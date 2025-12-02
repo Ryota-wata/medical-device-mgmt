@@ -35,108 +35,197 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        {/* 左側: ロゴとタイトル */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 text-white px-3 py-2 rounded font-bold text-lg">
-              SHIP
-            </div>
-            <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-          </div>
-          {resultCount !== undefined && (
-            <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded">
-              {resultCount}件（原本）
-            </span>
-          )}
-        </div>
-
-        {/* 右側: アクションボタン */}
+    <header
+      className="text-white flex justify-between items-center"
+      style={{
+        background: '#2c3e50',
+        padding: '12px 20px'
+      }}
+    >
+      {/* 左側: ロゴとタイトル */}
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          {/* ナビゲーションメニュー */}
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors"
-            >
-              <span>📑 メニュー</span>
-              <span className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
-            </button>
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                <div
-                  onClick={() => {
-                    router.push('/application-list');
-                    setIsMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                >
-                  <span>📝</span>
-                  <span>申請一覧</span>
-                </div>
-                <div
-                  onClick={() => {
-                    router.push('/quotation-data-box');
-                    setIsMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
-                >
-                  <span>📦</span>
-                  <span>見積書管理</span>
-                </div>
-                <div
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-t border-gray-200"
-                >
-                  <span>🚪</span>
-                  <span>ログアウト</span>
-                </div>
-              </div>
-            )}
+          <div
+            className="flex items-center justify-center text-white font-bold text-sm"
+            style={{
+              width: '40px',
+              height: '40px',
+              background: '#27ae60',
+              borderRadius: '8px'
+            }}
+          >
+            SHIP
           </div>
+          <div className="text-base font-bold">{title}</div>
+        </div>
+        {resultCount !== undefined && (
+          <span className="text-sm" style={{ color: '#ecf0f1' }}>
+            {resultCount}件（原本）
+          </span>
+        )}
+      </div>
 
-          {/* アイコンボタン群 */}
-          {onViewToggle && (
-            <button
-              onClick={onViewToggle}
-              className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors"
-              title="表示切替"
+      {/* 右側: アクションボタン */}
+      <div className="flex items-center gap-2">
+        {/* ナビゲーションメニュー */}
+        <div className="relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="flex items-center gap-2 px-4 py-2 border-0 rounded cursor-pointer text-sm transition-all text-white"
+            style={{
+              background: '#34495e'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2c3e50';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#34495e';
+            }}
+          >
+            <span>📑 メニュー</span>
+            <span className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+          {isMenuOpen && (
+            <div
+              className="absolute right-0 mt-2 w-48 bg-white rounded shadow-lg z-50"
+              style={{
+                border: '1px solid #ddd'
+              }}
             >
-              📋
-            </button>
-          )}
-          {onExport && (
-            <button
-              onClick={onExport}
-              className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors"
-              title="Excel/PDF出力"
-            >
-              📊
-            </button>
-          )}
-          {onPrint && (
-            <button
-              onClick={onPrint}
-              className="px-3 py-2 text-gray-700 hover:bg-gray-100 rounded transition-colors"
-              title="印刷"
-            >
-              🖨️
-            </button>
-          )}
-
-          {/* 戻るボタン */}
-          {showBackButton && (
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 bg-gray-200 text-gray-900 hover:bg-gray-300 rounded transition-colors"
-            >
-              戻る
-            </button>
+              <div
+                onClick={() => {
+                  router.push('/application-list');
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                style={{ color: '#2c3e50' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f8f8f8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                }}
+              >
+                <span>📝</span>
+                <span>申請一覧</span>
+              </div>
+              <div
+                onClick={() => {
+                  router.push('/quotation-data-box');
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                style={{ color: '#2c3e50' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f8f8f8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                }}
+              >
+                <span>📦</span>
+                <span>見積書管理</span>
+              </div>
+              <div
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                style={{ color: '#2c3e50', borderTop: '1px solid #ddd' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f8f8f8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                }}
+              >
+                <span>🚪</span>
+                <span>ログアウト</span>
+              </div>
+            </div>
           )}
         </div>
+
+        {/* アイコンボタン群 */}
+        {onViewToggle && (
+          <button
+            onClick={onViewToggle}
+            className="flex items-center justify-center text-white text-xl border-0 rounded cursor-pointer transition-all"
+            style={{
+              width: '40px',
+              height: '40px',
+              background: '#34495e'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2c3e50';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#34495e';
+            }}
+            title="表示切替"
+          >
+            📋
+          </button>
+        )}
+        {onExport && (
+          <button
+            onClick={onExport}
+            className="flex items-center justify-center text-white text-xl border-0 rounded cursor-pointer transition-all"
+            style={{
+              width: '40px',
+              height: '40px',
+              background: '#34495e'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2c3e50';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#34495e';
+            }}
+            title="Excel/PDF出力"
+          >
+            📊
+          </button>
+        )}
+        {onPrint && (
+          <button
+            onClick={onPrint}
+            className="flex items-center justify-center text-white text-xl border-0 rounded cursor-pointer transition-all"
+            style={{
+              width: '40px',
+              height: '40px',
+              background: '#34495e'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2c3e50';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#34495e';
+            }}
+            title="印刷"
+          >
+            🖨️
+          </button>
+        )}
+
+        {/* 戻るボタン */}
+        {showBackButton && (
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 text-white border-0 rounded cursor-pointer text-sm transition-all whitespace-nowrap"
+            style={{
+              background: '#27ae60'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#229954';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#27ae60';
+            }}
+          >
+            戻る
+          </button>
+        )}
       </div>
     </header>
   );

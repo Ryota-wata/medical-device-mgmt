@@ -25,20 +25,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   showHeader = true
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {showHeader && (
-        <Header
-          title={title}
-          showBackButton={showBackButton}
-          resultCount={resultCount}
-          onExport={onExport}
-          onPrint={onPrint}
-          onViewToggle={onViewToggle}
-        />
-      )}
-      <main className="container mx-auto px-6 py-6">
-        {children}
-      </main>
+    <div className="min-h-screen" style={{ background: '#f5f5f5', padding: '20px' }}>
+      <div
+        className="mx-auto bg-white rounded-lg"
+        style={{
+          maxWidth: '1400px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        }}
+      >
+        {showHeader && (
+          <Header
+            title={title}
+            showBackButton={showBackButton}
+            resultCount={resultCount}
+            onExport={onExport}
+            onPrint={onPrint}
+            onViewToggle={onViewToggle}
+          />
+        )}
+        <main style={{ padding: '20px' }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 };
