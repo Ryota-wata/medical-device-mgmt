@@ -14,7 +14,7 @@ export default function MenuPage() {
       title: '資産検索',
       description: '資産情報を検索・表示',
       icon: '🔍',
-      path: '/asset-search'
+      path: '/asset-search-result'
     },
     {
       title: '申請一覧',
