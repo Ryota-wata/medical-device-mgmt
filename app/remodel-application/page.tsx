@@ -83,6 +83,15 @@ export default function RemodelApplicationPage() {
     return initial;
   });
 
+  // 申請モーダル関連の状態
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [currentApplicationType, setCurrentApplicationType] = useState<string>('');
+  const [applicationBuilding, setApplicationBuilding] = useState('');
+  const [applicationFloor, setApplicationFloor] = useState('');
+  const [applicationDepartment, setApplicationDepartment] = useState('');
+  const [applicationSection, setApplicationSection] = useState('');
+  const [applicationRoomName, setApplicationRoomName] = useState('');
+
   // カラム幅の状態管理
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = { checkbox: 50 };
@@ -143,6 +152,11 @@ export default function RemodelApplicationPage() {
   const sectionOptions = useMemo(() => {
     const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter((s): s is string => !!s)));
     return uniqueSections;
+  }, [facilities]);
+
+  const roomNameOptions = useMemo(() => {
+    const uniqueRoomNames = Array.from(new Set(facilities.map(f => f.roomName).filter((r): r is string => !!r)));
+    return uniqueRoomNames;
   }, [facilities]);
 
   // モックデータ
@@ -317,7 +331,63 @@ export default function RemodelApplicationPage() {
       alert('申請する資産を選択してください');
       return;
     }
-    alert(`${actionType}を実行します（${selectedItems.size}件選択中）`);
+
+    if (actionType === '新規申請') {
+      alert('新規申請機能は開発中です');
+      return;
+    }
+
+    // 増設・更新・移動・廃棄申請の場合はモーダルを開く
+    setCurrentApplicationType(actionType);
+    setApplicationBuilding('');
+    setApplicationFloor('');
+    setApplicationDepartment('');
+    setApplicationSection('');
+    setApplicationRoomName('');
+    setIsApplicationModalOpen(true);
+  };
+
+  // 申請送信処理
+  const handleSubmitApplication = () => {
+    // バリデーション
+    if (!applicationBuilding || !applicationDepartment || !applicationSection || !applicationRoomName) {
+      alert('すべての設置情報を入力してください');
+      return;
+    }
+
+    // 選択された資産を取得
+    const selectedAssets = filteredAssets.filter(asset => selectedItems.has(asset.no));
+
+    // 申請データを作成（各資産ごとに1レコード）
+    const applications = selectedAssets.map(asset => ({
+      id: `APP-${Date.now()}-${asset.no}`,
+      applicationType: currentApplicationType,
+      assetQrCode: asset.qrCode,
+      assetName: asset.name,
+      assetMaker: asset.maker,
+      assetModel: asset.model,
+      facility: facility,
+      currentBuilding: asset.building,
+      currentFloor: asset.floor,
+      currentDepartment: asset.department,
+      currentSection: asset.section,
+      newBuilding: applicationBuilding,
+      newFloor: applicationFloor,
+      newDepartment: applicationDepartment,
+      newSection: applicationSection,
+      newRoomName: applicationRoomName,
+      applicationDate: new Date().toISOString(),
+      status: '申請中'
+    }));
+
+    // ここで実際にはAPIに送信するか、Zustandストアに保存する
+    console.log('申請データ:', applications);
+
+    alert(`${currentApplicationType}を送信しました\n申請件数: ${applications.length}件`);
+
+    // モーダルを閉じて選択をクリア
+    setIsApplicationModalOpen(false);
+    setSelectedItems(new Set());
   };
 
   return (
@@ -816,6 +886,206 @@ export default function RemodelApplicationPage() {
                 }}
               >
                 閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 申請モーダル */}
+      {isApplicationModalOpen && (
+        <div
+          onClick={() => setIsApplicationModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: '#3498db',
+                color: 'white',
+                padding: '20px 24px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTopLeftRadius: '12px',
+                borderTopRightRadius: '12px',
+              }}
+            >
+              <span>{currentApplicationType}</span>
+              <button
+                onClick={() => setIsApplicationModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '32px', flex: 1 }}>
+              <div style={{ marginBottom: '24px' }}>
+                <p style={{ fontSize: '14px', color: '#555', marginBottom: '12px' }}>
+                  選択された資産: <strong>{selectedItems.size}件</strong>
+                </p>
+                <p style={{ fontSize: '13px', color: '#777' }}>
+                  ※ 以下の設置情報を入力してください。一括申請の場合、すべての資産に同じ設置情報が適用されます。
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                  新しい設置情報
+                </h3>
+
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <div style={{ position: 'relative', zIndex: 5 }}>
+                    <SearchableSelect
+                      label="棟"
+                      value={applicationBuilding}
+                      onChange={setApplicationBuilding}
+                      options={buildingOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+
+                  <div style={{ position: 'relative', zIndex: 4 }}>
+                    <SearchableSelect
+                      label="階"
+                      value={applicationFloor}
+                      onChange={setApplicationFloor}
+                      options={floorOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+
+                  <div style={{ position: 'relative', zIndex: 3 }}>
+                    <SearchableSelect
+                      label="部門"
+                      value={applicationDepartment}
+                      onChange={setApplicationDepartment}
+                      options={departmentOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    <SearchableSelect
+                      label="部署"
+                      value={applicationSection}
+                      onChange={setApplicationSection}
+                      options={sectionOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    <SearchableSelect
+                      label="諸室名"
+                      value={applicationRoomName}
+                      onChange={setApplicationRoomName}
+                      options={roomNameOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
+                  申請内容の確認
+                </h4>
+                <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', paddingLeft: '20px' }}>
+                  <li>申請種別: <strong>{currentApplicationType}</strong></li>
+                  <li>申請資産数: <strong>{selectedItems.size}件</strong></li>
+                  <li>施設: <strong>{facility}</strong></li>
+                  {applicationBuilding && <li>移動先 棟: <strong>{applicationBuilding}</strong></li>}
+                  {applicationFloor && <li>移動先 階: <strong>{applicationFloor}</strong></li>}
+                  {applicationDepartment && <li>移動先 部門: <strong>{applicationDepartment}</strong></li>}
+                  {applicationSection && <li>移動先 部署: <strong>{applicationSection}</strong></li>}
+                  {applicationRoomName && <li>移動先 諸室名: <strong>{applicationRoomName}</strong></li>}
+                </ul>
+              </div>
+            </div>
+
+            {/* モーダルフッター */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #dee2e6',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+              }}
+            >
+              <button
+                onClick={() => setIsApplicationModalOpen(false)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSubmitApplication}
+                style={{
+                  padding: '10px 24px',
+                  background: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                申請する
               </button>
             </div>
           </div>
