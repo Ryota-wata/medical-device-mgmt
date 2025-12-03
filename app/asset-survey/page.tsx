@@ -138,7 +138,7 @@ function AssetSurveyContent() {
               type="text"
               value={sealNo}
               onChange={(e) => setSealNo(e.target.value)}
-              placeholder="シール番号を入力"
+              placeholder="ラベル番号を入力"
               style={{
                 flex: 1,
                 padding: isMobile ? '8px 10px' : '10px 12px',
@@ -688,7 +688,7 @@ function AssetSurveyContent() {
                       type="text"
                       value={endSealNo}
                       onChange={(e) => setEndSealNo(e.target.value)}
-                      placeholder="終了シール番号を入力"
+                      placeholder="終了ラベル番号を入力"
                       readOnly
                       style={{
                         padding: isMobile ? '10px' : '10px 12px',
@@ -699,7 +699,7 @@ function AssetSurveyContent() {
                       }}
                     />
                     <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                      一括登録の終了シール番号
+                      一括登録の終了ラベル番号
                     </span>
                   </div>
 

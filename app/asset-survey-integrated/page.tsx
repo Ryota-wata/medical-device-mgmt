@@ -107,7 +107,7 @@ export default function AssetSurveyIntegratedPage() {
             </label>
             <input
               type="text"
-              placeholder="シール番号を入力"
+              placeholder="ラベル番号を入力"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -596,7 +596,7 @@ export default function AssetSurveyIntegratedPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="終了シール番号を入力"
+                    placeholder="終了ラベル番号を入力"
                     readOnly
                     style={{
                       width: '100%',
@@ -609,7 +609,7 @@ export default function AssetSurveyIntegratedPage() {
                     }}
                   />
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                    一括登録の終了シール番号
+                    一括登録の終了ラベル番号
                   </div>
                 </div>
                 <button
