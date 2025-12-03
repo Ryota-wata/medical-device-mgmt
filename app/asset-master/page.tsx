@@ -7,41 +7,16 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function AssetMasterPage() {
-  const { assets: assetMasters, facilities } = useMasterStore();
+  const { assets: assetMasters } = useMasterStore();
   const { isMobile } = useResponsive();
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
 
   // フィルター状態
   const [filters, setFilters] = useState({
-    building: '',
-    floor: '',
-    department: '',
-    section: '',
     category: '',
     largeClass: '',
     mediumClass: ''
   });
-
-  // フィルターoptionsを生成（施設マスタから）
-  const buildingOptions = useMemo(() => {
-    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building)));
-    return uniqueBuildings.filter(Boolean);
-  }, [facilities]);
-
-  const floorOptions = useMemo(() => {
-    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor)));
-    return uniqueFloors.filter(Boolean);
-  }, [facilities]);
-
-  const departmentOptions = useMemo(() => {
-    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department)));
-    return uniqueDepartments.filter(Boolean);
-  }, [facilities]);
-
-  const sectionOptions = useMemo(() => {
-    const uniqueSections = Array.from(new Set(facilities.map(f => f.section)));
-    return uniqueSections.filter(Boolean);
-  }, [facilities]);
 
   // マスタデータからフィルターoptionsを生成（資産マスタから）
   const categoryOptions = useMemo(() => {
@@ -63,18 +38,6 @@ export default function AssetMasterPage() {
   const filteredAssets = useMemo(() => {
     let filtered = assetMasters;
 
-    if (filters.building) {
-      filtered = filtered.filter(a => a.building === filters.building);
-    }
-    if (filters.floor) {
-      filtered = filtered.filter(a => a.floor === filters.floor);
-    }
-    if (filters.department) {
-      filtered = filtered.filter(a => a.department === filters.department);
-    }
-    if (filters.section) {
-      filtered = filtered.filter(a => a.section === filters.section);
-    }
     if (filters.category) {
       filtered = filtered.filter(a => a.category === filters.category);
     }
@@ -145,46 +108,6 @@ export default function AssetMasterPage() {
       {/* フィルターヘッダー */}
       <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="棟"
-              value={filters.building}
-              onChange={(value) => setFilters({...filters, building: value})}
-              options={buildingOptions}
-              placeholder="全て"
-              isMobile={isMobile}
-            />
-          </div>
-          <div style={{ flex: '1', minWidth: '100px' }}>
-            <SearchableSelect
-              label="階"
-              value={filters.floor}
-              onChange={(value) => setFilters({...filters, floor: value})}
-              options={floorOptions}
-              placeholder="全て"
-              isMobile={isMobile}
-            />
-          </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="部門"
-              value={filters.department}
-              onChange={(value) => setFilters({...filters, department: value})}
-              options={departmentOptions}
-              placeholder="全て"
-              isMobile={isMobile}
-            />
-          </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="部署"
-              value={filters.section}
-              onChange={(value) => setFilters({...filters, section: value})}
-              options={sectionOptions}
-              placeholder="全て"
-              isMobile={isMobile}
-            />
-          </div>
           <div style={{ flex: '1', minWidth: '120px' }}>
             <SearchableSelect
               label="Category"
@@ -400,7 +323,7 @@ export default function AssetMasterPage() {
             <tbody>
               {filteredAssets.map((asset, index) => (
                 <tr
-                  key={asset.no}
+                  key={asset.id}
                   style={{
                     background: index % 2 === 0 ? 'white' : '#f8f9fa',
                     borderBottom: '1px solid #ecf0f1'

@@ -37,7 +37,7 @@ export default function MainPage() {
       .map(f => f.department)
       .filter((dept, index, self) => dept && self.indexOf(dept) === index);
 
-    return depts;
+    return depts as string[];
   }, [selectedRemodelFacility, facilities]);
 
   // メールアドレスからユーザー種別を判定

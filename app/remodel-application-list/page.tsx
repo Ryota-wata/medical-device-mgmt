@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -29,7 +29,7 @@ interface ApplicationData {
   editField3: string;
 }
 
-export default function RemodelApplicationListPage() {
+function RemodelApplicationListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { facilities } = useMasterStore();
@@ -102,22 +102,22 @@ export default function RemodelApplicationListPage() {
   // フィルターoptionsを生成（施設マスタから）
   const buildingOptions = useMemo(() => {
     const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building)));
-    return uniqueBuildings.filter(Boolean);
+    return uniqueBuildings.filter(Boolean) as string[];
   }, [facilities]);
 
   const floorOptions = useMemo(() => {
     const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor)));
-    return uniqueFloors.filter(Boolean);
+    return uniqueFloors.filter(Boolean) as string[];
   }, [facilities]);
 
   const departmentOptions = useMemo(() => {
     const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department)));
-    return uniqueDepartments.filter(Boolean);
+    return uniqueDepartments.filter(Boolean) as string[];
   }, [facilities]);
 
   const sectionOptions = useMemo(() => {
     const uniqueSections = Array.from(new Set(facilities.map(f => f.section)));
-    return uniqueSections.filter(Boolean);
+    return uniqueSections.filter(Boolean) as string[];
   }, [facilities]);
 
   // フィルタリングされた申請データ
@@ -608,5 +608,13 @@ export default function RemodelApplicationListPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RemodelApplicationListPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RemodelApplicationListContent />
+    </Suspense>
   );
 }

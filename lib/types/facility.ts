@@ -5,7 +5,7 @@
 /**
  * 施設マスタデータ
  */
-export interface FacilityMaster {
+export interface FacilityData {
   buildings: string[];
   divisions: string[];
   sectionsByDivision: Record<string, string[]>;

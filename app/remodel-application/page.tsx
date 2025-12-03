@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset } from '@/lib/types';
 import { useMasterStore } from '@/lib/stores';
@@ -60,7 +60,7 @@ const ALL_COLUMNS: ColumnDef[] = [
   { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false },
 ];
 
-export default function RemodelApplicationPage() {
+function RemodelApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { assets: assetMasters, facilities } = useMasterStore();
@@ -180,8 +180,8 @@ export default function RemodelApplicationPage() {
   }, [facilities]);
 
   const roomNameOptions = useMemo(() => {
-    const uniqueRoomNames = Array.from(new Set(facilities.map(f => f.roomName).filter((r): r is string => !!r)));
-    return uniqueRoomNames;
+    // FacilityMaster型にはroomNameフィールドがないため、空配列を返す
+    return [] as string[];
   }, [facilities]);
 
   // モックデータ
@@ -1799,5 +1799,13 @@ export default function RemodelApplicationPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RemodelApplicationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RemodelApplicationContent />
+    </Suspense>
   );
 }
