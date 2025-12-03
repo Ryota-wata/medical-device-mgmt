@@ -4,6 +4,60 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Individual, getIndividualStatusBadgeStyle } from '@/lib/types/individual';
 
+// カラム定義
+interface ColumnDef {
+  key: string;
+  label: string;
+  width?: string;
+  defaultVisible?: boolean;
+}
+
+const ALL_COLUMNS: ColumnDef[] = [
+  { key: 'facilityName', label: '施設名', width: '120px', defaultVisible: false },
+  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true },
+  { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false },
+  { key: 'managementNo', label: '管理機器番号', width: '150px', defaultVisible: false },
+  { key: 'building', label: '棟', width: '80px', defaultVisible: true },
+  { key: 'floor', label: '階', width: '60px', defaultVisible: true },
+  { key: 'department', label: '部門名', width: '120px', defaultVisible: true },
+  { key: 'section', label: '部署名（設置部署）', width: '150px', defaultVisible: true },
+  { key: 'roomClass1', label: '諸室区分①', width: '120px', defaultVisible: false },
+  { key: 'roomClass2', label: '諸室区分②', width: '120px', defaultVisible: false },
+  { key: 'roomName', label: '諸室名称', width: '150px', defaultVisible: false },
+  { key: 'category', label: 'category', width: '100px', defaultVisible: false },
+  { key: 'largeClass', label: '大分類', width: '100px', defaultVisible: false },
+  { key: 'mediumClass', label: '中分類', width: '100px', defaultVisible: false },
+  { key: 'assetName', label: '個体管理名称', width: '200px', defaultVisible: true },
+  { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: false },
+  { key: 'model', label: '型式', width: '150px', defaultVisible: true },
+  { key: 'quantity', label: '数量／単位', width: '100px', defaultVisible: false },
+  { key: 'inspectionDate', label: '検収日', width: '120px', defaultVisible: false },
+  { key: 'width', label: 'W', width: '80px', defaultVisible: false },
+  { key: 'depth', label: 'D', width: '80px', defaultVisible: false },
+  { key: 'height', label: 'H', width: '80px', defaultVisible: false },
+  { key: 'lease', label: 'リース', width: '80px', defaultVisible: false },
+  { key: 'rental', label: '借用', width: '80px', defaultVisible: false },
+  { key: 'contractName', label: '契約･見積名称', width: '150px', defaultVisible: false },
+  { key: 'contractNo', label: '契約番号（契約単位）', width: '180px', defaultVisible: false },
+  { key: 'quotationNo', label: '見積番号', width: '120px', defaultVisible: false },
+  { key: 'installationLocation', label: '設置場所', width: '150px', defaultVisible: false },
+  { key: 'assetInfo', label: '資産情報', width: '200px', defaultVisible: false },
+  { key: 'quantityNum', label: '数量', width: '80px', defaultVisible: false },
+  { key: 'serialNumber', label: 'シリアル番号', width: '150px', defaultVisible: false },
+  { key: 'contractDate', label: '契約･発注日', width: '120px', defaultVisible: false },
+  { key: 'deliveryDate', label: '納品日', width: '120px', defaultVisible: false },
+  { key: 'leaseStartDate', label: 'リース開始日', width: '120px', defaultVisible: false },
+  { key: 'leaseEndDate', label: 'リース終了日', width: '120px', defaultVisible: false },
+  { key: 'acquisitionCost', label: '取得価格', width: '120px', defaultVisible: false },
+  { key: 'legalServiceLife', label: '耐用年数（法定）', width: '140px', defaultVisible: false },
+  { key: 'recommendedServiceLife', label: '使用年数（メーカー推奨）', width: '180px', defaultVisible: false },
+  { key: 'endOfService', label: 'End of service：販売終了', width: '180px', defaultVisible: false },
+  { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false },
+  { key: 'registrationDate', label: '登録日', width: '120px', defaultVisible: true },
+  { key: 'applicationNo', label: '申請番号', width: '150px', defaultVisible: true },
+  { key: 'status', label: 'ステータス', width: '100px', defaultVisible: true },
+];
+
 // サンプルデータ
 const mockIndividualData: Individual[] = [
   {
@@ -100,6 +154,14 @@ export default function IndividualManagementListPage() {
   const [selectedIndividual, setSelectedIndividual] = useState<Individual | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isNavMenuOpen, setIsNavMenuOpen] = useState(false);
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => {
+      initial[col.key] = col.defaultVisible ?? false;
+    });
+    return initial;
+  });
 
   // フィルター適用
   const applyFilter = () => {
@@ -154,6 +216,49 @@ export default function IndividualManagementListPage() {
     alert('個体管理リストをExcel形式で出力します（実装予定）');
   };
 
+  // カラム表示切り替え
+  const toggleColumnVisibility = (key: string) => {
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  // 全選択/全解除
+  const handleSelectAll = () => {
+    const newState: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => {
+      newState[col.key] = true;
+    });
+    setVisibleColumns(newState);
+  };
+
+  const handleDeselectAll = () => {
+    const newState: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => {
+      newState[col.key] = false;
+    });
+    setVisibleColumns(newState);
+  };
+
+  // セルの値を取得
+  const getCellValue = (item: Individual, key: string): any => {
+    switch (key) {
+      case 'building':
+        return item.location.building;
+      case 'floor':
+        return item.location.floor;
+      case 'department':
+        return item.location.department;
+      case 'section':
+        return item.location.section;
+      case 'acquisitionCost':
+        return item.acquisitionCost ? `¥${item.acquisitionCost.toLocaleString()}` : '-';
+      default:
+        return (item as any)[key] || '-';
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: '#f5f7fa' }}>
       {/* ヘッダー */}
@@ -200,6 +305,24 @@ export default function IndividualManagementListPage() {
           </span>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setIsColumnSettingsOpen(true)}
+            style={{
+              background: '#9b59b6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '8px 16px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>⚙️</span>
+            <span>表示カラム設定</span>
+          </button>
           <button
             onClick={handleExportExcel}
             style={{
@@ -480,90 +603,21 @@ export default function IndividualManagementListPage() {
             >
               <thead>
                 <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '150px',
-                    }}
-                  >
-                    QRコード
-                  </th>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '200px',
-                    }}
-                  >
-                    資産名称
-                  </th>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '150px',
-                    }}
-                  >
-                    型式
-                  </th>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '200px',
-                    }}
-                  >
-                    設置場所
-                  </th>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '120px',
-                    }}
-                  >
-                    登録日
-                  </th>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '150px',
-                    }}
-                  >
-                    申請番号
-                  </th>
-                  <th
-                    style={{
-                      padding: '15px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      fontSize: '14px',
-                      width: '100px',
-                    }}
-                  >
-                    ステータス
-                  </th>
+                  {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
+                    <th
+                      key={col.key}
+                      style={{
+                        padding: '15px',
+                        textAlign: 'left',
+                        fontWeight: 'bold',
+                        color: '#2c3e50',
+                        fontSize: '14px',
+                        width: col.width,
+                      }}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
                   <th
                     style={{
                       padding: '15px',
@@ -581,51 +635,64 @@ export default function IndividualManagementListPage() {
               <tbody>
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: '60px 20px', textAlign: 'center', color: '#5a6c7d' }}>
+                    <td colSpan={ALL_COLUMNS.filter((col) => visibleColumns[col.key]).length + 1} style={{ padding: '60px 20px', textAlign: 'center', color: '#5a6c7d' }}>
                       個体データがありません
                     </td>
                   </tr>
                 ) : (
                   filteredData.map((item) => {
-                    const statusStyle = getIndividualStatusBadgeStyle(item.status);
-                    const locationText = `${item.location.building} ${item.location.floor} ${item.location.department} ${item.location.section}`;
-
                     return (
                       <tr key={item.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                        <td style={{ padding: '15px' }}>
-                          <strong style={{ color: '#2c3e50' }}>{item.qrCode}</strong>
-                        </td>
-                        <td style={{ padding: '15px', color: '#5a6c7d' }}>{item.assetName}</td>
-                        <td style={{ padding: '15px', color: '#5a6c7d' }}>{item.model || '-'}</td>
-                        <td style={{ padding: '15px', color: '#5a6c7d' }}>{locationText}</td>
-                        <td style={{ padding: '15px', color: '#5a6c7d' }}>{item.registrationDate}</td>
-                        <td style={{ padding: '15px' }}>
-                          <span
-                            onClick={() => alert(`申請詳細を表示: ${item.applicationNo}`)}
-                            style={{
-                              color: '#3498db',
-                              textDecoration: 'underline',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {item.applicationNo}
-                          </span>
-                        </td>
-                        <td style={{ padding: '15px' }}>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              padding: '4px 12px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              background: statusStyle.background,
-                              color: statusStyle.color,
-                            }}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
+                        {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => {
+                          if (col.key === 'status') {
+                            const statusStyle = getIndividualStatusBadgeStyle(item.status);
+                            return (
+                              <td key={col.key} style={{ padding: '15px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '4px 12px',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
+                                    fontWeight: '600',
+                                    background: statusStyle.background,
+                                    color: statusStyle.color,
+                                  }}
+                                >
+                                  {item.status}
+                                </span>
+                              </td>
+                            );
+                          }
+                          if (col.key === 'applicationNo') {
+                            return (
+                              <td key={col.key} style={{ padding: '15px' }}>
+                                <span
+                                  onClick={() => alert(`申請詳細を表示: ${item.applicationNo}`)}
+                                  style={{
+                                    color: '#3498db',
+                                    textDecoration: 'underline',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {item.applicationNo}
+                                </span>
+                              </td>
+                            );
+                          }
+                          if (col.key === 'qrCode') {
+                            return (
+                              <td key={col.key} style={{ padding: '15px' }}>
+                                <strong style={{ color: '#2c3e50' }}>{getCellValue(item, col.key)}</strong>
+                              </td>
+                            );
+                          }
+                          return (
+                            <td key={col.key} style={{ padding: '15px', color: '#5a6c7d' }}>
+                              {getCellValue(item, col.key)}
+                            </td>
+                          );
+                        })}
                         <td style={{ padding: '15px' }}>
                           <button
                             onClick={() => handleViewDetail(item)}
@@ -652,6 +719,119 @@ export default function IndividualManagementListPage() {
           </div>
         </div>
       </div>
+
+      {/* カラム設定モーダル */}
+      {isColumnSettingsOpen && (
+        <div
+          onClick={() => setIsColumnSettingsOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div style={{ padding: '20px', borderBottom: '1px solid #dee2e6' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
+                表示カラム設定
+              </h2>
+            </div>
+            <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+              <div style={{ marginBottom: '15px', display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={handleSelectAll}
+                  style={{
+                    background: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '8px 20px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  全て選択
+                </button>
+                <button
+                  onClick={handleDeselectAll}
+                  style={{
+                    background: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '8px 20px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  全て解除
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                {ALL_COLUMNS.map((col) => (
+                  <label
+                    key={col.key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '10px',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      background: visibleColumns[col.key] ? '#e3f2fd' : 'white',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[col.key]}
+                      onChange={() => toggleColumnVisibility(col.key)}
+                      style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#2c3e50' }}>{col.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div style={{ padding: '20px', borderTop: '1px solid #dee2e6', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setIsColumnSettingsOpen(false)}
+                style={{
+                  background: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '10px 30px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                確定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 詳細モーダル */}
       {isDetailModalOpen && selectedIndividual && (
