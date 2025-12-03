@@ -498,7 +498,7 @@ export default function AssetSearchResultPage() {
       {/* テーブル表示 */}
       <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
         {currentView === 'list' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
             <thead>
               <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                 <th
