@@ -1,28 +1,92 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Asset } from '@/lib/types';
 import { useMasterStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function AssetMasterPage() {
-  const { assets: assetMasters } = useMasterStore();
+  const { assets: assetMasters, facilities } = useMasterStore();
   const { isMobile } = useResponsive();
   const [selectedAssets, setSelectedAssets] = useState<Set<number>>(new Set());
-  const [searchQuery, setSearchQuery] = useState('');
 
-  // 検索フィルタリング
+  // フィルター状態
+  const [filters, setFilters] = useState({
+    building: '',
+    floor: '',
+    department: '',
+    section: '',
+    category: '',
+    largeClass: '',
+    mediumClass: ''
+  });
+
+  // フィルターoptionsを生成（施設マスタから）
+  const buildingOptions = useMemo(() => {
+    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building)));
+    return uniqueBuildings.filter(Boolean);
+  }, [facilities]);
+
+  const floorOptions = useMemo(() => {
+    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor)));
+    return uniqueFloors.filter(Boolean);
+  }, [facilities]);
+
+  const departmentOptions = useMemo(() => {
+    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department)));
+    return uniqueDepartments.filter(Boolean);
+  }, [facilities]);
+
+  const sectionOptions = useMemo(() => {
+    const uniqueSections = Array.from(new Set(facilities.map(f => f.section)));
+    return uniqueSections.filter(Boolean);
+  }, [facilities]);
+
+  // マスタデータからフィルターoptionsを生成（資産マスタから）
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const largeClassOptions = useMemo(() => {
+    const uniqueLargeClasses = Array.from(new Set(assetMasters.map(a => a.largeClass)));
+    return uniqueLargeClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  const mediumClassOptions = useMemo(() => {
+    const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
+    return uniqueMediumClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  // フィルタリングされた資産
   const filteredAssets = useMemo(() => {
-    if (!searchQuery) return assetMasters;
+    let filtered = assetMasters;
 
-    const query = searchQuery.toLowerCase();
-    return assetMasters.filter(asset =>
-      asset.name.toLowerCase().includes(query) ||
-      asset.maker.toLowerCase().includes(query) ||
-      asset.model.toLowerCase().includes(query) ||
-      asset.qrCode.toLowerCase().includes(query)
-    );
-  }, [assetMasters, searchQuery]);
+    if (filters.building) {
+      filtered = filtered.filter(a => a.building === filters.building);
+    }
+    if (filters.floor) {
+      filtered = filtered.filter(a => a.floor === filters.floor);
+    }
+    if (filters.department) {
+      filtered = filtered.filter(a => a.department === filters.department);
+    }
+    if (filters.section) {
+      filtered = filtered.filter(a => a.section === filters.section);
+    }
+    if (filters.category) {
+      filtered = filtered.filter(a => a.category === filters.category);
+    }
+    if (filters.largeClass) {
+      filtered = filtered.filter(a => a.largeClass === filters.largeClass);
+    }
+    if (filters.mediumClass) {
+      filtered = filtered.filter(a => a.mediumClass === filters.mediumClass);
+    }
+
+    return filtered;
+  }, [assetMasters, filters]);
 
   // チェックボックスの全選択/全解除
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +98,8 @@ export default function AssetMasterPage() {
   };
 
   // 個別チェックボックスの処理
-  const handleCheckboxChange = (assetNo: number) => {
+  const handleCheckboxChange = (e: React.MouseEvent, assetNo: number) => {
+    e.stopPropagation();
     const newSelected = new Set(selectedAssets);
     if (newSelected.has(assetNo)) {
       newSelected.delete(assetNo);
@@ -69,53 +134,120 @@ export default function AssetMasterPage() {
     <div style={{
       minHeight: '100vh',
       background: '#f5f5f5',
-      padding: isMobile ? '12px' : '20px'
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       {/* ヘッダー */}
       <div style={{
-        background: 'white',
-        padding: isMobile ? '16px' : '20px',
-        borderRadius: '8px',
-        marginBottom: '20px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        background: '#2c3e50',
+        color: 'white',
+        padding: isMobile ? '12px' : '16px 20px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <h1 style={{
-          fontSize: isMobile ? '18px' : '24px',
+          fontSize: isMobile ? '18px' : '20px',
           fontWeight: 'bold',
-          color: '#2c3e50',
-          marginBottom: '16px'
+          margin: 0
         }}>
           資産マスタ選択
         </h1>
+      </div>
 
-        {/* 検索バー */}
-        <div style={{ marginBottom: '16px' }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="資産名、メーカー、型式、QRコードで検索..."
-            style={{
-              width: '100%',
-              padding: isMobile ? '10px' : '12px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '14px' : '16px',
-              boxSizing: 'border-box'
-            }}
-          />
+      {/* フィルターヘッダー */}
+      <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
+        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="棟"
+              value={filters.building}
+              onChange={(value) => setFilters({...filters, building: value})}
+              options={buildingOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '100px' }}>
+            <SearchableSelect
+              label="階"
+              value={filters.floor}
+              onChange={(value) => setFilters({...filters, floor: value})}
+              options={floorOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="部門"
+              value={filters.department}
+              onChange={(value) => setFilters({...filters, department: value})}
+              options={departmentOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="部署"
+              value={filters.section}
+              onChange={(value) => setFilters({...filters, section: value})}
+              options={sectionOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="Category"
+              value={filters.category}
+              onChange={(value) => setFilters({...filters, category: value})}
+              options={categoryOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '150px' }}>
+            <SearchableSelect
+              label="大分類"
+              value={filters.largeClass}
+              onChange={(value) => setFilters({...filters, largeClass: value})}
+              options={largeClassOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '150px' }}>
+            <SearchableSelect
+              label="中分類"
+              value={filters.mediumClass}
+              onChange={(value) => setFilters({...filters, mediumClass: value})}
+              options={mediumClassOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
         </div>
+      </div>
 
-        {/* 選択数表示 */}
+      {/* アクションバー */}
+      <div style={{
+        background: 'white',
+        padding: '16px 20px',
+        borderBottom: '1px solid #dee2e6',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '12px'
+      }}>
         <div style={{
           fontSize: isMobile ? '13px' : '14px',
-          color: '#7f8c8d',
-          marginBottom: '12px'
+          color: '#2c3e50',
+          fontWeight: 'bold'
         }}>
           {selectedAssets.size}件選択中 / 全{filteredAssets.length}件
         </div>
 
-        {/* アクションボタン */}
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <button
             onClick={handleConfirmSelection}
@@ -171,14 +303,19 @@ export default function AssetMasterPage() {
 
       {/* 資産テーブル */}
       <div style={{
+        flex: 1,
         background: 'white',
+        margin: '20px',
         borderRadius: '8px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         <div style={{
+          flex: 1,
           overflowX: 'auto',
-          maxHeight: 'calc(100vh - 300px)'
+          overflowY: 'auto'
         }}>
           <table style={{
             width: '100%',
@@ -211,7 +348,8 @@ export default function AssetMasterPage() {
                   padding: isMobile ? '10px 8px' : '12px',
                   textAlign: 'left',
                   fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)'
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '150px'
                 }}>
                   QRコード
                 </th>
@@ -219,7 +357,8 @@ export default function AssetMasterPage() {
                   padding: isMobile ? '10px 8px' : '12px',
                   textAlign: 'left',
                   fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)'
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '200px'
                 }}>
                   個体管理名称
                 </th>
@@ -227,16 +366,53 @@ export default function AssetMasterPage() {
                   padding: isMobile ? '10px 8px' : '12px',
                   textAlign: 'left',
                   fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)'
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '150px'
                 }}>
                   メーカー名
                 </th>
                 <th style={{
                   padding: isMobile ? '10px 8px' : '12px',
                   textAlign: 'left',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  minWidth: '150px'
                 }}>
                   型式
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '100px'
+                }}>
+                  棟
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '80px'
+                }}>
+                  階
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '120px'
+                }}>
+                  部門
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  minWidth: '120px'
+                }}>
+                  部署
                 </th>
               </tr>
             </thead>
@@ -246,10 +422,8 @@ export default function AssetMasterPage() {
                   key={asset.no}
                   style={{
                     background: index % 2 === 0 ? 'white' : '#f8f9fa',
-                    borderBottom: '1px solid #ecf0f1',
-                    cursor: 'pointer'
+                    borderBottom: '1px solid #ecf0f1'
                   }}
-                  onClick={() => handleCheckboxChange(asset.no)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = '#e8f4f8';
                   }}
@@ -265,8 +439,8 @@ export default function AssetMasterPage() {
                     <input
                       type="checkbox"
                       checked={selectedAssets.has(asset.no)}
-                      onChange={() => handleCheckboxChange(asset.no)}
-                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => {}}
+                      onClick={(e) => handleCheckboxChange(e, asset.no)}
                       style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                     />
                   </td>
@@ -297,6 +471,33 @@ export default function AssetMasterPage() {
                   }}>
                     {asset.model}
                   </td>
+                  <td style={{
+                    padding: isMobile ? '10px 8px' : '12px',
+                    color: '#2c3e50',
+                    borderRight: '1px solid #ecf0f1'
+                  }}>
+                    {asset.building}
+                  </td>
+                  <td style={{
+                    padding: isMobile ? '10px 8px' : '12px',
+                    color: '#2c3e50',
+                    borderRight: '1px solid #ecf0f1'
+                  }}>
+                    {asset.floor}
+                  </td>
+                  <td style={{
+                    padding: isMobile ? '10px 8px' : '12px',
+                    color: '#2c3e50',
+                    borderRight: '1px solid #ecf0f1'
+                  }}>
+                    {asset.department}
+                  </td>
+                  <td style={{
+                    padding: isMobile ? '10px 8px' : '12px',
+                    color: '#2c3e50'
+                  }}>
+                    {asset.section}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -310,7 +511,7 @@ export default function AssetMasterPage() {
             color: '#7f8c8d',
             fontSize: isMobile ? '14px' : '16px'
           }}>
-            {searchQuery ? '検索結果がありません' : '資産がありません'}
+            該当する資産がありません
           </div>
         )}
       </div>

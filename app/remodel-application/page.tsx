@@ -1333,7 +1333,7 @@ export default function RemodelApplicationPage() {
                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
                   設置情報
                 </h3>
-                <div style={{ display: 'grid', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '20px' }}>
                   <div style={{ position: 'relative', zIndex: 5 }}>
                     <SearchableSelect
                       label="棟"
@@ -1374,7 +1374,7 @@ export default function RemodelApplicationPage() {
                       isMobile={isMobile}
                     />
                   </div>
-                  <div>
+                  <div style={{ gridColumn: isMobile ? '1' : '1 / -1' }}>
                     <label style={{
                       display: 'block',
                       fontSize: '14px',
@@ -1697,20 +1697,23 @@ export default function RemodelApplicationPage() {
                     }}>
                       執行年度
                     </label>
-                    <input
-                      type="text"
-                      value={executionYear}
-                      onChange={(e) => setExecutionYear(e.target.value)}
-                      placeholder="例: 2024年度"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        value={executionYear}
+                        onChange={(e) => setExecutionYear(e.target.value)}
+                        placeholder="例: 2024"
+                        style={{
+                          width: '150px',
+                          padding: '10px 12px',
+                          border: '1px solid #d0d0d0',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      <span style={{ fontSize: '14px', color: '#2c3e50' }}>年度</span>
+                    </div>
                   </div>
                 </div>
               </div>
