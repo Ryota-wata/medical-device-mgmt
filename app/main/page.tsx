@@ -1,27 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/stores';
+import { useAuthStore, useMasterStore } from '@/lib/stores';
 import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-
-// サンプル施設データ
-const mockFacilities = [
-  { code: 'FAC001', name: '〇〇病院 本館' },
-  { code: 'FAC002', name: '△△クリニック' },
-  { code: 'FAC003', name: '◇◇医療センター 新館' },
-  { code: 'FAC004', name: '□□総合病院 東棟' },
-];
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function MainPage() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { facilities } = useMasterStore();
   const { isMobile, isTablet } = useResponsive();
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
+
+  // 施設マスタから施設名オプションを生成
+  const facilityOptions = useMemo(() => {
+    return facilities.map(f => f.facilityName);
+  }, [facilities]);
 
   // メールアドレスからユーザー種別を判定
   const userType = user ? getUserType(user.email) : 'consultant';
@@ -63,9 +62,9 @@ export default function MainPage() {
     setButtonsEnabled(false);
   };
 
-  const handleFacilityChange = (facilityCode: string) => {
-    setSelectedFacility(facilityCode);
-    setButtonsEnabled(!!facilityCode);
+  const handleFacilityChange = (facilityName: string) => {
+    setSelectedFacility(facilityName);
+    setButtonsEnabled(!!facilityName);
   };
 
   const handleMenuSelect = (menuName: string) => {
@@ -610,36 +609,14 @@ export default function MainPage() {
             <div style={{ padding: '24px' }}>
               {/* 施設選択 */}
               <div style={{ marginBottom: '32px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    marginBottom: '8px',
-                  }}
-                >
-                  施設を選択
-                </label>
-                <select
+                <SearchableSelect
+                  label="施設を選択"
                   value={selectedFacility}
-                  onChange={(e) => handleFacilityChange(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '2px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '15px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">施設を選択してください</option>
-                  {mockFacilities.map((facility) => (
-                    <option key={facility.code} value={facility.code}>
-                      {facility.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={handleFacilityChange}
+                  options={['', ...facilityOptions]}
+                  placeholder="施設を選択してください"
+                  isMobile={isMobile}
+                />
               </div>
 
               {/* メニューボタン */}
