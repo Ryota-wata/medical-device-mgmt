@@ -508,7 +508,9 @@ export default function AssetSearchResultPage() {
                     fontWeight: 'bold',
                     color: '#2c3e50',
                     width: `${columnWidths.checkbox}px`,
-                    position: 'relative'
+                    position: 'relative',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden'
                   }}
                 >
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
@@ -541,7 +543,10 @@ export default function AssetSearchResultPage() {
                       fontWeight: 'bold',
                       color: '#2c3e50',
                       width: `${columnWidths[col.key]}px`,
-                      position: 'relative'
+                      position: 'relative',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
                     }}
                   >
                     {col.label}
@@ -589,7 +594,7 @@ export default function AssetSearchResultPage() {
                     }
                   }}
                 >
-                  <td style={{ padding: '12px 8px' }} onClick={(e) => e.stopPropagation()}>
+                  <td style={{ padding: '12px 8px', whiteSpace: 'nowrap', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedItems.has(asset.no)}
@@ -597,7 +602,7 @@ export default function AssetSearchResultPage() {
                     />
                   </td>
                   {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                    <td key={col.key} style={{ padding: '12px 8px', color: '#2c3e50' }}>
+                    <td key={col.key} style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {getCellValue(asset, col.key)}
                     </td>
                   ))}
