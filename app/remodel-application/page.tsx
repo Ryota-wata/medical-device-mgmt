@@ -17,7 +17,6 @@ interface ColumnDef {
 }
 
 const ALL_COLUMNS: ColumnDef[] = [
-  { key: 'no', label: 'No.', width: '80px', defaultVisible: true },
   { key: 'facility', label: '施設名', width: '200px', defaultVisible: true },
   { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true },
   { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false },
@@ -969,19 +968,17 @@ export default function RemodelApplicationPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead style={{ background: '#f8f9fa', position: 'sticky', top: 0 }}>
                       <tr>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>No.</th>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>QRコード</th>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>機器名称</th>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>個体管理名称</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー名</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredAssets.filter(asset => selectedItems.has(asset.no)).map((asset) => (
                         <tr key={asset.no} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.no}</td>
-                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.qrCode}</td>
                           <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.name}</td>
                           <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.maker}</td>
+                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.model}</td>
                         </tr>
                       ))}
                     </tbody>

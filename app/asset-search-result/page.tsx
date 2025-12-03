@@ -17,7 +17,6 @@ interface ColumnDef {
 }
 
 const ALL_COLUMNS: ColumnDef[] = [
-  { key: 'no', label: 'No.', width: '80px', defaultVisible: true },
   { key: 'facility', label: '施設名', width: '200px', defaultVisible: true },
   { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true },
   { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false },
