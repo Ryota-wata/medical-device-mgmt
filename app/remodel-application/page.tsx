@@ -1162,7 +1162,7 @@ export default function RemodelApplicationPage() {
                     新しい設置情報
                   </h3>
 
-                  <div style={{ display: 'grid', gap: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
                     <div style={{ position: 'relative', zIndex: 5 }}>
                       <SearchableSelect
                         label="棟"
@@ -1207,7 +1207,7 @@ export default function RemodelApplicationPage() {
                       />
                     </div>
 
-                    <div>
+                    <div style={{ gridColumn: '1 / -1' }}>
                       <label style={{
                         display: 'block',
                         fontSize: '14px',
