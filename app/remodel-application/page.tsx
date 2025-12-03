@@ -421,7 +421,6 @@ export default function RemodelApplicationPage() {
     }));
 
     // ここで実際にはAPIに送信するか、Zustandストアに保存する
-    console.log('申請データ:', applications);
 
     alert(`${currentApplicationType}を送信しました\n申請件数: ${applications.length}件`);
 
@@ -452,7 +451,6 @@ export default function RemodelApplicationPage() {
 
       if (event.data.type === 'ASSET_SELECTED') {
         const assetMasters = event.data.assets as any[];
-        console.log('Received assets from asset-master:', assetMasters);
 
         // AssetMaster型をAsset型に変換して selectedAssets に追加
         const newSelectedAssets = assetMasters.map(assetMaster => ({
@@ -481,7 +479,6 @@ export default function RemodelApplicationPage() {
           unit: '台'
         }));
 
-        console.log('Converted to SelectedAssets:', newSelectedAssets);
         setSelectedAssets(prev => [...prev, ...newSelectedAssets]);
       }
     };
@@ -549,7 +546,6 @@ export default function RemodelApplicationPage() {
     }));
 
     // ここで実際にはAPIに送信するか、Zustandストアに保存する
-    console.log('新規申請データ:', applications);
 
     alert(`新規申請を送信しました\n申請件数: ${applications.length}件`);
 

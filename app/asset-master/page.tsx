@@ -90,19 +90,12 @@ export default function AssetMasterPage() {
 
   // チェックボックスの全選択/全解除
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('=== Select All onChange ===');
-    console.log('e.target.checked:', e.target.checked);
-    console.log('filteredAssets count:', filteredAssets.length);
-
     if (e.target.checked) {
       const allAssetIds = filteredAssets.map(asset => asset.id);
-      console.log('Selecting all assets:', allAssetIds);
       setSelectedAssets(new Set(allAssetIds));
     } else {
-      console.log('Deselecting all assets');
       setSelectedAssets(new Set());
     }
-    console.log('======================');
   };
 
   // 選択した資産を親ウィンドウに渡す
@@ -431,22 +424,12 @@ export default function AssetMasterPage() {
                       type="checkbox"
                       checked={selectedAssets.has(asset.id)}
                       onChange={(e) => {
-                        console.log('=== Checkbox onChange ===');
-                        console.log('Asset ID:', asset.id);
-                        console.log('e.target.checked:', e.target.checked);
-                        console.log('Before selectedAssets:', Array.from(selectedAssets));
-
                         const newSelected = new Set(selectedAssets);
                         if (e.target.checked) {
                           newSelected.add(asset.id);
-                          console.log('Adding asset:', asset.id);
                         } else {
                           newSelected.delete(asset.id);
-                          console.log('Removing asset:', asset.id);
                         }
-
-                        console.log('After selectedAssets:', Array.from(newSelected));
-                        console.log('======================');
                         setSelectedAssets(newSelected);
                       }}
                       onClick={(e) => e.stopPropagation()}
