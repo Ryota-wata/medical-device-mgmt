@@ -113,10 +113,6 @@ export default function MainPage() {
     alert('全データ閲覧機能（開発中）');
   };
 
-  const handleHistory = () => {
-    router.push('/history');
-  };
-
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5', padding: '20px' }}>
       <div
@@ -479,38 +475,6 @@ export default function MainPage() {
               }}
             >
               全データ閲覧（閲覧・出力）
-            </button>
-            <button
-              onClick={handleHistory}
-              style={{
-                background: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '6px',
-                padding: isMobile ? '8px 10px' : isTablet ? '9px 12px' : '14px 20px',
-                fontSize: isMobile ? '11px' : isTablet ? '12px' : '15px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                flex: '0 0 auto'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#27ae60';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = '#27ae60';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(39, 174, 96, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#2c3e50';
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              登録履歴
             </button>
           </div>
         </div>
