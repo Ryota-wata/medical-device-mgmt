@@ -1,17 +1,50 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useMasterStore } from '@/lib/stores';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function AssetSurveyIntegratedPage() {
   const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
+  const { assets: assetMasters } = useMasterStore();
   const [bulkMode, setBulkMode] = useState(false);
   const [leaseToggle, setLeaseToggle] = useState(false);
   const [rentalToggle, setRentalToggle] = useState(false);
   const [qrScanned, setQrScanned] = useState(false);
   const [photoTaken, setPhotoTaken] = useState(false);
+  const [largeClass, setLargeClass] = useState('');
+  const [mediumClass, setMediumClass] = useState('');
+  const [item, setItem] = useState('');
+  const [maker, setMaker] = useState('');
+  const [model, setModel] = useState('');
+
+  const largeClassOptions = useMemo(() => {
+    const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean)));
+    return uniqueClasses;
+  }, [assetMasters]);
+
+  const mediumClassOptions = useMemo(() => {
+    const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass).filter(Boolean)));
+    return uniqueClasses;
+  }, [assetMasters]);
+
+  const itemOptions = useMemo(() => {
+    const uniqueItems = Array.from(new Set(assetMasters.map(a => a.item).filter(Boolean)));
+    return uniqueItems;
+  }, [assetMasters]);
+
+  const makerOptions = useMemo(() => {
+    const uniqueMakers = Array.from(new Set(assetMasters.map(a => a.maker).filter(Boolean)));
+    return uniqueMakers;
+  }, [assetMasters]);
+
+  const modelOptions = useMemo(() => {
+    const uniqueModels = Array.from(new Set(assetMasters.map(a => a.model).filter(Boolean)));
+    return uniqueModels;
+  }, [assetMasters]);
 
   const handleBack = () => {
     router.back();
@@ -391,57 +424,30 @@ export default function AssetSurveyIntegratedPage() {
             gap: '16px',
             marginBottom: '16px'
           }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                大分類
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}>
-                <option value="">選択してください</option>
-                <option value="医療機器">医療機器</option>
-                <option value="什器備品">什器備品</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                中分類
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}>
-                <option value="">選択してください</option>
-                <option value="検査機器">検査機器</option>
-                <option value="治療機器">治療機器</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                品目
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}>
-                <option value="">選択してください</option>
-                <option value="超音波診断装置">超音波診断装置</option>
-                <option value="人工呼吸器">人工呼吸器</option>
-              </select>
-            </div>
+            <SearchableSelect
+              label="大分類"
+              value={largeClass}
+              onChange={setLargeClass}
+              options={['', ...largeClassOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="中分類"
+              value={mediumClass}
+              onChange={setMediumClass}
+              options={['', ...mediumClassOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="品目"
+              value={item}
+              onChange={setItem}
+              options={['', ...itemOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
 
           <div style={{
@@ -449,40 +455,22 @@ export default function AssetSurveyIntegratedPage() {
             gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
             gap: '16px'
           }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                メーカー
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}>
-                <option value="">選択してください</option>
-                <option value="ABC社">ABC社</option>
-                <option value="XYZ社">XYZ社</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                型式
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}>
-                <option value="">選択してください</option>
-                <option value="US-1000">US-1000</option>
-                <option value="RES-500">RES-500</option>
-              </select>
-            </div>
+            <SearchableSelect
+              label="メーカー"
+              value={maker}
+              onChange={setMaker}
+              options={['', ...makerOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="型式"
+              value={model}
+              onChange={setModel}
+              options={['', ...modelOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
         </div>
 
