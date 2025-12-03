@@ -255,63 +255,99 @@ export default function RemodelApplicationListPage() {
       </div>
 
       {/* メインコンテンツ */}
-      <div style={{ flex: 1, padding: isMobile ? '10px' : '20px', overflowX: 'auto' }}>
+      <div style={{ flex: 1, padding: isMobile ? '10px' : '20px' }}>
         <div style={{
           background: 'white',
           borderRadius: '8px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: isMobile ? '12px' : '14px'
-          }}>
-            <thead style={{
-              background: '#34495e',
-              color: 'white',
-              position: 'sticky',
-              top: 0,
-              zIndex: 10
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: isMobile ? '12px' : '14px',
+              minWidth: '2000px'
             }}>
-              <tr>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  width: '50px',
-                  borderRight: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedRows.size === filteredApplications.length && filteredApplications.length > 0}
-                    onChange={handleSelectAll}
-                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                  />
-                </th>
-                {/* 設置情報 */}
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '100px' }}>棟</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '80px' }}>階</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>部門</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>部署</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>諸室名</th>
-                {/* 資産情報 */}
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '200px' }}>品目</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>メーカー</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>型式</th>
-                {/* 編集用カラム */}
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>申請区分</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>グルーピングNo</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>グルーピング</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>見積依頼No.</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>定価金額</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>購入金額</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム1</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム2</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム3</th>
-                <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'center', fontWeight: 'bold', width: '80px' }}>削除</th>
-              </tr>
-            </thead>
+              <thead style={{
+                background: '#34495e',
+                color: 'white',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10
+              }}>
+                {/* エリア区分ヘッダー */}
+                <tr>
+                  <th rowSpan={2} style={{
+                    padding: isMobile ? '10px 8px' : '12px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    width: '50px',
+                    borderRight: '2px solid rgba(255,255,255,0.3)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.size === filteredApplications.length && filteredApplications.length > 0}
+                      onChange={handleSelectAll}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                    />
+                  </th>
+                  <th colSpan={5} style={{
+                    padding: isMobile ? '8px' : '10px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    background: '#2c3e50',
+                    borderRight: '2px solid rgba(255,255,255,0.3)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: isMobile ? '13px' : '15px'
+                  }}>
+                    設置情報
+                  </th>
+                  <th colSpan={3} style={{
+                    padding: isMobile ? '8px' : '10px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    background: '#2c3e50',
+                    borderRight: '2px solid rgba(255,255,255,0.3)',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: isMobile ? '13px' : '15px'
+                  }}>
+                    申請資産情報
+                  </th>
+                  <th colSpan={10} style={{
+                    padding: isMobile ? '8px' : '10px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    background: '#2c3e50',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    fontSize: isMobile ? '13px' : '15px'
+                  }}>
+                    申請編集
+                  </th>
+                </tr>
+                {/* カラム名ヘッダー */}
+                <tr>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '100px' }}>棟</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '80px' }}>階</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>部門</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>部署</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '2px solid rgba(255,255,255,0.3)', minWidth: '150px' }}>諸室名</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '200px' }}>品目</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>メーカー</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '2px solid rgba(255,255,255,0.3)', minWidth: '150px' }}>型式</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>申請区分</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>グルーピングNo</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>グルーピング</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>見積依頼No.</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>定価金額</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>購入金額</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム1</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム2</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム3</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'center', fontWeight: 'bold', width: '80px' }}>削除</th>
+                </tr>
+              </thead>
             <tbody>
               {filteredApplications.map((app, index) => {
                 const isSelected = selectedRows.has(app.id);
@@ -324,7 +360,7 @@ export default function RemodelApplicationListPage() {
                     }}
                   >
                     {/* チェックボックス */}
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'center', borderRight: '1px solid #ecf0f1' }}>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'center', borderRight: '2px solid #bdc3c7' }}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -337,15 +373,14 @@ export default function RemodelApplicationListPage() {
                     <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.floor}</td>
                     <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.department}</td>
                     <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.section}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.roomName}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '2px solid #bdc3c7' }}>{app.roomName}</td>
                     {/* 資産情報（読み取り専用） */}
                     <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.itemName}</td>
                     <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.maker}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.model}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '2px solid #bdc3c7' }}>{app.model}</td>
                     {/* 編集可能カラム */}
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
+                      <select
                         value={app.applicationType}
                         onChange={(e) => handleFieldUpdate(app.id, 'applicationType', e.target.value)}
                         disabled={!isSelected}
@@ -357,9 +392,16 @@ export default function RemodelApplicationListPage() {
                           fontSize: '13px',
                           boxSizing: 'border-box',
                           background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
+                          cursor: isSelected ? 'pointer' : 'not-allowed'
                         }}
-                      />
+                      >
+                        <option value="">選択してください</option>
+                        <option value="新規">新規</option>
+                        <option value="更新">更新</option>
+                        <option value="増設">増設</option>
+                        <option value="移動">移動</option>
+                        <option value="廃棄">廃棄</option>
+                      </select>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
                       <input
@@ -552,6 +594,7 @@ export default function RemodelApplicationListPage() {
               申請データがありません
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
