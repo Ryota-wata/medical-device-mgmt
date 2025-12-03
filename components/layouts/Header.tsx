@@ -13,6 +13,8 @@ interface HeaderProps {
   onPrint?: () => void;
   onViewToggle?: () => void;
   onColumnSettings?: () => void;
+  hideMenu?: boolean;
+  showApplicationListLink?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,7 +24,9 @@ export const Header: React.FC<HeaderProps> = ({
   onExport,
   onPrint,
   onViewToggle,
-  onColumnSettings
+  onColumnSettings,
+  hideMenu = false,
+  showApplicationListLink = false
 }) => {
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -74,89 +78,114 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* 右側: アクションボタン */}
       <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
-        {/* ナビゲーションメニュー */}
-        <div className="relative">
+        {/* リモデル申請一覧リンク */}
+        {showApplicationListLink && (
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => router.push('/remodel-application-list')}
             className="flex items-center gap-2 border-0 rounded cursor-pointer transition-all text-white"
             style={{
-              background: '#34495e',
+              background: '#3498db',
               padding: isMobile ? '6px 12px' : '8px 16px',
               fontSize: isMobile ? '12px' : '14px',
               whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#2c3e50';
+              e.currentTarget.style.background = '#2980b9';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#34495e';
+              e.currentTarget.style.background = '#3498db';
             }}
           >
-            <span>📑 {isMobile ? '' : 'メニュー'}</span>
-            {!isMobile && (
-              <span className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
-            )}
+            <span>📋</span>
+            <span>リモデル申請一覧</span>
           </button>
-          {isMenuOpen && (
-            <div
-              className="absolute right-0 mt-2 w-48 bg-white rounded shadow-lg z-50"
+        )}
+
+        {/* ナビゲーションメニュー */}
+        {!hideMenu && (
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex items-center gap-2 border-0 rounded cursor-pointer transition-all text-white"
               style={{
-                border: '1px solid #ddd'
+                background: '#34495e',
+                padding: isMobile ? '6px 12px' : '8px 16px',
+                fontSize: isMobile ? '12px' : '14px',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#2c3e50';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#34495e';
               }}
             >
+              <span>📑 {isMobile ? '' : 'メニュー'}</span>
+              {!isMobile && (
+                <span className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              )}
+            </button>
+            {isMenuOpen && (
               <div
-                onClick={() => {
-                  router.push('/application-list');
-                  setIsMenuOpen(false);
-                }}
-                className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
-                style={{ color: '#2c3e50' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f8f8f8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white';
+                className="absolute right-0 mt-2 w-48 bg-white rounded shadow-lg z-50"
+                style={{
+                  border: '1px solid #ddd'
                 }}
               >
-                <span>📝</span>
-                <span>申請一覧</span>
+                <div
+                  onClick={() => {
+                    router.push('/application-list');
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                  style={{ color: '#2c3e50' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#f8f8f8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                  }}
+                >
+                  <span>📝</span>
+                  <span>申請一覧</span>
+                </div>
+                <div
+                  onClick={() => {
+                    router.push('/quotation-data-box');
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                  style={{ color: '#2c3e50' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#f8f8f8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                  }}
+                >
+                  <span>📦</span>
+                  <span>見積書管理</span>
+                </div>
+                <div
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                  style={{ color: '#2c3e50', borderTop: '1px solid #ddd' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#f8f8f8';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                  }}
+                >
+                  <span>🚪</span>
+                  <span>ログアウト</span>
+                </div>
               </div>
-              <div
-                onClick={() => {
-                  router.push('/quotation-data-box');
-                  setIsMenuOpen(false);
-                }}
-                className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
-                style={{ color: '#2c3e50' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f8f8f8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white';
-                }}
-              >
-                <span>📦</span>
-                <span>見積書管理</span>
-              </div>
-              <div
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"
-                style={{ color: '#2c3e50', borderTop: '1px solid #ddd' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f8f8f8';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'white';
-                }}
-              >
-                <span>🚪</span>
-                <span>ログアウト</span>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* アイコンボタン群 */}
         {onColumnSettings && (

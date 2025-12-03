@@ -330,6 +330,8 @@ export default function RemodelApplicationPage() {
         onPrint={() => window.print()}
         onColumnSettings={() => setIsColumnSettingsOpen(true)}
         showBackButton={true}
+        hideMenu={true}
+        showApplicationListLink={true}
       />
 
       {/* フィルターヘッダー */}
