@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts';
 import { Asset } from '@/lib/types';
 
-export default function AssetDetailPage() {
+function AssetDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const qrCode = searchParams.get('qrCode');
@@ -340,5 +340,14 @@ export default function AssetDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function AssetDetailPage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <AssetDetailContent />
+    </Suspense>
   );
 }

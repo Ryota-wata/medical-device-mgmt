@@ -22,10 +22,15 @@ export default function LoginPage() {
 
     try {
       await login({ username, password });
-      router.push('/menu');
+      router.push('/main');
     } catch (err) {
       setError('ログインに失敗しました');
     }
+  };
+
+  const handlePasswordReset = (e: React.MouseEvent) => {
+    e.preventDefault();
+    alert('パスワードリセット機能は開発中です');
   };
 
   return (
@@ -134,9 +139,22 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* フッター */}
-        <div className="mt-6 text-center text-sm" style={{ color: '#5a6c7d' }}>
-          <p>テスト用: 任意のユーザー名とパスワードでログイン可能</p>
+        {/* パスワードリセットリンク */}
+        <div className="mt-4 text-center">
+          <a
+            href="#"
+            onClick={handlePasswordReset}
+            className="text-sm transition-colors"
+            style={{ color: '#5a6c7d' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#27ae60';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#5a6c7d';
+            }}
+          >
+            パスワードをお忘れの方
+          </a>
         </div>
       </div>
     </div>

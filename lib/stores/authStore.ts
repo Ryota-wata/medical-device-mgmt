@@ -22,10 +22,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
       // 現在はモックデータ
       await new Promise((resolve) => setTimeout(resolve, 500));
 
+      // メールアドレスに基づいてユーザー種別を自動判定
+      // テスト用: @hospital を含むメールアドレス → 病院ユーザー
+      //          それ以外 → コンサルタントユーザー
       const mockUser: User = {
         id: '1',
         username: credentials.username,
-        email: `${credentials.username}@example.com`,
+        email: `${credentials.username}@example.com`, // @hospital.com にすると病院ユーザー
         role: 'staff',
         department: '手術部門',
         section: '手術'

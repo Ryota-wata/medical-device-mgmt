@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores';
+import { useResponsive } from '@/lib/hooks/useResponsive';
 
 interface HeaderProps {
   title?: string;
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const router = useRouter();
   const { logout } = useAuthStore();
+  const { isMobile } = useResponsive();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleBack = () => {
@@ -39,41 +41,47 @@ export const Header: React.FC<HeaderProps> = ({
       className="text-white flex justify-between items-center"
       style={{
         background: '#2c3e50',
-        padding: '12px 20px'
+        padding: isMobile ? '8px 12px' : '12px 20px',
+        flexWrap: 'wrap',
+        gap: isMobile ? '8px' : '0'
       }}
     >
       {/* 左側: ロゴとタイトル */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center" style={{ gap: isMobile ? '8px' : '16px' }}>
         <div className="flex items-center gap-2">
           <div
-            className="flex items-center justify-center text-white font-bold text-sm"
+            className="flex items-center justify-center text-white font-bold"
             style={{
-              width: '40px',
-              height: '40px',
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
               background: '#27ae60',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              fontSize: isMobile ? '10px' : '14px'
             }}
           >
             SHIP
           </div>
-          <div className="text-base font-bold">{title}</div>
+          <div className="font-bold" style={{ fontSize: isMobile ? '14px' : '16px' }}>{title}</div>
         </div>
         {resultCount !== undefined && (
-          <span className="text-sm" style={{ color: '#ecf0f1' }}>
+          <span style={{ color: '#ecf0f1', fontSize: isMobile ? '12px' : '14px' }}>
             {resultCount}件（原本）
           </span>
         )}
       </div>
 
       {/* 右側: アクションボタン */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
         {/* ナビゲーションメニュー */}
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center gap-2 px-4 py-2 border-0 rounded cursor-pointer text-sm transition-all text-white"
+            className="flex items-center gap-2 border-0 rounded cursor-pointer transition-all text-white"
             style={{
-              background: '#34495e'
+              background: '#34495e',
+              padding: isMobile ? '6px 12px' : '8px 16px',
+              fontSize: isMobile ? '12px' : '14px',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#2c3e50';
@@ -82,10 +90,12 @@ export const Header: React.FC<HeaderProps> = ({
               e.currentTarget.style.background = '#34495e';
             }}
           >
-            <span>📑 メニュー</span>
-            <span className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}>
-              ▼
-            </span>
+            <span>📑 {isMobile ? '' : 'メニュー'}</span>
+            {!isMobile && (
+              <span className={`transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}>
+                ▼
+              </span>
+            )}
           </button>
           {isMenuOpen && (
             <div
@@ -150,11 +160,12 @@ export const Header: React.FC<HeaderProps> = ({
         {onViewToggle && (
           <button
             onClick={onViewToggle}
-            className="flex items-center justify-center text-white text-xl border-0 rounded cursor-pointer transition-all"
+            className="flex items-center justify-center text-white border-0 rounded cursor-pointer transition-all"
             style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e'
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
+              background: '#34495e',
+              fontSize: isMobile ? '16px' : '20px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#2c3e50';
@@ -170,11 +181,12 @@ export const Header: React.FC<HeaderProps> = ({
         {onExport && (
           <button
             onClick={onExport}
-            className="flex items-center justify-center text-white text-xl border-0 rounded cursor-pointer transition-all"
+            className="flex items-center justify-center text-white border-0 rounded cursor-pointer transition-all"
             style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e'
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
+              background: '#34495e',
+              fontSize: isMobile ? '16px' : '20px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#2c3e50';
@@ -190,11 +202,12 @@ export const Header: React.FC<HeaderProps> = ({
         {onPrint && (
           <button
             onClick={onPrint}
-            className="flex items-center justify-center text-white text-xl border-0 rounded cursor-pointer transition-all"
+            className="flex items-center justify-center text-white border-0 rounded cursor-pointer transition-all"
             style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e'
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
+              background: '#34495e',
+              fontSize: isMobile ? '16px' : '20px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#2c3e50';
@@ -212,9 +225,11 @@ export const Header: React.FC<HeaderProps> = ({
         {showBackButton && (
           <button
             onClick={handleBack}
-            className="px-4 py-2 text-white border-0 rounded cursor-pointer text-sm transition-all whitespace-nowrap"
+            className="text-white border-0 rounded cursor-pointer transition-all whitespace-nowrap"
             style={{
-              background: '#27ae60'
+              background: '#27ae60',
+              padding: isMobile ? '6px 12px' : '8px 16px',
+              fontSize: isMobile ? '12px' : '14px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#229954';

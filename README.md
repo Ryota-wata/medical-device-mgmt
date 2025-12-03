@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HEALTHCARE 医療機器管理システム
 
-## Getting Started
+医療機器の資産管理システム
 
-First, run the development server:
+## 機能
+
+- QRコード発行・印刷プレビュー
+- オフライン準備・調査場所入力
+- 資産調査・詳細表示
+- 資産検索・個別管理一覧
+- 改修申請・見積処理
+- レスポンシブデザイン対応(PC/タブレット/スマホ)
+
+## 開発環境のセットアップ
+
+### 依存パッケージのインストール
+
+```bash
+npm install
+```
+
+### 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いてください。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`app/page.tsx` を編集すると、ページが自動的に更新されます。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### ビルド
 
-## Learn More
+静的ファイルとしてビルドするには:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+ビルドされたファイルは `out/` ディレクトリに出力されます。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## GitHub Pages へのデプロイ
 
-## Deploy on Vercel
+このプロジェクトはGitHub Pagesで公開できるように設定されています。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 1. GitHubリポジトリの作成
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/YOUR-USERNAME/medical-device-mgmt.git
+git push -u origin main
+```
+
+### 2. GitHub Pagesの設定
+
+1. GitHubリポジトリページを開く
+2. **Settings** → **Pages** に移動
+3. **Source** を **GitHub Actions** に変更
+
+### 3. 自動デプロイ
+
+mainブランチにpushすると、GitHub Actionsが自動的にビルドしてデプロイします。
+
+デプロイされたサイトのURL: `https://YOUR-USERNAME.github.io/medical-device-mgmt/`
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 16.0.6 (App Router)
+- **言語**: TypeScript 5
+- **スタイリング**: Inline CSS
+- **デプロイ**: GitHub Pages (静的エクスポート)
+
+## プロジェクト構造
+
+```
+/app                    # Next.js App Router
+  /qr-issue            # QRコード発行画面
+  /qr-print            # QR印刷プレビュー画面
+  /offline-prep        # オフライン準備画面
+  /survey-location     # 調査場所入力画面
+  /asset-survey        # 資産調査画面
+  /asset-detail        # 資産詳細画面
+  /asset-search-result # 資産検索結果画面
+  /...                 # その他の画面
+/components            # 共通コンポーネント
+/lib                   # ユーティリティ・型定義
+  /hooks              # カスタムフック
+  /styles             # スタイルユーティリティ
+  /types              # 型定義
+/public                # 静的ファイル
+```
+
+## ライセンス
+
+このプロジェクトはサンプルプロジェクトです。
