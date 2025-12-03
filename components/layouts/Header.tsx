@@ -166,14 +166,14 @@ export const Header: React.FC<HeaderProps> = ({
             style={{
               width: isMobile ? '32px' : '40px',
               height: isMobile ? '32px' : '40px',
-              background: '#9b59b6',
+              background: '#34495e',
               fontSize: isMobile ? '16px' : '20px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#8e44ad';
+              e.currentTarget.style.background = '#2c3e50';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#9b59b6';
+              e.currentTarget.style.background = '#34495e';
             }}
             title="表示カラム設定"
           >

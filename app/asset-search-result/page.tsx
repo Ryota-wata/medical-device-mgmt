@@ -78,6 +78,20 @@ export default function AssetSearchResultPage() {
     return initial;
   });
 
+  // カラム幅の状態管理
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const initial: Record<string, number> = { checkbox: 50 };
+    ALL_COLUMNS.forEach((col) => {
+      initial[col.key] = parseInt(col.width || '150');
+    });
+    return initial;
+  });
+
+  // リサイズ中の状態管理
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [resizeStartX, setResizeStartX] = useState(0);
+  const [resizeStartWidth, setResizeStartWidth] = useState(0);
+
   // フィルター状態
   const [filters, setFilters] = useState({
     building: '',
@@ -294,6 +308,40 @@ export default function AssetSearchResultPage() {
     setVisibleColumns(newState);
   };
 
+  // カラムリサイズのハンドラー
+  const handleResizeStart = (e: React.MouseEvent, columnKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnKey);
+    setResizeStartX(e.clientX);
+    setResizeStartWidth(columnWidths[columnKey]);
+  };
+
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStartX;
+      const newWidth = Math.max(50, resizeStartWidth + diff);
+      setColumnWidths((prev) => ({
+        ...prev,
+        [resizingColumn]: newWidth,
+      }));
+    };
+
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn, resizeStartX, resizeStartWidth]);
+
   // セルの値を取得
   const getCellValue = (asset: Asset, key: string): any => {
     if (key === 'acquisitionCost' && asset.acquisitionCost) {
@@ -453,12 +501,69 @@ export default function AssetSearchResultPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>
+                <th
+                  style={{
+                    padding: '12px 8px',
+                    textAlign: 'left',
+                    fontWeight: 'bold',
+                    color: '#2c3e50',
+                    width: `${columnWidths.checkbox}px`,
+                    position: 'relative'
+                  }}
+                >
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
+                  <div
+                    onMouseDown={(e) => handleResizeStart(e, 'checkbox')}
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '4px',
+                      cursor: 'col-resize',
+                      background: resizingColumn === 'checkbox' ? '#3498db' : 'transparent',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!resizingColumn) e.currentTarget.style.background = '#ddd';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!resizingColumn) e.currentTarget.style.background = 'transparent';
+                    }}
+                  />
                 </th>
                 {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                  <th key={col.key} style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: col.width }}>
+                  <th
+                    key={col.key}
+                    style={{
+                      padding: '12px 8px',
+                      textAlign: 'left',
+                      fontWeight: 'bold',
+                      color: '#2c3e50',
+                      width: `${columnWidths[col.key]}px`,
+                      position: 'relative'
+                    }}
+                  >
                     {col.label}
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, col.key)}
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '4px',
+                        cursor: 'col-resize',
+                        background: resizingColumn === col.key ? '#3498db' : 'transparent',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!resizingColumn) e.currentTarget.style.background = '#ddd';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!resizingColumn) e.currentTarget.style.background = 'transparent';
+                      }}
+                    />
                   </th>
                 ))}
               </tr>
