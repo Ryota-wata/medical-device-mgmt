@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -31,8 +31,18 @@ interface ApplicationData {
 
 export default function RemodelApplicationListPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { facilities } = useMasterStore();
   const { isMobile } = useResponsive();
+
+  // URLパラメータから施設・部署を取得
+  const facility = searchParams.get('facility') || '';
+  const department = searchParams.get('department') || '';
+
+  // ページタイトル
+  const pageTitle = facility && department
+    ? `リモデル申請一覧 - ${facility} ${department}`
+    : 'リモデル申請一覧';
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -178,7 +188,7 @@ export default function RemodelApplicationListPage() {
     <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
       {/* ヘッダー */}
       <Header
-        title="リモデル申請一覧"
+        title={pageTitle}
         showBackButton={true}
         hideMenu={true}
       />

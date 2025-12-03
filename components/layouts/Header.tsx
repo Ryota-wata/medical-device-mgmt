@@ -15,6 +15,8 @@ interface HeaderProps {
   onColumnSettings?: () => void;
   hideMenu?: boolean;
   showApplicationListLink?: boolean;
+  facility?: string;
+  department?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,7 +28,9 @@ export const Header: React.FC<HeaderProps> = ({
   onViewToggle,
   onColumnSettings,
   hideMenu = false,
-  showApplicationListLink = false
+  showApplicationListLink = false,
+  facility = '',
+  department = ''
 }) => {
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -81,7 +85,15 @@ export const Header: React.FC<HeaderProps> = ({
         {/* リモデル申請一覧リンク */}
         {showApplicationListLink && (
           <button
-            onClick={() => router.push('/remodel-application-list')}
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (facility) params.set('facility', facility);
+              if (department) params.set('department', department);
+              const url = params.toString()
+                ? `/remodel-application-list?${params.toString()}`
+                : '/remodel-application-list';
+              router.push(url);
+            }}
             className="flex items-center gap-2 border-0 rounded cursor-pointer transition-all text-white"
             style={{
               background: '#3498db',

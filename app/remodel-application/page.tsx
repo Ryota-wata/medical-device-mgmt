@@ -565,6 +565,8 @@ export default function RemodelApplicationPage() {
         showBackButton={true}
         hideMenu={true}
         showApplicationListLink={true}
+        facility={facility}
+        department={department}
       />
 
       {/* フィルターヘッダー */}
