@@ -8,6 +8,35 @@ import { Asset } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
+// カラム定義
+interface ColumnDef {
+  key: string;
+  label: string;
+  width?: string;
+  defaultVisible?: boolean;
+}
+
+const ALL_COLUMNS: ColumnDef[] = [
+  { key: 'no', label: 'No.', width: '80px', defaultVisible: true },
+  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: false },
+  { key: 'facility', label: '施設名', width: '200px', defaultVisible: true },
+  { key: 'building', label: '棟', width: '100px', defaultVisible: true },
+  { key: 'floor', label: '階', width: '80px', defaultVisible: true },
+  { key: 'department', label: '部門', width: '120px', defaultVisible: true },
+  { key: 'section', label: '部署', width: '120px', defaultVisible: false },
+  { key: 'category', label: 'Category', width: '120px', defaultVisible: false },
+  { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: false },
+  { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: false },
+  { key: 'item', label: '品目', width: '150px', defaultVisible: false },
+  { key: 'name', label: '品名', width: '200px', defaultVisible: true },
+  { key: 'maker', label: 'メーカー', width: '150px', defaultVisible: true },
+  { key: 'model', label: '型式', width: '150px', defaultVisible: true },
+  { key: 'quantity', label: '数量', width: '80px', defaultVisible: false },
+  { key: 'width', label: 'W', width: '80px', defaultVisible: false },
+  { key: 'depth', label: 'D', width: '80px', defaultVisible: false },
+  { key: 'height', label: 'H', width: '80px', defaultVisible: false },
+];
+
 export default function AssetSearchResultPage() {
   const router = useRouter();
   const { assets } = useAssetStore();
@@ -16,6 +45,14 @@ export default function AssetSearchResultPage() {
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => {
+      initial[col.key] = col.defaultVisible ?? false;
+    });
+    return initial;
+  });
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -160,6 +197,36 @@ export default function AssetSearchResultPage() {
     router.push(`/asset-detail?qrCode=${asset.qrCode}`);
   };
 
+  // カラム表示切り替え
+  const toggleColumnVisibility = (key: string) => {
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  // 全選択/全解除
+  const handleSelectAllColumns = () => {
+    const newState: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => {
+      newState[col.key] = true;
+    });
+    setVisibleColumns(newState);
+  };
+
+  const handleDeselectAllColumns = () => {
+    const newState: Record<string, boolean> = {};
+    ALL_COLUMNS.forEach((col) => {
+      newState[col.key] = false;
+    });
+    setVisibleColumns(newState);
+  };
+
+  // セルの値を取得
+  const getCellValue = (asset: Asset, key: string): any => {
+    return (asset as any)[key] ?? '-';
+  };
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
       <Header
@@ -259,6 +326,24 @@ export default function AssetSearchResultPage() {
           {selectedItems.size}件選択中
         </span>
         <button
+          onClick={() => setIsColumnSettingsOpen(true)}
+          style={{
+            padding: '8px 16px',
+            background: '#9b59b6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span>⚙️</span>
+          <span>表示カラム設定</span>
+        </button>
+        <button
           style={{
             padding: '8px 16px',
             background: '#27ae60',
@@ -313,14 +398,11 @@ export default function AssetSearchResultPage() {
                 <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
                 </th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>No.</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>施設名</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>棟</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>階</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>部門</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>品名</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
+                {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
+                  <th key={col.key} style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: col.width }}>
+                    {col.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -351,14 +433,11 @@ export default function AssetSearchResultPage() {
                       onChange={() => handleSelectItem(asset.no)}
                     />
                   </td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.no}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.facility}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.building}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.floor}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.department}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.name}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.maker}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.model}</td>
+                  {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
+                    <td key={col.key} style={{ padding: '12px 8px', color: '#2c3e50' }}>
+                      {getCellValue(asset, col.key)}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
@@ -407,6 +486,156 @@ export default function AssetSearchResultPage() {
           </div>
         )}
       </div>
+
+      {/* カラム設定モーダル */}
+      {isColumnSettingsOpen && (
+        <div
+          onClick={() => setIsColumnSettingsOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: '#9b59b6',
+                color: 'white',
+                padding: '20px 24px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>表示カラム設定</span>
+              <button
+                onClick={() => setIsColumnSettingsOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '24px', overflow: 'auto', flex: 1 }}>
+              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={handleSelectAllColumns}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  全て選択
+                </button>
+                <button
+                  onClick={handleDeselectAllColumns}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  全て解除
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+                {ALL_COLUMNS.map((col) => (
+                  <label
+                    key={col.key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px',
+                      background: visibleColumns[col.key] ? '#e8f5e9' : '#f5f5f5',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={visibleColumns[col.key]}
+                      onChange={() => toggleColumnVisibility(col.key)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#2c3e50' }}>{col.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* モーダルフッター */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #dee2e6',
+                display: 'flex',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                onClick={() => setIsColumnSettingsOpen(false)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
