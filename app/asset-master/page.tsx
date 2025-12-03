@@ -337,18 +337,9 @@ export default function AssetMasterPage() {
                   textAlign: 'left',
                   fontWeight: 'bold',
                   borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '200px'
+                  minWidth: '60px'
                 }}>
-                  施設名
-                </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '150px'
-                }}>
-                  QRコード
+                  No.
                 </th>
                 <th style={{
                   padding: isMobile ? '10px 8px' : '12px',
@@ -357,34 +348,7 @@ export default function AssetMasterPage() {
                   borderRight: '1px solid rgba(255,255,255,0.1)',
                   minWidth: '100px'
                 }}>
-                  棟
-                </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '80px'
-                }}>
-                  階
-                </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '120px'
-                }}>
-                  部門名
-                </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '200px'
-                }}>
-                  個体管理名称
+                  Category
                 </th>
                 <th style={{
                   padding: isMobile ? '10px 8px' : '12px',
@@ -393,7 +357,34 @@ export default function AssetMasterPage() {
                   borderRight: '1px solid rgba(255,255,255,0.1)',
                   minWidth: '150px'
                 }}>
-                  メーカー名
+                  大分類
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '150px'
+                }}>
+                  中分類
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '200px'
+                }}>
+                  品目
+                </th>
+                <th style={{
+                  padding: isMobile ? '10px 8px' : '12px',
+                  textAlign: 'left',
+                  fontWeight: 'bold',
+                  borderRight: '1px solid rgba(255,255,255,0.1)',
+                  minWidth: '150px'
+                }}>
+                  メーカー
                 </th>
                 <th style={{
                   padding: isMobile ? '10px 8px' : '12px',
@@ -420,24 +411,27 @@ export default function AssetMasterPage() {
                     e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#f8f9fa';
                   }}
                 >
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    textAlign: 'center',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td
+                    style={{
+                      padding: isMobile ? '10px 8px' : '12px',
+                      textAlign: 'center',
+                      borderRight: '1px solid #ecf0f1'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedAssets.has(asset.no)}
                       onChange={(e) => {
-                        e.stopPropagation();
                         const newSelected = new Set(selectedAssets);
-                        if (newSelected.has(asset.no)) {
-                          newSelected.delete(asset.no);
-                        } else {
+                        if (e.target.checked) {
                           newSelected.add(asset.no);
+                        } else {
+                          newSelected.delete(asset.no);
                         }
                         setSelectedAssets(newSelected);
                       }}
+                      onClick={(e) => e.stopPropagation()}
                       style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                     />
                   </td>
@@ -446,42 +440,35 @@ export default function AssetMasterPage() {
                     color: '#2c3e50',
                     borderRight: '1px solid #ecf0f1'
                   }}>
-                    {asset.facility}
+                    {index + 1}
                   </td>
                   <td style={{
                     padding: isMobile ? '10px 8px' : '12px',
                     color: '#2c3e50',
                     borderRight: '1px solid #ecf0f1'
                   }}>
-                    {asset.qrCode}
+                    {asset.category}
                   </td>
                   <td style={{
                     padding: isMobile ? '10px 8px' : '12px',
                     color: '#2c3e50',
                     borderRight: '1px solid #ecf0f1'
                   }}>
-                    {asset.building}
+                    {asset.largeClass}
                   </td>
                   <td style={{
                     padding: isMobile ? '10px 8px' : '12px',
                     color: '#2c3e50',
                     borderRight: '1px solid #ecf0f1'
                   }}>
-                    {asset.floor}
+                    {asset.mediumClass}
                   </td>
                   <td style={{
                     padding: isMobile ? '10px 8px' : '12px',
                     color: '#2c3e50',
                     borderRight: '1px solid #ecf0f1'
                   }}>
-                    {asset.department}
-                  </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
-                    {asset.name}
+                    {asset.item}
                   </td>
                   <td style={{
                     padding: isMobile ? '10px 8px' : '12px',
