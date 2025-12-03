@@ -6,8 +6,7 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 
 interface HistoryCardData {
   id: number;
-  largeClass: string;
-  mediumClass: string;
+  labelNumber: string;
   item: string;
   maker: string;
   model: string;
@@ -23,8 +22,7 @@ export default function HistoryPage() {
   const historyData: HistoryCardData[] = [
     {
       id: 1,
-      largeClass: '医療機器',
-      mediumClass: '検査機器',
+      labelNumber: 'L-001234',
       item: '超音波診断装置',
       maker: 'ABC社',
       model: 'US-1000',
@@ -32,8 +30,7 @@ export default function HistoryPage() {
     },
     {
       id: 2,
-      largeClass: '事務機器',
-      mediumClass: 'PC機器',
+      labelNumber: 'L-001235',
       item: 'ノートPC',
       maker: 'XYZ社',
       model: 'NB-2000',
@@ -41,8 +38,7 @@ export default function HistoryPage() {
     },
     {
       id: 3,
-      largeClass: '医療機器',
-      mediumClass: '治療機器',
+      labelNumber: 'L-001236',
       item: '人工呼吸器',
       maker: 'DEF社',
       model: 'RES-500',
@@ -50,8 +46,7 @@ export default function HistoryPage() {
     },
     {
       id: 4,
-      largeClass: '家具',
-      mediumClass: 'デスク',
+      labelNumber: 'L-001237',
       item: '事務デスク',
       maker: '家具工房',
       model: 'D-1200',
@@ -59,8 +54,7 @@ export default function HistoryPage() {
     },
     {
       id: 5,
-      largeClass: '医療機器',
-      mediumClass: '検査機器',
+      labelNumber: 'L-001238',
       item: '血液分析装置',
       maker: 'メディカル社',
       model: 'BA-3000',
@@ -68,8 +62,7 @@ export default function HistoryPage() {
     },
     {
       id: 6,
-      largeClass: '事務機器',
-      mediumClass: '複合機',
+      labelNumber: 'L-001239',
       item: '業務用複合機',
       maker: 'オフィス機器',
       model: 'MFP-7000',
@@ -226,31 +219,14 @@ export default function HistoryPage() {
                         display: 'block',
                         marginBottom: '4px'
                       }}>
-                        大分類
+                        ラベル番号
                       </label>
                       <span style={{
                         fontSize: isMobile ? '13px' : '14px',
                         color: '#2c3e50',
                         fontWeight: '500'
                       }}>
-                        {card.largeClass}
-                      </span>
-                    </div>
-                    <div>
-                      <label style={{
-                        fontSize: '11px',
-                        color: '#7a8a9a',
-                        display: 'block',
-                        marginBottom: '4px'
-                      }}>
-                        中分類
-                      </label>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#2c3e50',
-                        fontWeight: '500'
-                      }}>
-                        {card.mediumClass}
+                        {card.labelNumber}
                       </span>
                     </div>
                     <div>
@@ -270,14 +246,6 @@ export default function HistoryPage() {
                         {card.item}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Row 2 */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-                    gap: isMobile ? '12px' : '8px'
-                  }}>
                     <div>
                       <label style={{
                         fontSize: '11px',
@@ -295,6 +263,14 @@ export default function HistoryPage() {
                         {card.maker}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Row 2 */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                    gap: isMobile ? '12px' : '8px'
+                  }}>
                     <div>
                       <label style={{
                         fontSize: '11px',

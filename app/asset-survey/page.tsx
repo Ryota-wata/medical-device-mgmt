@@ -96,7 +96,7 @@ function AssetSurveyContent() {
 
   const handleRegister = () => {
     if (!sealNo || !roomName) {
-      alert('シールNo.と室名は必須です');
+      alert('ラベル番号と室名は必須です');
       return;
     }
     alert('商品を登録します（この機能は実装予定）');
@@ -132,7 +132,7 @@ function AssetSurveyContent() {
               color: 'white',
               whiteSpace: 'nowrap'
             }}>
-              シールNo.
+              ラベル番号
             </label>
             <input
               type="text"
@@ -682,7 +682,7 @@ function AssetSurveyContent() {
                       color: '#2c3e50',
                       marginBottom: isMobile ? '6px' : '8px'
                     }}>
-                      終了シールNo.
+                      終了ラベル番号
                     </label>
                     <input
                       type="text"

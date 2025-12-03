@@ -103,7 +103,7 @@ export default function AssetSurveyIntegratedPage() {
               marginBottom: '4px',
               fontWeight: '600'
             }}>
-              シールNo.
+              ラベル番号
             </label>
             <input
               type="text"
@@ -592,7 +592,7 @@ export default function AssetSurveyIntegratedPage() {
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexDirection: isMobile ? 'column' : 'row' }}>
                 <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
                   <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                    終了シールNo.
+                    終了ラベル番号
                   </label>
                   <input
                     type="text"
