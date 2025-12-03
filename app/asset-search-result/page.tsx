@@ -46,22 +46,22 @@ export default function AssetSearchResultPage() {
 
   // 施設マスタからフィルターoptionsを生成
   const buildingOptions = useMemo(() => {
-    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building).filter(Boolean)));
+    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building).filter((b): b is string => !!b)));
     return uniqueBuildings;
   }, [facilities]);
 
   const floorOptions = useMemo(() => {
-    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor).filter(Boolean)));
+    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor).filter((f): f is string => !!f)));
     return uniqueFloors;
   }, [facilities]);
 
   const departmentOptions = useMemo(() => {
-    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department).filter(Boolean)));
+    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department).filter((d): d is string => !!d)));
     return uniqueDepartments;
   }, [facilities]);
 
   const sectionOptions = useMemo(() => {
-    const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter(Boolean)));
+    const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter((s): s is string => !!s)));
     return uniqueSections;
   }, [facilities]);
 
