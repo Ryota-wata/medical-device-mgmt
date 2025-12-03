@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Asset } from '@/lib/types';
+import { AssetMaster } from '@/lib/types/master';
 import { useMasterStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -9,7 +9,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 export default function AssetMasterPage() {
   const { assets: assetMasters, facilities } = useMasterStore();
   const { isMobile } = useResponsive();
-  const [selectedAssets, setSelectedAssets] = useState<Set<number>>(new Set());
+  const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -90,16 +90,24 @@ export default function AssetMasterPage() {
 
   // チェックボックスの全選択/全解除
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('=== Select All onChange ===');
+    console.log('e.target.checked:', e.target.checked);
+    console.log('filteredAssets count:', filteredAssets.length);
+
     if (e.target.checked) {
-      setSelectedAssets(new Set(filteredAssets.map(asset => asset.no)));
+      const allAssetIds = filteredAssets.map(asset => asset.id);
+      console.log('Selecting all assets:', allAssetIds);
+      setSelectedAssets(new Set(allAssetIds));
     } else {
+      console.log('Deselecting all assets');
       setSelectedAssets(new Set());
     }
+    console.log('======================');
   };
 
   // 選択した資産を親ウィンドウに渡す
   const handleConfirmSelection = () => {
-    const selected = assetMasters.filter(asset => selectedAssets.has(asset.no));
+    const selected = assetMasters.filter(asset => selectedAssets.has(asset.id));
 
     if (selected.length === 0) {
       alert('資産を選択してください');
@@ -421,14 +429,24 @@ export default function AssetMasterPage() {
                   >
                     <input
                       type="checkbox"
-                      checked={selectedAssets.has(asset.no)}
+                      checked={selectedAssets.has(asset.id)}
                       onChange={(e) => {
+                        console.log('=== Checkbox onChange ===');
+                        console.log('Asset ID:', asset.id);
+                        console.log('e.target.checked:', e.target.checked);
+                        console.log('Before selectedAssets:', Array.from(selectedAssets));
+
                         const newSelected = new Set(selectedAssets);
                         if (e.target.checked) {
-                          newSelected.add(asset.no);
+                          newSelected.add(asset.id);
+                          console.log('Adding asset:', asset.id);
                         } else {
-                          newSelected.delete(asset.no);
+                          newSelected.delete(asset.id);
+                          console.log('Removing asset:', asset.id);
                         }
+
+                        console.log('After selectedAssets:', Array.from(newSelected));
+                        console.log('======================');
                         setSelectedAssets(newSelected);
                       }}
                       onClick={(e) => e.stopPropagation()}
