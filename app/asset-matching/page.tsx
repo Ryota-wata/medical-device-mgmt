@@ -202,11 +202,11 @@ export default function AssetMatchingPage() {
     const pendingCount = data.filter(d => d.status === 'pending').length;
     if (pendingCount > 0) {
       if (confirm(`未処理の項目が${pendingCount}件あります。このまま完了しますか？`)) {
-        router.push('/menu');
+        router.push('/main');
       }
     } else {
       alert('突き合わせが完了しました');
-      router.push('/menu');
+      router.push('/main');
     }
   };
 
