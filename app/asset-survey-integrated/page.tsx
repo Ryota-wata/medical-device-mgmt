@@ -407,9 +407,6 @@ export default function AssetSurveyIntegratedPage() {
                 <option value="医療機器">医療機器</option>
                 <option value="什器備品">什器備品</option>
               </select>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                フリー入力・一覧選択・あいまい検索可
-              </div>
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
@@ -427,9 +424,6 @@ export default function AssetSurveyIntegratedPage() {
                 <option value="検査機器">検査機器</option>
                 <option value="治療機器">治療機器</option>
               </select>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                フリー入力・一覧選択・あいまい検索可
-              </div>
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
@@ -447,9 +441,6 @@ export default function AssetSurveyIntegratedPage() {
                 <option value="超音波診断装置">超音波診断装置</option>
                 <option value="人工呼吸器">人工呼吸器</option>
               </select>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                フリー入力・一覧選択・あいまい検索可
-              </div>
             </div>
           </div>
 
@@ -474,9 +465,6 @@ export default function AssetSurveyIntegratedPage() {
                 <option value="ABC社">ABC社</option>
                 <option value="XYZ社">XYZ社</option>
               </select>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                フリー入力・一覧選択・あいまい検索可
-              </div>
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
@@ -494,9 +482,6 @@ export default function AssetSurveyIntegratedPage() {
                 <option value="US-1000">US-1000</option>
                 <option value="RES-500">RES-500</option>
               </select>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                フリー入力・一覧選択・あいまい検索可
-              </div>
             </div>
           </div>
         </div>
