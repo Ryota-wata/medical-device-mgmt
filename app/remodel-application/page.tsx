@@ -9,7 +9,7 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 
 export default function RemodelApplicationPage() {
   const router = useRouter();
-  const { assets: assetMasters } = useMasterStore();
+  const { assets: assetMasters, facilities } = useMasterStore();
   const { isMobile } = useResponsive();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
@@ -46,6 +46,27 @@ export default function RemodelApplicationPage() {
     const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
     return uniqueMediumClasses.filter(Boolean);
   }, [assetMasters]);
+
+  // 施設マスタからフィルターoptionsを生成
+  const buildingOptions = useMemo(() => {
+    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building).filter(Boolean)));
+    return uniqueBuildings;
+  }, [facilities]);
+
+  const floorOptions = useMemo(() => {
+    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor).filter(Boolean)));
+    return uniqueFloors;
+  }, [facilities]);
+
+  const departmentOptions = useMemo(() => {
+    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department).filter(Boolean)));
+    return uniqueDepartments;
+  }, [facilities]);
+
+  const sectionOptions = useMemo(() => {
+    const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter(Boolean)));
+    return uniqueSections;
+  }, [facilities]);
 
   // モックデータ
   useEffect(() => {
@@ -372,44 +393,36 @@ export default function RemodelApplicationPage() {
       <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
           <div style={{ flex: '1', minWidth: '120px' }}>
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: '#555' }}>棟</label>
-            <select
+            <SearchableSelect
+              label="棟"
               value={filters.building}
-              onChange={(e) => setFilters({ ...filters, building: e.target.value })}
-              style={{ width: '100%', padding: '6px 10px', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="">すべて</option>
-              <option value="本館">本館</option>
-              <option value="別館">別館</option>
-              <option value="新館">新館</option>
-            </select>
+              onChange={(value) => setFilters({ ...filters, building: value })}
+              options={['', ...buildingOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
           </div>
 
           <div style={{ flex: '1', minWidth: '120px' }}>
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: '#555' }}>階</label>
-            <select
+            <SearchableSelect
+              label="階"
               value={filters.floor}
-              onChange={(e) => setFilters({ ...filters, floor: e.target.value })}
-              style={{ width: '100%', padding: '6px 10px', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="">すべて</option>
-              <option value="B1F">B1F</option>
-              <option value="1F">1F</option>
-              <option value="2F">2F</option>
-              <option value="3F">3F</option>
-            </select>
+              onChange={(value) => setFilters({ ...filters, floor: value })}
+              options={['', ...floorOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
           </div>
 
           <div style={{ flex: '1', minWidth: '120px' }}>
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: '#555' }}>部門</label>
-            <select
+            <SearchableSelect
+              label="部門"
               value={filters.department}
-              onChange={(e) => setFilters({ ...filters, department: e.target.value })}
-              style={{ width: '100%', padding: '6px 10px', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="">すべて</option>
-              <option value="手術部門">手術部門</option>
-            </select>
+              onChange={(value) => setFilters({ ...filters, department: value })}
+              options={['', ...departmentOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
           </div>
 
           <div style={{ flex: '1', minWidth: '120px' }}>
