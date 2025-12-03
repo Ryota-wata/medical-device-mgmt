@@ -954,10 +954,42 @@ export default function MainPage() {
                   <span>🏥 SHIP資産マスタ</span>
                   <span style={{ fontSize: '20px' }}>→</span>
                 </button>
+
+                <button
+                  onClick={() => {
+                    closeMasterModal();
+                    showListModal();
+                  }}
+                  style={{
+                    padding: '16px 24px',
+                    background: 'white',
+                    border: '2px solid #e74c3c',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#e74c3c';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.color = '#2c3e50';
+                  }}
+                >
+                  <span>📋 個体管理リスト作成</span>
+                  <span style={{ fontSize: '20px' }}>→</span>
+                </button>
               </div>
 
               <p style={{ marginTop: '20px', fontSize: '13px', color: '#7f8c8d', textAlign: 'center' }}>
-                施設マスタと資産マスタの管理を行えます
+                マスタ管理と個体管理リスト作成を行えます
               </p>
             </div>
           </div>
