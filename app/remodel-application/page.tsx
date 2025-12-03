@@ -451,15 +451,37 @@ export default function RemodelApplicationPage() {
       if (event.origin !== window.location.origin) return;
 
       if (event.data.type === 'ASSET_SELECTED') {
-        const assets = event.data.assets as Asset[];
+        const assetMasters = event.data.assets as any[];
+        console.log('Received assets from asset-master:', assetMasters);
 
-        // 選択された資産を selectedAssets に追加（デフォルト数量1、単位「台」）
-        const newSelectedAssets = assets.map(asset => ({
-          asset,
+        // AssetMaster型をAsset型に変換して selectedAssets に追加
+        const newSelectedAssets = assetMasters.map(assetMaster => ({
+          asset: {
+            ...assetMaster,
+            name: assetMaster.item, // AssetMasterの item を Asset の name にマッピング
+            no: 0, // ダミー値
+            qrCode: '',
+            facility: '',
+            building: '',
+            floor: '',
+            department: '',
+            section: '',
+            category: assetMaster.category || '',
+            largeClass: assetMaster.largeClass || '',
+            mediumClass: assetMaster.mediumClass || '',
+            item: assetMaster.item || '',
+            maker: assetMaster.maker || '',
+            model: assetMaster.model || '',
+            quantity: 1,
+            width: 0,
+            depth: 0,
+            height: 0
+          } as Asset,
           quantity: 1,
           unit: '台'
         }));
 
+        console.log('Converted to SelectedAssets:', newSelectedAssets);
         setSelectedAssets(prev => [...prev, ...newSelectedAssets]);
       }
     };
