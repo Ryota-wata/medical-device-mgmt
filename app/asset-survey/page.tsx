@@ -1,13 +1,16 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useMasterStore } from '@/lib/stores';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 function AssetSurveyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
+  const { assets: assetMasters } = useMasterStore();
 
   // Get location data from URL params
   const category = searchParams.get('category') || '';
@@ -15,6 +18,32 @@ function AssetSurveyContent() {
   const floor = searchParams.get('floor') || '';
   const department = searchParams.get('department') || '';
   const section = searchParams.get('section') || '';
+
+  // マスタデータからフィルターoptionsを生成
+  const largeClassOptions = useMemo(() => {
+    const uniqueLargeClasses = Array.from(new Set(assetMasters.map(a => a.largeClass)));
+    return uniqueLargeClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  const mediumClassOptions = useMemo(() => {
+    const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
+    return uniqueMediumClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  const itemOptions = useMemo(() => {
+    const uniqueItems = Array.from(new Set(assetMasters.map(a => a.item)));
+    return uniqueItems.filter(Boolean);
+  }, [assetMasters]);
+
+  const makerOptions = useMemo(() => {
+    const uniqueMakers = Array.from(new Set(assetMasters.map(a => a.maker)));
+    return uniqueMakers.filter(Boolean);
+  }, [assetMasters]);
+
+  const modelOptions = useMemo(() => {
+    const uniqueModels = Array.from(new Set(assetMasters.map(a => a.model)));
+    return uniqueModels.filter(Boolean);
+  }, [assetMasters]);
 
   // Sticky header fields
   const [sealNo, setSealNo] = useState('');
@@ -455,90 +484,36 @@ function AssetSurveyContent() {
                 marginBottom: isMobile ? '12px' : '15px'
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    marginBottom: isMobile ? '6px' : '8px'
-                  }}>
-                    大分類
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="大分類"
                     value={largeClass}
-                    onChange={(e) => setLargeClass(e.target.value)}
-                    style={{
-                      padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '14px' : '14px',
-                      background: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">選択してください</option>
-                    <option value="医療機器">医療機器</option>
-                    <option value="事務機器">事務機器</option>
-                    <option value="什器・備品">什器・備品</option>
-                  </select>
-                  <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    フリー入力・一覧選択・あいまい検索可
-                  </span>
+                    onChange={setLargeClass}
+                    options={largeClassOptions}
+                    placeholder="選択してください"
+                    isMobile={isMobile}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    marginBottom: isMobile ? '6px' : '8px'
-                  }}>
-                    中分類
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="中分類"
                     value={mediumClass}
-                    onChange={(e) => setMediumClass(e.target.value)}
-                    style={{
-                      padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '14px' : '14px',
-                      background: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">選択してください</option>
-                  </select>
-                  <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    フリー入力・一覧選択・あいまい検索可
-                  </span>
+                    onChange={setMediumClass}
+                    options={mediumClassOptions}
+                    placeholder="選択してください"
+                    isMobile={isMobile}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    marginBottom: isMobile ? '6px' : '8px'
-                  }}>
-                    品目
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="品目"
                     value={item}
-                    onChange={(e) => setItem(e.target.value)}
-                    style={{
-                      padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '14px' : '14px',
-                      background: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">選択してください</option>
-                  </select>
-                  <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    フリー入力・一覧選択・あいまい検索可
-                  </span>
+                    onChange={setItem}
+                    options={itemOptions}
+                    placeholder="選択してください"
+                    isMobile={isMobile}
+                  />
                 </div>
               </div>
 
@@ -549,59 +524,25 @@ function AssetSurveyContent() {
                 marginBottom: isMobile ? '12px' : '15px'
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    marginBottom: isMobile ? '6px' : '8px'
-                  }}>
-                    メーカー
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="メーカー"
                     value={maker}
-                    onChange={(e) => setMaker(e.target.value)}
-                    style={{
-                      padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '14px' : '14px',
-                      background: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">選択してください</option>
-                  </select>
-                  <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    フリー入力・一覧選択・あいまい検索可
-                  </span>
+                    onChange={setMaker}
+                    options={makerOptions}
+                    placeholder="選択してください"
+                    isMobile={isMobile}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label style={{
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    marginBottom: isMobile ? '6px' : '8px'
-                  }}>
-                    型式
-                  </label>
-                  <select
+                  <SearchableSelect
+                    label="型式"
                     value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    style={{
-                      padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
-                      borderRadius: '6px',
-                      fontSize: isMobile ? '14px' : '14px',
-                      background: 'white',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="">選択してください</option>
-                  </select>
-                  <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
-                    フリー入力・一覧選択・あいまい検索可
-                  </span>
+                    onChange={setModel}
+                    options={modelOptions}
+                    placeholder="選択してください"
+                    isMobile={isMobile}
+                  />
                 </div>
               </div>
             </div>

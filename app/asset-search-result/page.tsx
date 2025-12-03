@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts';
-import { useAssetStore } from '@/lib/stores';
+import { useAssetStore, useMasterStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { useResponsive } from '@/lib/hooks/useResponsive';
 
 export default function AssetSearchResultPage() {
   const router = useRouter();
   const { assets } = useAssetStore();
+  const { assets: assetMasters } = useMasterStore();
+  const { isMobile } = useResponsive();
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
@@ -23,6 +27,22 @@ export default function AssetSearchResultPage() {
     largeClass: '',
     mediumClass: ''
   });
+
+  // マスタデータからフィルターoptionsを生成
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const largeClassOptions = useMemo(() => {
+    const uniqueLargeClasses = Array.from(new Set(assetMasters.map(a => a.largeClass)));
+    return uniqueLargeClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  const mediumClassOptions = useMemo(() => {
+    const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
+    return uniqueMediumClasses.filter(Boolean);
+  }, [assetMasters]);
 
   // モックデータ（実際のデータは useAssetStore から取得）
   const [mockAssets] = useState<Asset[]>([
@@ -175,16 +195,48 @@ export default function AssetSearchResultPage() {
           </div>
 
           <div style={{ flex: '1', minWidth: '120px' }}>
-            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: '#555' }}>Category</label>
+            <label style={{ display: 'block', fontSize: '12px', marginBottom: '5px', color: '#555' }}>部署</label>
             <select
-              value={filters.category}
-              onChange={(e) => setFilters({...filters, category: e.target.value})}
+              value={filters.section}
+              onChange={(e) => setFilters({...filters, section: e.target.value})}
               style={{ width: '100%', padding: '6px 10px', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '14px' }}
             >
               <option value="">すべて</option>
-              <option value="医療機器">医療機器</option>
-              <option value="什器備品">什器備品</option>
+              <option value="手術">手術</option>
             </select>
+          </div>
+
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="Category"
+              value={filters.category}
+              onChange={(value) => setFilters({...filters, category: value})}
+              options={['', ...categoryOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
+          </div>
+
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="大分類"
+              value={filters.largeClass}
+              onChange={(value) => setFilters({...filters, largeClass: value})}
+              options={['', ...largeClassOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
+          </div>
+
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="中分類"
+              value={filters.mediumClass}
+              onChange={(value) => setFilters({...filters, mediumClass: value})}
+              options={['', ...mediumClassOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
           </div>
         </div>
       </div>
