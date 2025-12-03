@@ -18,23 +18,47 @@ interface ColumnDef {
 
 const ALL_COLUMNS: ColumnDef[] = [
   { key: 'no', label: 'No.', width: '80px', defaultVisible: true },
-  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: false },
   { key: 'facility', label: '施設名', width: '200px', defaultVisible: true },
+  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true },
+  { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false },
+  { key: 'managementNo', label: '管理機器番号', width: '150px', defaultVisible: false },
   { key: 'building', label: '棟', width: '100px', defaultVisible: true },
   { key: 'floor', label: '階', width: '80px', defaultVisible: true },
-  { key: 'department', label: '部門', width: '120px', defaultVisible: true },
-  { key: 'section', label: '部署', width: '120px', defaultVisible: false },
+  { key: 'department', label: '部門名', width: '120px', defaultVisible: true },
+  { key: 'section', label: '部署名', width: '120px', defaultVisible: false },
+  { key: 'roomClass1', label: '諸室区分①', width: '120px', defaultVisible: false },
+  { key: 'roomClass2', label: '諸室区分②', width: '120px', defaultVisible: false },
+  { key: 'roomName', label: '諸室名称', width: '150px', defaultVisible: false },
   { key: 'category', label: 'Category', width: '120px', defaultVisible: false },
   { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: false },
   { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: false },
   { key: 'item', label: '品目', width: '150px', defaultVisible: false },
-  { key: 'name', label: '品名', width: '200px', defaultVisible: true },
-  { key: 'maker', label: 'メーカー', width: '150px', defaultVisible: true },
+  { key: 'name', label: '個体管理名称', width: '200px', defaultVisible: true },
+  { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: true },
   { key: 'model', label: '型式', width: '150px', defaultVisible: true },
+  { key: 'quantityUnit', label: '数量／単位', width: '120px', defaultVisible: false },
   { key: 'quantity', label: '数量', width: '80px', defaultVisible: false },
+  { key: 'serialNumber', label: 'シリアル番号', width: '150px', defaultVisible: false },
   { key: 'width', label: 'W', width: '80px', defaultVisible: false },
   { key: 'depth', label: 'D', width: '80px', defaultVisible: false },
   { key: 'height', label: 'H', width: '80px', defaultVisible: false },
+  { key: 'installationLocation', label: '設置場所', width: '150px', defaultVisible: false },
+  { key: 'assetInfo', label: '資産情報', width: '200px', defaultVisible: false },
+  { key: 'contractName', label: '契約･見積名称', width: '180px', defaultVisible: false },
+  { key: 'contractNo', label: '契約番号（契約単位）', width: '180px', defaultVisible: false },
+  { key: 'quotationNo', label: '見積番号', width: '120px', defaultVisible: false },
+  { key: 'contractDate', label: '契約･発注日', width: '120px', defaultVisible: false },
+  { key: 'deliveryDate', label: '納品日', width: '120px', defaultVisible: false },
+  { key: 'inspectionDate', label: '検収日', width: '120px', defaultVisible: false },
+  { key: 'lease', label: 'リース', width: '80px', defaultVisible: false },
+  { key: 'rental', label: '借用', width: '80px', defaultVisible: false },
+  { key: 'leaseStartDate', label: 'リース開始日', width: '120px', defaultVisible: false },
+  { key: 'leaseEndDate', label: 'リース終了日', width: '120px', defaultVisible: false },
+  { key: 'acquisitionCost', label: '取得価格', width: '120px', defaultVisible: false },
+  { key: 'legalServiceLife', label: '耐用年数（法定）', width: '140px', defaultVisible: false },
+  { key: 'recommendedServiceLife', label: '使用年数（メーカー推奨）', width: '180px', defaultVisible: false },
+  { key: 'endOfService', label: 'End of service：販売終了', width: '180px', defaultVisible: false },
+  { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false },
 ];
 
 export default function AssetSearchResultPage() {
@@ -123,6 +147,30 @@ export default function AssetSearchResultPage() {
       width: 520,
       depth: 480,
       height: 1400,
+      assetNo: '10605379-000',
+      managementNo: '1338',
+      roomClass1: '手術室',
+      roomClass2: 'OP室',
+      roomName: '手術室A',
+      installationLocation: '手術室A-中央',
+      assetInfo: '資産台帳登録済',
+      quantityUnit: '1台',
+      serialNumber: 'SN-2024-001',
+      contractName: '医療機器購入契約2024-01',
+      contractNo: 'C-2024-0001',
+      quotationNo: 'Q-2024-0001',
+      contractDate: '2024-01-10',
+      deliveryDate: '2024-01-20',
+      inspectionDate: '2024-01-25',
+      lease: 'なし',
+      rental: 'なし',
+      leaseStartDate: '',
+      leaseEndDate: '',
+      acquisitionCost: 15000000,
+      legalServiceLife: '6年',
+      recommendedServiceLife: '8年',
+      endOfService: '2032-12-31',
+      endOfSupport: '2035-12-31',
     },
     ...Array.from({length: 19}, (_, i) => ({
       qrCode: `QR-2025-${String(i + 2).padStart(4, '0')}`,
@@ -142,7 +190,31 @@ export default function AssetSearchResultPage() {
       quantity: 1,
       width: 500 + i * 10,
       depth: 600 + i * 10,
-      height: 700 + i * 10
+      height: 700 + i * 10,
+      assetNo: `10605379-${String(i + 1).padStart(3, '0')}`,
+      managementNo: `${1338 + i + 1}`,
+      roomClass1: '手術室',
+      roomClass2: 'OP室',
+      roomName: `手術室${String.fromCharCode(66 + i)}`,
+      installationLocation: `手術室${String.fromCharCode(66 + i)}-中央`,
+      assetInfo: '資産台帳登録済',
+      quantityUnit: '1台',
+      serialNumber: `SN-2024-${String(i + 2).padStart(3, '0')}`,
+      contractName: `医療機器購入契約2024-${String(i + 2).padStart(2, '0')}`,
+      contractNo: `C-2024-${String(i + 2).padStart(4, '0')}`,
+      quotationNo: `Q-2024-${String(i + 2).padStart(4, '0')}`,
+      contractDate: '2024-01-10',
+      deliveryDate: '2024-01-20',
+      inspectionDate: '2024-01-25',
+      lease: i % 3 === 0 ? 'あり' : 'なし',
+      rental: i % 5 === 0 ? 'あり' : 'なし',
+      leaseStartDate: i % 3 === 0 ? '2024-01-01' : '',
+      leaseEndDate: i % 3 === 0 ? '2029-12-31' : '',
+      acquisitionCost: 1000000 * (i + 2),
+      legalServiceLife: '6年',
+      recommendedServiceLife: '8年',
+      endOfService: '2032-12-31',
+      endOfSupport: '2035-12-31',
     }))
   ]);
 
@@ -224,6 +296,9 @@ export default function AssetSearchResultPage() {
 
   // セルの値を取得
   const getCellValue = (asset: Asset, key: string): any => {
+    if (key === 'acquisitionCost' && asset.acquisitionCost) {
+      return `¥${asset.acquisitionCost.toLocaleString()}`;
+    }
     return (asset as any)[key] ?? '-';
   };
 
@@ -235,6 +310,7 @@ export default function AssetSearchResultPage() {
         onViewToggle={() => setCurrentView(currentView === 'list' ? 'card' : 'list')}
         onExport={() => alert('Excel/PDF出力')}
         onPrint={() => window.print()}
+        onColumnSettings={() => setIsColumnSettingsOpen(true)}
         showBackButton={true}
       />
 
@@ -325,24 +401,6 @@ export default function AssetSearchResultPage() {
         <span style={{ fontSize: '14px', color: '#555', marginRight: '15px' }}>
           {selectedItems.size}件選択中
         </span>
-        <button
-          onClick={() => setIsColumnSettingsOpen(true)}
-          style={{
-            padding: '8px 16px',
-            background: '#9b59b6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          <span>⚙️</span>
-          <span>表示カラム設定</span>
-        </button>
         <button
           style={{
             padding: '8px 16px',
@@ -510,7 +568,7 @@ export default function AssetSearchResultPage() {
               background: 'white',
               borderRadius: '8px',
               width: '90%',
-              maxWidth: '600px',
+              maxWidth: '700px',
               maxHeight: '80vh',
               overflow: 'hidden',
               display: 'flex',
@@ -530,7 +588,7 @@ export default function AssetSearchResultPage() {
                 alignItems: 'center',
               }}
             >
-              <span>表示カラム設定</span>
+              <span>表示カラム設定（42カラム）</span>
               <button
                 onClick={() => setIsColumnSettingsOpen(false)}
                 style={{
@@ -581,7 +639,7 @@ export default function AssetSearchResultPage() {
                 </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                 {ALL_COLUMNS.map((col) => (
                   <label
                     key={col.key}
@@ -602,7 +660,7 @@ export default function AssetSearchResultPage() {
                       onChange={() => toggleColumnVisibility(col.key)}
                       style={{ cursor: 'pointer' }}
                     />
-                    <span style={{ fontSize: '14px', color: '#2c3e50' }}>{col.label}</span>
+                    <span style={{ fontSize: '13px', color: '#2c3e50' }}>{col.label}</span>
                   </label>
                 ))}
               </div>

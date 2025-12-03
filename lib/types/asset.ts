@@ -25,6 +25,32 @@ export interface Asset {
   depth: number | string;
   height: number | string;
   photos?: string[];
+
+  // 追加フィールド（個体管理対応）
+  assetNo?: string; // 固定資産番号
+  managementNo?: string; // 管理機器番号
+  roomClass1?: string; // 諸室区分①
+  roomClass2?: string; // 諸室区分②
+  roomName?: string; // 諸室名称
+  installationLocation?: string; // 設置場所
+  assetInfo?: string; // 資産情報
+  quantityUnit?: string; // 数量／単位
+  serialNumber?: string; // シリアル番号
+  contractName?: string; // 契約･見積名称
+  contractNo?: string; // 契約番号（契約単位）
+  quotationNo?: string; // 見積番号
+  contractDate?: string; // 契約･発注日
+  deliveryDate?: string; // 納品日
+  inspectionDate?: string; // 検収日
+  lease?: string; // リース
+  rental?: string; // 借用
+  leaseStartDate?: string; // リース開始日
+  leaseEndDate?: string; // リース終了日
+  acquisitionCost?: number; // 取得価格
+  legalServiceLife?: string; // 耐用年数（法定）
+  recommendedServiceLife?: string; // 使用年数（メーカー推奨）
+  endOfService?: string; // End of service：販売終了
+  endOfSupport?: string; // End of support：メンテ終了
 }
 
 /**

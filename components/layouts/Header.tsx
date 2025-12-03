@@ -12,6 +12,7 @@ interface HeaderProps {
   onExport?: () => void;
   onPrint?: () => void;
   onViewToggle?: () => void;
+  onColumnSettings?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,7 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   resultCount,
   onExport,
   onPrint,
-  onViewToggle
+  onViewToggle,
+  onColumnSettings
 }) => {
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -157,6 +159,27 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* アイコンボタン群 */}
+        {onColumnSettings && (
+          <button
+            onClick={onColumnSettings}
+            className="flex items-center justify-center text-white border-0 rounded cursor-pointer transition-all"
+            style={{
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
+              background: '#9b59b6',
+              fontSize: isMobile ? '16px' : '20px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#8e44ad';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#9b59b6';
+            }}
+            title="表示カラム設定"
+          >
+            ⚙️
+          </button>
+        )}
         {onViewToggle && (
           <button
             onClick={onViewToggle}
