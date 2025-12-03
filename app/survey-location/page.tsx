@@ -1,12 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useMasterStore } from '@/lib/stores';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function SurveyLocationPage() {
   const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
+  const { assets: assetMasters, facilities } = useMasterStore();
 
   const [surveyDate, setSurveyDate] = useState('');
   const [category, setCategory] = useState('');
@@ -15,12 +18,32 @@ export default function SurveyLocationPage() {
   const [department, setDepartment] = useState('');
   const [section, setSection] = useState('');
 
-  // Sample data - in a real app, this would come from the API
-  const categories = ['医療機器', '事務機器', '什器・備品', 'その他'];
-  const buildings = ['本館', '東館', '西館', '南館', '北館'];
-  const floors = ['B1F', '1F', '2F', '3F', '4F', '5F', '6F', '7F', '8F'];
-  const departments = ['内科', '外科', '小児科', '産婦人科', '整形外科', '眼科', '耳鼻咽喉科', '皮膚科', '泌尿器科', '精神科'];
-  const sections = ['外来', '病棟', '手術室', '検査室', '放射線科', '薬剤部', '事務部', '管理部'];
+  // 資産マスタからカテゴリーオプションを生成
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  // 施設マスタからフィルターoptionsを生成
+  const buildingOptions = useMemo(() => {
+    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building).filter((b): b is string => !!b)));
+    return uniqueBuildings;
+  }, [facilities]);
+
+  const floorOptions = useMemo(() => {
+    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor).filter((f): f is string => !!f)));
+    return uniqueFloors;
+  }, [facilities]);
+
+  const departmentOptions = useMemo(() => {
+    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department).filter((d): d is string => !!d)));
+    return uniqueDepartments;
+  }, [facilities]);
+
+  const sectionOptions = useMemo(() => {
+    const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter((s): s is string => !!s)));
+    return uniqueSections;
+  }, [facilities]);
 
   useEffect(() => {
     // Set current date in Japanese format
@@ -135,187 +158,62 @@ export default function SurveyLocationPage() {
 
           {/* Category */}
           <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              Category
-            </label>
-            <select
+            <SearchableSelect
+              label="Category"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{
-                width: '100%',
-                padding: isMobile ? '12px 14px' : '14px 18px',
-                fontSize: isMobile ? '15px' : '16px',
-                color: '#333333',
-                backgroundColor: '#ffffff',
-                border: '2px solid #d0d0d0',
-                borderRadius: '8px',
-                appearance: 'none',
-                cursor: 'pointer',
-                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23666\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: isMobile ? 'right 14px center' : 'right 18px center',
-                backgroundSize: '16px'
-              }}
-            >
-              <option value="">選択してください</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              onChange={setCategory}
+              options={['', ...categoryOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
 
           {/* Building (棟) */}
           <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              棟
-            </label>
-            <select
+            <SearchableSelect
+              label="棟"
               value={building}
-              onChange={(e) => setBuilding(e.target.value)}
-              style={{
-                width: '100%',
-                padding: isMobile ? '12px 14px' : '14px 18px',
-                fontSize: isMobile ? '15px' : '16px',
-                color: '#333333',
-                backgroundColor: '#ffffff',
-                border: '2px solid #d0d0d0',
-                borderRadius: '8px',
-                appearance: 'none',
-                cursor: 'pointer',
-                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23666\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: isMobile ? 'right 14px center' : 'right 18px center',
-                backgroundSize: '16px'
-              }}
-            >
-              <option value="">選択してください</option>
-              {buildings.map((bldg) => (
-                <option key={bldg} value={bldg}>{bldg}</option>
-              ))}
-            </select>
+              onChange={setBuilding}
+              options={['', ...buildingOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
 
           {/* Floor (階) */}
           <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              階
-            </label>
-            <select
+            <SearchableSelect
+              label="階"
               value={floor}
-              onChange={(e) => setFloor(e.target.value)}
-              style={{
-                width: '100%',
-                padding: isMobile ? '12px 14px' : '14px 18px',
-                fontSize: isMobile ? '15px' : '16px',
-                color: '#333333',
-                backgroundColor: '#ffffff',
-                border: '2px solid #d0d0d0',
-                borderRadius: '8px',
-                appearance: 'none',
-                cursor: 'pointer',
-                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23666\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: isMobile ? 'right 14px center' : 'right 18px center',
-                backgroundSize: '16px'
-              }}
-            >
-              <option value="">選択してください</option>
-              {floors.map((fl) => (
-                <option key={fl} value={fl}>{fl}</option>
-              ))}
-            </select>
+              onChange={setFloor}
+              options={['', ...floorOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
 
           {/* Department (部門) */}
           <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              部門
-            </label>
-            <select
+            <SearchableSelect
+              label="部門"
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              style={{
-                width: '100%',
-                padding: isMobile ? '12px 14px' : '14px 18px',
-                fontSize: isMobile ? '15px' : '16px',
-                color: '#333333',
-                backgroundColor: '#ffffff',
-                border: '2px solid #d0d0d0',
-                borderRadius: '8px',
-                appearance: 'none',
-                cursor: 'pointer',
-                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23666\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: isMobile ? 'right 14px center' : 'right 18px center',
-                backgroundSize: '16px'
-              }}
-            >
-              <option value="">選択してください</option>
-              {departments.map((dept) => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-            </select>
+              onChange={setDepartment}
+              options={['', ...departmentOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
 
           {/* Section (部署) */}
           <div style={{ marginBottom: 0 }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              部署
-            </label>
-            <select
+            <SearchableSelect
+              label="部署"
               value={section}
-              onChange={(e) => setSection(e.target.value)}
-              style={{
-                width: '100%',
-                padding: isMobile ? '12px 14px' : '14px 18px',
-                fontSize: isMobile ? '15px' : '16px',
-                color: '#333333',
-                backgroundColor: '#ffffff',
-                border: '2px solid #d0d0d0',
-                borderRadius: '8px',
-                appearance: 'none',
-                cursor: 'pointer',
-                backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23666\' stroke-width=\'2\'><polyline points=\'6 9 12 15 18 9\'/></svg>")',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: isMobile ? 'right 14px center' : 'right 18px center',
-                backgroundSize: '16px'
-              }}
-            >
-              <option value="">選択してください</option>
-              {sections.map((sect) => (
-                <option key={sect} value={sect}>{sect}</option>
-              ))}
-            </select>
+              onChange={setSection}
+              options={['', ...sectionOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
           </div>
         </div>
       </main>
