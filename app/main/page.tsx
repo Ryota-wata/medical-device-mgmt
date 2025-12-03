@@ -255,27 +255,6 @@ export default function MainPage() {
                 >
                   マスタ管理
                 </button>
-                <button
-                  onClick={showListModal}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#229954';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                  }}
-                >
-                  個体管理リスト作成
-                </button>
               </>
             )}
 
