@@ -91,6 +91,32 @@ export default function RemodelApplicationPage() {
   const [applicationSection, setApplicationSection] = useState('');
   const [applicationRoomName, setApplicationRoomName] = useState('');
 
+  // 新規申請モーダル関連の状態
+  const [isNewApplicationModalOpen, setIsNewApplicationModalOpen] = useState(false);
+  const [newAppBuilding, setNewAppBuilding] = useState('');
+  const [newAppFloor, setNewAppFloor] = useState('');
+  const [newAppDepartment, setNewAppDepartment] = useState('');
+  const [newAppSection, setNewAppSection] = useState('');
+  const [newAppRoomName, setNewAppRoomName] = useState('');
+
+  // 選択された資産リスト（新規申請用）
+  interface SelectedAsset {
+    asset: Asset;
+    quantity: number;
+    unit: string;
+  }
+  const [selectedAssets, setSelectedAssets] = useState<SelectedAsset[]>([]);
+
+  // システム関連情報（任意）
+  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
+  const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
+  const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
+  const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
+
+  // その他情報（任意）
+  const [applicationReason, setApplicationReason] = useState('');
+  const [executionYear, setExecutionYear] = useState('');
+
   // カラム幅の状態管理
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = { checkbox: 50 };
@@ -332,7 +358,20 @@ export default function RemodelApplicationPage() {
     }
 
     if (actionType === '新規申請') {
-      alert('新規申請機能は開発中です');
+      // 新規申請モーダルを開く
+      setNewAppBuilding('');
+      setNewAppFloor('');
+      setNewAppDepartment('');
+      setNewAppSection('');
+      setNewAppRoomName('');
+      setSelectedAssets([]);
+      setCurrentConnectionStatus('disconnected');
+      setCurrentConnectionDestination('');
+      setRequestConnectionStatus('not-required');
+      setRequestConnectionDestination('');
+      setApplicationReason('');
+      setExecutionYear('');
+      setIsNewApplicationModalOpen(true);
       return;
     }
 
@@ -389,6 +428,111 @@ export default function RemodelApplicationPage() {
     // モーダルを閉じて選択をクリア
     setIsApplicationModalOpen(false);
     setSelectedItems(new Set());
+  };
+
+  // 資産マスタ別ウィンドウを開く
+  const handleOpenAssetMaster = () => {
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+      '/asset-master',
+      'AssetMasterWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+  };
+
+  // 資産マスタからのメッセージを受信
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // セキュリティチェック: 同じオリジンからのメッセージのみ受け入れる
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'ASSET_SELECTED') {
+        const assets = event.data.assets as Asset[];
+
+        // 選択された資産を selectedAssets に追加（デフォルト数量1、単位「台」）
+        const newSelectedAssets = assets.map(asset => ({
+          asset,
+          quantity: 1,
+          unit: '台'
+        }));
+
+        setSelectedAssets(prev => [...prev, ...newSelectedAssets]);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // 選択資産の削除
+  const handleRemoveSelectedAsset = (index: number) => {
+    setSelectedAssets(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 選択資産の数量変更
+  const handleQuantityChange = (index: number, quantity: number) => {
+    setSelectedAssets(prev =>
+      prev.map((item, i) => i === index ? { ...item, quantity } : item)
+    );
+  };
+
+  // 選択資産の単位変更
+  const handleUnitChange = (index: number, unit: string) => {
+    setSelectedAssets(prev =>
+      prev.map((item, i) => i === index ? { ...item, unit } : item)
+    );
+  };
+
+  // 新規申請の送信処理
+  const handleSubmitNewApplication = () => {
+    // バリデーション
+    if (!newAppBuilding || !newAppDepartment || !newAppSection || !newAppRoomName) {
+      alert('すべての設置情報を入力してください');
+      return;
+    }
+
+    if (selectedAssets.length === 0) {
+      alert('資産を選択してください');
+      return;
+    }
+
+    // 申請データを作成（各資産ごとに1レコード）
+    const applications = selectedAssets.map(({ asset, quantity, unit }) => ({
+      id: `APP-NEW-${Date.now()}-${asset.no}`,
+      applicationType: '新規申請',
+      assetQrCode: asset.qrCode,
+      assetName: asset.name,
+      assetMaker: asset.maker,
+      assetModel: asset.model,
+      quantity,
+      unit,
+      facility: facility,
+      newBuilding: newAppBuilding,
+      newFloor: newAppFloor,
+      newDepartment: newAppDepartment,
+      newSection: newAppSection,
+      newRoomName: newAppRoomName,
+      currentConnectionStatus,
+      currentConnectionDestination,
+      requestConnectionStatus,
+      requestConnectionDestination,
+      applicationReason,
+      executionYear,
+      applicationDate: new Date().toISOString(),
+      status: '申請中'
+    }));
+
+    // ここで実際にはAPIに送信するか、Zustandストアに保存する
+    console.log('新規申請データ:', applications);
+
+    alert(`新規申請を送信しました\n申請件数: ${applications.length}件`);
+
+    // モーダルを閉じる
+    setIsNewApplicationModalOpen(false);
   };
 
   return (
@@ -1109,6 +1253,520 @@ export default function RemodelApplicationPage() {
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: 'bold',
+                }}
+              >
+                申請する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 新規申請モーダル */}
+      {isNewApplicationModalOpen && (
+        <div
+          onClick={() => setIsNewApplicationModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '1000px',
+              maxHeight: '90vh',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: '#3498db',
+                color: 'white',
+                padding: '20px 24px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTopLeftRadius: '12px',
+                borderTopRightRadius: '12px',
+              }}
+            >
+              <span>新規申請</span>
+              <button
+                onClick={() => setIsNewApplicationModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '32px', flex: 1, overflowY: 'auto' }}>
+              {/* 設置情報 */}
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                  設置情報
+                </h3>
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <div style={{ position: 'relative', zIndex: 5 }}>
+                    <SearchableSelect
+                      label="棟"
+                      value={newAppBuilding}
+                      onChange={setNewAppBuilding}
+                      options={buildingOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+                  <div style={{ position: 'relative', zIndex: 4 }}>
+                    <SearchableSelect
+                      label="階"
+                      value={newAppFloor}
+                      onChange={setNewAppFloor}
+                      options={floorOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+                  <div style={{ position: 'relative', zIndex: 3 }}>
+                    <SearchableSelect
+                      label="部門"
+                      value={newAppDepartment}
+                      onChange={setNewAppDepartment}
+                      options={departmentOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+                  <div style={{ position: 'relative', zIndex: 2 }}>
+                    <SearchableSelect
+                      label="部署"
+                      value={newAppSection}
+                      onChange={setNewAppSection}
+                      options={sectionOptions}
+                      placeholder="選択してください"
+                      isMobile={isMobile}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      諸室名
+                    </label>
+                    <input
+                      type="text"
+                      value={newAppRoomName}
+                      onChange={(e) => setNewAppRoomName(e.target.value)}
+                      placeholder="諸室名を入力してください"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d0d0d0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 資産選択 */}
+              <div style={{ marginBottom: '32px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '8px', flex: 1 }}>
+                    資産選択
+                  </h3>
+                </div>
+                <button
+                  onClick={handleOpenAssetMaster}
+                  style={{
+                    padding: '12px 24px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    marginBottom: '16px',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#229954';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#27ae60';
+                  }}
+                >
+                  📋 資産マスタを別ウィンドウで開く
+                </button>
+
+                {/* 選択された資産リスト */}
+                {selectedAssets.length > 0 && (
+                  <div style={{ border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead style={{ background: '#f8f9fa' }}>
+                        <tr>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>個体管理名称</th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー名</th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>数量</th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>単位</th>
+                          <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '80px' }}>削除</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedAssets.map((item, index) => (
+                          <tr key={index} style={{ borderBottom: index < selectedAssets.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                            <td style={{ padding: '12px', color: '#2c3e50' }}>{item.asset.name}</td>
+                            <td style={{ padding: '12px', color: '#2c3e50' }}>{item.asset.maker}</td>
+                            <td style={{ padding: '12px', color: '#2c3e50' }}>{item.asset.model}</td>
+                            <td style={{ padding: '8px' }}>
+                              <input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => handleQuantityChange(index, Number(e.target.value))}
+                                min="1"
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  border: '1px solid #d0d0d0',
+                                  borderRadius: '4px',
+                                  fontSize: '13px',
+                                  boxSizing: 'border-box'
+                                }}
+                              />
+                            </td>
+                            <td style={{ padding: '8px' }}>
+                              <select
+                                value={item.unit}
+                                onChange={(e) => handleUnitChange(index, e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  border: '1px solid #d0d0d0',
+                                  borderRadius: '4px',
+                                  fontSize: '13px',
+                                  boxSizing: 'border-box',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <option value="台">台</option>
+                                <option value="個">個</option>
+                                <option value="式">式</option>
+                                <option value="セット">セット</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleRemoveSelectedAsset(index)}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#e74c3c',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold',
+                                  transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = '#c0392b';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = '#e74c3c';
+                                }}
+                              >
+                                削除
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {selectedAssets.length === 0 && (
+                  <div style={{
+                    padding: '24px',
+                    textAlign: 'center',
+                    color: '#7f8c8d',
+                    background: '#f8f9fa',
+                    borderRadius: '8px',
+                    border: '1px dashed #d0d0d0'
+                  }}>
+                    資産が選択されていません
+                  </div>
+                )}
+              </div>
+
+              {/* システム関連情報（任意） */}
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                  システム関連情報（任意）
+                </h3>
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      現在の接続状況
+                    </label>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          checked={currentConnectionStatus === 'connected'}
+                          onChange={() => setCurrentConnectionStatus('connected')}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続あり</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          checked={currentConnectionStatus === 'disconnected'}
+                          onChange={() => setCurrentConnectionStatus('disconnected')}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続なし</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      現在の接続先
+                    </label>
+                    <input
+                      type="text"
+                      value={currentConnectionDestination}
+                      onChange={(e) => setCurrentConnectionDestination(e.target.value)}
+                      placeholder="接続先を入力してください"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d0d0d0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      要望機器の接続要望
+                    </label>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          checked={requestConnectionStatus === 'required'}
+                          onChange={() => setRequestConnectionStatus('required')}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続要望</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          checked={requestConnectionStatus === 'not-required'}
+                          onChange={() => setRequestConnectionStatus('not-required')}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続不要</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      要望機器の接続先
+                    </label>
+                    <input
+                      type="text"
+                      value={requestConnectionDestination}
+                      onChange={(e) => setRequestConnectionDestination(e.target.value)}
+                      placeholder="接続先を入力してください"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d0d0d0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* その他情報（任意） */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                  その他情報（任意）
+                </h3>
+                <div style={{ display: 'grid', gap: '20px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      申請理由・コメント等
+                    </label>
+                    <textarea
+                      value={applicationReason}
+                      onChange={(e) => setApplicationReason(e.target.value)}
+                      placeholder="申請理由やコメントを入力してください"
+                      rows={4}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d0d0d0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#2c3e50',
+                      marginBottom: '8px'
+                    }}>
+                      執行年度
+                    </label>
+                    <input
+                      type="text"
+                      value={executionYear}
+                      onChange={(e) => setExecutionYear(e.target.value)}
+                      placeholder="例: 2024年度"
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: '1px solid #d0d0d0',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* モーダルフッター */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #dee2e6',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+                background: '#f8f9fa'
+              }}
+            >
+              <button
+                onClick={() => setIsNewApplicationModalOpen(false)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#7f8c8d';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#95a5a6';
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSubmitNewApplication}
+                style={{
+                  padding: '10px 24px',
+                  background: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#2980b9';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#3498db';
                 }}
               >
                 申請する
