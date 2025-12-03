@@ -349,14 +349,16 @@ export default function RemodelApplicationPage() {
 
   // 申請送信処理
   const handleSubmitApplication = () => {
-    // バリデーション
-    if (!applicationBuilding || !applicationDepartment || !applicationSection || !applicationRoomName) {
-      alert('すべての設置情報を入力してください');
-      return;
-    }
-
     // 選択された資産を取得
     const selectedAssets = filteredAssets.filter(asset => selectedItems.has(asset.no));
+
+    // 廃棄申請以外はバリデーション
+    if (currentApplicationType !== '廃棄申請') {
+      if (!applicationBuilding || !applicationDepartment || !applicationSection || !applicationRoomName) {
+        alert('すべての設置情報を入力してください');
+        return;
+      }
+    }
 
     // 申請データを作成（各資産ごとに1レコード）
     const applications = selectedAssets.map(asset => ({
@@ -371,11 +373,11 @@ export default function RemodelApplicationPage() {
       currentFloor: asset.floor,
       currentDepartment: asset.department,
       currentSection: asset.section,
-      newBuilding: applicationBuilding,
-      newFloor: applicationFloor,
-      newDepartment: applicationDepartment,
-      newSection: applicationSection,
-      newRoomName: applicationRoomName,
+      newBuilding: currentApplicationType !== '廃棄申請' ? applicationBuilding : '',
+      newFloor: currentApplicationType !== '廃棄申請' ? applicationFloor : '',
+      newDepartment: currentApplicationType !== '廃棄申請' ? applicationDepartment : '',
+      newSection: currentApplicationType !== '廃棄申請' ? applicationSection : '',
+      newRoomName: currentApplicationType !== '廃棄申請' ? applicationRoomName : '',
       applicationDate: new Date().toISOString(),
       status: '申請中'
     }));
@@ -958,93 +960,120 @@ export default function RemodelApplicationPage() {
 
             {/* モーダルボディ */}
             <div style={{ padding: '32px', flex: 1 }}>
+              {/* 選択された資産リスト */}
               <div style={{ marginBottom: '24px' }}>
-                <p style={{ fontSize: '14px', color: '#555', marginBottom: '12px' }}>
-                  選択された資産: <strong>{selectedItems.size}件</strong>
-                </p>
-                <p style={{ fontSize: '13px', color: '#777' }}>
-                  ※ 以下の設置情報を入力してください。一括申請の場合、すべての資産に同じ設置情報が適用されます。
-                </p>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                  選択された資産 ({selectedItems.size}件)
+                </h3>
+                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '4px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead style={{ background: '#f8f9fa', position: 'sticky', top: 0 }}>
+                      <tr>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>No.</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>QRコード</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>機器名称</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAssets.filter(asset => selectedItems.has(asset.no)).map((asset) => (
+                        <tr key={asset.no} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.no}</td>
+                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.qrCode}</td>
+                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.name}</td>
+                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.maker}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {currentApplicationType !== '廃棄申請' && (
+                  <p style={{ fontSize: '13px', color: '#777', marginTop: '12px' }}>
+                    ※ 一括申請の場合、すべての資産に同じ設置情報が適用されます。
+                  </p>
+                )}
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                  新しい設置情報
-                </h3>
+              {/* 新しい設置情報（廃棄申請以外） */}
+              {currentApplicationType !== '廃棄申請' && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                    新しい設置情報
+                  </h3>
 
-                <div style={{ display: 'grid', gap: '20px' }}>
-                  <div style={{ position: 'relative', zIndex: 5 }}>
-                    <SearchableSelect
-                      label="棟"
-                      value={applicationBuilding}
-                      onChange={setApplicationBuilding}
-                      options={buildingOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
+                  <div style={{ display: 'grid', gap: '20px' }}>
+                    <div style={{ position: 'relative', zIndex: 5 }}>
+                      <SearchableSelect
+                        label="棟"
+                        value={applicationBuilding}
+                        onChange={setApplicationBuilding}
+                        options={buildingOptions}
+                        placeholder="選択してください"
+                        isMobile={isMobile}
+                      />
+                    </div>
 
-                  <div style={{ position: 'relative', zIndex: 4 }}>
-                    <SearchableSelect
-                      label="階"
-                      value={applicationFloor}
-                      onChange={setApplicationFloor}
-                      options={floorOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
+                    <div style={{ position: 'relative', zIndex: 4 }}>
+                      <SearchableSelect
+                        label="階"
+                        value={applicationFloor}
+                        onChange={setApplicationFloor}
+                        options={floorOptions}
+                        placeholder="選択してください"
+                        isMobile={isMobile}
+                      />
+                    </div>
 
-                  <div style={{ position: 'relative', zIndex: 3 }}>
-                    <SearchableSelect
-                      label="部門"
-                      value={applicationDepartment}
-                      onChange={setApplicationDepartment}
-                      options={departmentOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
+                    <div style={{ position: 'relative', zIndex: 3 }}>
+                      <SearchableSelect
+                        label="部門"
+                        value={applicationDepartment}
+                        onChange={setApplicationDepartment}
+                        options={departmentOptions}
+                        placeholder="選択してください"
+                        isMobile={isMobile}
+                      />
+                    </div>
 
-                  <div style={{ position: 'relative', zIndex: 2 }}>
-                    <SearchableSelect
-                      label="部署"
-                      value={applicationSection}
-                      onChange={setApplicationSection}
-                      options={sectionOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
+                    <div style={{ position: 'relative', zIndex: 2 }}>
+                      <SearchableSelect
+                        label="部署"
+                        value={applicationSection}
+                        onChange={setApplicationSection}
+                        options={sectionOptions}
+                        placeholder="選択してください"
+                        isMobile={isMobile}
+                      />
+                    </div>
 
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <SearchableSelect
-                      label="諸室名"
-                      value={applicationRoomName}
-                      onChange={setApplicationRoomName}
-                      options={roomNameOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#2c3e50',
+                        marginBottom: '8px'
+                      }}>
+                        諸室名
+                      </label>
+                      <input
+                        type="text"
+                        value={applicationRoomName}
+                        onChange={(e) => setApplicationRoomName(e.target.value)}
+                        placeholder="諸室名を入力してください"
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #d0d0d0',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
-                  申請内容の確認
-                </h4>
-                <ul style={{ fontSize: '13px', color: '#555', lineHeight: '1.8', paddingLeft: '20px' }}>
-                  <li>申請種別: <strong>{currentApplicationType}</strong></li>
-                  <li>申請資産数: <strong>{selectedItems.size}件</strong></li>
-                  <li>施設: <strong>{facility}</strong></li>
-                  {applicationBuilding && <li>移動先 棟: <strong>{applicationBuilding}</strong></li>}
-                  {applicationFloor && <li>移動先 階: <strong>{applicationFloor}</strong></li>}
-                  {applicationDepartment && <li>移動先 部門: <strong>{applicationDepartment}</strong></li>}
-                  {applicationSection && <li>移動先 部署: <strong>{applicationSection}</strong></li>}
-                  {applicationRoomName && <li>移動先 諸室名: <strong>{applicationRoomName}</strong></li>}
-                </ul>
-              </div>
+              )}
             </div>
 
             {/* モーダルフッター */}
