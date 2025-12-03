@@ -1010,9 +1010,12 @@ export default function MainPage() {
               background: 'white',
               borderRadius: '12px',
               width: '90%',
-              maxWidth: '600px',
+              maxWidth: '800px',
+              maxHeight: '90vh',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'hidden'
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             {/* モーダルヘッダー */}
@@ -1058,9 +1061,9 @@ export default function MainPage() {
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '24px' }}>
+            <div style={{ padding: '32px', flex: 1 }}>
               {/* 施設選択 */}
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '32px' }}>
                 <SearchableSelect
                   label="施設を選択"
                   value={selectedRemodelFacility}
@@ -1073,7 +1076,7 @@ export default function MainPage() {
 
               {/* 部署選択（施設選択後に表示） */}
               {selectedRemodelFacility && departmentOptions.length > 0 && (
-                <div style={{ marginBottom: '24px' }}>
+                <div style={{ marginBottom: '32px' }}>
                   <SearchableSelect
                     label="部署を選択"
                     value={selectedRemodelDepartment}
