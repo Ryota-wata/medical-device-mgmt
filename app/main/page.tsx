@@ -1061,9 +1061,9 @@ export default function MainPage() {
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '32px', flex: 1 }}>
+            <div style={{ padding: '32px', flex: 1, minHeight: '500px' }}>
               {/* 施設選択 */}
-              <div style={{ marginBottom: '32px' }}>
+              <div style={{ marginBottom: '32px', position: 'relative', zIndex: 3 }}>
                 <SearchableSelect
                   label="施設を選択"
                   value={selectedRemodelFacility}
@@ -1076,7 +1076,7 @@ export default function MainPage() {
 
               {/* 部署選択（施設選択後に表示） */}
               {selectedRemodelFacility && departmentOptions.length > 0 && (
-                <div style={{ marginBottom: '32px' }}>
+                <div style={{ marginBottom: '32px', position: 'relative', zIndex: 2 }}>
                   <SearchableSelect
                     label="部署を選択"
                     value={selectedRemodelDepartment}

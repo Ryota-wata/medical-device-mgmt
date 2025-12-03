@@ -128,9 +128,9 @@ export function SearchableSelect({
           border: '1px solid #d0d0d0',
           borderRadius: '6px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          maxHeight: isMobile ? '200px' : '300px',
+          maxHeight: isMobile ? '200px' : '350px',
           overflowY: 'auto',
-          zIndex: 1000
+          zIndex: 9999
         }}>
           {filteredOptions.map((option, index) => (
             <div
@@ -177,7 +177,7 @@ export function SearchableSelect({
           textAlign: 'center',
           color: '#7f8c8d',
           fontSize: isMobile ? '13px' : '14px',
-          zIndex: 1000
+          zIndex: 9999
         }}>
           検索結果がありません
         </div>
