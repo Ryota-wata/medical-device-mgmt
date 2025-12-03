@@ -1,30 +1,82 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset } from '@/lib/types';
 import { useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { Header } from '@/components/layouts/Header';
+
+// カラム定義（資産検索結果画面と同じ）
+interface Column {
+  key: string;
+  label: string;
+  width?: string;
+}
+
+const ALL_COLUMNS: Column[] = [
+  { key: 'qrCode', label: 'QRコード', width: '120px' },
+  { key: 'no', label: 'No.', width: '80px' },
+  { key: 'facility', label: '施設', width: '150px' },
+  { key: 'building', label: '建物', width: '100px' },
+  { key: 'floor', label: '階', width: '80px' },
+  { key: 'department', label: '部門', width: '120px' },
+  { key: 'section', label: '部署', width: '120px' },
+  { key: 'category', label: 'カテゴリ', width: '120px' },
+  { key: 'largeClass', label: '大分類', width: '150px' },
+  { key: 'mediumClass', label: '中分類', width: '150px' },
+  { key: 'item', label: '品目', width: '150px' },
+  { key: 'name', label: '機器名称', width: '200px' },
+  { key: 'maker', label: 'メーカー', width: '150px' },
+  { key: 'model', label: '型式', width: '150px' },
+  { key: 'quantity', label: '数量', width: '80px' },
+  { key: 'width', label: '幅(mm)', width: '100px' },
+  { key: 'depth', label: '奥行(mm)', width: '100px' },
+  { key: 'height', label: '高さ(mm)', width: '100px' },
+];
 
 export default function RemodelApplicationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { assets: assetMasters, facilities } = useMasterStore();
   const { isMobile } = useResponsive();
+
+  // URLパラメータから施設・部署を取得
+  const facility = searchParams.get('facility') || '';
+  const department = searchParams.get('department') || '';
+
   const [assets, setAssets] = useState<Asset[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isColumnPanelOpen, setIsColumnPanelOpen] = useState(false);
+  const [isApplicationMenuOpen, setIsApplicationMenuOpen] = useState(false);
 
-  const facilityName = '〇〇〇〇〇〇病院';
+  // カラム表示設定
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
+    new Set(ALL_COLUMNS.map(col => col.key))
+  );
+
+  // カラム幅の状態管理
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const initial: Record<string, number> = { checkbox: 50 };
+    ALL_COLUMNS.forEach((col) => {
+      initial[col.key] = parseInt(col.width || '150');
+    });
+    return initial;
+  });
+
+  // リサイズ中の状態管理
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [resizeStartX, setResizeStartX] = useState(0);
+  const [resizeStartWidth, setResizeStartWidth] = useState(0);
 
   // フィルター状態
   const [filters, setFilters] = useState({
     building: '',
     floor: '',
-    department: '',
+    department: department,
     section: '',
     category: '',
     largeClass: '',
@@ -73,10 +125,10 @@ export default function RemodelApplicationPage() {
     const mockData: Asset[] = Array.from({ length: 20 }, (_, i) => ({
       qrCode: `QR-2025-${String(i + 1).padStart(4, '0')}`,
       no: i + 1,
-      facility: '〇〇〇〇〇〇病院',
+      facility: facility,
       building: i < 10 ? '本館' : '別館',
       floor: `${Math.floor(i / 4) + 1}F`,
-      department: '手術部門',
+      department: department,
       section: '手術',
       category: '医療機器',
       largeClass: '手術関連機器',
@@ -93,508 +145,526 @@ export default function RemodelApplicationPage() {
 
     setAssets(mockData);
     setFilteredAssets(mockData);
-  }, []);
+  }, [facility, department]);
 
   // フィルター適用
   useEffect(() => {
     let filtered = [...assets];
 
     if (filters.building) {
-      filtered = filtered.filter((a) => a.building === filters.building);
+      filtered = filtered.filter((asset) => asset.building === filters.building);
     }
     if (filters.floor) {
-      filtered = filtered.filter((a) => a.floor === filters.floor);
+      filtered = filtered.filter((asset) => asset.floor === filters.floor);
     }
     if (filters.department) {
-      filtered = filtered.filter((a) => a.department === filters.department);
+      filtered = filtered.filter((asset) => asset.department === filters.department);
     }
     if (filters.section) {
-      filtered = filtered.filter((a) => a.section === filters.section);
+      filtered = filtered.filter((asset) => asset.section === filters.section);
     }
     if (filters.category) {
-      filtered = filtered.filter((a) => a.category === filters.category);
+      filtered = filtered.filter((asset) => asset.category === filters.category);
     }
     if (filters.largeClass) {
-      filtered = filtered.filter((a) => a.largeClass === filters.largeClass);
+      filtered = filtered.filter((asset) => asset.largeClass === filters.largeClass);
     }
     if (filters.mediumClass) {
-      filtered = filtered.filter((a) => a.mediumClass === filters.mediumClass);
+      filtered = filtered.filter((asset) => asset.mediumClass === filters.mediumClass);
     }
 
     setFilteredAssets(filtered);
   }, [filters, assets]);
 
+  const handleResizeStart = (e: React.MouseEvent, columnKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setResizingColumn(columnKey);
+    setResizeStartX(e.clientX);
+    setResizeStartWidth(columnWidths[columnKey]);
+  };
+
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStartX;
+      const newWidth = Math.max(50, resizeStartWidth + diff);
+      setColumnWidths((prev) => ({
+        ...prev,
+        [resizingColumn]: newWidth,
+      }));
+    };
+
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn, resizeStartX, resizeStartWidth]);
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(new Set(filteredAssets.map((a) => a.no)));
+      const allIndexes = new Set(filteredAssets.map((_, index) => index));
+      setSelectedItems(allIndexes);
     } else {
       setSelectedItems(new Set());
     }
   };
 
-  const handleSelectItem = (no: number) => {
+  const handleSelectItem = (index: number, checked: boolean) => {
     const newSelected = new Set(selectedItems);
-    if (newSelected.has(no)) {
-      newSelected.delete(no);
+    if (checked) {
+      newSelected.add(index);
     } else {
-      newSelected.add(no);
+      newSelected.delete(index);
     }
     setSelectedItems(newSelected);
   };
 
-  const handleNewPurchaseApplication = () => {
-    if (selectedItems.size === 0) {
-      alert('資産を選択してください');
-      return;
-    }
-    alert('新規購入申請画面へ遷移します');
+  const handleRowClick = (asset: Asset) => {
+    router.push(`/asset-detail?qrCode=${asset.qrCode}&readonly=true`);
   };
 
-  const handleExpansionApplication = () => {
+  const handleApplicationAction = (actionType: string) => {
     if (selectedItems.size === 0) {
-      alert('資産を選択してください');
+      alert('申請する資産を選択してください');
       return;
     }
-    alert('増設購入申請画面へ遷移します');
+    alert(`${actionType}を実行します（${selectedItems.size}件選択中）`);
+    setIsApplicationMenuOpen(false);
   };
 
-  const handleRenewalApplication = () => {
-    if (selectedItems.size === 0) {
-      alert('資産を選択してください');
-      return;
+  const handleExport = () => {
+    alert('Excel/PDF出力機能（開発中）');
+  };
+
+  const handlePrint = () => {
+    alert('印刷機能（開発中）');
+  };
+
+  const handleFilterChange = (key: keyof typeof filters, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFilterClear = () => {
+    setFilters({
+      building: '',
+      floor: '',
+      department: department,
+      section: '',
+      category: '',
+      largeClass: '',
+      mediumClass: '',
+    });
+  };
+
+  const toggleColumnVisibility = (columnKey: string) => {
+    const newVisible = new Set(visibleColumns);
+    if (newVisible.has(columnKey)) {
+      newVisible.delete(columnKey);
+    } else {
+      newVisible.add(columnKey);
     }
-    alert('更新購入申請画面へ遷移します');
+    setVisibleColumns(newVisible);
+  };
+
+  const visibleColumnsList = ALL_COLUMNS.filter(col => visibleColumns.has(col.key));
+
+  const getCellValue = (asset: Asset, key: string): string | number => {
+    return asset[key as keyof Asset] as string | number || '';
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'white' }}>
-      {/* ヘッダー */}
-      <header
-        style={{
-          background: '#2c3e50',
-          color: 'white',
-          padding: '12px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                background: '#27ae60',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '14px',
-              }}
-            >
-              SHIP
-            </div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{facilityName}</span>
-              <span style={{ color: '#95a5a6' }}>|</span>
-              <span>資産管理リスト【リモデル申請】</span>
-            </div>
-          </div>
-          <span style={{ fontSize: '14px', color: '#ecf0f1' }}>{filteredAssets.length}件（原本）</span>
-        </div>
+    <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+      <Header
+        title={`リモデル申請 - ${facility} ${department}`}
+        showBackButton={true}
+        resultCount={filteredAssets.length}
+        onExport={handleExport}
+        onPrint={handlePrint}
+        onViewToggle={() => setCurrentView(currentView === 'list' ? 'card' : 'list')}
+        onColumnSettings={() => setIsColumnPanelOpen(!isColumnPanelOpen)}
+      />
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {/* ナビゲーションメニュー */}
-          <div style={{ position: 'relative' }}>
+      <div style={{ padding: isMobile ? '12px' : '20px', maxWidth: '100%', margin: '0 auto' }}>
+        {/* フィルターセクション */}
+        <div
+          style={{
+            background: 'white',
+            padding: isMobile ? '16px' : '20px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          }}
+        >
+          <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ margin: 0, fontSize: isMobile ? '16px' : '18px', color: '#2c3e50', fontWeight: 600 }}>
+              フィルター
+            </h3>
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={handleFilterClear}
               style={{
-                padding: '8px 16px',
-                background: '#34495e',
+                padding: '6px 12px',
+                background: '#95a5a6',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '13px',
+              }}
+            >
+              クリア
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: '16px',
+            }}
+          >
+            <SearchableSelect
+              label="建物"
+              value={filters.building}
+              onChange={(value) => handleFilterChange('building', value)}
+              options={['', ...buildingOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="階"
+              value={filters.floor}
+              onChange={(value) => handleFilterChange('floor', value)}
+              options={['', ...floorOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="部門"
+              value={filters.department}
+              onChange={(value) => handleFilterChange('department', value)}
+              options={['', ...departmentOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="部署"
+              value={filters.section}
+              onChange={(value) => handleFilterChange('section', value)}
+              options={['', ...sectionOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="カテゴリ"
+              value={filters.category}
+              onChange={(value) => handleFilterChange('category', value)}
+              options={['', ...categoryOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="大分類"
+              value={filters.largeClass}
+              onChange={(value) => handleFilterChange('largeClass', value)}
+              options={['', ...largeClassOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+            <SearchableSelect
+              label="中分類"
+              value={filters.mediumClass}
+              onChange={(value) => handleFilterChange('mediumClass', value)}
+              options={['', ...mediumClassOptions]}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+          </div>
+        </div>
+
+        {/* 申請アクションボタン */}
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsApplicationMenuOpen(!isApplicationMenuOpen)}
+              style={{
+                padding: '10px 20px',
+                background: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
               }}
             >
-              <span>📑 メニュー</span>
-              <span style={{ fontSize: '10px' }}>▼</span>
+              申請アクション
+              <span style={{ fontSize: '12px' }}>▼</span>
             </button>
-            {isMenuOpen && (
+
+            {isApplicationMenuOpen && (
               <div
                 style={{
                   position: 'absolute',
-                  top: 'calc(100% + 4px)',
-                  right: 0,
+                  top: '100%',
+                  left: 0,
+                  marginTop: '4px',
                   background: 'white',
                   border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 100,
                   minWidth: '200px',
-                  zIndex: 2000,
-                  overflow: 'hidden',
                 }}
               >
-                <div
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    router.push('/application-list');
-                  }}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    color: '#2c3e50',
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f8f9fa';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                  }}
-                >
-                  <span>📝</span>
-                  <span>申請一覧</span>
-                </div>
-                <div
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    router.push('/quotation-data-box');
-                  }}
-                  style={{
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    color: '#2c3e50',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#f8f9fa';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                  }}
-                >
-                  <span>📦</span>
-                  <span>見積書管理</span>
-                </div>
+                {['新規申請', '増設申請', '更新申請', '移動申請', '廃棄申請', '保留'].map((action) => (
+                  <div
+                    key={action}
+                    onClick={() => handleApplicationAction(action)}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      color: '#2c3e50',
+                      borderBottom: '1px solid #f0f0f0',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#f8f9fa';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'white';
+                    }}
+                  >
+                    {action}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          <button
-            onClick={() => setCurrentView(currentView === 'list' ? 'card' : 'list')}
-            style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="表示切替"
-          >
-            📋
-          </button>
-          <button
-            onClick={() => setIsColumnPanelOpen(!isColumnPanelOpen)}
-            style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="表示カラム選択"
-          >
-            ⚙️
-          </button>
-          <button
-            onClick={() => alert('Excel/PDF出力')}
-            style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Excel/PDF出力"
-          >
-            📊
-          </button>
-          <button
-            onClick={() => window.print()}
-            style={{
-              width: '40px',
-              height: '40px',
-              background: '#34495e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="印刷"
-          >
-            🖨️
-          </button>
-          <button
-            onClick={() => router.push('/main')}
-            style={{
-              padding: '8px 16px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-          >
-            メニューに戻る
-          </button>
+          {selectedItems.size > 0 && (
+            <span style={{ color: '#2c3e50', fontSize: '14px', fontWeight: '600' }}>
+              {selectedItems.size}件選択中
+            </span>
+          )}
         </div>
-      </header>
 
-      {/* フィルターヘッダー */}
-      <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="棟"
-              value={filters.building}
-              onChange={(value) => setFilters({ ...filters, building: value })}
-              options={['', ...buildingOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="階"
-              value={filters.floor}
-              onChange={(value) => setFilters({ ...filters, floor: value })}
-              options={['', ...floorOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="部門"
-              value={filters.department}
-              onChange={(value) => setFilters({ ...filters, department: value })}
-              options={['', ...departmentOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="Category"
-              value={filters.category}
-              onChange={(value) => setFilters({ ...filters, category: value })}
-              options={['', ...categoryOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="大分類"
-              value={filters.largeClass}
-              onChange={(value) => setFilters({ ...filters, largeClass: value })}
-              options={['', ...largeClassOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="中分類"
-              value={filters.mediumClass}
-              onChange={(value) => setFilters({ ...filters, mediumClass: value })}
-              options={['', ...mediumClassOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* アクションバー */}
-      <div
-        style={{
-          background: '#fff',
-          padding: '15px 20px',
-          borderBottom: '1px solid #dee2e6',
-          display: 'flex',
-          gap: '10px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        <span style={{ fontSize: '14px', color: '#555', marginRight: '15px' }}>{selectedItems.size}件選択中</span>
-        <button
-          onClick={handleNewPurchaseApplication}
-          disabled={selectedItems.size === 0}
+        {/* テーブル表示 */}
+        <div
           style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
+            background: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
           }}
         >
-          新規購入申請
-        </button>
-        <button
-          onClick={handleExpansionApplication}
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-          }}
-        >
-          増設購入申請
-        </button>
-        <button
-          onClick={handleRenewalApplication}
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#e67e22',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-          }}
-        >
-          更新購入申請
-        </button>
-      </div>
-
-      {/* テーブル表示 */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
-        {currentView === 'list' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>
-                  <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
-                </th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>No.</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>施設名</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>棟</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>階</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>部門</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>品名</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
-                <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAssets.map((asset) => (
-                <tr
-                  key={asset.no}
-                  style={{
-                    borderBottom: '1px solid #dee2e6',
-                    background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white',
-                  }}
-                >
-                  <td style={{ padding: '12px 8px' }}>
-                    <input type="checkbox" checked={selectedItems.has(asset.no)} onChange={() => handleSelectItem(asset.no)} />
-                  </td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.no}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.facility}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.building}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.floor}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.department}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.name}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.maker}</td>
-                  <td style={{ padding: '12px 8px', color: '#2c3e50' }}>{asset.model}</td>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
+              <thead>
+                <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                  <th
+                    style={{
+                      padding: '12px 8px',
+                      textAlign: 'left',
+                      fontWeight: 'bold',
+                      color: '#2c3e50',
+                      width: `${columnWidths.checkbox}px`,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.size === filteredAssets.length && filteredAssets.length > 0}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </th>
+                  {visibleColumnsList.map((col) => (
+                    <th
+                      key={col.key}
+                      style={{
+                        padding: '12px 8px',
+                        textAlign: 'left',
+                        fontWeight: 'bold',
+                        color: '#2c3e50',
+                        width: `${columnWidths[col.key]}px`,
+                        position: 'relative',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {col.label}
+                      <div
+                        onMouseDown={(e) => handleResizeStart(e, col.key)}
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '4px',
+                          cursor: 'col-resize',
+                          background: resizingColumn === col.key ? '#3498db' : 'transparent',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!resizingColumn) e.currentTarget.style.background = '#ddd';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!resizingColumn) e.currentTarget.style.background = 'transparent';
+                        }}
+                      />
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {filteredAssets.map((asset, index) => (
+                  <tr
+                    key={index}
+                    style={{
+                      borderBottom: '1px solid #f0f0f0',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#f8f9fa';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'white';
+                    }}
+                  >
+                    <td
+                      style={{
+                        padding: '12px 8px',
+                        color: '#2c3e50',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.has(index)}
+                        onChange={(e) => handleSelectItem(index, e.target.checked)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </td>
+                    {visibleColumnsList.map((col) => (
+                      <td
+                        key={col.key}
+                        onClick={() => handleRowClick(asset)}
+                        style={{
+                          padding: '12px 8px',
+                          color: '#2c3e50',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {getCellValue(asset, col.key)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-        {currentView === 'card' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {filteredAssets.map((asset) => (
-              <div
-                key={asset.no}
+      {/* カラム設定パネル */}
+      {isColumnPanelOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: isMobile ? '80%' : '300px',
+            background: 'white',
+            boxShadow: '-2px 0 8px rgba(0,0,0,0.1)',
+            zIndex: 1000,
+            padding: '20px',
+            overflowY: 'auto',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>表示カラム設定</h3>
+            <button
+              onClick={() => setIsColumnPanelOpen(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#7f8c8d',
+              }}
+            >
+              ×
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {ALL_COLUMNS.map((col) => (
+              <label
+                key={col.key}
                 style={{
-                  background: 'white',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f8f9fa';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
                 }}
               >
-                <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input type="checkbox" checked={selectedItems.has(asset.no)} onChange={() => handleSelectItem(asset.no)} />
-                  <strong style={{ color: '#2c3e50' }}>No. {asset.no}</strong>
-                </div>
-                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#2c3e50' }}>{asset.name}</h3>
-                <div style={{ fontSize: '13px', color: '#5a6c7d', lineHeight: '1.6' }}>
-                  <div>施設: {asset.facility}</div>
-                  <div>場所: {asset.building} {asset.floor}</div>
-                  <div>部門: {asset.department}</div>
-                  <div>メーカー: {asset.maker}</div>
-                  <div>型式: {asset.model}</div>
-                </div>
-              </div>
+                <input
+                  type="checkbox"
+                  checked={visibleColumns.has(col.key)}
+                  onChange={() => toggleColumnVisibility(col.key)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '14px', color: '#2c3e50' }}>{col.label}</span>
+              </label>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* オーバーレイ（カラム設定パネルが開いているとき） */}
+      {isColumnPanelOpen && (
+        <div
+          onClick={() => setIsColumnPanelOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999,
+          }}
+        />
+      )}
     </div>
   );
 }
