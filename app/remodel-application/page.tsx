@@ -32,8 +32,8 @@ const ALL_COLUMNS: ColumnDef[] = [
   { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: false },
   { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: false },
   { key: 'item', label: '品目', width: '150px', defaultVisible: false },
-  { key: 'name', label: '個体管理名称', width: '200px', defaultVisible: true },
-  { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: true },
+  { key: 'name', label: '品目', width: '200px', defaultVisible: true },
+  { key: 'maker', label: 'メーカー', width: '150px', defaultVisible: true },
   { key: 'model', label: '型式', width: '150px', defaultVisible: true },
   { key: 'quantityUnit', label: '数量／単位', width: '120px', defaultVisible: false },
   { key: 'quantity', label: '数量', width: '80px', defaultVisible: false },
@@ -1112,8 +1112,8 @@ export default function RemodelApplicationPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead style={{ background: '#f8f9fa', position: 'sticky', top: 0 }}>
                       <tr>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>個体管理名称</th>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー名</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>品目</th>
+                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
                         <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
                       </tr>
                     </thead>
@@ -1439,8 +1439,8 @@ export default function RemodelApplicationPage() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                       <thead style={{ background: '#f8f9fa' }}>
                         <tr>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>個体管理名称</th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー名</th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>品目</th>
+                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>数量</th>
                           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>単位</th>
