@@ -182,17 +182,6 @@ export function SearchableSelect({
           検索結果がありません
         </div>
       )}
-
-      {!disabled && (
-        <span style={{
-          display: 'block',
-          fontSize: isMobile ? '10px' : '11px',
-          color: '#7f8c8d',
-          marginTop: '4px'
-        }}>
-          フリー入力・一覧選択・あいまい検索可
-        </span>
-      )}
     </div>
   );
 }
