@@ -309,11 +309,12 @@ export default function AssetMatchingPage() {
   const [data, setData] = useState(sampleData);
 
   // フィルターオプションを生成
-  const departmentOptions = useMemo(() => FACILITY_CONSTANTS.divisions, []);
+  const departmentOptions = useMemo(() => [...FACILITY_CONSTANTS.divisions], []);
 
   const sectionOptions = useMemo(() => {
     if (!filters.department) return [];
-    return FACILITY_CONSTANTS.sectionsByDivision[filters.department] || [];
+    const sections = FACILITY_CONSTANTS.sectionsByDivision[filters.department as keyof typeof FACILITY_CONSTANTS.sectionsByDivision];
+    return sections ? [...sections] : [];
   }, [filters.department]);
 
   const categoryOptions = useMemo(() => {
@@ -506,7 +507,6 @@ export default function AssetMatchingPage() {
     }
   };
 
-  const filteredData = filterStatus === 'all' ? data : data.filter(d => d.status === filterStatus);
   const totalCount = sampleData.length;
   const remainingCount = data.length;
 
