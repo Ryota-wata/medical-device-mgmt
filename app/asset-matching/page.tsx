@@ -395,7 +395,7 @@ export default function AssetMatchingPage() {
     const top = (window.screen.height - height) / 2;
 
     window.open(
-      '/asset-master',
+      'http://localhost:8080/ship-asset-master-standalone.html',
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
