@@ -10,6 +10,7 @@ interface SearchableSelectProps {
   label?: string;
   isMobile?: boolean;
   disabled?: boolean;
+  dropdownMinWidth?: string;
 }
 
 export function SearchableSelect({
@@ -19,7 +20,8 @@ export function SearchableSelect({
   placeholder = '選択または入力してください',
   label,
   isMobile = false,
-  disabled = false
+  disabled = false,
+  dropdownMinWidth = '200px'
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(value);
@@ -122,7 +124,7 @@ export function SearchableSelect({
           position: 'absolute',
           top: '100%',
           left: 0,
-          right: 0,
+          minWidth: dropdownMinWidth,
           marginTop: '4px',
           background: 'white',
           border: '1px solid #d0d0d0',
@@ -143,7 +145,8 @@ export function SearchableSelect({
                 color: '#2c3e50',
                 background: option === value ? '#e8f4f8' : 'white',
                 borderBottom: index < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
-                transition: 'background 0.15s'
+                transition: 'background 0.15s',
+                whiteSpace: 'nowrap'
               }}
               onMouseEnter={(e) => {
                 if (option !== value) {

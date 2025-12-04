@@ -666,6 +666,7 @@ export default function AssetMatchingPage() {
                 options={departmentOptions}
                 placeholder="全て"
                 isMobile={isMobile}
+                dropdownMinWidth="200px"
               />
             </div>
             <div style={{ flex: '0 0 140px' }}>
@@ -677,6 +678,7 @@ export default function AssetMatchingPage() {
                 placeholder="全て"
                 isMobile={isMobile}
                 disabled={!filters.department}
+                dropdownMinWidth="250px"
               />
             </div>
             <div style={{ flex: '0 0 120px' }}>
@@ -687,6 +689,7 @@ export default function AssetMatchingPage() {
                 options={categoryOptions}
                 placeholder="全て"
                 isMobile={isMobile}
+                dropdownMinWidth="200px"
               />
             </div>
             <div style={{ flex: '0 0 150px' }}>
@@ -697,6 +700,7 @@ export default function AssetMatchingPage() {
                 options={majorCategoryOptions}
                 placeholder="全て"
                 isMobile={isMobile}
+                dropdownMinWidth="300px"
               />
             </div>
             <div style={{ flex: '0 0 150px' }}>
@@ -707,6 +711,7 @@ export default function AssetMatchingPage() {
                 options={middleCategoryOptions}
                 placeholder="全て"
                 isMobile={isMobile}
+                dropdownMinWidth="300px"
               />
             </div>
             <button
@@ -865,6 +870,7 @@ export default function AssetMatchingPage() {
                                 options={majorCategoryOptions}
                                 placeholder="選択してください"
                                 isMobile={isMobile}
+                                dropdownMinWidth="300px"
                               />
                             </div>
                           ) : (
@@ -883,6 +889,7 @@ export default function AssetMatchingPage() {
                                 options={middleCategoryOptions}
                                 placeholder="選択してください"
                                 isMobile={isMobile}
+                                dropdownMinWidth="300px"
                               />
                             </div>
                           ) : (
@@ -901,6 +908,7 @@ export default function AssetMatchingPage() {
                                 options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)}
                                 placeholder="選択してください"
                                 isMobile={isMobile}
+                                dropdownMinWidth="400px"
                               />
                             </div>
                           ) : (
@@ -919,6 +927,7 @@ export default function AssetMatchingPage() {
                                 options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)}
                                 placeholder="選択してください"
                                 isMobile={isMobile}
+                                dropdownMinWidth="300px"
                               />
                             </div>
                           ) : (
@@ -937,6 +946,7 @@ export default function AssetMatchingPage() {
                                 options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)}
                                 placeholder="選択してください"
                                 isMobile={isMobile}
+                                dropdownMinWidth="300px"
                               />
                             </div>
                           ) : (
