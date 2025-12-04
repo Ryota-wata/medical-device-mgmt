@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useMasterStore } from '@/lib/stores';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface RegistrationData {
   id: number;
@@ -36,9 +38,22 @@ interface RegistrationData {
 export default function RegistrationEditPage() {
   const router = useRouter();
   const { isMobile } = useResponsive();
+  const { assets: assetMasters, facilities } = useMasterStore();
   const [selectedAll, setSelectedAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRow, setEditingRow] = useState<number | null>(null);
+
+  // フィルター状態
+  const [filters, setFilters] = useState({
+    building: '',
+    floor: '',
+    department: '',
+    section: '',
+    category: '',
+    largeClass: '',
+    mediumClass: '',
+    surveyor: ''
+  });
 
   const sampleData: RegistrationData[] = [
     {
@@ -185,6 +200,95 @@ export default function RegistrationEditPage() {
 
   const [data, setData] = useState(sampleData);
 
+  // フィルターoptionsを生成（施設マスタから）
+  const buildingOptions = useMemo(() => {
+    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building)));
+    return uniqueBuildings.filter(Boolean) as string[];
+  }, [facilities]);
+
+  const floorOptions = useMemo(() => {
+    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor)));
+    return uniqueFloors.filter(Boolean) as string[];
+  }, [facilities]);
+
+  const departmentOptions = useMemo(() => {
+    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department)));
+    return uniqueDepartments.filter(Boolean) as string[];
+  }, [facilities]);
+
+  const sectionOptions = useMemo(() => {
+    const uniqueSections = Array.from(new Set(facilities.map(f => f.section)));
+    return uniqueSections.filter(Boolean) as string[];
+  }, [facilities]);
+
+  // フィルターoptionsを生成（資産マスタから）
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const largeClassOptions = useMemo(() => {
+    const uniqueLargeClasses = Array.from(new Set(assetMasters.map(a => a.largeClass)));
+    return uniqueLargeClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  const mediumClassOptions = useMemo(() => {
+    const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
+    return uniqueMediumClasses.filter(Boolean);
+  }, [assetMasters]);
+
+  // 担当者オプションを生成（サンプルデータから）
+  const surveyorOptions = useMemo(() => {
+    const uniqueSurveyors = Array.from(new Set(data.map(d => d.surveyor)));
+    return uniqueSurveyors.filter(Boolean);
+  }, [data]);
+
+  // フィルタリングされたデータ
+  const filteredData = useMemo(() => {
+    let filtered = data;
+
+    if (filters.building) {
+      filtered = filtered.filter(d => d.building === filters.building);
+    }
+    if (filters.floor) {
+      filtered = filtered.filter(d => d.floor === filters.floor);
+    }
+    if (filters.department) {
+      filtered = filtered.filter(d => d.department === filters.department);
+    }
+    if (filters.section) {
+      filtered = filtered.filter(d => d.section === filters.section);
+    }
+    if (filters.category) {
+      filtered = filtered.filter(d => d.category === filters.category);
+    }
+    if (filters.largeClass) {
+      filtered = filtered.filter(d => d.largeClass === filters.largeClass);
+    }
+    if (filters.mediumClass) {
+      filtered = filtered.filter(d => d.mediumClass === filters.mediumClass);
+    }
+    if (filters.surveyor) {
+      filtered = filtered.filter(d => d.surveyor === filters.surveyor);
+    }
+
+    return filtered;
+  }, [data, filters]);
+
+  // フィルタークリア
+  const handleClearFilters = () => {
+    setFilters({
+      building: '',
+      floor: '',
+      department: '',
+      section: '',
+      category: '',
+      largeClass: '',
+      mediumClass: '',
+      surveyor: ''
+    });
+  };
+
   const handleBack = () => {
     router.back();
   };
@@ -192,7 +296,7 @@ export default function RegistrationEditPage() {
   const toggleSelectAll = (checked: boolean) => {
     setSelectedAll(checked);
     if (checked) {
-      setSelectedRows(new Set(data.map(row => row.id)));
+      setSelectedRows(new Set(filteredData.map(row => row.id)));
     } else {
       setSelectedRows(new Set());
     }
@@ -206,7 +310,7 @@ export default function RegistrationEditPage() {
       newSelected.add(id);
     }
     setSelectedRows(newSelected);
-    setSelectedAll(newSelected.size === data.length);
+    setSelectedAll(newSelected.size === filteredData.length);
   };
 
   const handleEdit = (id: number) => {
@@ -215,7 +319,7 @@ export default function RegistrationEditPage() {
   };
 
   const handleConfirm = (id: number) => {
-    const row = data.find(r => r.id === id);
+    const row = filteredData.find(r => r.id === id);
     if (row && !row.masterId) {
       alert('マスタIDが登録されていないため確定できません');
       return;
@@ -228,7 +332,7 @@ export default function RegistrationEditPage() {
       alert('確定する行を選択してください');
       return;
     }
-    const invalidRows = data.filter(row => selectedRows.has(row.id) && !row.masterId);
+    const invalidRows = filteredData.filter(row => selectedRows.has(row.id) && !row.masterId);
     if (invalidRows.length > 0) {
       alert(`${invalidRows.length}件のマスタ未登録行があります。先にマスタ登録を完了してください。`);
       return;
@@ -321,129 +425,106 @@ export default function RegistrationEditPage() {
           flexWrap: 'wrap',
           alignItems: 'flex-end'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>棟</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">棟</option>
-              <option value="本館">本館</option>
-              <option value="別館">別館</option>
-              <option value="新館">新館</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="棟"
+              value={filters.building}
+              onChange={(value) => setFilters({...filters, building: value})}
+              options={buildingOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>階</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">階</option>
-              <option value="1F">1F</option>
-              <option value="2F">2F</option>
-              <option value="3F">3F</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '100px' }}>
+            <SearchableSelect
+              label="階"
+              value={filters.floor}
+              onChange={(value) => setFilters({...filters, floor: value})}
+              options={floorOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>部門</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">部門</option>
-              <option value="手術部門">手術部門</option>
-              <option value="放射線科">放射線科</option>
-              <option value="検査科">検査科</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="部門"
+              value={filters.department}
+              onChange={(value) => setFilters({...filters, department: value})}
+              options={departmentOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>部署</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">部署</option>
-              <option value="手術">手術</option>
-              <option value="CT室">CT室</option>
-              <option value="検査室">検査室</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="部署"
+              value={filters.section}
+              onChange={(value) => setFilters({...filters, section: value})}
+              options={sectionOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>Category</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">Category</option>
-              <option value="医療機器">医療機器</option>
-              <option value="什器備品">什器備品</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="担当者"
+              value={filters.surveyor}
+              onChange={(value) => setFilters({...filters, surveyor: value})}
+              options={surveyorOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>大分類</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">大分類</option>
-              <option value="医療機器">医療機器</option>
-              <option value="検査機器">検査機器</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="Category"
+              value={filters.category}
+              onChange={(value) => setFilters({...filters, category: value})}
+              options={categoryOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <label style={{ fontSize: '12px', color: '#5a6c7d' }}>中分類</label>
-            <select style={{
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}>
-              <option value="">中分類</option>
-              <option value="滅菌機器">滅菌機器</option>
-              <option value="内視鏡関連">内視鏡関連</option>
-            </select>
+          <div style={{ flex: '1', minWidth: '150px' }}>
+            <SearchableSelect
+              label="大分類"
+              value={filters.largeClass}
+              onChange={(value) => setFilters({...filters, largeClass: value})}
+              options={largeClassOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
           </div>
 
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}>
-            絞り込み
-          </button>
+          <div style={{ flex: '1', minWidth: '150px' }}>
+            <SearchableSelect
+              label="中分類"
+              value={filters.mediumClass}
+              onChange={(value) => setFilters({...filters, mediumClass: value})}
+              options={mediumClassOptions}
+              placeholder="全て"
+              isMobile={false}
+            />
+          </div>
 
-          <button style={{
-            padding: '8px 16px',
-            backgroundColor: '#ffffff',
-            color: '#666',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}>
+          <button
+            onClick={handleClearFilters}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#ffffff',
+              color: '#666',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
             クリア
           </button>
         </div>
@@ -499,7 +580,7 @@ export default function RegistrationEditPage() {
               </tr>
             </thead>
             <tbody>
-              {data.map((row) => (
+              {filteredData.map((row) => (
                 <tr key={row.id} style={{ backgroundColor: !row.masterId ? '#fff3cd' : 'white' }}>
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: !row.masterId ? '#fff3cd' : 'white', zIndex: 1 }}>
                     <input
