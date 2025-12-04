@@ -7,18 +7,18 @@ import { useAuthStore } from '@/lib/stores';
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading } = useAuthStore();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
   // ページ読み込み時に保存されたログイン情報を復元
   useEffect(() => {
-    const savedUsername = localStorage.getItem('rememberedUsername');
+    const savedEmail = localStorage.getItem('rememberedEmail');
     const savedRememberMe = localStorage.getItem('rememberMe');
 
-    if (savedRememberMe === 'true' && savedUsername) {
-      setUsername(savedUsername);
+    if (savedRememberMe === 'true' && savedEmail) {
+      setEmail(savedEmail);
       setRememberMe(true);
     }
   }, []);
@@ -27,20 +27,20 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!username || !password) {
-      setError('ユーザー名とパスワードを入力してください');
+    if (!email || !password) {
+      setError('メールアドレスとパスワードを入力してください');
       return;
     }
 
     try {
-      await login({ username, password });
+      await login({ username: email, password });
 
       // ログイン情報を記憶する場合はLocalStorageに保存
       if (rememberMe) {
-        localStorage.setItem('rememberedUsername', username);
+        localStorage.setItem('rememberedEmail', email);
         localStorage.setItem('rememberMe', 'true');
       } else {
-        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem('rememberedEmail');
         localStorage.removeItem('rememberMe');
       }
 
@@ -81,16 +81,16 @@ export default function LoginPage() {
 
         {/* フォーム */}
         <form onSubmit={handleSubmit}>
-          {/* ユーザー名 */}
+          {/* メールアドレス */}
           <div className="mb-6">
             <label className="block text-sm font-semibold mb-2" style={{ color: '#5a6c7d' }}>
-              ユーザー名
+              メールアドレス
             </label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="ユーザー名を入力"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="メールアドレスを入力"
               className="w-full px-4 py-3 rounded-lg text-base transition-all"
               style={{
                 border: '2px solid #e1e8ed'
