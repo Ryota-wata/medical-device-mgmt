@@ -195,6 +195,62 @@ export default function RegistrationEditPage() {
       height: '120',
       remarks: '定期メンテナンス済',
       masterId: 'M004'
+    },
+    {
+      id: 6,
+      surveyDate: '2025-11-05',
+      surveyor: '田中一郎',
+      category: '医療機器',
+      building: '新館',
+      floor: '1F',
+      department: '検査科',
+      section: '検体検査室',
+      sealNo: 'シールなし',
+      roomName: '検体検査室B',
+      assetNo: '',
+      equipmentNo: '',
+      purchaseDate: '',
+      lease: 'なし',
+      rental: 'なし',
+      photoCount: 2,
+      largeClass: '検査装置（フリー入力）',
+      mediumClass: '血液検査装置（フリー入力）',
+      item: '自動血球計数器 XYZ-2000（フリー入力）',
+      manufacturer: 'ABC医療機器（フリー入力）',
+      model: 'XYZ-2000-Pro（フリー入力）',
+      width: '450',
+      depth: '500',
+      height: '400',
+      remarks: 'マスタ未登録機器',
+      masterId: ''
+    },
+    {
+      id: 7,
+      surveyDate: '2025-11-06',
+      surveyor: '佐藤花子',
+      category: '什器備品',
+      building: '本館',
+      floor: '1F',
+      department: '事務部',
+      section: '総務課',
+      sealNo: '22-01500',
+      roomName: '事務室',
+      assetNo: '10608123-000',
+      equipmentNo: '5123',
+      purchaseDate: '2023-03-20',
+      lease: 'なし',
+      rental: 'なし',
+      photoCount: 1,
+      largeClass: 'オフィス家具（フリー入力）',
+      mediumClass: '書庫',
+      item: 'スチール書庫 H1800（フリー入力）',
+      manufacturer: 'コクヨ',
+      model: 'S-D36F1N（フリー入力）',
+      width: '900',
+      depth: '400',
+      height: '1800',
+      remarks: '中分類と品目と型式がマスタ外',
+      masterId: 'M005'
     }
   ];
 
@@ -287,6 +343,31 @@ export default function RegistrationEditPage() {
       mediumClass: '',
       surveyor: ''
     });
+  };
+
+  // マスタに存在するかチェックする関数
+  const isInMaster = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string): boolean => {
+    if (!value) return true; // 空の場合は通常表示
+
+    const fieldMap = {
+      largeClass: 'largeClass',
+      mediumClass: 'mediumClass',
+      item: 'item',
+      manufacturer: 'maker',
+      model: 'model'
+    };
+
+    const masterField = fieldMap[field];
+    return assetMasters.some(master => master[masterField as keyof typeof master] === value);
+  };
+
+  // フリー入力セルのスタイル
+  const getFreeInputCellStyle = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string, baseStyle: React.CSSProperties): React.CSSProperties => {
+    const isFreeInput = !isInMaster(field, value);
+    return {
+      ...baseStyle,
+      backgroundColor: isFreeInput ? '#fff9c4' : (baseStyle.backgroundColor || 'white')
+    };
   };
 
   const handleBack = () => {
@@ -615,11 +696,11 @@ export default function RegistrationEditPage() {
                       📷 {row.photoCount}枚
                     </button>
                   </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.largeClass}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.mediumClass}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model}</td>
+                  <td style={getFreeInputCellStyle('largeClass', row.largeClass, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>{row.largeClass}</td>
+                  <td style={getFreeInputCellStyle('mediumClass', row.mediumClass, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>{row.mediumClass}</td>
+                  <td style={getFreeInputCellStyle('item', row.item, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>{row.item}</td>
+                  <td style={getFreeInputCellStyle('manufacturer', row.manufacturer, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>{row.manufacturer}</td>
+                  <td style={getFreeInputCellStyle('model', row.model, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>{row.model}</td>
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.width}</td>
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.depth}</td>
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.height}</td>
