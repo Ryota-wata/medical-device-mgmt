@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useMasterStore } from '@/lib/stores';
+import { FACILITY_CONSTANTS } from '@/lib/types/facility';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface MatchingData {
   id: number;
@@ -35,11 +38,20 @@ interface AIRecommendation {
 export default function AssetMatchingPage() {
   const router = useRouter();
   const { isMobile } = useResponsive();
+  const { assets: assetMasters } = useMasterStore();
   const [selectedAll, setSelectedAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [editingData, setEditingData] = useState<MatchingData | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
+
+  // フィルター状態
+  const [filters, setFilters] = useState({
+    department: '',
+    section: '',
+    category: '',
+    majorCategory: '',
+    middleCategory: ''
+  });
 
   const sampleData: MatchingData[] = [
     {
@@ -296,13 +308,58 @@ export default function AssetMatchingPage() {
 
   const [data, setData] = useState(sampleData);
 
+  // フィルターオプションを生成
+  const departmentOptions = useMemo(() => FACILITY_CONSTANTS.divisions, []);
+
+  const sectionOptions = useMemo(() => {
+    if (!filters.department) return [];
+    return FACILITY_CONSTANTS.sectionsByDivision[filters.department] || [];
+  }, [filters.department]);
+
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const majorCategoryOptions = useMemo(() => {
+    const uniqueMajorCategories = Array.from(new Set(assetMasters.map(a => a.largeClass)));
+    return uniqueMajorCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const middleCategoryOptions = useMemo(() => {
+    const uniqueMiddleCategories = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
+    return uniqueMiddleCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  // フィルタリングされたデータ
+  const filteredData = useMemo(() => {
+    let filtered = data;
+
+    if (filters.department) {
+      filtered = filtered.filter(d => d.department === filters.department);
+    }
+    if (filters.section) {
+      filtered = filtered.filter(d => d.section === filters.section);
+    }
+    if (filters.category) {
+      filtered = filtered.filter(d => d.category === filters.category);
+    }
+    if (filters.majorCategory) {
+      filtered = filtered.filter(d => d.majorCategory === filters.majorCategory);
+    }
+    if (filters.middleCategory) {
+      filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
+    }
+
+    return filtered;
+  }, [data, filters]);
+
   const handleBack = () => {
     router.back();
   };
 
   const toggleSelectAll = (checked: boolean) => {
     setSelectedAll(checked);
-    const filteredData = filterStatus === 'all' ? data : data.filter(d => d.status === filterStatus);
     if (checked) {
       setSelectedRows(new Set(filteredData.map(row => row.id)));
     } else {
@@ -519,62 +576,93 @@ export default function AssetMatchingPage() {
 
       {/* Filter Bar */}
       <div style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f8f9fa',
         borderBottom: '1px solid #e0e0e0',
-        padding: '12px 24px'
+        padding: '16px 24px'
       }}>
         <div style={{
           maxWidth: '1800px',
           margin: '0 auto',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'flex-end',
+          gap: '16px',
+          flexWrap: 'wrap'
         }}>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flex: 1, flexWrap: 'wrap' }}>
+            <div style={{ minWidth: '140px' }}>
+              <SearchableSelect
+                label="部門"
+                value={filters.department}
+                onChange={(value) => setFilters({...filters, department: value, section: ''})}
+                options={departmentOptions}
+                placeholder="全て"
+                isMobile={isMobile}
+              />
+            </div>
+            <div style={{ minWidth: '140px' }}>
+              <SearchableSelect
+                label="部署"
+                value={filters.section}
+                onChange={(value) => setFilters({...filters, section: value})}
+                options={sectionOptions}
+                placeholder="全て"
+                isMobile={isMobile}
+                disabled={!filters.department}
+              />
+            </div>
+            <div style={{ minWidth: '140px' }}>
+              <SearchableSelect
+                label="Category"
+                value={filters.category}
+                onChange={(value) => setFilters({...filters, category: value})}
+                options={categoryOptions}
+                placeholder="全て"
+                isMobile={isMobile}
+              />
+            </div>
+            <div style={{ minWidth: '140px' }}>
+              <SearchableSelect
+                label="大分類"
+                value={filters.majorCategory}
+                onChange={(value) => setFilters({...filters, majorCategory: value})}
+                options={majorCategoryOptions}
+                placeholder="全て"
+                isMobile={isMobile}
+              />
+            </div>
+            <div style={{ minWidth: '140px' }}>
+              <SearchableSelect
+                label="中分類"
+                value={filters.middleCategory}
+                onChange={(value) => setFilters({...filters, middleCategory: value})}
+                options={middleCategoryOptions}
+                placeholder="全て"
+                isMobile={isMobile}
+              />
+            </div>
             <button
-              onClick={() => setFilterStatus('all')}
+              onClick={() => setFilters({
+                department: '',
+                section: '',
+                category: '',
+                majorCategory: '',
+                middleCategory: ''
+              })}
               style={{
                 padding: '8px 16px',
-                backgroundColor: filterStatus === 'all' ? '#1976d2' : '#f5f5f5',
-                color: filterStatus === 'all' ? 'white' : '#5a6c7d',
+                backgroundColor: '#95a5a6',
+                color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontWeight: '600'
+                fontWeight: '600',
+                height: '38px',
+                alignSelf: 'flex-end'
               }}
             >
-              すべて <span>({data.length})</span>
-            </button>
-            <button
-              onClick={() => setFilterStatus('pending')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: filterStatus === 'pending' ? '#1976d2' : '#f5f5f5',
-                color: filterStatus === 'pending' ? 'white' : '#5a6c7d',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}
-            >
-              未処理 <span>({data.filter(d => d.status === 'pending').length})</span>
-            </button>
-            <button
-              onClick={() => setFilterStatus('completed')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: filterStatus === 'completed' ? '#1976d2' : '#f5f5f5',
-                color: filterStatus === 'completed' ? 'white' : '#5a6c7d',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}
-            >
-              済 <span>({data.filter(d => d.status === 'completed').length})</span>
+              リセット
             </button>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
