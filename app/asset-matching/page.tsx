@@ -336,17 +336,29 @@ export default function AssetMatchingPage() {
         manufacturer: editingData.aiRecommendation.manufacturer,
         model: editingData.aiRecommendation.model
       });
+    } else {
+      // 編集中でない場合は直接dataを更新
+      setData(data.map(r =>
+        r.id === rowId ? {
+          ...r,
+          majorCategory: r.aiRecommendation.major,
+          middleCategory: r.aiRecommendation.middle,
+          item: r.aiRecommendation.item,
+          manufacturer: r.aiRecommendation.manufacturer,
+          model: r.aiRecommendation.model
+        } : r
+      ));
     }
   };
 
   const handleOpenAssetMaster = () => {
-    const width = 1200;
-    const height = 800;
+    const width = 1400;
+    const height = 900;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
 
     window.open(
-      '/asset-master',
+      'http://localhost:8080/src/screens/ship-asset-master.html',
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
@@ -765,23 +777,21 @@ export default function AssetMatchingPage() {
 
                         {/* AI推薦 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', textAlign: 'center' }}>
-                          {isEditing && (
-                            <button
-                              onClick={() => handleApplyAIRecommendation(row.id)}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '11px',
-                                backgroundColor: '#ff9800',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              適用
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleApplyAIRecommendation(row.id)}
+                            style={{
+                              padding: '4px 8px',
+                              fontSize: '11px',
+                              backgroundColor: '#ff9800',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            適用
+                          </button>
                         </td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.major}</td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.middle}</td>
