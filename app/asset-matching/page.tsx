@@ -13,10 +13,7 @@ interface MatchingData {
   majorCategory: string;
   middleCategory: string;
   itemManagement: string;
-  ai1: AIRecommendation;
-  ai2: AIRecommendation;
-  ai3: AIRecommendation;
-  selectedAI: number;
+  aiRecommendation: AIRecommendation;
   status: 'pending' | 'completed';
 }
 
@@ -46,28 +43,13 @@ export default function AssetMatchingPage() {
       majorCategory: '',
       middleCategory: '',
       itemManagement: '',
-      ai1: {
+      aiRecommendation: {
         major: '医療機器',
         middle: '画像診断装置',
         item: 'MRI装置',
         manufacturer: 'シーメンスヘルスケア',
         model: 'MAGNETOM Vida 3T'
       },
-      ai2: {
-        major: '医療機器',
-        middle: '画像診断装置',
-        item: 'MRI装置（汎用）',
-        manufacturer: 'シーメンス',
-        model: 'MAGNETOMシリーズ'
-      },
-      ai3: {
-        major: '医療機器',
-        middle: '診断機器',
-        item: '磁気共鳴画像診断装置',
-        manufacturer: 'その他',
-        model: '不明'
-      },
-      selectedAI: 1,
       status: 'pending'
     },
     {
@@ -79,28 +61,13 @@ export default function AssetMatchingPage() {
       majorCategory: '',
       middleCategory: '',
       itemManagement: '',
-      ai1: {
+      aiRecommendation: {
         major: '医療機器',
         middle: '画像診断装置',
         item: 'CT装置',
         manufacturer: 'GEヘルスケア',
         model: 'Revolution CT'
       },
-      ai2: {
-        major: '医療機器',
-        middle: '画像診断装置',
-        item: 'CT装置（汎用）',
-        manufacturer: 'GE',
-        model: 'Revolution シリーズ'
-      },
-      ai3: {
-        major: '医療機器',
-        middle: '診断機器',
-        item: 'コンピュータ断層撮影装置',
-        manufacturer: 'その他',
-        model: '不明'
-      },
-      selectedAI: 1,
       status: 'pending'
     },
     {
@@ -112,28 +79,13 @@ export default function AssetMatchingPage() {
       majorCategory: '',
       middleCategory: '',
       itemManagement: '',
-      ai1: {
+      aiRecommendation: {
         major: '医療機器',
         middle: '生命維持装置',
         item: '人工呼吸器',
         manufacturer: 'ドレーゲル',
         model: 'Savina 300'
       },
-      ai2: {
-        major: '医療機器',
-        middle: '生命維持装置',
-        item: '人工呼吸器（汎用）',
-        manufacturer: 'ドレーゲル',
-        model: 'Savinaシリーズ'
-      },
-      ai3: {
-        major: '医療機器',
-        middle: '呼吸器系装置',
-        item: '呼吸補助装置',
-        manufacturer: 'その他',
-        model: '不明'
-      },
-      selectedAI: 1,
       status: 'pending'
     }
   ];
@@ -162,12 +114,6 @@ export default function AssetMatchingPage() {
       newSelected.add(id);
     }
     setSelectedRows(newSelected);
-  };
-
-  const handleAISelection = (rowId: number, aiIndex: number) => {
-    setData(data.map(row =>
-      row.id === rowId ? { ...row, selectedAI: aiIndex } : row
-    ));
   };
 
   const toggleEditMode = (id: number) => {
@@ -412,9 +358,7 @@ export default function AssetMatchingPage() {
                   </th>
                   <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>No.</th>
                   <th colSpan={7} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600' }}>固定資産台帳データ</th>
-                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI推薦1</th>
-                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fce4ec', fontWeight: '600' }}>AI推薦2</th>
-                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#f3e5f5', fontWeight: '600' }}>AI推薦3</th>
+                  <th colSpan={5} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI推薦</th>
                   <th colSpan={2} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 3 }}>操作</th>
                 </tr>
                 <tr style={{ backgroundColor: '#f5f5f5' }}>
@@ -426,22 +370,7 @@ export default function AssetMatchingPage() {
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>個体管理品目</th>
-                  {/* AI推薦1 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', fontSize: '11px' }}>選択</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>個体管理品目</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー名</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
-                  {/* AI推薦2 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', fontSize: '11px' }}>選択</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>個体管理品目</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー名</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
-                  {/* AI推薦3 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', fontSize: '11px' }}>選択</th>
+                  {/* AI推薦 */}
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>個体管理品目</th>
@@ -471,48 +400,12 @@ export default function AssetMatchingPage() {
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.itemManagement}</td>
-                    {/* AI推薦1 */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', backgroundColor: '#fff8e1' }}>
-                      <input
-                        type="radio"
-                        name={`ai-${row.id}`}
-                        checked={row.selectedAI === 1}
-                        onChange={() => handleAISelection(row.id, 1)}
-                      />
-                    </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.ai1.major}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.ai1.middle}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.ai1.item}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.ai1.manufacturer}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.ai1.model}</td>
-                    {/* AI推薦2 */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', backgroundColor: '#fce4ec' }}>
-                      <input
-                        type="radio"
-                        name={`ai-${row.id}`}
-                        checked={row.selectedAI === 2}
-                        onChange={() => handleAISelection(row.id, 2)}
-                      />
-                    </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fce4ec' }}>{row.ai2.major}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fce4ec' }}>{row.ai2.middle}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fce4ec' }}>{row.ai2.item}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fce4ec' }}>{row.ai2.manufacturer}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fce4ec' }}>{row.ai2.model}</td>
-                    {/* AI推薦3 */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', backgroundColor: '#f3e5f5' }}>
-                      <input
-                        type="radio"
-                        name={`ai-${row.id}`}
-                        checked={row.selectedAI === 3}
-                        onChange={() => handleAISelection(row.id, 3)}
-                      />
-                    </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#f3e5f5' }}>{row.ai3.major}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#f3e5f5' }}>{row.ai3.middle}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#f3e5f5' }}>{row.ai3.item}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#f3e5f5' }}>{row.ai3.manufacturer}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#f3e5f5' }}>{row.ai3.model}</td>
+                    {/* AI推薦 */}
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.major}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.middle}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.item}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.manufacturer}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.model}</td>
                     {/* 操作 */}
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 80, backgroundColor: row.status === 'completed' ? '#e8f5e9' : 'white', zIndex: 1 }}>
                       <button
