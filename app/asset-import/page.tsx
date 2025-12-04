@@ -547,24 +547,25 @@ export default function AssetImportPage() {
               </button>
             ) : (
               <button
-                disabled
+                onClick={() => router.push('/asset-matching')}
                 style={{
                   flex: isMobile ? 'none' : 1,
                   padding: '14px 24px',
-                  background: '#d0d0d0',
-                  color: '#999',
+                  background: '#27ae60',
+                  color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: isMobile ? '14px' : '15px',
                   fontWeight: 600,
-                  cursor: 'not-allowed',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px'
                 }}
               >
-                <span>ファイルを選択してください</span>
+                <span>次へ（モック）</span>
+                <span>→</span>
               </button>
             )}
           </div>
