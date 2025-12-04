@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useResponsive } from '@/lib/hooks/useResponsive';
-import { useDataMatchingFilters } from '@/lib/hooks/useDataMatchingFilters';
-import { SurveyData, MatchingStatus, MatchingEditData } from '@/lib/types/data-matching';
-import { surveyDataSample } from '@/lib/data/data-matching-sample';
+import React, { useState, useEffect, useMemo } from 'react';
+import { LedgerData, MatchingStatus, DataMatchingFilters } from '@/lib/types/data-matching';
+import { ledgerDataSample } from '@/lib/data/data-matching-sample';
+import { FACILITY_CONSTANTS } from '@/lib/types/facility';
 
 const MATCHING_STATUS_OPTIONS: MatchingStatus[] = [
   '完全一致',
@@ -17,36 +15,40 @@ const MATCHING_STATUS_OPTIONS: MatchingStatus[] = [
   '未突合'
 ];
 
-export default function DataMatchingPage() {
-  const router = useRouter();
-  const { isMobile } = useResponsive();
-  const [data, setData] = useState<SurveyData[]>(surveyDataSample);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingData, setEditingData] = useState<SurveyData | null>(null);
-  const [ledgerWindowRef, setLedgerWindowRef] = useState<Window | null>(null);
+export default function LedgerWindowPage() {
+  const [data, setData] = useState<LedgerData[]>(ledgerDataSample);
+  const [filters, setFilters] = useState<DataMatchingFilters>({
+    category: '',
+    department: '',
+    section: '',
+    majorCategory: '',
+    middleCategory: '',
+    matchingStatus: '全て',
+    keyword: ''
+  });
 
-  // フィルターフック
-  const {
-    filters,
-    setFilters,
-    filteredData,
-    departmentOptions,
-    sectionOptions,
-    categoryOptions,
-    majorCategoryOptions,
-    middleCategoryOptions,
-    resetFilters
-  } = useDataMatchingFilters({ data });
+  // 初回ロード時にLocalStorageからフィルターを読み込む
+  useEffect(() => {
+    const savedFilters = localStorage.getItem('dataMatchingFilters');
+    if (savedFilters) {
+      try {
+        setFilters(JSON.parse(savedFilters));
+      } catch (error) {
+        console.error('Failed to parse filters from localStorage', error);
+      }
+    }
+  }, []);
 
-  // フィルターをLocalStorageに保存（他ウィンドウと連動）
+  // フィルター変更時にLocalStorageに保存し、他のウィンドウに通知
   useEffect(() => {
     localStorage.setItem('dataMatchingFilters', JSON.stringify(filters));
 
-    // 台帳ウィンドウが開いている場合、直接メッセージを送信
-    if (ledgerWindowRef && !ledgerWindowRef.closed) {
-      ledgerWindowRef.postMessage({ type: 'FILTER_UPDATE', filters }, '*');
+    // 親ウィンドウと他のウィンドウにフィルター変更を通知
+    if (window.opener) {
+      window.opener.postMessage({ type: 'FILTER_UPDATE', filters }, '*');
     }
-  }, [filters, ledgerWindowRef]);
+    window.postMessage({ type: 'FILTER_UPDATE', filters }, '*');
+  }, [filters]);
 
   // 他のウィンドウからのフィルター更新を受信
   useEffect(() => {
@@ -58,64 +60,81 @@ export default function DataMatchingPage() {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [setFilters]);
+  }, []);
 
-  const handleBack = () => {
-    router.back();
-  };
+  // 部門オプション
+  const departmentOptions = useMemo(() => [...FACILITY_CONSTANTS.divisions], []);
 
-  const openLedgerWindow = () => {
-    // 台帳ウィンドウを開く（別ページとして）
-    const width = 1400;
-    const height = 800;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
+  // 部署オプション（選択された部門に応じて動的に生成）
+  const sectionOptions = useMemo(() => {
+    if (!filters.department) return [];
+    const sections = FACILITY_CONSTANTS.sectionsByDivision[filters.department as keyof typeof FACILITY_CONSTANTS.sectionsByDivision];
+    return sections ? [...sections] : [];
+  }, [filters.department]);
 
-    const newWindow = window.open(
-      '/data-matching/ledger',
-      'ledgerWindow',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
+  // カテゴリオプション
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(data.map(d => d.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [data]);
 
-    if (newWindow) {
-      setLedgerWindowRef(newWindow);
+  // 大分類オプション
+  const majorCategoryOptions = useMemo(() => {
+    const uniqueMajorCategories = Array.from(new Set(data.map(d => d.majorCategory)));
+    return uniqueMajorCategories.filter(Boolean);
+  }, [data]);
 
-      // ウィンドウが閉じられたときの処理
-      const checkWindowClosed = setInterval(() => {
-        if (newWindow.closed) {
-          setLedgerWindowRef(null);
-          clearInterval(checkWindowClosed);
-        }
-      }, 1000);
+  // 中分類オプション
+  const middleCategoryOptions = useMemo(() => {
+    const uniqueMiddleCategories = Array.from(new Set(data.map(d => d.middleCategory)));
+    return uniqueMiddleCategories.filter(Boolean);
+  }, [data]);
+
+  // フィルタリング
+  const filteredData = useMemo(() => {
+    let filtered = data;
+
+    if (filters.department) {
+      filtered = filtered.filter(d => d.department === filters.department);
     }
-  };
+    if (filters.section) {
+      filtered = filtered.filter(d => d.section === filters.section);
+    }
+    if (filters.category) {
+      filtered = filtered.filter(d => d.category === filters.category);
+    }
+    if (filters.majorCategory) {
+      filtered = filtered.filter(d => d.majorCategory === filters.majorCategory);
+    }
+    if (filters.middleCategory) {
+      filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
+    }
+    if (filters.matchingStatus && filters.matchingStatus !== '全て') {
+      filtered = filtered.filter(d => d.matchingStatus === filters.matchingStatus);
+    }
+    if (filters.keyword) {
+      const keyword = filters.keyword.toLowerCase();
+      filtered = filtered.filter(d =>
+        d.assetNo?.toLowerCase().includes(keyword) ||
+        d.item?.toLowerCase().includes(keyword) ||
+        d.manufacturer?.toLowerCase().includes(keyword) ||
+        d.model?.toLowerCase().includes(keyword)
+      );
+    }
 
-  const handleEdit = (row: SurveyData) => {
-    setEditingData({ ...row });
-    setShowEditModal(true);
-  };
+    return filtered;
+  }, [data, filters]);
 
-  const closeEditModal = () => {
-    setShowEditModal(false);
-    setEditingData(null);
-  };
-
-  const saveEdit = () => {
-    if (!editingData) return;
-
-    // データを更新
-    const updatedData = data.map(item =>
-      item.id === editingData.id
-        ? {
-            ...editingData,
-            matchedAt: new Date().toISOString(),
-            matchedBy: '現在のユーザー' // 実際にはログインユーザー情報を使用
-          }
-        : item
-    );
-
-    setData(updatedData);
-    closeEditModal();
+  const resetFilters = () => {
+    setFilters({
+      category: '',
+      department: '',
+      section: '',
+      majorCategory: '',
+      middleCategory: '',
+      matchingStatus: '全て',
+      keyword: ''
+    });
   };
 
   const getStatusColor = (status: MatchingStatus) => {
@@ -143,33 +162,18 @@ export default function DataMatchingPage() {
     未突合: data.filter(d => d.matchingStatus === '未突合').length
   };
 
-  if (isMobile) {
-    return (
-      <div style={{ padding: '16px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-        <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }}>
-          データ突合
-        </div>
-        <div style={{ color: '#d32f2f', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
-          この画面はデスクトップ表示に最適化されています
-        </div>
-        <button
-          onClick={handleBack}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
-        >
-          戻る
-        </button>
-      </div>
-    );
-  }
+  const handleSelectAsset = (asset: LedgerData) => {
+    // 親ウィンドウに選択した資産情報を送信
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'ASSET_SELECTED',
+        asset: asset
+      }, '*');
+    }
+
+    // 選択後もウィンドウは開いたまま（ユーザーが複数の資産を参照できるように）
+    alert(`資産番号 ${asset.assetNo} を選択しました。\n親ウィンドウで編集モーダルに反映してください。`);
+  };
 
   return (
     <div style={{
@@ -191,44 +195,12 @@ export default function DataMatchingPage() {
           maxWidth: '1600px',
           margin: '0 auto'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
-              onClick={handleBack}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <span>←</span> 戻る
-            </button>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
-              データ突合
-            </h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
+            固定資産台帳（参照用）
+          </h1>
+          <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
+            ※フィルターは自動的に現有品調査リストと連動します
           </div>
-          <button
-            onClick={openLedgerWindow}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#1976d2',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span>🗗</span> 資産台帳を別窓で開く
-          </button>
         </div>
       </header>
 
@@ -253,9 +225,7 @@ export default function DataMatchingPage() {
             <span style={{ color: getStatusColor('部分一致'), fontWeight: '600', marginLeft: '4px' }}>部分一致 {stats.部分一致}</span> |
             <span style={{ color: getStatusColor('数量不一致'), fontWeight: '600', marginLeft: '4px' }}>数量不一致 {stats.数量不一致}</span> |
             <span style={{ color: getStatusColor('再確認'), fontWeight: '600', marginLeft: '4px' }}>再確認 {stats.再確認}</span> |
-            <span style={{ color: getStatusColor('未確認'), fontWeight: '600', marginLeft: '4px' }}>未確認 {stats.未確認}</span> |
-            <span style={{ color: getStatusColor('未登録'), fontWeight: '600', marginLeft: '4px' }}>未登録 {stats.未登録}</span> |
-            <span style={{ color: getStatusColor('未突合'), fontWeight: '600', marginLeft: '4px' }}>未突合 {stats.未突合}</span>
+            <span style={{ color: getStatusColor('未確認'), fontWeight: '600', marginLeft: '4px' }}>未確認 {stats.未確認}</span>
           </span>
         </div>
       </div>
@@ -429,7 +399,7 @@ export default function DataMatchingPage() {
               marginBottom: '12px'
             }}>
               <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
-                現有品調査リスト
+                固定資産台帳リスト
               </h2>
               <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
                 表示: {filteredData.length}件 / 全体: {data.length}件
@@ -445,7 +415,6 @@ export default function DataMatchingPage() {
                 <thead>
                   <tr style={{ backgroundColor: '#f5f5f5' }}>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>QRコード</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部署</th>
@@ -457,7 +426,6 @@ export default function DataMatchingPage() {
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>型式</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>数量</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>取得年月日</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>メモ</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
@@ -477,8 +445,7 @@ export default function DataMatchingPage() {
                           {row.matchingStatus}
                         </span>
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.qrCode}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.roomName || '-'}</td>
@@ -488,32 +455,29 @@ export default function DataMatchingPage() {
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>{row.quantity}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.acquisitionDate || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', minWidth: '300px', maxWidth: '500px' }}>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {row.memo || '-'}
-                        </div>
-                      </td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.acquisitionDate}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                         <button
-                          onClick={() => handleEdit(row)}
+                          onClick={() => handleSelectAsset(row)}
                           style={{
                             padding: '4px 12px',
                             fontSize: '12px',
-                            backgroundColor: '#e3f2fd',
+                            backgroundColor: row.matchingStatus === '未確認' ? '#e3f2fd' : '#f5f5f5',
                             border: 'none',
                             borderRadius: '4px',
-                            cursor: 'pointer'
+                            cursor: row.matchingStatus === '未確認' ? 'pointer' : 'not-allowed',
+                            color: row.matchingStatus === '未確認' ? '#000' : '#999'
                           }}
+                          disabled={row.matchingStatus !== '未確認'}
                         >
-                          編集
+                          選択
                         </button>
                       </td>
                     </tr>
                   ))}
                   {filteredData.length === 0 && (
                     <tr>
-                      <td colSpan={15} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                      <td colSpan={13} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
                         該当するデータがありません
                       </td>
                     </tr>
@@ -522,201 +486,26 @@ export default function DataMatchingPage() {
               </table>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Edit Modal */}
-      {showEditModal && editingData && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+          {/* 使用方法の説明 */}
           <div style={{
-            backgroundColor: '#ffffff',
+            backgroundColor: '#e3f2fd',
             borderRadius: '8px',
-            width: '90%',
-            maxWidth: '800px',
-            maxHeight: '80vh',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+            padding: '16px',
+            fontSize: '14px',
+            color: '#1976d2'
           }}>
-            {/* Modal Header */}
-            <div style={{
-              padding: '20px',
-              borderBottom: '1px solid #e0e0e0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>
-                突合情報を編集
-              </h3>
-              <button
-                onClick={closeEditModal}
-                style={{
-                  fontSize: '24px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                  color: '#999'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: '20px', flex: 1, overflow: 'auto' }}>
-              {/* 現有品情報表示 */}
-              <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', color: '#2c3e50' }}>現有品情報</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '8px', fontSize: '14px' }}>
-                  <div style={{ color: '#5a6c7d', fontWeight: '600' }}>QRコード:</div>
-                  <div>{editingData.qrCode}</div>
-                  <div style={{ color: '#5a6c7d', fontWeight: '600' }}>品目:</div>
-                  <div>{editingData.item}</div>
-                  <div style={{ color: '#5a6c7d', fontWeight: '600' }}>メーカー:</div>
-                  <div>{editingData.manufacturer || '-'}</div>
-                  <div style={{ color: '#5a6c7d', fontWeight: '600' }}>型式:</div>
-                  <div>{editingData.model || '-'}</div>
-                  <div style={{ color: '#5a6c7d', fontWeight: '600' }}>数量:</div>
-                  <div>{editingData.quantity}</div>
-                  <div style={{ color: '#5a6c7d', fontWeight: '600' }}>部門/部署:</div>
-                  <div>{editingData.department} / {editingData.section}</div>
-                </div>
-              </div>
-
-              {/* 突合情報編集 */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#2c3e50' }}>
-                  突合状況 <span style={{ color: '#d32f2f' }}>*</span>
-                </label>
-                <select
-                  value={editingData.matchingStatus}
-                  onChange={(e) => setEditingData({ ...editingData, matchingStatus: e.target.value as MatchingStatus })}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  {MATCHING_STATUS_OPTIONS.map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#2c3e50' }}>
-                  資産番号
-                </label>
-                <input
-                  type="text"
-                  value={editingData.assetNo || ''}
-                  onChange={(e) => setEditingData({ ...editingData, assetNo: e.target.value })}
-                  placeholder="台帳の資産番号を入力"
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-                <div style={{ marginTop: '4px', fontSize: '12px', color: '#5a6c7d' }}>
-                  台帳から選択した資産の番号を入力してください
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#2c3e50' }}>
-                  メモ
-                </label>
-                <textarea
-                  value={editingData.memo || ''}
-                  onChange={(e) => setEditingData({ ...editingData, memo: e.target.value })}
-                  placeholder="突合時の注意事項やコメントを入力"
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {/* 突合履歴 */}
-              {editingData.matchedAt && (
-                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#e8f5e9', borderRadius: '4px', fontSize: '13px' }}>
-                  <div style={{ color: '#2e7d32', fontWeight: '600' }}>
-                    最終突合: {new Date(editingData.matchedAt).toLocaleString('ja-JP')}
-                  </div>
-                  {editingData.matchedBy && (
-                    <div style={{ color: '#5a6c7d', marginTop: '4px' }}>
-                      実施者: {editingData.matchedBy}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: '20px',
-              borderTop: '1px solid #e0e0e0',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}>
-              <button
-                onClick={closeEditModal}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={saveEdit}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}
-              >
-                保存
-              </button>
-            </div>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>使用方法</h3>
+            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              <li>このウィンドウは固定資産台帳の参照用です</li>
+              <li>フィルターは現有品調査リストと自動的に連動します</li>
+              <li>「未確認」状態の資産のみ選択ボタンが有効です</li>
+              <li>選択ボタンをクリックすると、親ウィンドウの編集モーダルに資産番号が反映されます</li>
+              <li>ウィンドウは開いたままで、複数の資産を参照できます</li>
+            </ul>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
