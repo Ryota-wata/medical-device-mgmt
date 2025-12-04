@@ -33,6 +33,307 @@ export default function AssetMatchingPage() {
     resetFilters
   } = useAssetMatchingFilters({ data, assetMasters });
 
+  const sampleData: MatchingData[] = [
+    {
+      id: 1,
+      fixedAssetNo: 'FA-2023-001',
+      managementDeviceNo: 'MD-001-2023',
+      department: '放射線科',
+      section: 'X線撮影室',
+      roomName: '一般撮影室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'シーメンスヘルスケア',
+      model: 'MAGNETOM Vida 3T',
+      quantityUnit: '1台',
+      inspectionDate: '2023-03-15',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '画像診断装置',
+        item: 'MRI装置',
+        manufacturer: 'シーメンスヘルスケア',
+        model: 'MAGNETOM Vida 3T'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 2,
+      fixedAssetNo: 'FA-2023-002',
+      managementDeviceNo: 'MD-002-2023',
+      department: '放射線科',
+      section: 'CT室',
+      roomName: 'CT1号機室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'GEヘルスケア',
+      model: 'Revolution CT',
+      quantityUnit: '1台',
+      inspectionDate: '2023-05-20',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '画像診断装置',
+        item: 'CT装置',
+        manufacturer: 'GEヘルスケア',
+        model: 'Revolution CT'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 3,
+      fixedAssetNo: 'FA-2023-003',
+      managementDeviceNo: 'MD-003-2023',
+      department: '手術部',
+      section: '中央手術室',
+      roomName: '手術室1',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'ドレーゲル',
+      model: 'Savina 300',
+      quantityUnit: '1台',
+      inspectionDate: '2023-02-10',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '生命維持装置',
+        item: '人工呼吸器',
+        manufacturer: 'ドレーゲル',
+        model: 'Savina 300'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 4,
+      fixedAssetNo: 'FA-2023-004',
+      managementDeviceNo: 'MD-004-2023',
+      department: '検査科',
+      section: '検体検査室',
+      roomName: '生化学検査室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'シスメックス',
+      model: 'XN-3000',
+      quantityUnit: '1台',
+      inspectionDate: '2023-01-20',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '検査装置',
+        item: '自動血球計数器',
+        manufacturer: 'シスメックス',
+        model: 'XN-3000'
+      },
+      aiApplied: false,
+      status: 'completed'
+    },
+    {
+      id: 5,
+      fixedAssetNo: 'FA-2023-005',
+      managementDeviceNo: 'MD-005-2023',
+      department: '内科',
+      section: '循環器内科',
+      roomName: '外来診察室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'フクダ電子',
+      model: 'FCP-8800',
+      quantityUnit: '1台',
+      inspectionDate: '2023-04-12',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '生体検査装置',
+        item: '心電計',
+        manufacturer: 'フクダ電子',
+        model: 'FCP-8800'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 6,
+      fixedAssetNo: 'FA-2023-006',
+      managementDeviceNo: 'MD-006-2023',
+      department: '手術部',
+      section: 'ICU',
+      roomName: 'ICU-1',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'フィリップス',
+      model: 'IntelliVue MX800',
+      quantityUnit: '1台',
+      inspectionDate: '2023-06-05',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '生命維持装置',
+        item: '患者モニタ',
+        manufacturer: 'フィリップス',
+        model: 'IntelliVue MX800'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 7,
+      fixedAssetNo: 'FA-2023-007',
+      managementDeviceNo: 'MD-007-2023',
+      department: '外科',
+      section: '一般外科',
+      roomName: '内視鏡室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'オリンパス',
+      model: 'CV-290',
+      quantityUnit: '1台',
+      inspectionDate: '2023-07-18',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '処置用機器',
+        item: '内視鏡ビデオシステム',
+        manufacturer: 'オリンパス',
+        model: 'CV-290'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 8,
+      fixedAssetNo: 'FA-2023-008',
+      managementDeviceNo: 'MD-008-2023',
+      department: '放射線科',
+      section: 'MRI室',
+      roomName: 'MRI操作室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'キヤノンメディカル',
+      model: 'Vantage Galan 3T',
+      quantityUnit: '1台',
+      inspectionDate: '2023-08-22',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '画像診断装置',
+        item: 'MRI装置',
+        manufacturer: 'キヤノンメディカル',
+        model: 'Vantage Galan 3T'
+      },
+      aiApplied: false,
+      status: 'pending'
+    },
+    {
+      id: 9,
+      fixedAssetNo: 'FA-2023-009',
+      managementDeviceNo: 'MD-009-2023',
+      department: '薬剤部',
+      section: '調剤室',
+      roomName: '無菌調剤室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'トーショー',
+      model: 'TPN-001',
+      quantityUnit: '1台',
+      inspectionDate: '2023-09-10',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '調剤用機器',
+        item: '自動調剤装置',
+        manufacturer: 'トーショー',
+        model: 'TPN-001'
+      },
+      aiApplied: false,
+      status: 'completed'
+    },
+    {
+      id: 10,
+      fixedAssetNo: 'FA-2023-010',
+      managementDeviceNo: 'MD-010-2023',
+      department: '検査科',
+      section: '生理検査室',
+      roomName: '超音波検査室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'GEヘルスケア',
+      model: 'LOGIQ E10',
+      quantityUnit: '1台',
+      inspectionDate: '2023-10-05',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '画像診断装置',
+        item: '超音波診断装置',
+        manufacturer: 'GEヘルスケア',
+        model: 'LOGIQ E10'
+      },
+      aiApplied: false,
+      status: 'pending'
+    }
+  ];
+
+  const [data, setData] = useState(sampleData);
+
+  // フィルターオプションを生成
+  const departmentOptions = useMemo(() => [...FACILITY_CONSTANTS.divisions], []);
+
+  const sectionOptions = useMemo(() => {
+    if (!filters.department) return [];
+    const sections = FACILITY_CONSTANTS.sectionsByDivision[filters.department as keyof typeof FACILITY_CONSTANTS.sectionsByDivision];
+    return sections ? [...sections] : [];
+  }, [filters.department]);
+
+  const categoryOptions = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
+    return uniqueCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const majorCategoryOptions = useMemo(() => {
+    const uniqueMajorCategories = Array.from(new Set(assetMasters.map(a => a.largeClass)));
+    return uniqueMajorCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  const middleCategoryOptions = useMemo(() => {
+    const uniqueMiddleCategories = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
+    return uniqueMiddleCategories.filter(Boolean);
+  }, [assetMasters]);
+
+  // フィルタリングされたデータ
+  const filteredData = useMemo(() => {
+    let filtered = data;
+
+    if (filters.department) {
+      filtered = filtered.filter(d => d.department === filters.department);
+    }
+    if (filters.section) {
+      filtered = filtered.filter(d => d.section === filters.section);
+    }
+    if (filters.category) {
+      filtered = filtered.filter(d => d.category === filters.category);
+    }
+    if (filters.majorCategory) {
+      filtered = filtered.filter(d => d.majorCategory === filters.majorCategory);
+    }
+    if (filters.middleCategory) {
+      filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
+    }
+
+    return filtered;
+  }, [data, filters]);
 
   const handleBack = () => {
     router.back();
@@ -74,8 +375,63 @@ export default function AssetMatchingPage() {
   const handleEditFieldChange = (field: 'majorCategory' | 'middleCategory' | 'item' | 'manufacturer' | 'model', value: string) => {
     if (!editingData) return;
 
-    // updateFieldWithParentsユーティリティを使用して親フィールドを自動更新
-    const updates = updateFieldWithParents(field, value, editingData, assetMasters);
+    let updates: Partial<MatchingData> = { [field]: value };
+
+    // 子から親への自動選択
+    if (value) {
+      // 選択された値に一致する資産を検索
+      const matchingAssets = assetMasters.filter(asset => {
+        if (field === 'model') return asset.model === value;
+        if (field === 'manufacturer') return asset.maker === value;
+        if (field === 'item') return asset.item === value;
+        if (field === 'middleCategory') return asset.mediumClass === value;
+        if (field === 'majorCategory') return asset.largeClass === value;
+        return false;
+      });
+
+      if (matchingAssets.length > 0) {
+        const asset = matchingAssets[0];
+
+        // 型式が選択された場合、全ての親を自動設定
+        if (field === 'model') {
+          updates = {
+            ...updates,
+            manufacturer: asset.maker,
+            item: asset.item,
+            middleCategory: asset.mediumClass,
+            majorCategory: asset.largeClass
+          };
+        }
+        // メーカーが選択された場合、品目以上を自動設定
+        else if (field === 'manufacturer') {
+          const specificAsset = matchingAssets.find(a =>
+            !editingData.model || a.model === editingData.model
+          ) || asset;
+          updates = {
+            ...updates,
+            item: specificAsset.item,
+            middleCategory: specificAsset.mediumClass,
+            majorCategory: specificAsset.largeClass
+          };
+        }
+        // 品目が選択された場合、中分類と大分類を自動設定
+        else if (field === 'item') {
+          updates = {
+            ...updates,
+            middleCategory: asset.mediumClass,
+            majorCategory: asset.largeClass
+          };
+        }
+        // 中分類が選択された場合、大分類を自動設定
+        else if (field === 'middleCategory') {
+          updates = {
+            ...updates,
+            majorCategory: asset.largeClass
+          };
+        }
+      }
+    }
+
     setEditingData({ ...editingData, ...updates });
   };
 
@@ -339,7 +695,13 @@ export default function AssetMatchingPage() {
               />
             </div>
             <button
-              onClick={resetFilters}
+              onClick={() => setFilters({
+                department: '',
+                section: '',
+                category: '',
+                majorCategory: '',
+                middleCategory: ''
+              })}
               style={{
                 padding: '8px 16px',
                 backgroundColor: '#95a5a6',
