@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
@@ -53,8 +53,6 @@ export default function RegistrationEditPage() {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedRowForPhoto, setSelectedRowForPhoto] = useState<RegistrationData | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
-  const [masterSearchKeyword, setMasterSearchKeyword] = useState('');
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -251,11 +249,11 @@ export default function RegistrationEditPage() {
         { id: '6-1', url: 'https://placehold.co/800x600/fff9c4/f57f17?text=Photo+1', filename: '血球計数器本体.jpg' },
         { id: '6-2', url: 'https://placehold.co/800x600/fff9c4/f57f17?text=Photo+2', filename: '型式プレート.jpg' }
       ],
-      largeClass: '検査装置（フリー入力）',
-      mediumClass: '血液検査装置（フリー入力）',
-      item: '自動血球計数器 XYZ-2000（フリー入力）',
-      manufacturer: 'ABC医療機器（フリー入力）',
-      model: 'XYZ-2000-Pro（フリー入力）',
+      largeClass: '検査装置',
+      mediumClass: '血液検査装置',
+      item: '自動血球計数器 XYZ-2000',
+      manufacturer: 'ABC医療機器',
+      model: 'XYZ-2000-Pro',
       width: '450',
       depth: '500',
       height: '400',
@@ -282,16 +280,16 @@ export default function RegistrationEditPage() {
       photos: [
         { id: '7-1', url: 'https://placehold.co/800x600/e1f5fe/0277bd?text=Photo+1', filename: 'スチール書庫.jpg' }
       ],
-      largeClass: 'オフィス家具（フリー入力）',
+      largeClass: 'オフィス家具',
       mediumClass: '書庫',
-      item: 'スチール書庫 H1800（フリー入力）',
+      item: 'スチール書庫 H1800',
       manufacturer: 'コクヨ',
-      model: 'S-D36F1N（フリー入力）',
+      model: 'S-D36F1N',
       width: '900',
       depth: '400',
       height: '1800',
-      remarks: '中分類と品目と型式がマスタ外',
-      masterId: 'M005'
+      remarks: '',
+      masterId: ''
     }
   ];
 
@@ -386,9 +384,10 @@ export default function RegistrationEditPage() {
     });
   };
 
-  // マスタに存在するかチェックする関数
-  const isInMaster = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string): boolean => {
+  // マスタに存在するかチェックする関数（masterId が設定されている場合はマスタ登録済みとみなす）
+  const isInMaster = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string, masterId: string): boolean => {
     if (!value) return true; // 空の場合は通常表示
+    if (masterId) return true; // masterId が設定されている場合はマスタ登録済み
 
     const fieldMap = {
       largeClass: 'largeClass',
@@ -403,8 +402,8 @@ export default function RegistrationEditPage() {
   };
 
   // フリー入力セルのスタイル
-  const getFreeInputCellStyle = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string, baseStyle: React.CSSProperties): React.CSSProperties => {
-    const isFreeInput = !isInMaster(field, value);
+  const getFreeInputCellStyle = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string, masterId: string, baseStyle: React.CSSProperties): React.CSSProperties => {
+    const isFreeInput = !isInMaster(field, value, masterId);
     return {
       ...baseStyle,
       backgroundColor: isFreeInput ? '#fff9c4' : (baseStyle.backgroundColor || 'white')
@@ -482,46 +481,47 @@ export default function RegistrationEditPage() {
     setSelectedPhoto(null);
   };
 
-  const handleOpenMasterModal = () => {
-    setIsMasterModalOpen(true);
-    setMasterSearchKeyword('');
-  };
+  const handleOpenAssetMaster = () => {
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
 
-  const handleCloseMasterModal = () => {
-    setIsMasterModalOpen(false);
-    setMasterSearchKeyword('');
-  };
-
-  const handleApplyMaster = (master: typeof assetMasters[0]) => {
-    if (!editingData) return;
-
-    setEditingData({
-      ...editingData,
-      largeClass: master.largeClass,
-      mediumClass: master.mediumClass,
-      item: master.item,
-      manufacturer: master.maker,
-      model: master.model,
-      masterId: master.id
-    });
-
-    setIsMasterModalOpen(false);
-    setMasterSearchKeyword('');
-  };
-
-  // マスタ検索フィルター
-  const filteredMasters = useMemo(() => {
-    if (!masterSearchKeyword) return assetMasters;
-
-    const keyword = masterSearchKeyword.toLowerCase();
-    return assetMasters.filter(master =>
-      master.largeClass.toLowerCase().includes(keyword) ||
-      master.mediumClass.toLowerCase().includes(keyword) ||
-      master.item.toLowerCase().includes(keyword) ||
-      master.maker.toLowerCase().includes(keyword) ||
-      master.model.toLowerCase().includes(keyword)
+    window.open(
+      '/asset-master',
+      'AssetMasterWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
-  }, [assetMasters, masterSearchKeyword]);
+  };
+
+  // 資産マスタからのメッセージを受信
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // セキュリティチェック: 同じオリジンからのメッセージのみ受け入れる
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'ASSET_SELECTED' && editingData) {
+        const assetMasters = event.data.assets as any[];
+
+        // 最初の資産を適用
+        if (assetMasters.length > 0) {
+          const master = assetMasters[0];
+          setEditingData({
+            ...editingData,
+            largeClass: master.largeClass,
+            mediumClass: master.mediumClass,
+            item: master.item,
+            manufacturer: master.maker,
+            model: master.model,
+            masterId: master.id
+          });
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [editingData]);
 
   const handleConfirm = (id: number) => {
     const row = filteredData.find(r => r.id === id);
@@ -872,7 +872,7 @@ export default function RegistrationEditPage() {
                       📷 {row.photoCount}枚
                     </button>
                   </td>
-                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -882,7 +882,7 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.largeClass}
                   </td>
-                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -892,7 +892,7 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.mediumClass}
                   </td>
-                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -902,7 +902,7 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.item}
                   </td>
-                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -912,7 +912,7 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.manufacturer}
                   </td>
-                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -967,18 +967,19 @@ export default function RegistrationEditPage() {
                       {editingRow === row.id ? (
                         <>
                           <button
-                            onClick={handleOpenMasterModal}
+                            onClick={handleOpenAssetMaster}
                             style={{
                               padding: '4px 8px',
                               fontSize: '12px',
-                              backgroundColor: '#fff9c4',
-                              border: '1px solid #f57f17',
+                              backgroundColor: '#27ae60',
+                              color: 'white',
+                              border: 'none',
                               borderRadius: '4px',
                               cursor: 'pointer',
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            マスタから選択
+                            📋 資産マスタを別ウィンドウで開く
                           </button>
                           <button
                             onClick={handleSave}
@@ -1072,126 +1073,6 @@ export default function RegistrationEditPage() {
           一括確定
         </button>
       </footer>
-
-      {/* Asset Master Modal */}
-      {isMasterModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '90%',
-            maxWidth: '1200px',
-            maxHeight: '90%',
-            overflow: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>資産マスタから選択</h2>
-              <button
-                onClick={handleCloseMasterModal}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f5f5f5',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                閉じる
-              </button>
-            </div>
-
-            <div>
-              <input
-                type="text"
-                value={masterSearchKeyword}
-                onChange={(e) => setMasterSearchKeyword(e.target.value)}
-                placeholder="検索キーワード（大分類、中分類、品目、メーカー、型式）"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
-            <div style={{ overflow: 'auto', flex: 1 }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '13px'
-              }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>Category</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>大分類</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>中分類</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>型式</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMasters.slice(0, 50).map((master) => (
-                    <tr key={master.id} style={{ backgroundColor: 'white' }}>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{master.category}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{master.largeClass}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{master.mediumClass}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{master.item}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{master.maker}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{master.model}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                        <button
-                          onClick={() => handleApplyMaster(master)}
-                          style={{
-                            padding: '4px 12px',
-                            fontSize: '12px',
-                            backgroundColor: '#1976d2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          適用
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredMasters.length > 50 && (
-                <div style={{ textAlign: 'center', padding: '16px', color: '#666' }}>
-                  表示: 上位50件 / 全{filteredMasters.length}件
-                </div>
-              )}
-              {filteredMasters.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '32px', color: '#999' }}>
-                  該当する資産マスタが見つかりません
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Photo Modal */}
       {isPhotoModalOpen && selectedRowForPhoto && (
