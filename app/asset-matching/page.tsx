@@ -322,15 +322,21 @@ export default function AssetMatchingPage() {
     }
   };
 
-  const handleApplyAIRecommendation = () => {
-    if (!editingData) return;
+  const handleApplyAIRecommendation = (rowId: number) => {
+    const row = data.find(r => r.id === rowId);
+    if (!row) return;
 
-    setEditingData({
-      ...editingData,
-      majorCategory: editingData.aiRecommendation.major,
-      middleCategory: editingData.aiRecommendation.middle,
-      item: editingData.aiRecommendation.item
-    });
+    if (editingRow === rowId && editingData) {
+      // 編集中の場合は編集データに反映
+      setEditingData({
+        ...editingData,
+        majorCategory: editingData.aiRecommendation.major,
+        middleCategory: editingData.aiRecommendation.middle,
+        item: editingData.aiRecommendation.item,
+        manufacturer: editingData.aiRecommendation.manufacturer,
+        model: editingData.aiRecommendation.model
+      });
+    }
   };
 
   const handleOpenAssetMaster = () => {
@@ -355,32 +361,6 @@ export default function AssetMatchingPage() {
     setEditingRow(null);
     setEditingData(null);
   };
-
-  // 資産マスタからのメッセージを受信
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // セキュリティチェック: 同じオリジンからのメッセージのみ受け入れる
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'ASSET_SELECTED' && editingData) {
-        const assetMasters = event.data.assets as any[];
-
-        // 最初の資産を適用
-        if (assetMasters.length > 0) {
-          const master = assetMasters[0];
-          setEditingData({
-            ...editingData,
-            majorCategory: master.largeClass,
-            middleCategory: master.mediumClass,
-            item: master.item
-          });
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [editingData]);
 
   const confirmRow = (id: number) => {
     const row = data.find(r => r.id === id);
@@ -626,7 +606,7 @@ export default function AssetMatchingPage() {
                   </th>
                   <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>No.</th>
                   <th colSpan={13} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600' }}>固定資産台帳データ</th>
-                  <th colSpan={5} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI推薦</th>
+                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI推薦</th>
                   <th colSpan={2} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 3 }}>操作</th>
                 </tr>
                 <tr style={{ backgroundColor: '#f5f5f5' }}>
@@ -645,6 +625,7 @@ export default function AssetMatchingPage() {
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>数量／単位</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>検収日</th>
                   {/* AI推薦 */}
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', textAlign: 'center' }}>選択</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>大分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>中分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '150px' }}>品目</th>
@@ -739,12 +720,69 @@ export default function AssetMatchingPage() {
                           )}
                         </td>
 
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.manufacturer}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.model}</td>
+                        {/* 編集可能フィールド: メーカー */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
+                          {isEditing && editingData ? (
+                            <input
+                              type="text"
+                              value={editingData.manufacturer}
+                              onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '4px',
+                                fontSize: '12px',
+                                border: '1px solid #ccc',
+                                borderRadius: '2px'
+                              }}
+                            />
+                          ) : (
+                            displayRow.manufacturer
+                          )}
+                        </td>
+
+                        {/* 編集可能フィールド: 型式 */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
+                          {isEditing && editingData ? (
+                            <input
+                              type="text"
+                              value={editingData.model}
+                              onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '4px',
+                                fontSize: '12px',
+                                border: '1px solid #ccc',
+                                borderRadius: '2px'
+                              }}
+                            />
+                          ) : (
+                            displayRow.model
+                          )}
+                        </td>
+
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.quantityUnit}</td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.inspectionDate}</td>
 
                         {/* AI推薦 */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', textAlign: 'center' }}>
+                          {isEditing && (
+                            <button
+                              onClick={() => handleApplyAIRecommendation(row.id)}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                backgroundColor: '#ff9800',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              適用
+                            </button>
+                          )}
+                        </td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.major}</td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.middle}</td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '150px' }}>{displayRow.aiRecommendation.item}</td>
@@ -823,50 +861,6 @@ export default function AssetMatchingPage() {
                           )}
                         </td>
                       </tr>
-                      {isEditing && (
-                        <tr style={{ backgroundColor: '#f9fbe7' }}>
-                          <td colSpan={21} style={{ padding: '12px', borderBottom: '2px solid #e0e0e0' }}>
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'center' }}>
-                              <button
-                                onClick={handleApplyAIRecommendation}
-                                style={{
-                                  padding: '8px 16px',
-                                  backgroundColor: '#fff3e0',
-                                  border: '1px solid #ff9800',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '13px',
-                                  fontWeight: '600',
-                                  color: '#e65100',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px'
-                                }}
-                              >
-                                <span>🤖</span> AI推薦を適用
-                              </button>
-                              <button
-                                onClick={handleOpenAssetMaster}
-                                style={{
-                                  padding: '8px 16px',
-                                  backgroundColor: '#e3f2fd',
-                                  border: '1px solid #1976d2',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '13px',
-                                  fontWeight: '600',
-                                  color: '#0d47a1',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px'
-                                }}
-                              >
-                                <span>📋</span> 資産マスタから選択
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
                     </React.Fragment>
                   );
                 })}
