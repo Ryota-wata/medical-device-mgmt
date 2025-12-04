@@ -668,17 +668,24 @@ export default function AssetMatchingPage() {
               リセット
             </button>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main style={{ flex: 1, padding: '24px' }}>
+        <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
             <button
               onClick={bulkConfirmSelected}
               style={{
-                padding: '8px 16px',
+                padding: '10px 20px',
                 backgroundColor: '#4caf50',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -689,13 +696,14 @@ export default function AssetMatchingPage() {
             <button
               onClick={handleOpenAssetMaster}
               style={{
-                padding: '8px 16px',
+                padding: '10px 20px',
                 backgroundColor: '#1976d2',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
+                fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px'
@@ -704,25 +712,6 @@ export default function AssetMatchingPage() {
               <span>📋</span> 資産マスタを別ウィンドウで開く
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main style={{ flex: 1, padding: '24px' }}>
-        <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
-          <input
-            type="text"
-            placeholder="資産番号、品名で検索..."
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px',
-              marginBottom: '16px',
-              boxSizing: 'border-box'
-            }}
-          />
 
           <div style={{
             backgroundColor: '#ffffff',
