@@ -592,7 +592,7 @@ export default function AssetMatchingPage() {
             display: 'flex',
             gap: '10px',
             flex: 1,
-            alignItems: 'center'
+            alignItems: 'flex-end'
           }}>
             <div style={{ flex: '0 0 130px' }}>
               <SearchableSelect
@@ -654,7 +654,7 @@ export default function AssetMatchingPage() {
                 middleCategory: ''
               })}
               style={{
-                padding: '6px 14px',
+                padding: '8px 16px',
                 backgroundColor: '#95a5a6',
                 color: 'white',
                 border: 'none',
@@ -662,7 +662,8 @@ export default function AssetMatchingPage() {
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: '600',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                height: '38px'
               }}
             >
               リセット
@@ -792,8 +793,7 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 大分類 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <input
-                              type="text"
+                            <select
                               value={editingData.majorCategory}
                               onChange={(e) => setEditingData({ ...editingData, majorCategory: e.target.value })}
                               style={{
@@ -803,7 +803,12 @@ export default function AssetMatchingPage() {
                                 border: '1px solid #ccc',
                                 borderRadius: '2px'
                               }}
-                            />
+                            >
+                              <option value="">選択してください</option>
+                              {majorCategoryOptions.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
                           ) : (
                             displayRow.majorCategory
                           )}
@@ -812,8 +817,7 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 中分類 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <input
-                              type="text"
+                            <select
                               value={editingData.middleCategory}
                               onChange={(e) => setEditingData({ ...editingData, middleCategory: e.target.value })}
                               style={{
@@ -823,7 +827,12 @@ export default function AssetMatchingPage() {
                                 border: '1px solid #ccc',
                                 borderRadius: '2px'
                               }}
-                            />
+                            >
+                              <option value="">選択してください</option>
+                              {middleCategoryOptions.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
                           ) : (
                             displayRow.middleCategory
                           )}
@@ -832,8 +841,7 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 品目 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '150px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <input
-                              type="text"
+                            <select
                               value={editingData.item}
                               onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
                               style={{
@@ -843,7 +851,12 @@ export default function AssetMatchingPage() {
                                 border: '1px solid #ccc',
                                 borderRadius: '2px'
                               }}
-                            />
+                            >
+                              <option value="">選択してください</option>
+                              {Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean).map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
                           ) : (
                             displayRow.item
                           )}
@@ -852,8 +865,7 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: メーカー */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <input
-                              type="text"
+                            <select
                               value={editingData.manufacturer}
                               onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
                               style={{
@@ -863,7 +875,12 @@ export default function AssetMatchingPage() {
                                 border: '1px solid #ccc',
                                 borderRadius: '2px'
                               }}
-                            />
+                            >
+                              <option value="">選択してください</option>
+                              {Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean).map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
                           ) : (
                             displayRow.manufacturer
                           )}
@@ -872,8 +889,7 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 型式 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <input
-                              type="text"
+                            <select
                               value={editingData.model}
                               onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
                               style={{
@@ -883,7 +899,12 @@ export default function AssetMatchingPage() {
                                 border: '1px solid #ccc',
                                 borderRadius: '2px'
                               }}
-                            />
+                            >
+                              <option value="">選択してください</option>
+                              {Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean).map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
                           ) : (
                             displayRow.model
                           )}
