@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores';
 
@@ -10,6 +10,18 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // ページ読み込み時に保存されたログイン情報を復元
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('rememberedUsername');
+    const savedRememberMe = localStorage.getItem('rememberMe');
+
+    if (savedRememberMe === 'true' && savedUsername) {
+      setUsername(savedUsername);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +34,16 @@ export default function LoginPage() {
 
     try {
       await login({ username, password });
+
+      // ログイン情報を記憶する場合はLocalStorageに保存
+      if (rememberMe) {
+        localStorage.setItem('rememberedUsername', username);
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem('rememberMe');
+      }
+
       router.push('/main');
     } catch (err) {
       setError('ログインに失敗しました');
@@ -30,7 +52,7 @@ export default function LoginPage() {
 
   const handlePasswordReset = (e: React.MouseEvent) => {
     e.preventDefault();
-    alert('パスワードリセット機能は開発中です');
+    router.push('/password-reset');
   };
 
   return (
@@ -107,6 +129,24 @@ export default function LoginPage() {
                 e.target.style.boxShadow = 'none';
               }}
             />
+          </div>
+
+          {/* ログイン情報を記憶する */}
+          <div className="mb-6">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-5 h-5 rounded cursor-pointer transition-all"
+                style={{
+                  accentColor: '#27ae60'
+                }}
+              />
+              <span className="ml-2 text-sm" style={{ color: '#5a6c7d' }}>
+                ログイン情報を記憶する
+              </span>
+            </label>
           </div>
 
           {/* エラーメッセージ */}
