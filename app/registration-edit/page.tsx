@@ -786,8 +786,8 @@ export default function RegistrationEditPage() {
             </thead>
             <tbody>
               {filteredData.map((row) => (
-                <tr key={row.id} style={{ backgroundColor: !row.masterId ? '#fff3cd' : 'white' }}>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: !row.masterId ? '#fff3cd' : 'white', zIndex: 1 }}>
+                <tr key={row.id}>
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1 }}>
                     <input
                       type="checkbox"
                       checked={selectedRows.has(row.id)}
@@ -962,7 +962,7 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.remarks}
                   </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', position: 'sticky', right: 0, backgroundColor: !row.masterId ? '#fff3cd' : 'white', zIndex: 1 }}>
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1 }}>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                       {editingRow === row.id ? (
                         <>
