@@ -313,10 +313,17 @@ export default function AssetMatchingPage() {
   };
 
   const confirmRow = (id: number) => {
-    setData(data.map(row =>
-      row.id === id ? { ...row, status: 'completed' } : row
-    ));
-    alert(`行 ${id} を確定しました`);
+    const row = data.find(r => r.id === id);
+    if (!row) return;
+
+    if (confirm(`No.${id} のレコードを確定しますか？\n確定後、このレコードは画面から削除されます。`)) {
+      setData(data.filter(r => r.id !== id));
+      setSelectedRows(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
   };
 
   const bulkConfirmSelected = () => {
@@ -324,12 +331,12 @@ export default function AssetMatchingPage() {
       alert('確定する項目を選択してください');
       return;
     }
-    setData(data.map(row =>
-      selectedRows.has(row.id) ? { ...row, status: 'completed' } : row
-    ));
-    alert(`${selectedRows.size}件を一括確定しました`);
-    setSelectedRows(new Set());
-    setSelectedAll(false);
+
+    if (confirm(`選択した${selectedRows.size}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
+      setData(data.filter(row => !selectedRows.has(row.id)));
+      setSelectedRows(new Set());
+      setSelectedAll(false);
+    }
   };
 
   const openAssetMasterWindow = () => {
@@ -337,9 +344,8 @@ export default function AssetMatchingPage() {
   };
 
   const completeMatching = () => {
-    const pendingCount = data.filter(d => d.status === 'pending').length;
-    if (pendingCount > 0) {
-      if (confirm(`未処理の項目が${pendingCount}件あります。このまま完了しますか？`)) {
+    if (data.length > 0) {
+      if (confirm(`未確定の項目が${data.length}件あります。このまま完了しますか？`)) {
         router.push('/main');
       }
     } else {
@@ -349,7 +355,8 @@ export default function AssetMatchingPage() {
   };
 
   const filteredData = filterStatus === 'all' ? data : data.filter(d => d.status === filterStatus);
-  const completedCount = data.filter(d => d.status === 'completed').length;
+  const totalCount = sampleData.length;
+  const remainingCount = data.length;
 
   if (isMobile) {
     return (
@@ -403,11 +410,14 @@ export default function AssetMatchingPage() {
             資産台帳とマスタの突き合わせ
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>進捗:</span>
-            <span style={{ fontSize: '14px', color: '#2c3e50' }}>{completedCount} / {data.length}</span>
+            <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>全体:</span>
+            <span style={{ fontSize: '14px', color: '#2c3e50' }}>{totalCount}件</span>
+            <span style={{ color: '#ccc' }}>|</span>
+            <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>残り:</span>
+            <span style={{ fontSize: '14px', color: '#ff9800', fontWeight: '600' }}>{remainingCount}件</span>
             <span style={{ color: '#ccc' }}>|</span>
             <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>完了:</span>
-            <span style={{ fontSize: '14px', color: '#4caf50', fontWeight: '600' }}>{completedCount}件</span>
+            <span style={{ fontSize: '14px', color: '#4caf50', fontWeight: '600' }}>{totalCount - remainingCount}件</span>
           </div>
         </div>
       </header>
@@ -469,7 +479,7 @@ export default function AssetMatchingPage() {
                 fontWeight: '600'
               }}
             >
-              済 <span>({completedCount})</span>
+              済 <span>({data.filter(d => d.status === 'completed').length})</span>
             </button>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
@@ -581,8 +591,8 @@ export default function AssetMatchingPage() {
               </thead>
               <tbody>
                 {filteredData.map((row, index) => (
-                  <tr key={row.id} style={{ backgroundColor: row.status === 'completed' ? '#e8f5e9' : 'white' }}>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: row.status === 'completed' ? '#e8f5e9' : 'white', zIndex: 1 }}>
+                  <tr key={row.id} style={{ backgroundColor: 'white' }}>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1 }}>
                       <input
                         type="checkbox"
                         checked={selectedRows.has(row.id)}
@@ -611,7 +621,7 @@ export default function AssetMatchingPage() {
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.manufacturer}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.model}</td>
                     {/* 操作 */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 80, backgroundColor: row.status === 'completed' ? '#e8f5e9' : 'white', zIndex: 1 }}>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 80, backgroundColor: 'white', zIndex: 1 }}>
                       <button
                         onClick={() => toggleEditMode(row.id)}
                         style={{
@@ -627,23 +637,22 @@ export default function AssetMatchingPage() {
                         編集
                       </button>
                     </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: row.status === 'completed' ? '#e8f5e9' : 'white', zIndex: 1 }}>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1 }}>
                       <button
                         onClick={() => confirmRow(row.id)}
-                        disabled={row.status === 'completed'}
                         style={{
                           padding: '4px 8px',
                           fontSize: '12px',
-                          backgroundColor: row.status === 'completed' ? '#4caf50' : '#c8e6c9',
-                          color: row.status === 'completed' ? 'white' : '#2e7d32',
+                          backgroundColor: '#c8e6c9',
+                          color: '#2e7d32',
                           border: 'none',
                           borderRadius: '4px',
-                          cursor: row.status === 'completed' ? 'not-allowed' : 'pointer',
+                          cursor: 'pointer',
                           whiteSpace: 'nowrap',
                           fontWeight: '600'
                         }}
                       >
-                        {row.status === 'completed' ? '確定済' : '確定'}
+                        確定
                       </button>
                     </td>
                   </tr>
