@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
@@ -37,6 +37,7 @@ export default function AssetMatchingPage() {
   const [selectedAll, setSelectedAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRow, setEditingRow] = useState<number | null>(null);
+  const [editingData, setEditingData] = useState<MatchingData | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
 
   const sampleData: MatchingData[] = [
@@ -309,8 +310,77 @@ export default function AssetMatchingPage() {
   };
 
   const toggleEditMode = (id: number) => {
-    setEditingRow(editingRow === id ? null : id);
+    if (editingRow === id) {
+      setEditingRow(null);
+      setEditingData(null);
+    } else {
+      const row = data.find(r => r.id === id);
+      if (row) {
+        setEditingRow(id);
+        setEditingData({ ...row });
+      }
+    }
   };
+
+  const handleApplyAIRecommendation = () => {
+    if (!editingData) return;
+
+    setEditingData({
+      ...editingData,
+      majorCategory: editingData.aiRecommendation.major,
+      middleCategory: editingData.aiRecommendation.middle,
+      item: editingData.aiRecommendation.item
+    });
+  };
+
+  const handleOpenAssetMaster = () => {
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+      '/asset-master',
+      'AssetMasterWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+  };
+
+  const saveEdit = () => {
+    if (!editingData) return;
+
+    setData(data.map(row =>
+      row.id === editingData.id ? editingData : row
+    ));
+    setEditingRow(null);
+    setEditingData(null);
+  };
+
+  // 資産マスタからのメッセージを受信
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // セキュリティチェック: 同じオリジンからのメッセージのみ受け入れる
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'ASSET_SELECTED' && editingData) {
+        const assetMasters = event.data.assets as any[];
+
+        // 最初の資産を適用
+        if (assetMasters.length > 0) {
+          const master = assetMasters[0];
+          setEditingData({
+            ...editingData,
+            majorCategory: master.largeClass,
+            middleCategory: master.mediumClass,
+            item: master.item
+          });
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [editingData]);
 
   const confirmRow = (id: number) => {
     const row = data.find(r => r.id === id);
@@ -337,10 +407,6 @@ export default function AssetMatchingPage() {
       setSelectedRows(new Set());
       setSelectedAll(false);
     }
-  };
-
-  const openAssetMasterWindow = () => {
-    alert('資産マスタを別ウィンドウで開きます');
   };
 
   const completeMatching = () => {
@@ -501,7 +567,7 @@ export default function AssetMatchingPage() {
               <span>✓</span> 選択項目を一括確定
             </button>
             <button
-              onClick={openAssetMasterWindow}
+              onClick={handleOpenAssetMaster}
               style={{
                 padding: '8px 16px',
                 backgroundColor: '#1976d2',
@@ -571,17 +637,17 @@ export default function AssetMatchingPage() {
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>部署名（設置部署）</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>諸室名称</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>category</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>品目</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>大分類</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>中分類</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '150px' }}>品目</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>数量／単位</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>検収日</th>
                   {/* AI推薦 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>品目</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>大分類</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>中分類</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '150px' }}>品目</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
                   {/* 操作 */}
@@ -590,73 +656,220 @@ export default function AssetMatchingPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((row, index) => (
-                  <tr key={row.id} style={{ backgroundColor: 'white' }}>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1 }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.has(row.id)}
-                        onChange={() => toggleRowSelection(row.id)}
-                      />
-                    </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{index + 1}</td>
-                    {/* 固定資産台帳データ */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.fixedAssetNo}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.managementDeviceNo}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.roomName}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.category}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.quantityUnit}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.inspectionDate}</td>
-                    {/* AI推薦 */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.major}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.middle}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.item}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.manufacturer}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.model}</td>
-                    {/* 操作 */}
-                    <td style={{ padding: '8px 4px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 60, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => toggleEditMode(row.id)}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '12px',
-                          backgroundColor: '#e3f2fd',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        編集
-                      </button>
-                    </td>
-                    <td style={{ padding: '8px 4px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => confirmRow(row.id)}
-                        style={{
-                          padding: '4px 8px',
-                          fontSize: '12px',
-                          backgroundColor: '#c8e6c9',
-                          color: '#2e7d32',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                          fontWeight: '600'
-                        }}
-                      >
-                        確定
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredData.map((row, index) => {
+                  const isEditing = editingRow === row.id;
+                  const displayRow = isEditing && editingData ? editingData : row;
+
+                  return (
+                    <React.Fragment key={row.id}>
+                      <tr style={{ backgroundColor: 'white' }}>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1 }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.has(row.id)}
+                            onChange={() => toggleRowSelection(row.id)}
+                          />
+                        </td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{index + 1}</td>
+                        {/* 固定資産台帳データ */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.fixedAssetNo}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.managementDeviceNo}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.department}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.section}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.roomName}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.category}</td>
+
+                        {/* 編集可能フィールド: 大分類 */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
+                          {isEditing && editingData ? (
+                            <input
+                              type="text"
+                              value={editingData.majorCategory}
+                              onChange={(e) => setEditingData({ ...editingData, majorCategory: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '4px',
+                                fontSize: '12px',
+                                border: '1px solid #ccc',
+                                borderRadius: '2px'
+                              }}
+                            />
+                          ) : (
+                            displayRow.majorCategory
+                          )}
+                        </td>
+
+                        {/* 編集可能フィールド: 中分類 */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
+                          {isEditing && editingData ? (
+                            <input
+                              type="text"
+                              value={editingData.middleCategory}
+                              onChange={(e) => setEditingData({ ...editingData, middleCategory: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '4px',
+                                fontSize: '12px',
+                                border: '1px solid #ccc',
+                                borderRadius: '2px'
+                              }}
+                            />
+                          ) : (
+                            displayRow.middleCategory
+                          )}
+                        </td>
+
+                        {/* 編集可能フィールド: 品目 */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '150px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
+                          {isEditing && editingData ? (
+                            <input
+                              type="text"
+                              value={editingData.item}
+                              onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '4px',
+                                fontSize: '12px',
+                                border: '1px solid #ccc',
+                                borderRadius: '2px'
+                              }}
+                            />
+                          ) : (
+                            displayRow.item
+                          )}
+                        </td>
+
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.manufacturer}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.model}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.quantityUnit}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.inspectionDate}</td>
+
+                        {/* AI推薦 */}
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.major}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.middle}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '150px' }}>{displayRow.aiRecommendation.item}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{displayRow.aiRecommendation.manufacturer}</td>
+                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{displayRow.aiRecommendation.model}</td>
+
+                        {/* 操作 */}
+                        <td style={{ padding: '8px 4px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 60, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
+                          {isEditing ? (
+                            <button
+                              onClick={() => toggleEditMode(row.id)}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                backgroundColor: '#f5f5f5',
+                                border: '1px solid #ccc',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              キャンセル
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => toggleEditMode(row.id)}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                backgroundColor: '#e3f2fd',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              編集
+                            </button>
+                          )}
+                        </td>
+                        <td style={{ padding: '8px 4px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
+                          {isEditing ? (
+                            <button
+                              onClick={saveEdit}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                backgroundColor: '#1976d2',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                fontWeight: '600'
+                              }}
+                            >
+                              保存
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => confirmRow(row.id)}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                backgroundColor: '#c8e6c9',
+                                color: '#2e7d32',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                fontWeight: '600'
+                              }}
+                            >
+                              確定
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                      {isEditing && (
+                        <tr style={{ backgroundColor: '#f9fbe7' }}>
+                          <td colSpan={21} style={{ padding: '12px', borderBottom: '2px solid #e0e0e0' }}>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'center' }}>
+                              <button
+                                onClick={handleApplyAIRecommendation}
+                                style={{
+                                  padding: '8px 16px',
+                                  backgroundColor: '#fff3e0',
+                                  border: '1px solid #ff9800',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '600',
+                                  color: '#e65100',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                <span>🤖</span> AI推薦を適用
+                              </button>
+                              <button
+                                onClick={handleOpenAssetMaster}
+                                style={{
+                                  padding: '8px 16px',
+                                  backgroundColor: '#e3f2fd',
+                                  border: '1px solid #1976d2',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '600',
+                                  color: '#0d47a1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px'
+                                }}
+                              >
+                                <span>📋</span> 資産マスタから選択
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
