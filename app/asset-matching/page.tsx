@@ -6,13 +6,19 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 
 interface MatchingData {
   id: number;
-  assetNo: string;
-  productName: string;
-  manufacturer: string;
-  model: string;
+  fixedAssetNo: string;
+  managementDeviceNo: string;
+  department: string;
+  section: string;
+  roomName: string;
+  category: string;
   majorCategory: string;
   middleCategory: string;
-  itemManagement: string;
+  item: string;
+  manufacturer: string;
+  model: string;
+  quantityUnit: string;
+  inspectionDate: string;
   aiRecommendation: AIRecommendation;
   status: 'pending' | 'completed';
 }
@@ -36,13 +42,19 @@ export default function AssetMatchingPage() {
   const sampleData: MatchingData[] = [
     {
       id: 1,
-      assetNo: 'A-001-2023',
-      productName: 'MRI装置 シーメンス MAGNETOM',
-      manufacturer: 'シーメンスヘルスケア',
-      model: 'MAGNETOM Vida 3T',
+      fixedAssetNo: 'FA-2023-001',
+      managementDeviceNo: 'MD-001-2023',
+      department: '放射線科',
+      section: 'X線撮影室',
+      roomName: '一般撮影室',
+      category: '医療機器',
       majorCategory: '',
       middleCategory: '',
-      itemManagement: '',
+      item: '',
+      manufacturer: 'シーメンスヘルスケア',
+      model: 'MAGNETOM Vida 3T',
+      quantityUnit: '1台',
+      inspectionDate: '2023-03-15',
       aiRecommendation: {
         major: '医療機器',
         middle: '画像診断装置',
@@ -54,13 +66,19 @@ export default function AssetMatchingPage() {
     },
     {
       id: 2,
-      assetNo: 'A-002-2023',
-      productName: 'CT装置 GE Healthcare Revolution',
-      manufacturer: 'GEヘルスケア',
-      model: 'Revolution CT',
+      fixedAssetNo: 'FA-2023-002',
+      managementDeviceNo: 'MD-002-2023',
+      department: '放射線科',
+      section: 'CT室',
+      roomName: 'CT1号機室',
+      category: '医療機器',
       majorCategory: '',
       middleCategory: '',
-      itemManagement: '',
+      item: '',
+      manufacturer: 'GEヘルスケア',
+      model: 'Revolution CT',
+      quantityUnit: '1台',
+      inspectionDate: '2023-05-20',
       aiRecommendation: {
         major: '医療機器',
         middle: '画像診断装置',
@@ -72,19 +90,193 @@ export default function AssetMatchingPage() {
     },
     {
       id: 3,
-      assetNo: 'A-003-2023',
-      productName: '人工呼吸器 ドレーゲル Savina',
-      manufacturer: 'ドレーゲル',
-      model: 'Savina 300',
+      fixedAssetNo: 'FA-2023-003',
+      managementDeviceNo: 'MD-003-2023',
+      department: '手術部',
+      section: '中央手術室',
+      roomName: '手術室1',
+      category: '医療機器',
       majorCategory: '',
       middleCategory: '',
-      itemManagement: '',
+      item: '',
+      manufacturer: 'ドレーゲル',
+      model: 'Savina 300',
+      quantityUnit: '1台',
+      inspectionDate: '2023-02-10',
       aiRecommendation: {
         major: '医療機器',
         middle: '生命維持装置',
         item: '人工呼吸器',
         manufacturer: 'ドレーゲル',
         model: 'Savina 300'
+      },
+      status: 'pending'
+    },
+    {
+      id: 4,
+      fixedAssetNo: 'FA-2023-004',
+      managementDeviceNo: 'MD-004-2023',
+      department: '検査科',
+      section: '検体検査室',
+      roomName: '生化学検査室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'シスメックス',
+      model: 'XN-3000',
+      quantityUnit: '1台',
+      inspectionDate: '2023-01-20',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '検査装置',
+        item: '自動血球計数器',
+        manufacturer: 'シスメックス',
+        model: 'XN-3000'
+      },
+      status: 'completed'
+    },
+    {
+      id: 5,
+      fixedAssetNo: 'FA-2023-005',
+      managementDeviceNo: 'MD-005-2023',
+      department: '内科',
+      section: '循環器内科',
+      roomName: '外来診察室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'フクダ電子',
+      model: 'FCP-8800',
+      quantityUnit: '1台',
+      inspectionDate: '2023-04-12',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '生体検査装置',
+        item: '心電計',
+        manufacturer: 'フクダ電子',
+        model: 'FCP-8800'
+      },
+      status: 'pending'
+    },
+    {
+      id: 6,
+      fixedAssetNo: 'FA-2023-006',
+      managementDeviceNo: 'MD-006-2023',
+      department: '手術部',
+      section: 'ICU',
+      roomName: 'ICU-1',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'フィリップス',
+      model: 'IntelliVue MX800',
+      quantityUnit: '1台',
+      inspectionDate: '2023-06-05',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '生命維持装置',
+        item: '患者モニタ',
+        manufacturer: 'フィリップス',
+        model: 'IntelliVue MX800'
+      },
+      status: 'pending'
+    },
+    {
+      id: 7,
+      fixedAssetNo: 'FA-2023-007',
+      managementDeviceNo: 'MD-007-2023',
+      department: '外科',
+      section: '一般外科',
+      roomName: '内視鏡室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'オリンパス',
+      model: 'CV-290',
+      quantityUnit: '1台',
+      inspectionDate: '2023-07-18',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '処置用機器',
+        item: '内視鏡ビデオシステム',
+        manufacturer: 'オリンパス',
+        model: 'CV-290'
+      },
+      status: 'pending'
+    },
+    {
+      id: 8,
+      fixedAssetNo: 'FA-2023-008',
+      managementDeviceNo: 'MD-008-2023',
+      department: '放射線科',
+      section: 'MRI室',
+      roomName: 'MRI操作室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'キヤノンメディカル',
+      model: 'Vantage Galan 3T',
+      quantityUnit: '1台',
+      inspectionDate: '2023-08-22',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '画像診断装置',
+        item: 'MRI装置',
+        manufacturer: 'キヤノンメディカル',
+        model: 'Vantage Galan 3T'
+      },
+      status: 'pending'
+    },
+    {
+      id: 9,
+      fixedAssetNo: 'FA-2023-009',
+      managementDeviceNo: 'MD-009-2023',
+      department: '薬剤部',
+      section: '調剤室',
+      roomName: '無菌調剤室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'トーショー',
+      model: 'TPN-001',
+      quantityUnit: '1台',
+      inspectionDate: '2023-09-10',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '調剤用機器',
+        item: '自動調剤装置',
+        manufacturer: 'トーショー',
+        model: 'TPN-001'
+      },
+      status: 'completed'
+    },
+    {
+      id: 10,
+      fixedAssetNo: 'FA-2023-010',
+      managementDeviceNo: 'MD-010-2023',
+      department: '検査科',
+      section: '生理検査室',
+      roomName: '超音波検査室',
+      category: '医療機器',
+      majorCategory: '',
+      middleCategory: '',
+      item: '',
+      manufacturer: 'GEヘルスケア',
+      model: 'LOGIQ E10',
+      quantityUnit: '1台',
+      inspectionDate: '2023-10-05',
+      aiRecommendation: {
+        major: '医療機器',
+        middle: '画像診断装置',
+        item: '超音波診断装置',
+        manufacturer: 'GEヘルスケア',
+        model: 'LOGIQ E10'
       },
       status: 'pending'
     }
@@ -357,24 +549,30 @@ export default function AssetMatchingPage() {
                     />
                   </th>
                   <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>No.</th>
-                  <th colSpan={7} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600' }}>固定資産台帳データ</th>
+                  <th colSpan={13} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600' }}>固定資産台帳データ</th>
                   <th colSpan={5} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI推薦</th>
                   <th colSpan={2} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 3 }}>操作</th>
                 </tr>
                 <tr style={{ backgroundColor: '#f5f5f5' }}>
                   {/* 固定資産台帳 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>資産番号</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>登録品目名</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー名</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>固定資産番号</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>管理機器番号</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>部門名</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>部署名（設置部署）</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>諸室名称</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>category</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>個体管理品目</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>品目</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>数量／単位</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>検収日</th>
                   {/* AI推薦 */}
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>大分類</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>個体管理品目</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー名</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>品目</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
                   {/* 操作 */}
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 80, backgroundColor: '#f5f5f5', zIndex: 2 }}>編集</th>
@@ -393,13 +591,19 @@ export default function AssetMatchingPage() {
                     </td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{index + 1}</td>
                     {/* 固定資産台帳データ */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.productName}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.fixedAssetNo}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.managementDeviceNo}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.roomName}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.category}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.itemManagement}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.quantityUnit}</td>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.inspectionDate}</td>
                     {/* AI推薦 */}
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.major}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.middle}</td>
