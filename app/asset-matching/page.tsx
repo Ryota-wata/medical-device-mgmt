@@ -585,8 +585,8 @@ export default function AssetMatchingPage() {
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
                   <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
                   {/* 操作 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 80, backgroundColor: '#f5f5f5', zIndex: 2 }}>編集</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 2 }}>確定</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 60, backgroundColor: '#f5f5f5', zIndex: 2, width: '60px' }}>編集</th>
+                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 2, width: '60px' }}>確定</th>
                 </tr>
               </thead>
               <tbody>
@@ -621,7 +621,7 @@ export default function AssetMatchingPage() {
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.manufacturer}</td>
                     <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{row.aiRecommendation.model}</td>
                     {/* 操作 */}
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 80, backgroundColor: 'white', zIndex: 1 }}>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 60, backgroundColor: 'white', zIndex: 1, width: '60px' }}>
                       <button
                         onClick={() => toggleEditMode(row.id)}
                         style={{
@@ -637,7 +637,7 @@ export default function AssetMatchingPage() {
                         編集
                       </button>
                     </td>
-                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1 }}>
+                    <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1, width: '60px' }}>
                       <button
                         onClick={() => confirmRow(row.id)}
                         style={{
