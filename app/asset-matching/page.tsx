@@ -391,6 +391,70 @@ export default function AssetMatchingPage() {
     }
   };
 
+  // 編集時のフィールド変更ハンドラ（親子関係の自動選択）
+  const handleEditFieldChange = (field: 'majorCategory' | 'middleCategory' | 'item' | 'manufacturer' | 'model', value: string) => {
+    if (!editingData) return;
+
+    let updates: Partial<MatchingData> = { [field]: value };
+
+    // 子から親への自動選択
+    if (value) {
+      // 選択された値に一致する資産を検索
+      const matchingAssets = assetMasters.filter(asset => {
+        if (field === 'model') return asset.model === value;
+        if (field === 'manufacturer') return asset.maker === value;
+        if (field === 'item') return asset.item === value;
+        if (field === 'middleCategory') return asset.mediumClass === value;
+        if (field === 'majorCategory') return asset.largeClass === value;
+        return false;
+      });
+
+      if (matchingAssets.length > 0) {
+        const asset = matchingAssets[0];
+
+        // 型式が選択された場合、全ての親を自動設定
+        if (field === 'model') {
+          updates = {
+            ...updates,
+            manufacturer: asset.maker,
+            item: asset.item,
+            middleCategory: asset.mediumClass,
+            majorCategory: asset.largeClass
+          };
+        }
+        // メーカーが選択された場合、品目以上を自動設定
+        else if (field === 'manufacturer') {
+          const specificAsset = matchingAssets.find(a =>
+            !editingData.model || a.model === editingData.model
+          ) || asset;
+          updates = {
+            ...updates,
+            item: specificAsset.item,
+            middleCategory: specificAsset.mediumClass,
+            majorCategory: specificAsset.largeClass
+          };
+        }
+        // 品目が選択された場合、中分類と大分類を自動設定
+        else if (field === 'item') {
+          updates = {
+            ...updates,
+            middleCategory: asset.mediumClass,
+            majorCategory: asset.largeClass
+          };
+        }
+        // 中分類が選択された場合、大分類を自動設定
+        else if (field === 'middleCategory') {
+          updates = {
+            ...updates,
+            majorCategory: asset.largeClass
+          };
+        }
+      }
+    }
+
+    setEditingData({ ...editingData, ...updates });
+  };
+
   const handleApplyAIRecommendation = (rowId: number) => {
     const row = data.find(r => r.id === rowId);
     if (!row) return;
@@ -793,22 +857,16 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 大分類 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <select
-                              value={editingData.majorCategory}
-                              onChange={(e) => setEditingData({ ...editingData, majorCategory: e.target.value })}
-                              style={{
-                                width: '100%',
-                                padding: '4px',
-                                fontSize: '12px',
-                                border: '1px solid #ccc',
-                                borderRadius: '2px'
-                              }}
-                            >
-                              <option value="">選択してください</option>
-                              {majorCategoryOptions.map(option => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
-                            </select>
+                            <div style={{ width: '100%' }}>
+                              <SearchableSelect
+                                label=""
+                                value={editingData.majorCategory}
+                                onChange={(value) => handleEditFieldChange('majorCategory', value)}
+                                options={majorCategoryOptions}
+                                placeholder="選択してください"
+                                isMobile={isMobile}
+                              />
+                            </div>
                           ) : (
                             displayRow.majorCategory
                           )}
@@ -817,22 +875,16 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 中分類 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <select
-                              value={editingData.middleCategory}
-                              onChange={(e) => setEditingData({ ...editingData, middleCategory: e.target.value })}
-                              style={{
-                                width: '100%',
-                                padding: '4px',
-                                fontSize: '12px',
-                                border: '1px solid #ccc',
-                                borderRadius: '2px'
-                              }}
-                            >
-                              <option value="">選択してください</option>
-                              {middleCategoryOptions.map(option => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
-                            </select>
+                            <div style={{ width: '100%' }}>
+                              <SearchableSelect
+                                label=""
+                                value={editingData.middleCategory}
+                                onChange={(value) => handleEditFieldChange('middleCategory', value)}
+                                options={middleCategoryOptions}
+                                placeholder="選択してください"
+                                isMobile={isMobile}
+                              />
+                            </div>
                           ) : (
                             displayRow.middleCategory
                           )}
@@ -841,22 +893,16 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 品目 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '150px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <select
-                              value={editingData.item}
-                              onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
-                              style={{
-                                width: '100%',
-                                padding: '4px',
-                                fontSize: '12px',
-                                border: '1px solid #ccc',
-                                borderRadius: '2px'
-                              }}
-                            >
-                              <option value="">選択してください</option>
-                              {Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean).map(option => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
-                            </select>
+                            <div style={{ width: '100%' }}>
+                              <SearchableSelect
+                                label=""
+                                value={editingData.item}
+                                onChange={(value) => handleEditFieldChange('item', value)}
+                                options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)}
+                                placeholder="選択してください"
+                                isMobile={isMobile}
+                              />
+                            </div>
                           ) : (
                             displayRow.item
                           )}
@@ -865,22 +911,16 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: メーカー */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <select
-                              value={editingData.manufacturer}
-                              onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
-                              style={{
-                                width: '100%',
-                                padding: '4px',
-                                fontSize: '12px',
-                                border: '1px solid #ccc',
-                                borderRadius: '2px'
-                              }}
-                            >
-                              <option value="">選択してください</option>
-                              {Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean).map(option => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
-                            </select>
+                            <div style={{ width: '100%' }}>
+                              <SearchableSelect
+                                label=""
+                                value={editingData.manufacturer}
+                                onChange={(value) => handleEditFieldChange('manufacturer', value)}
+                                options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)}
+                                placeholder="選択してください"
+                                isMobile={isMobile}
+                              />
+                            </div>
                           ) : (
                             displayRow.manufacturer
                           )}
@@ -889,22 +929,16 @@ export default function AssetMatchingPage() {
                         {/* 編集可能フィールド: 型式 */}
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
                           {isEditing && editingData ? (
-                            <select
-                              value={editingData.model}
-                              onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
-                              style={{
-                                width: '100%',
-                                padding: '4px',
-                                fontSize: '12px',
-                                border: '1px solid #ccc',
-                                borderRadius: '2px'
-                              }}
-                            >
-                              <option value="">選択してください</option>
-                              {Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean).map(option => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
-                            </select>
+                            <div style={{ width: '100%' }}>
+                              <SearchableSelect
+                                label=""
+                                value={editingData.model}
+                                onChange={(value) => handleEditFieldChange('model', value)}
+                                options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)}
+                                placeholder="選択してください"
+                                isMobile={isMobile}
+                              />
+                            </div>
                           ) : (
                             displayRow.model
                           )}
