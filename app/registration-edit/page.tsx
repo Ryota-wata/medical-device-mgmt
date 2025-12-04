@@ -561,12 +561,22 @@ export default function RegistrationEditPage() {
   }, [editingData]);
 
   const handleConfirm = (id: number) => {
-    const row = filteredData.find(r => r.id === id);
-    if (row && !row.masterId) {
+    const row = data.find(r => r.id === id);
+    if (!row) return;
+
+    if (!row.masterId) {
       alert('マスタIDが登録されていないため確定できません');
       return;
     }
-    alert(`行 ${id} を確定しました`);
+
+    if (confirm(`ID: ${row.id} のレコードを確定しますか？\n確定後、このレコードは画面から削除されます。`)) {
+      setData(data.filter(r => r.id !== id));
+      setSelectedRows(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
   };
 
   const handleBulkConfirm = () => {
@@ -574,12 +584,17 @@ export default function RegistrationEditPage() {
       alert('確定する行を選択してください');
       return;
     }
-    const invalidRows = filteredData.filter(row => selectedRows.has(row.id) && !row.masterId);
+    const invalidRows = data.filter(row => selectedRows.has(row.id) && !row.masterId);
     if (invalidRows.length > 0) {
       alert(`${invalidRows.length}件のマスタ未登録行があります。先にマスタ登録を完了してください。`);
       return;
     }
-    alert(`${selectedRows.size}件を一括確定しました`);
+
+    if (confirm(`選択した${selectedRows.size}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
+      setData(data.filter(row => !selectedRows.has(row.id)));
+      setSelectedRows(new Set());
+      setSelectedAll(false);
+    }
   };
 
   if (isMobile) {
