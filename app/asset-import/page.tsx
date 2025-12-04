@@ -564,7 +564,7 @@ export default function AssetImportPage() {
                   gap: '8px'
                 }}
               >
-                <span>次へ（モック）</span>
+                <span>次へ</span>
                 <span>→</span>
               </button>
             )}
