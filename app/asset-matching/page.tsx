@@ -195,7 +195,7 @@ export default function AssetMatchingPage() {
     }
   };
 
-  const totalCount = sampleData.length;
+  const totalCount = assetMatchingSampleData.length;
   const remainingCount = data.length;
 
   if (isMobile) {
