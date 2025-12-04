@@ -20,6 +20,7 @@ interface MatchingData {
   quantityUnit: string;
   inspectionDate: string;
   aiRecommendation: AIRecommendation;
+  aiApplied: boolean;
   status: 'pending' | 'completed';
 }
 
@@ -63,6 +64,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'シーメンスヘルスケア',
         model: 'MAGNETOM Vida 3T'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -87,6 +89,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'GEヘルスケア',
         model: 'Revolution CT'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -111,6 +114,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'ドレーゲル',
         model: 'Savina 300'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -135,6 +139,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'シスメックス',
         model: 'XN-3000'
       },
+      aiApplied: false,
       status: 'completed'
     },
     {
@@ -159,6 +164,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'フクダ電子',
         model: 'FCP-8800'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -183,6 +189,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'フィリップス',
         model: 'IntelliVue MX800'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -207,6 +214,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'オリンパス',
         model: 'CV-290'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -231,6 +239,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'キヤノンメディカル',
         model: 'Vantage Galan 3T'
       },
+      aiApplied: false,
       status: 'pending'
     },
     {
@@ -255,6 +264,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'トーショー',
         model: 'TPN-001'
       },
+      aiApplied: false,
       status: 'completed'
     },
     {
@@ -279,6 +289,7 @@ export default function AssetMatchingPage() {
         manufacturer: 'GEヘルスケア',
         model: 'LOGIQ E10'
       },
+      aiApplied: false,
       status: 'pending'
     }
   ];
@@ -327,26 +338,52 @@ export default function AssetMatchingPage() {
     if (!row) return;
 
     if (editingRow === rowId && editingData) {
-      // 編集中の場合は編集データに反映
-      setEditingData({
-        ...editingData,
-        majorCategory: editingData.aiRecommendation.major,
-        middleCategory: editingData.aiRecommendation.middle,
-        item: editingData.aiRecommendation.item,
-        manufacturer: editingData.aiRecommendation.manufacturer,
-        model: editingData.aiRecommendation.model
-      });
+      // 編集中の場合は編集データに反映または解除
+      if (editingData.aiApplied) {
+        // 解除: 空にする
+        setEditingData({
+          ...editingData,
+          majorCategory: '',
+          middleCategory: '',
+          item: '',
+          manufacturer: editingData.manufacturer, // メーカーと型式は元のまま
+          model: editingData.model,
+          aiApplied: false
+        });
+      } else {
+        // 適用
+        setEditingData({
+          ...editingData,
+          majorCategory: editingData.aiRecommendation.major,
+          middleCategory: editingData.aiRecommendation.middle,
+          item: editingData.aiRecommendation.item,
+          manufacturer: editingData.aiRecommendation.manufacturer,
+          model: editingData.aiRecommendation.model,
+          aiApplied: true
+        });
+      }
     } else {
       // 編集中でない場合は直接dataを更新
       setData(data.map(r =>
-        r.id === rowId ? {
-          ...r,
-          majorCategory: r.aiRecommendation.major,
-          middleCategory: r.aiRecommendation.middle,
-          item: r.aiRecommendation.item,
-          manufacturer: r.aiRecommendation.manufacturer,
-          model: r.aiRecommendation.model
-        } : r
+        r.id === rowId ? (
+          r.aiApplied ? {
+            // 解除: 空にする
+            ...r,
+            majorCategory: '',
+            middleCategory: '',
+            item: '',
+            aiApplied: false
+          } : {
+            // 適用
+            ...r,
+            majorCategory: r.aiRecommendation.major,
+            middleCategory: r.aiRecommendation.middle,
+            item: r.aiRecommendation.item,
+            manufacturer: r.aiRecommendation.manufacturer,
+            model: r.aiRecommendation.model,
+            aiApplied: true
+          }
+        ) : r
       ));
     }
   };
@@ -358,7 +395,7 @@ export default function AssetMatchingPage() {
     const top = (window.screen.height - height) / 2;
 
     window.open(
-      'http://localhost:8080/src/screens/ship-asset-master.html',
+      'http://127.0.0.1:8080/src/screens/ship-asset-master.html',
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
@@ -782,7 +819,7 @@ export default function AssetMatchingPage() {
                             style={{
                               padding: '4px 8px',
                               fontSize: '11px',
-                              backgroundColor: '#ff9800',
+                              backgroundColor: displayRow.aiApplied ? '#f44336' : '#ff9800',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -790,7 +827,7 @@ export default function AssetMatchingPage() {
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            適用
+                            {displayRow.aiApplied ? '解除' : '適用'}
                           </button>
                         </td>
                         <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.major}</td>
