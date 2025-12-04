@@ -578,19 +578,23 @@ export default function AssetMatchingPage() {
       <div style={{
         backgroundColor: '#f8f9fa',
         borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px'
+        padding: '12px 24px'
       }}>
         <div style={{
           maxWidth: '1800px',
           margin: '0 auto',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          gap: '16px',
-          flexWrap: 'wrap'
+          alignItems: 'center',
+          gap: '12px'
         }}>
-          <div style={{ display: 'flex', gap: '12px', flex: 1, flexWrap: 'wrap' }}>
-            <div style={{ minWidth: '140px' }}>
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            flex: 1,
+            alignItems: 'center'
+          }}>
+            <div style={{ flex: '0 0 130px' }}>
               <SearchableSelect
                 label="部門"
                 value={filters.department}
@@ -600,7 +604,7 @@ export default function AssetMatchingPage() {
                 isMobile={isMobile}
               />
             </div>
-            <div style={{ minWidth: '140px' }}>
+            <div style={{ flex: '0 0 140px' }}>
               <SearchableSelect
                 label="部署"
                 value={filters.section}
@@ -611,7 +615,7 @@ export default function AssetMatchingPage() {
                 disabled={!filters.department}
               />
             </div>
-            <div style={{ minWidth: '140px' }}>
+            <div style={{ flex: '0 0 120px' }}>
               <SearchableSelect
                 label="Category"
                 value={filters.category}
@@ -621,7 +625,7 @@ export default function AssetMatchingPage() {
                 isMobile={isMobile}
               />
             </div>
-            <div style={{ minWidth: '140px' }}>
+            <div style={{ flex: '0 0 150px' }}>
               <SearchableSelect
                 label="大分類"
                 value={filters.majorCategory}
@@ -631,7 +635,7 @@ export default function AssetMatchingPage() {
                 isMobile={isMobile}
               />
             </div>
-            <div style={{ minWidth: '140px' }}>
+            <div style={{ flex: '0 0 150px' }}>
               <SearchableSelect
                 label="中分類"
                 value={filters.middleCategory}
@@ -650,16 +654,15 @@ export default function AssetMatchingPage() {
                 middleCategory: ''
               })}
               style={{
-                padding: '8px 16px',
+                padding: '6px 14px',
                 backgroundColor: '#95a5a6',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: '600',
-                height: '38px',
-                alignSelf: 'flex-end'
+                whiteSpace: 'nowrap'
               }}
             >
               リセット
