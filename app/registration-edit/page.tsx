@@ -53,6 +53,9 @@ export default function RegistrationEditPage() {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedRowForPhoto, setSelectedRowForPhoto] = useState<RegistrationData | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [modalPosition, setModalPosition] = useState({ x: 100, y: 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -459,7 +462,41 @@ export default function RegistrationEditPage() {
     setSelectedRowForPhoto(row);
     setIsPhotoModalOpen(true);
     setSelectedPhoto(null);
+    setModalPosition({ x: 100, y: 100 });
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - modalPosition.x,
+      y: e.clientY - modalPosition.y
+    });
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        setModalPosition({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart.x, dragStart.y]);
 
   const handlePhotoDelete = (photoId: string) => {
     if (!selectedRowForPhoto) return;
@@ -1078,45 +1115,52 @@ export default function RegistrationEditPage() {
       {isPhotoModalOpen && selectedRowForPhoto && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          top: modalPosition.y,
+          left: modalPosition.x,
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '0',
+          width: '600px',
+          maxHeight: '80vh',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
+          flexDirection: 'column',
           zIndex: 1000
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            maxWidth: '90%',
-            maxHeight: '90%',
-            overflow: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>写真一覧</h2>
-              <button
-                onClick={handlePhotoModalClose}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#f5f5f5',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                閉じる
-              </button>
-            </div>
+          <div
+            onMouseDown={handleMouseDown}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderBottom: '1px solid #e0e0e0',
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: 'none',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '12px 12px 0 0'
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>📷 写真一覧</h2>
+            <button
+              onClick={handlePhotoModalClose}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ✕
+            </button>
+          </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+          <div style={{ padding: '20px', overflow: 'auto', flex: 1 }}>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
               {selectedRowForPhoto.photos.map((photo) => (
                 <div
                   key={photo.id}
@@ -1132,7 +1176,7 @@ export default function RegistrationEditPage() {
                   <img
                     src={photo.url}
                     alt={photo.filename}
-                    style={{ width: '100%', height: '150px', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '120px', objectFit: 'cover' }}
                   />
                   <div style={{ padding: '8px' }}>
                     <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>{photo.filename}</div>
@@ -1169,7 +1213,7 @@ export default function RegistrationEditPage() {
                 <img
                   src={selectedRowForPhoto.photos.find(p => p.id === selectedPhoto)?.url}
                   alt="拡大写真"
-                  style={{ width: '100%', maxHeight: '500px', objectFit: 'contain', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', border: '1px solid #e0e0e0', borderRadius: '8px' }}
                 />
               </div>
             )}
