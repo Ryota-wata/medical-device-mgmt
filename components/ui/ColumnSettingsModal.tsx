@@ -20,6 +20,13 @@ interface ColumnSettingsModalProps {
   onDeselectAll: () => void;
 }
 
+interface Bookmark {
+  id: string;
+  name: string;
+  visibleColumns: Record<string, boolean>;
+  createdAt: string;
+}
+
 const COLUMN_GROUPS = [
   { id: 'basic', label: '基本情報' },
   { id: 'location', label: '設置場所' },
@@ -52,6 +59,65 @@ export function ColumnSettingsModal({
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [resizeDirection, setResizeDirection] = useState<string>('');
+
+  // ブックマーク機能の状態管理
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [isBookmarkInputOpen, setIsBookmarkInputOpen] = useState(false);
+  const [bookmarkName, setBookmarkName] = useState('');
+  const [showBookmarks, setShowBookmarks] = useState(false);
+
+  // localStorageからブックマークを読み込み
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('columnBookmarks');
+      if (saved) {
+        try {
+          setBookmarks(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to load bookmarks:', e);
+        }
+      }
+    }
+  }, []);
+
+  // ブックマーク保存
+  const saveBookmark = () => {
+    if (!bookmarkName.trim()) {
+      alert('ブックマーク名を入力してください');
+      return;
+    }
+
+    const newBookmark: Bookmark = {
+      id: Date.now().toString(),
+      name: bookmarkName.trim(),
+      visibleColumns: { ...visibleColumns },
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedBookmarks = [...bookmarks, newBookmark];
+    setBookmarks(updatedBookmarks);
+    localStorage.setItem('columnBookmarks', JSON.stringify(updatedBookmarks));
+    setBookmarkName('');
+    setIsBookmarkInputOpen(false);
+  };
+
+  // ブックマーク適用
+  const applyBookmark = (bookmark: Bookmark) => {
+    Object.keys(bookmark.visibleColumns).forEach((key) => {
+      if (visibleColumns[key] !== bookmark.visibleColumns[key]) {
+        onVisibilityChange(key);
+      }
+    });
+  };
+
+  // ブックマーク削除
+  const deleteBookmark = (id: string) => {
+    if (!confirm('このブックマークを削除しますか？')) return;
+
+    const updatedBookmarks = bookmarks.filter(b => b.id !== id);
+    setBookmarks(updatedBookmarks);
+    localStorage.setItem('columnBookmarks', JSON.stringify(updatedBookmarks));
+  };
 
   // モーダルが開いたときに中央に配置
   useEffect(() => {
@@ -291,7 +357,7 @@ export function ColumnSettingsModal({
 
         {/* モーダルボディ */}
         <div style={{ padding: '24px', overflow: 'auto', flex: 1 }}>
-          <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               onClick={onSelectAll}
               style={{
@@ -320,7 +386,184 @@ export function ColumnSettingsModal({
             >
               全て解除
             </button>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <button
+                onClick={() => setIsBookmarkInputOpen(!isBookmarkInputOpen)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f39c12',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                ⭐ ブックマーク保存
+              </button>
+              <button
+                onClick={() => setShowBookmarks(!showBookmarks)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                📚 ブックマーク一覧 ({bookmarks.length})
+              </button>
+            </div>
           </div>
+
+          {/* ブックマーク保存フォーム */}
+          {isBookmarkInputOpen && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              background: '#fff3cd',
+              border: '1px solid #f39c12',
+              borderRadius: '6px',
+            }}>
+              <div style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 'bold', color: '#856404' }}>
+                現在の選択状態をブックマークとして保存
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="text"
+                  value={bookmarkName}
+                  onChange={(e) => setBookmarkName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && saveBookmark()}
+                  placeholder="ブックマーク名を入力..."
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                  }}
+                />
+                <button
+                  onClick={saveBookmark}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  保存
+                </button>
+                <button
+                  onClick={() => {
+                    setIsBookmarkInputOpen(false);
+                    setBookmarkName('');
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                  }}
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ブックマーク一覧 */}
+          {showBookmarks && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '16px',
+              background: '#e3f2fd',
+              border: '1px solid #3498db',
+              borderRadius: '6px',
+              maxHeight: '300px',
+              overflow: 'auto',
+            }}>
+              <div style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 'bold', color: '#1565c0' }}>
+                保存済みブックマーク
+              </div>
+              {bookmarks.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#666', fontSize: '14px' }}>
+                  ブックマークがまだ保存されていません
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {bookmarks.map((bookmark) => {
+                    const selectedCount = Object.values(bookmark.visibleColumns).filter(Boolean).length;
+                    return (
+                      <div
+                        key={bookmark.id}
+                        style={{
+                          padding: '12px',
+                          background: 'white',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          border: '1px solid #dee2e6',
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#2c3e50', marginBottom: '4px' }}>
+                            {bookmark.name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                            {selectedCount}カラム選択 • {new Date(bookmark.createdAt).toLocaleString('ja-JP')}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => applyBookmark(bookmark)}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#27ae60',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          適用
+                        </button>
+                        <button
+                          onClick={() => deleteBookmark(bookmark.id)}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          削除
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
 
           {/* グループごとの表示 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
