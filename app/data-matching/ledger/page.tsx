@@ -17,6 +17,7 @@ const MATCHING_STATUS_OPTIONS: MatchingStatus[] = [
 
 export default function LedgerWindowPage() {
   const [data, setData] = useState<LedgerData[]>(ledgerDataSample);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<DataMatchingFilters>({
     category: '',
     department: '',
@@ -50,17 +51,46 @@ export default function LedgerWindowPage() {
     window.postMessage({ type: 'FILTER_UPDATE', filters }, '*');
   }, [filters]);
 
-  // 他のウィンドウからのフィルター更新を受信
+  // 選択情報を親ウィンドウに送信
+  useEffect(() => {
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'LEDGER_SELECTION',
+        selectedIds: Array.from(selectedIds)
+      }, '*');
+    }
+  }, [selectedIds]);
+
+  // 他のウィンドウからのフィルター更新と突合完了を受信
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'FILTER_UPDATE' && event.source !== window) {
         setFilters(event.data.filters);
       }
+      // 突合完了通知を受け取る
+      if (event.data.type === 'MATCH_COMPLETE') {
+        const { ledgerIds } = event.data;
+        // 突合完了したデータを更新
+        const now = new Date().toISOString();
+        const updatedData = data.map(item => {
+          if (ledgerIds.includes(item.id)) {
+            return {
+              ...item,
+              matchingStatus: '完全一致' as MatchingStatus,
+              matchedAt: now,
+              matchedBy: '現在のユーザー'
+            };
+          }
+          return item;
+        });
+        setData(updatedData);
+        setSelectedIds(new Set());
+      }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [data]);
 
   // 部門オプション
   const departmentOptions = useMemo(() => [...FACILITY_CONSTANTS.divisions], []);
@@ -135,6 +165,26 @@ export default function LedgerWindowPage() {
       matchingStatus: '全て',
       keyword: ''
     });
+  };
+
+  // チェックボックスの選択処理
+  const handleSelectRow = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // 一括選択処理
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredData.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredData.map(d => d.id)));
+    }
   };
 
   const getStatusColor = (status: MatchingStatus) => {
@@ -396,14 +446,33 @@ export default function LedgerWindowPage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '12px'
+              marginBottom: '12px',
+              gap: '12px'
             }}>
               <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
                 固定資産台帳リスト
               </h2>
-              <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
-                表示: {filteredData.length}件 / 全体: {data.length}件
-              </span>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+                  選択: {selectedIds.size}件
+                </span>
+                <button
+                  onClick={handleSelectAll}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  {selectedIds.size === filteredData.length ? '全解除' : '全選択'}
+                </button>
+                <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+                  | 表示: {filteredData.length}件 / 全体: {data.length}件
+                </span>
+              </div>
             </div>
 
             <div style={{ overflow: 'auto' }}>
@@ -414,6 +483,14 @@ export default function LedgerWindowPage() {
               }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f5f5f5' }}>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', width: '50px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === filteredData.length && filteredData.length > 0}
+                        onChange={handleSelectAll}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      />
+                    </th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
@@ -432,6 +509,14 @@ export default function LedgerWindowPage() {
                 <tbody>
                   {filteredData.map((row) => (
                     <tr key={row.id}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(row.id)}
+                          onChange={() => handleSelectRow(row.id)}
+                          style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                      </td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0' }}>
                         <span style={{
                           padding: '4px 8px',

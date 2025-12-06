@@ -6,6 +6,7 @@ import { Header } from '@/components/layouts';
 import { useAssetStore, useMasterStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
 // カラム定義
@@ -14,50 +15,68 @@ interface ColumnDef {
   label: string;
   width?: string;
   defaultVisible?: boolean;
+  group?: string;
 }
 
 const ALL_COLUMNS: ColumnDef[] = [
-  { key: 'facility', label: '施設名', width: '200px', defaultVisible: true },
-  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true },
-  { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false },
-  { key: 'managementNo', label: '管理機器番号', width: '150px', defaultVisible: false },
-  { key: 'building', label: '棟', width: '100px', defaultVisible: true },
-  { key: 'floor', label: '階', width: '80px', defaultVisible: true },
-  { key: 'department', label: '部門名', width: '120px', defaultVisible: true },
-  { key: 'section', label: '部署名', width: '120px', defaultVisible: false },
-  { key: 'roomClass1', label: '諸室区分①', width: '120px', defaultVisible: false },
-  { key: 'roomClass2', label: '諸室区分②', width: '120px', defaultVisible: false },
-  { key: 'roomName', label: '諸室名称', width: '150px', defaultVisible: false },
-  { key: 'category', label: 'Category', width: '120px', defaultVisible: false },
-  { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: false },
-  { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: false },
-  { key: 'item', label: '品目', width: '150px', defaultVisible: false },
-  { key: 'name', label: '個体管理名称', width: '200px', defaultVisible: true },
-  { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: true },
-  { key: 'model', label: '型式', width: '150px', defaultVisible: true },
-  { key: 'quantityUnit', label: '数量／単位', width: '120px', defaultVisible: false },
-  { key: 'quantity', label: '数量', width: '80px', defaultVisible: false },
-  { key: 'serialNumber', label: 'シリアル番号', width: '150px', defaultVisible: false },
-  { key: 'width', label: 'W', width: '80px', defaultVisible: false },
-  { key: 'depth', label: 'D', width: '80px', defaultVisible: false },
-  { key: 'height', label: 'H', width: '80px', defaultVisible: false },
-  { key: 'installationLocation', label: '設置場所', width: '150px', defaultVisible: false },
-  { key: 'assetInfo', label: '資産情報', width: '200px', defaultVisible: false },
-  { key: 'contractName', label: '契約･見積名称', width: '180px', defaultVisible: false },
-  { key: 'contractNo', label: '契約番号（契約単位）', width: '180px', defaultVisible: false },
-  { key: 'quotationNo', label: '見積番号', width: '120px', defaultVisible: false },
-  { key: 'contractDate', label: '契約･発注日', width: '120px', defaultVisible: false },
-  { key: 'deliveryDate', label: '納品日', width: '120px', defaultVisible: false },
-  { key: 'inspectionDate', label: '検収日', width: '120px', defaultVisible: false },
-  { key: 'lease', label: 'リース', width: '80px', defaultVisible: false },
-  { key: 'rental', label: '借用', width: '80px', defaultVisible: false },
-  { key: 'leaseStartDate', label: 'リース開始日', width: '120px', defaultVisible: false },
-  { key: 'leaseEndDate', label: 'リース終了日', width: '120px', defaultVisible: false },
-  { key: 'acquisitionCost', label: '取得価格', width: '120px', defaultVisible: false },
-  { key: 'legalServiceLife', label: '耐用年数（法定）', width: '140px', defaultVisible: false },
-  { key: 'recommendedServiceLife', label: '使用年数（メーカー推奨）', width: '180px', defaultVisible: false },
-  { key: 'endOfService', label: 'End of service：販売終了', width: '180px', defaultVisible: false },
-  { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false },
+  // 基本情報
+  { key: 'facility', label: '施設名', width: '200px', defaultVisible: true, group: 'basic' },
+  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true, group: 'basic' },
+  { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false, group: 'basic' },
+  { key: 'managementNo', label: '管理機器番号', width: '150px', defaultVisible: false, group: 'basic' },
+
+  // 設置場所
+  { key: 'building', label: '棟', width: '100px', defaultVisible: true, group: 'location' },
+  { key: 'floor', label: '階', width: '80px', defaultVisible: true, group: 'location' },
+  { key: 'department', label: '部門名', width: '120px', defaultVisible: true, group: 'location' },
+  { key: 'section', label: '部署名', width: '120px', defaultVisible: false, group: 'location' },
+  { key: 'roomClass1', label: '諸室区分①', width: '120px', defaultVisible: false, group: 'location' },
+  { key: 'roomClass2', label: '諸室区分②', width: '120px', defaultVisible: false, group: 'location' },
+  { key: 'roomName', label: '諸室名称', width: '150px', defaultVisible: false, group: 'location' },
+  { key: 'installationLocation', label: '設置場所', width: '150px', defaultVisible: false, group: 'location' },
+
+  // 機器分類
+  { key: 'category', label: 'Category', width: '120px', defaultVisible: false, group: 'classification' },
+  { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: false, group: 'classification' },
+  { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: false, group: 'classification' },
+  { key: 'item', label: '品目', width: '150px', defaultVisible: false, group: 'classification' },
+
+  // 機器仕様
+  { key: 'name', label: '個体管理名称', width: '200px', defaultVisible: true, group: 'specification' },
+  { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: true, group: 'specification' },
+  { key: 'model', label: '型式', width: '150px', defaultVisible: true, group: 'specification' },
+  { key: 'quantityUnit', label: '数量／単位', width: '120px', defaultVisible: false, group: 'specification' },
+  { key: 'quantity', label: '数量', width: '80px', defaultVisible: false, group: 'specification' },
+  { key: 'serialNumber', label: 'シリアル番号', width: '150px', defaultVisible: false, group: 'specification' },
+
+  // サイズ
+  { key: 'width', label: 'W', width: '80px', defaultVisible: false, group: 'size' },
+  { key: 'depth', label: 'D', width: '80px', defaultVisible: false, group: 'size' },
+  { key: 'height', label: 'H', width: '80px', defaultVisible: false, group: 'size' },
+
+  // 契約情報
+  { key: 'contractName', label: '契約･見積名称', width: '180px', defaultVisible: false, group: 'contract' },
+  { key: 'contractNo', label: '契約番号（契約単位）', width: '180px', defaultVisible: false, group: 'contract' },
+  { key: 'quotationNo', label: '見積番号', width: '120px', defaultVisible: false, group: 'contract' },
+  { key: 'contractDate', label: '契約･発注日', width: '120px', defaultVisible: false, group: 'contract' },
+  { key: 'deliveryDate', label: '納品日', width: '120px', defaultVisible: false, group: 'contract' },
+  { key: 'inspectionDate', label: '検収日', width: '120px', defaultVisible: false, group: 'contract' },
+
+  // リース情報
+  { key: 'lease', label: 'リース', width: '80px', defaultVisible: false, group: 'lease' },
+  { key: 'rental', label: '借用', width: '80px', defaultVisible: false, group: 'lease' },
+  { key: 'leaseStartDate', label: 'リース開始日', width: '120px', defaultVisible: false, group: 'lease' },
+  { key: 'leaseEndDate', label: 'リース終了日', width: '120px', defaultVisible: false, group: 'lease' },
+
+  // 財務情報
+  { key: 'acquisitionCost', label: '取得価格', width: '120px', defaultVisible: false, group: 'financial' },
+  { key: 'assetInfo', label: '資産情報', width: '200px', defaultVisible: false, group: 'financial' },
+
+  // 耐用年数
+  { key: 'legalServiceLife', label: '耐用年数（法定）', width: '140px', defaultVisible: false, group: 'lifespan' },
+  { key: 'recommendedServiceLife', label: '使用年数（メーカー推奨）', width: '180px', defaultVisible: false, group: 'lifespan' },
+  { key: 'endOfService', label: 'End of service：販売終了', width: '180px', defaultVisible: false, group: 'lifespan' },
+  { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false, group: 'lifespan' },
 ];
 
 export default function AssetSearchResultPage() {
@@ -655,154 +674,15 @@ export default function AssetSearchResultPage() {
       </div>
 
       {/* カラム設定モーダル */}
-      {isColumnSettingsOpen && (
-        <div
-          onClick={() => setIsColumnSettingsOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '8px',
-              width: '90%',
-              maxWidth: '700px',
-              maxHeight: '80vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: '#9b59b6',
-                color: 'white',
-                padding: '20px 24px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span>表示カラム設定（42カラム）</span>
-              <button
-                onClick={() => setIsColumnSettingsOpen(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'white',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: '30px',
-                  height: '30px',
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* モーダルボディ */}
-            <div style={{ padding: '24px', overflow: 'auto', flex: 1 }}>
-              <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={handleSelectAllColumns}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  全て選択
-                </button>
-                <button
-                  onClick={handleDeselectAllColumns}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#95a5a6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  全て解除
-                </button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                {ALL_COLUMNS.map((col) => (
-                  <label
-                    key={col.key}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px',
-                      background: visibleColumns[col.key] ? '#e8f5e9' : '#f5f5f5',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={visibleColumns[col.key]}
-                      onChange={() => toggleColumnVisibility(col.key)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <span style={{ fontSize: '13px', color: '#2c3e50' }}>{col.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* モーダルフッター */}
-            <div
-              style={{
-                padding: '16px 24px',
-                borderTop: '1px solid #dee2e6',
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <button
-                onClick={() => setIsColumnSettingsOpen(false)}
-                style={{
-                  padding: '10px 24px',
-                  background: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ColumnSettingsModal
+        isOpen={isColumnSettingsOpen}
+        onClose={() => setIsColumnSettingsOpen(false)}
+        columns={ALL_COLUMNS}
+        visibleColumns={visibleColumns}
+        onVisibilityChange={toggleColumnVisibility}
+        onSelectAll={handleSelectAllColumns}
+        onDeselectAll={handleDeselectAllColumns}
+      />
     </div>
   );
 }

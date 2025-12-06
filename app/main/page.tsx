@@ -17,28 +17,12 @@ export default function MainPage() {
   const [isRemodelModalOpen, setIsRemodelModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedRemodelFacility, setSelectedRemodelFacility] = useState('');
-  const [selectedRemodelDepartment, setSelectedRemodelDepartment] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = useMemo(() => {
     return facilities.map(f => f.facilityName);
   }, [facilities]);
-
-  // 選択した施設に紐づく部署リストを取得
-  const departmentOptions = useMemo(() => {
-    if (!selectedRemodelFacility) return [];
-    const selectedFac = facilities.find(f => f.facilityName === selectedRemodelFacility);
-    if (!selectedFac || !selectedFac.department) return [];
-
-    // 同じ施設の全ての部署を取得（重複を除く）
-    const depts = facilities
-      .filter(f => f.facilityName === selectedRemodelFacility && f.department)
-      .map(f => f.department)
-      .filter((dept, index, self) => dept && self.indexOf(dept) === index);
-
-    return depts as string[];
-  }, [selectedRemodelFacility, facilities]);
 
   // メールアドレスからユーザー種別を判定
   const userType = user ? getUserType(user.email) : 'consultant';
@@ -61,28 +45,21 @@ export default function MainPage() {
   const closeRemodelModal = () => {
     setIsRemodelModalOpen(false);
     setSelectedRemodelFacility('');
-    setSelectedRemodelDepartment('');
   };
 
   const handleRemodelFacilityChange = (facilityName: string) => {
     setSelectedRemodelFacility(facilityName);
-    setSelectedRemodelDepartment(''); // 施設変更時に部署選択をリセット
-  };
-
-  const handleRemodelDepartmentChange = (department: string) => {
-    setSelectedRemodelDepartment(department);
   };
 
   const handleRemodelSubmit = () => {
-    if (!selectedRemodelFacility || !selectedRemodelDepartment) {
-      alert('施設と部署を選択してください');
+    if (!selectedRemodelFacility) {
+      alert('施設を選択してください');
       return;
     }
 
-    // リモデル申請画面に遷移（クエリパラメータで施設と部署を渡す）
+    // リモデル申請画面に遷移（クエリパラメータで施設を渡す）
     const params = new URLSearchParams({
       facility: selectedRemodelFacility,
-      department: selectedRemodelDepartment,
     });
     router.push(`/remodel-application?${params.toString()}`);
   };
@@ -1010,10 +987,10 @@ export default function MainPage() {
               background: 'white',
               borderRadius: '12px',
               width: '90%',
-              maxWidth: '800px',
+              maxWidth: '500px',
               maxHeight: '90vh',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'auto',
+              overflow: 'visible',
               display: 'flex',
               flexDirection: 'column'
             }}
@@ -1023,8 +1000,8 @@ export default function MainPage() {
               style={{
                 background: '#27ae60',
                 color: 'white',
-                padding: '20px 24px',
-                fontSize: '20px',
+                padding: '16px 20px',
+                fontSize: '18px',
                 fontWeight: 'bold',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -1037,12 +1014,12 @@ export default function MainPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '24px',
+                  fontSize: '20px',
                   cursor: 'pointer',
                   color: 'white',
                   padding: '0',
-                  width: '32px',
-                  height: '32px',
+                  width: '28px',
+                  height: '28px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1061,9 +1038,9 @@ export default function MainPage() {
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '32px', flex: 1, minHeight: '500px' }}>
+            <div style={{ padding: '24px', overflow: 'visible' }}>
               {/* 施設選択 */}
-              <div style={{ marginBottom: '32px', position: 'relative', zIndex: 3 }}>
+              <div style={{ marginBottom: '24px', position: 'relative', zIndex: 3 }}>
                 <SearchableSelect
                   label="施設を選択"
                   value={selectedRemodelFacility}
@@ -1074,32 +1051,18 @@ export default function MainPage() {
                 />
               </div>
 
-              {/* 部署選択（施設選択後に表示） */}
-              {selectedRemodelFacility && departmentOptions.length > 0 && (
-                <div style={{ marginBottom: '32px', position: 'relative', zIndex: 2 }}>
-                  <SearchableSelect
-                    label="部署を選択"
-                    value={selectedRemodelDepartment}
-                    onChange={handleRemodelDepartmentChange}
-                    options={['', ...departmentOptions]}
-                    placeholder="部署を選択してください"
-                    isMobile={isMobile}
-                  />
-                </div>
-              )}
-
               {/* 決定ボタン */}
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button
                   onClick={closeRemodelModal}
                   style={{
-                    padding: '10px 20px',
+                    padding: '8px 16px',
                     background: '#95a5a6',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     fontWeight: '600',
                     transition: 'background 0.2s',
                   }}
@@ -1114,25 +1077,25 @@ export default function MainPage() {
                 </button>
                 <button
                   onClick={handleRemodelSubmit}
-                  disabled={!selectedRemodelFacility || !selectedRemodelDepartment}
+                  disabled={!selectedRemodelFacility}
                   style={{
-                    padding: '10px 20px',
-                    background: selectedRemodelFacility && selectedRemodelDepartment ? '#27ae60' : '#ddd',
-                    color: selectedRemodelFacility && selectedRemodelDepartment ? 'white' : '#999',
+                    padding: '8px 16px',
+                    background: selectedRemodelFacility ? '#27ae60' : '#ddd',
+                    color: selectedRemodelFacility ? 'white' : '#999',
                     border: 'none',
-                    borderRadius: '6px',
-                    cursor: selectedRemodelFacility && selectedRemodelDepartment ? 'pointer' : 'not-allowed',
-                    fontSize: '14px',
+                    borderRadius: '4px',
+                    cursor: selectedRemodelFacility ? 'pointer' : 'not-allowed',
+                    fontSize: '13px',
                     fontWeight: '600',
                     transition: 'background 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    if (selectedRemodelFacility && selectedRemodelDepartment) {
+                    if (selectedRemodelFacility) {
                       e.currentTarget.style.background = '#229954';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (selectedRemodelFacility && selectedRemodelDepartment) {
+                    if (selectedRemodelFacility) {
                       e.currentTarget.style.background = '#27ae60';
                     }
                   }}

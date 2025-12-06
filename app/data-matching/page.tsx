@@ -24,6 +24,7 @@ export default function DataMatchingPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingData, setEditingData] = useState<SurveyData | null>(null);
   const [ledgerWindowRef, setLedgerWindowRef] = useState<Window | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // フィルターフック
   const {
@@ -53,6 +54,11 @@ export default function DataMatchingPage() {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'FILTER_UPDATE' && event.source !== window) {
         setFilters(event.data.filters);
+      }
+      // 台帳側からの選択情報を受け取る
+      if (event.data.type === 'LEDGER_SELECTION') {
+        // ledgerSelectedIdsをwindowオブジェクトに保存
+        (window as any).ledgerSelectedIds = event.data.selectedIds;
       }
     };
 
@@ -116,6 +122,77 @@ export default function DataMatchingPage() {
 
     setData(updatedData);
     closeEditModal();
+  };
+
+  // チェックボックスの選択処理
+  const handleSelectRow = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  // 一括選択処理
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredData.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredData.map(d => d.id)));
+    }
+  };
+
+  // 突合処理
+  const handleMatch = () => {
+    if (selectedIds.size === 0) {
+      alert('現有リスト側から突合する項目を選択してください');
+      return;
+    }
+
+    const ledgerSelectedIds = (window as any).ledgerSelectedIds as string[] | undefined;
+    if (!ledgerSelectedIds || ledgerSelectedIds.length === 0) {
+      alert('台帳リスト側から突合する項目を選択してください');
+      return;
+    }
+
+    // 1対1の突合チェック
+    if (selectedIds.size !== ledgerSelectedIds.length) {
+      const confirmMatch = confirm(
+        `選択数が一致しません。\n現有品: ${selectedIds.size}件\n台帳: ${ledgerSelectedIds.length}件\n\nこのまま突合を実行しますか？`
+      );
+      if (!confirmMatch) return;
+    }
+
+    // 突合処理を実行
+    const now = new Date().toISOString();
+    const updatedData = data.map(item => {
+      if (selectedIds.has(item.id)) {
+        return {
+          ...item,
+          matchingStatus: '完全一致' as MatchingStatus,
+          matchedLedgerId: ledgerSelectedIds[0], // 簡易実装：最初の台帳IDと紐付け
+          matchedAt: now,
+          matchedBy: '現在のユーザー'
+        };
+      }
+      return item;
+    });
+
+    setData(updatedData);
+    setSelectedIds(new Set());
+
+    // 台帳側にも突合完了を通知
+    if (ledgerWindowRef && !ledgerWindowRef.closed) {
+      ledgerWindowRef.postMessage({
+        type: 'MATCH_COMPLETE',
+        surveyIds: Array.from(selectedIds),
+        ledgerIds: ledgerSelectedIds
+      }, '*');
+    }
+
+    alert(`${selectedIds.size}件の突合が完了しました`);
   };
 
   const getStatusColor = (status: MatchingStatus) => {
@@ -426,11 +503,48 @@ export default function DataMatchingPage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '12px'
+              marginBottom: '12px',
+              gap: '12px'
             }}>
               <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
                 現有品調査リスト
               </h2>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+                  選択: {selectedIds.size}件
+                </span>
+                <button
+                  onClick={handleSelectAll}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px'
+                  }}
+                >
+                  {selectedIds.size === filteredData.length ? '全解除' : '全選択'}
+                </button>
+                <button
+                  onClick={handleMatch}
+                  disabled={selectedIds.size === 0}
+                  style={{
+                    padding: '6px 16px',
+                    backgroundColor: selectedIds.size > 0 ? '#27ae60' : '#cccccc',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: selectedIds.size > 0 ? 'pointer' : 'not-allowed',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
+                  突合実行
+                </button>
+              </div>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
               <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
                 表示: {filteredData.length}件 / 全体: {data.length}件
               </span>
@@ -444,6 +558,14 @@ export default function DataMatchingPage() {
               }}>
                 <thead>
                   <tr style={{ backgroundColor: '#f5f5f5' }}>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', width: '50px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === filteredData.length && filteredData.length > 0}
+                        onChange={handleSelectAll}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      />
+                    </th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>QRコード</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
@@ -464,6 +586,14 @@ export default function DataMatchingPage() {
                 <tbody>
                   {filteredData.map((row) => (
                     <tr key={row.id}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(row.id)}
+                          onChange={() => handleSelectRow(row.id)}
+                          style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                      </td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0' }}>
                         <span style={{
                           padding: '4px 8px',
