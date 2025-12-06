@@ -70,9 +70,12 @@ export const ASSET_COLUMNS: ColumnDef[] = [
 ];
 
 // リモデル申請画面用のカラム定義（nameカラムのラベルが異なる）
-export const REMODEL_COLUMNS: ColumnDef[] = ASSET_COLUMNS.map(col =>
-  col.key === 'name' ? { ...col, label: '品目' } : col
-);
+export const REMODEL_COLUMNS: ColumnDef[] = [
+  { key: 'applicationStatus', label: '申請ステータス', width: '150px', defaultVisible: true, group: 'status' },
+  ...ASSET_COLUMNS.map(col =>
+    col.key === 'name' ? { ...col, label: '品目' } : col
+  )
+];
 
 // ユーティリティ関数: カラムのラベルを上書き
 export function overrideColumnLabels(

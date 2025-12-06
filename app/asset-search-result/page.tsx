@@ -301,13 +301,14 @@ export default function AssetSearchResultPage() {
       const applicationData: Omit<Application, 'id'> = {
         applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         applicationDate: new Date().toISOString().split('T')[0],
-        applicationType: '新規購入申請',
+        applicationType: '新規申請',
         asset: {
           name: asset.name,
           model: asset.model,
         },
         vendor: asset.maker,
-        quantity: `${quantity}${unit}`,
+        quantity: `${quantity}`,
+        unit: unit,
         status: '承認待ち',
         approvalProgress: {
           current: 0,
@@ -319,8 +320,14 @@ export default function AssetSearchResultPage() {
           department: newAppDepartment,
           section: newAppSection,
         },
+        roomName: newAppRoomName,
         freeInput: applicationReason,
         executionYear: executionYear || new Date().getFullYear().toString(),
+        currentConnectionStatus: currentConnectionStatus,
+        currentConnectionDestination: currentConnectionDestination,
+        requestConnectionStatus: requestConnectionStatus,
+        requestConnectionDestination: requestConnectionDestination,
+        applicationReason: applicationReason,
       };
 
       // ストアに申請データを追加
@@ -333,7 +340,7 @@ export default function AssetSearchResultPage() {
     setIsNewApplicationModalOpen(false);
 
     // 申請一覧画面に遷移
-    router.push('/remodel-application-list');
+    router.push('/application-list');
   };
 
   return (
@@ -447,7 +454,7 @@ export default function AssetSearchResultPage() {
           }}
           onClick={handleNewApplication}
         >
-          新規購入申請
+          新規申請
         </button>
         <button
           disabled={selectedItems.size === 0}
@@ -460,9 +467,9 @@ export default function AssetSearchResultPage() {
             cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
             fontSize: '14px'
           }}
-          onClick={() => alert('増設購入申請')}
+          onClick={() => alert('増設申請')}
         >
-          増設購入申請
+          増設申請
         </button>
         <button
           disabled={selectedItems.size === 0}
@@ -475,9 +482,9 @@ export default function AssetSearchResultPage() {
             cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
             fontSize: '14px'
           }}
-          onClick={() => alert('更新購入申請')}
+          onClick={() => alert('更新申請')}
         >
-          更新購入申請
+          更新申請
         </button>
       </div>
 

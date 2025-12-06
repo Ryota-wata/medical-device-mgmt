@@ -17,7 +17,7 @@ const ALL_COLUMNS = REMODEL_COLUMNS;
 function RemodelApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addApplication } = useApplicationStore();
+  const { addApplication, applications } = useApplicationStore();
   const { isMobile } = useResponsive();
 
   // URLパラメータから施設・部署を取得
@@ -159,6 +159,58 @@ function RemodelApplicationContent() {
     router.push(`/asset-detail?qrCode=${asset.qrCode}&readonly=true`);
   };
 
+  // 資産の申請ステータスを取得
+  const getAssetApplications = (asset: Asset) => {
+    // この資産に関連する申請を取得（名前とモデルで照合）
+    return applications.filter(app =>
+      app.asset.name === asset.name &&
+      app.asset.model === asset.model
+    );
+  };
+
+  // 申請ステータスバッジを描画
+  const renderApplicationStatus = (asset: Asset) => {
+    const assetApplications = getAssetApplications(asset);
+
+    if (assetApplications.length === 0) {
+      return <span style={{ color: '#95a5a6', fontSize: '12px' }}>-</span>;
+    }
+
+    // 申請タイプごとの色定義
+    const typeColors: Record<string, string> = {
+      '新規申請': '#27ae60',
+      '増設申請': '#3498db',
+      '更新申請': '#e67e22',
+      '移動申請': '#9b59b6',
+      '廃棄申請': '#e74c3c',
+      '保留': '#95a5a6',
+    };
+
+    // ユニークな申請タイプを取得
+    const uniqueTypes = Array.from(new Set(assetApplications.map(app => app.applicationType)));
+
+    return (
+      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+        {uniqueTypes.map((type, index) => (
+          <span
+            key={index}
+            style={{
+              padding: '2px 8px',
+              background: typeColors[type] || '#95a5a6',
+              color: 'white',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {type}
+          </span>
+        ))}
+      </div>
+    );
+  };
+
   // 申請アクションハンドラー
   const handleApplicationAction = (actionType: string) => {
     if (selectedItems.size === 0 && actionType !== '新規申請') {
@@ -207,31 +259,40 @@ function RemodelApplicationContent() {
       }
     }
 
-    // 申請データを作成（各資産ごとに1レコード）
-    const applications = selectedAssets.map(asset => ({
-      id: `APP-${Date.now()}-${asset.no}`,
-      applicationType: currentApplicationType,
-      assetQrCode: asset.qrCode,
-      assetName: asset.name,
-      assetMaker: asset.maker,
-      assetModel: asset.model,
-      facility: facility,
-      currentBuilding: asset.building,
-      currentFloor: asset.floor,
-      currentDepartment: asset.department,
-      currentSection: asset.section,
-      newBuilding: currentApplicationType !== '廃棄申請' ? applicationBuilding : '',
-      newFloor: currentApplicationType !== '廃棄申請' ? applicationFloor : '',
-      newDepartment: currentApplicationType !== '廃棄申請' ? applicationDepartment : '',
-      newSection: currentApplicationType !== '廃棄申請' ? applicationSection : '',
-      newRoomName: currentApplicationType !== '廃棄申請' ? applicationRoomName : '',
-      applicationDate: new Date().toISOString(),
-      status: '申請中'
-    }));
+    // 申請データを作成してストアに保存（各資産ごとに1レコード）
+    selectedAssets.forEach(asset => {
+      const applicationData: Omit<Application, 'id'> = {
+        applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        applicationDate: new Date().toISOString().split('T')[0],
+        applicationType: currentApplicationType,
+        asset: {
+          name: asset.name,
+          model: asset.model,
+        },
+        vendor: asset.maker,
+        quantity: '1',
+        unit: '台',
+        status: '承認待ち',
+        approvalProgress: {
+          current: 0,
+          total: 3,
+        },
+        facility: {
+          building: currentApplicationType !== '廃棄申請' ? applicationBuilding : asset.building,
+          floor: currentApplicationType !== '廃棄申請' ? applicationFloor : asset.floor,
+          department: currentApplicationType !== '廃棄申請' ? applicationDepartment : asset.department,
+          section: currentApplicationType !== '廃棄申請' ? applicationSection : asset.section,
+        },
+        roomName: currentApplicationType !== '廃棄申請' ? applicationRoomName : undefined,
+        freeInput: currentApplicationType !== '廃棄申請' ? applicationRoomName : '廃棄',
+        executionYear: new Date().getFullYear().toString(),
+      };
 
-    // ここで実際にはAPIに送信するか、Zustandストアに保存する
+      // ストアに申請データを追加
+      addApplication(applicationData);
+    });
 
-    alert(`${currentApplicationType}を送信しました\n申請件数: ${applications.length}件`);
+    alert(`${currentApplicationType}を送信しました\n申請件数: ${selectedAssets.length}件`);
 
     // モーダルを閉じて選択をクリア
     setIsApplicationModalOpen(false);
@@ -333,13 +394,14 @@ function RemodelApplicationContent() {
       const applicationData: Omit<Application, 'id'> = {
         applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         applicationDate: new Date().toISOString().split('T')[0],
-        applicationType: '新規購入申請',
+        applicationType: '新規申請',
         asset: {
           name: asset.name,
           model: asset.model,
         },
         vendor: asset.maker,
-        quantity: `${quantity}${unit}`,
+        quantity: `${quantity}`,
+        unit: unit,
         status: '承認待ち',
         approvalProgress: {
           current: 0,
@@ -351,8 +413,14 @@ function RemodelApplicationContent() {
           department: newAppDepartment,
           section: newAppSection,
         },
+        roomName: newAppRoomName,
         freeInput: applicationReason,
         executionYear: executionYear || new Date().getFullYear().toString(),
+        currentConnectionStatus: currentConnectionStatus,
+        currentConnectionDestination: currentConnectionDestination,
+        requestConnectionStatus: requestConnectionStatus,
+        requestConnectionDestination: requestConnectionDestination,
+        applicationReason: applicationReason,
       };
 
       // ストアに申請データを追加
@@ -364,14 +432,14 @@ function RemodelApplicationContent() {
     // モーダルを閉じる
     setIsNewApplicationModalOpen(false);
 
-    // 申請一覧画面に遷移
-    router.push('/remodel-application-list');
+    // 選択された資産をクリア
+    setSelectedAssets([]);
   };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
       <Header
-        title={`リモデル申請 - ${facility} ${department}`}
+        title={`リモデル管理 - ${facility} ${department}`}
         resultCount={filteredAssets.length}
         onViewToggle={() => setCurrentView(currentView === 'list' ? 'card' : 'list')}
         onExport={() => alert('Excel/PDF出力')}
@@ -670,7 +738,7 @@ function RemodelApplicationContent() {
                   </td>
                   {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
                     <td key={col.key} style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {getCellValue(asset, col.key)}
+                      {col.key === 'applicationStatus' ? renderApplicationStatus(asset) : getCellValue(asset, col.key)}
                     </td>
                   ))}
                 </tr>

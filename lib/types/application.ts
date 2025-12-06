@@ -16,6 +16,7 @@ export interface Application {
   };
   vendor: string;
   quantity: string;
+  unit?: string;
   rfqNo?: string;
   status: ApplicationStatus;
   approvalProgress: {
@@ -28,8 +29,14 @@ export interface Application {
     department: string;
     section: string;
   };
+  roomName?: string;
   freeInput: string;
   executionYear: string;
+  currentConnectionStatus?: string;
+  currentConnectionDestination?: string;
+  requestConnectionStatus?: string;
+  requestConnectionDestination?: string;
+  applicationReason?: string;
   quotationInfo?: QuotationInfo[];
   individualRegistered?: boolean;
 }
@@ -38,13 +45,12 @@ export interface Application {
  * 申請種別
  */
 export type ApplicationType =
-  | '新規購入申請'
-  | '増設購入申請'
-  | '更新購入申請'
+  | '新規申請'
+  | '増設申請'
+  | '更新申請'
   | '移動申請'
   | '廃棄申請'
-  | '修理申請'
-  | '保守申請';
+  | '保留';
 
 /**
  * 申請ステータス
@@ -93,13 +99,12 @@ export function getApplicationTypeBadgeStyle(type: ApplicationType): {
   color: string;
 } {
   const styles: Record<ApplicationType, { background: string; color: string }> = {
-    '新規購入申請': { background: '#3498db', color: 'white' },
-    '増設購入申請': { background: '#9b59b6', color: 'white' },
-    '更新購入申請': { background: '#1abc9c', color: 'white' },
-    '移動申請': { background: '#34495e', color: 'white' },
-    '廃棄申請': { background: '#c0392b', color: 'white' },
-    '修理申請': { background: '#e67e22', color: 'white' },
-    '保守申請': { background: '#7f8c8d', color: 'white' },
+    '新規申請': { background: '#27ae60', color: 'white' },
+    '増設申請': { background: '#3498db', color: 'white' },
+    '更新申請': { background: '#e67e22', color: 'white' },
+    '移動申請': { background: '#9b59b6', color: 'white' },
+    '廃棄申請': { background: '#e74c3c', color: 'white' },
+    '保留': { background: '#95a5a6', color: 'white' },
   };
   return styles[type];
 }

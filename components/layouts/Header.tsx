@@ -9,6 +9,7 @@ interface HeaderProps {
   title?: string;
   showBackButton?: boolean;
   resultCount?: number;
+  showOriginalLabel?: boolean;
   onExport?: () => void;
   onPrint?: () => void;
   onViewToggle?: () => void;
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   title = '資産リスト',
   showBackButton = true,
   resultCount,
+  showOriginalLabel = true,
   onExport,
   onPrint,
   onViewToggle,
@@ -75,7 +77,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         {resultCount !== undefined && (
           <span style={{ color: '#ecf0f1', fontSize: isMobile ? '12px' : '14px' }}>
-            {resultCount}件（原本）
+            {resultCount}件{showOriginalLabel && '（原本）'}
           </span>
         )}
       </div>

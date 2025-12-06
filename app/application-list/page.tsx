@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useApplicationStore } from '@/lib/stores';
 import {
   Application,
   ApplicationType,
@@ -12,7 +13,7 @@ import {
 
 export default function ApplicationListPage() {
   const router = useRouter();
-  const [applications, setApplications] = useState<Application[]>([]);
+  const { applications, addApplication } = useApplicationStore();
   const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,178 +27,6 @@ export default function ApplicationListPage() {
     dateTo: '',
     keyword: '',
   });
-
-  // モックデータ
-  useEffect(() => {
-    const mockData: Application[] = [
-      {
-        id: 1,
-        applicationNo: 'REQ-2025-0001',
-        applicationDate: '2025-11-15',
-        applicationType: '新規購入申請',
-        asset: {
-          name: '電気手術用電源装置',
-          model: 'EW11 超音波吸引器',
-        },
-        vendor: '◯◯メディカル 東京支店',
-        quantity: '1台',
-        rfqNo: 'RFQ-2025-0001',
-        status: '承認待ち',
-        approvalProgress: {
-          current: 1,
-          total: 3,
-        },
-        facility: {
-          building: '本館',
-          floor: '2F',
-          department: '手術部門',
-          section: '手術',
-        },
-        freeInput: '老朽化に伴う更新',
-        executionYear: '2025年度',
-        quotationInfo: [
-          {
-            quotationId: 'Q-1737000000001',
-            quotationDate: '2025-01-25',
-            vendor: 'メディカルサプライ株式会社',
-            ocrItemName: '超音波診断装置 ProSound Alpha 7',
-            assetMaster: {
-              itemId: 'AST-001',
-              itemName: '超音波診断装置',
-              largeName: '画像診断機器',
-              mediumName: '超音波診断装置',
-            },
-            quantity: 1,
-            unitPrice: 15000000,
-            amount: 15000000,
-          },
-        ],
-      },
-      {
-        id: 2,
-        applicationNo: 'REQ-2025-0002',
-        applicationDate: '2025-11-15',
-        applicationType: '新規購入申請',
-        asset: {
-          name: '超音波診断装置',
-          model: 'US-3000X',
-        },
-        vendor: '◯◯メディカル 東京支店',
-        quantity: '2台',
-        rfqNo: 'RFQ-2025-0001',
-        status: '承認待ち',
-        approvalProgress: {
-          current: 1,
-          total: 3,
-        },
-        facility: {
-          building: '本館',
-          floor: '3F',
-          department: '内科',
-          section: '循環器内科',
-        },
-        freeInput: '診療業務拡大のため',
-        executionYear: '2025年度',
-        quotationInfo: [
-          {
-            quotationId: 'Q-1737000000001',
-            quotationDate: '2025-01-25',
-            vendor: 'メディカルサプライ株式会社',
-            ocrItemName: 'リニアプローブ UST-5713T',
-            assetMaster: {
-              itemId: 'AST-002',
-              itemName: 'リニアプローブ',
-              largeName: '画像診断機器',
-              mediumName: '超音波プローブ',
-            },
-            quantity: 2,
-            unitPrice: 800000,
-            amount: 1600000,
-          },
-        ],
-      },
-      {
-        id: 3,
-        applicationNo: 'REQ-2025-0003',
-        applicationDate: '2025-11-14',
-        applicationType: '更新購入申請',
-        asset: {
-          name: 'X線撮影装置',
-          model: 'XR-500',
-        },
-        vendor: '日立メディコ 大阪支店',
-        quantity: '1式',
-        rfqNo: 'RFQ-2025-0002',
-        status: '承認済み',
-        approvalProgress: {
-          current: 3,
-          total: 3,
-        },
-        facility: {
-          building: '本館',
-          floor: '1F',
-          department: '放射線科',
-          section: 'X線撮影室',
-        },
-        freeInput: '耐用年数超過',
-        executionYear: '2025年度',
-      },
-      {
-        id: 4,
-        applicationNo: 'REQ-2025-0004',
-        applicationDate: '2025-11-18',
-        applicationType: '廃棄申請',
-        asset: {
-          name: '人工呼吸器',
-          model: 'VT-1000',
-        },
-        vendor: '-',
-        quantity: '1台',
-        status: '下書き',
-        approvalProgress: {
-          current: 0,
-          total: 2,
-        },
-        facility: {
-          building: '本館',
-          floor: '4F',
-          department: 'ICU',
-          section: '集中治療室',
-        },
-        freeInput: '故障により使用不可',
-        executionYear: '2025年度',
-      },
-      {
-        id: 5,
-        applicationNo: 'REQ-2025-0005',
-        applicationDate: '2025-11-20',
-        applicationType: '移動申請',
-        asset: {
-          name: '心電計',
-          model: 'ECG-2000',
-        },
-        vendor: '-',
-        quantity: '1台',
-        status: '承認済み',
-        approvalProgress: {
-          current: 2,
-          total: 2,
-        },
-        facility: {
-          building: '本館',
-          floor: '5F',
-          department: '循環器内科',
-          section: '外来',
-        },
-        freeInput: '病棟移動のため',
-        executionYear: '2025年度',
-        individualRegistered: true,
-      },
-    ];
-
-    setApplications(mockData);
-    setFilteredApplications(mockData);
-  }, []);
 
   // フィルター適用
   useEffect(() => {
@@ -454,13 +283,12 @@ export default function ApplicationListPage() {
               }}
             >
               <option value="">すべて</option>
-              <option value="新規購入申請">新規購入申請</option>
-              <option value="増設購入申請">増設購入申請</option>
-              <option value="更新購入申請">更新購入申請</option>
+              <option value="新規申請">新規申請</option>
+              <option value="増設申請">増設申請</option>
+              <option value="更新申請">更新申請</option>
               <option value="移動申請">移動申請</option>
               <option value="廃棄申請">廃棄申請</option>
-              <option value="修理申請">修理申請</option>
-              <option value="保守申請">保守申請</option>
+              <option value="保留">保留</option>
             </select>
           </div>
 
