@@ -280,8 +280,8 @@ function RemodelApplicationListContent() {
               minWidth: '2000px'
             }}>
               <thead style={{
-                background: '#34495e',
-                color: 'white',
+                background: '#f8f9fa',
+                color: '#2c3e50',
                 position: 'sticky',
                 top: 0,
                 zIndex: 10
@@ -293,8 +293,9 @@ function RemodelApplicationListContent() {
                     textAlign: 'center',
                     fontWeight: 'bold',
                     width: '50px',
-                    borderRight: '2px solid rgba(255,255,255,0.3)',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                    borderRight: '2px solid #bdc3c7',
+                    borderBottom: '1px solid #dee2e6',
+                    background: '#f8f9fa'
                   }}>
                     <input
                       type="checkbox"
@@ -307,9 +308,10 @@ function RemodelApplicationListContent() {
                     padding: isMobile ? '8px' : '10px',
                     textAlign: 'center',
                     fontWeight: 'bold',
-                    background: '#2c3e50',
-                    borderRight: '2px solid rgba(255,255,255,0.3)',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    background: '#c8e6c9',
+                    color: '#2e7d32',
+                    borderRight: '2px solid #bdc3c7',
+                    borderBottom: '1px solid #dee2e6',
                     fontSize: isMobile ? '13px' : '15px'
                   }}>
                     設置情報
@@ -318,9 +320,10 @@ function RemodelApplicationListContent() {
                     padding: isMobile ? '8px' : '10px',
                     textAlign: 'center',
                     fontWeight: 'bold',
-                    background: '#2c3e50',
-                    borderRight: '2px solid rgba(255,255,255,0.3)',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    background: '#bbdefb',
+                    color: '#1565c0',
+                    borderRight: '2px solid #bdc3c7',
+                    borderBottom: '1px solid #dee2e6',
                     fontSize: isMobile ? '13px' : '15px'
                   }}>
                     申請資産情報
@@ -329,8 +332,9 @@ function RemodelApplicationListContent() {
                     padding: isMobile ? '8px' : '10px',
                     textAlign: 'center',
                     fontWeight: 'bold',
-                    background: '#2c3e50',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
+                    background: '#ffe0b2',
+                    color: '#e65100',
+                    borderBottom: '1px solid #dee2e6',
                     fontSize: isMobile ? '13px' : '15px'
                   }}>
                     申請編集
@@ -338,24 +342,24 @@ function RemodelApplicationListContent() {
                 </tr>
                 {/* カラム名ヘッダー */}
                 <tr>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '100px' }}>棟</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '80px' }}>階</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>部門</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>部署</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '2px solid rgba(255,255,255,0.3)', minWidth: '150px' }}>諸室名</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '200px' }}>品目</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>メーカー</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '2px solid rgba(255,255,255,0.3)', minWidth: '150px' }}>型式</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>申請区分</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>グルーピングNo</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>グルーピング</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>見積依頼No.</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>定価金額</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '120px' }}>購入金額</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム1</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム2</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderRight: '1px solid rgba(255,255,255,0.1)', minWidth: '150px' }}>編集カラム3</th>
-                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'center', fontWeight: 'bold', width: '80px' }}>削除</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '100px' }}>棟</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '80px' }}>階</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '120px' }}>部門</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '120px' }}>部署</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '2px solid #bdc3c7', minWidth: '150px' }}>諸室名</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '200px' }}>品目</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '150px' }}>メーカー</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '2px solid #bdc3c7', minWidth: '150px' }}>型式</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '120px' }}>申請区分</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '120px' }}>グルーピングNo</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '150px' }}>グルーピング</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '150px' }}>見積依頼No.</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '120px' }}>定価金額</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'right', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '120px' }}>購入金額</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '150px' }}>編集カラム1</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '150px' }}>編集カラム2</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'left', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #dee2e6', minWidth: '150px' }}>編集カラム3</th>
+                  <th style={{ padding: isMobile ? '10px 8px' : '12px', textAlign: 'center', fontWeight: 'bold', borderBottom: '1px solid #dee2e6', width: '80px' }}>削除</th>
                 </tr>
               </thead>
             <tbody>
