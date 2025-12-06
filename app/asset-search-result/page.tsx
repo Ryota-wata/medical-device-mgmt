@@ -8,6 +8,8 @@ import { Asset } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
+import { useAssetTable } from '@/lib/hooks/useAssetTable';
 import { ASSET_COLUMNS, type ColumnDef } from '@/lib/constants/assetColumns';
 
 const ALL_COLUMNS = ASSET_COLUMNS;
@@ -15,81 +17,10 @@ const ALL_COLUMNS = ASSET_COLUMNS;
 export default function AssetSearchResultPage() {
   const router = useRouter();
   const { assets } = useAssetStore();
-  const { assets: assetMasters, facilities } = useMasterStore();
   const { isMobile } = useResponsive();
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
-  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    ALL_COLUMNS.forEach((col) => {
-      initial[col.key] = col.defaultVisible ?? false;
-    });
-    return initial;
-  });
-
-  // カラム幅の状態管理
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
-    const initial: Record<string, number> = { checkbox: 50 };
-    ALL_COLUMNS.forEach((col) => {
-      initial[col.key] = parseInt(col.width || '150');
-    });
-    return initial;
-  });
-
-  // リサイズ中の状態管理
-  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
-  const [resizeStartX, setResizeStartX] = useState(0);
-  const [resizeStartWidth, setResizeStartWidth] = useState(0);
-
-  // フィルター状態
-  const [filters, setFilters] = useState({
-    building: '',
-    floor: '',
-    department: '',
-    section: '',
-    category: '',
-    largeClass: '',
-    mediumClass: ''
-  });
-
-  // マスタデータからフィルターoptionsを生成
-  const categoryOptions = useMemo(() => {
-    const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
-    return uniqueCategories.filter(Boolean);
-  }, [assetMasters]);
-
-  const largeClassOptions = useMemo(() => {
-    const uniqueLargeClasses = Array.from(new Set(assetMasters.map(a => a.largeClass)));
-    return uniqueLargeClasses.filter(Boolean);
-  }, [assetMasters]);
-
-  const mediumClassOptions = useMemo(() => {
-    const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
-    return uniqueMediumClasses.filter(Boolean);
-  }, [assetMasters]);
-
-  // 施設マスタからフィルターoptionsを生成
-  const buildingOptions = useMemo(() => {
-    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building).filter((b): b is string => !!b)));
-    return uniqueBuildings;
-  }, [facilities]);
-
-  const floorOptions = useMemo(() => {
-    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor).filter((f): f is string => !!f)));
-    return uniqueFloors;
-  }, [facilities]);
-
-  const departmentOptions = useMemo(() => {
-    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department).filter((d): d is string => !!d)));
-    return uniqueDepartments;
-  }, [facilities]);
-
-  const sectionOptions = useMemo(() => {
-    const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter((s): s is string => !!s)));
-    return uniqueSections;
-  }, [facilities]);
 
   // モックデータ（実際のデータは useAssetStore から取得）
   const [mockAssets] = useState<Asset[]>([
@@ -183,34 +114,31 @@ export default function AssetSearchResultPage() {
     }))
   ]);
 
-  useEffect(() => {
-    // フィルター適用
-    let filtered = mockAssets;
+  // useAssetFilterフックを使用
+  const {
+    filters,
+    setFilters,
+    filteredAssets,
+    categoryOptions,
+    largeClassOptions,
+    mediumClassOptions,
+    buildingOptions,
+    floorOptions,
+    departmentOptions,
+    sectionOptions,
+  } = useAssetFilter(mockAssets);
 
-    if (filters.building) {
-      filtered = filtered.filter(a => a.building === filters.building);
-    }
-    if (filters.floor) {
-      filtered = filtered.filter(a => a.floor === filters.floor);
-    }
-    if (filters.department) {
-      filtered = filtered.filter(a => a.department === filters.department);
-    }
-    if (filters.section) {
-      filtered = filtered.filter(a => a.section === filters.section);
-    }
-    if (filters.category) {
-      filtered = filtered.filter(a => a.category === filters.category);
-    }
-    if (filters.largeClass) {
-      filtered = filtered.filter(a => a.largeClass === filters.largeClass);
-    }
-    if (filters.mediumClass) {
-      filtered = filtered.filter(a => a.mediumClass === filters.mediumClass);
-    }
-
-    setFilteredAssets(filtered);
-  }, [filters, mockAssets]);
+  // useAssetTableフックを使用
+  const {
+    visibleColumns,
+    columnWidths,
+    resizingColumn,
+    toggleColumnVisibility,
+    handleSelectAllColumns,
+    handleDeselectAllColumns,
+    handleResizeStart,
+    getCellValue,
+  } = useAssetTable(ALL_COLUMNS);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -232,73 +160,6 @@ export default function AssetSearchResultPage() {
 
   const handleRowClick = (asset: Asset) => {
     router.push(`/asset-detail?qrCode=${asset.qrCode}`);
-  };
-
-  // カラム表示切り替え
-  const toggleColumnVisibility = (key: string) => {
-    setVisibleColumns((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
-  // 全選択/全解除
-  const handleSelectAllColumns = () => {
-    const newState: Record<string, boolean> = {};
-    ALL_COLUMNS.forEach((col) => {
-      newState[col.key] = true;
-    });
-    setVisibleColumns(newState);
-  };
-
-  const handleDeselectAllColumns = () => {
-    const newState: Record<string, boolean> = {};
-    ALL_COLUMNS.forEach((col) => {
-      newState[col.key] = false;
-    });
-    setVisibleColumns(newState);
-  };
-
-  // カラムリサイズのハンドラー
-  const handleResizeStart = (e: React.MouseEvent, columnKey: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizingColumn(columnKey);
-    setResizeStartX(e.clientX);
-    setResizeStartWidth(columnWidths[columnKey]);
-  };
-
-  useEffect(() => {
-    if (!resizingColumn) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const diff = e.clientX - resizeStartX;
-      const newWidth = Math.max(50, resizeStartWidth + diff);
-      setColumnWidths((prev) => ({
-        ...prev,
-        [resizingColumn]: newWidth,
-      }));
-    };
-
-    const handleMouseUp = () => {
-      setResizingColumn(null);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [resizingColumn, resizeStartX, resizeStartWidth]);
-
-  // セルの値を取得
-  const getCellValue = (asset: Asset, key: string): any => {
-    if (key === 'acquisitionCost' && asset.acquisitionCost) {
-      return `¥${asset.acquisitionCost.toLocaleString()}`;
-    }
-    return (asset as any)[key] ?? '-';
   };
 
   return (
