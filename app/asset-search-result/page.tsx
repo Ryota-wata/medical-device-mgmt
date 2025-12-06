@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts';
-import { useAssetStore, useMasterStore } from '@/lib/stores';
-import { Asset } from '@/lib/types';
+import { useAssetStore, useMasterStore, useApplicationStore } from '@/lib/stores';
+import { Asset, Application } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -17,6 +17,7 @@ const ALL_COLUMNS = ASSET_COLUMNS;
 export default function AssetSearchResultPage() {
   const router = useRouter();
   const { assets } = useAssetStore();
+  const { addApplication } = useApplicationStore();
   const { isMobile } = useResponsive();
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -296,37 +297,43 @@ export default function AssetSearchResultPage() {
     }
 
     // 申請データを作成（各資産ごとに1レコード）
-    const applications = selectedAssets.map(({ asset, quantity, unit }) => ({
-      id: `APP-NEW-${Date.now()}-${asset.no}`,
-      applicationType: '新規申請',
-      assetQrCode: asset.qrCode,
-      assetName: asset.name,
-      assetMaker: asset.maker,
-      assetModel: asset.model,
-      quantity,
-      unit,
-      facility: '〇〇〇〇〇〇病院',
-      newBuilding: newAppBuilding,
-      newFloor: newAppFloor,
-      newDepartment: newAppDepartment,
-      newSection: newAppSection,
-      newRoomName: newAppRoomName,
-      currentConnectionStatus,
-      currentConnectionDestination,
-      requestConnectionStatus,
-      requestConnectionDestination,
-      applicationReason,
-      executionYear,
-      applicationDate: new Date().toISOString(),
-      status: '申請中'
-    }));
+    selectedAssets.forEach(({ asset, quantity, unit }) => {
+      const applicationData: Omit<Application, 'id'> = {
+        applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        applicationDate: new Date().toISOString().split('T')[0],
+        applicationType: '新規購入申請',
+        asset: {
+          name: asset.name,
+          model: asset.model,
+        },
+        vendor: asset.maker,
+        quantity: `${quantity}${unit}`,
+        status: '承認待ち',
+        approvalProgress: {
+          current: 0,
+          total: 3,
+        },
+        facility: {
+          building: newAppBuilding,
+          floor: newAppFloor,
+          department: newAppDepartment,
+          section: newAppSection,
+        },
+        freeInput: applicationReason,
+        executionYear: executionYear || new Date().getFullYear().toString(),
+      };
 
-    // ここで実際にはAPIに送信するか、Zustandストアに保存する
+      // ストアに申請データを追加
+      addApplication(applicationData);
+    });
 
-    alert(`新規申請を送信しました\n申請件数: ${applications.length}件`);
+    alert(`新規申請を送信しました\n申請件数: ${selectedAssets.length}件`);
 
     // モーダルを閉じる
     setIsNewApplicationModalOpen(false);
+
+    // 申請一覧画面に遷移
+    router.push('/remodel-application-list');
   };
 
   return (

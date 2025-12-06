@@ -2,37 +2,17 @@
 
 import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useMasterStore } from '@/lib/stores';
+import { useMasterStore, useApplicationStore } from '@/lib/stores';
+import { Application } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { Header } from '@/components/layouts/Header';
-
-// 申請データの型定義
-interface ApplicationData {
-  id: string;
-  building: string;
-  floor: string;
-  department: string;
-  section: string;
-  roomName: string;
-  itemName: string;
-  maker: string;
-  model: string;
-  applicationType: string;
-  groupingNo: string;
-  grouping: string;
-  rfqNo: string;
-  listPrice: number;
-  purchasePrice: number;
-  editField1: string;
-  editField2: string;
-  editField3: string;
-}
 
 function RemodelApplicationListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { facilities } = useMasterStore();
+  const { applications } = useApplicationStore();
   const { isMobile } = useResponsive();
 
   // URLパラメータから施設・部署を取得
@@ -53,51 +33,7 @@ function RemodelApplicationListContent() {
   });
 
   // 選択された行
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-
-  // ダミーデータ（実際にはAPIから取得）
-  const [applications, setApplications] = useState<ApplicationData[]>([
-    {
-      id: '1',
-      building: '本館',
-      floor: '2F',
-      department: '内科',
-      section: '循環器内科',
-      roomName: '診察室1',
-      itemName: 'CTスキャナ',
-      maker: 'GEヘルスケア',
-      model: 'Revolution CT',
-      applicationType: '更新',
-      groupingNo: 'G001',
-      grouping: 'グループA',
-      rfqNo: 'RFQ-2024-001',
-      listPrice: 50000000,
-      purchasePrice: 45000000,
-      editField1: '',
-      editField2: '',
-      editField3: ''
-    },
-    {
-      id: '2',
-      building: '本館',
-      floor: '3F',
-      department: '外科',
-      section: '一般外科',
-      roomName: '手術室1',
-      itemName: 'MRI装置',
-      maker: 'シーメンス',
-      model: 'MAGNETOM Vida',
-      applicationType: '新規',
-      groupingNo: 'G002',
-      grouping: 'グループB',
-      rfqNo: 'RFQ-2024-002',
-      listPrice: 80000000,
-      purchasePrice: 75000000,
-      editField1: '',
-      editField2: '',
-      editField3: ''
-    }
-  ]);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
   // フィルターoptionsを生成（施設マスタから）
   const buildingOptions = useMemo(() => {
@@ -125,16 +61,16 @@ function RemodelApplicationListContent() {
     let filtered = applications;
 
     if (filters.building) {
-      filtered = filtered.filter(a => a.building === filters.building);
+      filtered = filtered.filter(a => a.facility.building === filters.building);
     }
     if (filters.floor) {
-      filtered = filtered.filter(a => a.floor === filters.floor);
+      filtered = filtered.filter(a => a.facility.floor === filters.floor);
     }
     if (filters.department) {
-      filtered = filtered.filter(a => a.department === filters.department);
+      filtered = filtered.filter(a => a.facility.department === filters.department);
     }
     if (filters.section) {
-      filtered = filtered.filter(a => a.section === filters.section);
+      filtered = filtered.filter(a => a.facility.section === filters.section);
     }
 
     return filtered;
@@ -150,7 +86,7 @@ function RemodelApplicationListContent() {
   };
 
   // 個別チェックボックス
-  const handleRowSelect = (id: string) => {
+  const handleRowSelect = (id: number) => {
     const newSelected = new Set(selectedRows);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -160,17 +96,11 @@ function RemodelApplicationListContent() {
     setSelectedRows(newSelected);
   };
 
-  // フィールド更新
-  const handleFieldUpdate = (id: string, field: keyof ApplicationData, value: string | number) => {
-    setApplications(prev => prev.map(app =>
-      app.id === id ? { ...app, [field]: value } : app
-    ));
-  };
-
   // 行削除
-  const handleDeleteRow = (id: string) => {
+  const handleDeleteRow = (id: number) => {
     if (confirm('この申請を削除しますか？')) {
-      setApplications(prev => prev.filter(app => app.id !== id));
+      const { deleteApplication } = useApplicationStore.getState();
+      deleteApplication(id);
       setSelectedRows(prev => {
         const newSet = new Set(prev);
         newSet.delete(id);
@@ -383,185 +313,60 @@ function RemodelApplicationListContent() {
                       />
                     </td>
                     {/* 設置情報（読み取り専用） */}
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.building}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.floor}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.department}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.section}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '2px solid #bdc3c7' }}>{app.roomName}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.facility.building}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.facility.floor}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.facility.department}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.facility.section}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '2px solid #bdc3c7' }}>{app.freeInput || '-'}</td>
                     {/* 資産情報（読み取り専用） */}
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.itemName}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.maker}</td>
-                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '2px solid #bdc3c7' }}>{app.model}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.asset.name}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '1px solid #ecf0f1' }}>{app.vendor}</td>
+                    <td style={{ padding: isMobile ? '10px 8px' : '12px', color: '#2c3e50', borderRight: '2px solid #bdc3c7' }}>{app.asset.model}</td>
                     {/* 編集可能カラム */}
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <select
-                        value={app.applicationType}
-                        onChange={(e) => handleFieldUpdate(app.id, 'applicationType', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'pointer' : 'not-allowed'
-                        }}
-                      >
-                        <option value="">選択してください</option>
-                        <option value="新規">新規</option>
-                        <option value="更新">更新</option>
-                        <option value="増設">増設</option>
-                        <option value="移動">移動</option>
-                        <option value="廃棄">廃棄</option>
-                      </select>
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#2c3e50' }}>
+                        {app.applicationType}
+                      </div>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
-                        value={app.groupingNo}
-                        onChange={(e) => handleFieldUpdate(app.id, 'groupingNo', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
-                        value={app.grouping}
-                        onChange={(e) => handleFieldUpdate(app.id, 'grouping', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
-                        value={app.rfqNo}
-                        onChange={(e) => handleFieldUpdate(app.id, 'rfqNo', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#2c3e50' }}>
+                        {app.rfqNo || '-'}
+                      </div>
+                    </td>
+                    <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1', textAlign: 'right' }}>
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
+                    </td>
+                    <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1', textAlign: 'right' }}>
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="number"
-                        value={app.listPrice}
-                        onChange={(e) => handleFieldUpdate(app.id, 'listPrice', Number(e.target.value))}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          textAlign: 'right',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="number"
-                        value={app.purchasePrice}
-                        onChange={(e) => handleFieldUpdate(app.id, 'purchasePrice', Number(e.target.value))}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          textAlign: 'right',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
                     </td>
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
-                        value={app.editField1}
-                        onChange={(e) => handleFieldUpdate(app.id, 'editField1', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
-                    </td>
-                    <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
-                        value={app.editField2}
-                        onChange={(e) => handleFieldUpdate(app.id, 'editField2', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
-                    </td>
-                    <td style={{ padding: isMobile ? '6px 4px' : '8px', borderRight: '1px solid #ecf0f1' }}>
-                      <input
-                        type="text"
-                        value={app.editField3}
-                        onChange={(e) => handleFieldUpdate(app.id, 'editField3', e.target.value)}
-                        disabled={!isSelected}
-                        style={{
-                          width: '100%',
-                          padding: '6px 8px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          boxSizing: 'border-box',
-                          background: isSelected ? 'white' : '#f8f9fa',
-                          cursor: isSelected ? 'text' : 'not-allowed'
-                        }}
-                      />
+                      <div style={{ padding: '6px 8px', fontSize: '13px', color: '#7f8c8d' }}>
+                        -
+                      </div>
                     </td>
                     {/* 削除ボタン */}
                     <td style={{ padding: isMobile ? '6px 4px' : '8px', textAlign: 'center' }}>
