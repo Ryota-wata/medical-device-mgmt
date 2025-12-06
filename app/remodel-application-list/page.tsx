@@ -3,6 +3,8 @@
 import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMasterStore, useApplicationStore } from '@/lib/stores';
+import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
+import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { Application } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -12,7 +14,9 @@ function RemodelApplicationListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { facilities, assets } = useMasterStore();
-  const { applications } = useApplicationStore();
+  const { applications, updateApplication } = useApplicationStore();
+  const { generateRfqNo, addRfqGroup } = useRfqGroupStore();
+  const { quotationGroups, quotationItems, getQuotationItemsByGroupId } = useQuotationStore();
   const { isMobile } = useResponsive();
 
   // URLパラメータから施設・部署を取得
@@ -33,11 +37,25 @@ function RemodelApplicationListContent() {
     category: '',
     largeClass: '',
     mediumClass: '',
-    applicationType: '' // 申請種別フィルター
+    applicationType: '', // 申請種別フィルター
+    quotationStatus: '' // 見積紐付け状態フィルター: '' | '紐付け済み' | '未紐付け'
   });
 
   // 選択された行
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+
+  // 見積依頼グループ登録モーダル
+  const [showRfqModal, setShowRfqModal] = useState(false);
+  const [rfqGroupName, setRfqGroupName] = useState('');
+
+  // 見積紐付けモーダル
+  const [showQuotationLinkModal, setShowQuotationLinkModal] = useState(false);
+  const [linkingApplication, setLinkingApplication] = useState<Application | null>(null);
+  const [selectedQuotationId, setSelectedQuotationId] = useState<number | null>(null);
+
+  // 一括見積紐付けモーダル
+  const [showBulkQuotationLinkModal, setShowBulkQuotationLinkModal] = useState(false);
+  const [bulkSelectedQuotationId, setBulkSelectedQuotationId] = useState<number | null>(null);
 
   // フィルターoptionsを生成（施設マスタから）
   const buildingOptions = useMemo(() => {
@@ -94,6 +112,13 @@ function RemodelApplicationListContent() {
     }
     if (filters.applicationType) {
       filtered = filtered.filter(a => a.applicationType === filters.applicationType);
+    }
+    if (filters.quotationStatus) {
+      if (filters.quotationStatus === '紐付け済み') {
+        filtered = filtered.filter(a => a.quotationInfo && a.quotationInfo.length > 0);
+      } else if (filters.quotationStatus === '未紐付け') {
+        filtered = filtered.filter(a => !a.quotationInfo || a.quotationInfo.length === 0);
+      }
     }
     // TODO: category, largeClass, mediumClassでもフィルタリングできるように
     // Application型に資産分類情報を追加する必要がある
@@ -152,6 +177,178 @@ function RemodelApplicationListContent() {
   // 選択項目の切り替え
   const handleSelectItem = (id: number) => {
     handleRowSelect(id);
+  };
+
+  // 見積依頼グループ登録モーダルを開く
+  const handleOpenRfqModal = () => {
+    if (selectedRows.size === 0) {
+      alert('見積依頼グループに追加する申請を選択してください');
+      return;
+    }
+    setShowRfqModal(true);
+    setRfqGroupName('');
+  };
+
+  // 見積依頼グループ登録
+  const handleCreateRfqGroup = () => {
+    if (!rfqGroupName.trim()) {
+      alert('見積依頼グループ名称を入力してください');
+      return;
+    }
+
+    const rfqNo = generateRfqNo();
+    const today = new Date();
+    const createdDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    addRfqGroup({
+      rfqNo,
+      groupName: rfqGroupName,
+      createdDate,
+      applicationIds: Array.from(selectedRows),
+      status: '未送信'
+    });
+
+    // 選択された申請にRFQ No.を設定
+    const { updateApplication } = useApplicationStore.getState();
+    selectedRows.forEach(id => {
+      updateApplication(id, { rfqNo });
+    });
+
+    alert(`見積依頼グループを作成しました\n見積依頼No: ${rfqNo}`);
+    setShowRfqModal(false);
+    setRfqGroupName('');
+    setSelectedRows(new Set());
+  };
+
+  // 見積紐付けモーダルを開く
+  const handleOpenQuotationLinkModal = (app: Application, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLinkingApplication(app);
+    setSelectedQuotationId(null);
+    setShowQuotationLinkModal(true);
+  };
+
+  // 見積を紐付け
+  const handleLinkQuotation = () => {
+    if (!linkingApplication || selectedQuotationId === null) {
+      alert('見積を選択してください');
+      return;
+    }
+
+    const quotationGroup = quotationGroups.find(q => q.id === selectedQuotationId);
+    if (!quotationGroup) {
+      alert('見積が見つかりません');
+      return;
+    }
+
+    // 見積明細の中で資産マスタが選択されているものを紐付け
+    const allItems = getQuotationItemsByGroupId(quotationGroup.id);
+    const linkedItems = allItems.filter(item => item.assetMasterId);
+
+    if (linkedItems.length === 0) {
+      alert('この見積には資産マスタが紐付けられた明細がありません');
+      return;
+    }
+
+    // 申請に見積情報を追加
+    const newQuotationInfo = linkedItems.map(item => {
+      const assetMaster = assets.find(a => String(a.id) === String(item.assetMasterId));
+      return {
+        quotationId: quotationGroup.receivedQuotationNo,
+        quotationDate: quotationGroup.quotationDate,
+        vendor: quotationGroup.vendorName,
+        ocrItemName: item.itemName,
+        assetMaster: {
+          itemId: assetMaster?.id || '',
+          itemName: assetMaster?.item || '',
+          largeName: assetMaster?.largeClass || '',
+          mediumName: assetMaster?.mediumClass || ''
+        },
+        quantity: item.quantity || 0,
+        unitPrice: item.sellingPriceUnit || 0,
+        amount: item.sellingPriceTotal || 0
+      };
+    });
+
+    const existingQuotationInfo = linkingApplication.quotationInfo || [];
+    updateApplication(linkingApplication.id, {
+      quotationInfo: [...existingQuotationInfo, ...newQuotationInfo]
+    });
+
+    alert(`見積を紐付けました\n見積No: ${quotationGroup.receivedQuotationNo}\n紐付け明細数: ${linkedItems.length}`);
+    setShowQuotationLinkModal(false);
+    setLinkingApplication(null);
+    setSelectedQuotationId(null);
+  };
+
+  // 一括見積紐付けモーダルを開く
+  const handleOpenBulkQuotationLinkModal = () => {
+    if (selectedRows.size === 0) {
+      alert('見積を紐付ける申請を選択してください');
+      return;
+    }
+    setBulkSelectedQuotationId(null);
+    setShowBulkQuotationLinkModal(true);
+  };
+
+  // 一括見積紐付け
+  const handleBulkLinkQuotation = () => {
+    if (bulkSelectedQuotationId === null) {
+      alert('見積を選択してください');
+      return;
+    }
+
+    const quotationGroup = quotationGroups.find(q => q.id === bulkSelectedQuotationId);
+    if (!quotationGroup) {
+      alert('見積が見つかりません');
+      return;
+    }
+
+    // 見積明細の中で資産マスタが選択されているものを紐付け
+    const allItems = getQuotationItemsByGroupId(quotationGroup.id);
+    const linkedItems = allItems.filter(item => item.assetMasterId);
+
+    if (linkedItems.length === 0) {
+      alert('この見積には資産マスタが紐付けられた明細がありません');
+      return;
+    }
+
+    // 選択された全申請に見積情報を追加
+    let successCount = 0;
+    selectedRows.forEach(appId => {
+      const application = applications.find(a => a.id === appId);
+      if (application) {
+        const newQuotationInfo = linkedItems.map(item => {
+          const assetMaster = assets.find(a => String(a.id) === String(item.assetMasterId));
+          return {
+            quotationId: quotationGroup.receivedQuotationNo,
+            quotationDate: quotationGroup.quotationDate,
+            vendor: quotationGroup.vendorName,
+            ocrItemName: item.itemName,
+            assetMaster: {
+              itemId: assetMaster?.id || '',
+              itemName: assetMaster?.item || '',
+              largeName: assetMaster?.largeClass || '',
+              mediumName: assetMaster?.mediumClass || ''
+            },
+            quantity: item.quantity || 0,
+            unitPrice: item.sellingPriceUnit || 0,
+            amount: item.sellingPriceTotal || 0
+          };
+        });
+
+        const existingQuotationInfo = application.quotationInfo || [];
+        updateApplication(appId, {
+          quotationInfo: [...existingQuotationInfo, ...newQuotationInfo]
+        });
+        successCount++;
+      }
+    });
+
+    alert(`見積を一括紐付けしました\n見積No: ${quotationGroup.receivedQuotationNo}\n紐付け申請数: ${successCount}件\n紐付け明細数: ${linkedItems.length}件/申請`);
+    setShowBulkQuotationLinkModal(false);
+    setBulkSelectedQuotationId(null);
+    setSelectedRows(new Set());
   };
 
   return (
@@ -243,6 +440,17 @@ function RemodelApplicationListContent() {
               isMobile={isMobile}
             />
           </div>
+
+          <div style={{ flex: '1', minWidth: '140px' }}>
+            <SearchableSelect
+              label="見積紐付け状態"
+              value={filters.quotationStatus}
+              onChange={(value) => setFilters({...filters, quotationStatus: value})}
+              options={['', '紐付け済み', '未紐付け']}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
+          </div>
         </div>
       </div>
 
@@ -251,6 +459,53 @@ function RemodelApplicationListContent() {
         <span style={{ fontSize: '14px', color: '#555', marginRight: '15px' }}>
           {selectedRows.size}件選択中
         </span>
+        {selectedRows.size > 0 && (
+          <>
+            <button
+              style={{
+                padding: '8px 16px',
+                background: '#2ecc71',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+              onClick={handleOpenRfqModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#27ae60';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#2ecc71';
+              }}
+            >
+              見積依頼グループ登録
+            </button>
+            <button
+              style={{
+                padding: '8px 16px',
+                background: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                marginRight: '15px'
+              }}
+              onClick={handleOpenBulkQuotationLinkModal}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#2980b9';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#3498db';
+              }}
+            >
+              一括見積紐付け
+            </button>
+          </>
+        )}
         <button
           style={{
             padding: '8px 16px',
@@ -409,10 +664,16 @@ function RemodelApplicationListContent() {
               <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '100px' }}>グループ</th>
               <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>見積依頼No.</th>
               <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '150px' }}>グループ名称</th>
+              <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>見積紐付け状態</th>
+              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '150px' }}>見積業者</th>
+              <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>見積金額</th>
+              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>大分類</th>
+              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>中分類</th>
+              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '180px' }}>品目</th>
               <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>概算金額</th>
               <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '150px' }}>編集カラム</th>
               <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '150px' }}>編集カラム</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', width: '150px' }}>編集カラム</th>
+              <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -527,6 +788,58 @@ function RemodelApplicationListContent() {
                 <td style={{ padding: '12px 8px', color: '#7f8c8d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   -
                 </td>
+                {/* 見積紐付け状態 */}
+                <td style={{ padding: '12px 8px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  {app.quotationInfo && app.quotationInfo.length > 0 ? (
+                    <span style={{
+                      padding: '4px 12px',
+                      background: '#27ae60',
+                      color: 'white',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      紐付け済み ({app.quotationInfo.length})
+                    </span>
+                  ) : (
+                    <span style={{
+                      padding: '4px 12px',
+                      background: '#95a5a6',
+                      color: 'white',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      未紐付け
+                    </span>
+                  )}
+                </td>
+                {/* 見積情報 */}
+                <td style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {app.quotationInfo && app.quotationInfo.length > 0
+                    ? app.quotationInfo.map(q => q.vendor).filter((v, i, arr) => arr.indexOf(v) === i).join(', ')
+                    : '-'}
+                </td>
+                <td style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', textAlign: 'right', fontWeight: 600 }}>
+                  {app.quotationInfo && app.quotationInfo.length > 0
+                    ? `¥${app.quotationInfo.reduce((sum, q) => sum + q.amount, 0).toLocaleString()}`
+                    : '-'}
+                </td>
+                <td style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {app.quotationInfo && app.quotationInfo.length > 0 && app.quotationInfo[0].assetMaster.largeName
+                    ? app.quotationInfo[0].assetMaster.largeName
+                    : '-'}
+                </td>
+                <td style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {app.quotationInfo && app.quotationInfo.length > 0 && app.quotationInfo[0].assetMaster.mediumName
+                    ? app.quotationInfo[0].assetMaster.mediumName
+                    : '-'}
+                </td>
+                <td style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
+                  {app.quotationInfo && app.quotationInfo.length > 0 && app.quotationInfo[0].assetMaster.itemName
+                    ? app.quotationInfo[0].assetMaster.itemName
+                    : '-'}
+                </td>
                 <td style={{ padding: '12px 8px', color: '#7f8c8d', whiteSpace: 'nowrap', textAlign: 'right' }}>
                   -
                 </td>
@@ -536,8 +849,29 @@ function RemodelApplicationListContent() {
                 <td style={{ padding: '12px 8px', color: '#7f8c8d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   -
                 </td>
-                <td style={{ padding: '12px 8px', color: '#7f8c8d', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  -
+                <td style={{ padding: '12px 8px', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => handleOpenQuotationLinkModal(app, e)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#3498db',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#2980b9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#3498db';
+                    }}
+                  >
+                    見積紐付け
+                  </button>
                 </td>
               </tr>
             ))}
@@ -555,6 +889,549 @@ function RemodelApplicationListContent() {
           </div>
         )}
       </div>
+
+      {/* 見積依頼グループ登録モーダル */}
+      {showRfqModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowRfqModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '30px',
+              minWidth: '500px',
+              maxWidth: '90%',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold', color: '#2c3e50' }}>
+              見積依頼グループ登録
+            </h2>
+
+            <div style={{ marginBottom: '20px', padding: '15px', background: '#e8f5e9', borderRadius: '4px', border: '1px solid #27ae60' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#2c3e50' }}>
+                <strong>選択された申請:</strong> {selectedRows.size}件
+              </p>
+              <p style={{ margin: '0', fontSize: '13px', color: '#555' }}>
+                これらの申請をまとめて見積依頼グループとして登録します
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#2c3e50'
+              }}>
+                見積依頼No.
+              </label>
+              <input
+                type="text"
+                value={generateRfqNo()}
+                readOnly
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  background: '#f5f5f5',
+                  color: '#555',
+                  fontFamily: 'monospace',
+                  fontWeight: 'bold'
+                }}
+              />
+              <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#7f8c8d' }}>
+                ※自動採番されます
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#2c3e50'
+              }}>
+                見積依頼グループ名称 <span style={{ color: '#e74c3c' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={rfqGroupName}
+                onChange={(e) => setRfqGroupName(e.target.value)}
+                placeholder="例: 2025年度リモデル第1期"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  fontSize: '14px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px'
+                }}
+                autoFocus
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+                onClick={() => setShowRfqModal(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#7f8c8d';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#95a5a6';
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                style={{
+                  padding: '10px 24px',
+                  background: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+                onClick={handleCreateRfqGroup}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#229954';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#27ae60';
+                }}
+              >
+                登録
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 見積紐付けモーダル */}
+      {showQuotationLinkModal && linkingApplication && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowQuotationLinkModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '30px',
+              minWidth: '700px',
+              maxWidth: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold', color: '#2c3e50' }}>
+              見積紐付け
+            </h2>
+
+            <div style={{ marginBottom: '20px', padding: '15px', background: '#e3f2fd', borderRadius: '4px', border: '1px solid #3498db' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#2c3e50' }}>
+                <strong>申請番号:</strong> {linkingApplication.applicationNo}
+              </p>
+              <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#2c3e50' }}>
+                <strong>品目:</strong> {linkingApplication.asset.name}
+              </p>
+              <p style={{ margin: '0', fontSize: '14px', color: '#2c3e50' }}>
+                <strong>申請種別:</strong> {linkingApplication.applicationType}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#2c3e50'
+              }}>
+                見積を選択 <span style={{ color: '#e74c3c' }}>*</span>
+              </label>
+
+              {quotationGroups.length === 0 ? (
+                <div style={{
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '4px',
+                  textAlign: 'center',
+                  color: '#7f8c8d'
+                }}>
+                  登録された見積がありません
+                </div>
+              ) : (
+                <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
+                  {quotationGroups.map((quotationGroup) => {
+                    const items = getQuotationItemsByGroupId(quotationGroup.id);
+                    const linkedItemsCount = items.filter(item => item.assetMasterId).length;
+                    const isSelected = selectedQuotationId === quotationGroup.id;
+
+                    return (
+                      <div
+                        key={quotationGroup.id}
+                        onClick={() => setSelectedQuotationId(quotationGroup.id)}
+                        style={{
+                          padding: '15px',
+                          borderBottom: '1px solid #ddd',
+                          cursor: 'pointer',
+                          background: isSelected ? '#e3f2fd' : 'white',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.background = '#f8f9fa';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.background = 'white';
+                          }
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                            <input
+                              type="radio"
+                              checked={isSelected}
+                              onChange={() => setSelectedQuotationId(quotationGroup.id)}
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <span style={{ fontWeight: 'bold', color: '#2c3e50', fontFamily: 'monospace' }}>
+                              {quotationGroup.receivedQuotationNo}
+                            </span>
+                            <span style={{
+                              padding: '2px 8px',
+                              background: quotationGroup.phase === '定価見積' ? '#e8f5e9' :
+                                         quotationGroup.phase === '概算見積' ? '#fff3e0' : '#e3f2fd',
+                              color: quotationGroup.phase === '定価見積' ? '#2e7d32' :
+                                     quotationGroup.phase === '概算見積' ? '#e65100' : '#1565c0',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 'bold'
+                            }}>
+                              {quotationGroup.phase}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '13px', color: '#555', marginLeft: '24px' }}>
+                            <div>業者: {quotationGroup.vendorName}</div>
+                            <div>見積日: {quotationGroup.quotationDate}</div>
+                            <div>
+                              資産マスタ紐付け: {linkedItemsCount}件 / {items.length}明細
+                              {linkedItemsCount === 0 && (
+                                <span style={{ color: '#e74c3c', marginLeft: '10px', fontWeight: 'bold' }}>
+                                  ※紐付けされた明細がありません
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>
+                            ¥{quotationGroup.totalAmount?.toLocaleString() || '-'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+                onClick={() => setShowQuotationLinkModal(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#7f8c8d';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#95a5a6';
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                style={{
+                  padding: '10px 24px',
+                  background: selectedQuotationId !== null ? '#3498db' : '#bdc3c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: selectedQuotationId !== null ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+                onClick={handleLinkQuotation}
+                disabled={selectedQuotationId === null}
+                onMouseEnter={(e) => {
+                  if (selectedQuotationId !== null) {
+                    e.currentTarget.style.background = '#2980b9';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedQuotationId !== null) {
+                    e.currentTarget.style.background = '#3498db';
+                  }
+                }}
+              >
+                紐付け
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 一括見積紐付けモーダル */}
+      {showBulkQuotationLinkModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowBulkQuotationLinkModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '30px',
+              minWidth: '700px',
+              maxWidth: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold', color: '#2c3e50' }}>
+              一括見積紐付け
+            </h2>
+
+            <div style={{ marginBottom: '20px', padding: '15px', background: '#e3f2fd', borderRadius: '4px', border: '1px solid #3498db' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#2c3e50' }}>
+                <strong>選択された申請:</strong> {selectedRows.size}件
+              </p>
+              <p style={{ margin: '0', fontSize: '13px', color: '#555' }}>
+                選択された全ての申請に同じ見積を紐付けます
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#2c3e50'
+              }}>
+                見積を選択 <span style={{ color: '#e74c3c' }}>*</span>
+              </label>
+
+              {quotationGroups.length === 0 ? (
+                <div style={{
+                  padding: '20px',
+                  background: '#f8f9fa',
+                  borderRadius: '4px',
+                  textAlign: 'center',
+                  color: '#7f8c8d'
+                }}>
+                  登録された見積がありません
+                </div>
+              ) : (
+                <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
+                  {quotationGroups.map((quotationGroup) => {
+                    const items = getQuotationItemsByGroupId(quotationGroup.id);
+                    const linkedItemsCount = items.filter(item => item.assetMasterId).length;
+                    const isSelected = bulkSelectedQuotationId === quotationGroup.id;
+
+                    return (
+                      <div
+                        key={quotationGroup.id}
+                        onClick={() => setBulkSelectedQuotationId(quotationGroup.id)}
+                        style={{
+                          padding: '15px',
+                          borderBottom: '1px solid #ddd',
+                          cursor: 'pointer',
+                          background: isSelected ? '#e3f2fd' : 'white',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.background = '#f8f9fa';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.background = 'white';
+                          }
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                            <input
+                              type="radio"
+                              checked={isSelected}
+                              onChange={() => setBulkSelectedQuotationId(quotationGroup.id)}
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <span style={{ fontWeight: 'bold', color: '#2c3e50', fontFamily: 'monospace' }}>
+                              {quotationGroup.receivedQuotationNo}
+                            </span>
+                            <span style={{
+                              padding: '2px 8px',
+                              background: quotationGroup.phase === '定価見積' ? '#e8f5e9' :
+                                         quotationGroup.phase === '概算見積' ? '#fff3e0' : '#e3f2fd',
+                              color: quotationGroup.phase === '定価見積' ? '#2e7d32' :
+                                     quotationGroup.phase === '概算見積' ? '#e65100' : '#1565c0',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 'bold'
+                            }}>
+                              {quotationGroup.phase}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '13px', color: '#555', marginLeft: '24px' }}>
+                            <div>業者: {quotationGroup.vendorName}</div>
+                            <div>見積日: {quotationGroup.quotationDate}</div>
+                            <div>
+                              資産マスタ紐付け: {linkedItemsCount}件 / {items.length}明細
+                              {linkedItemsCount === 0 && (
+                                <span style={{ color: '#e74c3c', marginLeft: '10px', fontWeight: 'bold' }}>
+                                  ※紐付けされた明細がありません
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>
+                            ¥{quotationGroup.totalAmount?.toLocaleString() || '-'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+                onClick={() => setShowBulkQuotationLinkModal(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#7f8c8d';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#95a5a6';
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                style={{
+                  padding: '10px 24px',
+                  background: bulkSelectedQuotationId !== null ? '#3498db' : '#bdc3c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: bulkSelectedQuotationId !== null ? 'pointer' : 'not-allowed',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+                onClick={handleBulkLinkQuotation}
+                disabled={bulkSelectedQuotationId === null}
+                onMouseEnter={(e) => {
+                  if (bulkSelectedQuotationId !== null) {
+                    e.currentTarget.style.background = '#2980b9';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (bulkSelectedQuotationId !== null) {
+                    e.currentTarget.style.background = '#3498db';
+                  }
+                }}
+              >
+                一括紐付け
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

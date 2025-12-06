@@ -1,0 +1,60 @@
+import { OCRResult } from '@/lib/types/quotation';
+
+/**
+ * 見積書OCRのテストデータ
+ */
+export const MOCK_OCR_RESULT: OCRResult = {
+  vendorName: '株式会社メディカルサプライ',
+  quotationDate: '2025-01-15',
+  validityPeriod: 3,
+  deliveryPeriod: 2,
+  phase: '確定見積',
+  items: [
+    {
+      itemType: 'C_個体管理品目',
+      itemName: 'MRI装置 MAGNETOM Altea',
+      manufacturer: 'シーメンスヘルスケア',
+      model: 'MAGNETOM Altea 1.5T',
+      quantity: 1,
+      unit: '台',
+      listPriceUnit: 120000000,
+      listPriceTotal: 120000000,
+      sellingPriceUnit: 100000000,
+      sellingPriceTotal: 100000000,
+      discount: 16.7,
+      taxRate: 10,
+      totalWithTax: 110000000,
+    },
+    {
+      itemType: 'D_付属品',
+      itemName: 'MRI用頭部コイル',
+      manufacturer: 'シーメンスヘルスケア',
+      model: 'Head Coil 64ch',
+      quantity: 2,
+      unit: '個',
+      listPriceUnit: 2000000,
+      listPriceTotal: 4000000,
+      sellingPriceUnit: 1800000,
+      sellingPriceTotal: 3600000,
+      discount: 10,
+      taxRate: 10,
+      totalWithTax: 3960000,
+    },
+    {
+      itemType: 'E_その他役務',
+      itemName: '設置工事費',
+      manufacturer: '',
+      model: '',
+      quantity: 1,
+      unit: '式',
+      listPriceUnit: 5000000,
+      listPriceTotal: 5000000,
+      sellingPriceUnit: 5000000,
+      sellingPriceTotal: 5000000,
+      discount: 0,
+      taxRate: 10,
+      totalWithTax: 5500000,
+    },
+  ],
+  totalAmount: 119460000,
+};

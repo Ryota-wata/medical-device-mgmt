@@ -286,6 +286,8 @@ function RemodelApplicationContent() {
         roomName: currentApplicationType !== '廃棄申請' ? applicationRoomName : undefined,
         freeInput: currentApplicationType !== '廃棄申請' ? applicationRoomName : '廃棄',
         executionYear: new Date().getFullYear().toString(),
+        currentConnectionStatus: currentApplicationType === '移動申請' ? currentConnectionStatus : undefined,
+        currentConnectionDestination: currentApplicationType === '移動申請' ? currentConnectionDestination : undefined,
       };
 
       // ストアに申請データを追加
@@ -416,8 +418,6 @@ function RemodelApplicationContent() {
         roomName: newAppRoomName,
         freeInput: applicationReason,
         executionYear: executionYear || new Date().getFullYear().toString(),
-        currentConnectionStatus: currentConnectionStatus,
-        currentConnectionDestination: currentConnectionDestination,
         requestConnectionStatus: requestConnectionStatus,
         requestConnectionDestination: requestConnectionDestination,
         applicationReason: applicationReason,
@@ -977,6 +977,68 @@ function RemodelApplicationContent() {
                       />
                     </div>
                   </div>
+
+                  {/* 移動申請の場合のみ接続状況を表示 */}
+                  {currentApplicationType === '移動申請' && (
+                    <div style={{ display: 'grid', gap: '20px', marginTop: '20px' }}>
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#2c3e50',
+                          marginBottom: '8px'
+                        }}>
+                          現在の接続状況
+                        </label>
+                        <div style={{ display: 'flex', gap: '16px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              checked={currentConnectionStatus === 'connected'}
+                              onChange={() => setCurrentConnectionStatus('connected')}
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続あり</span>
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              checked={currentConnectionStatus === 'disconnected'}
+                              onChange={() => setCurrentConnectionStatus('disconnected')}
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続なし</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{
+                          display: 'block',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#2c3e50',
+                          marginBottom: '8px'
+                        }}>
+                          現在の接続先
+                        </label>
+                        <input
+                          type="text"
+                          value={currentConnectionDestination}
+                          onChange={(e) => setCurrentConnectionDestination(e.target.value)}
+                          placeholder="接続先を入力してください"
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            border: '1px solid #d0d0d0',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1304,62 +1366,6 @@ function RemodelApplicationContent() {
                   システム関連情報（任意）
                 </h3>
                 <div style={{ display: 'grid', gap: '20px' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      現在の接続状況
-                    </label>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          checked={currentConnectionStatus === 'connected'}
-                          onChange={() => setCurrentConnectionStatus('connected')}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続あり</span>
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          checked={currentConnectionStatus === 'disconnected'}
-                          onChange={() => setCurrentConnectionStatus('disconnected')}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続なし</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      現在の接続先
-                    </label>
-                    <input
-                      type="text"
-                      value={currentConnectionDestination}
-                      onChange={(e) => setCurrentConnectionDestination(e.target.value)}
-                      placeholder="接続先を入力してください"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
                   <div>
                     <label style={{
                       display: 'block',

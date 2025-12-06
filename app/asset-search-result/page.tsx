@@ -323,8 +323,6 @@ export default function AssetSearchResultPage() {
         roomName: newAppRoomName,
         freeInput: applicationReason,
         executionYear: executionYear || new Date().getFullYear().toString(),
-        currentConnectionStatus: currentConnectionStatus,
-        currentConnectionDestination: currentConnectionDestination,
         requestConnectionStatus: requestConnectionStatus,
         requestConnectionDestination: requestConnectionDestination,
         applicationReason: applicationReason,
