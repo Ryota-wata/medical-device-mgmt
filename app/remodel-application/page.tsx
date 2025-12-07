@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Asset, Application } from '@/lib/types';
+import { Asset, Application, ApplicationType } from '@/lib/types';
 import { useMasterStore, useApplicationStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
@@ -30,7 +30,7 @@ function RemodelApplicationContent() {
 
   // 申請モーダル関連の状態
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-  const [currentApplicationType, setCurrentApplicationType] = useState<string>('');
+  const [currentApplicationType, setCurrentApplicationType] = useState<ApplicationType | ''>('');
   const [applicationBuilding, setApplicationBuilding] = useState('');
   const [applicationFloor, setApplicationFloor] = useState('');
   const [applicationDepartment, setApplicationDepartment] = useState('');
@@ -237,7 +237,7 @@ function RemodelApplicationContent() {
     }
 
     // 増設・更新・移動・廃棄申請の場合はモーダルを開く
-    setCurrentApplicationType(actionType);
+    setCurrentApplicationType(actionType as ApplicationType);
     setApplicationBuilding('');
     setApplicationFloor('');
     setApplicationDepartment('');
@@ -248,6 +248,12 @@ function RemodelApplicationContent() {
 
   // 申請送信処理
   const handleSubmitApplication = () => {
+    // 申請タイプのバリデーション
+    if (!currentApplicationType) {
+      alert('申請タイプを選択してください');
+      return;
+    }
+
     // 選択された資産を取得
     const selectedAssets = filteredAssets.filter(asset => selectedItems.has(asset.no));
 
@@ -264,7 +270,7 @@ function RemodelApplicationContent() {
       const applicationData: Omit<Application, 'id'> = {
         applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         applicationDate: new Date().toISOString().split('T')[0],
-        applicationType: currentApplicationType,
+        applicationType: currentApplicationType as ApplicationType,
         asset: {
           name: asset.name,
           model: asset.model,

@@ -17,7 +17,6 @@ const testApplications: Application[] = [
     applicationDate: '2025-01-10',
     applicationType: '更新申請',
     facility: {
-      facilityNo: '001',
       building: '本館',
       floor: '3F',
       department: '放射線科',
@@ -25,12 +24,11 @@ const testApplications: Application[] = [
     },
     roomName: 'MRI検査室1',
     asset: {
-      assetNo: 'AST-001',
       name: 'MRI装置',
       model: 'MAGNETOM Altea 1.5T'
     },
     vendor: 'シーメンスヘルスケア',
-    quantity: 1,
+    quantity: '1',
     unit: '台',
     currentConnectionStatus: '電源接続',
     currentConnectionDestination: '専用電源',
@@ -38,6 +36,12 @@ const testApplications: Application[] = [
     requestConnectionDestination: '専用電源',
     applicationReason: '老朽化による更新',
     executionYear: '2025',
+    status: '承認待ち',
+    approvalProgress: {
+      current: 2,
+      total: 3
+    },
+    freeInput: '',
     rfqNo: 'RFQ-20250110-0001',
     quotationInfo: [
       {
@@ -93,7 +97,6 @@ const testApplications: Application[] = [
     applicationDate: '2025-01-11',
     applicationType: '新規申請',
     facility: {
-      facilityNo: '001',
       building: '本館',
       floor: '2F',
       department: '循環器科',
@@ -101,15 +104,20 @@ const testApplications: Application[] = [
     },
     roomName: '心臓カテーテル室',
     asset: {
-      assetNo: 'AST-002',
       name: '血管造影装置',
       model: 'Azurion 7'
     },
     vendor: 'フィリップス',
-    quantity: 1,
+    quantity: '1',
     unit: '台',
     applicationReason: '新規導入',
     executionYear: '2025',
+    status: '承認待ち',
+    approvalProgress: {
+      current: 1,
+      total: 3
+    },
+    freeInput: '',
     quotationInfo: []
   },
   {
@@ -118,7 +126,6 @@ const testApplications: Application[] = [
     applicationDate: '2025-01-12',
     applicationType: '更新申請',
     facility: {
-      facilityNo: '001',
       building: '本館',
       floor: '3F',
       department: '放射線科',
@@ -126,15 +133,20 @@ const testApplications: Application[] = [
     },
     roomName: 'CT検査室1',
     asset: {
-      assetNo: 'AST-003',
       name: 'CT装置',
       model: 'Aquilion ONE'
     },
     vendor: 'キヤノンメディカル',
-    quantity: 1,
+    quantity: '1',
     unit: '台',
     applicationReason: '老朽化による更新',
     executionYear: '2025',
+    status: '承認待ち',
+    approvalProgress: {
+      current: 2,
+      total: 3
+    },
+    freeInput: '',
     rfqNo: 'RFQ-20250110-0001',
     quotationInfo: [
       {
@@ -175,7 +187,6 @@ const testApplications: Application[] = [
     applicationDate: '2025-01-13',
     applicationType: '増設申請',
     facility: {
-      facilityNo: '001',
       building: '本館',
       floor: '1F',
       department: '検査科',
@@ -183,15 +194,20 @@ const testApplications: Application[] = [
     },
     roomName: '生化学検査室',
     asset: {
-      assetNo: 'AST-004',
       name: '自動分析装置',
       model: 'JCA-BM8000'
     },
     vendor: '日本電子',
-    quantity: 1,
+    quantity: '1',
     unit: '台',
     applicationReason: '検査数増加対応',
     executionYear: '2025',
+    status: '承認待ち',
+    approvalProgress: {
+      current: 1,
+      total: 3
+    },
+    freeInput: '',
     quotationInfo: []
   },
   {
@@ -200,7 +216,6 @@ const testApplications: Application[] = [
     applicationDate: '2025-01-14',
     applicationType: '更新申請',
     facility: {
-      facilityNo: '001',
       building: '本館',
       floor: '4F',
       department: '手術室',
@@ -208,15 +223,20 @@ const testApplications: Application[] = [
     },
     roomName: '手術室1',
     asset: {
-      assetNo: 'AST-005',
       name: '手術台',
       model: 'ALPHAMAXX'
     },
     vendor: 'マッケ',
-    quantity: 1,
+    quantity: '1',
     unit: '台',
     applicationReason: '老朽化による更新',
     executionYear: '2025',
+    status: '承認待ち',
+    approvalProgress: {
+      current: 1,
+      total: 3
+    },
+    freeInput: '',
     quotationInfo: []
   }
 ];

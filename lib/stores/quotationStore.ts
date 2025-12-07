@@ -25,7 +25,7 @@ interface QuotationState {
   unlinkItemFromApplication: (itemId: number, applicationId: number) => void;
 
   // ユーティリティ
-  generateReceivedQuotationNo: (facilityNo: string) => string;
+  generateReceivedQuotationNo: (facilityNo?: string) => string;
 }
 
 // テストデータ

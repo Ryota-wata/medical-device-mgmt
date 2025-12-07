@@ -37,7 +37,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
           <option value="">すべて</option>
           <option value="未送信">未送信</option>
           <option value="送信済み">送信済み</option>
-          <option value="見積書受領">見積書受領</option>
+          <option value="回答受領">回答受領</option>
         </select>
       </div>
 

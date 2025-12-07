@@ -187,7 +187,7 @@ export default function QuotationManagementPage() {
 
     // 見積依頼グループのステータスを更新
     if (rfqGroup) {
-      updateRfqGroup(rfqGroup.id, { status: '見積書受領' });
+      updateRfqGroup(rfqGroup.id, { status: '回答受領' });
     }
 
     alert(MESSAGES.QUOTATION_REGISTERED(quotationNo, itemsToAdd.length));

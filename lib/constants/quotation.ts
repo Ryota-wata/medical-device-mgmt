@@ -49,7 +49,7 @@ export const STATUS_STYLES = {
     background: '#3498db',
     color: 'white',
   },
-  見積書受領: {
+  回答受領: {
     background: '#27ae60',
     color: 'white',
   },

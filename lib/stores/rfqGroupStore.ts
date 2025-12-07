@@ -18,7 +18,7 @@ const testRfqGroups: RfqGroup[] = [
     groupName: '2025年度放射線科機器更新',
     createdDate: '2025-01-10',
     applicationIds: [1, 3],
-    status: '見積書受領'
+    status: '回答受領'
   },
   {
     id: 2,

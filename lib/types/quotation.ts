@@ -54,7 +54,7 @@ export interface ReceivedQuotationItem {
   discount?: number;
   taxRate: number;
   totalWithTax?: number;
-  assetMasterId?: number; // 資産Masterとの紐づけ
+  assetMasterId?: string; // 資産Masterとの紐づけ
   linkedApplicationIds?: number[]; // 紐づけられた申請ID（複数可）
   createdAt: string;
   updatedAt: string;
