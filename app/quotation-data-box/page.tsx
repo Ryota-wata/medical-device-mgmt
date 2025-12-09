@@ -222,7 +222,7 @@ export default function QuotationManagementPage() {
               color: activeTab === 'rfqGroups' ? '#2c3e50' : '#7f8c8d'
             }}
           >
-            見積依頼グループ ({rfqGroups.length})
+            見積依頼グループ
           </button>
           <button
             onClick={() => setActiveTab('quotations')}
@@ -237,7 +237,7 @@ export default function QuotationManagementPage() {
               color: activeTab === 'quotations' ? '#2c3e50' : '#7f8c8d'
             }}
           >
-            受領見積 ({quotationGroups.length})
+            見積明細情報
           </button>
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function QuotationManagementPage() {
         />
       )}
 
-      {/* 受領見積タブ */}
+      {/* 見積明細情報タブ */}
       {activeTab === 'quotations' && (
         <QuotationsTab
           quotationGroups={quotationGroups}

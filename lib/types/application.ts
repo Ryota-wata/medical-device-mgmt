@@ -18,6 +18,7 @@ export interface Application {
   quantity: string;
   unit?: string;
   rfqNo?: string;
+  rfqGroupName?: string;
   status: ApplicationStatus;
   approvalProgress: {
     current: number;

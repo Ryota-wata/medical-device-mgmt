@@ -18,6 +18,7 @@ interface HeaderProps {
   showApplicationListLink?: boolean;
   facility?: string;
   department?: string;
+  children?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,7 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   hideMenu = false,
   showApplicationListLink = false,
   facility = '',
-  department = ''
+  department = '',
+  children
 }) => {
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -114,6 +116,9 @@ export const Header: React.FC<HeaderProps> = ({
             <span>リモデル申請一覧</span>
           </button>
         )}
+
+        {/* カスタムアクションボタン */}
+        {children}
 
         {/* ナビゲーションメニュー */}
         {!hideMenu && (

@@ -24,6 +24,19 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
   onRegisterQuotation,
   onDeleteQuotation,
 }) => {
+  // フィルタリングされた明細
+  const filteredItems = quotationItems.filter(item => {
+    const group = quotationGroups.find(g => g.id === item.quotationGroupId);
+    if (!group) return false;
+    if (quotationFilter.rfqGroupId && group.rfqGroupId?.toString() !== quotationFilter.rfqGroupId) {
+      return false;
+    }
+    if (quotationFilter.phase && group.phase !== quotationFilter.phase) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
       {/* アクションバー */}
@@ -102,20 +115,7 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
             </tr>
           </thead>
           <tbody>
-            {quotationItems
-              .filter(item => {
-                const group = quotationGroups.find(g => g.id === item.quotationGroupId);
-                if (!group) return false;
-
-                if (quotationFilter.rfqGroupId && group.rfqGroupId?.toString() !== quotationFilter.rfqGroupId) {
-                  return false;
-                }
-                if (quotationFilter.phase && group.phase !== quotationFilter.phase) {
-                  return false;
-                }
-                return true;
-              })
-              .map((item) => {
+            {filteredItems.map((item) => {
                 const group = quotationGroups.find(g => g.id === item.quotationGroupId);
                 const assetMaster = item.assetMasterId
                   ? assetMasterData.find(a => a.id === item.assetMasterId)
