@@ -291,7 +291,7 @@ function RemodelApplicationListContent() {
     setShowBulkQuotationLinkModal(true);
   };
 
-  // 資産マスタを別ウィンドウで開く
+  // SHIP資産マスタを別ウィンドウで開く
   const handleOpenAssetMasterWindow = () => {
     const width = 1400;
     const height = 900;
@@ -299,8 +299,8 @@ function RemodelApplicationListContent() {
     const top = (window.screen.height - height) / 2;
 
     window.open(
-      '/asset-master',
-      'AssetMasterWindow',
+      '/ship-asset-master',
+      'ShipAssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
   };
