@@ -291,6 +291,34 @@ function RemodelApplicationListContent() {
     setShowBulkQuotationLinkModal(true);
   };
 
+  // 資産マスタを別ウィンドウで開く
+  const handleOpenAssetMasterWindow = () => {
+    const width = 1400;
+    const height = 900;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+      '/asset-master',
+      'AssetMasterWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+  };
+
+  // 見積管理を別ウィンドウで開く
+  const handleOpenQuotationManagementWindow = () => {
+    const width = 1400;
+    const height = 900;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    window.open(
+      '/quotation-data-box',
+      'QuotationManagementWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+  };
+
   // 一括見積紐付け
   const handleBulkLinkQuotation = () => {
     if (bulkSelectedQuotationId === null) {
@@ -622,6 +650,49 @@ function RemodelApplicationListContent() {
             🔄 クリア
           </button>
         )}
+        <div style={{ flex: 1 }} />
+        <button
+          style={{
+            padding: '8px 16px',
+            background: '#16a085',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+          onClick={handleOpenAssetMasterWindow}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#138d75';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#16a085';
+          }}
+        >
+          資産マスタを別ウィンドウで開く
+        </button>
+        <button
+          style={{
+            padding: '8px 16px',
+            background: '#8e44ad',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+          onClick={handleOpenQuotationManagementWindow}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#7d3c98';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#8e44ad';
+          }}
+        >
+          見積管理を別ウィンドウで開く
+        </button>
       </div>
 
       {/* テーブル表示 */}
