@@ -10,14 +10,17 @@ export interface User {
   username: string;
   email: string;
   role: UserRole;
+  hospital?: string;
   department?: string;
   section?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
  * ユーザーロール
  */
-export type UserRole = 'admin' | 'manager' | 'staff' | 'viewer';
+export type UserRole = 'consultant' | 'sales' | 'medical_office' | 'medical_clinical';
 
 /**
  * ユーザー種別（コンサル/病院）
