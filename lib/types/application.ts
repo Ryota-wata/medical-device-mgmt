@@ -3,6 +3,45 @@
  */
 
 /**
+ * 原本登録ドキュメント種別
+ */
+export type OriginalDocumentType =
+  | '契約書（押印済）'
+  | '納品書（業者）'
+  | '検収書（押印分）'
+  | '保証書'
+  | '取扱説明書'
+  | '添付文書（JMDN発行）'
+  | 'カタログdata';
+
+/**
+ * アップロードファイル情報
+ */
+export interface UploadedFile {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: string;
+  url?: string;
+}
+
+/**
+ * 原本登録情報
+ */
+export interface OriginalRegistration {
+  qrCodeNo?: string;
+  serialNo?: string;
+  photos: UploadedFile[];
+  documents: {
+    type: OriginalDocumentType;
+    files: UploadedFile[];
+  }[];
+  registeredAt?: string;
+  registeredBy?: string;
+}
+
+/**
  * 申請情報
  */
 export interface Application {
@@ -40,6 +79,7 @@ export interface Application {
   applicationReason?: string;
   quotationInfo?: QuotationInfo[];
   individualRegistered?: boolean;
+  originalRegistration?: OriginalRegistration;
 }
 
 /**

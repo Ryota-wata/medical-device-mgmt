@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useMasterStore, useApplicationStore } from '@/lib/stores';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
-import { Application } from '@/lib/types';
+import { Application, OriginalRegistration } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { Header } from '@/components/layouts/Header';
@@ -13,8 +13,12 @@ import {
   RfqGroupModal,
   QuotationLinkModal,
   ApplicationTypeFilterBar,
+  OriginalRegistrationModal,
 } from './components';
 import { APPLICATION_TYPE_BADGE_STYLES, WINDOW_SIZES } from './constants';
+
+// 原本登録対象の申請種別
+const ORIGINAL_REGISTRATION_TYPES = ['新規申請', '更新申請', '増設申請'];
 
 function RemodelApplicationListContent() {
   const searchParams = useSearchParams();
@@ -57,6 +61,13 @@ function RemodelApplicationListContent() {
   const [showQuotationLinkModal, setShowQuotationLinkModal] = useState(false);
   const [linkingApplication, setLinkingApplication] = useState<Application | null>(null);
   const [selectedQuotationItemId, setSelectedQuotationItemId] = useState<number | null>(null);
+
+  // 原本登録モーダル
+  const [showOriginalRegistrationModal, setShowOriginalRegistrationModal] = useState(false);
+  const [originalRegistrationApplication, setOriginalRegistrationApplication] = useState<Application | null>(null);
+
+  // QRコードNo.採番カウンター（実際にはstoreやDBで管理）
+  const [qrCodeCounter, setQrCodeCounter] = useState(1);
 
 
   // フィルターオプション生成
@@ -206,6 +217,30 @@ function RemodelApplicationListContent() {
     const left = (window.screen.width - size.width) / 2;
     const top = (window.screen.height - size.height) / 2;
     window.open(url, name, `width=${size.width},height=${size.height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+  };
+
+  // 原本登録モーダルを開く
+  const handleOpenOriginalRegistrationModal = (app: Application, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOriginalRegistrationApplication(app);
+    setShowOriginalRegistrationModal(true);
+  };
+
+  // QRコードNo.採番
+  const generateQrCodeNo = (): string => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const counter = String(qrCodeCounter).padStart(5, '0');
+    return `QR-${year}${month}${day}-${counter}`;
+  };
+
+  // 原本登録を確定
+  const handleOriginalRegistrationSubmit = (applicationId: number, registration: OriginalRegistration) => {
+    updateApplication(applicationId, { originalRegistration: registration });
+    setQrCodeCounter(prev => prev + 1);
+    alert(`原本登録が完了しました\nQRコードNo: ${registration.qrCodeNo}`);
   };
 
   // 申請種別バッジスタイル取得
@@ -395,7 +430,7 @@ function RemodelApplicationListContent() {
                     <td style={{ padding: '12px 8px', color: '#7f8c8d' }}>-</td>
                     <td style={{ padding: '12px 8px', color: '#7f8c8d' }}>-</td>
                     <td style={{ padding: '12px 8px', textAlign: 'center', position: 'sticky', right: 0, background: isSelected ? '#e3f2fd' : 'white', boxShadow: '-2px 0 5px rgba(0,0,0,0.1)', zIndex: 5 }} onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                           onClick={(e) => handleOpenQuotationLinkModal(app, e)}
                           style={{ padding: '6px 12px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
@@ -404,6 +439,25 @@ function RemodelApplicationListContent() {
                         >
                           見積紐付け
                         </button>
+                        {ORIGINAL_REGISTRATION_TYPES.includes(app.applicationType) && (
+                          <button
+                            onClick={(e) => handleOpenOriginalRegistrationModal(app, e)}
+                            style={{
+                              padding: '6px 12px',
+                              background: app.originalRegistration ? '#27ae60' : '#f39c12',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = app.originalRegistration ? '#219a52' : '#d68910'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = app.originalRegistration ? '#27ae60' : '#f39c12'; }}
+                          >
+                            {app.originalRegistration ? '原本登録済' : '原本登録'}
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteRow(app.id)}
                           style={{ padding: '6px 12px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
@@ -449,6 +503,14 @@ function RemodelApplicationListContent() {
         selectedQuotationItemId={selectedQuotationItemId}
         onSelectQuotationItem={setSelectedQuotationItemId}
         onSubmit={handleLinkQuotation}
+      />
+
+      <OriginalRegistrationModal
+        show={showOriginalRegistrationModal}
+        onClose={() => setShowOriginalRegistrationModal(false)}
+        application={originalRegistrationApplication}
+        onSubmit={handleOriginalRegistrationSubmit}
+        generateQrCodeNo={generateQrCodeNo}
       />
 
     </div>
