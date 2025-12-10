@@ -1,6 +1,6 @@
 import React from 'react';
 import { RfqGroup, AssetMaster } from '@/lib/types';
-import { ReceivedQuotationGroup, ReceivedQuotationItem, QuotationFilter } from '@/lib/types/quotation';
+import { ReceivedQuotationGroup, ReceivedQuotationItem, QuotationFilter, QuotationItemType } from '@/lib/types/quotation';
 import { MESSAGES } from '@/lib/constants/quotation';
 
 interface QuotationsTabProps {
@@ -13,6 +13,27 @@ interface QuotationsTabProps {
   onRegisterQuotation: () => void;
   onDeleteQuotation: (groupId: number) => void;
 }
+
+// 金額フォーマット
+const formatCurrency = (value?: number) => {
+  if (value === undefined || value === null) return '-';
+  return `¥${value.toLocaleString()}`;
+};
+
+// パーセンテージフォーマット
+const formatPercent = (value?: number) => {
+  if (value === undefined || value === null) return '-';
+  return `${value}%`;
+};
+
+// 登録区分の色設定
+const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
+  'A_表紙明細': { bg: '#e3f2fd', text: '#1565c0' },
+  'B_明細代表': { bg: '#f3e5f5', text: '#7b1fa2' },
+  'C_個体管理品目': { bg: '#e8f5e9', text: '#2e7d32' },
+  'D_付属品': { bg: '#fff3e0', text: '#ef6c00' },
+  'E_その他役務': { bg: '#fce4ec', text: '#c2185b' },
+};
 
 export const QuotationsTab: React.FC<QuotationsTabProps> = ({
   quotationGroups,
@@ -36,6 +57,43 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
     }
     return true;
   });
+
+  // ヘッダースタイル
+  const thStyle: React.CSSProperties = {
+    padding: '8px 6px',
+    textAlign: 'left',
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    whiteSpace: 'nowrap',
+    fontSize: '11px',
+    background: '#f8f9fa',
+  };
+
+  const thStyleRight: React.CSSProperties = {
+    ...thStyle,
+    textAlign: 'right',
+  };
+
+  const thStyleCenter: React.CSSProperties = {
+    ...thStyle,
+    textAlign: 'center',
+  };
+
+  // セルスタイル
+  const tdStyle: React.CSSProperties = {
+    padding: '8px 6px',
+    fontSize: '11px',
+  };
+
+  const tdStyleRight: React.CSSProperties = {
+    ...tdStyle,
+    textAlign: 'right',
+  };
+
+  const tdStyleCenter: React.CSSProperties = {
+    ...tdStyle,
+    textAlign: 'center',
+  };
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
@@ -96,88 +154,131 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
 
       {/* テーブル */}
       <div style={{ overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '2400px' }}>
+          {/* エリアヘッダー */}
           <thead>
+            <tr>
+              <th colSpan={11} style={{ padding: '6px', background: '#fff3e0', color: '#e65100', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', border: '1px solid #ffcc80' }}>
+                見積書情報
+              </th>
+              <th colSpan={7} style={{ padding: '6px', background: '#e8f5e9', color: '#2e7d32', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', border: '1px solid #a5d6a7' }}>
+                資産情報
+              </th>
+              <th colSpan={7} style={{ padding: '6px', background: '#e3f2fd', color: '#1565c0', fontWeight: 'bold', fontSize: '12px', textAlign: 'center', border: '1px solid #90caf9' }}>
+                価格按分登録
+              </th>
+              <th style={{ padding: '6px', background: '#f8f9fa' }}></th>
+            </tr>
             <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>見積番号</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>業者名</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>見積日</th>
-              <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 'bold', color: '#2c3e50' }}>フェーズ</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>品目名</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>型番</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 'bold', color: '#2c3e50' }}>数量</th>
-              <th style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 'bold', color: '#2c3e50' }}>金額</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>大分類</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>中分類</th>
-              <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50' }}>品目</th>
-              <th style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 'bold', color: '#2c3e50' }}>操作</th>
+              {/* 見積書情報エリア */}
+              <th style={thStyle}>品名</th>
+              <th style={thStyle}>メーカー名</th>
+              <th style={thStyle}>型式</th>
+              <th style={thStyleRight}>数量</th>
+              <th style={thStyleRight}>定価単価</th>
+              <th style={thStyleRight}>定価金額</th>
+              <th style={thStyleRight}>納入単価</th>
+              <th style={thStyleRight}>納入金額</th>
+              <th style={thStyleRight}>値引</th>
+              <th style={thStyleRight}>消費税率</th>
+              <th style={thStyleRight}>納入金額（税込）</th>
+              {/* 資産情報エリア */}
+              <th style={thStyleCenter}>登録区分</th>
+              <th style={thStyle}>category</th>
+              <th style={thStyle}>大分類</th>
+              <th style={thStyle}>中分類</th>
+              <th style={thStyle}>個体管理品目</th>
+              <th style={thStyle}>メーカー</th>
+              <th style={thStyle}>型式</th>
+              {/* 価格按分登録エリア */}
+              <th style={thStyleRight}>定価単価</th>
+              <th style={thStyleRight}>定価金額</th>
+              <th style={thStyleRight}>登録単価<br/>(税別)</th>
+              <th style={thStyleRight}>値引率</th>
+              <th style={thStyleRight}>消費税率</th>
+              <th style={thStyleRight}>税込金額</th>
+              <th style={thStyleCenter}>勘定<br/>科目</th>
+              {/* 操作 */}
+              <th style={thStyleCenter}>操作</th>
             </tr>
           </thead>
           <tbody>
             {filteredItems.map((item) => {
-                const group = quotationGroups.find(g => g.id === item.quotationGroupId);
-                const assetMaster = item.assetMasterId
-                  ? assetMasterData.find(a => a.id === item.assetMasterId)
-                  : null;
+              const group = quotationGroups.find(g => g.id === item.quotationGroupId);
+              const assetMaster = item.assetMasterId
+                ? assetMasterData.find(a => a.id === item.assetMasterId)
+                : null;
+              const itemTypeColor = ITEM_TYPE_COLORS[item.itemType] || { bg: '#f5f5f5', text: '#666' };
 
-                return (
-                  <tr key={item.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                    <td style={{ padding: '12px 8px', fontFamily: 'monospace', fontWeight: 600 }}>{item.receivedQuotationNo}</td>
-                    <td style={{ padding: '12px 8px' }}>{group?.vendorName || '-'}</td>
-                    <td style={{ padding: '12px 8px' }}>{group?.quotationDate || '-'}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                      {group && (
-                        <span
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            background: group.phase === '定価見積' ? '#e8f5e9' :
-                                       group.phase === '概算見積' ? '#fff3e0' : '#e3f2fd',
-                            color: group.phase === '定価見積' ? '#2e7d32' :
-                                   group.phase === '概算見積' ? '#e65100' : '#1565c0'
-                          }}
-                        >
-                          {group.phase}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px 8px', fontWeight: 500 }}>{item.itemName}</td>
-                    <td style={{ padding: '12px 8px' }}>{item.manufacturer || '-'}</td>
-                    <td style={{ padding: '12px 8px' }}>{item.model || '-'}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'right' }}>{item.quantity}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600 }}>
-                      ¥{item.sellingPriceTotal?.toLocaleString() || '-'}
-                    </td>
-                    <td style={{ padding: '12px 8px', color: '#555' }}>{assetMaster?.largeClass || '-'}</td>
-                    <td style={{ padding: '12px 8px', color: '#555' }}>{assetMaster?.mediumClass || '-'}</td>
-                    <td style={{ padding: '12px 8px', color: '#555' }}>{assetMaster?.item || '-'}</td>
-                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => {
-                          if (confirm(MESSAGES.CONFIRM_DELETE_ITEM)) {
-                            onDeleteQuotation(item.quotationGroupId);
-                          }
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#e74c3c',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        削除
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+              return (
+                <tr key={item.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                  {/* 見積書情報エリア */}
+                  <td style={{ ...tdStyle, fontWeight: 500, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.itemName}>{item.itemName}</td>
+                  <td style={tdStyle}>{item.manufacturer || '-'}</td>
+                  <td style={tdStyle}>{item.model || '-'}</td>
+                  <td style={tdStyleRight}>{item.quantity}</td>
+                  <td style={tdStyleRight}>{formatCurrency(item.listPriceUnit)}</td>
+                  <td style={tdStyleRight}>{formatCurrency(item.listPriceTotal)}</td>
+                  <td style={tdStyleRight}>{formatCurrency(item.sellingPriceUnit)}</td>
+                  <td style={{ ...tdStyleRight, fontWeight: 600 }}>{formatCurrency(item.sellingPriceTotal)}</td>
+                  <td style={{ ...tdStyleRight, color: item.discount && item.discount > 0 ? '#c62828' : '#666' }}>
+                    {item.discount && item.discount > 0 ? `-${formatPercent(item.discount)}` : '-'}
+                  </td>
+                  <td style={tdStyleRight}>{formatPercent(item.taxRate)}</td>
+                  <td style={{ ...tdStyleRight, fontWeight: 'bold', color: '#e65100' }}>{formatCurrency(item.totalWithTax)}</td>
+                  {/* 資産情報エリア */}
+                  <td style={tdStyleCenter}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '2px 6px',
+                      borderRadius: '3px',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      background: itemTypeColor.bg,
+                      color: itemTypeColor.text,
+                    }}>
+                      {item.itemType}
+                    </span>
+                  </td>
+                  <td style={tdStyle}>{assetMaster?.category || '-'}</td>
+                  <td style={tdStyle}>{assetMaster?.largeClass || '-'}</td>
+                  <td style={tdStyle}>{assetMaster?.mediumClass || '-'}</td>
+                  <td style={{ ...tdStyle, fontWeight: 500 }}>{assetMaster?.item || '-'}</td>
+                  <td style={tdStyle}>{assetMaster?.maker || '-'}</td>
+                  <td style={tdStyle}>{assetMaster?.model || '-'}</td>
+                  {/* 価格按分登録エリア（データなし） */}
+                  <td style={tdStyleRight}>-</td>
+                  <td style={tdStyleRight}>-</td>
+                  <td style={tdStyleRight}>-</td>
+                  <td style={tdStyleRight}>-</td>
+                  <td style={tdStyleRight}>-</td>
+                  <td style={tdStyleRight}>-</td>
+                  <td style={tdStyleCenter}>-</td>
+                  {/* 操作 */}
+                  <td style={tdStyleCenter}>
+                    <button
+                      onClick={() => {
+                        if (confirm(MESSAGES.CONFIRM_DELETE_ITEM)) {
+                          onDeleteQuotation(item.quotationGroupId);
+                        }
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#e74c3c',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      削除
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

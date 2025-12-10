@@ -36,6 +36,16 @@ export interface ReceivedQuotationGroup {
   updatedAt: string;
 }
 
+// 勘定科目
+export type AccountTitle =
+  | '器械備品'
+  | '医療機器'
+  | '什器備品'
+  | '建物付属設備'
+  | '消耗品費'
+  | '修繕費'
+  | '委託費';
+
 // 受領見積明細（個別レコード）
 export interface ReceivedQuotationItem {
   id: number;
@@ -54,6 +64,7 @@ export interface ReceivedQuotationItem {
   discount?: number;
   taxRate: number;
   totalWithTax?: number;
+  accountTitle?: AccountTitle; // 勘定科目
   assetMasterId?: string; // 資産Masterとの紐づけ
   linkedApplicationIds?: number[]; // 紐づけられた申請ID（複数可）
   createdAt: string;
@@ -121,6 +132,7 @@ export interface OCRResultItem {
 
 export interface OCRResult {
   vendorName: string;
+  facilityName: string; // 宛先（施設名）
   quotationDate: string;
   validityPeriod: number;
   deliveryPeriod: number;

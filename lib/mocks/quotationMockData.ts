@@ -5,6 +5,7 @@ import { OCRResult } from '@/lib/types/quotation';
  */
 export const MOCK_OCR_RESULT: OCRResult = {
   vendorName: '株式会社メディカルサプライ',
+  facilityName: '医療法人社団 サンプル病院',
   quotationDate: '2025-01-15',
   validityPeriod: 3,
   deliveryPeriod: 2,
