@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useMasterStore } from '@/lib/stores';
-import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -12,43 +11,16 @@ export default function MainPage() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { facilities } = useMasterStore();
-  const { hospitals, setHospitals } = useHospitalFacilityStore();
   const { isMobile, isTablet } = useResponsive();
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const [isRemodelModalOpen, setIsRemodelModalOpen] = useState(false);
   const [isHospitalSelectModalOpen, setIsHospitalSelectModalOpen] = useState(false);
+  const [isHospitalMasterModalOpen, setIsHospitalMasterModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedRemodelFacility, setSelectedRemodelFacility] = useState('');
-  const [selectedHospitalForFacility, setSelectedHospitalForFacility] = useState('');
+  const [selectedFacilityForMaster, setSelectedFacilityForMaster] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
-
-  // 病院マスタの初期化
-  useEffect(() => {
-    if (hospitals.length === 0) {
-      const sampleHospitals = [
-        {
-          id: 'HOSP001',
-          name: '東京中央病院',
-          remodelStatus: 'in_progress' as const,
-          facilityCount: 3,
-          completedCount: 1,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-        {
-          id: 'HOSP002',
-          name: '大阪総合医療センター',
-          remodelStatus: 'preparing' as const,
-          facilityCount: 2,
-          completedCount: 0,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-      ];
-      setHospitals(sampleHospitals);
-    }
-  }, [hospitals.length, setHospitals]);
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = useMemo(() => {
@@ -311,27 +283,50 @@ export default function MainPage() {
 
             {/* 病院ユーザー専用ボタン */}
             {isHospital && (
-              <button
-                onClick={handleQRIssueFromModal}
-                style={{
-                  padding: '8px 16px',
-                  background: '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  transition: 'background 0.3s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#229954';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#27ae60';
-                }}
-              >
-                QRコード発行
-              </button>
+              <>
+                <button
+                  onClick={handleQRIssueFromModal}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'background 0.3s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#229954';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#27ae60';
+                  }}
+                >
+                  QRコード発行
+                </button>
+                <button
+                  onClick={() => setIsHospitalMasterModalOpen(true)}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#34495e',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'background 0.3s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#2c3e50';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#34495e';
+                  }}
+                >
+                  マスタ管理
+                </button>
+              </>
             )}
 
             {/* ログアウトボタン（全ユーザー共通） */}
@@ -990,14 +985,9 @@ export default function MainPage() {
                     closeMasterModal();
                     if (isHospital && user?.hospital) {
                       // 病院ユーザーは自身の病院の施設マスタへ直接遷移
-                      const userHospital = hospitals.find(h => h.name === user.hospital);
-                      if (userHospital) {
-                        router.push(`/hospital-facility-master?hospitalId=${userHospital.id}`);
-                      } else {
-                        router.push('/hospital-facility-master');
-                      }
+                      router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
                     } else {
-                      // コンサルユーザーは病院選択モーダルを表示
+                      // コンサルユーザーは施設選択モーダルを表示
                       setIsHospitalSelectModalOpen(true);
                     }
                   }}
@@ -1219,7 +1209,7 @@ export default function MainPage() {
         <div
           onClick={() => {
             setIsHospitalSelectModalOpen(false);
-            setSelectedHospitalForFacility('');
+            setSelectedFacilityForMaster('');
           }}
           style={{
             position: 'fixed',
@@ -1244,7 +1234,9 @@ export default function MainPage() {
               maxWidth: '500px',
               maxHeight: '90vh',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'hidden',
+              overflow: 'visible',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* モーダルヘッダー */}
@@ -1258,13 +1250,14 @@ export default function MainPage() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
+                borderRadius: '12px 12px 0 0',
               }}
             >
-              <span>個別施設マスタ - 病院選択</span>
+              <span>個別施設マスタ - 施設選択</span>
               <button
                 onClick={() => {
                   setIsHospitalSelectModalOpen(false);
-                  setSelectedHospitalForFacility('');
+                  setSelectedFacilityForMaster('');
                 }}
                 style={{
                   background: 'none',
@@ -1293,39 +1286,17 @@ export default function MainPage() {
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '24px' }}>
-              {/* 病院選択 */}
-              <div style={{ marginBottom: '24px' }}>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    marginBottom: '8px',
-                    color: '#2c3e50',
-                  }}
-                >
-                  病院を選択
-                </label>
-                <select
-                  value={selectedHospitalForFacility}
-                  onChange={(e) => setSelectedHospitalForFacility(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #d0d0d0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    background: 'white',
-                  }}
-                >
-                  <option value="">病院を選択してください</option>
-                  {hospitals.map((hospital) => (
-                    <option key={hospital.id} value={hospital.id}>
-                      {hospital.name}
-                    </option>
-                  ))}
-                </select>
+            <div style={{ padding: '24px', overflow: 'visible' }}>
+              {/* 施設選択 */}
+              <div style={{ marginBottom: '24px', position: 'relative', zIndex: 3 }}>
+                <SearchableSelect
+                  label="施設を選択"
+                  value={selectedFacilityForMaster}
+                  onChange={(facilityName) => setSelectedFacilityForMaster(facilityName)}
+                  options={['', ...facilityOptions]}
+                  placeholder="施設を選択してください"
+                  isMobile={isMobile}
+                />
               </div>
 
               {/* 決定ボタン */}
@@ -1333,7 +1304,7 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     setIsHospitalSelectModalOpen(false);
-                    setSelectedHospitalForFacility('');
+                    setSelectedFacilityForMaster('');
                   }}
                   style={{
                     padding: '10px 20px',
@@ -1357,28 +1328,170 @@ export default function MainPage() {
                 </button>
                 <button
                   onClick={() => {
-                    if (selectedHospitalForFacility) {
-                      router.push(`/hospital-facility-master?hospitalId=${selectedHospitalForFacility}`);
+                    if (selectedFacilityForMaster) {
+                      router.push(`/hospital-facility-master?facility=${encodeURIComponent(selectedFacilityForMaster)}`);
                       setIsHospitalSelectModalOpen(false);
-                      setSelectedHospitalForFacility('');
+                      setSelectedFacilityForMaster('');
                     }
                   }}
-                  disabled={!selectedHospitalForFacility}
+                  disabled={!selectedFacilityForMaster}
                   style={{
                     padding: '10px 20px',
-                    background: selectedHospitalForFacility
+                    background: selectedFacilityForMaster
                       ? 'linear-gradient(135deg, #8e44ad, #9b59b6)'
                       : '#ddd',
-                    color: selectedHospitalForFacility ? 'white' : '#999',
+                    color: selectedFacilityForMaster ? 'white' : '#999',
                     border: 'none',
                     borderRadius: '6px',
-                    cursor: selectedHospitalForFacility ? 'pointer' : 'not-allowed',
+                    cursor: selectedFacilityForMaster ? 'pointer' : 'not-allowed',
                     fontSize: '14px',
                     fontWeight: '600',
                     transition: 'background 0.2s',
                   }}
                 >
                   決定
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 病院ユーザー用マスタ管理モーダル */}
+      {isHospitalMasterModalOpen && (
+        <div
+          onClick={() => setIsHospitalMasterModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '90vh',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: '#34495e',
+                color: 'white',
+                padding: '16px 20px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderRadius: '12px 12px 0 0',
+              }}
+            >
+              <span>マスタ管理</span>
+              <button
+                onClick={() => setIsHospitalMasterModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  padding: '0',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    setIsHospitalMasterModalOpen(false);
+                    const hospitalName = user?.hospital || '東京中央病院';
+                    router.push(`/hospital-facility-master?facility=${encodeURIComponent(hospitalName)}`);
+                  }}
+                  style={{
+                    padding: '16px 20px',
+                    background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(142, 68, 173, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>🏢</span>
+                  <span>個別施設マスタ</span>
+                </button>
+              </div>
+
+              {/* 閉じるボタン */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+                <button
+                  onClick={() => setIsHospitalMasterModalOpen(false)}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#7f8c8d';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#95a5a6';
+                  }}
+                >
+                  閉じる
                 </button>
               </div>
             </div>

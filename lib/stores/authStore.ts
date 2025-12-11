@@ -25,11 +25,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
       // メールアドレスに基づいてユーザー種別を自動判定
       // テスト用: @hospital を含むメールアドレス → 病院ユーザー
       //          それ以外 → コンサルタントユーザー
+      const isHospitalUser = credentials.username.includes('@hospital');
       const mockUser: User = {
         id: '1',
         username: credentials.username,
-        email: `${credentials.username}@example.com`, // @hospital.com にすると病院ユーザー
+        email: isHospitalUser ? credentials.username : `${credentials.username}@example.com`,
         role: 'consultant',
+        hospital: isHospitalUser ? '東京中央病院' : undefined, // 病院ユーザーの場合は病院名を設定
         department: '手術部門',
         section: '手術'
       };

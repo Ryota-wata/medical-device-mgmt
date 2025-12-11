@@ -4,31 +4,31 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
-import { useAuthStore } from '@/lib/stores/authStore';
+import { useMasterStore } from '@/lib/stores/masterStore';
 import { HospitalFacilityMaster, HospitalFacilityStatus } from '@/lib/types/hospitalFacility';
 import { HospitalFacilityFormModal } from './components/HospitalFacilityFormModal';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 function HospitalFacilityMasterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
-  const { user } = useAuthStore();
+  const { facilities: masterFacilities } = useMasterStore();
   const {
-    hospitals,
     facilities,
-    setHospitals,
     setFacilities,
     addFacility,
     updateFacility,
     deleteFacility,
-    getFacilitiesByHospitalId,
-    getHospitalById,
     generateFacilityId,
   } = useHospitalFacilityStore();
 
-  // URLパラメータから病院IDを取得
-  const hospitalIdParam = searchParams.get('hospitalId');
-  const [selectedHospitalId, setSelectedHospitalId] = useState<string>(hospitalIdParam || '');
+  // URLパラメータから施設名を取得
+  const facilityParam = searchParams.get('facility');
+  const [selectedFacilityName, setSelectedFacilityName] = useState<string>(facilityParam || '');
+
+  // 施設マスタから施設名オプションを生成
+  const facilityOptions = masterFacilities.map(f => f.facilityName);
 
   // フィルター状態
   const [filterCurrentFloor, setFilterCurrentFloor] = useState('');
@@ -44,36 +44,16 @@ function HospitalFacilityMasterContent() {
 
   // サンプルデータ初期化
   useEffect(() => {
-    if (hospitals.length === 0) {
-      const sampleHospitals = [
-        {
-          id: 'HOSP001',
-          name: '東京中央病院',
-          remodelStatus: 'in_progress' as const,
-          facilityCount: 3,
-          completedCount: 1,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-        {
-          id: 'HOSP002',
-          name: '大阪総合医療センター',
-          remodelStatus: 'preparing' as const,
-          facilityCount: 2,
-          completedCount: 0,
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-      ];
-      setHospitals(sampleHospitals);
-    }
+    if (facilities.length === 0 && masterFacilities.length > 0) {
+      // SHIP施設マスタの施設名を使用してサンプルデータを作成
+      const firstFacility = masterFacilities[0]?.facilityName || '東京中央病院';
+      const secondFacility = masterFacilities[1]?.facilityName || '大阪総合医療センター';
 
-    if (facilities.length === 0) {
       const sampleFacilities: HospitalFacilityMaster[] = [
         {
           id: 'HF00001',
-          hospitalId: 'HOSP001',
-          hospitalName: '東京中央病院',
+          hospitalId: firstFacility,
+          hospitalName: firstFacility,
           currentFloor: '3F',
           currentDepartment: '手術部門',
           currentRoom: '手術室1',
@@ -86,8 +66,8 @@ function HospitalFacilityMasterContent() {
         },
         {
           id: 'HF00002',
-          hospitalId: 'HOSP001',
-          hospitalName: '東京中央病院',
+          hospitalId: firstFacility,
+          hospitalName: firstFacility,
           currentFloor: '3F',
           currentDepartment: '手術部門',
           currentRoom: '手術室2',
@@ -100,8 +80,8 @@ function HospitalFacilityMasterContent() {
         },
         {
           id: 'HF00003',
-          hospitalId: 'HOSP001',
-          hospitalName: '東京中央病院',
+          hospitalId: firstFacility,
+          hospitalName: firstFacility,
           currentFloor: '2F',
           currentDepartment: '外来',
           currentRoom: '診察室1',
@@ -114,8 +94,8 @@ function HospitalFacilityMasterContent() {
         },
         {
           id: 'HF00004',
-          hospitalId: 'HOSP002',
-          hospitalName: '大阪総合医療センター',
+          hospitalId: secondFacility,
+          hospitalName: secondFacility,
           currentFloor: '1F',
           currentDepartment: '救急部門',
           currentRoom: '救急処置室',
@@ -128,8 +108,8 @@ function HospitalFacilityMasterContent() {
         },
         {
           id: 'HF00005',
-          hospitalId: 'HOSP002',
-          hospitalName: '大阪総合医療センター',
+          hospitalId: secondFacility,
+          hospitalName: secondFacility,
           currentFloor: '2F',
           currentDepartment: '検査部門',
           currentRoom: '検査室1',
@@ -143,19 +123,11 @@ function HospitalFacilityMasterContent() {
       ];
       setFacilities(sampleFacilities);
     }
+  }, [facilities.length, masterFacilities, setFacilities]);
 
-    // 病院ユーザーの場合は自身の病院を自動選択
-    if (user?.hospital && !selectedHospitalId) {
-      const userHospital = hospitals.find((h) => h.name === user.hospital);
-      if (userHospital) {
-        setSelectedHospitalId(userHospital.id);
-      }
-    }
-  }, [hospitals.length, facilities.length, setHospitals, setFacilities, user, selectedHospitalId, hospitals]);
-
-  // 選択病院の施設一覧を取得
-  const hospitalFacilities = selectedHospitalId
-    ? getFacilitiesByHospitalId(selectedHospitalId)
+  // 選択施設の個別施設一覧を取得
+  const hospitalFacilities = selectedFacilityName
+    ? facilities.filter((f) => f.hospitalName === selectedFacilityName)
     : [];
 
   // フィルタリング処理
@@ -183,8 +155,6 @@ function HospitalFacilityMasterContent() {
     );
   });
 
-  const selectedHospital = selectedHospitalId ? getHospitalById(selectedHospitalId) : null;
-
   const handleBack = () => {
     router.back();
   };
@@ -201,12 +171,12 @@ function HospitalFacilityMasterContent() {
   };
 
   const handleNewSubmit = (data: Partial<HospitalFacilityMaster>) => {
-    if (!selectedHospitalId || !selectedHospital) return;
+    if (!selectedFacilityName) return;
 
     const newFacility: HospitalFacilityMaster = {
       id: generateFacilityId(),
-      hospitalId: selectedHospitalId,
-      hospitalName: selectedHospital.name,
+      hospitalId: selectedFacilityName,
+      hospitalName: selectedFacilityName,
       currentFloor: data.currentFloor || '',
       currentDepartment: data.currentDepartment || '',
       currentRoom: data.currentRoom || '',
@@ -295,7 +265,7 @@ function HospitalFacilityMasterContent() {
               個別施設マスタ
             </h1>
           </div>
-          {selectedHospital && (
+          {selectedFacilityName && (
             <div
               style={{
                 background: '#34495e',
@@ -306,12 +276,12 @@ function HospitalFacilityMasterContent() {
                 fontWeight: 600,
               }}
             >
-              {selectedHospital.name} - {filteredFacilities.length}件
+              {selectedFacilityName} - {filteredFacilities.length}件
             </div>
           )}
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          {selectedHospitalId && (
+          {selectedFacilityName && (
             <button
               onClick={() => setShowNewModal(true)}
               style={{
@@ -348,8 +318,8 @@ function HospitalFacilityMasterContent() {
         </div>
       </header>
 
-      {/* Hospital Selection (コンサルユーザー向け) */}
-      {!hospitalIdParam && (
+      {/* Facility Selection */}
+      {!facilityParam && (
         <div
           style={{
             background: 'white',
@@ -357,40 +327,19 @@ function HospitalFacilityMasterContent() {
             borderBottom: '2px solid #e0e0e0',
           }}
         >
-          <label
-            style={{
-              display: 'block',
-              fontSize: isMobile ? '12px' : '13px',
-              fontWeight: 600,
-              marginBottom: '6px',
-              color: '#2c3e50',
-            }}
-          >
-            病院を選択
-          </label>
-          <select
-            value={selectedHospitalId}
-            onChange={(e) => setSelectedHospitalId(e.target.value)}
-            style={{
-              width: isMobile ? '100%' : '300px',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-            }}
-          >
-            <option value="">病院を選択してください</option>
-            {hospitals.map((hospital) => (
-              <option key={hospital.id} value={hospital.id}>
-                {hospital.name}
-              </option>
-            ))}
-          </select>
+          <SearchableSelect
+            label="施設を選択"
+            value={selectedFacilityName}
+            onChange={(value) => setSelectedFacilityName(value)}
+            options={['', ...facilityOptions]}
+            placeholder="施設を選択してください"
+            isMobile={isMobile}
+          />
         </div>
       )}
 
       {/* Filter Header */}
-      {selectedHospitalId && (
+      {selectedFacilityName && (
         <div
           style={{
             background: 'white',
@@ -539,7 +488,7 @@ function HospitalFacilityMasterContent() {
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflowY: 'auto' }}>
-        {!selectedHospitalId ? (
+        {!selectedFacilityName ? (
           <div
             style={{
               background: 'white',
@@ -550,7 +499,7 @@ function HospitalFacilityMasterContent() {
               fontSize: isMobile ? '14px' : '16px',
             }}
           >
-            病院を選択してください
+            施設を選択してください
           </div>
         ) : isMobile ? (
           // カード表示 (モバイル)
@@ -691,7 +640,7 @@ function HospitalFacilityMasterContent() {
           </div>
         )}
 
-        {selectedHospitalId && filteredFacilities.length === 0 && (
+        {selectedFacilityName && filteredFacilities.length === 0 && (
           <div
             style={{
               background: 'white',
