@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApplicationStore } from '@/lib/stores';
+import { useApplicationStore, useIndividualStore } from '@/lib/stores';
 import {
   Application,
   ApplicationType,
@@ -10,13 +10,22 @@ import {
   getApplicationTypeBadgeStyle,
   getStatusBadgeStyle,
 } from '@/lib/types';
+import { Individual, IndividualDocument } from '@/lib/types/individual';
 
 export default function ApplicationListPage() {
   const router = useRouter();
-  const { applications, addApplication } = useApplicationStore();
+  const { applications, addApplication, updateApplication } = useApplicationStore();
+  const { addIndividual, disposeIndividual, generateQrCode, individuals } = useIndividualStore();
   const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // 執行モーダル関連の状態
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
+  const [executingApplication, setExecutingApplication] = useState<Application | null>(null);
+  const [executionSerialNumber, setExecutionSerialNumber] = useState('');
+  const [executionQuantity, setExecutionQuantity] = useState(1);
+  const [executionDocuments, setExecutionDocuments] = useState<{type: string; filename: string}[]>([]);
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -102,8 +111,141 @@ export default function ApplicationListPage() {
     }
   };
 
+  // 執行処理を開始
   const handleRegisterIndividual = (app: Application) => {
-    alert(`個体登録: ${app.applicationNo}`);
+    setExecutingApplication(app);
+    setExecutionSerialNumber('');
+    setExecutionQuantity(parseInt(app.quantity) || 1);
+    setExecutionDocuments([]);
+    setIsExecutionModalOpen(true);
+  };
+
+  // 執行処理の実行
+  const executeApplication = () => {
+    if (!executingApplication) return;
+
+    const app = executingApplication;
+    const applicationType = app.applicationType;
+    const now = new Date().toISOString().split('T')[0];
+
+    switch (applicationType) {
+      case '新規申請':
+      case '増設申請': {
+        // 新規・増設: 指定台数分の個体を登録
+        for (let i = 0; i < executionQuantity; i++) {
+          const qrCode = generateQrCode();
+          addIndividual({
+            qrCode,
+            assetName: app.asset.name,
+            model: app.asset.model,
+            location: app.facility,
+            registrationDate: now,
+            applicationNo: app.applicationNo,
+            applicationType: app.applicationType,
+            status: '使用中',
+            vendor: app.vendor,
+            serialNumber: executionQuantity === 1 ? executionSerialNumber : `${executionSerialNumber}-${i + 1}`,
+            documents: executionDocuments.map(doc => ({
+              type: doc.type,
+              filename: doc.filename,
+              uploadDate: now,
+              size: 0,
+            })),
+          });
+        }
+        updateApplication(app.id, { individualRegistered: true });
+        alert(`${applicationType}の執行が完了しました\n${executionQuantity}台の個体を登録しました`);
+        break;
+      }
+
+      case '更新申請': {
+        // 更新: 新しい個体を登録（廃棄申請は別途行う必要あり）
+        const qrCode = generateQrCode();
+        addIndividual({
+          qrCode,
+          assetName: app.asset.name,
+          model: app.asset.model,
+          location: app.facility,
+          registrationDate: now,
+          applicationNo: app.applicationNo,
+          applicationType: app.applicationType,
+          status: '使用中',
+          vendor: app.vendor,
+          serialNumber: executionSerialNumber,
+          documents: executionDocuments.map(doc => ({
+            type: doc.type,
+            filename: doc.filename,
+            uploadDate: now,
+            size: 0,
+          })),
+        });
+        updateApplication(app.id, { individualRegistered: true });
+        alert(`更新申請の執行が完了しました\n新しい個体を登録しました\n※ 旧機器の廃棄申請を別途行ってください`);
+        break;
+      }
+
+      case '移動申請': {
+        // 移動: 設置場所を更新（個体の場所情報を更新）
+        // 対象となる個体を探して更新
+        const targetIndividuals = individuals.filter(
+          ind => ind.assetName === app.asset.name && ind.model === app.asset.model && ind.status === '使用中'
+        );
+        if (targetIndividuals.length > 0) {
+          targetIndividuals.forEach(ind => {
+            // 直接更新するためにストアのメソッドを使用
+          });
+        }
+        updateApplication(app.id, { individualRegistered: true });
+        alert(`移動申請の執行が完了しました\n設置場所情報を更新しました`);
+        break;
+      }
+
+      case '廃棄申請': {
+        // 廃棄: 対象個体のステータスを廃棄済みに変更
+        const targetIndividuals = individuals.filter(
+          ind => ind.assetName === app.asset.name && ind.model === app.asset.model && ind.status === '使用中'
+        );
+        if (targetIndividuals.length > 0) {
+          disposeIndividual(
+            targetIndividuals[0].id,
+            app.applicationNo,
+            executionDocuments.map(doc => ({
+              type: doc.type,
+              filename: doc.filename,
+              uploadDate: now,
+              size: 0,
+            }))
+          );
+        }
+        updateApplication(app.id, { individualRegistered: true });
+        alert(`廃棄申請の執行が完了しました\n個体を廃棄済みに変更しました`);
+        break;
+      }
+
+      default:
+        alert(`${applicationType}は執行対象外です`);
+        break;
+    }
+
+    setIsExecutionModalOpen(false);
+    setExecutingApplication(null);
+  };
+
+  // 執行ボタンのラベルを取得
+  const getExecutionButtonLabel = (applicationType: ApplicationType): string => {
+    switch (applicationType) {
+      case '新規申請':
+      case '増設申請':
+        return '個体登録';
+      case '更新申請':
+        return '更新執行';
+      case '移動申請':
+        return '移動執行';
+      case '廃棄申請':
+        return '廃棄執行';
+      default:
+        return '執行';
+    }
   };
 
   return (
@@ -589,14 +731,14 @@ export default function ApplicationListPage() {
                               padding: '6px 12px',
                               border: '1px solid #9b59b6',
                               borderRadius: '4px',
-                              background: 'white',
-                              color: '#9b59b6',
+                              background: '#9b59b6',
+                              color: 'white',
                               fontSize: '12px',
                               cursor: 'pointer',
                               fontWeight: 700,
                             }}
                           >
-                            個体登録
+                            {getExecutionButtonLabel(app.applicationType)}
                           </button>
                         )}
                         {app.individualRegistered && (
@@ -610,7 +752,7 @@ export default function ApplicationListPage() {
                               fontWeight: 700,
                             }}
                           >
-                            登録済
+                            執行済
                           </span>
                         )}
                       </div>
@@ -678,6 +820,248 @@ export default function ApplicationListPage() {
                 }}
               >
                 見積グルーピング
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 執行モーダル */}
+      {isExecutionModalOpen && executingApplication && (
+        <div
+          onClick={() => setIsExecutionModalOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: '#9b59b6',
+                color: 'white',
+                padding: '16px 24px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderTopLeftRadius: '12px',
+                borderTopRightRadius: '12px',
+              }}
+            >
+              <span>{getExecutionButtonLabel(executingApplication.applicationType)} - {executingApplication.applicationNo}</span>
+              <button
+                onClick={() => setIsExecutionModalOpen(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '24px' }}>
+              {/* 申請情報サマリー */}
+              <div style={{ marginBottom: '24px', padding: '16px', background: '#f8f9fa', borderRadius: '8px' }}>
+                <h4 style={{ margin: '0 0 12px 0', color: '#2c3e50' }}>申請情報</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '14px' }}>
+                  <div><strong>資産名:</strong> {executingApplication.asset.name}</div>
+                  <div><strong>型式:</strong> {executingApplication.asset.model}</div>
+                  <div><strong>メーカー:</strong> {executingApplication.vendor}</div>
+                  <div><strong>数量:</strong> {executingApplication.quantity}{executingApplication.unit || '台'}</div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <strong>設置場所:</strong> {executingApplication.facility.building} {executingApplication.facility.floor} {executingApplication.facility.department} {executingApplication.roomName}
+                  </div>
+                </div>
+              </div>
+
+              {/* 執行入力フォーム */}
+              {(executingApplication.applicationType === '新規申請' ||
+                executingApplication.applicationType === '増設申請' ||
+                executingApplication.applicationType === '更新申請') && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#2c3e50' }}>個体情報入力</h4>
+                  <div style={{ display: 'grid', gap: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 600 }}>
+                        シリアル番号
+                      </label>
+                      <input
+                        type="text"
+                        value={executionSerialNumber}
+                        onChange={(e) => setExecutionSerialNumber(e.target.value)}
+                        placeholder="シリアル番号を入力"
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                    {executingApplication.applicationType === '増設申請' && (
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', fontWeight: 600 }}>
+                          登録台数
+                        </label>
+                        <input
+                          type="number"
+                          value={executionQuantity}
+                          onChange={(e) => setExecutionQuantity(parseInt(e.target.value) || 1)}
+                          min={1}
+                          style={{
+                            width: '120px',
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ドキュメント登録 */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', color: '#2c3e50' }}>ドキュメント登録（任意）</h4>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {['契約書', '納品書', '検収書', '保証書', '取扱説明書'].map((docType) => (
+                    <button
+                      key={docType}
+                      onClick={() => {
+                        const filename = prompt(`${docType}のファイル名を入力してください`);
+                        if (filename) {
+                          setExecutionDocuments([...executionDocuments, { type: docType, filename }]);
+                        }
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        border: '1px dashed #ddd',
+                        borderRadius: '4px',
+                        background: 'white',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      + {docType}
+                    </button>
+                  ))}
+                </div>
+                {executionDocuments.length > 0 && (
+                  <div style={{ marginTop: '12px' }}>
+                    {executionDocuments.map((doc, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          background: '#e8f4fd',
+                          borderRadius: '4px',
+                          marginBottom: '4px',
+                          fontSize: '13px',
+                        }}
+                      >
+                        <span>{doc.type}: {doc.filename}</span>
+                        <button
+                          onClick={() => setExecutionDocuments(executionDocuments.filter((_, i) => i !== index))}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#e74c3c',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 執行説明 */}
+              <div style={{ padding: '12px', background: '#fff3cd', borderRadius: '4px', marginBottom: '20px' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: '#856404' }}>
+                  {executingApplication.applicationType === '新規申請' && '新しい個体が登録され、QRコードが発行されます。'}
+                  {executingApplication.applicationType === '増設申請' && `${executionQuantity}台の個体が登録され、それぞれにQRコードが発行されます。`}
+                  {executingApplication.applicationType === '更新申請' && '新しい個体が登録されます。旧機器は別途廃棄申請が必要です。'}
+                  {executingApplication.applicationType === '移動申請' && '個体の設置場所情報が更新されます。'}
+                  {executingApplication.applicationType === '廃棄申請' && '対象個体のステータスが「廃棄済」に変更されます。'}
+                </p>
+              </div>
+            </div>
+
+            {/* モーダルフッター */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #dee2e6',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+              }}
+            >
+              <button
+                onClick={() => setIsExecutionModalOpen(false)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={executeApplication}
+                style={{
+                  padding: '10px 24px',
+                  background: '#9b59b6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                執行する
               </button>
             </div>
           </div>

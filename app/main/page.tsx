@@ -1021,38 +1021,6 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     closeMasterModal();
-                    router.push('/original-list');
-                  }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #c0392b',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#c0392b';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
-                >
-                  <span>📄 原本リスト管理</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    closeMasterModal();
                     showListModal();
                   }}
                   style={{

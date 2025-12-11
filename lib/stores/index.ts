@@ -8,4 +8,4 @@ export * from './masterStore';
 export * from './applicationStore';
 export * from './userStore';
 export * from './hospitalFacilityStore';
-export * from './originalListStore';
+export * from './individualStore';
