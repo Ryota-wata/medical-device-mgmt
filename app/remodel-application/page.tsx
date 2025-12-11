@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset, Application, ApplicationType } from '@/lib/types';
-import { useMasterStore, useApplicationStore } from '@/lib/stores';
+import { useMasterStore, useApplicationStore, useHospitalFacilityStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -18,6 +18,7 @@ function RemodelApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addApplication, applications } = useApplicationStore();
+  const { getNewLocationByCurrentLocation } = useHospitalFacilityStore();
   const { isMobile } = useResponsive();
 
   // URLパラメータから施設・部署を取得
@@ -908,9 +909,53 @@ function RemodelApplicationContent() {
               {/* 新しい設置情報（廃棄申請以外） */}
               {currentApplicationType !== '廃棄申請' && (
                 <div style={{ marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                    新しい設置情報
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
+                      新しい設置情報
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // 選択された資産の現在の設置場所から新居情報を自動取得
+                        const selectedAssetsList = filteredAssets.filter(a => selectedItems.has(a.no));
+                        if (selectedAssetsList.length === 0) {
+                          alert('資産を選択してください');
+                          return;
+                        }
+                        const firstAsset = selectedAssetsList[0];
+                        const newLocation = getNewLocationByCurrentLocation({
+                          hospitalId: facility,
+                          floor: firstAsset.floor,
+                          department: firstAsset.department,
+                          room: firstAsset.roomName || firstAsset.section,
+                        });
+                        if (newLocation && newLocation.floor) {
+                          setApplicationFloor(newLocation.floor);
+                          setApplicationDepartment(newLocation.department);
+                          setApplicationRoomName(newLocation.room);
+                          alert('施設マスタから新居情報を取得しました');
+                        } else {
+                          alert('施設マスタに該当するマッピング情報がありません。\n個別施設マスタで現状→新居のマッピングを登録してください。');
+                        }
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>🏢</span>
+                      <span>施設マスタから自動入力</span>
+                    </button>
+                  </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
                     <div style={{ position: 'relative', zIndex: 5 }}>
