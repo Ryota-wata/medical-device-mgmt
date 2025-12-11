@@ -933,9 +933,9 @@ function RemodelApplicationContent() {
                           setApplicationFloor(newLocation.floor);
                           setApplicationDepartment(newLocation.department);
                           setApplicationRoomName(newLocation.room);
-                          alert('施設マスタから新居情報を取得しました');
+                          alert('個別施設マスタから新居情報を取得しました');
                         } else {
-                          alert('施設マスタに該当するマッピング情報がありません。\n個別施設マスタで現状→新居のマッピングを登録してください。');
+                          alert('個別施設マスタに該当するマッピング情報がありません。\n個別施設マスタで現状→新居のマッピングを登録してください。');
                         }
                       }}
                       style={{
@@ -953,7 +953,7 @@ function RemodelApplicationContent() {
                       }}
                     >
                       <span>🏢</span>
-                      <span>施設マスタから自動入力</span>
+                      <span>個別施設マスタから自動入力</span>
                     </button>
                   </div>
 
