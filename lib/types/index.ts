@@ -5,6 +5,7 @@
 export * from './application';
 export * from './asset';
 export * from './facility';
+export * from './hospitalFacility';
 export * from './master';
 export * from './quotation';
 export * from './rfq';

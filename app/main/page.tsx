@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useMasterStore } from '@/lib/stores';
+import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -11,13 +12,43 @@ export default function MainPage() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { facilities } = useMasterStore();
+  const { hospitals, setHospitals } = useHospitalFacilityStore();
   const { isMobile, isTablet } = useResponsive();
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const [isRemodelModalOpen, setIsRemodelModalOpen] = useState(false);
+  const [isHospitalSelectModalOpen, setIsHospitalSelectModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedRemodelFacility, setSelectedRemodelFacility] = useState('');
+  const [selectedHospitalForFacility, setSelectedHospitalForFacility] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
+
+  // 病院マスタの初期化
+  useEffect(() => {
+    if (hospitals.length === 0) {
+      const sampleHospitals = [
+        {
+          id: 'HOSP001',
+          name: '東京中央病院',
+          remodelStatus: 'in_progress' as const,
+          facilityCount: 3,
+          completedCount: 1,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'HOSP002',
+          name: '大阪総合医療センター',
+          remodelStatus: 'preparing' as const,
+          facilityCount: 2,
+          completedCount: 0,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ];
+      setHospitals(sampleHospitals);
+    }
+  }, [hospitals.length, setHospitals]);
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = useMemo(() => {
@@ -957,6 +988,49 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     closeMasterModal();
+                    if (isHospital && user?.hospital) {
+                      // 病院ユーザーは自身の病院の施設マスタへ直接遷移
+                      const userHospital = hospitals.find(h => h.name === user.hospital);
+                      if (userHospital) {
+                        router.push(`/hospital-facility-master?hospitalId=${userHospital.id}`);
+                      } else {
+                        router.push('/hospital-facility-master');
+                      }
+                    } else {
+                      // コンサルユーザーは病院選択モーダルを表示
+                      setIsHospitalSelectModalOpen(true);
+                    }
+                  }}
+                  style={{
+                    padding: '16px 24px',
+                    background: 'white',
+                    border: '2px solid #8e44ad',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#8e44ad';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.color = '#2c3e50';
+                  }}
+                >
+                  <span>🏢 個別施設マスタ</span>
+                  <span style={{ fontSize: '20px' }}>→</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    closeMasterModal();
                     showListModal();
                   }}
                   style={{
@@ -1130,6 +1204,178 @@ export default function MainPage() {
                     if (selectedRemodelFacility) {
                       e.currentTarget.style.background = '#27ae60';
                     }
+                  }}
+                >
+                  決定
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 病院選択モーダル（個別施設マスタ用） */}
+      {isHospitalSelectModalOpen && (
+        <div
+          onClick={() => {
+            setIsHospitalSelectModalOpen(false);
+            setSelectedHospitalForFacility('');
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '90vh',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
+                color: 'white',
+                padding: '16px 20px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>個別施設マスタ - 病院選択</span>
+              <button
+                onClick={() => {
+                  setIsHospitalSelectModalOpen(false);
+                  setSelectedHospitalForFacility('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  padding: '0',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '24px' }}>
+              {/* 病院選択 */}
+              <div style={{ marginBottom: '24px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    marginBottom: '8px',
+                    color: '#2c3e50',
+                  }}
+                >
+                  病院を選択
+                </label>
+                <select
+                  value={selectedHospitalForFacility}
+                  onChange={(e) => setSelectedHospitalForFacility(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d0d0d0',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    background: 'white',
+                  }}
+                >
+                  <option value="">病院を選択してください</option>
+                  {hospitals.map((hospital) => (
+                    <option key={hospital.id} value={hospital.id}>
+                      {hospital.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 決定ボタン */}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => {
+                    setIsHospitalSelectModalOpen(false);
+                    setSelectedHospitalForFacility('');
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#7f8c8d';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#95a5a6';
+                  }}
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedHospitalForFacility) {
+                      router.push(`/hospital-facility-master?hospitalId=${selectedHospitalForFacility}`);
+                      setIsHospitalSelectModalOpen(false);
+                      setSelectedHospitalForFacility('');
+                    }
+                  }}
+                  disabled={!selectedHospitalForFacility}
+                  style={{
+                    padding: '10px 20px',
+                    background: selectedHospitalForFacility
+                      ? 'linear-gradient(135deg, #8e44ad, #9b59b6)'
+                      : '#ddd',
+                    color: selectedHospitalForFacility ? 'white' : '#999',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: selectedHospitalForFacility ? 'pointer' : 'not-allowed',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'background 0.2s',
                   }}
                 >
                   決定
