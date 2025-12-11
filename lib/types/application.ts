@@ -101,7 +101,8 @@ export type ApplicationStatus =
   | '承認待ち'
   | '承認済み'
   | '差し戻し'
-  | '却下';
+  | '却下'
+  | '執行済み';
 
 /**
  * 見積情報
@@ -163,6 +164,7 @@ export function getStatusBadgeStyle(status: ApplicationStatus): {
     '承認済み': { background: '#27ae60', color: 'white' },
     '差し戻し': { background: '#e67e22', color: 'white' },
     '却下': { background: '#e74c3c', color: 'white' },
+    '執行済み': { background: '#2c3e50', color: 'white' },
   };
   return styles[status];
 }

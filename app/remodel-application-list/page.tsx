@@ -14,11 +14,19 @@ import {
   QuotationLinkModal,
   ApplicationTypeFilterBar,
   OriginalRegistrationModal,
+  DisposalExecutionModal,
+  MovementExecutionModal,
 } from './components';
 import { APPLICATION_TYPE_BADGE_STYLES, WINDOW_SIZES } from './constants';
 
 // 原本登録対象の申請種別
 const ORIGINAL_REGISTRATION_TYPES = ['新規申請', '更新申請', '増設申請'];
+
+// 廃棄執行対象の申請種別
+const DISPOSAL_EXECUTION_TYPES = ['廃棄申請'];
+
+// 移動執行対象の申請種別
+const MOVEMENT_EXECUTION_TYPES = ['移動申請'];
 
 function RemodelApplicationListContent() {
   const searchParams = useSearchParams();
@@ -65,6 +73,14 @@ function RemodelApplicationListContent() {
   // 原本登録モーダル
   const [showOriginalRegistrationModal, setShowOriginalRegistrationModal] = useState(false);
   const [originalRegistrationApplication, setOriginalRegistrationApplication] = useState<Application | null>(null);
+
+  // 廃棄執行モーダル
+  const [showDisposalExecutionModal, setShowDisposalExecutionModal] = useState(false);
+  const [disposalExecutionApplication, setDisposalExecutionApplication] = useState<Application | null>(null);
+
+  // 移動執行モーダル
+  const [showMovementExecutionModal, setShowMovementExecutionModal] = useState(false);
+  const [movementExecutionApplication, setMovementExecutionApplication] = useState<Application | null>(null);
 
   // QRコードNo.採番カウンター（実際にはstoreやDBで管理）
   const [qrCodeCounter, setQrCodeCounter] = useState(1);
@@ -236,11 +252,38 @@ function RemodelApplicationListContent() {
     return `QR-${year}${month}${day}-${counter}`;
   };
 
-  // 原本登録を確定
+  // 原本登録を確定（執行完了後にレコード削除）
   const handleOriginalRegistrationSubmit = (applicationId: number, registration: OriginalRegistration) => {
     updateApplication(applicationId, { originalRegistration: registration });
     setQrCodeCounter(prev => prev + 1);
-    alert(`原本登録が完了しました\nQRコードNo: ${registration.qrCodeNo}`);
+    alert(`原本登録が完了しました\nQRコードNo: ${registration.qrCodeNo}\n\n申請はクローズされます。`);
+    deleteApplication(applicationId);
+  };
+
+  // 廃棄執行モーダルを開く
+  const handleOpenDisposalExecutionModal = (app: Application, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDisposalExecutionApplication(app);
+    setShowDisposalExecutionModal(true);
+  };
+
+  // 廃棄執行を確定（執行完了後にレコード削除）
+  const handleDisposalExecutionSubmit = (applicationId: number) => {
+    alert('廃棄執行が完了しました。\n\n申請はクローズされます。');
+    deleteApplication(applicationId);
+  };
+
+  // 移動執行モーダルを開く
+  const handleOpenMovementExecutionModal = (app: Application, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMovementExecutionApplication(app);
+    setShowMovementExecutionModal(true);
+  };
+
+  // 移動執行を確定（執行完了後にレコード削除）
+  const handleMovementExecutionSubmit = (applicationId: number) => {
+    alert('移動執行が完了しました。\n\n申請はクローズされます。');
+    deleteApplication(applicationId);
   };
 
   // 申請種別バッジスタイル取得
@@ -458,6 +501,44 @@ function RemodelApplicationListContent() {
                             {app.originalRegistration ? '原本登録済' : '原本登録'}
                           </button>
                         )}
+                        {DISPOSAL_EXECUTION_TYPES.includes(app.applicationType) && (
+                          <button
+                            onClick={(e) => handleOpenDisposalExecutionModal(app, e)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#e74c3c',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
+                          >
+                            廃棄執行
+                          </button>
+                        )}
+                        {MOVEMENT_EXECUTION_TYPES.includes(app.applicationType) && (
+                          <button
+                            onClick={(e) => handleOpenMovementExecutionModal(app, e)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#9b59b6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = '#8e44ad'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = '#9b59b6'; }}
+                          >
+                            移動執行
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteRow(app.id)}
                           style={{ padding: '6px 12px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
@@ -511,6 +592,20 @@ function RemodelApplicationListContent() {
         application={originalRegistrationApplication}
         onSubmit={handleOriginalRegistrationSubmit}
         generateQrCodeNo={generateQrCodeNo}
+      />
+
+      <DisposalExecutionModal
+        show={showDisposalExecutionModal}
+        onClose={() => setShowDisposalExecutionModal(false)}
+        application={disposalExecutionApplication}
+        onSubmit={handleDisposalExecutionSubmit}
+      />
+
+      <MovementExecutionModal
+        show={showMovementExecutionModal}
+        onClose={() => setShowMovementExecutionModal(false)}
+        application={movementExecutionApplication}
+        onSubmit={handleMovementExecutionSubmit}
       />
 
     </div>

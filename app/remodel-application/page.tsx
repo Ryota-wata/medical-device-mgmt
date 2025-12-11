@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset, Application, ApplicationType } from '@/lib/types';
-import { useMasterStore, useApplicationStore, useHospitalFacilityStore } from '@/lib/stores';
+import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -18,7 +18,8 @@ function RemodelApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addApplication, applications } = useApplicationStore();
-  const { getNewLocationByCurrentLocation } = useHospitalFacilityStore();
+  const { getNewLocationByCurrentLocation, facilities: hospitalFacilities, swapToNewLocation } = useHospitalFacilityStore();
+  const { individuals, updateIndividual } = useIndividualStore();
   const { isMobile } = useResponsive();
 
   // URLパラメータから施設・部署を取得
@@ -63,6 +64,42 @@ function RemodelApplicationContent() {
   // その他情報（任意）
   const [applicationReason, setApplicationReason] = useState('');
   const [executionYear, setExecutionYear] = useState('');
+
+  // クローズ確認モーダル
+  const [showCloseConfirmModal, setShowCloseConfirmModal] = useState(false);
+
+  // クローズ処理
+  const handleCloseProject = () => {
+    const facilityMasters = hospitalFacilities.filter(f => f.hospitalName === facility);
+
+    // 個別施設マスタの新居→現状への切り替え
+    facilityMasters.forEach(f => {
+      if (f.status !== 'completed' && f.newFloor) {
+        swapToNewLocation(f.id);
+      }
+    });
+
+    // 個体管理の設置場所更新
+    individuals.forEach(ind => {
+      const matchingFacility = facilityMasters.find(f =>
+        f.currentFloor === ind.location.floor &&
+        f.currentDepartment === ind.location.department
+      );
+      if (matchingFacility && matchingFacility.newFloor) {
+        updateIndividual(ind.id, {
+          location: {
+            ...ind.location,
+            floor: matchingFacility.newFloor,
+            department: matchingFacility.newDepartment,
+            section: matchingFacility.newRoom,
+          },
+        });
+      }
+    });
+
+    alert('リモデル管理をクローズしました。\n\n・個別施設マスタの新居が現状に反映されました\n・資産の設置場所が更新されました');
+    setShowCloseConfirmModal(false);
+  };
 
   // モックデータ
   const [mockAssets] = useState<Asset[]>(
@@ -111,6 +148,53 @@ function RemodelApplicationContent() {
       endOfSupport: '2035-12-31',
     }))
   );
+
+  // 個別施設マスタの統計
+  const facilityMasterStats = useMemo(() => {
+    const facilityMasters = hospitalFacilities.filter(f => f.hospitalName === facility);
+    return {
+      total: facilityMasters.length,
+      completed: facilityMasters.filter(f => f.status === 'completed').length,
+    };
+  }, [facility, hospitalFacilities]);
+
+  // 資産ベースの進捗統計（原本リストの資産を基準に）
+  const assetProgress = useMemo(() => {
+    const totalAssets = mockAssets.length;
+
+    // 申請中の資産数（applicationsに該当資産がある場合）
+    const inProgressAssets = mockAssets.filter(asset => {
+      return applications.some(app =>
+        app.asset.name === asset.name &&
+        app.asset.model === asset.model
+      );
+    }).length;
+
+    // 未申請の資産数
+    const notAppliedAssets = totalAssets - inProgressAssets;
+
+    // 執行済み資産数（申請が執行されて削除された資産）
+    // ※ 執行完了時に申請が削除されるので、実際の執行済み数は別途管理が必要
+    const executedAssets = 0;
+
+    return {
+      total: totalAssets,
+      notApplied: notAppliedAssets,
+      inProgress: inProgressAssets,
+      executed: executedAssets,
+    };
+  }, [mockAssets, applications]);
+
+  // 進捗率（申請中 + 執行済み / 全体）
+  const progressRate = useMemo(() => {
+    if (assetProgress.total === 0) return 0;
+    return Math.round(((assetProgress.inProgress + assetProgress.executed) / assetProgress.total) * 100);
+  }, [assetProgress]);
+
+  // クローズ可能条件（すべての資産が申請済み、かつ申請中がゼロ）
+  const canClose = useMemo(() => {
+    return assetProgress.notApplied === 0 && assetProgress.inProgress === 0;
+  }, [assetProgress]);
 
   // useAssetFilterフックを使用
   const {
@@ -635,6 +719,107 @@ function RemodelApplicationContent() {
         >
           保留
         </button>
+
+        {/* 区切り線 */}
+        <div style={{ width: '1px', height: '30px', background: '#dee2e6', margin: '0 10px' }} />
+
+        {/* 資産ベース進捗状況パネル */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+          {/* 進捗バー */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>進捗:</span>
+            <div style={{
+              width: '100px',
+              height: '8px',
+              background: '#e0e0e0',
+              borderRadius: '4px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${progressRate}%`,
+                height: '100%',
+                background: progressRate === 100 ? '#27ae60' : '#3498db',
+                borderRadius: '4px',
+                transition: 'width 0.3s ease',
+              }} />
+            </div>
+            <span style={{
+              fontSize: '12px',
+              fontWeight: 'bold',
+              color: progressRate === 100 ? '#27ae60' : '#3498db',
+            }}>
+              {progressRate}%
+            </span>
+          </div>
+
+          {/* 資産ベースのステータス別カウント */}
+          <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
+            <span style={{
+              fontSize: '11px',
+              padding: '3px 8px',
+              background: '#f8d7da',
+              color: '#721c24',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+            }}>
+              未申請: {assetProgress.notApplied}
+            </span>
+            <span style={{
+              fontSize: '11px',
+              padding: '3px 8px',
+              background: '#fff3cd',
+              color: '#856404',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+            }}>
+              申請中: {assetProgress.inProgress}
+            </span>
+            <span style={{
+              fontSize: '11px',
+              padding: '3px 8px',
+              background: '#d4edda',
+              color: '#155724',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+            }}>
+              執行済み: {assetProgress.executed}
+            </span>
+            <span style={{
+              fontSize: '11px',
+              padding: '3px 8px',
+              background: '#cce5ff',
+              color: '#004085',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+            }}>
+              合計: {assetProgress.total}
+            </span>
+          </div>
+
+          {/* クローズボタン */}
+          <button
+            disabled={!canClose}
+            onClick={() => setShowCloseConfirmModal(true)}
+            style={{
+              padding: '8px 16px',
+              background: canClose ? '#2c3e50' : '#ccc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: canClose ? 'pointer' : 'not-allowed',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              marginLeft: '8px',
+            }}
+            title={canClose ? 'すべての資産の申請が執行済みです。クローズできます。' : '未申請または申請中の資産があります。すべて執行完了後にクローズできます。'}
+          >
+            リモデルクローズ
+          </button>
+        </div>
       </div>
 
       {/* テーブル表示 */}
@@ -1594,6 +1779,145 @@ function RemodelApplicationContent() {
                 }}
               >
                 申請する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* クローズ確認モーダル */}
+      {showCloseConfirmModal && (
+        <div
+          onClick={() => setShowCloseConfirmModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* モーダルヘッダー */}
+            <div
+              style={{
+                background: '#2c3e50',
+                color: 'white',
+                padding: '20px 24px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>リモデルクローズ確認</span>
+              <button
+                onClick={() => setShowCloseConfirmModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div style={{ padding: '24px' }}>
+              <div style={{
+                background: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '16px',
+                marginBottom: '20px',
+              }}>
+                <p style={{ margin: 0, color: '#856404', fontWeight: 'bold', marginBottom: '8px' }}>
+                  以下の処理が実行されます:
+                </p>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#856404', fontSize: '14px' }}>
+                  <li>個別施設マスタの「新居」情報が「現状」に反映されます</li>
+                  <li>資産の設置場所が新しい場所に更新されます</li>
+                  <li>この操作は取り消すことができません</li>
+                </ul>
+              </div>
+
+              <div style={{
+                background: '#e8f5e9',
+                border: '1px solid #a5d6a7',
+                borderRadius: '8px',
+                padding: '16px',
+              }}>
+                <p style={{ margin: 0, color: '#2e7d32', fontSize: '14px' }}>
+                  対象施設: <strong>{facility}</strong>
+                </p>
+                <p style={{ margin: '8px 0 0 0', color: '#2e7d32', fontSize: '14px' }}>
+                  個別施設マスタ: <strong>{facilityMasterStats.total}件</strong>
+                </p>
+              </div>
+            </div>
+
+            {/* モーダルフッター */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid #dee2e6',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px',
+                background: '#f8f9fa'
+              }}
+            >
+              <button
+                onClick={() => setShowCloseConfirmModal(false)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleCloseProject}
+                style={{
+                  padding: '10px 24px',
+                  background: '#2c3e50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                クローズ実行
               </button>
             </div>
           </div>
