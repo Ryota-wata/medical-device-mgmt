@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         id: '1',
         username: credentials.username,
         email: `${credentials.username}@example.com`, // @hospital.com にすると病院ユーザー
-        role: 'staff',
+        role: 'consultant',
         department: '手術部門',
         section: '手術'
       };
