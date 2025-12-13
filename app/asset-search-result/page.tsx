@@ -573,7 +573,7 @@ export default function AssetSearchResultPage() {
                     cursor: 'pointer',
                     background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white'
                   }}
-                  onClick={() => handleRowClick(asset)}
+                  onDoubleClick={() => router.push(`/asset-detail?no=${asset.no}`)}
                   onMouseEnter={(e) => {
                     if (!selectedItems.has(asset.no)) {
                       e.currentTarget.style.background = '#f8f9fa';
@@ -616,7 +616,7 @@ export default function AssetSearchResultPage() {
                   cursor: 'pointer',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}
-                onClick={() => handleRowClick(asset)}
+                onDoubleClick={() => router.push(`/asset-karte/${asset.no}`)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                 }}

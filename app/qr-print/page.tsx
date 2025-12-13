@@ -10,7 +10,6 @@ function QRPrintContent() {
   const { isMobile, isTablet } = useResponsive();
 
   const [printer, setPrinter] = useState('sr5900p');
-  const [sealSize, setSealSize] = useState('24mm');
   const [qrNumbers, setQrNumbers] = useState<string[]>([]);
   const [template, setTemplate] = useState('');
   const [footerText, setFooterText] = useState('');
@@ -73,6 +72,13 @@ function QRPrintContent() {
     return names[templateKey] || templateKey;
   };
 
+  const getSealSizeFromTemplate = (templateKey: string): string => {
+    if (templateKey.includes('small')) return '18mm幅';
+    if (templateKey.includes('medium')) return '24mm幅';
+    if (templateKey.includes('large')) return '24mm幅';
+    return '24mm幅';
+  };
+
   const isQRType = template.startsWith('qr');
 
   const handleCancel = () => {
@@ -113,7 +119,7 @@ function QRPrintContent() {
             <span>戻る</span>
           </button>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '22px', fontWeight: 600, margin: 0 }}>QRコード印刷</h1>
+            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '22px', fontWeight: 600, margin: 0 }}>ラベル印刷</h1>
             <span style={{ fontSize: isMobile ? '12px' : '14px', opacity: 0.9 }}>東京総合病院</span>
           </div>
         </div>
@@ -130,7 +136,7 @@ function QRPrintContent() {
         {/* Page Header */}
         <div style={{ marginBottom: isMobile ? '20px' : isTablet ? '24px' : '32px' }}>
           <h2 style={{ fontSize: isMobile ? '20px' : isTablet ? '24px' : '28px', fontWeight: 600, color: '#2c3e50', marginBottom: '8px' }}>
-            QRコード印刷プレビュー
+            ラベル印刷プレビュー
           </h2>
         </div>
 
@@ -194,25 +200,19 @@ function QRPrintContent() {
                 }}>
                   シールサイズ
                 </label>
-                <select
-                  value={sealSize}
-                  onChange={(e) => setSealSize(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: isMobile ? '10px 12px' : '12px 14px',
-                    fontSize: isMobile ? '14px' : '15px',
-                    border: '2px solid #d0d0d0',
-                    borderRadius: '8px',
-                    background: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="24mm">24mm幅 (推奨)</option>
-                  <option value="18mm">18mm幅</option>
-                  <option value="12mm">12mm幅</option>
-                </select>
+                <div style={{
+                  width: '100%',
+                  padding: isMobile ? '10px 12px' : '12px 14px',
+                  fontSize: isMobile ? '14px' : '15px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  background: '#f5f5f5',
+                  color: '#333'
+                }}>
+                  {getSealSizeFromTemplate(template)}
+                </div>
                 <div style={{ fontSize: isMobile ? '11px' : '12px', color: '#666', marginTop: '6px' }}>
-                  ※QRコード印刷には24mm幅を推奨します
+                  ※前の画面で設定したテンプレートに基づいて表示されます
                 </div>
               </div>
             </div>

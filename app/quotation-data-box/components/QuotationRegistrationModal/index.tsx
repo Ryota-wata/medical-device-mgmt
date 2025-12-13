@@ -70,8 +70,9 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
           borderRadius: '8px',
           padding: '30px',
           minWidth: '600px',
-          maxWidth: '90%',
-          maxHeight: '80vh',
+          maxWidth: '95%',
+          width: step === 2 ? '1400px' : undefined,
+          maxHeight: '90vh',
           overflow: 'auto',
           boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
         }}
@@ -96,6 +97,7 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
         {step === 2 && ocrResult && (
           <Step2OcrResultDisplay
             ocrResult={ocrResult}
+            pdfFile={formData.pdfFile}
             onBack={() => onStepChange(1)}
             onNext={() => onStepChange(3)}
           />

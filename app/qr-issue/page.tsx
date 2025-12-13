@@ -81,7 +81,7 @@ export default function QRIssuePage() {
           <span>←</span>
           <span>戻る</span>
         </button>
-        <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 'bold', margin: 0 }}>QRコード新規発行</h1>
+        <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 'bold', margin: 0 }}>ラベル発行</h1>
       </div>
 
       {/* メインコンテンツ */}
@@ -89,9 +89,9 @@ export default function QRIssuePage() {
         {/* ページヘッダー */}
         <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
           <h2 style={{ fontSize: isMobile ? '20px' : isTablet ? '22px' : '24px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
-            QRコード新規発行
+            ラベル発行
           </h2>
-          <p style={{ color: '#5a6c7d', fontSize: isMobile ? '13px' : '14px' }}>資産管理用のQRコードを発行します</p>
+          <p style={{ color: '#5a6c7d', fontSize: isMobile ? '13px' : '14px' }}>資産管理用のQRコード・バーコードラベルを発行します</p>
         </div>
 
         {/* フォームコンテナ */}

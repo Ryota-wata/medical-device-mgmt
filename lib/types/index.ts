@@ -4,8 +4,11 @@
 
 export * from './application';
 export * from './asset';
+export * from './asset-matching';
+export * from './data-matching';
 export * from './facility';
 export * from './hospitalFacility';
+export * from './individual';
 export * from './master';
 export * from './quotation';
 export * from './rfq';

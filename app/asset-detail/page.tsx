@@ -9,6 +9,7 @@ function AssetDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const qrCode = searchParams.get('qrCode');
+  const assetNo = searchParams.get('no');
   const isReadOnly = searchParams.get('readonly') === 'true';
 
   const [asset, setAsset] = useState<Asset | null>(null);
@@ -19,7 +20,7 @@ function AssetDetailContent() {
   useEffect(() => {
     const mockAsset: Asset = {
       qrCode: qrCode || 'QR-2025-0001',
-      no: 1,
+      no: assetNo ? parseInt(assetNo) : 1,
       facility: '〇〇〇〇〇〇病院',
       building: '本館',
       floor: '2F',
@@ -67,7 +68,7 @@ function AssetDetailContent() {
       ]
     };
     setAsset(mockAsset);
-  }, [qrCode]);
+  }, [qrCode, assetNo]);
 
   // 写真アップロードハンドラー
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

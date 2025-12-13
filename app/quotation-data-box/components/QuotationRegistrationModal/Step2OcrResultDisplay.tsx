@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { OCRResult } from '@/lib/types/quotation';
 
 interface Step2OcrResultDisplayProps {
   ocrResult: OCRResult;
+  pdfFile: File | null;
   onBack: () => void;
   onNext: () => void;
 }
 
 export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   ocrResult,
+  pdfFile,
   onBack,
   onNext,
 }) => {
@@ -18,8 +20,67 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   // パーセンテージフォーマット
   const formatPercent = (value: number) => `${value}%`;
 
+  // PDFプレビュー用のURL生成
+  const pdfUrl = useMemo(() => {
+    if (pdfFile) {
+      return URL.createObjectURL(pdfFile);
+    }
+    return null;
+  }, [pdfFile]);
+
+  // コンポーネントアンマウント時にURLを解放
+  React.useEffect(() => {
+    return () => {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [pdfUrl]);
+
   return (
-    <div>
+    <div style={{ display: 'flex', gap: '20px' }}>
+      {/* 左側: PDFプレビュー */}
+      <div style={{
+        flex: '0 0 400px',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRight: '1px solid #e0e0e0',
+        paddingRight: '20px'
+      }}>
+        <h3 style={{ fontSize: '14px', marginBottom: '10px', color: '#2c3e50' }}>
+          見積書プレビュー
+        </h3>
+        {pdfUrl ? (
+          <iframe
+            src={pdfUrl}
+            style={{
+              width: '100%',
+              height: '600px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              background: '#f5f5f5'
+            }}
+            title="見積書PDF"
+          />
+        ) : (
+          <div style={{
+            width: '100%',
+            height: '600px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            background: '#f5f5f5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#999'
+          }}>
+            PDFファイルがありません
+          </div>
+        )}
+      </div>
+
+      {/* 右側: OCR結果 */}
+      <div style={{ flex: 1, minWidth: 0 }}>
       {/* 日付情報・宛先・業者情報 */}
       <div style={{ marginBottom: '20px', padding: '15px', background: '#e8f5e9', borderRadius: '4px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -166,6 +227,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           次へ（資産マスタ紐付け）
         </button>
       </div>
+      </div>{/* 右側: OCR結果 終わり */}
     </div>
   );
 };
