@@ -1,24 +1,83 @@
-import React, { useMemo } from 'react';
-import { OCRResult } from '@/lib/types/quotation';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { OCRResult, QuotationItemType, AIJudgmentResult, ConfirmedStateMap, ConfirmedAssetInfo } from '@/lib/types/quotation';
+
+// 登録区分の表示名マッピング
+const ITEM_TYPE_LABELS: Record<QuotationItemType, string> = {
+  'A_表紙明細': 'A',
+  'B_明細代表': 'B',
+  'C_個体管理品目': 'C',
+  'D_付属品': 'D',
+  'E_その他役務': 'E',
+};
+
+// 登録区分の色設定
+const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
+  'A_表紙明細': { bg: '#e3f2fd', text: '#1565c0' },
+  'B_明細代表': { bg: '#f3e5f5', text: '#7b1fa2' },
+  'C_個体管理品目': { bg: '#e8f5e9', text: '#2e7d32' },
+  'D_付属品': { bg: '#fff3e0', text: '#ef6c00' },
+  'E_その他役務': { bg: '#fce4ec', text: '#c2185b' },
+};
 
 interface Step2OcrResultDisplayProps {
   ocrResult: OCRResult;
   pdfFile: File | null;
+  confirmedState: ConfirmedStateMap;
+  onConfirmedStateChange: (state: ConfirmedStateMap) => void;
   onBack: () => void;
   onNext: () => void;
+}
+
+// 商品明細とAI判定の1対1表示用
+interface DisplayRow {
+  ocrItemIndex: number;
+  ocrItem: {
+    rowNo?: number;
+    itemType: QuotationItemType;
+    itemName: string;
+    manufacturer: string;
+    model: string;
+    quantity: number;
+  };
+  aiJudgment: AIJudgmentResult | null;
 }
 
 export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   ocrResult,
   pdfFile,
+  confirmedState,
+  onConfirmedStateChange,
   onBack,
   onNext,
 }) => {
-  // 金額フォーマット
-  const formatCurrency = (value: number) => `¥${value.toLocaleString()}`;
+  // 選択中の行（資産マスタ選択待ち）
+  const [selectingRow, setSelectingRow] = useState<number | null>(null);
 
-  // パーセンテージフォーマット
-  const formatPercent = (value: number) => `${value}%`;
+  // 別ウィンドウからの資産マスタ選択を受信
+  const handleAssetMasterMessage = useCallback((event: MessageEvent) => {
+    // 同一オリジンからのメッセージのみ受け付ける
+    if (event.origin !== window.location.origin) return;
+
+    if (event.data?.type === 'ASSET_MASTER_SELECTED' && selectingRow !== null) {
+      const assetData: ConfirmedAssetInfo = event.data.data;
+      const key = `${selectingRow}`;
+      onConfirmedStateChange({
+        ...confirmedState,
+        [key]: {
+          status: 'asset_master_selected',
+          assetInfo: assetData,
+        },
+      });
+      setSelectingRow(null);
+    }
+  }, [selectingRow, confirmedState, onConfirmedStateChange]);
+
+  useEffect(() => {
+    window.addEventListener('message', handleAssetMasterMessage);
+    return () => {
+      window.removeEventListener('message', handleAssetMasterMessage);
+    };
+  }, [handleAssetMasterMessage]);
 
   // PDFプレビュー用のURL生成
   const pdfUrl = useMemo(() => {
@@ -37,11 +96,72 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
     };
   }, [pdfUrl]);
 
+  // 表示用の行データを生成（1対1）
+  const displayRows: DisplayRow[] = useMemo(() => {
+    return ocrResult.items.map((item, ocrItemIndex) => ({
+      ocrItemIndex,
+      ocrItem: {
+        rowNo: item.rowNo,
+        itemType: item.itemType,
+        itemName: item.itemName,
+        manufacturer: item.manufacturer,
+        model: item.model,
+        quantity: item.quantity,
+      },
+      // AI判定は最初の1件のみ使用
+      aiJudgment: item.aiJudgments[0] || null,
+    }));
+  }, [ocrResult.items]);
+
+  // AI判定を確定する
+  const handleConfirm = (ocrItemIndex: number, aiJudgment: AIJudgmentResult) => {
+    const key = `${ocrItemIndex}`;
+    onConfirmedStateChange({
+      ...confirmedState,
+      [key]: {
+        status: 'ai_confirmed',
+        assetInfo: {
+          category: aiJudgment.category,
+          majorCategory: aiJudgment.majorCategory,
+          middleCategory: aiJudgment.middleCategory,
+          assetName: aiJudgment.assetName,
+          manufacturer: aiJudgment.manufacturer,
+          model: aiJudgment.model,
+        },
+      },
+    });
+  };
+
+  // 確定を解除する
+  const handleUnconfirm = (ocrItemIndex: number) => {
+    const key = `${ocrItemIndex}`;
+    const newState = { ...confirmedState };
+    delete newState[key];
+    onConfirmedStateChange(newState);
+  };
+
+  // 資産マスタを別ウィンドウで開いて選択させる
+  const handleOpenAssetMasterForSelection = (ocrItemIndex: number) => {
+    setSelectingRow(ocrItemIndex);
+    window.open('/ship-asset-master?mode=select', '_blank', 'width=1200,height=800');
+  };
+
+  // 確定状態を取得
+  const getConfirmedInfo = (ocrItemIndex: number) => {
+    const key = `${ocrItemIndex}`;
+    return confirmedState[key] || null;
+  };
+
+  // 確定済みかどうか
+  const isRowConfirmed = (ocrItemIndex: number): boolean => {
+    return getConfirmedInfo(ocrItemIndex) !== null;
+  };
+
   return (
     <div style={{ display: 'flex', gap: '20px' }}>
       {/* 左側: PDFプレビュー */}
       <div style={{
-        flex: '0 0 400px',
+        flex: '0 0 350px',
         display: 'flex',
         flexDirection: 'column',
         borderRight: '1px solid #e0e0e0',
@@ -55,7 +175,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
             src={pdfUrl}
             style={{
               width: '100%',
-              height: '600px',
+              height: '700px',
               border: '1px solid #ddd',
               borderRadius: '4px',
               background: '#f5f5f5'
@@ -65,7 +185,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
         ) : (
           <div style={{
             width: '100%',
-            height: '600px',
+            height: '700px',
             border: '1px solid #ddd',
             borderRadius: '4px',
             background: '#f5f5f5',
@@ -80,154 +200,315 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
       </div>
 
       {/* 右側: OCR結果 */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-      {/* 日付情報・宛先・業者情報 */}
-      <div style={{ marginBottom: '20px', padding: '15px', background: '#e8f5e9', borderRadius: '4px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <div>
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#2e7d32', borderBottom: '1px solid #a5d6a7', paddingBottom: '5px' }}>
-              日付情報
-            </h4>
-            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-              <strong>見積日:</strong> {ocrResult.quotationDate}
-            </p>
-            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-              <strong>見積有効期限:</strong> {ocrResult.validityPeriod}ヶ月
-            </p>
-            <p style={{ margin: '0', fontSize: '14px' }}>
-              <strong>納期:</strong> {ocrResult.deliveryPeriod}ヶ月
-            </p>
-          </div>
-          <div>
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#2e7d32', borderBottom: '1px solid #a5d6a7', paddingBottom: '5px' }}>
-              取引先情報
-            </h4>
-            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-              <strong>宛先（施設名）:</strong> {ocrResult.facilityName}
-            </p>
-            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}>
-              <strong>業者名:</strong> {ocrResult.vendorName}
-            </p>
-            <p style={{ margin: '0', fontSize: '14px', fontWeight: 'bold', color: '#1565c0' }}>
-              <strong>総額:</strong> {formatCurrency(ocrResult.totalAmount)}
-            </p>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {/* ヘッダー情報 */}
+        <div style={{ marginBottom: '12px', padding: '10px', background: '#e8f5e9', borderRadius: '4px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '20px', fontSize: '12px', flexWrap: 'wrap' }}>
+            <span><strong>見積日:</strong> {ocrResult.quotationDate}</span>
+            <span><strong>業者:</strong> {ocrResult.vendorName}</span>
+            <span><strong>宛先:</strong> {ocrResult.facilityName}</span>
+            <span style={{ fontWeight: 'bold', color: '#1565c0' }}>
+              <strong>総額:</strong> ¥{ocrResult.totalAmount.toLocaleString()}
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* 明細情報テーブル */}
-      <div style={{ marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '16px', marginBottom: '10px' }}>OCR読み取り結果 - 明細情報</h3>
-        <div style={{ maxHeight: '400px', overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1200px' }}>
-            <thead>
-              <tr style={{ background: '#f8f9fa', position: 'sticky', top: 0, zIndex: 1 }}>
-                <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>品名</th>
-                <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>メーカー名</th>
-                <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>型式</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>数量</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap', background: '#fff3e0' }}>定価単価</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap', background: '#fff3e0' }}>定価金額</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap', background: '#e3f2fd' }}>納入単価</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap', background: '#e3f2fd' }}>納入金額</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap', background: '#ffebee' }}>値引</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>消費税率</th>
-                <th style={{ padding: '10px 8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap', background: '#e8f5e9', fontWeight: 'bold' }}>納入金額（税込）</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ocrResult.items.map((item, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '10px 8px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.itemName}>
-                    {item.itemName}
-                  </td>
-                  <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>{item.manufacturer || '-'}</td>
-                  <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>{item.model || '-'}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right' }}>{item.quantity} {item.unit}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right', background: '#fffaf0' }}>{formatCurrency(item.listPriceUnit)}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right', background: '#fffaf0' }}>{formatCurrency(item.listPriceTotal)}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right', background: '#f5faff' }}>{formatCurrency(item.sellingPriceUnit)}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right', background: '#f5faff', fontWeight: 600 }}>{formatCurrency(item.sellingPriceTotal)}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right', background: '#fff8f8', color: item.discount > 0 ? '#c62828' : '#666' }}>
-                    {item.discount > 0 ? `-${formatPercent(item.discount)}` : '-'}
-                  </td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right' }}>{formatPercent(item.taxRate)}</td>
-                  <td style={{ padding: '10px 8px', textAlign: 'right', background: '#f1f8e9', fontWeight: 'bold', color: '#2e7d32' }}>
-                    {formatCurrency(item.totalWithTax)}
-                  </td>
+        {/* 明細テーブル */}
+        <div style={{ marginBottom: '12px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexShrink: 0 }}>
+            <h3 style={{ fontSize: '13px', margin: 0, color: '#2c3e50' }}>
+              AI-OCR読み取り結果
+            </h3>
+            <span style={{ fontSize: '11px', color: '#666' }}>
+              ※ 全ての明細が登録されます。資産マスタ紐付けは任意です。
+            </span>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px', maxHeight: '500px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1100px' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                {/* 2段ヘッダー：グループ名 */}
+                <tr>
+                  <th colSpan={5} style={{
+                    padding: '6px',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #3498db',
+                    fontWeight: 'bold',
+                    color: '#3498db',
+                    background: '#e8f4fc',
+                    fontSize: '11px'
+                  }}>
+                    商品情報（原本情報）
+                  </th>
+                  <th style={{
+                    padding: '6px',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #dee2e6',
+                    background: '#f8f9fa',
+                    width: '25px'
+                  }}>
+                    ⇒
+                  </th>
+                  <th colSpan={6} style={{
+                    padding: '6px',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #9c27b0',
+                    fontWeight: 'bold',
+                    color: '#9c27b0',
+                    background: '#f3e5f5',
+                    fontSize: '11px'
+                  }}>
+                    AI判定（参考）
+                  </th>
+                  <th style={{
+                    padding: '6px',
+                    textAlign: 'center',
+                    borderBottom: '2px solid #dee2e6',
+                    background: '#f8f9fa',
+                    width: '150px',
+                    fontSize: '11px'
+                  }}>
+                    操作
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr style={{ background: '#f5f5f5', fontWeight: 'bold' }}>
-                <td colSpan={7} style={{ padding: '10px 8px', textAlign: 'right' }}>合計</td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', background: '#e3f2fd' }}>
-                  {formatCurrency(ocrResult.items.reduce((sum, item) => sum + item.sellingPriceTotal, 0))}
-                </td>
-                <td style={{ padding: '10px 8px' }}></td>
-                <td style={{ padding: '10px 8px' }}></td>
-                <td style={{ padding: '10px 8px', textAlign: 'right', background: '#c8e6c9', color: '#1b5e20', fontSize: '14px' }}>
-                  {formatCurrency(ocrResult.totalAmount)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                {/* 2段ヘッダー：カラム名 */}
+                <tr style={{ background: '#f8f9fa' }}>
+                  {/* 原本情報 */}
+                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px', fontSize: '9px' }}>No</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px' }}>品名</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px' }}>メーカー</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px' }}>型式</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '35px', fontSize: '9px' }}>数量</th>
+                  {/* 矢印 */}
+                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '25px', background: '#fafafa', fontSize: '9px' }}>区分</th>
+                  {/* AI判定 */}
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>category</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '90px', fontSize: '9px', background: '#faf5fc' }}>大分類</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>中分類</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px', background: '#faf5fc' }}>個体管理品目</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '60px', fontSize: '9px', background: '#faf5fc' }}>メーカー</th>
+                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '60px', fontSize: '9px', background: '#faf5fc' }}>型式</th>
+                  {/* 操作 */}
+                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '150px', fontSize: '9px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayRows.map((row, index) => {
+                  const confirmedInfo = getConfirmedInfo(row.ocrItemIndex);
+                  const rowIsConfirmed = confirmedInfo !== null;
+                  const isSelectingThisRow = selectingRow === row.ocrItemIndex;
+
+                  // 表示するデータを決定（確定済みの場合はassetInfoを表示）
+                  const displayData = confirmedInfo?.assetInfo || row.aiJudgment;
+
+                  const aiItemTypeColor = row.aiJudgment
+                    ? ITEM_TYPE_COLORS[row.aiJudgment.itemType] || { bg: '#f5f5f5', text: '#666' }
+                    : { bg: '#f5f5f5', text: '#666' };
+
+                  return (
+                    <tr key={index} style={{
+                      borderBottom: '1px solid #ddd',
+                      background: isSelectingThisRow ? '#fff3e0' : rowIsConfirmed ? '#e8f5e9' : 'transparent',
+                    }}>
+                      {/* 原本情報 */}
+                      <td style={{ padding: '5px 3px', textAlign: 'center', borderRight: '1px solid #eee' }}>
+                        {row.ocrItem.rowNo || '-'}
+                      </td>
+                      <td style={{ padding: '5px 3px', fontWeight: 'bold', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.ocrItem.itemName}>
+                        {row.ocrItem.itemName}
+                      </td>
+                      <td style={{ padding: '5px 3px', color: '#555', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.ocrItem.manufacturer}>
+                        {row.ocrItem.manufacturer || '-'}
+                      </td>
+                      <td style={{ padding: '5px 3px', color: '#555', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.ocrItem.model}>
+                        {row.ocrItem.model || '-'}
+                      </td>
+                      <td style={{ padding: '5px 3px', textAlign: 'center', borderRight: '1px solid #ddd' }}>
+                        {row.ocrItem.quantity}
+                      </td>
+                      {/* 登録区分 */}
+                      <td style={{ padding: '5px 3px', textAlign: 'center', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fafafa' }}>
+                        {row.aiJudgment ? (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '2px 5px',
+                            borderRadius: '3px',
+                            fontSize: '9px',
+                            fontWeight: 'bold',
+                            background: aiItemTypeColor.bg,
+                            color: aiItemTypeColor.text,
+                          }}>
+                            {ITEM_TYPE_LABELS[row.aiJudgment.itemType]}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#ccc' }}>-</span>
+                        )}
+                      </td>
+                      {/* AI判定結果（または資産マスタ選択結果） */}
+                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px' }}>
+                        {displayData && 'category' in displayData ? displayData.category : <span style={{ color: '#ccc' }}>-</span>}
+                      </td>
+                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData && 'majorCategory' in displayData ? displayData.majorCategory : ''}>
+                        {displayData && 'majorCategory' in displayData ? displayData.majorCategory : <span style={{ color: '#ccc' }}>-</span>}
+                      </td>
+                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData && 'middleCategory' in displayData ? displayData.middleCategory : ''}>
+                        {displayData && 'middleCategory' in displayData ? displayData.middleCategory : <span style={{ color: '#ccc' }}>-</span>}
+                      </td>
+                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontWeight: row.aiJudgment?.itemType === 'C_個体管理品目' ? 'bold' : 'normal', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData?.assetName || ''}>
+                        {displayData?.assetName || <span style={{ color: '#ccc' }}>-</span>}
+                      </td>
+                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', color: '#555', fontSize: '9px', maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData?.manufacturer || ''}>
+                        {displayData?.manufacturer || <span style={{ color: '#ccc' }}>-</span>}
+                      </td>
+                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', color: '#555', fontSize: '9px', maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData?.model || ''}>
+                        {displayData?.model || <span style={{ color: '#ccc' }}>-</span>}
+                      </td>
+                      {/* 操作ボタン */}
+                      <td style={{ padding: '5px 3px', textAlign: 'center' }}>
+                        {rowIsConfirmed ? (
+                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center' }}>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '3px 6px',
+                              background: confirmedInfo?.status === 'asset_master_selected' ? '#1976d2' : '#27ae60',
+                              color: 'white',
+                              borderRadius: '3px',
+                              fontSize: '8px',
+                              fontWeight: 'bold',
+                            }}>
+                              {confirmedInfo?.status === 'asset_master_selected' ? '紐付済' : 'AI適用'}
+                            </span>
+                            <button
+                              onClick={() => handleUnconfirm(row.ocrItemIndex)}
+                              style={{
+                                padding: '3px 5px',
+                                background: '#e74c3c',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                fontSize: '8px',
+                                fontWeight: 'bold',
+                              }}
+                              title="紐付けを解除"
+                            >
+                              解除
+                            </button>
+                          </div>
+                        ) : isSelectingThisRow ? (
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '3px 8px',
+                            background: '#ff9800',
+                            color: 'white',
+                            borderRadius: '3px',
+                            fontSize: '8px',
+                            fontWeight: 'bold',
+                          }}>
+                            選択中...
+                          </span>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            {row.aiJudgment && (
+                              <button
+                                onClick={() => row.aiJudgment && handleConfirm(row.ocrItemIndex, row.aiJudgment)}
+                                style={{
+                                  padding: '3px 5px',
+                                  background: '#ff9800',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '3px',
+                                  cursor: 'pointer',
+                                  fontSize: '8px',
+                                  fontWeight: 'bold',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                AI適用
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleOpenAssetMasterForSelection(row.ocrItemIndex)}
+                              style={{
+                                padding: '3px 5px',
+                                background: '#1976d2',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                fontSize: '8px',
+                                fontWeight: 'bold',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              マスタ選択
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 凡例 */}
+        <div style={{ marginBottom: '12px', padding: '8px', background: '#fafafa', borderRadius: '4px', fontSize: '9px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontWeight: 'bold', color: '#555' }}>登録区分：</span>
+            {Object.entries(ITEM_TYPE_COLORS).map(([type, colors]) => (
+              <span key={type} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <span style={{
+                  display: 'inline-block',
+                  padding: '1px 3px',
+                  borderRadius: '2px',
+                  fontSize: '8px',
+                  fontWeight: 'bold',
+                  background: colors.bg,
+                  color: colors.text,
+                }}>
+                  {ITEM_TYPE_LABELS[type as QuotationItemType]}
+                </span>
+                <span style={{ color: '#666' }}>{type}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexShrink: 0 }}>
+          <button
+            onClick={onBack}
+            style={{
+              padding: '10px 24px',
+              background: '#95a5a6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
+          >
+            戻る
+          </button>
+          <button
+            onClick={onNext}
+            style={{
+              padding: '10px 24px',
+              background: '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}
+          >
+            次へ（申請確認）
+          </button>
         </div>
       </div>
-
-      {/* 凡例 */}
-      <div style={{ marginBottom: '20px', padding: '10px', background: '#fafafa', borderRadius: '4px', fontSize: '12px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '12px', height: '12px', background: '#fff3e0', border: '1px solid #ddd' }}></span>
-          定価関連
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '12px', height: '12px', background: '#e3f2fd', border: '1px solid #ddd' }}></span>
-          納入価格関連
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '12px', height: '12px', background: '#ffebee', border: '1px solid #ddd' }}></span>
-          値引情報
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '12px', height: '12px', background: '#e8f5e9', border: '1px solid #ddd' }}></span>
-          税込金額
-        </span>
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-        <button
-          onClick={onBack}
-          style={{
-            padding: '10px 24px',
-            background: '#95a5a6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          戻る
-        </button>
-        <button
-          onClick={onNext}
-          style={{
-            padding: '10px 24px',
-            background: '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          次へ（資産マスタ紐付け）
-        </button>
-      </div>
-      </div>{/* 右側: OCR結果 終わり */}
     </div>
   );
 };

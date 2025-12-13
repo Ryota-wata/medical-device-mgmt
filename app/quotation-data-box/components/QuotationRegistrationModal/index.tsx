@@ -1,28 +1,26 @@
-import React from 'react';
-import { RfqGroup, AssetMaster } from '@/lib/types';
-import { OCRResult, QuotationFormData } from '@/lib/types/quotation';
+import React, { useState, useCallback } from 'react';
+import { RfqGroup, AssetMaster, Application } from '@/lib/types';
+import { OCRResult, QuotationFormData, OCRResultItem, ConfirmedStateMap } from '@/lib/types/quotation';
 import { Step1RfqGroupSelection } from './Step1RfqGroupSelection';
 import { Step2OcrResultDisplay } from './Step2OcrResultDisplay';
 import { Step3AssetMasterLinking } from './Step3AssetMasterLinking';
+import { ApplicationFormData } from './ApplicationCreationModal';
 
 interface QuotationRegistrationModalProps {
   show: boolean;
   step: 1 | 2 | 3;
   rfqGroups: RfqGroup[];
   assetMasterData: AssetMaster[];
+  applications: Application[];
   formData: QuotationFormData;
   ocrProcessing: boolean;
   ocrResult: OCRResult | null;
-  itemAssetLinks: Record<number, string>;
   onFormDataChange: (formData: QuotationFormData) => void;
   onPdfUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onGenerateTestOCR: () => void;
   onStepChange: (step: 1 | 2 | 3) => void;
-  onOpenAssetMasterWindow: (itemId: number) => void;
-  onAdoptRecommendation: (itemIndex: number, assetId: string) => void;
-  onRemoveLink: (itemIndex: number) => void;
-  getAIRecommendation: (item: { itemName: string; manufacturer?: string; model?: string }) => AssetMaster | undefined;
-  onSubmit: () => void;
+  onCreateApplication: (formData: ApplicationFormData, ocrItem: OCRResultItem) => void;
+  onSubmit: (confirmedState: ConfirmedStateMap, ocrResult: OCRResult) => void;
   onClose: () => void;
 }
 
@@ -31,22 +29,32 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
   step,
   rfqGroups,
   assetMasterData,
+  applications,
   formData,
   ocrProcessing,
   ocrResult,
-  itemAssetLinks,
   onFormDataChange,
   onPdfUpload,
   onGenerateTestOCR,
   onStepChange,
-  onOpenAssetMasterWindow,
-  onAdoptRecommendation,
-  onRemoveLink,
-  getAIRecommendation,
+  onCreateApplication,
   onSubmit,
   onClose,
 }) => {
+  // Step2で確定された内容を管理
+  const [confirmedState, setConfirmedState] = useState<ConfirmedStateMap>({});
+
+  // Step2からの確定状態変更を受け取るコールバック
+  const handleConfirmedStateChange = useCallback((newState: ConfirmedStateMap) => {
+    setConfirmedState(newState);
+  }, []);
+
   if (!show) return null;
+
+  // 選択された見積依頼グループを取得
+  const selectedRfqGroup = formData.rfqGroupId
+    ? rfqGroups.find(g => g.id.toString() === formData.rfqGroupId)
+    : undefined;
 
   return (
     <div
@@ -71,8 +79,8 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
           padding: '30px',
           minWidth: '600px',
           maxWidth: '95%',
-          width: step === 2 ? '1400px' : undefined,
-          maxHeight: '90vh',
+          width: step === 2 ? '1400px' : step === 3 ? '1400px' : undefined,
+          maxHeight: '92vh',
           overflow: 'auto',
           boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
         }}
@@ -98,6 +106,8 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
           <Step2OcrResultDisplay
             ocrResult={ocrResult}
             pdfFile={formData.pdfFile}
+            confirmedState={confirmedState}
+            onConfirmedStateChange={handleConfirmedStateChange}
             onBack={() => onStepChange(1)}
             onNext={() => onStepChange(3)}
           />
@@ -106,14 +116,12 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
         {step === 3 && ocrResult && (
           <Step3AssetMasterLinking
             ocrResult={ocrResult}
-            assetMasterData={assetMasterData}
-            itemAssetLinks={itemAssetLinks}
-            onOpenAssetMasterWindow={onOpenAssetMasterWindow}
-            onAdoptRecommendation={onAdoptRecommendation}
-            onRemoveLink={onRemoveLink}
-            getAIRecommendation={getAIRecommendation}
+            rfqGroup={selectedRfqGroup}
+            applications={applications}
+            confirmedState={confirmedState}
+            onCreateApplication={onCreateApplication}
             onBack={() => onStepChange(2)}
-            onSubmit={onSubmit}
+            onSubmit={() => onSubmit(confirmedState, ocrResult)}
           />
         )}
       </div>

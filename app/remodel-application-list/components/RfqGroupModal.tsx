@@ -10,6 +10,8 @@ interface RfqGroupModalProps {
   rfqGroupName: string;
   onRfqGroupNameChange: (value: string) => void;
   onSubmit: () => void;
+  mode?: 'create' | 'edit';
+  onDelete?: () => void;
 }
 
 export const RfqGroupModal: React.FC<RfqGroupModalProps> = ({
@@ -20,8 +22,12 @@ export const RfqGroupModal: React.FC<RfqGroupModalProps> = ({
   rfqGroupName,
   onRfqGroupNameChange,
   onSubmit,
+  mode = 'create',
+  onDelete,
 }) => {
   if (!show) return null;
+
+  const isEditMode = mode === 'edit';
 
   return (
     <div
@@ -51,15 +57,15 @@ export const RfqGroupModal: React.FC<RfqGroupModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold', color: '#2c3e50' }}>
-          見積依頼グループ登録
+          {isEditMode ? '見積依頼グループ編集' : '見積依頼グループ登録'}
         </h2>
 
-        <div style={{ marginBottom: '20px', padding: '15px', background: '#e8f5e9', borderRadius: '4px', border: '1px solid #27ae60' }}>
+        <div style={{ marginBottom: '20px', padding: '15px', background: isEditMode ? '#e3f2fd' : '#e8f5e9', borderRadius: '4px', border: `1px solid ${isEditMode ? '#3498db' : '#27ae60'}` }}>
           <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#2c3e50' }}>
-            <strong>選択された申請:</strong> {selectedCount}件
+            <strong>{isEditMode ? '対象申請:' : '選択された申請:'}</strong> {selectedCount}件
           </p>
           <p style={{ margin: '0', fontSize: '13px', color: '#555' }}>
-            これらの申請をまとめて見積依頼グループとして登録します
+            {isEditMode ? 'このグループに紐づいている申請です' : 'これらの申請をまとめて見積依頼グループとして登録します'}
           </p>
         </div>
 
@@ -89,9 +95,11 @@ export const RfqGroupModal: React.FC<RfqGroupModalProps> = ({
               fontWeight: 'bold'
             }}
           />
-          <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#7f8c8d' }}>
-            ※自動採番されます
-          </p>
+          {!isEditMode && (
+            <p style={{ margin: '5px 0 0 0', fontSize: '12px', color: '#7f8c8d' }}>
+              ※自動採番されます
+            </p>
+          )}
         </div>
 
         <div style={{ marginBottom: '25px' }}>
@@ -120,49 +128,74 @@ export const RfqGroupModal: React.FC<RfqGroupModalProps> = ({
           />
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          <button
-            style={{
-              padding: '10px 24px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-            onClick={onClose}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#7f8c8d';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#95a5a6';
-            }}
-          >
-            キャンセル
-          </button>
-          <button
-            style={{
-              padding: '10px 24px',
-              background: '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-            onClick={onSubmit}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#229954';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#27ae60';
-            }}
-          >
-            登録
-          </button>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: isEditMode ? 'space-between' : 'flex-end' }}>
+          {isEditMode && onDelete && (
+            <button
+              style={{
+                padding: '10px 24px',
+                background: '#e74c3c',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+              onClick={onDelete}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#c0392b';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#e74c3c';
+              }}
+            >
+              削除
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              style={{
+                padding: '10px 24px',
+                background: '#95a5a6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+              onClick={onClose}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#7f8c8d';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#95a5a6';
+              }}
+            >
+              キャンセル
+            </button>
+            <button
+              style={{
+                padding: '10px 24px',
+                background: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+              onClick={onSubmit}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#229954';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#27ae60';
+              }}
+            >
+              {isEditMode ? '更新' : '登録'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

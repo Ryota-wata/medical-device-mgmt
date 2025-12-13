@@ -53,8 +53,7 @@ function RemodelApplicationListContent() {
     category: '',
     largeClass: '',
     mediumClass: '',
-    applicationType: '',
-    quotationStatus: ''
+    applicationType: ''
   });
 
   // 選択された行
@@ -63,6 +62,9 @@ function RemodelApplicationListContent() {
   // 見積依頼グループ登録モーダル
   const [showRfqModal, setShowRfqModal] = useState(false);
   const [rfqGroupName, setRfqGroupName] = useState('');
+  const [rfqModalMode, setRfqModalMode] = useState<'create' | 'edit'>('create');
+  const [editingRfqNo, setEditingRfqNo] = useState<string>('');
+  const [editingAppId, setEditingAppId] = useState<number | null>(null);
 
 
   // 原本登録モーダル
@@ -105,8 +107,6 @@ function RemodelApplicationListContent() {
       if (filters.department && app.facility.department !== filters.department) return false;
       if (filters.section && app.facility.section !== filters.section) return false;
       if (filters.applicationType && app.applicationType !== filters.applicationType) return false;
-      if (filters.quotationStatus === '紐付け済み' && (!app.quotationInfo || app.quotationInfo.length === 0)) return false;
-      if (filters.quotationStatus === '未紐付け' && app.quotationInfo && app.quotationInfo.length > 0) return false;
       return true;
     });
   }, [applications, filters]);
@@ -141,7 +141,7 @@ function RemodelApplicationListContent() {
     }));
   };
 
-  // 見積依頼グループ登録
+  // 見積依頼グループ登録（新規作成モード）
   const handleOpenRfqModal = (appId?: number) => {
     if (selectedRows.size === 0 && appId) {
       setSelectedRows(new Set([appId]));
@@ -150,8 +150,21 @@ function RemodelApplicationListContent() {
       alert('見積依頼グループに追加する申請を選択してください');
       return;
     }
+    setRfqModalMode('create');
+    setEditingRfqNo('');
+    setEditingAppId(null);
     setShowRfqModal(true);
     setRfqGroupName('');
+  };
+
+  // 見積依頼グループ編集（編集モード）
+  const handleOpenRfqEditModal = (app: Application) => {
+    if (!app.rfqNo) return;
+    setRfqModalMode('edit');
+    setEditingRfqNo(app.rfqNo);
+    setEditingAppId(app.id);
+    setRfqGroupName(app.rfqGroupName || '');
+    setShowRfqModal(true);
   };
 
   const handleCreateRfqGroup = () => {
@@ -160,26 +173,62 @@ function RemodelApplicationListContent() {
       return;
     }
 
-    const rfqNo = generateRfqNo();
-    const today = new Date();
-    const createdDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (rfqModalMode === 'edit') {
+      // 編集モード: 同じrfqNoを持つ全ての申請のグループ名を更新
+      applications.forEach(app => {
+        if (app.rfqNo === editingRfqNo) {
+          updateApplication(app.id, { rfqGroupName });
+        }
+      });
+      alert(`見積依頼グループを更新しました\n見積依頼No: ${editingRfqNo}\nグループ名称: ${rfqGroupName}`);
+    } else {
+      // 新規作成モード
+      const rfqNo = generateRfqNo();
+      const today = new Date();
+      const createdDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    addRfqGroup({
-      rfqNo,
-      groupName: rfqGroupName,
-      createdDate,
-      applicationIds: Array.from(selectedRows),
-      status: '未送信'
-    });
+      addRfqGroup({
+        rfqNo,
+        groupName: rfqGroupName,
+        createdDate,
+        applicationIds: Array.from(selectedRows),
+        status: '未送信'
+      });
 
-    selectedRows.forEach(id => {
-      updateApplication(id, { rfqNo, rfqGroupName });
-    });
+      selectedRows.forEach(id => {
+        updateApplication(id, { rfqNo, rfqGroupName });
+      });
 
-    alert(`見積依頼グループを作成しました\n見積依頼No: ${rfqNo}\nグループ名称: ${rfqGroupName}\n登録件数: ${selectedRows.size}件`);
+      alert(`見積依頼グループを作成しました\n見積依頼No: ${rfqNo}\nグループ名称: ${rfqGroupName}\n登録件数: ${selectedRows.size}件`);
+      setSelectedRows(new Set());
+    }
+
     setShowRfqModal(false);
     setRfqGroupName('');
-    setSelectedRows(new Set());
+    setEditingRfqNo('');
+    setEditingAppId(null);
+  };
+
+  // 見積依頼グループ削除
+  const handleDeleteRfqGroup = () => {
+    if (!editingRfqNo) return;
+
+    if (!confirm(`見積依頼No: ${editingRfqNo} を削除しますか？\n\n紐づいている全ての申請から見積依頼No.とグループ名称が削除されます。`)) {
+      return;
+    }
+
+    // 同じrfqNoを持つ全ての申請からrfqNo/rfqGroupNameを削除
+    applications.forEach(app => {
+      if (app.rfqNo === editingRfqNo) {
+        updateApplication(app.id, { rfqNo: undefined, rfqGroupName: undefined });
+      }
+    });
+
+    alert(`見積依頼グループを削除しました: ${editingRfqNo}`);
+    setShowRfqModal(false);
+    setRfqGroupName('');
+    setEditingRfqNo('');
+    setEditingAppId(null);
   };
 
   // 別ウィンドウで開く
@@ -347,16 +396,6 @@ function RemodelApplicationListContent() {
               />
             </div>
           ))}
-          <div style={{ flex: '1', minWidth: '140px' }}>
-            <SearchableSelect
-              label="見積紐付け状態"
-              value={filters.quotationStatus}
-              onChange={(value) => setFilters(prev => ({ ...prev, quotationStatus: value }))}
-              options={['', '紐付け済み', '未紐付け']}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
         </div>
       </div>
 
@@ -597,25 +636,34 @@ function RemodelApplicationListContent() {
                       onSave={handleCellSave}
                       onBulkEdit={handleOpenBulkEdit}
                     />
-                    <EditableCell
-                      value={app.rfqNo || ''}
-                      fieldKey="rfqNo"
-                      applicationId={app.id}
-                      isSelected={isSelected}
-                      selectedCount={selectedRows.size}
-                      onSave={handleCellSave}
-                      onBulkEdit={handleOpenBulkEdit}
-                      style={{ fontFamily: 'monospace' }}
-                    />
-                    <EditableCell
-                      value={app.rfqGroupName || ''}
-                      fieldKey="rfqGroupName"
-                      applicationId={app.id}
-                      isSelected={isSelected}
-                      selectedCount={selectedRows.size}
-                      onSave={handleCellSave}
-                      onBulkEdit={handleOpenBulkEdit}
-                    />
+                    <td
+                      style={{
+                        padding: '12px 8px',
+                        fontFamily: 'monospace',
+                        cursor: 'pointer',
+                        background: !app.rfqNo ? '#fffbf0' : undefined,
+                      }}
+                      onDoubleClick={() => {
+                        if (app.rfqNo) {
+                          // 登録済みの場合は編集モードで開く
+                          handleOpenRfqEditModal(app);
+                        } else {
+                          if (selectedRows.size > 0 && isSelected) {
+                            // 複数選択されていて、この行も選択されている場合は一括登録
+                            handleOpenRfqModal();
+                          } else {
+                            // 単一行の場合はこの行を選択してモーダルを開く
+                            handleOpenRfqModal(app.id);
+                          }
+                        }
+                      }}
+                      title={app.rfqNo ? 'ダブルクリックで編集' : 'ダブルクリックで見積依頼No.を発行'}
+                    >
+                      {app.rfqNo || <span style={{ color: '#bdc3c7', fontSize: '12px' }}>未発行</span>}
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      {app.rfqGroupName || <span style={{ color: '#bdc3c7', fontSize: '12px' }}>-</span>}
+                    </td>
                     <td style={{ padding: '12px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {app.quotationInfo?.map(q => q.vendor).filter((v, i, arr) => arr.indexOf(v) === i).join(', ') || '-'}
                     </td>
@@ -712,11 +760,13 @@ function RemodelApplicationListContent() {
       <RfqGroupModal
         show={showRfqModal}
         onClose={() => setShowRfqModal(false)}
-        selectedCount={selectedRows.size}
-        rfqNo={generateRfqNo()}
+        selectedCount={rfqModalMode === 'edit' ? applications.filter(app => app.rfqNo === editingRfqNo).length : selectedRows.size}
+        rfqNo={rfqModalMode === 'edit' ? editingRfqNo : generateRfqNo()}
         rfqGroupName={rfqGroupName}
         onRfqGroupNameChange={setRfqGroupName}
         onSubmit={handleCreateRfqGroup}
+        mode={rfqModalMode}
+        onDelete={handleDeleteRfqGroup}
       />
 
       <BulkEditModal

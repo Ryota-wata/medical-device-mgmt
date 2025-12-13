@@ -3,12 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
+import { useApplicationStore } from '@/lib/stores/applicationStore';
 import { useMasterStore } from '@/lib/stores';
 import { RfqGroupStatus, AssetMaster } from '@/lib/types';
 import {
   OCRResult,
+  OCRResultItem,
   QuotationFormData,
-  QuotationFilter
+  QuotationFilter,
+  ConfirmedStateMap
 } from '@/lib/types/quotation';
 import { Header } from '@/components/layouts/Header';
 import { WINDOW_SIZES, TIMEOUTS, MESSAGES } from '@/lib/constants/quotation';
@@ -16,6 +19,7 @@ import { MOCK_OCR_RESULT } from '@/lib/mocks/quotationMockData';
 import { RfqGroupsTab } from './components/RfqGroupsTab';
 import { QuotationsTab } from './components/QuotationsTab';
 import { QuotationRegistrationModal } from './components/QuotationRegistrationModal';
+import { ApplicationFormData } from './components/QuotationRegistrationModal/ApplicationCreationModal';
 
 type TabType = 'rfqGroups' | 'quotations';
 
@@ -26,9 +30,11 @@ export default function QuotationManagementPage() {
     quotationItems,
     addQuotationGroup,
     addQuotationItems,
+    updateQuotationItem,
     deleteQuotationGroup,
     generateReceivedQuotationNo
   } = useQuotationStore();
+  const { applications, addApplication } = useApplicationStore();
   const { assets: assetMasterData } = useMasterStore();
 
   const [activeTab, setActiveTab] = useState<TabType>('rfqGroups');
@@ -51,61 +57,6 @@ export default function QuotationManagementPage() {
   });
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
-  const [itemAssetLinks, setItemAssetLinks] = useState<Record<number, string>>({});
-
-  // 現在紐づけ中の明細項目ID（モーダルStep 3用）
-  const [linkingItemId, setLinkingItemId] = useState<number | null>(null);
-
-  // SHIP資産マスタを別ウィンドウで開く（特定の明細項目に紐づける）
-  const handleOpenAssetMasterWindow = (itemId: number) => {
-    setLinkingItemId(itemId);
-    const { width, height } = WINDOW_SIZES.ASSET_MASTER;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-
-    window.open(
-      '/asset-master',
-      'AssetMasterWindow',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-  };
-
-  // AI推薦機能（見積明細とマッチする資産マスタを推薦）
-  const getAIRecommendation = (item: { itemName: string; manufacturer?: string; model?: string }) => {
-    // 品目名とメーカー、型番で簡易的にマッチング
-    const recommendation = assetMasterData.find(asset =>
-      asset.item.includes(item.itemName) ||
-      (item.manufacturer && asset.maker.includes(item.manufacturer)) ||
-      (item.model && asset.model === item.model)
-    );
-    return recommendation;
-  };
-
-  // 資産マスタ選択ウィンドウからのメッセージを受信（モーダルStep 3用）
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // セキュリティチェック: 同一オリジンからのメッセージのみ処理
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'ASSET_SELECTED' && linkingItemId !== null) {
-        const selectedAssets = event.data.assets as AssetMaster[];
-        if (selectedAssets && selectedAssets.length > 0) {
-          // 最初に選択された資産を使用
-          const asset = selectedAssets[0];
-
-          // モーダルのステップ3での紐付け
-          setItemAssetLinks(prev => ({
-            ...prev,
-            [linkingItemId]: asset.id
-          }));
-          setLinkingItemId(null);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [linkingItemId]);
 
   // 見積書登録開始
   const handleStartQuotationRegistration = (rfqGroupId?: number) => {
@@ -115,8 +66,61 @@ export default function QuotationManagementPage() {
     });
     setModalStep(1);
     setOcrResult(null);
-    setItemAssetLinks({});
     setShowQuotationModal(true);
+  };
+
+  // 申請を作成
+  const handleCreateApplication = (
+    formData: ApplicationFormData,
+    ocrItem: OCRResultItem
+  ) => {
+    // 申請番号を生成
+    const today = new Date();
+    const applicationNo = `APP-${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(Date.now() % 1000).padStart(3, '0')}`;
+
+    // 申請を作成
+    addApplication({
+      applicationNo,
+      applicationDate: today.toISOString().split('T')[0],
+      applicationType: formData.applicationType,
+      facility: {
+        building: formData.building,
+        floor: formData.floor,
+        department: formData.department,
+        section: formData.section,
+      },
+      roomName: formData.roomName,
+      asset: {
+        name: ocrItem.itemName,
+        model: ocrItem.model || '',
+      },
+      vendor: ocrItem.manufacturer || '',
+      quantity: String(formData.quantity),
+      unit: ocrItem.unit || '台',
+      applicationReason: formData.applicationReason,
+      executionYear: formData.executionYear,
+      status: '下書き',
+      approvalProgress: {
+        current: 0,
+        total: 3,
+      },
+      freeInput: '',
+      quotationInfo: [],
+    });
+
+    // 見積依頼グループに申請を追加
+    if (quotationFormData.rfqGroupId) {
+      const rfqGroup = rfqGroups.find(g => g.id.toString() === quotationFormData.rfqGroupId);
+      if (rfqGroup) {
+        // 最新の申請IDを取得（簡易的な実装）
+        const newAppId = applications.length + 1;
+        updateRfqGroup(rfqGroup.id, {
+          applicationIds: [...rfqGroup.applicationIds, newAppId]
+        });
+      }
+    }
+
+    alert(`申請を作成しました: ${applicationNo}`);
   };
 
   // テストデータでOCR結果を生成
@@ -139,9 +143,9 @@ export default function QuotationManagementPage() {
     handleGenerateTestOCR();
   };
 
-  // 見積書登録確定
-  const handleSubmitQuotation = () => {
-    if (!ocrResult) return;
+  // 見積書登録確定（全明細を登録、資産マスタ紐付けはオプション）
+  const handleSubmitQuotation = (confirmedState: ConfirmedStateMap, submittedOcrResult: OCRResult) => {
+    if (!submittedOcrResult) return;
 
     const rfqGroup = quotationFormData.rfqGroupId
       ? rfqGroups.find(g => g.id.toString() === quotationFormData.rfqGroupId)
@@ -152,36 +156,77 @@ export default function QuotationManagementPage() {
       receivedQuotationNo: generateReceivedQuotationNo(),
       rfqGroupId: rfqGroup?.id,
       rfqNo: rfqGroup?.rfqNo,
-      vendorName: ocrResult.vendorName,
-      quotationDate: ocrResult.quotationDate,
-      validityPeriod: ocrResult.validityPeriod,
-      deliveryPeriod: ocrResult.deliveryPeriod,
-      phase: ocrResult.phase,
-      totalAmount: ocrResult.totalAmount,
+      vendorName: submittedOcrResult.vendorName,
+      quotationDate: submittedOcrResult.quotationDate,
+      validityPeriod: submittedOcrResult.validityPeriod,
+      deliveryPeriod: submittedOcrResult.deliveryPeriod,
+      phase: submittedOcrResult.phase,
+      totalAmount: submittedOcrResult.totalAmount,
       pdfUrl: quotationFormData.pdfFile ? URL.createObjectURL(quotationFormData.pdfFile) : undefined
     });
 
-    // 見積明細を作成（個別レコードとして）
+    // 全明細を登録（OCRの明細をそのまま1レコードとして登録）
     const quotationNo = generateReceivedQuotationNo();
-    const itemsToAdd = ocrResult.items.map((item, index) => ({
-      quotationGroupId: groupId,
-      receivedQuotationNo: quotationNo,
-      itemType: item.itemType,
-      itemName: item.itemName,
-      manufacturer: item.manufacturer,
-      model: item.model,
-      quantity: item.quantity,
-      unit: item.unit,
-      listPriceUnit: item.listPriceUnit,
-      listPriceTotal: item.listPriceTotal,
-      sellingPriceUnit: item.sellingPriceUnit,
-      sellingPriceTotal: item.sellingPriceTotal,
-      discount: item.discount,
-      taxRate: item.taxRate,
-      totalWithTax: item.totalWithTax,
-      assetMasterId: itemAssetLinks[index] ? itemAssetLinks[index] : undefined,
-      linkedApplicationIds: []
-    }));
+    const itemsToAdd: Parameters<typeof addQuotationItems>[0] = [];
+
+    // 全てのOCRアイテムを処理
+    submittedOcrResult.items.forEach((ocrItem, ocrItemIndex) => {
+      // 資産マスタ紐付け情報を取得（あれば）
+      const key = `${ocrItemIndex}`;
+      const confirmedInfo = confirmedState[key];
+      const assetInfo = confirmedInfo?.assetInfo;
+
+      // AI判定から情報を取得（資産マスタ紐付けがなければAI判定を使用）
+      const aiJudgment = ocrItem.aiJudgments[0];
+
+      // 資産マスタから選択した場合、assetMasterIdを取得
+      const matchedAsset = assetInfo
+        ? assetMasterData.find(a =>
+            a.item === assetInfo.assetName &&
+            a.model === assetInfo.model &&
+            a.maker === assetInfo.manufacturer
+          )
+        : undefined;
+
+      itemsToAdd.push({
+        quotationGroupId: groupId,
+        receivedQuotationNo: quotationNo,
+        // 商品情報（原本情報）
+        rowNo: ocrItem.rowNo,
+        originalItemName: ocrItem.itemName,
+        originalManufacturer: ocrItem.manufacturer,
+        originalModel: ocrItem.model,
+        originalQuantity: ocrItem.quantity,
+        // AI判定・資産マスタ情報（紐付けがあればそれを使用、なければAI判定、なければ原本情報）
+        itemType: ocrItem.itemType,
+        category: assetInfo?.category || aiJudgment?.category || '',
+        largeClass: assetInfo?.majorCategory || aiJudgment?.majorCategory || '',
+        middleClass: assetInfo?.middleCategory || aiJudgment?.middleCategory || '',
+        itemName: assetInfo?.assetName || aiJudgment?.assetName || ocrItem.itemName,
+        manufacturer: assetInfo?.manufacturer || aiJudgment?.manufacturer || ocrItem.manufacturer,
+        model: assetInfo?.model || aiJudgment?.model || ocrItem.model,
+        aiQuantity: ocrItem.quantity,
+        // 見積依頼No
+        rfqNo: rfqGroup?.rfqNo,
+        // 価格情報（原本情報）
+        unit: ocrItem.unit,
+        listPriceUnit: ocrItem.listPriceUnit,
+        listPriceTotal: ocrItem.listPriceTotal,
+        purchasePriceUnit: ocrItem.purchasePriceUnit,
+        purchasePriceTotal: ocrItem.purchasePriceTotal,
+        remarks: ocrItem.remarks,
+        // 価格情報（按分登録）- 初期値は原本情報と同じ（ユーザーが手動で編集）
+        allocListPriceUnit: ocrItem.listPriceUnit,
+        allocListPriceTotal: ocrItem.listPriceTotal,
+        allocPriceUnit: ocrItem.purchasePriceUnit,
+        allocDiscount: ocrItem.discount,
+        allocTaxRate: ocrItem.taxRate,
+        allocTaxTotal: ocrItem.totalWithTax,
+        // 資産マスタとの紐づけ（あれば）
+        assetMasterId: matchedAsset?.id,
+        linkedApplicationIds: []
+      });
+    });
 
     addQuotationItems(itemsToAdd);
 
@@ -193,7 +238,6 @@ export default function QuotationManagementPage() {
     alert(MESSAGES.QUOTATION_REGISTERED(quotationNo, itemsToAdd.length));
     setShowQuotationModal(false);
     setModalStep(1);
-    setItemAssetLinks({});
     setOcrResult(null);
     setActiveTab('quotations');
   };
@@ -258,11 +302,9 @@ export default function QuotationManagementPage() {
           quotationGroups={quotationGroups}
           quotationItems={quotationItems}
           rfqGroups={rfqGroups}
-          assetMasterData={assetMasterData}
           quotationFilter={quotationFilter}
           onFilterChange={setQuotationFilter}
-          onRegisterQuotation={() => handleStartQuotationRegistration()}
-          onDeleteQuotation={deleteQuotationGroup}
+          onUpdateItem={updateQuotationItem}
         />
       )}
 
@@ -272,29 +314,15 @@ export default function QuotationManagementPage() {
         step={modalStep}
         rfqGroups={rfqGroups}
         assetMasterData={assetMasterData}
+        applications={applications}
         formData={quotationFormData}
         ocrProcessing={ocrProcessing}
         ocrResult={ocrResult}
-        itemAssetLinks={itemAssetLinks}
         onFormDataChange={setQuotationFormData}
         onPdfUpload={handlePdfUpload}
         onGenerateTestOCR={handleGenerateTestOCR}
-        onStepChange={(step) => {
-          if (step === 3) {
-            setItemAssetLinks({});
-          }
-          setModalStep(step);
-        }}
-        onOpenAssetMasterWindow={handleOpenAssetMasterWindow}
-        onAdoptRecommendation={(itemIndex, assetId) => {
-          setItemAssetLinks({ ...itemAssetLinks, [itemIndex]: assetId });
-        }}
-        onRemoveLink={(itemIndex) => {
-          const newLinks = { ...itemAssetLinks };
-          delete newLinks[itemIndex];
-          setItemAssetLinks(newLinks);
-        }}
-        getAIRecommendation={getAIRecommendation}
+        onStepChange={setModalStep}
+        onCreateApplication={handleCreateApplication}
         onSubmit={handleSubmitQuotation}
         onClose={() => setShowQuotationModal(false)}
       />

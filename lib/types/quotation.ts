@@ -51,22 +51,50 @@ export interface ReceivedQuotationItem {
   id: number;
   quotationGroupId: number; // 見積グループとの紐づけ
   receivedQuotationNo: string; // 見積番号（表示用）
-  itemType: QuotationItemType;
-  itemName: string;
-  manufacturer?: string;
-  model?: string;
-  quantity: number;
-  unit?: string;
-  listPriceUnit?: number;
-  listPriceTotal?: number;
-  sellingPriceUnit?: number;
-  sellingPriceTotal?: number;
-  discount?: number;
-  taxRate: number;
-  totalWithTax?: number;
+
+  // === 商品情報（原本情報） ===
+  rowNo?: number; // No（見積書上の行番号）
+  originalItemName: string; // 品名（原本）
+  originalManufacturer?: string; // メーカー（原本）
+  originalModel?: string; // 型式（原本）
+  originalQuantity: number; // 数量（原本）
+
+  // === AI判定・資産マスタ情報 ===
+  itemType: QuotationItemType; // 登録区分
+  category?: string; // category（01医療機器など）
+  largeClass?: string; // 大分類
+  middleClass?: string; // 中分類
+  itemName: string; // 個体管理品目（確定後の資産名）
+  manufacturer?: string; // メーカー（確定後）
+  model?: string; // 型式（確定後）
+  aiQuantity: number; // 数量（登録区分Cは1、それ以外は原本数量）
+
+  // === 見積依頼No・枝番 ===
+  rfqNo?: string; // 見積依頼No
+  branchNo?: number; // 枝番（登録区分Cのみ使用、1から連番）
+
+  // === 価格情報（原本情報） ===
+  listPriceUnit?: number; // 定価単価
+  listPriceTotal?: number; // 定価金額
+  purchasePriceUnit?: number; // 購入単価
+  purchasePriceTotal?: number; // 購入金額
+  remarks?: string; // 備考
+
+  // === 価格情報（按分登録）- 編集可能 ===
+  allocListPriceUnit?: number; // 定価単価（按分）
+  allocListPriceTotal?: number; // 定価金額（按分）
+  allocPriceUnit?: number; // 登録単価（税別）
+  allocDiscount?: number; // 値引率
+  allocTaxRate?: number; // 消費税率
+  allocTaxTotal?: number; // 税込金額
   accountTitle?: AccountTitle; // 勘定科目
+
+  // === その他 ===
+  unit?: string;
   assetMasterId?: string; // 資産Masterとの紐づけ
   linkedApplicationIds?: number[]; // 紐づけられた申請ID（複数可）
+  isSpecificationLine?: boolean; // 仕様行フラグ
+  specificationText?: string; // 仕様テキスト
   createdAt: string;
   updatedAt: string;
 }
@@ -113,21 +141,44 @@ export interface QuotationItem {
   linkedApplicationIds?: number[];
 }
 
-// OCR結果の型定義
+// AI判定結果（資産マスタ推薦情報）
+export interface AIJudgmentResult {
+  itemType: QuotationItemType; // 登録区分（AI判定）
+  category: string; // category（01医療機器、02什器備品など）
+  majorCategory: string; // 大分類
+  middleCategory: string; // 中分類
+  assetName: string; // 個体管理品目名
+  manufacturer: string; // メーカー
+  model: string; // 型式
+  quantity: number; // 数量（C_個体管理品目は常に1）
+}
+
+// OCR結果の型定義（原本情報）
 export interface OCRResultItem {
-  itemType: QuotationItemType;
-  itemName: string;
-  manufacturer: string;
-  model: string;
-  quantity: number;
-  unit: string;
-  listPriceUnit: number;
-  listPriceTotal: number;
-  sellingPriceUnit: number;
-  sellingPriceTotal: number;
-  discount: number;
-  taxRate: number;
-  totalWithTax: number;
+  rowNo?: number; // No
+  itemType: QuotationItemType; // 登録区分（原本）
+  itemName: string; // 品名
+  manufacturer: string; // メーカー
+  model: string; // 型式
+  specification?: string; // 仕様
+  quantity: number; // 数量
+  unit: string; // 単位
+  // 定価情報
+  listPriceUnit: number; // 定価単価
+  listPriceTotal: number; // 定価合計
+  // 購入価格情報（新規追加）
+  purchasePriceUnit: number; // 購入単価
+  purchasePriceTotal: number; // 購入金額
+  // 値引・税・備考
+  discount: number; // 値引率
+  taxRate: number; // 税率
+  totalWithTax: number; // 税込合計
+  remarks?: string; // 備考
+  // 後方互換性のため残す
+  sellingPriceUnit?: number; // 売価単価（非推奨：purchasePriceUnitを使用）
+  sellingPriceTotal?: number; // 売価合計（非推奨：purchasePriceTotalを使用）
+  // AI判定結果（1対1対応）
+  aiJudgments: AIJudgmentResult[];
 }
 
 export interface OCRResult {
@@ -151,3 +202,21 @@ export interface QuotationFilter {
   rfqGroupId: string;
   phase: string;
 }
+
+// Step2での確定情報（Step3に引き継ぐ）
+export interface ConfirmedAssetInfo {
+  category: string;
+  majorCategory: string;
+  middleCategory: string;
+  assetName: string;
+  manufacturer: string;
+  model: string;
+}
+
+export interface ConfirmedItemInfo {
+  status: 'ai_confirmed' | 'asset_master_selected';
+  assetInfo: ConfirmedAssetInfo; // 確定した資産情報
+}
+
+// 確定状態のマップ（key: `${ocrItemIndex}-${aiIndex}`）
+export type ConfirmedStateMap = Record<string, ConfirmedItemInfo>;

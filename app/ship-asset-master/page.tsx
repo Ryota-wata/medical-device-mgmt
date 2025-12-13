@@ -1,14 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { AssetMaster } from '@/lib/types/master';
 import { AssetFormModal } from '@/components/modals/AssetFormModal';
 
-export default function ShipAssetMasterPage() {
+function ShipAssetMasterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isSelectMode = searchParams.get('mode') === 'select';
   const { isMobile, isTablet } = useResponsive();
   const { assets, setAssets, addAsset, updateAsset, deleteAsset } = useMasterStore();
 
@@ -135,6 +137,24 @@ export default function ShipAssetMasterPage() {
     }
   };
 
+  // 選択モード: 親ウィンドウに資産マスタを送信
+  const handleSelect = (asset: AssetMaster) => {
+    if (window.opener) {
+      window.opener.postMessage({
+        type: 'ASSET_MASTER_SELECTED',
+        data: {
+          category: asset.category,
+          majorCategory: asset.largeClass,
+          middleCategory: asset.mediumClass,
+          assetName: asset.item,
+          manufacturer: asset.maker,
+          model: asset.model,
+        }
+      }, window.location.origin);
+      window.close();
+    }
+  };
+
   const handleNewSubmit = (data: Partial<AssetMaster>) => {
     const newAsset: AssetMaster = {
       id: `A${String(assets.length + 1).padStart(3, '0')}`,
@@ -163,6 +183,40 @@ export default function ShipAssetMasterPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+      {/* 選択モードバナー */}
+      {isSelectMode && (
+        <div style={{
+          background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+          color: 'white',
+          padding: '12px 20px',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '18px' }}>👆</span>
+          資産マスタを選択してください - 行をクリックすると選択されます
+          <button
+            onClick={() => window.close()}
+            style={{
+              padding: '6px 12px',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.5)',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 'bold',
+            }}
+          >
+            キャンセル
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <header style={{
         background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
@@ -421,7 +475,26 @@ export default function ShipAssetMasterPage() {
                 </thead>
                 <tbody>
                   {filteredAssets.map((asset, index) => (
-                    <tr key={asset.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                    <tr
+                      key={asset.id}
+                      onClick={isSelectMode ? () => handleSelect(asset) : undefined}
+                      style={{
+                        borderBottom: '1px solid #f0f0f0',
+                        background: index % 2 === 0 ? 'white' : '#fafafa',
+                        cursor: isSelectMode ? 'pointer' : 'default',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isSelectMode) {
+                          e.currentTarget.style.background = '#fff3e0';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (isSelectMode) {
+                          e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#fafafa';
+                        }
+                      }}
+                    >
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.category}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.largeClass}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.mediumClass}</td>
@@ -430,12 +503,15 @@ export default function ShipAssetMasterPage() {
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.model}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', textAlign: 'right', whiteSpace: 'nowrap' }}>¥{asset.unitPrice.toLocaleString()}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        {isSelectMode ? (
                           <button
-                            onClick={() => handleEdit(asset)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelect(asset);
+                            }}
                             style={{
-                              padding: '6px 12px',
-                              background: '#3498db',
+                              padding: '6px 16px',
+                              background: '#ff9800',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -444,24 +520,42 @@ export default function ShipAssetMasterPage() {
                               cursor: 'pointer'
                             }}
                           >
-                            編集
+                            選択
                           </button>
-                          <button
-                            onClick={() => handleDelete(asset.id)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#e74c3c',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: isTablet ? '12px' : '13px',
-                              fontWeight: 600,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            削除
-                          </button>
-                        </div>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button
+                              onClick={() => handleEdit(asset)}
+                              style={{
+                                padding: '6px 12px',
+                                background: '#3498db',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                fontSize: isTablet ? '12px' : '13px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              編集
+                            </button>
+                            <button
+                              onClick={() => handleDelete(asset.id)}
+                              style={{
+                                padding: '6px 12px',
+                                background: '#e74c3c',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                fontSize: isTablet ? '12px' : '13px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              削除
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -510,5 +604,13 @@ export default function ShipAssetMasterPage() {
         isMobile={isMobile}
       />
     </div>
+  );
+}
+
+export default function ShipAssetMasterPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>読み込み中...</div>}>
+      <ShipAssetMasterContent />
+    </Suspense>
   );
 }

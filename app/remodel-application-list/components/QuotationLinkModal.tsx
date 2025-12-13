@@ -144,19 +144,19 @@ export const QuotationLinkModal: React.FC<QuotationLinkModalProps> = ({
                         {item.itemName}
                       </td>
                       <td style={{ padding: '10px 8px', textAlign: 'right' }}>
-                        {item.quantity || '-'}
+                        {item.aiQuantity || item.originalQuantity || '-'}
                       </td>
                       <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 600 }}>
-                        ¥{item.sellingPriceTotal?.toLocaleString() || '-'}
+                        ¥{item.allocTaxTotal?.toLocaleString() || item.purchasePriceTotal?.toLocaleString() || '-'}
                       </td>
                       <td style={{ padding: '10px 8px', color: '#555' }}>
-                        {assetMaster?.largeClass || '-'}
+                        {item.largeClass || assetMaster?.largeClass || '-'}
                       </td>
                       <td style={{ padding: '10px 8px', color: '#555' }}>
-                        {assetMaster?.mediumClass || '-'}
+                        {item.middleClass || assetMaster?.mediumClass || '-'}
                       </td>
                       <td style={{ padding: '10px 8px', color: '#555' }}>
-                        {assetMaster?.item || '-'}
+                        {item.itemName || assetMaster?.item || '-'}
                       </td>
                     </tr>
                   );
