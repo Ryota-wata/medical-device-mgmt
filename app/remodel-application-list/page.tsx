@@ -294,6 +294,9 @@ function RemodelApplicationListContent() {
     return APPLICATION_TYPE_BADGE_STYLES[type as keyof typeof APPLICATION_TYPE_BADGE_STYLES] || { background: '#f5f5f5', color: '#555' };
   };
 
+  // 数値フィールドのリスト
+  const numericFields = ['quotationAmount', 'estimatedAmount'];
+
   // セル単体編集ハンドラー
   const handleCellSave = (id: number, fieldKey: string, value: string) => {
     const updateData: Partial<Application> = {};
@@ -311,6 +314,10 @@ function RemodelApplicationListContent() {
       if (app) {
         updateData.asset = { ...app.asset, [subKey]: value };
       }
+    } else if (numericFields.includes(fieldKey)) {
+      // 数値フィールドの場合は数値に変換
+      const numValue = value ? parseInt(value.replace(/[,¥]/g, ''), 10) : undefined;
+      (updateData as Record<string, number | undefined>)[fieldKey] = numValue;
     } else {
       (updateData as Record<string, string>)[fieldKey] = value;
     }
@@ -664,15 +671,53 @@ function RemodelApplicationListContent() {
                     <td style={{ padding: '12px 8px' }}>
                       {app.rfqGroupName || <span style={{ color: '#bdc3c7', fontSize: '12px' }}>-</span>}
                     </td>
-                    <td style={{ padding: '12px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {app.quotationInfo?.map(q => q.vendor).filter((v, i, arr) => arr.indexOf(v) === i).join(', ') || '-'}
-                    </td>
-                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600 }}>
-                      {app.quotationInfo?.length ? `¥${app.quotationInfo.reduce((sum, q) => sum + q.amount, 0).toLocaleString()}` : '-'}
-                    </td>
-                    <td style={{ padding: '12px 8px', textAlign: 'right', color: '#7f8c8d' }}>-</td>
-                    <td style={{ padding: '12px 8px', color: '#7f8c8d' }}>-</td>
-                    <td style={{ padding: '12px 8px', color: '#7f8c8d' }}>-</td>
+                    <EditableCell
+                      value={app.quotationVendor || ''}
+                      fieldKey="quotationVendor"
+                      applicationId={app.id}
+                      isSelected={isSelected}
+                      selectedCount={selectedRows.size}
+                      onSave={handleCellSave}
+                      onBulkEdit={handleOpenBulkEdit}
+                    />
+                    <EditableCell
+                      value={app.quotationAmount?.toString() || ''}
+                      fieldKey="quotationAmount"
+                      applicationId={app.id}
+                      isSelected={isSelected}
+                      selectedCount={selectedRows.size}
+                      onSave={handleCellSave}
+                      onBulkEdit={handleOpenBulkEdit}
+                      style={{ textAlign: 'right', fontWeight: 600 }}
+                    />
+                    <EditableCell
+                      value={app.estimatedAmount?.toString() || ''}
+                      fieldKey="estimatedAmount"
+                      applicationId={app.id}
+                      isSelected={isSelected}
+                      selectedCount={selectedRows.size}
+                      onSave={handleCellSave}
+                      onBulkEdit={handleOpenBulkEdit}
+                      style={{ textAlign: 'right' }}
+                    />
+                    <EditableCell
+                      value={app.editColumn1 || ''}
+                      fieldKey="editColumn1"
+                      applicationId={app.id}
+                      isSelected={isSelected}
+                      selectedCount={selectedRows.size}
+                      onSave={handleCellSave}
+                      onBulkEdit={handleOpenBulkEdit}
+                    />
+                    <EditableCell
+                      value={app.editColumn2 || ''}
+                      fieldKey="editColumn2"
+                      applicationId={app.id}
+                      isSelected={isSelected}
+                      selectedCount={selectedRows.size}
+                      onSave={handleCellSave}
+                      onBulkEdit={handleOpenBulkEdit}
+                    />
                     <td style={{ padding: '12px 8px', textAlign: 'center', position: 'sticky', right: 0, background: isSelected ? '#e3f2fd' : 'white', boxShadow: '-2px 0 5px rgba(0,0,0,0.1)', zIndex: 5 }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         {ORIGINAL_REGISTRATION_TYPES.includes(app.applicationType) && (

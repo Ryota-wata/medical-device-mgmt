@@ -80,6 +80,13 @@ export interface Application {
   quotationInfo?: QuotationInfo[];
   individualRegistered?: boolean;
   originalRegistration?: OriginalRegistration;
+  // 見積・概算情報
+  quotationVendor?: string;
+  quotationAmount?: number;
+  estimatedAmount?: number;
+  // 編集用フリーカラム
+  editColumn1?: string;
+  editColumn2?: string;
 }
 
 /**
