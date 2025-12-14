@@ -992,7 +992,7 @@ export default function AssetSurveyIntegratedPage() {
             bottom: 0,
             background: 'rgba(0,0,0,0.5)',
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000
           }}
@@ -1001,12 +1001,11 @@ export default function AssetSurveyIntegratedPage() {
           <div
             style={{
               background: 'white',
-              borderRadius: '16px 16px 0 0',
-              width: '100%',
-              maxWidth: '500px',
+              borderRadius: '16px',
+              width: '90%',
+              maxWidth: '400px',
               padding: '0',
-              boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
-              animation: 'slideUp 0.3s ease-out'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
