@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
@@ -25,6 +25,17 @@ export default function AssetSurveyIntegratedPage() {
   const [purchaseYear, setPurchaseYear] = useState('');
   const [purchaseMonth, setPurchaseMonth] = useState('');
   const [purchaseDay, setPurchaseDay] = useState('');
+
+  // 日付ピッカーモーダル
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempYear, setTempYear] = useState('');
+  const [tempMonth, setTempMonth] = useState('');
+  const [tempDay, setTempDay] = useState('');
+
+  // ドラムロールのスクロール参照
+  const yearScrollRef = useRef<HTMLDivElement>(null);
+  const monthScrollRef = useRef<HTMLDivElement>(null);
+  const dayScrollRef = useRef<HTMLDivElement>(null);
 
   // 和暦変換関数
   const toWareki = (year: number): string => {
@@ -57,20 +68,83 @@ export default function AssetSurveyIntegratedPage() {
   // 日の選択肢（未選択可、選択された年月に応じて変動）
   const dayOptions = useMemo(() => {
     const days: string[] = [];
-    if (!purchaseYear || !purchaseMonth) {
+    const year = tempYear ? parseInt(tempYear, 10) : null;
+    const month = tempMonth ? parseInt(tempMonth, 10) : null;
+    if (!year || !month) {
       for (let d = 1; d <= 31; d++) {
         days.push(d.toString());
       }
     } else {
-      const year = parseInt(purchaseYear, 10);
-      const month = parseInt(purchaseMonth, 10);
       const daysInMonth = new Date(year, month, 0).getDate();
       for (let d = 1; d <= daysInMonth; d++) {
         days.push(d.toString());
       }
     }
     return days;
-  }, [purchaseYear, purchaseMonth]);
+  }, [tempYear, tempMonth]);
+
+  // モーダルを開く際に現在の値をセット
+  const openDatePicker = () => {
+    setTempYear(purchaseYear);
+    setTempMonth(purchaseMonth);
+    setTempDay(purchaseDay);
+    setShowDatePicker(true);
+  };
+
+  // モーダルでの選択を確定
+  const confirmDatePicker = () => {
+    setPurchaseYear(tempYear);
+    setPurchaseMonth(tempMonth);
+    setPurchaseDay(tempDay);
+    setShowDatePicker(false);
+  };
+
+  // モーダルをキャンセル
+  const cancelDatePicker = () => {
+    setShowDatePicker(false);
+  };
+
+  // 日付表示用のフォーマット
+  const formatDisplayDate = () => {
+    if (!purchaseYear) return '選択してください';
+    let display = `${purchaseYear}（${toWareki(parseInt(purchaseYear, 10))}）年`;
+    if (purchaseMonth) {
+      display += ` ${purchaseMonth}月`;
+      if (purchaseDay) {
+        display += ` ${purchaseDay}日`;
+      }
+    }
+    return display;
+  };
+
+  // ドラムロール内の項目の高さ
+  const ITEM_HEIGHT = 44;
+
+  // スクロール位置を選択値に基づいて設定
+  useEffect(() => {
+    if (showDatePicker) {
+      setTimeout(() => {
+        if (yearScrollRef.current && tempYear) {
+          const index = yearOptions.indexOf(tempYear);
+          if (index >= 0) {
+            yearScrollRef.current.scrollTop = index * ITEM_HEIGHT;
+          }
+        }
+        if (monthScrollRef.current && tempMonth) {
+          const index = monthOptions.indexOf(tempMonth);
+          if (index >= 0) {
+            monthScrollRef.current.scrollTop = index * ITEM_HEIGHT;
+          }
+        }
+        if (dayScrollRef.current && tempDay) {
+          const index = dayOptions.indexOf(tempDay);
+          if (index >= 0) {
+            dayScrollRef.current.scrollTop = index * ITEM_HEIGHT;
+          }
+        }
+      }, 100);
+    }
+  }, [showDatePicker, tempYear, tempMonth, tempDay, yearOptions, monthOptions, dayOptions]);
 
   const largeClassOptions = useMemo(() => {
     const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean)));
@@ -342,68 +416,24 @@ export default function AssetSurveyIntegratedPage() {
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
                 購入年月日
               </label>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                {/* 年選択 */}
-                <select
-                  value={purchaseYear}
-                  onChange={(e) => setPurchaseYear(e.target.value)}
-                  style={{
-                    padding: '10px 6px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    minWidth: isMobile ? '120px' : '140px',
-                    background: 'white'
-                  }}
-                >
-                  <option value="">年</option>
-                  {yearOptions.map(year => (
-                    <option key={year} value={year}>
-                      {year}（{toWareki(parseInt(year, 10))}）
-                    </option>
-                  ))}
-                </select>
-                <span style={{ color: '#7f8c8d', fontSize: '14px' }}>年</span>
-
-                {/* 月選択 */}
-                <select
-                  value={purchaseMonth}
-                  onChange={(e) => setPurchaseMonth(e.target.value)}
-                  style={{
-                    padding: '10px 6px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    minWidth: '55px',
-                    background: 'white'
-                  }}
-                >
-                  <option value="">--</option>
-                  {monthOptions.map(month => (
-                    <option key={month} value={month}>{month}</option>
-                  ))}
-                </select>
-                <span style={{ color: '#7f8c8d', fontSize: '14px' }}>月</span>
-
-                {/* 日選択 */}
-                <select
-                  value={purchaseDay}
-                  onChange={(e) => setPurchaseDay(e.target.value)}
-                  style={{
-                    padding: '10px 6px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    minWidth: '55px',
-                    background: 'white'
-                  }}
-                >
-                  <option value="">--</option>
-                  {dayOptions.map(day => (
-                    <option key={day} value={day}>{day}</option>
-                  ))}
-                </select>
-                <span style={{ color: '#7f8c8d', fontSize: '14px' }}>日</span>
+              <div
+                onClick={openDatePicker}
+                style={{
+                  padding: '10px 12px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  minHeight: '42px',
+                  color: purchaseYear ? '#2c3e50' : '#999'
+                }}
+              >
+                <span>{formatDisplayDate()}</span>
+                <span style={{ color: '#999', fontSize: '18px' }}>▼</span>
               </div>
             </div>
             <div>
@@ -950,6 +980,318 @@ export default function AssetSurveyIntegratedPage() {
           <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#27ae60' }}>商品登録</span>
         </button>
       </footer>
+
+      {/* 日付ピッカーモーダル */}
+      {showDatePicker && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={cancelDatePicker}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px 16px 0 0',
+              width: '100%',
+              maxWidth: '500px',
+              padding: '0',
+              boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+              animation: 'slideUp 0.3s ease-out'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* ヘッダー */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
+              borderBottom: '1px solid #eee'
+            }}>
+              <button
+                onClick={cancelDatePicker}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '16px',
+                  color: '#999',
+                  cursor: 'pointer',
+                  padding: '4px 8px'
+                }}
+              >
+                キャンセル
+              </button>
+              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>
+                購入年月日
+              </span>
+              <button
+                onClick={confirmDatePicker}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '16px',
+                  color: '#1976d2',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  padding: '4px 8px'
+                }}
+              >
+                完了
+              </button>
+            </div>
+
+            {/* ドラムロール部分 */}
+            <div style={{
+              display: 'flex',
+              height: '220px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* 選択インジケーター */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '10px',
+                right: '10px',
+                height: `${ITEM_HEIGHT}px`,
+                transform: 'translateY(-50%)',
+                background: '#f0f7ff',
+                borderRadius: '8px',
+                pointerEvents: 'none',
+                zIndex: 1
+              }} />
+
+              {/* 年ドラムロール */}
+              <div style={{ flex: 2, position: 'relative' }}>
+                <div
+                  ref={yearScrollRef}
+                  style={{
+                    height: '100%',
+                    overflowY: 'auto',
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingTop: `${(220 - ITEM_HEIGHT) / 2}px`,
+                    paddingBottom: `${(220 - ITEM_HEIGHT) / 2}px`
+                  }}
+                >
+                  <div
+                    style={{
+                      height: `${ITEM_HEIGHT}px`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      scrollSnapAlign: 'center',
+                      fontSize: '16px',
+                      color: !tempYear ? '#1976d2' : '#999',
+                      fontWeight: !tempYear ? 'bold' : 'normal',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      zIndex: 2
+                    }}
+                    onClick={() => setTempYear('')}
+                  >
+                    未選択
+                  </div>
+                  {yearOptions.map(year => (
+                    <div
+                      key={year}
+                      style={{
+                        height: `${ITEM_HEIGHT}px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        scrollSnapAlign: 'center',
+                        fontSize: '16px',
+                        color: tempYear === year ? '#1976d2' : '#2c3e50',
+                        fontWeight: tempYear === year ? 'bold' : 'normal',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 2
+                      }}
+                      onClick={() => setTempYear(year)}
+                    >
+                      {year}（{toWareki(parseInt(year, 10))}）
+                    </div>
+                  ))}
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  fontSize: '12px',
+                  color: '#999'
+                }}>
+                  年
+                </div>
+              </div>
+
+              {/* 月ドラムロール */}
+              <div style={{ flex: 1, position: 'relative' }}>
+                <div
+                  ref={monthScrollRef}
+                  style={{
+                    height: '100%',
+                    overflowY: 'auto',
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingTop: `${(220 - ITEM_HEIGHT) / 2}px`,
+                    paddingBottom: `${(220 - ITEM_HEIGHT) / 2}px`
+                  }}
+                >
+                  <div
+                    style={{
+                      height: `${ITEM_HEIGHT}px`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      scrollSnapAlign: 'center',
+                      fontSize: '18px',
+                      color: !tempMonth ? '#1976d2' : '#999',
+                      fontWeight: !tempMonth ? 'bold' : 'normal',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      zIndex: 2
+                    }}
+                    onClick={() => setTempMonth('')}
+                  >
+                    --
+                  </div>
+                  {monthOptions.map(month => (
+                    <div
+                      key={month}
+                      style={{
+                        height: `${ITEM_HEIGHT}px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        scrollSnapAlign: 'center',
+                        fontSize: '18px',
+                        color: tempMonth === month ? '#1976d2' : '#2c3e50',
+                        fontWeight: tempMonth === month ? 'bold' : 'normal',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 2
+                      }}
+                      onClick={() => setTempMonth(month)}
+                    >
+                      {month}
+                    </div>
+                  ))}
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  fontSize: '12px',
+                  color: '#999'
+                }}>
+                  月
+                </div>
+              </div>
+
+              {/* 日ドラムロール */}
+              <div style={{ flex: 1, position: 'relative' }}>
+                <div
+                  ref={dayScrollRef}
+                  style={{
+                    height: '100%',
+                    overflowY: 'auto',
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingTop: `${(220 - ITEM_HEIGHT) / 2}px`,
+                    paddingBottom: `${(220 - ITEM_HEIGHT) / 2}px`
+                  }}
+                >
+                  <div
+                    style={{
+                      height: `${ITEM_HEIGHT}px`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      scrollSnapAlign: 'center',
+                      fontSize: '18px',
+                      color: !tempDay ? '#1976d2' : '#999',
+                      fontWeight: !tempDay ? 'bold' : 'normal',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      zIndex: 2
+                    }}
+                    onClick={() => setTempDay('')}
+                  >
+                    --
+                  </div>
+                  {dayOptions.map(day => (
+                    <div
+                      key={day}
+                      style={{
+                        height: `${ITEM_HEIGHT}px`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        scrollSnapAlign: 'center',
+                        fontSize: '18px',
+                        color: tempDay === day ? '#1976d2' : '#2c3e50',
+                        fontWeight: tempDay === day ? 'bold' : 'normal',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 2
+                      }}
+                      onClick={() => setTempDay(day)}
+                    >
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  bottom: '8px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  fontSize: '12px',
+                  color: '#999'
+                }}>
+                  日
+                </div>
+              </div>
+            </div>
+
+            {/* クリアボタン */}
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #eee' }}>
+              <button
+                onClick={() => {
+                  setTempYear('');
+                  setTempMonth('');
+                  setTempDay('');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: '#f5f5f5',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  color: '#666',
+                  cursor: 'pointer'
+                }}
+              >
+                クリア
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
