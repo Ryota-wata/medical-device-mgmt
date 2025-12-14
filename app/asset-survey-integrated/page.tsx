@@ -124,27 +124,55 @@ export default function AssetSurveyIntegratedPage() {
   useEffect(() => {
     if (showDatePicker) {
       setTimeout(() => {
-        if (yearScrollRef.current && tempYear) {
-          const index = yearOptions.indexOf(tempYear);
-          if (index >= 0) {
-            yearScrollRef.current.scrollTop = index * ITEM_HEIGHT;
-          }
+        if (yearScrollRef.current) {
+          const index = tempYear ? yearOptions.indexOf(tempYear) + 1 : 0; // +1 for 未選択
+          yearScrollRef.current.scrollTop = index * ITEM_HEIGHT;
         }
-        if (monthScrollRef.current && tempMonth) {
-          const index = monthOptions.indexOf(tempMonth);
-          if (index >= 0) {
-            monthScrollRef.current.scrollTop = index * ITEM_HEIGHT;
-          }
+        if (monthScrollRef.current) {
+          const index = tempMonth ? monthOptions.indexOf(tempMonth) + 1 : 0; // +1 for --
+          monthScrollRef.current.scrollTop = index * ITEM_HEIGHT;
         }
-        if (dayScrollRef.current && tempDay) {
-          const index = dayOptions.indexOf(tempDay);
-          if (index >= 0) {
-            dayScrollRef.current.scrollTop = index * ITEM_HEIGHT;
-          }
+        if (dayScrollRef.current) {
+          const index = tempDay ? dayOptions.indexOf(tempDay) + 1 : 0; // +1 for --
+          dayScrollRef.current.scrollTop = index * ITEM_HEIGHT;
         }
       }, 100);
     }
-  }, [showDatePicker, tempYear, tempMonth, tempDay, yearOptions, monthOptions, dayOptions]);
+  }, [showDatePicker]);
+
+  // スクロール終了時に中央の項目を選択
+  const handleYearScroll = () => {
+    if (!yearScrollRef.current) return;
+    const scrollTop = yearScrollRef.current.scrollTop;
+    const index = Math.round(scrollTop / ITEM_HEIGHT);
+    if (index === 0) {
+      setTempYear('');
+    } else if (index > 0 && index <= yearOptions.length) {
+      setTempYear(yearOptions[index - 1]);
+    }
+  };
+
+  const handleMonthScroll = () => {
+    if (!monthScrollRef.current) return;
+    const scrollTop = monthScrollRef.current.scrollTop;
+    const index = Math.round(scrollTop / ITEM_HEIGHT);
+    if (index === 0) {
+      setTempMonth('');
+    } else if (index > 0 && index <= monthOptions.length) {
+      setTempMonth(monthOptions[index - 1]);
+    }
+  };
+
+  const handleDayScroll = () => {
+    if (!dayScrollRef.current) return;
+    const scrollTop = dayScrollRef.current.scrollTop;
+    const index = Math.round(scrollTop / ITEM_HEIGHT);
+    if (index === 0) {
+      setTempDay('');
+    } else if (index > 0 && index <= dayOptions.length) {
+      setTempDay(dayOptions[index - 1]);
+    }
+  };
 
   const largeClassOptions = useMemo(() => {
     const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean)));
@@ -1086,6 +1114,7 @@ export default function AssetSurveyIntegratedPage() {
               <div style={{ flex: 2, position: 'relative' }}>
                 <div
                   ref={yearScrollRef}
+                  onScroll={handleYearScroll}
                   style={{
                     height: '100%',
                     overflowY: 'auto',
@@ -1105,11 +1134,9 @@ export default function AssetSurveyIntegratedPage() {
                       fontSize: '16px',
                       color: !tempYear ? '#1976d2' : '#999',
                       fontWeight: !tempYear ? 'bold' : 'normal',
-                      cursor: 'pointer',
                       position: 'relative',
                       zIndex: 2
                     }}
-                    onClick={() => setTempYear('')}
                   >
                     未選択
                   </div>
@@ -1125,11 +1152,9 @@ export default function AssetSurveyIntegratedPage() {
                         fontSize: '16px',
                         color: tempYear === year ? '#1976d2' : '#2c3e50',
                         fontWeight: tempYear === year ? 'bold' : 'normal',
-                        cursor: 'pointer',
                         position: 'relative',
                         zIndex: 2
                       }}
-                      onClick={() => setTempYear(year)}
                     >
                       {year}（{toWareki(parseInt(year, 10))}）
                     </div>
@@ -1141,6 +1166,7 @@ export default function AssetSurveyIntegratedPage() {
               <div style={{ flex: 1, position: 'relative' }}>
                 <div
                   ref={monthScrollRef}
+                  onScroll={handleMonthScroll}
                   style={{
                     height: '100%',
                     overflowY: 'auto',
@@ -1160,11 +1186,9 @@ export default function AssetSurveyIntegratedPage() {
                       fontSize: '18px',
                       color: !tempMonth ? '#1976d2' : '#999',
                       fontWeight: !tempMonth ? 'bold' : 'normal',
-                      cursor: 'pointer',
                       position: 'relative',
                       zIndex: 2
                     }}
-                    onClick={() => setTempMonth('')}
                   >
                     --
                   </div>
@@ -1180,11 +1204,9 @@ export default function AssetSurveyIntegratedPage() {
                         fontSize: '18px',
                         color: tempMonth === month ? '#1976d2' : '#2c3e50',
                         fontWeight: tempMonth === month ? 'bold' : 'normal',
-                        cursor: 'pointer',
                         position: 'relative',
                         zIndex: 2
                       }}
-                      onClick={() => setTempMonth(month)}
                     >
                       {month}
                     </div>
@@ -1196,6 +1218,7 @@ export default function AssetSurveyIntegratedPage() {
               <div style={{ flex: 1, position: 'relative' }}>
                 <div
                   ref={dayScrollRef}
+                  onScroll={handleDayScroll}
                   style={{
                     height: '100%',
                     overflowY: 'auto',
@@ -1215,11 +1238,9 @@ export default function AssetSurveyIntegratedPage() {
                       fontSize: '18px',
                       color: !tempDay ? '#1976d2' : '#999',
                       fontWeight: !tempDay ? 'bold' : 'normal',
-                      cursor: 'pointer',
                       position: 'relative',
                       zIndex: 2
                     }}
-                    onClick={() => setTempDay('')}
                   >
                     --
                   </div>
@@ -1235,11 +1256,9 @@ export default function AssetSurveyIntegratedPage() {
                         fontSize: '18px',
                         color: tempDay === day ? '#1976d2' : '#2c3e50',
                         fontWeight: tempDay === day ? 'bold' : 'normal',
-                        cursor: 'pointer',
                         position: 'relative',
                         zIndex: 2
                       }}
-                      onClick={() => setTempDay(day)}
                     >
                       {day}
                     </div>
