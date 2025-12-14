@@ -235,7 +235,10 @@ function RemodelApplicationListContent() {
   const openWindow = (url: string, name: string, size: { width: number; height: number }) => {
     const left = (window.screen.width - size.width) / 2;
     const top = (window.screen.height - size.height) / 2;
-    window.open(url, name, `width=${size.width},height=${size.height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+    // GitHub Pages対応: basePathを付与
+    const basePath = process.env.NODE_ENV === 'production' ? '/medical-device-mgmt' : '';
+    const fullUrl = `${basePath}${url}`;
+    window.open(fullUrl, name, `width=${size.width},height=${size.height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
   };
 
   // 原本登録モーダルを開く
