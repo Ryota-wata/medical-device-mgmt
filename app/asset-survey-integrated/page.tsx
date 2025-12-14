@@ -21,6 +21,57 @@ export default function AssetSurveyIntegratedPage() {
   const [maker, setMaker] = useState('');
   const [model, setModel] = useState('');
 
+  // 購入年月日（年、月、日を個別に管理）
+  const [purchaseYear, setPurchaseYear] = useState('');
+  const [purchaseMonth, setPurchaseMonth] = useState('');
+  const [purchaseDay, setPurchaseDay] = useState('');
+
+  // 和暦変換関数
+  const toWareki = (year: number): string => {
+    if (year >= 2019) return `令和${year - 2018}`;
+    if (year >= 1989) return `平成${year - 1988}`;
+    if (year >= 1926) return `昭和${year - 1925}`;
+    if (year >= 1912) return `大正${year - 1911}`;
+    return `明治${year - 1867}`;
+  };
+
+  // 年の選択肢（1950年〜現在+1年）
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years: string[] = [];
+    for (let y = currentYear + 1; y >= 1950; y--) {
+      years.push(y.toString());
+    }
+    return years;
+  }, []);
+
+  // 月の選択肢（未選択可）
+  const monthOptions = useMemo(() => {
+    const months: string[] = [];
+    for (let m = 1; m <= 12; m++) {
+      months.push(m.toString());
+    }
+    return months;
+  }, []);
+
+  // 日の選択肢（未選択可、選択された年月に応じて変動）
+  const dayOptions = useMemo(() => {
+    const days: string[] = [];
+    if (!purchaseYear || !purchaseMonth) {
+      for (let d = 1; d <= 31; d++) {
+        days.push(d.toString());
+      }
+    } else {
+      const year = parseInt(purchaseYear, 10);
+      const month = parseInt(purchaseMonth, 10);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        days.push(d.toString());
+      }
+    }
+    return days;
+  }, [purchaseYear, purchaseMonth]);
+
   const largeClassOptions = useMemo(() => {
     const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean)));
     return uniqueClasses;
@@ -291,17 +342,69 @@ export default function AssetSurveyIntegratedPage() {
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
                 購入年月日
               </label>
-              <input
-                type="date"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* 年選択 */}
+                <select
+                  value={purchaseYear}
+                  onChange={(e) => setPurchaseYear(e.target.value)}
+                  style={{
+                    padding: '10px 6px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    minWidth: isMobile ? '120px' : '140px',
+                    background: 'white'
+                  }}
+                >
+                  <option value="">年</option>
+                  {yearOptions.map(year => (
+                    <option key={year} value={year}>
+                      {year}（{toWareki(parseInt(year, 10))}）
+                    </option>
+                  ))}
+                </select>
+                <span style={{ color: '#7f8c8d', fontSize: '14px' }}>年</span>
+
+                {/* 月選択 */}
+                <select
+                  value={purchaseMonth}
+                  onChange={(e) => setPurchaseMonth(e.target.value)}
+                  style={{
+                    padding: '10px 6px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    minWidth: '55px',
+                    background: 'white'
+                  }}
+                >
+                  <option value="">--</option>
+                  {monthOptions.map(month => (
+                    <option key={month} value={month}>{month}</option>
+                  ))}
+                </select>
+                <span style={{ color: '#7f8c8d', fontSize: '14px' }}>月</span>
+
+                {/* 日選択 */}
+                <select
+                  value={purchaseDay}
+                  onChange={(e) => setPurchaseDay(e.target.value)}
+                  style={{
+                    padding: '10px 6px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    minWidth: '55px',
+                    background: 'white'
+                  }}
+                >
+                  <option value="">--</option>
+                  {dayOptions.map(day => (
+                    <option key={day} value={day}>{day}</option>
+                  ))}
+                </select>
+                <span style={{ color: '#7f8c8d', fontSize: '14px' }}>日</span>
+              </div>
             </div>
             <div>
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
