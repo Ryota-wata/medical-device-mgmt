@@ -1049,10 +1049,22 @@ export default function AssetSurveyIntegratedPage() {
               </button>
             </div>
 
+            {/* ラベル行 */}
+            <div style={{
+              display: 'flex',
+              padding: '8px 10px',
+              borderBottom: '1px solid #eee',
+              background: '#fafafa'
+            }}>
+              <div style={{ flex: 2, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>年</div>
+              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>月</div>
+              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>日</div>
+            </div>
+
             {/* ドラムロール部分 */}
             <div style={{
               display: 'flex',
-              height: '220px',
+              height: '200px',
               position: 'relative',
               overflow: 'hidden'
             }}>
@@ -1079,8 +1091,8 @@ export default function AssetSurveyIntegratedPage() {
                     overflowY: 'auto',
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
-                    paddingTop: `${(220 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(220 - ITEM_HEIGHT) / 2}px`
+                    paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
+                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
                   }}
                 >
                   <div
@@ -1123,16 +1135,6 @@ export default function AssetSurveyIntegratedPage() {
                     </div>
                   ))}
                 </div>
-                <div style={{
-                  position: 'absolute',
-                  bottom: '8px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  fontSize: '12px',
-                  color: '#999'
-                }}>
-                  年
-                </div>
               </div>
 
               {/* 月ドラムロール */}
@@ -1144,8 +1146,8 @@ export default function AssetSurveyIntegratedPage() {
                     overflowY: 'auto',
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
-                    paddingTop: `${(220 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(220 - ITEM_HEIGHT) / 2}px`
+                    paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
+                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
                   }}
                 >
                   <div
@@ -1188,16 +1190,6 @@ export default function AssetSurveyIntegratedPage() {
                     </div>
                   ))}
                 </div>
-                <div style={{
-                  position: 'absolute',
-                  bottom: '8px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  fontSize: '12px',
-                  color: '#999'
-                }}>
-                  月
-                </div>
               </div>
 
               {/* 日ドラムロール */}
@@ -1209,8 +1201,8 @@ export default function AssetSurveyIntegratedPage() {
                     overflowY: 'auto',
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
-                    paddingTop: `${(220 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(220 - ITEM_HEIGHT) / 2}px`
+                    paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
+                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
                   }}
                 >
                   <div
@@ -1252,16 +1244,6 @@ export default function AssetSurveyIntegratedPage() {
                       {day}
                     </div>
                   ))}
-                </div>
-                <div style={{
-                  position: 'absolute',
-                  bottom: '8px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  fontSize: '12px',
-                  color: '#999'
-                }}>
-                  日
                 </div>
               </div>
             </div>
