@@ -1274,6 +1274,10 @@ export default function AssetSurveyIntegratedPage() {
                   setTempYear('');
                   setTempMonth('');
                   setTempDay('');
+                  // スクロール位置もリセット
+                  if (yearScrollRef.current) yearScrollRef.current.scrollTop = 0;
+                  if (monthScrollRef.current) monthScrollRef.current.scrollTop = 0;
+                  if (dayScrollRef.current) dayScrollRef.current.scrollTop = 0;
                 }}
                 style={{
                   width: '100%',

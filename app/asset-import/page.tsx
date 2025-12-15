@@ -129,7 +129,7 @@ export default function AssetImportPage() {
   };
 
   const getFileTypeLabel = (type: FileType): string => {
-    return type === 'fixed-asset' ? '固定資産管理台帳' : 'ME管理台帳';
+    return type === 'fixed-asset' ? '固定資産管理台帳' : 'その他台帳';
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -306,7 +306,7 @@ export default function AssetImportPage() {
               {uploadedFiles.length === 0 ? 'Excelファイルをアップロードしてください' : '追加のファイルをアップロード'}
             </h2>
             <p style={{ fontSize: isMobile ? '14px' : '15px', color: '#7f8c8d', lineHeight: 1.6 }}>
-              固定資産管理台帳またはME管理台帳のExcelファイル（.xlsx, .xls）またはCSVファイル（.csv）をアップロードできます。
+              固定資産管理台帳またはその他台帳のExcelファイル（.xlsx, .xls）またはCSVファイル（.csv）をアップロードできます。
             </p>
           </div>
 
@@ -351,7 +351,7 @@ export default function AssetImportPage() {
                   onChange={(e) => setSelectedFileType(e.target.value as FileType)}
                   style={{ cursor: 'pointer' }}
                 />
-                <span>ME管理台帳</span>
+                <span>その他台帳</span>
                 {hasMELedgerFile && <span style={{ color: '#4caf50', fontSize: '12px' }}>✓ 済</span>}
               </label>
             </div>
