@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
-import { HospitalFacilityMaster, HospitalFacilityStatus } from '@/lib/types/hospitalFacility';
+import { HospitalFacilityMaster } from '@/lib/types/hospitalFacility';
 import { HospitalFacilityFormModal } from './components/HospitalFacilityFormModal';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
@@ -35,7 +35,6 @@ function HospitalFacilityMasterContent() {
   const [filterCurrentDepartment, setFilterCurrentDepartment] = useState('');
   const [filterNewFloor, setFilterNewFloor] = useState('');
   const [filterNewDepartment, setFilterNewDepartment] = useState('');
-  const [filterStatus, setFilterStatus] = useState<HospitalFacilityStatus | ''>('');
 
   // モーダル状態
   const [showNewModal, setShowNewModal] = useState(false);
@@ -144,14 +143,12 @@ function HospitalFacilityMasterContent() {
     const matchNewDepartment =
       !filterNewDepartment ||
       facility.newDepartment.toLowerCase().includes(filterNewDepartment.toLowerCase());
-    const matchStatus = !filterStatus || facility.status === filterStatus;
 
     return (
       matchCurrentFloor &&
       matchCurrentDepartment &&
       matchNewFloor &&
-      matchNewDepartment &&
-      matchStatus
+      matchNewDepartment
     );
   });
 
@@ -193,36 +190,10 @@ function HospitalFacilityMasterContent() {
 
   const handleEditSubmit = (data: Partial<HospitalFacilityMaster>) => {
     if (selectedFacility) {
-      // ステータス判定: 新居情報が全て入力されていれば mapped に
-      const hasNewLocation = data.newFloor && data.newDepartment && data.newRoom;
-      const newStatus = hasNewLocation ? 'mapped' : 'draft';
-      updateFacility(selectedFacility.id, { ...data, status: newStatus as HospitalFacilityStatus });
+      updateFacility(selectedFacility.id, data);
       setShowEditModal(false);
       setSelectedFacility(null);
     }
-  };
-
-  const getStatusBadge = (status: HospitalFacilityStatus) => {
-    const styles: Record<HospitalFacilityStatus, { bg: string; color: string; label: string }> = {
-      draft: { bg: '#fef3c7', color: '#92400e', label: '下書き' },
-      mapped: { bg: '#dbeafe', color: '#1e40af', label: 'マッピング済' },
-      completed: { bg: '#dcfce7', color: '#166534', label: '完了' },
-    };
-    const style = styles[status];
-    return (
-      <span
-        style={{
-          padding: '4px 10px',
-          borderRadius: '12px',
-          fontSize: '12px',
-          fontWeight: 600,
-          background: style.bg,
-          color: style.color,
-        }}
-      >
-        {style.label}
-      </span>
-    );
   };
 
   return (
@@ -454,35 +425,6 @@ function HospitalFacilityMasterContent() {
               }}
             />
           </div>
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: isMobile ? '12px' : '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-                color: '#2c3e50',
-              }}
-            >
-              ステータス
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as HospitalFacilityStatus | '')}
-              style={{
-                width: '100%',
-                padding: isMobile ? '8px' : '10px',
-                border: '1px solid #d0d0d0',
-                borderRadius: '6px',
-                fontSize: isMobile ? '13px' : '14px',
-              }}
-            >
-              <option value="">すべて</option>
-              <option value="draft">下書き</option>
-              <option value="mapped">マッピング済</option>
-              <option value="completed">完了</option>
-            </select>
-          </div>
         </div>
       )}
 
@@ -515,11 +457,8 @@ function HospitalFacilityMasterContent() {
                 }}
               >
                 <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
-                      {facility.id}
-                    </div>
-                    {getStatusBadge(facility.status)}
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
+                    {facility.id}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
@@ -583,7 +522,6 @@ function HospitalFacilityMasterContent() {
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 階</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 部門</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 部屋名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>ステータス</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
@@ -597,7 +535,6 @@ function HospitalFacilityMasterContent() {
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newFloor || '-'}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newDepartment || '-'}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newRoom || '-'}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center' }}>{getStatusBadge(facility.status)}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
