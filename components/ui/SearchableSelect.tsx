@@ -94,11 +94,13 @@ export function SearchableSelect({
           disabled={disabled}
           style={{
             width: '100%',
-            padding: isMobile ? '10px' : '10px 12px',
+            paddingTop: '10px',
+            paddingBottom: '10px',
+            paddingLeft: isMobile ? '10px' : '12px',
             paddingRight: '36px',
             border: '1px solid #d0d0d0',
             borderRadius: '6px',
-            fontSize: isMobile ? '14px' : '14px',
+            fontSize: '14px',
             background: disabled ? '#f8f9fa' : 'white',
             cursor: disabled ? 'not-allowed' : 'text',
             boxSizing: 'border-box'

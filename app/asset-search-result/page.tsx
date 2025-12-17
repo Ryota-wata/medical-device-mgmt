@@ -484,6 +484,22 @@ export default function AssetSearchResultPage() {
         >
           更新申請
         </button>
+        <div style={{ flex: 1 }} />
+        <button
+          style={{
+            padding: '8px 16px',
+            background: '#9b59b6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+          onClick={() => router.push('/inventory')}
+        >
+          棚卸しを開始
+        </button>
       </div>
 
       {/* テーブル表示 */}
