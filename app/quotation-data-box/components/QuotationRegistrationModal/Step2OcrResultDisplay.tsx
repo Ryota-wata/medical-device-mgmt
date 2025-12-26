@@ -143,7 +143,9 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   // 資産マスタを別ウィンドウで開いて選択させる
   const handleOpenAssetMasterForSelection = (ocrItemIndex: number) => {
     setSelectingRow(ocrItemIndex);
-    window.open('/ship-asset-master?mode=select', '_blank', 'width=1200,height=800');
+    // GitHub Pages対応: basePathを付与
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    window.open(`${basePath}/ship-asset-master?mode=select`, '_blank', 'width=1200,height=800');
   };
 
   // 確定状態を取得

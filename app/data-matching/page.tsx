@@ -76,9 +76,11 @@ export default function DataMatchingPage() {
     const height = 800;
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
+    // GitHub Pages対応: basePathを付与
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
     const newWindow = window.open(
-      '/data-matching/ledger',
+      `${basePath}/data-matching/ledger`,
       'ledgerWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );

@@ -236,7 +236,7 @@ function RemodelApplicationListContent() {
     const left = (window.screen.width - size.width) / 2;
     const top = (window.screen.height - size.height) / 2;
     // GitHub Pages対応: basePathを付与
-    const basePath = process.env.NODE_ENV === 'production' ? '/medical-device-mgmt' : '';
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
     const fullUrl = `${basePath}${url}`;
     window.open(fullUrl, name, `width=${size.width},height=${size.height},left=${left},top=${top},resizable=yes,scrollbars=yes`);
   };

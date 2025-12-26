@@ -212,9 +212,11 @@ export default function AssetSearchResultPage() {
     const height = 800;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
+    // GitHub Pages対応: basePathを付与
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
     window.open(
-      '/asset-master',
+      `${basePath}/asset-master`,
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
