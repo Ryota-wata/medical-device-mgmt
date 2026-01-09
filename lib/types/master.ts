@@ -39,6 +39,18 @@ export interface AssetMaster {
   updatedAt: string;
 }
 
+// SHIP部署マスタの型定義
+export interface DepartmentMaster {
+  id: string;
+  division: string;        // 部門
+  department: string;      // 部署
+  roomCategory1: string;   // 諸室区分①
+  roomCategory2: string;   // 諸室区分②
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
 // フィルター条件
 export interface FacilityFilter {
   facilityCode?: string;

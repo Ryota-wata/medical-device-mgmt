@@ -223,42 +223,6 @@ export default function ShipFacilityMasterPage() {
       }}>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            施設コード
-          </label>
-          <input
-            type="text"
-            value={filterFacilityCode}
-            onChange={(e) => setFilterFacilityCode(e.target.value)}
-            placeholder="F001"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            施設名
-          </label>
-          <input
-            type="text"
-            value={filterFacilityName}
-            onChange={(e) => setFilterFacilityName(e.target.value)}
-            placeholder="施設名で検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
             都道府県
           </label>
           <input
@@ -284,6 +248,42 @@ export default function ShipFacilityMasterPage() {
             value={filterFoundingBody}
             onChange={(e) => setFilterFoundingBody(e.target.value)}
             placeholder="国立、公立、医療法人"
+            style={{
+              width: '100%',
+              padding: isMobile ? '8px' : '10px',
+              border: '1px solid #d0d0d0',
+              borderRadius: '6px',
+              fontSize: isMobile ? '13px' : '14px'
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+            施設コード
+          </label>
+          <input
+            type="text"
+            value={filterFacilityCode}
+            onChange={(e) => setFilterFacilityCode(e.target.value)}
+            placeholder="F001"
+            style={{
+              width: '100%',
+              padding: isMobile ? '8px' : '10px',
+              border: '1px solid #d0d0d0',
+              borderRadius: '6px',
+              fontSize: isMobile ? '13px' : '14px'
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+            施設名
+          </label>
+          <input
+            type="text"
+            value={filterFacilityName}
+            onChange={(e) => setFilterFacilityName(e.target.value)}
+            placeholder="施設名で検索"
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',

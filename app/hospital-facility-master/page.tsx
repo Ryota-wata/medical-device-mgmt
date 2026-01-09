@@ -31,8 +31,10 @@ function HospitalFacilityMasterContent() {
   const facilityOptions = masterFacilities.map(f => f.facilityName);
 
   // フィルター状態
+  const [filterCurrentBuilding, setFilterCurrentBuilding] = useState('');
   const [filterCurrentFloor, setFilterCurrentFloor] = useState('');
   const [filterCurrentDepartment, setFilterCurrentDepartment] = useState('');
+  const [filterNewBuilding, setFilterNewBuilding] = useState('');
   const [filterNewFloor, setFilterNewFloor] = useState('');
   const [filterNewDepartment, setFilterNewDepartment] = useState('');
 
@@ -53,12 +55,14 @@ function HospitalFacilityMasterContent() {
           id: 'HF00001',
           hospitalId: firstFacility,
           hospitalName: firstFacility,
+          currentBuilding: '本館',
           currentFloor: '3F',
           currentDepartment: '手術部門',
-          currentRoom: '手術室1',
+          currentSection: '手術室1',
+          newBuilding: '新館',
           newFloor: '4F',
           newDepartment: '手術部門',
-          newRoom: '手術室A',
+          newSection: '手術室A',
           status: 'mapped',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
@@ -67,12 +71,14 @@ function HospitalFacilityMasterContent() {
           id: 'HF00002',
           hospitalId: firstFacility,
           hospitalName: firstFacility,
+          currentBuilding: '本館',
           currentFloor: '3F',
           currentDepartment: '手術部門',
-          currentRoom: '手術室2',
+          currentSection: '手術室2',
+          newBuilding: '新館',
           newFloor: '4F',
           newDepartment: '手術部門',
-          newRoom: '手術室B',
+          newSection: '手術室B',
           status: 'completed',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
@@ -81,12 +87,14 @@ function HospitalFacilityMasterContent() {
           id: 'HF00003',
           hospitalId: firstFacility,
           hospitalName: firstFacility,
+          currentBuilding: '本館',
           currentFloor: '2F',
           currentDepartment: '外来',
-          currentRoom: '診察室1',
+          currentSection: '診察室1',
+          newBuilding: '新館',
           newFloor: '3F',
           newDepartment: '外来',
-          newRoom: '診察室A',
+          newSection: '診察室A',
           status: 'draft',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
@@ -95,12 +103,14 @@ function HospitalFacilityMasterContent() {
           id: 'HF00004',
           hospitalId: secondFacility,
           hospitalName: secondFacility,
+          currentBuilding: 'A棟',
           currentFloor: '1F',
           currentDepartment: '救急部門',
-          currentRoom: '救急処置室',
+          currentSection: '救急処置室',
+          newBuilding: 'A棟',
           newFloor: '1F',
           newDepartment: '救急部門',
-          newRoom: '救急処置室A',
+          newSection: '救急処置室A',
           status: 'draft',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
@@ -109,12 +119,14 @@ function HospitalFacilityMasterContent() {
           id: 'HF00005',
           hospitalId: secondFacility,
           hospitalName: secondFacility,
+          currentBuilding: 'B棟',
           currentFloor: '2F',
           currentDepartment: '検査部門',
-          currentRoom: '検査室1',
+          currentSection: '検査室1',
+          newBuilding: 'B棟',
           newFloor: '2F',
           newDepartment: '検査部門',
-          newRoom: '検査室A',
+          newSection: '検査室A',
           status: 'draft',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
@@ -131,12 +143,18 @@ function HospitalFacilityMasterContent() {
 
   // フィルタリング処理
   const filteredFacilities = hospitalFacilities.filter((facility) => {
+    const matchCurrentBuilding =
+      !filterCurrentBuilding ||
+      facility.currentBuilding.toLowerCase().includes(filterCurrentBuilding.toLowerCase());
     const matchCurrentFloor =
       !filterCurrentFloor ||
       facility.currentFloor.toLowerCase().includes(filterCurrentFloor.toLowerCase());
     const matchCurrentDepartment =
       !filterCurrentDepartment ||
       facility.currentDepartment.toLowerCase().includes(filterCurrentDepartment.toLowerCase());
+    const matchNewBuilding =
+      !filterNewBuilding ||
+      facility.newBuilding.toLowerCase().includes(filterNewBuilding.toLowerCase());
     const matchNewFloor =
       !filterNewFloor ||
       facility.newFloor.toLowerCase().includes(filterNewFloor.toLowerCase());
@@ -145,8 +163,10 @@ function HospitalFacilityMasterContent() {
       facility.newDepartment.toLowerCase().includes(filterNewDepartment.toLowerCase());
 
     return (
+      matchCurrentBuilding &&
       matchCurrentFloor &&
       matchCurrentDepartment &&
+      matchNewBuilding &&
       matchNewFloor &&
       matchNewDepartment
     );
@@ -174,12 +194,14 @@ function HospitalFacilityMasterContent() {
       id: generateFacilityId(),
       hospitalId: selectedFacilityName,
       hospitalName: selectedFacilityName,
+      currentBuilding: data.currentBuilding || '',
       currentFloor: data.currentFloor || '',
       currentDepartment: data.currentDepartment || '',
-      currentRoom: data.currentRoom || '',
+      currentSection: data.currentSection || '',
+      newBuilding: data.newBuilding || '',
       newFloor: data.newFloor || '',
       newDepartment: data.newDepartment || '',
-      newRoom: data.newRoom || '',
+      newSection: data.newSection || '',
       status: 'draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -317,10 +339,36 @@ function HospitalFacilityMasterContent() {
             padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
             borderBottom: '2px solid #e0e0e0',
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(150px, 1fr))',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(120px, 1fr))',
             gap: isMobile ? '12px' : '16px',
           }}
         >
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: isMobile ? '12px' : '13px',
+                fontWeight: 600,
+                marginBottom: '6px',
+                color: '#2c3e50',
+              }}
+            >
+              現状 - 棟
+            </label>
+            <input
+              type="text"
+              value={filterCurrentBuilding}
+              onChange={(e) => setFilterCurrentBuilding(e.target.value)}
+              placeholder="本館"
+              style={{
+                width: '100%',
+                padding: isMobile ? '8px' : '10px',
+                border: '1px solid #d0d0d0',
+                borderRadius: '6px',
+                fontSize: isMobile ? '13px' : '14px',
+              }}
+            />
+          </div>
           <div>
             <label
               style={{
@@ -380,20 +428,20 @@ function HospitalFacilityMasterContent() {
                 fontSize: isMobile ? '12px' : '13px',
                 fontWeight: 600,
                 marginBottom: '6px',
-                color: '#2c3e50',
+                color: '#8e44ad',
               }}
             >
-              新居 - 階
+              新居 - 棟
             </label>
             <input
               type="text"
-              value={filterNewFloor}
-              onChange={(e) => setFilterNewFloor(e.target.value)}
-              placeholder="4F"
+              value={filterNewBuilding}
+              onChange={(e) => setFilterNewBuilding(e.target.value)}
+              placeholder="新館"
               style={{
                 width: '100%',
                 padding: isMobile ? '8px' : '10px',
-                border: '1px solid #d0d0d0',
+                border: '1px solid #d7bde2',
                 borderRadius: '6px',
                 fontSize: isMobile ? '13px' : '14px',
               }}
@@ -406,7 +454,33 @@ function HospitalFacilityMasterContent() {
                 fontSize: isMobile ? '12px' : '13px',
                 fontWeight: 600,
                 marginBottom: '6px',
-                color: '#2c3e50',
+                color: '#8e44ad',
+              }}
+            >
+              新居 - 階
+            </label>
+            <input
+              type="text"
+              value={filterNewFloor}
+              onChange={(e) => setFilterNewFloor(e.target.value)}
+              placeholder="4F"
+              style={{
+                width: '100%',
+                padding: isMobile ? '8px' : '10px',
+                border: '1px solid #d7bde2',
+                borderRadius: '6px',
+                fontSize: isMobile ? '13px' : '14px',
+              }}
+            />
+          </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: isMobile ? '12px' : '13px',
+                fontWeight: 600,
+                marginBottom: '6px',
+                color: '#8e44ad',
               }}
             >
               新居 - 部門
@@ -419,7 +493,7 @@ function HospitalFacilityMasterContent() {
               style={{
                 width: '100%',
                 padding: isMobile ? '8px' : '10px',
-                border: '1px solid #d0d0d0',
+                border: '1px solid #d7bde2',
                 borderRadius: '6px',
                 fontSize: isMobile ? '13px' : '14px',
               }}
@@ -456,19 +530,14 @@ function HospitalFacilityMasterContent() {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                 }}
               >
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
-                    {facility.id}
-                  </div>
-                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
                   <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '6px' }}>
                     <div style={{ fontWeight: 600, color: '#7f8c8d', marginBottom: '6px' }}>現状</div>
-                    <div>{facility.currentFloor} / {facility.currentDepartment} / {facility.currentRoom}</div>
+                    <div>{facility.currentBuilding} / {facility.currentFloor} / {facility.currentDepartment} / {facility.currentSection}</div>
                   </div>
                   <div style={{ background: '#f0f9ff', padding: '12px', borderRadius: '6px' }}>
                     <div style={{ fontWeight: 600, color: '#7f8c8d', marginBottom: '6px' }}>新居</div>
-                    <div>{facility.newFloor || '-'} / {facility.newDepartment || '-'} / {facility.newRoom || '-'}</div>
+                    <div>{facility.newBuilding || '-'} / {facility.newFloor || '-'} / {facility.newDepartment || '-'} / {facility.newSection || '-'}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -515,26 +584,28 @@ function HospitalFacilityMasterContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>ID</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap', background: '#f8f9fa' }}>現状 - 棟</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap', background: '#f8f9fa' }}>現状 - 階</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap', background: '#f8f9fa' }}>現状 - 部門</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap', background: '#f8f9fa' }}>現状 - 部屋名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap', background: '#f8f9fa' }}>現状 - 部署</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 棟</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 階</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 部門</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 部屋名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#8e44ad', whiteSpace: 'nowrap', background: '#f5f0ff' }}>新居 - 部署</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredFacilities.map((facility, index) => (
                     <tr key={facility.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.id}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.currentBuilding}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.currentFloor}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.currentDepartment}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.currentRoom}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.currentSection}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newBuilding || '-'}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newFloor || '-'}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newDepartment || '-'}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newRoom || '-'}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#8e44ad', background: index % 2 === 0 ? '#faf8fc' : '#f5f0ff' }}>{facility.newSection || '-'}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button

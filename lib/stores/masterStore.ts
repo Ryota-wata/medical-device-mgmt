@@ -1,9 +1,10 @@
 import { create } from 'zustand';
-import { FacilityMaster, AssetMaster } from '@/lib/types/master';
+import { FacilityMaster, AssetMaster, DepartmentMaster } from '@/lib/types/master';
 
 interface MasterStore {
   facilities: FacilityMaster[];
   assets: AssetMaster[];
+  departments: DepartmentMaster[];
 
   // Facility actions
   setFacilities: (facilities: FacilityMaster[]) => void;
@@ -19,9 +20,17 @@ interface MasterStore {
   deleteAsset: (id: string) => void;
   getAssetById: (id: string) => AssetMaster | undefined;
 
+  // Department actions
+  setDepartments: (departments: DepartmentMaster[]) => void;
+  addDepartment: (department: DepartmentMaster) => void;
+  updateDepartment: (id: string, department: Partial<DepartmentMaster>) => void;
+  deleteDepartment: (id: string) => void;
+  getDepartmentById: (id: string) => DepartmentMaster | undefined;
+
   // Search functions
   searchFacilities: (query: string) => FacilityMaster[];
   searchAssets: (query: string) => AssetMaster[];
+  searchDepartments: (query: string) => DepartmentMaster[];
 }
 
 // サンプル施設マスタデータ（20件）
@@ -35,6 +44,7 @@ const initialFacilities: FacilityMaster[] = [
     department: '外科',
     section: '手術室',
     prefecture: '東京都',
+    foundingBody: '国立',
     city: '新宿区',
     address: '西新宿1-1-1',
     postalCode: '160-0023',
@@ -55,6 +65,7 @@ const initialFacilities: FacilityMaster[] = [
     department: '内科',
     section: '診察室',
     prefecture: '神奈川県',
+    foundingBody: '公立',
     city: '横浜市',
     address: '中区本町1-1',
     postalCode: '231-0005',
@@ -75,6 +86,7 @@ const initialFacilities: FacilityMaster[] = [
     department: '小児科',
     section: '受付',
     prefecture: '大阪府',
+    foundingBody: '医療法人',
     city: '大阪市',
     address: '北区梅田1-1-1',
     postalCode: '530-0001',
@@ -95,6 +107,7 @@ const initialFacilities: FacilityMaster[] = [
     department: '整形外科',
     section: 'リハビリ室',
     prefecture: '愛知県',
+    foundingBody: '国立',
     city: '名古屋市',
     address: '中区栄1-1-1',
     postalCode: '460-0008',
@@ -115,6 +128,7 @@ const initialFacilities: FacilityMaster[] = [
     department: '循環器科',
     section: '検査室',
     prefecture: '福岡県',
+    foundingBody: '公立',
     city: '福岡市',
     address: '博多区博多駅前1-1',
     postalCode: '812-0011',
@@ -131,6 +145,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC006',
     facilityName: '札幌記念病院',
     prefecture: '北海道',
+    foundingBody: '医療法人',
     city: '札幌市',
     address: '中央区北1条西1-1',
     postalCode: '060-0001',
@@ -147,6 +162,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC007',
     facilityName: '仙台総合医療センター',
     prefecture: '宮城県',
+    foundingBody: '公立',
     city: '仙台市',
     address: '青葉区中央1-1-1',
     postalCode: '980-0021',
@@ -163,6 +179,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC008',
     facilityName: '神戸中央クリニック',
     prefecture: '兵庫県',
+    foundingBody: '医療法人',
     city: '神戸市',
     address: '中央区三宮町1-1-1',
     postalCode: '650-0021',
@@ -179,6 +196,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC009',
     facilityName: '京都大学病院',
     prefecture: '京都府',
+    foundingBody: '国立',
     city: '京都市',
     address: '左京区聖護院川原町54',
     postalCode: '606-8507',
@@ -195,6 +213,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC010',
     facilityName: '広島県立病院',
     prefecture: '広島県',
+    foundingBody: '公立',
     city: '広島市',
     address: '中区基町1-1',
     postalCode: '730-0011',
@@ -211,6 +230,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC011',
     facilityName: '千葉メディカルセンター',
     prefecture: '千葉県',
+    foundingBody: '公立',
     city: '千葉市',
     address: '中央区新町1-1',
     postalCode: '260-0028',
@@ -227,6 +247,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC012',
     facilityName: '埼玉協同病院',
     prefecture: '埼玉県',
+    foundingBody: '医療法人',
     city: 'さいたま市',
     address: '浦和区高砂1-1-1',
     postalCode: '330-0063',
@@ -243,6 +264,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC013',
     facilityName: '静岡県総合病院',
     prefecture: '静岡県',
+    foundingBody: '公立',
     city: '静岡市',
     address: '葵区呉服町1-1',
     postalCode: '420-0031',
@@ -259,6 +281,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC014',
     facilityName: '岡山中央医療センター',
     prefecture: '岡山県',
+    foundingBody: '国立',
     city: '岡山市',
     address: '北区大供1-1-1',
     postalCode: '700-0913',
@@ -275,6 +298,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC015',
     facilityName: '熊本赤十字病院',
     prefecture: '熊本県',
+    foundingBody: '日本赤十字社',
     city: '熊本市',
     address: '中央区水前寺1-1-1',
     postalCode: '862-0950',
@@ -291,6 +315,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC016',
     facilityName: '鹿児島市立病院',
     prefecture: '鹿児島県',
+    foundingBody: '公立',
     city: '鹿児島市',
     address: '中央町1-1',
     postalCode: '890-0053',
@@ -307,6 +332,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC017',
     facilityName: '新潟大学医歯学総合病院',
     prefecture: '新潟県',
+    foundingBody: '国立',
     city: '新潟市',
     address: '中央区旭町通1-1',
     postalCode: '951-8520',
@@ -323,6 +349,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC018',
     facilityName: '金沢医療センター',
     prefecture: '石川県',
+    foundingBody: '国立',
     city: '金沢市',
     address: '香林坊1-1-1',
     postalCode: '920-0981',
@@ -339,6 +366,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC019',
     facilityName: '長野県立こども病院',
     prefecture: '長野県',
+    foundingBody: '公立',
     city: '長野市',
     address: '善光寺1-1-1',
     postalCode: '380-0851',
@@ -355,6 +383,7 @@ const initialFacilities: FacilityMaster[] = [
     facilityCode: 'FAC020',
     facilityName: '沖縄総合病院',
     prefecture: '沖縄県',
+    foundingBody: '公立',
     city: '那覇市',
     address: '久茂地1-1-1',
     postalCode: '900-0015',
@@ -692,9 +721,164 @@ const initialAssets: AssetMaster[] = [
   },
 ];
 
+// サンプル部署マスタデータ
+const initialDepartments: DepartmentMaster[] = [
+  {
+    id: 'DEPT001',
+    division: '診療部門',
+    department: '外科',
+    roomCategory1: '手術室',
+    roomCategory2: 'オペ室1',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT002',
+    division: '診療部門',
+    department: '外科',
+    roomCategory1: '手術室',
+    roomCategory2: 'オペ室2',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT003',
+    division: '診療部門',
+    department: '内科',
+    roomCategory1: '診察室',
+    roomCategory2: '診察室A',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT004',
+    division: '診療部門',
+    department: '内科',
+    roomCategory1: '診察室',
+    roomCategory2: '診察室B',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT005',
+    division: '診療部門',
+    department: '小児科',
+    roomCategory1: '診察室',
+    roomCategory2: '小児診察室',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT006',
+    division: '看護部門',
+    department: '病棟',
+    roomCategory1: '一般病棟',
+    roomCategory2: '3階東病棟',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT007',
+    division: '看護部門',
+    department: '病棟',
+    roomCategory1: '一般病棟',
+    roomCategory2: '3階西病棟',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT008',
+    division: '看護部門',
+    department: '病棟',
+    roomCategory1: 'ICU',
+    roomCategory2: 'ICU-1',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT009',
+    division: '検査部門',
+    department: '検査科',
+    roomCategory1: '検体検査室',
+    roomCategory2: '生化学検査室',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT010',
+    division: '検査部門',
+    department: '検査科',
+    roomCategory1: '検体検査室',
+    roomCategory2: '血液検査室',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT011',
+    division: '検査部門',
+    department: '放射線科',
+    roomCategory1: 'CT室',
+    roomCategory2: 'CT室1',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT012',
+    division: '検査部門',
+    department: '放射線科',
+    roomCategory1: 'MRI室',
+    roomCategory2: 'MRI室1',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT013',
+    division: 'リハビリ部門',
+    department: 'リハビリテーション科',
+    roomCategory1: '理学療法室',
+    roomCategory2: 'PT室',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT014',
+    division: 'リハビリ部門',
+    department: 'リハビリテーション科',
+    roomCategory1: '作業療法室',
+    roomCategory2: 'OT室',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'DEPT015',
+    division: '管理部門',
+    department: '事務局',
+    roomCategory1: '事務室',
+    roomCategory2: '総務課',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+];
+
 export const useMasterStore = create<MasterStore>((set, get) => ({
   facilities: initialFacilities,
   assets: initialAssets,
+  departments: initialDepartments,
 
   // Facility actions
   setFacilities: (facilities) => set({ facilities }),
@@ -764,6 +948,40 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
       a.item.toLowerCase().includes(lowerQuery) ||
       a.maker.toLowerCase().includes(lowerQuery) ||
       a.model.toLowerCase().includes(lowerQuery)
+    );
+  },
+
+  // Department actions
+  setDepartments: (departments) => set({ departments }),
+
+  addDepartment: (department) => set((state) => ({
+    departments: [...state.departments, department]
+  })),
+
+  updateDepartment: (id, department) => set((state) => ({
+    departments: state.departments.map((d) =>
+      d.id === id ? { ...d, ...department, updatedAt: new Date().toISOString() } : d
+    )
+  })),
+
+  deleteDepartment: (id) => set((state) => ({
+    departments: state.departments.filter((d) => d.id !== id)
+  })),
+
+  getDepartmentById: (id) => {
+    return get().departments.find((d) => d.id === id);
+  },
+
+  searchDepartments: (query) => {
+    const departments = get().departments;
+    if (!query) return departments;
+
+    const lowerQuery = query.toLowerCase();
+    return departments.filter((d) =>
+      d.division.toLowerCase().includes(lowerQuery) ||
+      d.department.toLowerCase().includes(lowerQuery) ||
+      d.roomCategory1.toLowerCase().includes(lowerQuery) ||
+      d.roomCategory2.toLowerCase().includes(lowerQuery)
     );
   },
 }));

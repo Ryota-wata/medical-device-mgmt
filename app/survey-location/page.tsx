@@ -1,15 +1,25 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
+import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
-export default function SurveyLocationPage() {
+function SurveyLocationContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const facilityName = searchParams.get('facility') || '';
   const { isMobile, isTablet } = useResponsive();
-  const { assets: assetMasters, facilities } = useMasterStore();
+  const { assets: assetMasters } = useMasterStore();
+  const { facilities: hospitalFacilities } = useHospitalFacilityStore();
+
+  // 選択された施設の個別施設マスタデータをフィルター
+  const facilityMasterData = useMemo(() => {
+    if (!facilityName) return [];
+    return hospitalFacilities.filter(f => f.hospitalName === facilityName);
+  }, [hospitalFacilities, facilityName]);
 
   const [surveyDate, setSurveyDate] = useState('');
   const [category, setCategory] = useState('');
@@ -24,26 +34,26 @@ export default function SurveyLocationPage() {
     return uniqueCategories.filter(Boolean);
   }, [assetMasters]);
 
-  // 施設マスタからフィルターoptionsを生成
+  // 個別施設マスタ（HospitalFacilityMaster）から現状の設置場所オプションを生成
   const buildingOptions = useMemo(() => {
-    const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building).filter((b): b is string => !!b)));
+    const uniqueBuildings = Array.from(new Set(facilityMasterData.map(f => f.currentBuilding).filter((b): b is string => !!b)));
     return uniqueBuildings;
-  }, [facilities]);
+  }, [facilityMasterData]);
 
   const floorOptions = useMemo(() => {
-    const uniqueFloors = Array.from(new Set(facilities.map(f => f.floor).filter((f): f is string => !!f)));
+    const uniqueFloors = Array.from(new Set(facilityMasterData.map(f => f.currentFloor).filter((f): f is string => !!f)));
     return uniqueFloors;
-  }, [facilities]);
+  }, [facilityMasterData]);
 
   const departmentOptions = useMemo(() => {
-    const uniqueDepartments = Array.from(new Set(facilities.map(f => f.department).filter((d): d is string => !!d)));
+    const uniqueDepartments = Array.from(new Set(facilityMasterData.map(f => f.currentDepartment).filter((d): d is string => !!d)));
     return uniqueDepartments;
-  }, [facilities]);
+  }, [facilityMasterData]);
 
   const sectionOptions = useMemo(() => {
-    const uniqueSections = Array.from(new Set(facilities.map(f => f.section).filter((s): s is string => !!s)));
+    const uniqueSections = Array.from(new Set(facilityMasterData.map(f => f.currentSection).filter((s): s is string => !!s)));
     return uniqueSections;
-  }, [facilities]);
+  }, [facilityMasterData]);
 
   useEffect(() => {
     // Set current date in Japanese format
@@ -320,5 +330,13 @@ export default function SurveyLocationPage() {
         </button>
       </footer>
     </div>
+  );
+}
+
+export default function SurveyLocationPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SurveyLocationContent />
+    </Suspense>
   );
 }

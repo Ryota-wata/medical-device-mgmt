@@ -1,11 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
-export default function OfflinePrepPage() {
+function OfflinePrepContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const facility = searchParams.get('facility') || '';
   const { isMobile, isTablet } = useResponsive();
 
   const [downloadStatus, setDownloadStatus] = useState('✓ 最新');
@@ -29,7 +31,8 @@ export default function OfflinePrepPage() {
   };
 
   const handleStartSurvey = () => {
-    router.push('/survey-location');
+    const params = facility ? `?facility=${encodeURIComponent(facility)}` : '';
+    router.push(`/survey-location${params}`);
   };
 
   return (
@@ -366,5 +369,13 @@ export default function OfflinePrepPage() {
         </button>
       </footer>
     </div>
+  );
+}
+
+export default function OfflinePrepPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OfflinePrepContent />
+    </Suspense>
   );
 }

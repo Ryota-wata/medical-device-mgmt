@@ -21,32 +21,38 @@ export function HospitalFacilityFormModal({
   isMobile,
 }: HospitalFacilityFormModalProps) {
   const [formData, setFormData] = useState({
+    currentBuilding: '',
     currentFloor: '',
     currentDepartment: '',
-    currentRoom: '',
+    currentSection: '',
+    newBuilding: '',
     newFloor: '',
     newDepartment: '',
-    newRoom: '',
+    newSection: '',
   });
 
   useEffect(() => {
     if (mode === 'edit' && facility) {
       setFormData({
+        currentBuilding: facility.currentBuilding,
         currentFloor: facility.currentFloor,
         currentDepartment: facility.currentDepartment,
-        currentRoom: facility.currentRoom,
+        currentSection: facility.currentSection,
+        newBuilding: facility.newBuilding,
         newFloor: facility.newFloor,
         newDepartment: facility.newDepartment,
-        newRoom: facility.newRoom,
+        newSection: facility.newSection,
       });
     } else {
       setFormData({
+        currentBuilding: '',
         currentFloor: '',
         currentDepartment: '',
-        currentRoom: '',
+        currentSection: '',
+        newBuilding: '',
         newFloor: '',
         newDepartment: '',
-        newRoom: '',
+        newSection: '',
       });
     }
   }, [mode, facility, isOpen]);
@@ -133,10 +139,23 @@ export function HospitalFacilityFormModal({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
                 gap: isMobile ? '16px' : '20px',
               }}
             >
+              <div>
+                <label style={labelStyle}>
+                  棟 <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.currentBuilding}
+                  onChange={(e) => setFormData({ ...formData, currentBuilding: e.target.value })}
+                  placeholder="本館"
+                  required
+                  style={inputStyle}
+                />
+              </div>
               <div>
                 <label style={labelStyle}>
                   階 <span style={{ color: '#e74c3c' }}>*</span>
@@ -152,7 +171,7 @@ export function HospitalFacilityFormModal({
               </div>
               <div>
                 <label style={labelStyle}>
-                  部門・部署 <span style={{ color: '#e74c3c' }}>*</span>
+                  部門 <span style={{ color: '#e74c3c' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -165,12 +184,12 @@ export function HospitalFacilityFormModal({
               </div>
               <div>
                 <label style={labelStyle}>
-                  部屋名 <span style={{ color: '#e74c3c' }}>*</span>
+                  部署 <span style={{ color: '#e74c3c' }}>*</span>
                 </label>
                 <input
                   type="text"
-                  value={formData.currentRoom}
-                  onChange={(e) => setFormData({ ...formData, currentRoom: e.target.value })}
+                  value={formData.currentSection}
+                  onChange={(e) => setFormData({ ...formData, currentSection: e.target.value })}
                   placeholder="手術室1"
                   required
                   style={inputStyle}
@@ -196,10 +215,20 @@ export function HospitalFacilityFormModal({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)',
                 gap: isMobile ? '16px' : '20px',
               }}
             >
+              <div>
+                <label style={{ ...labelStyle, color: '#8e44ad' }}>棟</label>
+                <input
+                  type="text"
+                  value={formData.newBuilding}
+                  onChange={(e) => setFormData({ ...formData, newBuilding: e.target.value })}
+                  placeholder="新館"
+                  style={{ ...inputStyle, borderColor: '#d7bde2' }}
+                />
+              </div>
               <div>
                 <label style={{ ...labelStyle, color: '#8e44ad' }}>階</label>
                 <input
@@ -211,7 +240,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#8e44ad' }}>部門・部署</label>
+                <label style={{ ...labelStyle, color: '#8e44ad' }}>部門</label>
                 <input
                   type="text"
                   value={formData.newDepartment}
@@ -221,11 +250,11 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#8e44ad' }}>部屋名</label>
+                <label style={{ ...labelStyle, color: '#8e44ad' }}>部署</label>
                 <input
                   type="text"
-                  value={formData.newRoom}
-                  onChange={(e) => setFormData({ ...formData, newRoom: e.target.value })}
+                  value={formData.newSection}
+                  onChange={(e) => setFormData({ ...formData, newSection: e.target.value })}
                   placeholder="手術室A"
                   style={{ ...inputStyle, borderColor: '#d7bde2' }}
                 />

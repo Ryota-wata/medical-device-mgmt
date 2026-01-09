@@ -95,23 +95,24 @@ export default function MainPage() {
   };
 
   const handleMenuSelect = (menuName: string) => {
+    const facilityParam = selectedFacility ? `?facility=${encodeURIComponent(selectedFacility)}` : '';
     closeListModal();
 
     switch (menuName) {
       case 'QRコード発行':
-        router.push('/qr-issue');
+        router.push(`/qr-issue${facilityParam}`);
         break;
       case '現有品調査':
-        router.push('/offline-prep');
+        router.push(`/offline-prep${facilityParam}`);
         break;
       case '現有品調査内容修正':
-        router.push('/registration-edit');
+        router.push(`/registration-edit${facilityParam}`);
         break;
       case '資産台帳取込':
-        router.push('/asset-import');
+        router.push(`/asset-import${facilityParam}`);
         break;
       case 'データ突合':
-        router.push('/data-matching');
+        router.push(`/data-matching${facilityParam}`);
         break;
     }
   };
@@ -913,6 +914,38 @@ export default function MainPage() {
                   }}
                 >
                   <span>🏥 SHIP施設マスタ</span>
+                  <span style={{ fontSize: '20px' }}>→</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    closeMasterModal();
+                    router.push('/ship-department-master');
+                  }}
+                  style={{
+                    padding: '16px 24px',
+                    background: 'white',
+                    border: '2px solid #27ae60',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#27ae60';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.color = '#2c3e50';
+                  }}
+                >
+                  <span>🏢 SHIP部署マスタ</span>
                   <span style={{ fontSize: '20px' }}>→</span>
                 </button>
 

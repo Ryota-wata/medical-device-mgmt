@@ -15,14 +15,16 @@ export interface HospitalFacilityMaster {
   hospitalName: string;         // 病院名（表示用）
 
   // 現状の設置場所
+  currentBuilding: string;      // 現状の棟
   currentFloor: string;         // 現状の階
   currentDepartment: string;    // 現状の部門・部署
-  currentRoom: string;          // 現状の部屋名
+  currentSection: string;       // 現状の部署
 
   // 新居の設置場所
+  newBuilding: string;          // 新居の棟
   newFloor: string;             // 新居の階
   newDepartment: string;        // 新居の部門・部署
-  newRoom: string;              // 新居の部屋名
+  newSection: string;           // 新居の部署
 
   // 管理情報
   status: HospitalFacilityStatus;
@@ -64,14 +66,16 @@ export type RemodelProjectStatus =
  */
 export interface FacilityMapping {
   currentLocation: {
+    building: string;
     floor: string;
     department: string;
-    room: string;
+    section: string;
   };
   newLocation: {
+    building: string;
     floor: string;
     department: string;
-    room: string;
+    section: string;
   };
 }
 
@@ -92,9 +96,10 @@ export interface HospitalFacilityFilter {
  */
 export interface CurrentLocationKey {
   hospitalId: string;
+  building: string;
   floor: string;
   department: string;
-  room: string;
+  section: string;
 }
 
 /**
