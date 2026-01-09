@@ -8,6 +8,7 @@ export interface FacilityMaster {
   department?: string;  // 部門
   section?: string;     // 部署
   prefecture: string;
+  foundingBody: string; // 設立母体
   city: string;
   address: string;
   postalCode: string;

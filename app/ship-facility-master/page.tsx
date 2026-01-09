@@ -15,7 +15,7 @@ export default function ShipFacilityMasterPage() {
   const [filterFacilityCode, setFilterFacilityCode] = useState('');
   const [filterFacilityName, setFilterFacilityName] = useState('');
   const [filterPrefecture, setFilterPrefecture] = useState('');
-  const [filterCity, setFilterCity] = useState('');
+  const [filterFoundingBody, setFilterFoundingBody] = useState('');
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<FacilityMaster | null>(null);
@@ -29,6 +29,7 @@ export default function ShipFacilityMasterPage() {
           facilityCode: 'F001',
           facilityName: '〇〇〇〇〇〇病院',
           prefecture: '東京都',
+          foundingBody: '国立',
           city: '千代田区',
           address: '千代田1-1-1',
           postalCode: '100-0001',
@@ -45,13 +46,14 @@ export default function ShipFacilityMasterPage() {
           facilityCode: 'F002',
           facilityName: '△△△△△△クリニック',
           prefecture: '神奈川県',
+          foundingBody: '医療法人',
           city: '横浜市',
           address: '西区みなとみらい2-2-2',
           postalCode: '220-0012',
           phoneNumber: '045-1234-5678',
           establishedDate: '1995-06-15',
           facilityType: 'クリニック',
-          bedCount: 0,
+          bedCount: 50,
           status: 'active',
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z'
@@ -61,6 +63,7 @@ export default function ShipFacilityMasterPage() {
           facilityCode: 'F003',
           facilityName: '□□□□□□医療センター',
           prefecture: '大阪府',
+          foundingBody: '公立',
           city: '大阪市',
           address: '北区梅田3-3-3',
           postalCode: '530-0001',
@@ -82,8 +85,8 @@ export default function ShipFacilityMasterPage() {
     const matchFacilityCode = !filterFacilityCode || facility.facilityCode.includes(filterFacilityCode);
     const matchFacilityName = !filterFacilityName || facility.facilityName.toLowerCase().includes(filterFacilityName.toLowerCase());
     const matchPrefecture = !filterPrefecture || facility.prefecture.includes(filterPrefecture);
-    const matchCity = !filterCity || facility.city.includes(filterCity);
-    return matchFacilityCode && matchFacilityName && matchPrefecture && matchCity;
+    const matchFoundingBody = !filterFoundingBody || (facility.foundingBody && facility.foundingBody.includes(filterFoundingBody));
+    return matchFacilityCode && matchFacilityName && matchPrefecture && matchFoundingBody;
   });
 
   const handleBack = () => {
@@ -111,6 +114,7 @@ export default function ShipFacilityMasterPage() {
       department: data.department,
       section: data.section,
       prefecture: '',
+      foundingBody: '',
       city: '',
       address: '',
       postalCode: '',
@@ -273,13 +277,13 @@ export default function ShipFacilityMasterPage() {
         </div>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            市区町村
+            設立母体
           </label>
           <input
             type="text"
-            value={filterCity}
-            onChange={(e) => setFilterCity(e.target.value)}
-            placeholder="千代田区"
+            value={filterFoundingBody}
+            onChange={(e) => setFilterFoundingBody(e.target.value)}
+            placeholder="国立、公立、医療法人"
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
@@ -312,8 +316,8 @@ export default function ShipFacilityMasterPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#7f8c8d' }}>種別:</span> {facility.facilityType}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>所在地:</span> {facility.prefecture}{facility.city}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>都道府県:</span> {facility.prefecture}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>設立母体:</span> {facility.foundingBody}</div>
                   <div><span style={{ color: '#7f8c8d' }}>病床数:</span> {facility.bedCount}床</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -360,11 +364,10 @@ export default function ShipFacilityMasterPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                   <tr>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>都道府県</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>設立母体</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>施設コード</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>施設名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>種別</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>都道府県</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>市区町村</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'right', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>病床数</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
@@ -372,11 +375,10 @@ export default function ShipFacilityMasterPage() {
                 <tbody>
                   {filteredFacilities.map((facility, index) => (
                     <tr key={facility.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.prefecture}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.foundingBody}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.facilityCode}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.facilityName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.facilityType}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.prefecture}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.city}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', textAlign: 'right', whiteSpace: 'nowrap' }}>{facility.bedCount}床</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
