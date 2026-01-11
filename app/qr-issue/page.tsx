@@ -12,7 +12,7 @@ export default function QRIssuePage() {
   const [twoDigit, setTwoDigit] = useState('07');
   const [fiveDigit, setFiveDigit] = useState('00001');
   const [reissueNumber, setReissueNumber] = useState('');
-  const [template, setTemplate] = useState('qr-small');
+  const [template, setTemplate] = useState('qr-12x12');
   const [footerText, setFooterText] = useState('');
   const [footerCharMax, setFooterCharMax] = useState(12);
   const [issueCount, setIssueCount] = useState(50);
@@ -20,12 +20,12 @@ export default function QRIssuePage() {
   // フッター文字数制限を更新
   useEffect(() => {
     const limits: Record<string, number> = {
-      'qr-small': 12,
-      'qr-medium': 18,
-      'qr-large': 24,
-      'barcode-small': 12,
-      'barcode-medium': 18,
-      'barcode-large': 24,
+      'qr-12x12': 12,
+      'qr-12x24': 12,
+      'qr-18x18': 18,
+      'qr-18x24': 18,
+      'qr-24x24': 24,
+      'qr-24x32': 24,
     };
     setFooterCharMax(limits[template] || 12);
   }, [template]);
@@ -81,7 +81,7 @@ export default function QRIssuePage() {
           <span>←</span>
           <span>戻る</span>
         </button>
-        <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 'bold', margin: 0 }}>ラベル発行</h1>
+        <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 'bold', margin: 0 }}>QRコード発行</h1>
       </div>
 
       {/* メインコンテンツ */}
@@ -89,9 +89,9 @@ export default function QRIssuePage() {
         {/* ページヘッダー */}
         <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
           <h2 style={{ fontSize: isMobile ? '20px' : isTablet ? '22px' : '24px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
-            ラベル発行
+            QRコード発行
           </h2>
-          <p style={{ color: '#5a6c7d', fontSize: isMobile ? '13px' : '14px' }}>資産管理用のQRコード・バーコードラベルを発行します</p>
+          <p style={{ color: '#5a6c7d', fontSize: isMobile ? '13px' : '14px' }}>資産管理用のQRコードを発行します</p>
         </div>
 
         {/* フォームコンテナ */}
@@ -234,40 +234,43 @@ export default function QRIssuePage() {
           {/* ラベルテンプレート選択 */}
           <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
             <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
-              ラベルテンプレートを選択 <span style={{ color: '#e74c3c' }}>*</span>
+              QRコードテンプレートを選択 <span style={{ color: '#e74c3c' }}>*</span>
             </label>
 
             {/* QRコードテンプレート */}
-            <div style={{ marginBottom: isMobile ? '16px' : '20px' }}>
-              <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#5a6c7d', marginBottom: '10px' }}>QRコード</div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '10px' }}>
-                {['qr-small', 'qr-medium', 'qr-large'].map((value) => (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '10px' }}>
+                {[
+                  { value: 'qr-12x12', label: '12×12mm' },
+                  { value: 'qr-12x24', label: '12×24mm' },
+                  { value: 'qr-18x18', label: '18×18mm' },
+                  { value: 'qr-18x24', label: '18×24mm' },
+                  { value: 'qr-24x24', label: '24×24mm' },
+                  { value: 'qr-24x32', label: '24×32mm' },
+                ].map((item) => (
                   <label
-                    key={value}
+                    key={item.value}
                     style={{
-                      border: template === value ? '3px solid #27ae60' : '2px solid #dee2e6',
+                      border: template === item.value ? '3px solid #27ae60' : '2px solid #dee2e6',
                       borderRadius: '8px',
                       padding: isMobile ? '12px' : '15px',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-                      background: template === value ? '#f0f9f4' : 'white',
+                      background: template === item.value ? '#f0f9f4' : 'white',
                     }}
                   >
                     <input
                       type="radio"
                       name="template"
-                      value={value}
-                      checked={template === value}
+                      value={item.value}
+                      checked={template === item.value}
                       onChange={(e) => setTemplate(e.target.value)}
                       style={{ display: 'none' }}
                     />
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: isMobile ? '28px' : '32px', marginBottom: '8px' }}>▣</div>
-                      <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '4px' }}>
-                        {value.includes('small') ? '小サイズ' : value.includes('medium') ? '中サイズ' : '大サイズ'}
-                      </div>
-                      <div style={{ fontSize: isMobile ? '11px' : '12px', color: '#5a6c7d' }}>
-                        {value.includes('small') ? '18mm幅' : value.includes('medium') ? '24mm幅' : '36mm幅'}
+                      <div style={{ fontSize: isMobile ? '24px' : '28px', marginBottom: '8px' }}>▣</div>
+                      <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#2c3e50' }}>
+                        {item.label}
                       </div>
                     </div>
                   </label>
@@ -275,58 +278,19 @@ export default function QRIssuePage() {
               </div>
             </div>
 
-            {/* バーコードテンプレート */}
-            <div>
-              <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#5a6c7d', marginBottom: '10px' }}>
-                バーコード
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '10px' }}>
-                {['barcode-small', 'barcode-medium', 'barcode-large'].map((value) => (
-                  <label
-                    key={value}
-                    style={{
-                      border: template === value ? '3px solid #27ae60' : '2px solid #dee2e6',
-                      borderRadius: '8px',
-                      padding: isMobile ? '12px' : '15px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      background: template === value ? '#f0f9f4' : 'white',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="template"
-                      value={value}
-                      checked={template === value}
-                      onChange={(e) => setTemplate(e.target.value)}
-                      style={{ display: 'none' }}
-                    />
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: isMobile ? '20px' : '24px', marginBottom: '8px' }}>||||||||</div>
-                      <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '4px' }}>
-                        {value.includes('small') ? '小サイズ' : value.includes('medium') ? '中サイズ' : '大サイズ'}
-                      </div>
-                      <div style={{ fontSize: isMobile ? '11px' : '12px', color: '#5a6c7d' }}>
-                        {value.includes('small') ? '18mm幅' : value.includes('medium') ? '24mm幅' : '36mm幅'}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
 
-          {/* フッター記入項目 */}
+          {/* フリー記入項目 */}
           <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
             <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
-              フッター記入項目
+              フリー記入項目
             </label>
             <input
               type="text"
               value={footerText}
               onChange={(e) => setFooterText(e.target.value.slice(0, footerCharMax))}
               maxLength={footerCharMax}
-              placeholder="フッターテキストを入力"
+              placeholder="テキストを入力"
               style={{
                 padding: isMobile ? '8px' : '10px',
                 border: '1px solid #dee2e6',

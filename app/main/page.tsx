@@ -655,7 +655,7 @@ export default function MainPage() {
                     }
                   }}
                 >
-                  ラベル発行
+                  QRコード発行
                 </button>
 
                 <button

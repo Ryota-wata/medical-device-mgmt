@@ -62,24 +62,27 @@ function QRPrintContent() {
 
   const getTemplateDisplayName = (templateKey: string): string => {
     const names: Record<string, string> = {
-      'qr-small': 'QRコード 小サイズ (18mm幅)',
-      'qr-medium': 'QRコード 中サイズ (24mm幅)',
-      'qr-large': 'QRコード 大サイズ (24mm幅)',
-      'barcode-small': 'バーコード 小サイズ (18mm幅)',
-      'barcode-medium': 'バーコード 中サイズ (24mm幅)',
-      'barcode-large': 'バーコード 大サイズ (24mm幅)',
+      'qr-12x12': 'QRコード 12×12mm',
+      'qr-12x24': 'QRコード 12×24mm',
+      'qr-18x18': 'QRコード 18×18mm',
+      'qr-18x24': 'QRコード 18×24mm',
+      'qr-24x24': 'QRコード 24×24mm',
+      'qr-24x32': 'QRコード 24×32mm',
     };
     return names[templateKey] || templateKey;
   };
 
   const getSealSizeFromTemplate = (templateKey: string): string => {
-    if (templateKey.includes('small')) return '18mm幅';
-    if (templateKey.includes('medium')) return '24mm幅';
-    if (templateKey.includes('large')) return '24mm幅';
-    return '24mm幅';
+    const sizes: Record<string, string> = {
+      'qr-12x12': '12×12mm',
+      'qr-12x24': '12×24mm',
+      'qr-18x18': '18×18mm',
+      'qr-18x24': '18×24mm',
+      'qr-24x24': '24×24mm',
+      'qr-24x32': '24×32mm',
+    };
+    return sizes[templateKey] || templateKey;
   };
-
-  const isQRType = template.startsWith('qr');
 
   const handleCancel = () => {
     router.back();
@@ -119,7 +122,7 @@ function QRPrintContent() {
             <span>戻る</span>
           </button>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '22px', fontWeight: 600, margin: 0 }}>ラベル印刷</h1>
+            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '22px', fontWeight: 600, margin: 0 }}>QRコード印刷</h1>
             <span style={{ fontSize: isMobile ? '12px' : '14px', opacity: 0.9 }}>東京総合病院</span>
           </div>
         </div>
@@ -136,7 +139,7 @@ function QRPrintContent() {
         {/* Page Header */}
         <div style={{ marginBottom: isMobile ? '20px' : isTablet ? '24px' : '32px' }}>
           <h2 style={{ fontSize: isMobile ? '20px' : isTablet ? '24px' : '28px', fontWeight: 600, color: '#2c3e50', marginBottom: '8px' }}>
-            ラベル印刷プレビュー
+            QRコード印刷プレビュー
           </h2>
         </div>
 
@@ -388,31 +391,21 @@ function QRPrintContent() {
                   gap: isMobile ? '10px' : '12px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                 }}>
-                  {/* QR/Barcode Placeholder */}
-                  {isQRType ? (
-                    <div style={{
-                      width: isMobile ? '100px' : '120px',
-                      height: isMobile ? '100px' : '120px',
-                      background: 'white',
-                      border: isMobile ? '2px solid #333' : '3px solid #333',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: isMobile ? '40px' : '48px',
-                      color: '#333'
-                    }}>
-                      ▣
-                    </div>
-                  ) : (
-                    <div style={{
-                      width: isMobile ? '140px' : '160px',
-                      height: isMobile ? '50px' : '60px',
-                      background: 'linear-gradient(90deg, #333 3px, transparent 3px) 0 0 / 8px 100%',
-                      backgroundColor: 'white',
-                      border: '2px solid #333'
-                    }}></div>
-                  )}
+                  {/* QR Code Placeholder */}
+                  <div style={{
+                    width: isMobile ? '100px' : '120px',
+                    height: isMobile ? '100px' : '120px',
+                    background: 'white',
+                    border: isMobile ? '2px solid #333' : '3px solid #333',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: isMobile ? '40px' : '48px',
+                    color: '#333'
+                  }}>
+                    ▣
+                  </div>
 
                   {/* QR Number */}
                   <div style={{
