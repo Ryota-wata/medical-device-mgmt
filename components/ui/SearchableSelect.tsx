@@ -24,12 +24,12 @@ export function SearchableSelect({
   dropdownMinWidth = '200px'
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(value);
+  const [searchQuery, setSearchQuery] = useState(value || '');
   const [filteredOptions, setFilteredOptions] = useState(options);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSearchQuery(value);
+    setSearchQuery(value || '');
   }, [value]);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export function SearchableSelect({
       <div style={{ position: 'relative' }}>
         <input
           type="text"
-          value={searchQuery}
+          value={searchQuery ?? ''}
           onChange={handleInputChange}
           onFocus={handleFocus}
           placeholder={placeholder}

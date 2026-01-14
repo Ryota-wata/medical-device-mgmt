@@ -25,6 +25,8 @@ interface RegistrationData {
   roomName: string;
   assetNo: string;
   equipmentNo: string;
+  serialNo: string;
+  quantity: number;
   purchaseDate: string;
   lease: string;
   rental: string;
@@ -69,6 +71,30 @@ export default function RegistrationEditPage() {
     surveyor: ''
   });
 
+  // ソート状態
+  type SortKey = keyof RegistrationData | null;
+  type SortDirection = 'asc' | 'desc';
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // ソートハンドラ
+  const handleSort = (key: keyof RegistrationData) => {
+    if (sortKey === key) {
+      // 同じカラムをクリックした場合は方向を切り替え
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 新しいカラムをクリックした場合は昇順でソート
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
+  // ソートアイコン表示
+  const getSortIcon = (key: keyof RegistrationData) => {
+    if (sortKey !== key) return ' ↕';
+    return sortDirection === 'asc' ? ' ↑' : ' ↓';
+  };
+
   const sampleData: RegistrationData[] = [
     {
       id: 1,
@@ -83,6 +109,8 @@ export default function RegistrationEditPage() {
       roomName: '手術室A',
       assetNo: '10605379-000',
       equipmentNo: '1338',
+      serialNo: 'SN-001234',
+      quantity: 1,
       purchaseDate: '2022-04-15',
       lease: 'なし',
       rental: 'なし',
@@ -116,6 +144,8 @@ export default function RegistrationEditPage() {
       roomName: 'CT室1',
       assetNo: '',
       equipmentNo: '',
+      serialNo: '',
+      quantity: 1,
       purchaseDate: '',
       lease: 'あり',
       rental: 'なし',
@@ -147,6 +177,8 @@ export default function RegistrationEditPage() {
       roomName: '検査室B',
       assetNo: '10605421-000',
       equipmentNo: '2156',
+      serialNo: 'SN-003456',
+      quantity: 1,
       purchaseDate: '2023-01-20',
       lease: 'なし',
       rental: 'なし',
@@ -179,6 +211,8 @@ export default function RegistrationEditPage() {
       roomName: '診察室3',
       assetNo: '10606523-000',
       equipmentNo: '3421',
+      serialNo: 'SN-004567',
+      quantity: 2,
       purchaseDate: '2024-06-10',
       lease: 'なし',
       rental: 'なし',
@@ -210,6 +244,8 @@ export default function RegistrationEditPage() {
       roomName: '処置室A',
       assetNo: '10607834-000',
       equipmentNo: '4892',
+      serialNo: 'SN-005678',
+      quantity: 1,
       purchaseDate: '2021-09-15',
       lease: 'あり',
       rental: 'なし',
@@ -244,6 +280,8 @@ export default function RegistrationEditPage() {
       roomName: '検体検査室B',
       assetNo: '',
       equipmentNo: '',
+      serialNo: '',
+      quantity: 1,
       purchaseDate: '',
       lease: 'なし',
       rental: 'なし',
@@ -276,6 +314,8 @@ export default function RegistrationEditPage() {
       roomName: '事務室',
       assetNo: '10608123-000',
       equipmentNo: '5123',
+      serialNo: 'SN-007890',
+      quantity: 3,
       purchaseDate: '2023-03-20',
       lease: 'なし',
       rental: 'なし',
@@ -370,8 +410,32 @@ export default function RegistrationEditPage() {
       filtered = filtered.filter(d => d.surveyor === filters.surveyor);
     }
 
+    // ソート処理
+    if (sortKey) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = a[sortKey];
+        const bValue = b[sortKey];
+
+        // null/undefined チェック
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return sortDirection === 'asc' ? 1 : -1;
+        if (bValue == null) return sortDirection === 'asc' ? -1 : 1;
+
+        // 数値の場合
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        // 文字列の場合
+        const aStr = String(aValue);
+        const bStr = String(bValue);
+        const comparison = aStr.localeCompare(bStr, 'ja');
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+
     return filtered;
-  }, [data, filters]);
+  }, [data, filters, sortKey, sortDirection]);
 
   // フィルタークリア
   const handleClearFilters = () => {
@@ -541,19 +605,62 @@ export default function RegistrationEditPage() {
 
       if (event.data.type === 'ASSET_SELECTED' && editingData) {
         const assetMasters = event.data.assets as any[];
+        const scope = event.data.scope as 'all' | 'toMaker' | 'toItem';
 
         // 最初の資産を適用
         if (assetMasters.length > 0) {
           const master = assetMasters[0];
-          setEditingData({
-            ...editingData,
-            largeClass: master.largeClass,
-            mediumClass: master.mediumClass,
-            item: master.item,
-            manufacturer: master.maker,
-            model: master.model,
-            masterId: master.id
-          });
+
+          // スコープに応じて適用するフィールドを決定
+          // 範囲外のフィールドは空白にする
+          let updatedData: typeof editingData;
+
+          switch (scope) {
+            case 'toItem':
+              // 品目まで確定: Category, 大分類, 中分類, 個体管理品目
+              // メーカー、型式は空白にする
+              updatedData = {
+                ...editingData,
+                category: master.category || editingData.category,
+                largeClass: master.largeClass || editingData.largeClass,
+                mediumClass: master.mediumClass || editingData.mediumClass,
+                item: master.item || editingData.item,
+                manufacturer: '',  // 範囲外なので空白
+                model: '',         // 範囲外なので空白
+                masterId: master.id
+              };
+              break;
+            case 'toMaker':
+              // メーカーまで確定: Category, 大分類, 中分類, 個体管理品目, メーカー
+              // 型式は空白にする
+              updatedData = {
+                ...editingData,
+                category: master.category || editingData.category,
+                largeClass: master.largeClass || editingData.largeClass,
+                mediumClass: master.mediumClass || editingData.mediumClass,
+                item: master.item || editingData.item,
+                manufacturer: master.maker || editingData.manufacturer,
+                model: '',         // 範囲外なので空白
+                masterId: master.id
+              };
+              break;
+            case 'all':
+            default:
+              // 全て確定: 全カラム
+              updatedData = {
+                ...editingData,
+                category: master.category || editingData.category,
+                largeClass: master.largeClass || editingData.largeClass,
+                mediumClass: master.mediumClass || editingData.mediumClass,
+                item: master.item || editingData.item,
+                manufacturer: master.maker || editingData.manufacturer,
+                model: master.model || editingData.model,
+                masterId: master.id
+              };
+              break;
+          }
+
+          setEditingData(updatedData);
         }
       }
     };
@@ -804,89 +911,210 @@ export default function RegistrationEditPage() {
           }}>
             <thead>
               <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: '#f5f5f5', zIndex: 2 }}>
+                <th onClick={() => handleSort('sealNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>QRコード{getSortIcon('sealNo')}</th>
+                <th onClick={() => handleSort('floor')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>階{getSortIcon('floor')}</th>
+                <th onClick={() => handleSort('department')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>部門{getSortIcon('department')}</th>
+                <th onClick={() => handleSort('section')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>部署{getSortIcon('section')}</th>
+                <th onClick={() => handleSort('roomName')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>室名{getSortIcon('roomName')}</th>
+                <th onClick={() => handleSort('category')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>Category{getSortIcon('category')}</th>
+                <th onClick={() => handleSort('largeClass')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>大分類{getSortIcon('largeClass')}</th>
+                <th onClick={() => handleSort('mediumClass')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>中分類{getSortIcon('mediumClass')}</th>
+                <th onClick={() => handleSort('item')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>個体管理品目{getSortIcon('item')}</th>
+                <th onClick={() => handleSort('manufacturer')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>メーカー{getSortIcon('manufacturer')}</th>
+                <th onClick={() => handleSort('model')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>型式{getSortIcon('model')}</th>
+                <th onClick={() => handleSort('quantity')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>数量{getSortIcon('quantity')}</th>
+                <th onClick={() => handleSort('width')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>W{getSortIcon('width')}</th>
+                <th onClick={() => handleSort('depth')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>D{getSortIcon('depth')}</th>
+                <th onClick={() => handleSort('height')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>H{getSortIcon('height')}</th>
+                <th onClick={() => handleSort('assetNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>資産番号{getSortIcon('assetNo')}</th>
+                <th onClick={() => handleSort('equipmentNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>ME番号{getSortIcon('equipmentNo')}</th>
+                <th onClick={() => handleSort('serialNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>シリアルNo{getSortIcon('serialNo')}</th>
+                <th onClick={() => handleSort('purchaseDate')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>購入年月日{getSortIcon('purchaseDate')}</th>
+                <th onClick={() => handleSort('remarks')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>備考{getSortIcon('remarks')}</th>
+                <th onClick={() => handleSort('lease')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>リース・借用{getSortIcon('lease')}</th>
+                <th onClick={() => handleSort('surveyDate')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>調査日付{getSortIcon('surveyDate')}</th>
+                <th onClick={() => handleSort('surveyor')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>担当者{getSortIcon('surveyor')}</th>
+                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>写真</th>
+                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>操作</th>
+                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', whiteSpace: 'nowrap' }}>
                   <input
                     type="checkbox"
                     checked={selectedAll}
                     onChange={(e) => toggleSelectAll(e.target.checked)}
                   />
                 </th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>調査日</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>調査担当者</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>Category</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>棟</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>階</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部署</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>ラベル番号</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>室名</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>備品番号</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>購入年月日</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>リース</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>貸出品</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>写真</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>大分類</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>中分類</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>品目</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>メーカー</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>型式</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>W</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>D</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>H</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>備考</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 2 }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((row) => (
                 <tr key={row.id}>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1 }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.has(row.id)}
-                      onChange={() => toggleRowSelection(row.id)}
-                    />
-                  </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.surveyDate}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.surveyor}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.category}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.building}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.floor}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
+                  {/* ① QRコード */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.sealNo}</td>
+                  {/* ② 階 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.floor}</td>
+                  {/* ③ 部門 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
+                  {/* ④ 部署 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
+                  {/* ⑤ 室名 */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.roomName}</td>
+                  {/* ⑥ Category */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.category}</td>
+                  {/* ⑥ 大分類 */}
+                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.largeClass || ''}
+                        onChange={(e) => setEditingData({ ...editingData, largeClass: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.largeClass}
+                  </td>
+                  {/* ⑥ 中分類 */}
+                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.mediumClass || ''}
+                        onChange={(e) => setEditingData({ ...editingData, mediumClass: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.mediumClass}
+                  </td>
+                  {/* ⑥ 個体管理品目 */}
+                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.item || ''}
+                        onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.item}
+                  </td>
+                  {/* ⑦ メーカー */}
+                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.manufacturer || ''}
+                        onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.manufacturer}
+                  </td>
+                  {/* ⑧ 型式 */}
+                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.model || ''}
+                        onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.model}
+                  </td>
+                  {/* ⑨ 数量 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="number"
+                        value={editingData.quantity}
+                        onChange={(e) => setEditingData({ ...editingData, quantity: parseInt(e.target.value) || 0 })}
+                        style={{ width: '60px', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.quantity}
+                  </td>
+                  {/* ⑩ W */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
-                        value={editingData.assetNo}
+                        value={editingData.width || ''}
+                        onChange={(e) => setEditingData({ ...editingData, width: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.width}
+                  </td>
+                  {/* ⑩ D */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.depth || ''}
+                        onChange={(e) => setEditingData({ ...editingData, depth: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.depth}
+                  </td>
+                  {/* ⑩ H */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.height || ''}
+                        onChange={(e) => setEditingData({ ...editingData, height: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.height}
+                  </td>
+                  {/* ⑪ 資産番号 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.assetNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, assetNo: e.target.value })}
                         style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
                       />
                     ) : row.assetNo}
                   </td>
+                  {/* ⑫ ME番号 */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
-                        value={editingData.equipmentNo}
+                        value={editingData.equipmentNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, equipmentNo: e.target.value })}
                         style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
                       />
                     ) : row.equipmentNo}
                   </td>
+                  {/* ⑬ シリアルNo */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.serialNo || ''}
+                        onChange={(e) => setEditingData({ ...editingData, serialNo: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.serialNo}
+                  </td>
+                  {/* ⑭ 購入年月日 */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="date"
-                        value={editingData.purchaseDate}
+                        value={editingData.purchaseDate || ''}
                         onChange={(e) => setEditingData({ ...editingData, purchaseDate: e.target.value })}
                         style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
                       />
                     ) : row.purchaseDate}
                   </td>
+                  {/* ⑭ 備考 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.remarks || ''}
+                        onChange={(e) => setEditingData({ ...editingData, remarks: e.target.value })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                    ) : row.remarks}
+                  </td>
+                  {/* ⑮ リース・借用 */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                     {editingRow === row.id && editingData ? (
                       <select
@@ -899,18 +1127,11 @@ export default function RegistrationEditPage() {
                       </select>
                     ) : row.lease}
                   </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {editingRow === row.id && editingData ? (
-                      <select
-                        value={editingData.rental}
-                        onChange={(e) => setEditingData({ ...editingData, rental: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      >
-                        <option value="あり">あり</option>
-                        <option value="なし">なし</option>
-                      </select>
-                    ) : row.rental}
-                  </td>
+                  {/* ⑯ 調査日付 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.surveyDate}</td>
+                  {/* ⑰ 担当者 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.surveyor}</td>
+                  {/* 写真 */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
                     <button
                       onClick={() => handlePhotoClick(row)}
@@ -923,100 +1144,10 @@ export default function RegistrationEditPage() {
                         cursor: 'pointer'
                       }}
                     >
-                      📷 {row.photoCount}枚
+                      {row.photoCount}枚
                     </button>
                   </td>
-                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.largeClass}
-                        onChange={(e) => setEditingData({ ...editingData, largeClass: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.largeClass}
-                  </td>
-                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.mediumClass}
-                        onChange={(e) => setEditingData({ ...editingData, mediumClass: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.mediumClass}
-                  </td>
-                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.item}
-                        onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.item}
-                  </td>
-                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.manufacturer}
-                        onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.manufacturer}
-                  </td>
-                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.model}
-                        onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.model}
-                  </td>
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.width}
-                        onChange={(e) => setEditingData({ ...editingData, width: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.width}
-                  </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.depth}
-                        onChange={(e) => setEditingData({ ...editingData, depth: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.depth}
-                  </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.height}
-                        onChange={(e) => setEditingData({ ...editingData, height: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.height}
-                  </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.remarks}
-                        onChange={(e) => setEditingData({ ...editingData, remarks: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.remarks}
-                  </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1 }}>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                       {editingRow === row.id ? (
                         <>
@@ -1033,7 +1164,7 @@ export default function RegistrationEditPage() {
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            📋 資産マスタを別ウィンドウで開く
+                            資産マスタを別ウィンドウで開く
                           </button>
                           <button
                             onClick={handleSave}
@@ -1095,6 +1226,14 @@ export default function RegistrationEditPage() {
                         </>
                       )}
                     </div>
+                  </td>
+                  {/* チェックボックス */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedRows.has(row.id)}
+                      onChange={() => toggleRowSelection(row.id)}
+                    />
                   </td>
                 </tr>
               ))}

@@ -9,13 +9,17 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 export default function AssetMasterPage() {
   const { assets: assetMasters } = useMasterStore();
   const { isMobile } = useResponsive();
-  const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   // フィルター状態
   const [filters, setFilters] = useState({
+    globalSearch: '',
     category: '',
     largeClass: '',
-    mediumClass: ''
+    mediumClass: '',
+    item: '',
+    maker: '',
+    model: ''
   });
 
   // マスタデータからフィルターoptionsを生成（資産マスタから）
@@ -34,9 +38,38 @@ export default function AssetMasterPage() {
     return uniqueMediumClasses.filter(Boolean);
   }, [assetMasters]);
 
+  const itemOptions = useMemo(() => {
+    const uniqueItems = Array.from(new Set(assetMasters.map(a => a.item)));
+    return uniqueItems.filter(Boolean);
+  }, [assetMasters]);
+
+  const makerOptions = useMemo(() => {
+    const uniqueMakers = Array.from(new Set(assetMasters.map(a => a.maker)));
+    return uniqueMakers.filter(Boolean);
+  }, [assetMasters]);
+
+  const modelOptions = useMemo(() => {
+    const uniqueModels = Array.from(new Set(assetMasters.map(a => a.model)));
+    return uniqueModels.filter(Boolean);
+  }, [assetMasters]);
+
   // フィルタリングされた資産
   const filteredAssets = useMemo(() => {
     let filtered = assetMasters;
+
+    // 全体検索（曖昧検索）
+    if (filters.globalSearch) {
+      const searchTerm = filters.globalSearch.toLowerCase();
+      filtered = filtered.filter(a =>
+        (a.category?.toLowerCase() || '').includes(searchTerm) ||
+        (a.largeClass?.toLowerCase() || '').includes(searchTerm) ||
+        (a.mediumClass?.toLowerCase() || '').includes(searchTerm) ||
+        (a.item?.toLowerCase() || '').includes(searchTerm) ||
+        (a.maker?.toLowerCase() || '').includes(searchTerm) ||
+        (a.model?.toLowerCase() || '').includes(searchTerm) ||
+        (a.id?.toLowerCase() || '').includes(searchTerm)
+      );
+    }
 
     if (filters.category) {
       filtered = filtered.filter(a => a.category === filters.category);
@@ -47,34 +80,79 @@ export default function AssetMasterPage() {
     if (filters.mediumClass) {
       filtered = filtered.filter(a => a.mediumClass === filters.mediumClass);
     }
+    if (filters.item) {
+      filtered = filtered.filter(a => a.item === filters.item);
+    }
+    if (filters.maker) {
+      filtered = filtered.filter(a => a.maker === filters.maker);
+    }
+    if (filters.model) {
+      filtered = filtered.filter(a => a.model === filters.model);
+    }
 
     return filtered;
   }, [assetMasters, filters]);
 
-  // チェックボックスの全選択/全解除
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      const allAssetIds = filteredAssets.map(asset => asset.id);
-      setSelectedAssets(new Set(allAssetIds));
-    } else {
-      setSelectedAssets(new Set());
-    }
-  };
+  // 選択した資産を取得
+  const selectedAsset = useMemo(() => {
+    return assetMasters.find(asset => asset.id === selectedAssetId) || null;
+  }, [assetMasters, selectedAssetId]);
 
-  // 選択した資産を親ウィンドウに渡す
-  const handleConfirmSelection = () => {
-    const selected = assetMasters.filter(asset => selectedAssets.has(asset.id));
+  // 選択した資産を親ウィンドウに渡す（スコープ別）
+  type ConfirmScope = 'all' | 'toMaker' | 'toItem';
 
-    if (selected.length === 0) {
+  const handleConfirmSelection = (scope: ConfirmScope) => {
+    if (!selectedAsset) {
       alert('資産を選択してください');
       return;
+    }
+
+    // スコープに応じて送信するデータを選択
+    let assetData: Partial<AssetMaster>;
+
+    switch (scope) {
+      case 'toItem':
+        // 品目まで確定: Category, 大分類, 中分類, 個体管理品目
+        assetData = {
+          id: selectedAsset.id,
+          category: selectedAsset.category,
+          largeClass: selectedAsset.largeClass,
+          mediumClass: selectedAsset.mediumClass,
+          item: selectedAsset.item
+        };
+        break;
+      case 'toMaker':
+        // メーカーまで確定: Category, 大分類, 中分類, 個体管理品目, メーカー
+        assetData = {
+          id: selectedAsset.id,
+          category: selectedAsset.category,
+          largeClass: selectedAsset.largeClass,
+          mediumClass: selectedAsset.mediumClass,
+          item: selectedAsset.item,
+          maker: selectedAsset.maker
+        };
+        break;
+      case 'all':
+      default:
+        // 全て確定: 全カラム
+        assetData = {
+          id: selectedAsset.id,
+          category: selectedAsset.category,
+          largeClass: selectedAsset.largeClass,
+          mediumClass: selectedAsset.mediumClass,
+          item: selectedAsset.item,
+          maker: selectedAsset.maker,
+          model: selectedAsset.model
+        };
+        break;
     }
 
     // 親ウィンドウに選択した資産を渡す
     if (window.opener && !window.opener.closed) {
       window.opener.postMessage({
         type: 'ASSET_SELECTED',
-        assets: selected
+        assets: [assetData],
+        scope: scope
       }, window.location.origin);
       window.close();
     } else {
@@ -107,7 +185,34 @@ export default function AssetMasterPage() {
 
       {/* フィルターヘッダー */}
       <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+        {/* 全体検索 */}
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#2c3e50',
+            marginBottom: '4px'
+          }}>
+            全体検索
+          </label>
+          <input
+            type="text"
+            value={filters.globalSearch || ''}
+            onChange={(e) => setFilters({...filters, globalSearch: e.target.value})}
+            placeholder="キーワードを入力（全カラムから曖昧検索）"
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '14px',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+        {/* 個別フィルター */}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: '1', minWidth: '120px' }}>
             <SearchableSelect
               label="Category"
@@ -118,7 +223,7 @@ export default function AssetMasterPage() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '150px' }}>
+          <div style={{ flex: '1', minWidth: '120px' }}>
             <SearchableSelect
               label="大分類"
               value={filters.largeClass}
@@ -128,7 +233,7 @@ export default function AssetMasterPage() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '150px' }}>
+          <div style={{ flex: '1', minWidth: '120px' }}>
             <SearchableSelect
               label="中分類"
               value={filters.mediumClass}
@@ -138,6 +243,59 @@ export default function AssetMasterPage() {
               isMobile={isMobile}
             />
           </div>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="個体管理品目"
+              value={filters.item}
+              onChange={(value) => setFilters({...filters, item: value})}
+              options={itemOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="メーカー"
+              value={filters.maker}
+              onChange={(value) => setFilters({...filters, maker: value})}
+              options={makerOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="型式"
+              value={filters.model}
+              onChange={(value) => setFilters({...filters, model: value})}
+              options={modelOptions}
+              placeholder="全て"
+              isMobile={isMobile}
+            />
+          </div>
+          <button
+            onClick={() => setFilters({
+              globalSearch: '',
+              category: '',
+              largeClass: '',
+              mediumClass: '',
+              item: '',
+              maker: '',
+              model: ''
+            })}
+            style={{
+              padding: '8px 16px',
+              background: '#95a5a6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '13px',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            クリア
+          </button>
         </div>
       </div>
 
@@ -152,51 +310,97 @@ export default function AssetMasterPage() {
         flexWrap: 'wrap',
         gap: '12px'
       }}>
-        <div style={{
-          fontSize: isMobile ? '13px' : '14px',
-          color: '#2c3e50',
-          fontWeight: 'bold'
-        }}>
-          {selectedAssets.size}件選択中 / 全{filteredAssets.length}件
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
-            onClick={handleConfirmSelection}
-            disabled={selectedAssets.size === 0}
+            onClick={() => handleConfirmSelection('all')}
+            disabled={!selectedAssetId}
             style={{
-              padding: isMobile ? '10px 20px' : '12px 24px',
-              background: selectedAssets.size === 0 ? '#bdc3c7' : '#27ae60',
+              padding: isMobile ? '8px 12px' : '10px 16px',
+              background: !selectedAssetId ? '#bdc3c7' : '#27ae60',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
-              fontSize: isMobile ? '14px' : '16px',
+              fontSize: isMobile ? '12px' : '14px',
               fontWeight: 'bold',
-              cursor: selectedAssets.size === 0 ? 'not-allowed' : 'pointer',
+              cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
               transition: 'background 0.2s'
             }}
             onMouseEnter={(e) => {
-              if (selectedAssets.size > 0) {
+              if (selectedAssetId) {
                 e.currentTarget.style.background = '#229954';
               }
             }}
             onMouseLeave={(e) => {
-              if (selectedAssets.size > 0) {
+              if (selectedAssetId) {
                 e.currentTarget.style.background = '#27ae60';
               }
             }}
           >
-            選択を確定
+            全て確定
+          </button>
+          <button
+            onClick={() => handleConfirmSelection('toMaker')}
+            disabled={!selectedAssetId}
+            style={{
+              padding: isMobile ? '8px 12px' : '10px 16px',
+              background: !selectedAssetId ? '#bdc3c7' : '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: 'bold',
+              cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (selectedAssetId) {
+                e.currentTarget.style.background = '#2980b9';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedAssetId) {
+                e.currentTarget.style.background = '#3498db';
+              }
+            }}
+          >
+            メーカーまで確定
+          </button>
+          <button
+            onClick={() => handleConfirmSelection('toItem')}
+            disabled={!selectedAssetId}
+            style={{
+              padding: isMobile ? '8px 12px' : '10px 16px',
+              background: !selectedAssetId ? '#bdc3c7' : '#9b59b6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '12px' : '14px',
+              fontWeight: 'bold',
+              cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (selectedAssetId) {
+                e.currentTarget.style.background = '#8e44ad';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedAssetId) {
+                e.currentTarget.style.background = '#9b59b6';
+              }
+            }}
+          >
+            品目まで確定
           </button>
           <button
             onClick={() => window.close()}
             style={{
-              padding: isMobile ? '10px 20px' : '12px 24px',
+              padding: isMobile ? '8px 12px' : '10px 16px',
               background: '#95a5a6',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
-              fontSize: isMobile ? '14px' : '16px',
+              fontSize: isMobile ? '12px' : '14px',
               fontWeight: 'bold',
               cursor: 'pointer',
               transition: 'background 0.2s'
@@ -249,12 +453,7 @@ export default function AssetMasterPage() {
                   width: '50px',
                   borderRight: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedAssets.size === filteredAssets.length && filteredAssets.length > 0}
-                    onChange={handleSelectAll}
-                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                  />
+                  選択
                 </th>
                 <th style={{
                   padding: isMobile ? '10px 8px' : '12px',
@@ -299,7 +498,7 @@ export default function AssetMasterPage() {
                   borderRight: '1px solid rgba(255,255,255,0.1)',
                   minWidth: '200px'
                 }}>
-                  品目
+                  個体管理品目
                 </th>
                 <th style={{
                   padding: isMobile ? '10px 8px' : '12px',
@@ -325,14 +524,22 @@ export default function AssetMasterPage() {
                 <tr
                   key={asset.id}
                   style={{
-                    background: index % 2 === 0 ? 'white' : '#f8f9fa',
-                    borderBottom: '1px solid #ecf0f1'
+                    background: selectedAssetId === asset.id
+                      ? '#d5f4e6'
+                      : index % 2 === 0 ? 'white' : '#f8f9fa',
+                    borderBottom: '1px solid #ecf0f1',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => setSelectedAssetId(asset.id)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#e8f4f8';
+                    if (selectedAssetId !== asset.id) {
+                      e.currentTarget.style.background = '#e8f4f8';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#f8f9fa';
+                    if (selectedAssetId !== asset.id) {
+                      e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#f8f9fa';
+                    }
                   }}
                 >
                   <td
@@ -344,17 +551,10 @@ export default function AssetMasterPage() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
-                      type="checkbox"
-                      checked={selectedAssets.has(asset.id)}
-                      onChange={(e) => {
-                        const newSelected = new Set(selectedAssets);
-                        if (e.target.checked) {
-                          newSelected.add(asset.id);
-                        } else {
-                          newSelected.delete(asset.id);
-                        }
-                        setSelectedAssets(newSelected);
-                      }}
+                      type="radio"
+                      name="assetSelection"
+                      checked={selectedAssetId === asset.id}
+                      onChange={() => setSelectedAssetId(asset.id)}
                       onClick={(e) => e.stopPropagation()}
                       style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                     />
