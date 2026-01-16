@@ -18,7 +18,7 @@ export const ASSET_COLUMNS: ColumnDef[] = [
   // 設置場所
   { key: 'building', label: '棟', width: '100px', defaultVisible: true, group: 'location' },
   { key: 'floor', label: '階', width: '80px', defaultVisible: true, group: 'location' },
-  { key: 'department', label: '部門名', width: '120px', defaultVisible: true, group: 'location' },
+  { key: 'department', label: '部門', width: '120px', defaultVisible: true, group: 'location' },
   { key: 'section', label: '部署名', width: '120px', defaultVisible: false, group: 'location' },
   { key: 'roomClass1', label: '諸室区分①', width: '120px', defaultVisible: false, group: 'location' },
   { key: 'roomClass2', label: '諸室区分②', width: '120px', defaultVisible: false, group: 'location' },
@@ -69,12 +69,23 @@ export const ASSET_COLUMNS: ColumnDef[] = [
   { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false, group: 'lifespan' },
 ];
 
-// リモデル申請画面用のカラム定義（nameカラムのラベルが異なる）
+// リモデル申請画面用のカラム定義（不要なカラムを除外）
+const EXCLUDED_COLUMNS = ['managementNo', 'roomName', 'installationLocation', 'quantityUnit', 'item'];
+
+// 作業用カラム（見積依頼関連）
+const WORK_COLUMNS: ColumnDef[] = [
+  { key: 'rfqNo', label: '見積依頼No.', width: '130px', defaultVisible: true, group: 'work' },
+  { key: 'rfqGroupName', label: 'グループ名称', width: '150px', defaultVisible: true, group: 'work' },
+  { key: 'rfqVendor', label: '見積業者', width: '150px', defaultVisible: true, group: 'work' },
+  { key: 'rfqAmount', label: '見積金額', width: '120px', defaultVisible: true, group: 'work' },
+];
+
 export const REMODEL_COLUMNS: ColumnDef[] = [
-  { key: 'applicationStatus', label: '申請ステータス', width: '150px', defaultVisible: true, group: 'status' },
-  ...ASSET_COLUMNS.map(col =>
-    col.key === 'name' ? { ...col, label: '品目' } : col
-  )
+  { key: 'applicationStatus', label: '要望区分', width: '150px', defaultVisible: true, group: 'status' },
+  ...ASSET_COLUMNS
+    .filter(col => !EXCLUDED_COLUMNS.includes(col.key))
+    .map(col => col.key === 'name' ? { ...col, label: '品目' } : col)
+    .flatMap(col => col.key === 'model' ? [col, ...WORK_COLUMNS] : [col])
 ];
 
 // ユーティリティ関数: カラムのラベルを上書き

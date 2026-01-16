@@ -92,6 +92,13 @@ export function useAssetTable(columns: ColumnDef[]) {
     if (key === 'acquisitionCost' && asset.acquisitionCost) {
       return `¥${asset.acquisitionCost.toLocaleString()}`;
     }
+    if (key === 'rfqAmount' && (asset as any).rfqAmount) {
+      const amount = (asset as any).rfqAmount;
+      if (typeof amount === 'number') {
+        return `¥${amount.toLocaleString()}`;
+      }
+      return amount;
+    }
     return (asset as any)[key] ?? '-';
   };
 

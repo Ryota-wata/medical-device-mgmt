@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 interface SearchableSelectProps {
   value: string;
   onChange: (value: string) => void;
+  onSelect?: (value: string) => void;  // ドロップダウンから選択時のみ呼ばれる
   options: string[];
   placeholder?: string;
   label?: string;
@@ -16,6 +17,7 @@ interface SearchableSelectProps {
 export function SearchableSelect({
   value,
   onChange,
+  onSelect,
   options,
   placeholder = '選択または入力してください',
   label,
@@ -64,6 +66,9 @@ export function SearchableSelect({
   const handleOptionClick = (option: string) => {
     setSearchQuery(option);
     onChange(option);
+    if (onSelect) {
+      onSelect(option);
+    }
     setIsOpen(false);
   };
 

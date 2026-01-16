@@ -18,6 +18,8 @@ interface HeaderProps {
   showApplicationListLink?: boolean;
   facility?: string;
   department?: string;
+  targetFacilities?: string[];
+  createdAt?: string;
   children?: React.ReactNode;
 }
 
@@ -34,6 +36,8 @@ export const Header: React.FC<HeaderProps> = ({
   showApplicationListLink = false,
   facility = '',
   department = '',
+  targetFacilities,
+  createdAt,
   children
 }) => {
   const router = useRouter();
@@ -61,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
       }}
     >
       {/* 左側: ロゴとタイトル */}
-      <div className="flex items-center" style={{ gap: isMobile ? '8px' : '16px' }}>
+      <div className="flex items-center" style={{ gap: isMobile ? '8px' : '16px', flexWrap: 'wrap' }}>
         <div className="flex items-center gap-2">
           <div
             className="flex items-center justify-center text-white font-bold"
@@ -82,41 +86,42 @@ export const Header: React.FC<HeaderProps> = ({
             {resultCount}件{showOriginalLabel && '（原本）'}
           </span>
         )}
+        {/* 対象施設と作成日 */}
+        {targetFacilities && targetFacilities.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '12px', color: '#95a5a6' }}>対象施設:</span>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {targetFacilities.map((f, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      padding: '2px 8px',
+                      background: 'rgba(39, 174, 96, 0.3)',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      color: '#ecf0f1',
+                    }}
+                  >
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {createdAt && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '12px', color: '#95a5a6' }}>作成日:</span>
+                <span style={{ fontSize: '12px', color: '#ecf0f1' }}>
+                  {new Date(createdAt).toLocaleDateString('ja-JP')}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 右側: アクションボタン */}
       <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
-        {/* リモデル申請一覧リンク */}
-        {showApplicationListLink && (
-          <button
-            onClick={() => {
-              const params = new URLSearchParams();
-              if (facility) params.set('facility', facility);
-              if (department) params.set('department', department);
-              const url = params.toString()
-                ? `/remodel-application-list?${params.toString()}`
-                : '/remodel-application-list';
-              router.push(url);
-            }}
-            className="flex items-center gap-2 border-0 rounded cursor-pointer transition-all text-white"
-            style={{
-              background: '#3498db',
-              padding: isMobile ? '6px 12px' : '8px 16px',
-              fontSize: isMobile ? '12px' : '14px',
-              whiteSpace: 'nowrap'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#2980b9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#3498db';
-            }}
-          >
-            <span>📋</span>
-            <span>リモデル申請一覧</span>
-          </button>
-        )}
-
         {/* カスタムアクションボタン */}
         {children}
 

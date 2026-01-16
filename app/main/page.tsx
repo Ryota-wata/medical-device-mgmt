@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore, useMasterStore } from '@/lib/stores';
+import { useAuthStore, useMasterStore, useEditListStore } from '@/lib/stores';
 import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -11,16 +11,21 @@ export default function MainPage() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { facilities } = useMasterStore();
+  const { editLists, addEditList, deleteEditList } = useEditListStore();
   const { isMobile, isTablet } = useResponsive();
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
-  const [isRemodelModalOpen, setIsRemodelModalOpen] = useState(false);
+  const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
   const [isHospitalSelectModalOpen, setIsHospitalSelectModalOpen] = useState(false);
   const [isHospitalMasterModalOpen, setIsHospitalMasterModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
-  const [selectedRemodelFacility, setSelectedRemodelFacility] = useState('');
   const [selectedFacilityForMaster, setSelectedFacilityForMaster] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
+
+  // 編集リスト関連のstate
+  const [editListMode, setEditListMode] = useState<'select' | 'create'>('select');
+  const [newEditListName, setNewEditListName] = useState('');
+  const [selectedEditListFacilities, setSelectedEditListFacilities] = useState<string[]>([]);
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = useMemo(() => {
@@ -41,30 +46,54 @@ export default function MainPage() {
     alert('QR読取機能（開発中）');
   };
 
-  const handleRemodelManagement = () => {
-    setIsRemodelModalOpen(true);
+  // 編集リスト関連の関数
+  const handleEditListManagement = () => {
+    setIsEditListModalOpen(true);
+    setEditListMode('select');
   };
 
-  const closeRemodelModal = () => {
-    setIsRemodelModalOpen(false);
-    setSelectedRemodelFacility('');
+  const closeEditListModal = () => {
+    setIsEditListModalOpen(false);
+    setEditListMode('select');
+    setNewEditListName('');
+    setSelectedEditListFacilities([]);
   };
 
-  const handleRemodelFacilityChange = (facilityName: string) => {
-    setSelectedRemodelFacility(facilityName);
+  const handleFacilityToggle = (facilityName: string) => {
+    setSelectedEditListFacilities(prev => {
+      if (prev.includes(facilityName)) {
+        return prev.filter(f => f !== facilityName);
+      } else {
+        return [...prev, facilityName];
+      }
+    });
   };
 
-  const handleRemodelSubmit = () => {
-    if (!selectedRemodelFacility) {
-      alert('施設を選択してください');
+  const handleCreateEditList = () => {
+    if (!newEditListName.trim()) {
+      alert('編集リスト名を入力してください');
+      return;
+    }
+    if (selectedEditListFacilities.length === 0) {
+      alert('施設を1つ以上選択してください');
       return;
     }
 
-    // リモデル申請画面に遷移（クエリパラメータで施設を渡す）
+    addEditList({
+      name: newEditListName.trim(),
+      facilities: selectedEditListFacilities,
+    });
+
+    alert(`編集リスト「${newEditListName.trim()}」を作成しました`);
+    closeEditListModal();
+  };
+
+  const handleSelectEditList = (listId: string) => {
     const params = new URLSearchParams({
-      facility: selectedRemodelFacility,
+      listId: listId,
     });
     router.push(`/remodel-application?${params.toString()}`);
+    closeEditListModal();
   };
 
   const handleQuotationManagement = () => {
@@ -217,7 +246,7 @@ export default function MainPage() {
                   QR読取
                 </button>
                 <button
-                  onClick={handleRemodelManagement}
+                  onClick={handleEditListManagement}
                   style={{
                     padding: '8px 16px',
                     background: '#27ae60',
@@ -235,7 +264,7 @@ export default function MainPage() {
                     e.currentTarget.style.background = '#27ae60';
                   }}
                 >
-                  リモデル管理
+                  編集リスト
                 </button>
                 <button
                   onClick={handleQuotationManagement}
@@ -1092,10 +1121,10 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* リモデル施設選択モーダル */}
-      {isRemodelModalOpen && (
+      {/* 編集リストモーダル */}
+      {isEditListModalOpen && (
         <div
-          onClick={closeRemodelModal}
+          onClick={closeEditListModal}
           style={{
             position: 'fixed',
             top: 0,
@@ -1116,8 +1145,7 @@ export default function MainPage() {
               background: 'white',
               borderRadius: '12px',
               width: '90%',
-              maxWidth: '500px',
-              maxHeight: '90vh',
+              maxWidth: '600px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
               overflow: 'visible',
               display: 'flex',
@@ -1137,9 +1165,9 @@ export default function MainPage() {
                 alignItems: 'center',
               }}
             >
-              <span>リモデル管理 - 施設選択</span>
+              <span>編集リスト</span>
               <button
-                onClick={closeRemodelModal}
+                onClick={closeEditListModal}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -1166,72 +1194,284 @@ export default function MainPage() {
               </button>
             </div>
 
+            {/* タブ切り替え */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
+              <button
+                onClick={() => setEditListMode('select')}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: editListMode === 'select' ? '#27ae60' : 'white',
+                  color: editListMode === 'select' ? 'white' : '#333',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                }}
+              >
+                作成済みリストを選択
+              </button>
+              <button
+                onClick={() => setEditListMode('create')}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: editListMode === 'create' ? '#27ae60' : 'white',
+                  color: editListMode === 'create' ? 'white' : '#333',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                }}
+              >
+                新規リスト作成
+              </button>
+            </div>
+
             {/* モーダルボディ */}
             <div style={{ padding: '24px', overflow: 'visible' }}>
-              {/* 施設選択 */}
-              <div style={{ marginBottom: '24px', position: 'relative', zIndex: 3 }}>
-                <SearchableSelect
-                  label="施設を選択"
-                  value={selectedRemodelFacility}
-                  onChange={handleRemodelFacilityChange}
-                  options={['', ...facilityOptions]}
-                  placeholder="施設を選択してください"
-                  isMobile={isMobile}
-                />
-              </div>
+              {editListMode === 'select' ? (
+                /* 作成済みリスト選択モード */
+                <div>
+                  {editLists.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: '#7f8c8d', padding: '20px' }}>
+                      作成済みの編集リストがありません
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {editLists.map((list) => (
+                        <div
+                          key={list.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'stretch',
+                            gap: '8px',
+                          }}
+                        >
+                          <button
+                            onClick={() => handleSelectEditList(list.id)}
+                            style={{
+                              flex: 1,
+                              padding: '16px',
+                              background: 'white',
+                              border: '2px solid #27ae60',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#27ae60';
+                              e.currentTarget.style.color = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'white';
+                              e.currentTarget.style.color = '#333';
+                            }}
+                          >
+                            <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: '8px' }}>
+                              {list.name}
+                            </div>
+                            <div style={{ fontSize: '13px', opacity: 0.8 }}>
+                              施設: {list.facilities.join(', ')}
+                            </div>
+                            <div style={{ fontSize: '12px', opacity: 0.6, marginTop: '4px' }}>
+                              作成日: {new Date(list.createdAt).toLocaleDateString('ja-JP')}
+                            </div>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`「${list.name}」を削除しますか？`)) {
+                                deleteEditList(list.id);
+                              }
+                            }}
+                            style={{
+                              padding: '12px 16px',
+                              background: 'white',
+                              border: '2px solid #e74c3c',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              color: '#e74c3c',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#e74c3c';
+                              e.currentTarget.style.color = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'white';
+                              e.currentTarget.style.color = '#e74c3c';
+                            }}
+                            title="削除"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* 新規作成モード */
+                <div>
+                  {/* 編集リスト名称 */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#333' }}>
+                      編集リスト名称
+                    </label>
+                    <input
+                      type="text"
+                      value={newEditListName}
+                      onChange={(e) => setNewEditListName(e.target.value)}
+                      placeholder="例: 2025年度リモデル計画"
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        border: '2px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
 
-              {/* 決定ボタン */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={closeRemodelModal}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#95a5a6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#7f8c8d';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#95a5a6';
-                  }}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleRemodelSubmit}
-                  disabled={!selectedRemodelFacility}
-                  style={{
-                    padding: '8px 16px',
-                    background: selectedRemodelFacility ? '#27ae60' : '#ddd',
-                    color: selectedRemodelFacility ? 'white' : '#999',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: selectedRemodelFacility ? 'pointer' : 'not-allowed',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (selectedRemodelFacility) {
-                      e.currentTarget.style.background = '#229954';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (selectedRemodelFacility) {
-                      e.currentTarget.style.background = '#27ae60';
-                    }
-                  }}
-                >
-                  決定
-                </button>
-              </div>
+                  {/* 施設選択 */}
+                  <div style={{ position: 'relative', zIndex: 10 }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#333' }}>
+                      取り込む原本データ（施設）を選択
+                    </label>
+                    <p style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '12px' }}>
+                      複数選択可能です（選択後もプルダウンから追加できます）
+                    </p>
+
+                    {/* 選択済み施設タグ */}
+                    {selectedEditListFacilities.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        marginBottom: '12px',
+                      }}>
+                        {selectedEditListFacilities.map((facility) => (
+                          <span
+                            key={facility}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '6px 12px',
+                              background: '#e8f5e9',
+                              border: '1px solid #27ae60',
+                              borderRadius: '16px',
+                              fontSize: '13px',
+                              color: '#2c3e50',
+                            }}
+                          >
+                            {facility}
+                            <button
+                              type="button"
+                              onClick={() => handleFacilityToggle(facility)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: '0',
+                                fontSize: '16px',
+                                color: '#e74c3c',
+                                lineHeight: 1,
+                              }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 施設プルダウン */}
+                    <SearchableSelect
+                      label=""
+                      value=""
+                      onChange={() => {}}
+                      onSelect={(value) => {
+                        if (value && !selectedEditListFacilities.includes(value)) {
+                          setSelectedEditListFacilities(prev => [...prev, value]);
+                        }
+                      }}
+                      options={['', ...facilityOptions.filter(f => !selectedEditListFacilities.includes(f))]}
+                      placeholder="施設を検索して選択..."
+                      isMobile={isMobile}
+                    />
+
+                    {selectedEditListFacilities.length > 0 && (
+                      <p style={{ fontSize: '13px', color: '#27ae60', marginTop: '8px' }}>
+                        {selectedEditListFacilities.length}件選択中
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 作成ボタン */}
+                  <div style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                    <button
+                      onClick={closeEditListModal}
+                      style={{
+                        padding: '10px 20px',
+                        background: '#95a5a6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#7f8c8d';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#95a5a6';
+                      }}
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      onClick={handleCreateEditList}
+                      disabled={!newEditListName.trim() || selectedEditListFacilities.length === 0}
+                      style={{
+                        padding: '10px 20px',
+                        background: newEditListName.trim() && selectedEditListFacilities.length > 0 ? '#27ae60' : '#ddd',
+                        color: newEditListName.trim() && selectedEditListFacilities.length > 0 ? 'white' : '#999',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: newEditListName.trim() && selectedEditListFacilities.length > 0 ? 'pointer' : 'not-allowed',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        transition: 'background 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (newEditListName.trim() && selectedEditListFacilities.length > 0) {
+                          e.currentTarget.style.background = '#229954';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (newEditListName.trim() && selectedEditListFacilities.length > 0) {
+                          e.currentTarget.style.background = '#27ae60';
+                        }
+                      }}
+                    >
+                      作成
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

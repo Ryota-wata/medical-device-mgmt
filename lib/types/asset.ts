@@ -51,6 +51,12 @@ export interface Asset {
   recommendedServiceLife?: string; // 使用年数（メーカー推奨）
   endOfService?: string; // End of service：販売終了
   endOfSupport?: string; // End of support：メンテ終了
+
+  // 作業用フィールド（見積依頼関連）
+  rfqNo?: string; // 見積依頼No.
+  rfqGroupName?: string; // グループ名称
+  rfqVendor?: string; // 見積業者
+  rfqAmount?: number | string; // 見積金額
 }
 
 /**

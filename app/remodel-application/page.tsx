@@ -3,14 +3,17 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset, Application, ApplicationType } from '@/lib/types';
-import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore } from '@/lib/stores';
+import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
+import { useColumnFeatures } from '@/lib/hooks/useColumnFeatures';
 import { Header } from '@/components/layouts/Header';
 import { REMODEL_COLUMNS, type ColumnDef } from '@/lib/constants/assetColumns';
+import { RfqGroupModal } from '@/components/remodel/RfqGroupModal';
+import { generateMockAssets, BUILDING_LIST } from '@/lib/data/generateMockAssets';
 
 const ALL_COLUMNS = REMODEL_COLUMNS;
 
@@ -20,10 +23,16 @@ function RemodelApplicationContent() {
   const { addApplication, applications } = useApplicationStore();
   const { getNewLocationByCurrentLocation, facilities: hospitalFacilities, swapToNewLocation } = useHospitalFacilityStore();
   const { individuals, updateIndividual } = useIndividualStore();
+  const { getEditListById } = useEditListStore();
+  const { addRfqGroup, generateRfqNo } = useRfqGroupStore();
   const { isMobile } = useResponsive();
 
-  // URLパラメータから施設・部署を取得
-  const facility = searchParams.get('facility') || '';
+  // URLパラメータから編集リストIDを取得
+  const listId = searchParams.get('listId') || '';
+  const editList = listId ? getEditListById(listId) : null;
+
+  // 編集リストがない場合は従来の施設・部署パラメータを使用
+  const facility = editList ? editList.facilities.join(', ') : (searchParams.get('facility') || '');
   const department = searchParams.get('department') || '';
 
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -38,6 +47,15 @@ function RemodelApplicationContent() {
   const [applicationDepartment, setApplicationDepartment] = useState('');
   const [applicationSection, setApplicationSection] = useState('');
   const [applicationRoomName, setApplicationRoomName] = useState('');
+
+  // 見積依頼グループ作成モーダル関連の状態
+  const [isRfqGroupModalOpen, setIsRfqGroupModalOpen] = useState(false);
+  const [rfqGroupName, setRfqGroupName] = useState('');
+
+  // セル編集関連の状態
+  const [editingCell, setEditingCell] = useState<{ rowNo: number; colKey: string } | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [hoveredCell, setHoveredCell] = useState<{ rowNo: number; colKey: string } | null>(null);
 
   // 新規申請モーダル関連の状態
   const [isNewApplicationModalOpen, setIsNewApplicationModalOpen] = useState(false);
@@ -101,53 +119,11 @@ function RemodelApplicationContent() {
     setShowCloseConfirmModal(false);
   };
 
-  // モックデータ
-  const [mockAssets] = useState<Asset[]>(
-    Array.from({length: 20}, (_, i) => ({
-      qrCode: `QR-2025-${String(i + 1).padStart(4, '0')}`,
-      no: i + 1,
-      facility: facility,
-      building: '本館',
-      floor: '2F',
-      department: department,
-      section: '手術',
-      category: '医療機器',
-      largeClass: '手術関連機器',
-      mediumClass: i % 2 === 0 ? '電気メス 双極' : 'CT関連',
-      item: `品目${i + 1}`,
-      name: `サンプル製品${i + 1}`,
-      maker: '医療機器',
-      model: `MODEL-${i + 1}`,
-      quantity: 1,
-      width: 500 + i * 10,
-      depth: 600 + i * 10,
-      height: 700 + i * 10,
-      assetNo: `10605379-${String(i + 1).padStart(3, '0')}`,
-      managementNo: `${1338 + i + 1}`,
-      roomClass1: '手術室',
-      roomClass2: 'OP室',
-      roomName: `手術室${String.fromCharCode(65 + i)}`,
-      installationLocation: `手術室${String.fromCharCode(65 + i)}-中央`,
-      assetInfo: '資産台帳登録済',
-      quantityUnit: '1台',
-      serialNumber: `SN-2024-${String(i + 1).padStart(3, '0')}`,
-      contractName: `医療機器購入契約2024-${String(i + 1).padStart(2, '0')}`,
-      contractNo: `C-2024-${String(i + 1).padStart(4, '0')}`,
-      quotationNo: `Q-2024-${String(i + 1).padStart(4, '0')}`,
-      contractDate: '2024-01-10',
-      deliveryDate: '2024-01-20',
-      inspectionDate: '2024-01-25',
-      lease: i % 3 === 0 ? 'あり' : 'なし',
-      rental: i % 5 === 0 ? 'あり' : 'なし',
-      leaseStartDate: i % 3 === 0 ? '2024-01-01' : '',
-      leaseEndDate: i % 3 === 0 ? '2029-12-31' : '',
-      acquisitionCost: 1000000 * (i + 1),
-      legalServiceLife: '6年',
-      recommendedServiceLife: '8年',
-      endOfService: '2032-12-31',
-      endOfSupport: '2035-12-31',
-    }))
-  );
+  // 対象施設リスト
+  const targetFacilities = editList ? editList.facilities : (facility ? [facility] : []);
+
+  // モックデータ（施設ごとにデータを生成）
+  const [mockAssets, setMockAssets] = useState<Asset[]>(() => generateMockAssets(targetFacilities));
 
   // 個別施設マスタの統計
   const facilityMasterStats = useMemo(() => {
@@ -210,6 +186,28 @@ function RemodelApplicationContent() {
     sectionOptions,
   } = useAssetFilter(mockAssets);
 
+  // カラム機能（ソート、フィルター、並び替え）
+  const {
+    sortConfig,
+    handleSort,
+    columnFilters,
+    openFilterColumn,
+    setOpenFilterColumn,
+    getColumnUniqueValues,
+    toggleColumnFilter,
+    clearColumnFilter,
+    draggedColumn,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    orderedColumns,
+    finalFilteredAssets,
+  } = useColumnFeatures({
+    columns: ALL_COLUMNS,
+    assets: mockAssets,
+    baseFilteredAssets: filteredAssets,
+  });
+
   // useAssetTableフックを使用
   const {
     visibleColumns,
@@ -224,7 +222,7 @@ function RemodelApplicationContent() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(new Set(filteredAssets.map(a => a.no)));
+      setSelectedItems(new Set(finalFilteredAssets.map(a => a.no)));
     } else {
       setSelectedItems(new Set());
     }
@@ -296,6 +294,59 @@ function RemodelApplicationContent() {
     );
   };
 
+  // セル編集開始
+  const handleCellDoubleClick = (rowNo: number, colKey: string, currentValue: string) => {
+    // 見積依頼No.カラムの場合はモーダルを開く
+    if (colKey === 'rfqNo') {
+      // 選択されていない場合は該当行を選択
+      if (selectedItems.size === 0 || !selectedItems.has(rowNo)) {
+        setSelectedItems(new Set([rowNo]));
+      }
+      setIsRfqGroupModalOpen(true);
+      return;
+    }
+
+    setEditingCell({ rowNo, colKey });
+    setEditingValue(currentValue);
+  };
+
+  // セル編集確定（複数選択時は一括編集）
+  const handleCellSave = () => {
+    if (!editingCell) return;
+
+    // 複数選択されていて、編集中のセルが選択レコードに含まれている場合は一括編集
+    if (selectedItems.size > 1 && selectedItems.has(editingCell.rowNo)) {
+      setMockAssets(prev => prev.map(asset => {
+        if (selectedItems.has(asset.no)) {
+          return { ...asset, [editingCell.colKey]: editingValue };
+        }
+        return asset;
+      }));
+    } else {
+      // 単一編集
+      setMockAssets(prev => prev.map(asset => {
+        if (asset.no === editingCell.rowNo) {
+          return { ...asset, [editingCell.colKey]: editingValue };
+        }
+        return asset;
+      }));
+    }
+
+    setEditingCell(null);
+    setEditingValue('');
+  };
+
+  // セル編集キャンセル
+  const handleCellCancel = () => {
+    setEditingCell(null);
+    setEditingValue('');
+  };
+
+  // 編集可能なカラム
+  const editableColumns = ALL_COLUMNS.filter(col =>
+    !['applicationStatus'].includes(col.key)
+  );
+
   // 申請アクションハンドラー
   const handleApplicationAction = (actionType: string) => {
     if (selectedItems.size === 0 && actionType !== '新規申請') {
@@ -340,7 +391,7 @@ function RemodelApplicationContent() {
     }
 
     // 選択された資産を取得
-    const selectedAssets = filteredAssets.filter(asset => selectedItems.has(asset.no));
+    const selectedAssets = finalFilteredAssets.filter(asset => selectedItems.has(asset.no));
 
     // 廃棄申請以外はバリデーション
     if (currentApplicationType !== '廃棄申請') {
@@ -532,44 +583,166 @@ function RemodelApplicationContent() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
       <Header
-        title={`リモデル管理 - ${facility} ${department}`}
-        resultCount={filteredAssets.length}
+        title={editList ? `編集リスト: ${editList.name}` : `リモデル管理 - ${facility} ${department}`}
+        resultCount={finalFilteredAssets.length}
         onViewToggle={() => setCurrentView(currentView === 'list' ? 'card' : 'list')}
         onExport={() => alert('Excel/PDF出力')}
         onPrint={() => window.print()}
         onColumnSettings={() => setIsColumnSettingsOpen(true)}
         showBackButton={true}
         hideMenu={true}
-        showApplicationListLink={true}
         facility={facility}
         department={department}
+        targetFacilities={editList?.facilities}
+        createdAt={editList?.createdAt}
       />
+
+      {/* アクションボタンバー */}
+      <div style={{
+        background: '#fff',
+        padding: '12px 20px',
+        borderBottom: '1px solid #dee2e6',
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <button
+          onClick={() => alert('API連携機能（開発中）')}
+          style={{
+            padding: '8px 16px',
+            background: '#27ae60',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; }}
+        >
+          API連携
+        </button>
+        <button
+          onClick={() => alert('要望区分機能（開発中）')}
+          style={{
+            padding: '8px 16px',
+            background: '#27ae60',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; }}
+        >
+          要望区分
+        </button>
+        <button
+          onClick={() => {
+            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            window.open(`${basePath}/ship-asset-master`, '_blank', 'width=1200,height=800');
+          }}
+          style={{
+            padding: '8px 16px',
+            background: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
+        >
+          マスタを開く
+        </button>
+        <button
+          onClick={() => {
+            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+            window.open(`${basePath}/quotation-data-box`, '_blank', 'width=1200,height=800');
+          }}
+          style={{
+            padding: '8px 16px',
+            background: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
+        >
+          見積DBを開く
+        </button>
+        <button
+          onClick={() => alert('原本を開く機能（開発中）')}
+          style={{
+            padding: '8px 16px',
+            background: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 500,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
+        >
+          原本を開く
+        </button>
+        </div>
+
+        {/* 合計表示 */}
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <div style={{
+            padding: '8px 16px',
+            background: '#f8f9fa',
+            borderRadius: '4px',
+            border: '1px solid #dee2e6',
+          }}>
+            <span style={{ fontSize: '12px', color: '#666', marginRight: '8px' }}>表示数量合計:</span>
+            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>{finalFilteredAssets.length}件</span>
+          </div>
+          <div style={{
+            padding: '8px 16px',
+            background: '#f8f9fa',
+            borderRadius: '4px',
+            border: '1px solid #dee2e6',
+          }}>
+            <span style={{ fontSize: '12px', color: '#666', marginRight: '8px' }}>表示金額合計:</span>
+            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60' }}>
+              ¥{finalFilteredAssets.reduce((sum, asset) => {
+                const amount = asset.rfqAmount;
+                if (typeof amount === 'number') return sum + amount;
+                if (typeof amount === 'string' && amount) {
+                  const num = parseInt(amount.replace(/[^0-9]/g, ''), 10);
+                  return sum + (isNaN(num) ? 0 : num);
+                }
+                return sum;
+              }, 0).toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* フィルターヘッダー */}
       <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="棟"
-              value={filters.building}
-              onChange={(value) => setFilters({...filters, building: value})}
-              options={['', ...buildingOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="階"
-              value={filters.floor}
-              onChange={(value) => setFilters({...filters, floor: value})}
-              options={['', ...floorOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
           <div style={{ flex: '1', minWidth: '120px' }}>
             <SearchableSelect
               label="部門"
@@ -624,212 +797,27 @@ function RemodelApplicationContent() {
               isMobile={isMobile}
             />
           </div>
-        </div>
-      </div>
 
-      {/* アクションバー */}
-      <div style={{ background: '#fff', padding: '15px 20px', borderBottom: '1px solid #dee2e6', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '14px', color: '#555', marginRight: '15px' }}>
-          {selectedItems.size}件選択中
-        </span>
-        <button
-          style={{
-            padding: '8px 16px',
-            background: '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => handleApplicationAction('新規申請')}
-        >
-          新規申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => handleApplicationAction('増設申請')}
-        >
-          増設申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#e67e22',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => handleApplicationAction('更新申請')}
-        >
-          更新申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#9b59b6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => handleApplicationAction('移動申請')}
-        >
-          移動申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#e74c3c',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => handleApplicationAction('廃棄申請')}
-        >
-          廃棄申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#95a5a6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => handleApplicationAction('保留')}
-        >
-          保留
-        </button>
-
-        {/* 区切り線 */}
-        <div style={{ width: '1px', height: '30px', background: '#dee2e6', margin: '0 10px' }} />
-
-        {/* 資産ベース進捗状況パネル */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
-          {/* 進捗バー */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>進捗:</span>
-            <div style={{
-              width: '100px',
-              height: '8px',
-              background: '#e0e0e0',
-              borderRadius: '4px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                width: `${progressRate}%`,
-                height: '100%',
-                background: progressRate === 100 ? '#27ae60' : '#3498db',
-                borderRadius: '4px',
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
-            <span style={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: progressRate === 100 ? '#27ae60' : '#3498db',
-            }}>
-              {progressRate}%
-            </span>
+          <div style={{ flex: '1', minWidth: '120px' }}>
+            <SearchableSelect
+              label="資産管理部署"
+              value={filters.section}
+              onChange={(value) => setFilters({...filters, section: value})}
+              options={['', ...sectionOptions]}
+              placeholder="すべて"
+              isMobile={isMobile}
+            />
           </div>
-
-          {/* 資産ベースのステータス別カウント */}
-          <div style={{ display: 'flex', gap: '6px', marginLeft: '8px' }}>
-            <span style={{
-              fontSize: '11px',
-              padding: '3px 8px',
-              background: '#f8d7da',
-              color: '#721c24',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-            }}>
-              未申請: {assetProgress.notApplied}
-            </span>
-            <span style={{
-              fontSize: '11px',
-              padding: '3px 8px',
-              background: '#fff3cd',
-              color: '#856404',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-            }}>
-              申請中: {assetProgress.inProgress}
-            </span>
-            <span style={{
-              fontSize: '11px',
-              padding: '3px 8px',
-              background: '#d4edda',
-              color: '#155724',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-            }}>
-              執行済み: {assetProgress.executed}
-            </span>
-            <span style={{
-              fontSize: '11px',
-              padding: '3px 8px',
-              background: '#cce5ff',
-              color: '#004085',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-            }}>
-              合計: {assetProgress.total}
-            </span>
-          </div>
-
-          {/* クローズボタン */}
-          <button
-            disabled={!canClose}
-            onClick={() => setShowCloseConfirmModal(true)}
-            style={{
-              padding: '8px 16px',
-              background: canClose ? '#2c3e50' : '#ccc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: canClose ? 'pointer' : 'not-allowed',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              marginLeft: '8px',
-            }}
-            title={canClose ? 'すべての資産の申請が執行済みです。クローズできます。' : '未申請または申請中の資産があります。すべて執行完了後にクローズできます。'}
-          >
-            リモデルクローズ
-          </button>
         </div>
       </div>
 
       {/* テーブル表示 */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+      <div style={{ flex: 1, overflow: 'hidden', padding: '20px', position: 'relative' }}>
+        <div style={{ overflow: 'auto', width: '100%', height: '100%' }}>
         {currentView === 'list' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px', tableLayout: 'fixed' }}>
             <thead>
-              <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+              <tr style={{ background: '#f8f9fa' }}>
                 <th
                   style={{
                     padding: '12px 8px',
@@ -837,58 +825,30 @@ function RemodelApplicationContent() {
                     fontWeight: 'bold',
                     color: '#2c3e50',
                     width: `${columnWidths.checkbox}px`,
-                    position: 'relative',
+                    minWidth: `${columnWidths.checkbox}px`,
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 101,
+                    background: '#f8f9fa',
                     whiteSpace: 'nowrap',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
+                    borderRight: '1px solid #dee2e6',
+                    borderBottom: '2px solid #dee2e6',
                   }}
                 >
-                  <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
-                  <div
-                    onMouseDown={(e) => handleResizeStart(e, 'checkbox')}
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: '4px',
-                      cursor: 'col-resize',
-                      background: resizingColumn === 'checkbox' ? '#3498db' : 'transparent',
-                      transition: 'background 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!resizingColumn) e.currentTarget.style.background = '#ddd';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!resizingColumn) e.currentTarget.style.background = 'transparent';
-                    }}
-                  />
-                </th>
-                {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                  <th
-                    key={col.key}
-                    style={{
-                      padding: '12px 8px',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#2c3e50',
-                      width: `${columnWidths[col.key]}px`,
-                      position: 'relative',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {col.label}
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
                     <div
-                      onMouseDown={(e) => handleResizeStart(e, col.key)}
+                      onMouseDown={(e) => handleResizeStart(e, 'checkbox')}
                       style={{
                         position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
+                        right: -8,
+                        top: -12,
+                        bottom: -12,
                         width: '4px',
                         cursor: 'col-resize',
-                        background: resizingColumn === col.key ? '#3498db' : 'transparent',
+                        background: resizingColumn === 'checkbox' ? '#3498db' : 'transparent',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => {
@@ -898,52 +858,264 @@ function RemodelApplicationContent() {
                         if (!resizingColumn) e.currentTarget.style.background = 'transparent';
                       }}
                     />
-                  </th>
-                ))}
+                  </div>
+                </th>
+                {orderedColumns.filter((col) => visibleColumns[col.key]).map((col) => {
+                  const isSorted = sortConfig?.key === col.key;
+                  const hasFilter = columnFilters[col.key]?.length > 0;
+                  const uniqueValues = getColumnUniqueValues(col.key);
+
+                  return (
+                    <th
+                      key={col.key}
+                      draggable
+                      onDragStart={() => handleDragStart(col.key)}
+                      onDragOver={(e) => handleDragOver(e, col.key)}
+                      onDragEnd={handleDragEnd}
+                      style={{
+                        padding: '8px',
+                        textAlign: 'left',
+                        fontWeight: 'bold',
+                        color: '#2c3e50',
+                        width: `${columnWidths[col.key]}px`,
+                        position: 'relative',
+                        whiteSpace: 'nowrap',
+                        overflow: 'visible',
+                        background: draggedColumn === col.key ? '#e3f2fd' : '#f8f9fa',
+                        zIndex: openFilterColumn === col.key ? 100 : 1,
+                        borderRight: '1px solid #dee2e6',
+                        borderBottom: '2px solid #dee2e6',
+                        cursor: 'grab',
+                      }}
+                    >
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {/* カラム名とソートボタン */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span
+                            onClick={() => handleSort(col.key)}
+                            style={{ cursor: 'pointer', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                            title={col.label}
+                          >
+                            {col.label}
+                          </span>
+                          <span
+                            onClick={() => handleSort(col.key)}
+                            style={{ cursor: 'pointer', fontSize: '10px', color: isSorted ? '#3498db' : '#aaa' }}
+                          >
+                            {isSorted ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                          </span>
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenFilterColumn(openFilterColumn === col.key ? null : col.key);
+                            }}
+                            style={{
+                              cursor: 'pointer',
+                              fontSize: '10px',
+                              color: hasFilter ? '#e74c3c' : '#aaa',
+                              padding: '2px',
+                            }}
+                          >
+                            ▼
+                          </span>
+                        </div>
+
+                        {/* フィルタードロップダウン */}
+                        {openFilterColumn === col.key && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              background: 'white',
+                              border: '1px solid #dee2e6',
+                              borderRadius: '4px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              zIndex: 1000,
+                              maxHeight: '200px',
+                              overflowY: 'auto',
+                              minWidth: '150px',
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: '8px',
+                                borderBottom: '1px solid #dee2e6',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <span style={{ fontSize: '11px', fontWeight: 'bold' }}>絞り込み</span>
+                              <button
+                                onClick={() => clearColumnFilter(col.key)}
+                                style={{
+                                  fontSize: '10px',
+                                  padding: '2px 6px',
+                                  background: '#e74c3c',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '2px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                クリア
+                              </button>
+                            </div>
+                            {uniqueValues.map((value) => (
+                              <label
+                                key={value}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '6px 8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  borderBottom: '1px solid #f0f0f0',
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={columnFilters[col.key]?.includes(value) || false}
+                                  onChange={() => toggleColumnFilter(col.key, value)}
+                                />
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {value || '(空)'}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          handleResizeStart(e, col.key);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '4px',
+                          cursor: 'col-resize',
+                          background: resizingColumn === col.key ? '#3498db' : 'transparent',
+                          transition: 'background 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!resizingColumn) e.currentTarget.style.background = '#ddd';
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!resizingColumn) e.currentTarget.style.background = 'transparent';
+                        }}
+                      />
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {filteredAssets.map((asset) => (
+              {finalFilteredAssets.map((asset) => (
                 <tr
                   key={asset.no}
-                  style={{
-                    borderBottom: '1px solid #dee2e6',
-                    cursor: 'pointer',
-                    background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white'
-                  }}
-                  onDoubleClick={() => router.push(`/asset-detail?no=${asset.no}`)}
-                  onMouseEnter={(e) => {
-                    if (!selectedItems.has(asset.no)) {
-                      e.currentTarget.style.background = '#f8f9fa';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!selectedItems.has(asset.no)) {
-                      e.currentTarget.style.background = 'white';
-                    }
-                  }}
                 >
-                  <td style={{ padding: '12px 8px', whiteSpace: 'nowrap', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+                  <td style={{
+                    padding: '12px 8px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 100,
+                    background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white',
+                    boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
+                    borderRight: '1px solid #dee2e6',
+                    borderBottom: '1px solid #dee2e6',
+                  }}>
                     <input
                       type="checkbox"
                       checked={selectedItems.has(asset.no)}
                       onChange={() => handleSelectItem(asset.no)}
                     />
                   </td>
-                  {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                    <td key={col.key} style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {col.key === 'applicationStatus' ? renderApplicationStatus(asset) : getCellValue(asset, col.key)}
-                    </td>
-                  ))}
+                  {orderedColumns.filter((col) => visibleColumns[col.key]).map((col) => {
+                    const isEditing = editingCell?.rowNo === asset.no && editingCell?.colKey === col.key;
+                    const isHovered = hoveredCell?.rowNo === asset.no && hoveredCell?.colKey === col.key;
+                    const cellValue = getCellValue(asset, col.key);
+                    const isEditable = col.key !== 'applicationStatus';
+                    const isRowSelected = selectedItems.has(asset.no);
+
+                    // セル背景色の決定
+                    const getCellBackground = () => {
+                      if (isEditing) return '#fff3cd';
+                      if (isHovered && isEditable) {
+                        // 選択状態では濃い青、非選択では薄い青
+                        return isRowSelected ? '#bbdefb' : '#e8f4fd';
+                      }
+                      // デフォルトは行の背景色に合わせる
+                      return isRowSelected ? '#e3f2fd' : 'white';
+                    };
+
+                    return (
+                      <td
+                        key={col.key}
+                        style={{
+                          padding: isEditing ? '4px' : '12px 8px',
+                          color: '#2c3e50',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          background: getCellBackground(),
+                          cursor: isEditable ? 'pointer' : 'default',
+                          transition: 'background 0.15s',
+                          position: 'relative',
+                          zIndex: 0,
+                          borderRight: '1px solid #dee2e6',
+                          borderBottom: '1px solid #dee2e6',
+                        }}
+                        onMouseEnter={() => isEditable && setHoveredCell({ rowNo: asset.no, colKey: col.key })}
+                        onMouseLeave={() => setHoveredCell(null)}
+                        onDoubleClick={() => isEditable && handleCellDoubleClick(asset.no, col.key, cellValue)}
+                      >
+                        {col.key === 'applicationStatus' ? (
+                          renderApplicationStatus(asset)
+                        ) : isEditing ? (
+                          <input
+                            type="text"
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={handleCellSave}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleCellSave();
+                              if (e.key === 'Escape') handleCellCancel();
+                            }}
+                            autoFocus
+                            style={{
+                              width: '100%',
+                              padding: '6px 8px',
+                              border: '2px solid #3498db',
+                              borderRadius: '4px',
+                              fontSize: '13px',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        ) : (
+                          cellValue
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+        </div>
 
         {currentView === 'card' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {filteredAssets.map((asset) => (
+            {finalFilteredAssets.map((asset) => (
               <div
                 key={asset.no}
                 style={{
@@ -1076,7 +1248,7 @@ function RemodelApplicationContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredAssets.filter(asset => selectedItems.has(asset.no)).map((asset) => (
+                      {finalFilteredAssets.filter(asset => selectedItems.has(asset.no)).map((asset) => (
                         <tr key={asset.no} style={{ borderBottom: '1px solid #f0f0f0' }}>
                           <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.name}</td>
                           <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.maker}</td>
@@ -1104,7 +1276,7 @@ function RemodelApplicationContent() {
                       type="button"
                       onClick={() => {
                         // 選択された資産の現在の設置場所から新居情報を自動取得
-                        const selectedAssetsList = filteredAssets.filter(a => selectedItems.has(a.no));
+                        const selectedAssetsList = finalFilteredAssets.filter(a => selectedItems.has(a.no));
                         if (selectedAssetsList.length === 0) {
                           alert('資産を選択してください');
                           return;
@@ -1926,6 +2098,45 @@ function RemodelApplicationContent() {
           </div>
         </div>
       )}
+
+      {/* 見積依頼グループ作成モーダル */}
+      <RfqGroupModal
+        isOpen={isRfqGroupModalOpen}
+        onClose={() => setIsRfqGroupModalOpen(false)}
+        rfqGroupName={rfqGroupName}
+        setRfqGroupName={setRfqGroupName}
+        selectedCount={selectedItems.size}
+        generatedRfqNo={generateRfqNo()}
+        onSubmit={() => {
+          const rfqNo = generateRfqNo();
+          const today = new Date();
+          const createdDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+          addRfqGroup({
+            rfqNo,
+            groupName: rfqGroupName.trim(),
+            createdDate,
+            applicationIds: Array.from(selectedItems),
+            status: '未送信',
+          });
+
+          setMockAssets(prev => prev.map(asset => {
+            if (selectedItems.has(asset.no)) {
+              return {
+                ...asset,
+                rfqNo: rfqNo,
+                rfqGroupName: rfqGroupName.trim(),
+              };
+            }
+            return asset;
+          }));
+
+          alert(`見積依頼グループ「${rfqGroupName.trim()}」を作成しました\n\n見積依頼No.: ${rfqNo}\n選択レコード: ${selectedItems.size}件`);
+          setIsRfqGroupModalOpen(false);
+          setRfqGroupName('');
+          setSelectedItems(new Set());
+        }}
+      />
     </div>
   );
 }

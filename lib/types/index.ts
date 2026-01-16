@@ -14,3 +14,4 @@ export * from './quotation';
 export * from './rfq';
 export * from './rfqGroup';
 export * from './user';
+export * from './editList';
