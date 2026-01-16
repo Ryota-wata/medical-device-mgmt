@@ -11,8 +11,8 @@ export type MatchingStatus =
   | '数量不一致'
   | '再確認'
   | '未確認'  // 台帳に存在するが現場に無い
-  | '未登録'  // 現場に存在するが台帳に無い
-  | '未突合';
+  | '未登録'; // 現場に存在するが台帳に無い
+// 注: 突合状況が未設定（undefined）の場合は未突合を意味する
 
 /**
  * フィルター条件
@@ -47,7 +47,7 @@ export interface SurveyData {
   acquisitionDate?: string;    // 取得年月日
 
   // 突合情報
-  matchingStatus: MatchingStatus;
+  matchingStatus?: MatchingStatus;  // undefined = 未突合
   matchedLedgerId?: string;    // 紐付けた台帳のID
   matchedAt?: string;          // 突合日時
   matchedBy?: string;          // 突合実施者
@@ -73,7 +73,7 @@ export interface LedgerData {
   acquisitionDate: string;     // 取得年月日
 
   // 突合情報
-  matchingStatus: MatchingStatus;
+  matchingStatus?: MatchingStatus;  // undefined = 未突合
   matchedSurveyId?: string;    // 紐付けた現有品のID
   matchedAt?: string;          // 突合日時
   matchedBy?: string;          // 突合実施者

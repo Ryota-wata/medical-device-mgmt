@@ -2,22 +2,26 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { LedgerData, MatchingStatus, DataMatchingFilters } from '@/lib/types/data-matching';
-import { ledgerDataSample } from '@/lib/data/data-matching-sample';
+import { ledgerDataSample, surveyDataSample } from '@/lib/data/data-matching-sample';
 import { FACILITY_CONSTANTS } from '@/lib/types/facility';
 
+// 一致検索タイプ
+type MatchFilterType = 'none' | 'category' | 'assetNo' | 'item' | 'manufacturer';
+
+// 突合状況オプション（未突合はundefinedで表現するので除外）
 const MATCHING_STATUS_OPTIONS: MatchingStatus[] = [
   '完全一致',
   '部分一致',
   '数量不一致',
   '再確認',
   '未確認',
-  '未登録',
-  '未突合'
+  '未登録'
 ];
 
 export default function LedgerWindowPage() {
   const [data, setData] = useState<LedgerData[]>(ledgerDataSample);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [matchFilter, setMatchFilter] = useState<MatchFilterType>('none');
   const [filters, setFilters] = useState<DataMatchingFilters>({
     category: '',
     department: '',
@@ -38,6 +42,11 @@ export default function LedgerWindowPage() {
         console.error('Failed to parse filters from localStorage', error);
       }
     }
+    // 一致検索フィルターも読み込む
+    const savedMatchFilter = localStorage.getItem('dataMatchingMatchFilter');
+    if (savedMatchFilter && ['none', 'category', 'assetNo', 'item', 'manufacturer'].includes(savedMatchFilter)) {
+      setMatchFilter(savedMatchFilter as MatchFilterType);
+    }
   }, []);
 
   // フィルター変更時にLocalStorageに保存し、他のウィンドウに通知
@@ -50,6 +59,16 @@ export default function LedgerWindowPage() {
     }
     window.postMessage({ type: 'FILTER_UPDATE', filters }, '*');
   }, [filters]);
+
+  // 一致検索フィルター変更時にLocalStorageに保存し、親ウィンドウに通知
+  useEffect(() => {
+    localStorage.setItem('dataMatchingMatchFilter', matchFilter);
+
+    // 親ウィンドウに一致検索フィルター変更を通知
+    if (window.opener) {
+      window.opener.postMessage({ type: 'MATCH_FILTER_UPDATE', matchFilter }, '*');
+    }
+  }, [matchFilter]);
 
   // 選択情報を親ウィンドウに送信
   useEffect(() => {
@@ -67,29 +86,58 @@ export default function LedgerWindowPage() {
       if (event.data.type === 'FILTER_UPDATE' && event.source !== window) {
         setFilters(event.data.filters);
       }
+      // 一致検索フィルター更新を受け取る
+      if (event.data.type === 'MATCH_FILTER_UPDATE' && event.source !== window) {
+        setMatchFilter(event.data.matchFilter);
+      }
       // 突合完了通知を受け取る
       if (event.data.type === 'MATCH_COMPLETE') {
-        const { ledgerIds } = event.data;
-        // 突合完了したデータを更新
+        const { ledgerIds, matchingStatus } = event.data;
+        // 突合完了したデータを更新（関数型更新で最新のstateを参照）
         const now = new Date().toISOString();
-        const updatedData = data.map(item => {
+        setData(prev => prev.map(item => {
           if (ledgerIds.includes(item.id)) {
             return {
               ...item,
-              matchingStatus: '完全一致' as MatchingStatus,
+              matchingStatus: matchingStatus as MatchingStatus,
               matchedAt: now,
               matchedBy: '現在のユーザー'
             };
           }
           return item;
-        });
-        setData(updatedData);
+        }));
         setSelectedIds(new Set());
+      }
+      // 突合解除（元に戻す）通知を受け取る
+      if (event.data.type === 'REVERT_MATCH') {
+        const { ledgerIds } = event.data;
+        setData(prev => prev.map(item => {
+          if (ledgerIds.includes(item.id)) {
+            return {
+              ...item,
+              matchingStatus: undefined,
+              matchedSurveyId: undefined,
+              matchedAt: undefined,
+              matchedBy: undefined
+            };
+          }
+          return item;
+        }));
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // 未突合のデータのみ（matchingStatusがundefinedのもの）
+  const unmatchedData = useMemo(() => {
+    return data.filter(item => !item.matchingStatus);
+  }, [data]);
+
+  // 突合完了したデータ
+  const matchedData = useMemo(() => {
+    return data.filter(item => item.matchingStatus);
   }, [data]);
 
   // 部門オプション
@@ -120,9 +168,9 @@ export default function LedgerWindowPage() {
     return uniqueMiddleCategories.filter(Boolean);
   }, [data]);
 
-  // フィルタリング
+  // フィルタリング（未突合のデータのみ対象）
   const filteredData = useMemo(() => {
-    let filtered = data;
+    let filtered = unmatchedData;
 
     if (filters.department) {
       filtered = filtered.filter(d => d.department === filters.department);
@@ -139,9 +187,6 @@ export default function LedgerWindowPage() {
     if (filters.middleCategory) {
       filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
     }
-    if (filters.matchingStatus && filters.matchingStatus !== '全て') {
-      filtered = filtered.filter(d => d.matchingStatus === filters.matchingStatus);
-    }
     if (filters.keyword) {
       const keyword = filters.keyword.toLowerCase();
       filtered = filtered.filter(d =>
@@ -153,7 +198,7 @@ export default function LedgerWindowPage() {
     }
 
     return filtered;
-  }, [data, filters]);
+  }, [unmatchedData, filters]);
 
   const resetFilters = () => {
     setFilters({
@@ -180,14 +225,126 @@ export default function LedgerWindowPage() {
 
   // 一括選択処理
   const handleSelectAll = () => {
-    if (selectedIds.size === filteredData.length) {
+    if (selectedIds.size === matchFilteredData.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredData.map(d => d.id)));
+      setSelectedIds(new Set(matchFilteredData.map(d => d.id)));
     }
   };
 
-  const getStatusColor = (status: MatchingStatus) => {
+  // 選択したレコードを「未確認」として確定（現場にないが台帳にある）
+  const handleMarkAsUnconfirmed = () => {
+    if (selectedIds.size === 0) {
+      alert('「未確認」として確定するレコードを選択してください');
+      return;
+    }
+
+    const confirmMark = confirm(
+      `選択した${selectedIds.size}件を「未確認」（現場に存在しない）として確定しますか？\n確定後、リストから消えて個体管理リストに追加されます。`
+    );
+    if (!confirmMark) return;
+
+    const now = new Date().toISOString();
+    const selectedItems = data.filter(d => selectedIds.has(d.id));
+    const updatedData = data.map(item => {
+      if (selectedIds.has(item.id)) {
+        return {
+          ...item,
+          matchingStatus: '未確認' as MatchingStatus,
+          matchedAt: now,
+          matchedBy: '現在のユーザー'
+        };
+      }
+      return item;
+    });
+
+    setData(updatedData);
+
+    // 親ウィンドウに通知
+    if (window.opener) {
+      const confirmedItems = selectedItems.map(item => ({
+        id: item.id,
+        assetNo: item.assetNo,
+        item: item.item,
+        manufacturer: item.manufacturer,
+        model: item.model,
+        department: item.department,
+        section: item.section,
+        roomName: item.roomName,
+        category: item.category,
+        majorCategory: item.majorCategory,
+        middleCategory: item.middleCategory,
+        quantity: item.quantity,
+        acquisitionDate: item.acquisitionDate
+      }));
+      window.opener.postMessage({
+        type: 'LEDGER_UNCONFIRMED',
+        ledgerItems: confirmedItems
+      }, '*');
+    }
+
+    setSelectedIds(new Set());
+    alert(`${selectedIds.size}件を「未確認」として確定しました。\n個体管理リストに追加されます。`);
+  };
+
+  // 一致検索フィルターを適用したデータ（未突合のみ）
+  const matchFilteredData = useMemo(() => {
+    if (matchFilter === 'none') {
+      return filteredData;
+    }
+
+    // 未突合の現有品データの対応するフィールドの値リストを取得
+    const surveyValues = new Set<string>();
+    surveyDataSample.filter(s => !s.matchingStatus).forEach(survey => {
+      switch (matchFilter) {
+        case 'category':
+          if (survey.category) surveyValues.add(survey.category);
+          break;
+        case 'assetNo':
+          if (survey.assetNo) surveyValues.add(survey.assetNo);
+          break;
+        case 'item':
+          if (survey.item) surveyValues.add(survey.item);
+          break;
+        case 'manufacturer':
+          if (survey.manufacturer) surveyValues.add(survey.manufacturer);
+          break;
+      }
+    });
+
+    // 台帳データをフィルタリング
+    return filteredData.filter(ledger => {
+      switch (matchFilter) {
+        case 'category':
+          return ledger.category && surveyValues.has(ledger.category);
+        case 'assetNo':
+          return ledger.assetNo && surveyValues.has(ledger.assetNo);
+        case 'item':
+          return ledger.item && surveyValues.has(ledger.item);
+        case 'manufacturer':
+          return ledger.manufacturer && surveyValues.has(ledger.manufacturer);
+        default:
+          return true;
+      }
+    });
+  }, [filteredData, matchFilter]);
+
+  // 一致検索ボタンのハンドラー
+  const handleMatchFilterClick = (type: MatchFilterType) => {
+    if (matchFilter === type) {
+      setMatchFilter('none');
+    } else {
+      setMatchFilter(type);
+    }
+  };
+
+  // 一致検索解除
+  const resetMatchFilter = () => {
+    setMatchFilter('none');
+  };
+
+  const getStatusColor = (status?: MatchingStatus) => {
+    if (!status) return '#757575'; // 未突合
     switch (status) {
       case '完全一致': return '#4caf50';
       case '部分一致': return '#8bc34a';
@@ -195,7 +352,6 @@ export default function LedgerWindowPage() {
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
       case '未登録': return '#9c27b0';
-      case '未突合': return '#757575';
       default: return '#999';
     }
   };
@@ -203,26 +359,9 @@ export default function LedgerWindowPage() {
   // 統計情報を計算
   const stats = {
     total: data.length,
-    完全一致: data.filter(d => d.matchingStatus === '完全一致').length,
-    部分一致: data.filter(d => d.matchingStatus === '部分一致').length,
-    数量不一致: data.filter(d => d.matchingStatus === '数量不一致').length,
-    再確認: data.filter(d => d.matchingStatus === '再確認').length,
-    未確認: data.filter(d => d.matchingStatus === '未確認').length,
-    未登録: data.filter(d => d.matchingStatus === '未登録').length,
-    未突合: data.filter(d => d.matchingStatus === '未突合').length
-  };
-
-  const handleSelectAsset = (asset: LedgerData) => {
-    // 親ウィンドウに選択した資産情報を送信
-    if (window.opener) {
-      window.opener.postMessage({
-        type: 'ASSET_SELECTED',
-        asset: asset
-      }, '*');
-    }
-
-    // 選択後もウィンドウは開いたまま（ユーザーが複数の資産を参照できるように）
-    alert(`資産番号 ${asset.assetNo} を選択しました。\n親ウィンドウで編集モーダルに反映してください。`);
+    未突合: unmatchedData.length,
+    突合済: matchedData.length,
+    未確認: data.filter(d => d.matchingStatus === '未確認').length
   };
 
   return (
@@ -246,10 +385,10 @@ export default function LedgerWindowPage() {
           margin: '0 auto'
         }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
-            固定資産台帳（参照用）
+            固定資産台帳（未突合）
           </h1>
           <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
-            ※フィルターは自動的に現有品調査リストと連動します
+            ※フィルターは現有品調査リストと連動
           </div>
         </div>
       </header>
@@ -268,15 +407,131 @@ export default function LedgerWindowPage() {
           gap: '16px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>突合状況:</span>
+          <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>資産台帳:</span>
           <span style={{ fontSize: '14px', color: '#2c3e50' }}>
             全{stats.total}件 |
-            <span style={{ color: getStatusColor('完全一致'), fontWeight: '600', marginLeft: '4px' }}>完全一致 {stats.完全一致}</span> |
-            <span style={{ color: getStatusColor('部分一致'), fontWeight: '600', marginLeft: '4px' }}>部分一致 {stats.部分一致}</span> |
-            <span style={{ color: getStatusColor('数量不一致'), fontWeight: '600', marginLeft: '4px' }}>数量不一致 {stats.数量不一致}</span> |
-            <span style={{ color: getStatusColor('再確認'), fontWeight: '600', marginLeft: '4px' }}>再確認 {stats.再確認}</span> |
+            <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>未突合 {stats.未突合}</span> |
+            <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span> |
             <span style={{ color: getStatusColor('未確認'), fontWeight: '600', marginLeft: '4px' }}>未確認 {stats.未確認}</span>
           </span>
+          {stats.未突合 === 0 && (
+            <span style={{
+              padding: '4px 12px',
+              backgroundColor: '#e8f5e9',
+              borderRadius: '4px',
+              color: '#2e7d32',
+              fontWeight: '600',
+              fontSize: '13px'
+            }}>
+              突合完了！
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 一致検索パネル */}
+      <div style={{
+        backgroundColor: '#e8f4fd',
+        borderBottom: '1px solid #b8daff',
+        padding: '12px 24px'
+      }}>
+        <div style={{
+          maxWidth: '1600px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ fontSize: '14px', color: '#1976d2', fontWeight: '600' }}>
+            一致検索（現有品との照合）:
+          </span>
+          <button
+            onClick={() => handleMatchFilterClick('category')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: matchFilter === 'category' ? '#1976d2' : '#ffffff',
+              color: matchFilter === 'category' ? '#ffffff' : '#1976d2',
+              border: '1px solid #1976d2',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              transition: 'all 0.2s'
+            }}
+          >
+            category
+          </button>
+          <button
+            onClick={() => handleMatchFilterClick('assetNo')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: matchFilter === 'assetNo' ? '#1976d2' : '#ffffff',
+              color: matchFilter === 'assetNo' ? '#ffffff' : '#1976d2',
+              border: '1px solid #1976d2',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              transition: 'all 0.2s'
+            }}
+          >
+            資産番号一致
+          </button>
+          <button
+            onClick={() => handleMatchFilterClick('item')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: matchFilter === 'item' ? '#1976d2' : '#ffffff',
+              color: matchFilter === 'item' ? '#ffffff' : '#1976d2',
+              border: '1px solid #1976d2',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              transition: 'all 0.2s'
+            }}
+          >
+            個体管理品目一致
+          </button>
+          <button
+            onClick={() => handleMatchFilterClick('manufacturer')}
+            style={{
+              padding: '6px 16px',
+              backgroundColor: matchFilter === 'manufacturer' ? '#1976d2' : '#ffffff',
+              color: matchFilter === 'manufacturer' ? '#ffffff' : '#1976d2',
+              border: '1px solid #1976d2',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              transition: 'all 0.2s'
+            }}
+          >
+            メーカー一致
+          </button>
+          {matchFilter !== 'none' && (
+            <button
+              onClick={resetMatchFilter}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#f5f5f5',
+                color: '#666',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                marginLeft: '8px'
+              }}
+            >
+              一致検索解除
+            </button>
+          )}
+          {matchFilter !== 'none' && (
+            <span style={{ fontSize: '13px', color: '#1976d2', marginLeft: '8px' }}>
+              ※ 未突合の現有品と{matchFilter === 'category' ? 'カテゴリ' : matchFilter === 'assetNo' ? '資産番号' : matchFilter === 'item' ? '品目' : 'メーカー'}が一致するレコードを表示中
+            </span>
+          )}
         </div>
       </div>
 
@@ -296,23 +551,6 @@ export default function LedgerWindowPage() {
             gap: '12px',
             marginBottom: '12px'
           }}>
-            {/* 突合状況フィルター */}
-            <select
-              value={filters.matchingStatus}
-              onChange={(e) => setFilters({ ...filters, matchingStatus: e.target.value })}
-              style={{
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
-            >
-              <option value="全て">突合状況: 全て</option>
-              {MATCHING_STATUS_OPTIONS.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-
             {/* 部門フィルター */}
             <select
               value={filters.department}
@@ -450,7 +688,7 @@ export default function LedgerWindowPage() {
               gap: '12px'
             }}>
               <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
-                固定資産台帳リスト
+                固定資産台帳リスト（未突合）
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
@@ -467,12 +705,35 @@ export default function LedgerWindowPage() {
                     fontSize: '13px'
                   }}
                 >
-                  {selectedIds.size === filteredData.length ? '全解除' : '全選択'}
+                  {selectedIds.size === matchFilteredData.length && matchFilteredData.length > 0 ? '全解除' : '全選択'}
                 </button>
-                <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
-                  | 表示: {filteredData.length}件 / 全体: {data.length}件
-                </span>
+                <button
+                  onClick={handleMarkAsUnconfirmed}
+                  disabled={selectedIds.size === 0}
+                  style={{
+                    padding: '6px 16px',
+                    backgroundColor: selectedIds.size > 0 ? '#f44336' : '#cccccc',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: selectedIds.size > 0 ? 'pointer' : 'not-allowed',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
+                  未確認として確定
+                </button>
               </div>
+            </div>
+            <div style={{ marginBottom: '12px' }}>
+              <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+                表示: {matchFilteredData.length}件 / 未突合全体: {unmatchedData.length}件
+                {matchFilter !== 'none' && (
+                  <span style={{ color: '#1976d2', marginLeft: '8px' }}>
+                    （一致検索適用中）
+                  </span>
+                )}
+              </span>
             </div>
 
             <div style={{ overflow: 'auto' }}>
@@ -486,12 +747,11 @@ export default function LedgerWindowPage() {
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', width: '50px' }}>
                       <input
                         type="checkbox"
-                        checked={selectedIds.size === filteredData.length && filteredData.length > 0}
+                        checked={selectedIds.size === matchFilteredData.length && matchFilteredData.length > 0}
                         onChange={handleSelectAll}
                         style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     </th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部署</th>
@@ -503,12 +763,11 @@ export default function LedgerWindowPage() {
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>型式</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>数量</th>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>取得年月日</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((row) => (
-                    <tr key={row.id}>
+                  {matchFilteredData.map((row) => (
+                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#e3f2fd' : 'transparent' }}>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
                         <input
                           type="checkbox"
@@ -516,19 +775,6 @@ export default function LedgerWindowPage() {
                           onChange={() => handleSelectRow(row.id)}
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
-                      </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0' }}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          backgroundColor: getStatusColor(row.matchingStatus) + '20',
-                          color: getStatusColor(row.matchingStatus),
-                          fontWeight: '600',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {row.matchingStatus}
-                        </span>
                       </td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
@@ -541,29 +787,12 @@ export default function LedgerWindowPage() {
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>{row.quantity}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.acquisitionDate}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                        <button
-                          onClick={() => handleSelectAsset(row)}
-                          style={{
-                            padding: '4px 12px',
-                            fontSize: '12px',
-                            backgroundColor: row.matchingStatus === '未確認' ? '#e3f2fd' : '#f5f5f5',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: row.matchingStatus === '未確認' ? 'pointer' : 'not-allowed',
-                            color: row.matchingStatus === '未確認' ? '#000' : '#999'
-                          }}
-                          disabled={row.matchingStatus !== '未確認'}
-                        >
-                          選択
-                        </button>
-                      </td>
                     </tr>
                   ))}
-                  {filteredData.length === 0 && (
+                  {matchFilteredData.length === 0 && (
                     <tr>
-                      <td colSpan={13} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
-                        該当するデータがありません
+                      <td colSpan={12} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
+                        {unmatchedData.length === 0 ? '全ての台帳レコードの突合が完了しました' : '該当するデータがありません'}
                       </td>
                     </tr>
                   )}
@@ -582,11 +811,11 @@ export default function LedgerWindowPage() {
           }}>
             <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>使用方法</h3>
             <ul style={{ margin: 0, paddingLeft: '20px' }}>
-              <li>このウィンドウは固定資産台帳の参照用です</li>
-              <li>フィルターは現有品調査リストと自動的に連動します</li>
-              <li>「未確認」状態の資産のみ選択ボタンが有効です</li>
-              <li>選択ボタンをクリックすると、親ウィンドウの編集モーダルに資産番号が反映されます</li>
-              <li>ウィンドウは開いたままで、複数の資産を参照できます</li>
+              <li>このリストには未突合の資産台帳レコードのみ表示されます</li>
+              <li>現有品調査リストと見比べて、対応するレコードをチェックしてください</li>
+              <li>現有品調査リスト側で「台帳と突合実行」をクリックすると突合が完了します</li>
+              <li>現場に存在しない資産は「未確認として確定」をクリックしてください</li>
+              <li>突合が完了したレコードはリストから消えます</li>
             </ul>
           </div>
         </div>

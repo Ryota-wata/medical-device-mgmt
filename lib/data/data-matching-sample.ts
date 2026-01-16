@@ -2,6 +2,7 @@ import { SurveyData, LedgerData } from '@/lib/types/data-matching';
 
 /**
  * 現有品調査データのサンプル
+ * 突合状況は初期状態（undefined = 未突合）
  */
 export const surveyDataSample: SurveyData[] = [
   {
@@ -19,11 +20,6 @@ export const surveyDataSample: SurveyData[] = [
     model: 'CEパルサマドライ',
     quantity: 1,
     acquisitionDate: '2022-04-15',
-    matchingStatus: '完全一致',
-    matchedLedgerId: 'L1',
-    matchedAt: '2023-12-01T10:30:00',
-    matchedBy: '山田太郎',
-    memo: ''
   },
   {
     id: '2',
@@ -40,11 +36,6 @@ export const surveyDataSample: SurveyData[] = [
     model: 'XN-3000',
     quantity: 1,
     acquisitionDate: '2023-01-20',
-    matchingStatus: '部分一致',
-    matchedLedgerId: 'L3',
-    matchedAt: '2023-12-02T14:20:00',
-    matchedBy: '山田太郎',
-    memo: '型式が台帳と若干異なる'
   },
   {
     id: '3',
@@ -61,8 +52,6 @@ export const surveyDataSample: SurveyData[] = [
     model: 'BF-ABC-123-XYZ',
     quantity: 1,
     acquisitionDate: '',
-    matchingStatus: '未登録',
-    memo: '台帳に存在しない機器'
   },
   {
     id: '4',
@@ -77,16 +66,27 @@ export const surveyDataSample: SurveyData[] = [
     item: '人工呼吸器',
     manufacturer: 'ドレーゲル',
     model: 'Savina 300',
-    quantity: 2,
+    quantity: 1,
     acquisitionDate: '2023-02-10',
-    matchingStatus: '数量不一致',
-    matchedLedgerId: 'L4',
-    matchedAt: '2023-12-03T09:15:00',
-    matchedBy: '佐藤花子',
-    memo: '台帳は1台だが現場に2台ある'
   },
   {
     id: '5',
+    qrCode: '22-00924',
+    assetNo: '10605502-000',
+    department: '手術部門',
+    section: '中央手術室',
+    roomName: '手術室2',
+    category: '医療機器',
+    majorCategory: '治療機器',
+    middleCategory: '人工呼吸器',
+    item: '人工呼吸器',
+    manufacturer: 'ドレーゲル',
+    model: 'Savina 300',
+    quantity: 1,
+    acquisitionDate: '2023-02-10',
+  },
+  {
+    id: '6',
     qrCode: '23-00234',
     assetNo: '10605603-000',
     department: '放射線科',
@@ -100,14 +100,9 @@ export const surveyDataSample: SurveyData[] = [
     model: 'MAGNETOM Vida 3T',
     quantity: 1,
     acquisitionDate: '2023-03-15',
-    matchingStatus: '再確認',
-    matchedLedgerId: 'L2',
-    matchedAt: '2023-12-03T11:45:00',
-    matchedBy: '佐藤花子',
-    memo: 'メーカー名の表記ゆれあり、再度確認が必要'
   },
   {
-    id: '6',
+    id: '7',
     qrCode: '23-00345',
     assetNo: '10605704-000',
     department: '検査科',
@@ -121,11 +116,9 @@ export const surveyDataSample: SurveyData[] = [
     model: '7600-120',
     quantity: 1,
     acquisitionDate: '2023-04-20',
-    matchingStatus: '未突合',
-    memo: ''
   },
   {
-    id: '7',
+    id: '8',
     qrCode: '22-00511',
     assetNo: '10605205-000',
     department: '手術部門',
@@ -139,14 +132,9 @@ export const surveyDataSample: SurveyData[] = [
     model: 'Aisys CS2',
     quantity: 1,
     acquisitionDate: '2022-06-10',
-    matchingStatus: '完全一致',
-    matchedLedgerId: 'L5',
-    matchedAt: '2023-12-01T15:20:00',
-    matchedBy: '山田太郎',
-    memo: ''
   },
   {
-    id: '8',
+    id: '9',
     qrCode: '23-00456',
     assetNo: '',
     department: '検査科',
@@ -160,11 +148,9 @@ export const surveyDataSample: SurveyData[] = [
     model: 'Thermo Scientific 3110',
     quantity: 1,
     acquisitionDate: '2023-05-15',
-    matchingStatus: '未登録',
-    memo: '新規導入機器、台帳未登録'
   },
   {
-    id: '9',
+    id: '10',
     qrCode: '22-00789',
     assetNo: '10605306-000',
     department: '放射線科',
@@ -178,14 +164,9 @@ export const surveyDataSample: SurveyData[] = [
     model: 'Revolution CT',
     quantity: 1,
     acquisitionDate: '2023-05-20',
-    matchingStatus: '部分一致',
-    matchedLedgerId: 'L6',
-    matchedAt: '2023-12-02T16:30:00',
-    matchedBy: '山田太郎',
-    memo: '設置場所が台帳と異なる'
   },
   {
-    id: '10',
+    id: '11',
     qrCode: '23-00567',
     assetNo: '10605807-000',
     department: '手術部門',
@@ -199,13 +180,12 @@ export const surveyDataSample: SurveyData[] = [
     model: 'ESG-400',
     quantity: 1,
     acquisitionDate: '2023-06-01',
-    matchingStatus: '未突合',
-    memo: ''
   }
 ];
 
 /**
  * 固定資産台帳データのサンプル
+ * 突合状況は初期状態（undefined = 未突合）
  */
 export const ledgerDataSample: LedgerData[] = [
   {
@@ -222,10 +202,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'CEパルサマドライ',
     quantity: 1,
     acquisitionDate: '2022-04-15',
-    matchingStatus: '完全一致',
-    matchedSurveyId: '1',
-    matchedAt: '2023-12-01T10:30:00',
-    matchedBy: '山田太郎'
   },
   {
     id: 'L2',
@@ -241,10 +217,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'MAGNETOM Vida 3T',
     quantity: 1,
     acquisitionDate: '2023-03-15',
-    matchingStatus: '再確認',
-    matchedSurveyId: '5',
-    matchedAt: '2023-12-03T11:45:00',
-    matchedBy: '佐藤花子'
   },
   {
     id: 'L3',
@@ -260,10 +232,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'XN-3100',
     quantity: 1,
     acquisitionDate: '2023-01-20',
-    matchingStatus: '部分一致',
-    matchedSurveyId: '2',
-    matchedAt: '2023-12-02T14:20:00',
-    matchedBy: '山田太郎'
   },
   {
     id: 'L4',
@@ -277,12 +245,8 @@ export const ledgerDataSample: LedgerData[] = [
     item: '人工呼吸器',
     manufacturer: 'ドレーゲル',
     model: 'Savina 300',
-    quantity: 1,
+    quantity: 2,
     acquisitionDate: '2023-02-10',
-    matchingStatus: '数量不一致',
-    matchedSurveyId: '4',
-    matchedAt: '2023-12-03T09:15:00',
-    matchedBy: '佐藤花子'
   },
   {
     id: 'L5',
@@ -298,10 +262,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'Aisys CS2',
     quantity: 1,
     acquisitionDate: '2022-06-10',
-    matchingStatus: '完全一致',
-    matchedSurveyId: '7',
-    matchedAt: '2023-12-01T15:20:00',
-    matchedBy: '山田太郎'
   },
   {
     id: 'L6',
@@ -317,10 +277,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'Revolution CT',
     quantity: 1,
     acquisitionDate: '2023-05-20',
-    matchingStatus: '部分一致',
-    matchedSurveyId: '9',
-    matchedAt: '2023-12-02T16:30:00',
-    matchedBy: '山田太郎'
   },
   {
     id: 'L7',
@@ -336,9 +292,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'BX53',
     quantity: 1,
     acquisitionDate: '2022-08-15',
-    matchingStatus: '未確認',
-    matchedAt: undefined,
-    matchedBy: undefined
   },
   {
     id: 'L8',
@@ -354,9 +307,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'DS-7100',
     quantity: 1,
     acquisitionDate: '2022-09-20',
-    matchingStatus: '未確認',
-    matchedAt: undefined,
-    matchedBy: undefined
   },
   {
     id: 'L9',
@@ -372,9 +322,6 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'RADspeed Pro',
     quantity: 1,
     acquisitionDate: '2022-10-10',
-    matchingStatus: '未確認',
-    matchedAt: undefined,
-    matchedBy: undefined
   },
   {
     id: 'L10',
@@ -390,8 +337,5 @@ export const ledgerDataSample: LedgerData[] = [
     model: 'AutoVue Innova',
     quantity: 1,
     acquisitionDate: '2022-11-25',
-    matchingStatus: '未確認',
-    matchedAt: undefined,
-    matchedBy: undefined
   }
 ];
