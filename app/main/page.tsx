@@ -888,6 +888,38 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     closeMasterModal();
+                    router.push('/ship-asset-master');
+                  }}
+                  style={{
+                    padding: '16px 24px',
+                    background: 'white',
+                    border: '2px solid #3498db',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#3498db';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.color = '#2c3e50';
+                  }}
+                >
+                  <span>🏥 SHIP資産マスタ</span>
+                  <span style={{ fontSize: '20px' }}>→</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    closeMasterModal();
                     router.push('/ship-facility-master');
                   }}
                   style={{
@@ -952,70 +984,6 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     closeMasterModal();
-                    router.push('/ship-asset-master');
-                  }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #3498db',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#3498db';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
-                >
-                  <span>🏥 SHIP資産マスタ</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    router.push('/user-management');
-                  }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #9b59b6',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#9b59b6';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
-                >
-                  <span>👤 ユーザー管理</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    closeMasterModal();
                     if (isHospital && user?.hospital) {
                       // 病院ユーザーは自身の病院の施設マスタへ直接遷移
                       router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
@@ -1048,6 +1016,38 @@ export default function MainPage() {
                   }}
                 >
                   <span>🏢 個別施設マスタ</span>
+                  <span style={{ fontSize: '20px' }}>→</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    closeMasterModal();
+                    router.push('/user-management');
+                  }}
+                  style={{
+                    padding: '16px 24px',
+                    background: 'white',
+                    border: '2px solid #9b59b6',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#9b59b6';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.color = '#2c3e50';
+                  }}
+                >
+                  <span>👤 ユーザー管理</span>
                   <span style={{ fontSize: '20px' }}>→</span>
                 </button>
 
