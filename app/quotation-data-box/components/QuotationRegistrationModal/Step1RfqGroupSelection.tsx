@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RfqGroup } from '@/lib/types';
 import { QuotationFormData } from '@/lib/types/quotation';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 interface Step1RfqGroupSelectionProps {
   rfqGroups: RfqGroup[];
@@ -12,6 +13,9 @@ interface Step1RfqGroupSelectionProps {
   onCancel: () => void;
 }
 
+// 保存形式の型
+type SaveFormat = 'electronic' | 'scanner' | 'unspecified';
+
 export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
   rfqGroups,
   formData,
@@ -21,92 +25,297 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
   onGenerateTestOCR,
   onCancel,
 }) => {
+  const { user } = useAuthStore();
+  const [quotationPhase, setQuotationPhase] = useState('listPrice');
+  const [saveFormat, setSaveFormat] = useState<SaveFormat>('scanner');
+  const [fileName, setFileName] = useState('');
+  const [registrationDeadline, setRegistrationDeadline] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+    }
+    onPdfUpload(e);
+  };
+
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#2c3e50' }}>
-          見積依頼グループ（任意）
-        </label>
-        <select
-          value={formData.rfqGroupId}
-          onChange={(e) => onFormDataChange({ ...formData, rfqGroupId: e.target.value })}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '14px',
-            border: '1px solid #ddd',
-            borderRadius: '4px'
-          }}
-        >
-          <option value="">なし</option>
-          {rfqGroups.map(g => (
-            <option key={g.id} value={g.id}>{g.rfqNo} - {g.groupName}</option>
-          ))}
-        </select>
-      </div>
+      {/* フォームテーブル */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #4a6fa5' }}>
+        <tbody>
+          {/* 添付ファイル */}
+          <tr>
+            <th style={{
+              background: '#4a6fa5',
+              color: 'white',
+              padding: '10px 12px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              textAlign: 'left',
+              width: '120px',
+              border: '1px solid #4a6fa5',
+              whiteSpace: 'nowrap',
+            }}>
+              添付ファイル
+            </th>
+            <td style={{
+              background: 'white',
+              padding: '10px 12px',
+              border: '1px solid #4a6fa5',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{
+                  padding: '6px 16px',
+                  background: '#f5f5f5',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  whiteSpace: 'nowrap',
+                }}>
+                  ファイルの選択
+                  <input
+                    type="file"
+                    accept=".pdf,.xlsx,.xls"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                <span style={{ color: '#666', fontSize: '13px' }}>
+                  {fileName || 'ファイルが選択されていません'}
+                </span>
+              </div>
+            </td>
+          </tr>
 
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#2c3e50' }}>
-          見積書PDF
-        </label>
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={onPdfUpload}
-          style={{
-            width: '100%',
-            padding: '10px',
-            fontSize: '14px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            marginBottom: '10px'
-          }}
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ flex: 1, height: '1px', background: '#ddd' }} />
-          <span style={{ color: '#7f8c8d', fontSize: '13px' }}>または</span>
-          <div style={{ flex: 1, height: '1px', background: '#ddd' }} />
-        </div>
-        <button
-          onClick={onGenerateTestOCR}
-          disabled={ocrProcessing}
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginTop: '10px',
-            background: ocrProcessing ? '#bdc3c7' : '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: ocrProcessing ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          {ocrProcessing ? 'AI OCR処理中...' : 'テストデータで次へ'}
-        </button>
-        {ocrProcessing && (
-          <div style={{ marginTop: '10px', color: '#3498db', fontSize: '13px', textAlign: 'center' }}>
-            AI OCR処理中...
-          </div>
-        )}
-      </div>
+          {/* 申請者 */}
+          <tr>
+            <th style={{
+              background: '#4a6fa5',
+              color: 'white',
+              padding: '10px 12px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              textAlign: 'left',
+              width: '120px',
+              border: '1px solid #4a6fa5',
+              whiteSpace: 'nowrap',
+            }}>
+              申請者
+            </th>
+            <td style={{
+              background: 'white',
+              padding: '10px 12px',
+              border: '1px solid #4a6fa5',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{
+                  padding: '6px 12px',
+                  background: '#f5f5f5',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  color: '#333',
+                }}>
+                  {user?.username || 'user001'}
+                </span>
+                <span style={{ fontSize: '13px', color: '#333' }}>
+                  {user?.email ? user.email.split('@')[0] : '担当者名'}
+                </span>
+              </div>
+            </td>
+          </tr>
 
-      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          {/* 見積フェーズ */}
+          <tr>
+            <th style={{
+              background: '#4a6fa5',
+              color: 'white',
+              padding: '10px 12px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              textAlign: 'left',
+              width: '120px',
+              border: '1px solid #4a6fa5',
+              whiteSpace: 'nowrap',
+              verticalAlign: 'top',
+            }}>
+              見積フェーズ
+            </th>
+            <td style={{
+              background: 'white',
+              padding: '10px 12px',
+              border: '1px solid #4a6fa5',
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  <input
+                    type="radio"
+                    name="quotationPhase"
+                    checked={quotationPhase === 'listPrice'}
+                    onChange={() => setQuotationPhase('listPrice')}
+                  />
+                  定価
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  <input
+                    type="radio"
+                    name="quotationPhase"
+                    checked={quotationPhase === 'approximate'}
+                    onChange={() => setQuotationPhase('approximate')}
+                  />
+                  概算
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  <input
+                    type="radio"
+                    name="quotationPhase"
+                    checked={quotationPhase === 'final'}
+                    onChange={() => setQuotationPhase('final')}
+                  />
+                  最終原本登録用
+                </label>
+              </div>
+            </td>
+          </tr>
+
+          {/* 保存形式 */}
+          <tr>
+            <th style={{
+              background: '#4a6fa5',
+              color: 'white',
+              padding: '10px 12px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              textAlign: 'left',
+              width: '120px',
+              border: '1px solid #4a6fa5',
+              whiteSpace: 'nowrap',
+              verticalAlign: 'top',
+            }}>
+              保存形式
+            </th>
+            <td style={{
+              background: 'white',
+              padding: '10px 12px',
+              border: '1px solid #4a6fa5',
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  <input
+                    type="radio"
+                    name="saveFormat"
+                    checked={saveFormat === 'electronic'}
+                    onChange={() => setSaveFormat('electronic')}
+                  />
+                  電子取引
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  <input
+                    type="radio"
+                    name="saveFormat"
+                    checked={saveFormat === 'scanner'}
+                    onChange={() => setSaveFormat('scanner')}
+                  />
+                  スキャナ保存
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                  <input
+                    type="radio"
+                    name="saveFormat"
+                    checked={saveFormat === 'unspecified'}
+                    onChange={() => setSaveFormat('unspecified')}
+                  />
+                  未指定
+                </label>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ボタンエリア */}
+      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', alignItems: 'center', marginTop: '20px' }}>
         <button
           onClick={onCancel}
           style={{
-            padding: '10px 24px',
+            padding: '10px 20px',
             background: '#95a5a6',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
+            fontSize: '13px',
+            fontWeight: 'bold',
           }}
         >
           キャンセル
+        </button>
+
+        {/* SHIPへ依頼 + 登録期限 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={() => {/* SHIPへ依頼処理 */}}
+            style={{
+              padding: '10px 20px',
+              background: '#f39c12',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'bold',
+            }}
+          >
+            SHIPへ依頼
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <label style={{ fontSize: '12px', color: '#555' }}>登録期限:</label>
+            <input
+              type="date"
+              value={registrationDeadline}
+              onChange={(e) => setRegistrationDeadline(e.target.value)}
+              style={{
+                padding: '6px 10px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '13px',
+              }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={() => {/* Excel取込処理 */}}
+          style={{
+            padding: '10px 20px',
+            background: '#27ae60',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 'bold',
+          }}
+        >
+          Excel取込
+        </button>
+        <button
+          onClick={onGenerateTestOCR}
+          disabled={ocrProcessing}
+          style={{
+            padding: '10px 20px',
+            background: ocrProcessing ? '#bdc3c7' : '#3498db',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: ocrProcessing ? 'not-allowed' : 'pointer',
+            fontSize: '13px',
+            fontWeight: 'bold',
+          }}
+        >
+          {ocrProcessing ? '処理中...' : '登録へ'}
         </button>
       </div>
     </div>

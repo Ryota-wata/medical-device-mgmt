@@ -1,45 +1,51 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { OCRResult, QuotationItemType, AIJudgmentResult, ConfirmedStateMap, ConfirmedAssetInfo } from '@/lib/types/quotation';
+import { OCRResult, ConfirmedStateMap, ConfirmedAssetInfo, AssetCategory, AccountingCategory } from '@/lib/types/quotation';
 
-// 登録区分の表示名マッピング
-const ITEM_TYPE_LABELS: Record<QuotationItemType, string> = {
-  'A_表紙明細': 'A',
-  'B_明細代表': 'B',
-  'C_個体管理品目': 'C',
-  'D_付属品': 'D',
-  'E_その他役務': 'E',
-};
+// 資産区分の選択肢
+const ASSET_CATEGORY_OPTIONS: { value: AssetCategory; label: string }[] = [
+  { value: '有形資産_医療用機器備品', label: '医療用機器備品' },
+  { value: '有形資産_器具備品', label: '器具備品' },
+  { value: '有形資産_建物附属設備', label: '建物附属設備' },
+  { value: '無形資産_ソフトウェア', label: 'ソフトウェア' },
+  { value: '費用_消耗品経費', label: '消耗品・経費' },
+  { value: '長期前払費用_保守費', label: '保守費' },
+];
 
-// 登録区分の色設定
-const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
-  'A_表紙明細': { bg: '#e3f2fd', text: '#1565c0' },
-  'B_明細代表': { bg: '#f3e5f5', text: '#7b1fa2' },
-  'C_個体管理品目': { bg: '#e8f5e9', text: '#2e7d32' },
-  'D_付属品': { bg: '#fff3e0', text: '#ef6c00' },
-  'E_その他役務': { bg: '#fce4ec', text: '#c2185b' },
-};
+// 会計区分の選択肢
+const ACCOUNTING_CATEGORY_OPTIONS: AccountingCategory[] = ['資本的支出', '経費', '前払費用'];
 
 interface Step2OcrResultDisplayProps {
   ocrResult: OCRResult;
   pdfFile: File | null;
   confirmedState: ConfirmedStateMap;
   onConfirmedStateChange: (state: ConfirmedStateMap) => void;
+  onOcrResultChange?: (result: OCRResult) => void;
   onBack: () => void;
   onNext: () => void;
 }
 
-// 商品明細とAI判定の1対1表示用
-interface DisplayRow {
-  ocrItemIndex: number;
-  ocrItem: {
-    rowNo?: number;
-    itemType: QuotationItemType;
-    itemName: string;
-    manufacturer: string;
-    model: string;
-    quantity: number;
-  };
-  aiJudgment: AIJudgmentResult | null;
+// 基本情報フォームの型
+interface BasicInfoForm {
+  quotationDate: string;
+  quotationPhase: string;
+  vendorName: string;
+  manufacturer: string;
+  personInCharge: string;
+  tel: string;
+  email: string;
+}
+
+// 明細データの型
+interface DetailItem {
+  id: number;
+  itemName: string;
+  manufacturer: string;
+  model: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  category?: AssetCategory;
+  accountingCategory?: AccountingCategory;
 }
 
 export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
@@ -47,37 +53,41 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   pdfFile,
   confirmedState,
   onConfirmedStateChange,
+  onOcrResultChange,
   onBack,
   onNext,
 }) => {
-  // 選択中の行（資産マスタ選択待ち）
-  const [selectingRow, setSelectingRow] = useState<number | null>(null);
+  // 基本情報フォーム
+  const [basicInfo, setBasicInfo] = useState<BasicInfoForm>({
+    quotationDate: ocrResult.quotationDate || '',
+    quotationPhase: '定価',
+    vendorName: ocrResult.vendorName || '',
+    manufacturer: '',
+    personInCharge: '',
+    tel: '',
+    email: '',
+  });
 
-  // 別ウィンドウからの資産マスタ選択を受信
-  const handleAssetMasterMessage = useCallback((event: MessageEvent) => {
-    // 同一オリジンからのメッセージのみ受け付ける
-    if (event.origin !== window.location.origin) return;
+  // 明細データ
+  const [detailItems, setDetailItems] = useState<DetailItem[]>([]);
 
-    if (event.data?.type === 'ASSET_MASTER_SELECTED' && selectingRow !== null) {
-      const assetData: ConfirmedAssetInfo = event.data.data;
-      const key = `${selectingRow}`;
-      onConfirmedStateChange({
-        ...confirmedState,
-        [key]: {
-          status: 'asset_master_selected',
-          assetInfo: assetData,
-        },
-      });
-      setSelectingRow(null);
-    }
-  }, [selectingRow, confirmedState, onConfirmedStateChange]);
+  // タブ切り替え
+  const [activeTab, setActiveTab] = useState<'basic' | 'category'>('basic');
 
+  // 初期化
   useEffect(() => {
-    window.addEventListener('message', handleAssetMasterMessage);
-    return () => {
-      window.removeEventListener('message', handleAssetMasterMessage);
-    };
-  }, [handleAssetMasterMessage]);
+    setDetailItems(ocrResult.items.map((item, index) => ({
+      id: index + 1,
+      itemName: item.itemName,
+      manufacturer: item.manufacturer,
+      model: item.model,
+      quantity: item.quantity,
+      unitPrice: item.purchasePriceUnit,
+      totalPrice: item.purchasePriceTotal,
+      category: item.assetCategory,
+      accountingCategory: item.accountingCategory,
+    })));
+  }, [ocrResult]);
 
   // PDFプレビュー用のURL生成
   const pdfUrl = useMemo(() => {
@@ -88,7 +98,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   }, [pdfFile]);
 
   // コンポーネントアンマウント時にURLを解放
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (pdfUrl) {
         URL.revokeObjectURL(pdfUrl);
@@ -96,420 +106,481 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
     };
   }, [pdfUrl]);
 
-  // 表示用の行データを生成（1対1）
-  const displayRows: DisplayRow[] = useMemo(() => {
-    return ocrResult.items.map((item, ocrItemIndex) => ({
-      ocrItemIndex,
-      ocrItem: {
-        rowNo: item.rowNo,
-        itemType: item.itemType,
-        itemName: item.itemName,
-        manufacturer: item.manufacturer,
-        model: item.model,
-        quantity: item.quantity,
-      },
-      // AI判定は最初の1件のみ使用
-      aiJudgment: item.aiJudgments[0] || null,
-    }));
-  }, [ocrResult.items]);
+  // 合計金額計算（税抜）
+  const totalAmount = useMemo(() => {
+    return detailItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+  }, [detailItems]);
 
-  // AI判定を確定する
-  const handleConfirm = (ocrItemIndex: number, aiJudgment: AIJudgmentResult) => {
-    const key = `${ocrItemIndex}`;
-    onConfirmedStateChange({
-      ...confirmedState,
-      [key]: {
-        status: 'ai_confirmed',
-        assetInfo: {
-          category: aiJudgment.category,
-          majorCategory: aiJudgment.majorCategory,
-          middleCategory: aiJudgment.middleCategory,
-          assetName: aiJudgment.assetName,
-          manufacturer: aiJudgment.manufacturer,
-          model: aiJudgment.model,
-        },
-      },
+  // 基本情報の更新
+  const handleBasicInfoChange = (field: keyof BasicInfoForm, value: string) => {
+    setBasicInfo(prev => ({ ...prev, [field]: value }));
+  };
+
+  // 明細の更新
+  const handleDetailChange = (index: number, field: keyof DetailItem, value: string | number | AssetCategory | AccountingCategory | undefined) => {
+    setDetailItems(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
     });
   };
 
-  // 確定を解除する
-  const handleUnconfirm = (ocrItemIndex: number) => {
-    const key = `${ocrItemIndex}`;
-    const newState = { ...confirmedState };
-    delete newState[key];
-    onConfirmedStateChange(newState);
+  // 資産情報紐チェック
+  const handleAssetInfoCheck = () => {
+    console.log('資産情報紐チェック実行');
   };
 
-  // 資産マスタを別ウィンドウで開いて選択させる
-  const handleOpenAssetMasterForSelection = (ocrItemIndex: number) => {
-    setSelectingRow(ocrItemIndex);
-    // GitHub Pages対応: basePathを付与
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.open(`${basePath}/ship-asset-master?mode=select`, '_blank', 'width=1200,height=800');
+  // 入力済みかどうかの判定
+  const isFieldFilled = (value: string | undefined) => {
+    return value && value.trim() !== '';
   };
 
-  // 確定状態を取得
-  const getConfirmedInfo = (ocrItemIndex: number) => {
-    const key = `${ocrItemIndex}`;
-    return confirmedState[key] || null;
+  // セルスタイル
+  const cellStyle: React.CSSProperties = {
+    padding: '8px 10px',
+    border: '1px solid #ddd',
+    fontSize: '12px',
+    verticalAlign: 'middle',
   };
 
-  // 確定済みかどうか
-  const isRowConfirmed = (ocrItemIndex: number): boolean => {
-    return getConfirmedInfo(ocrItemIndex) !== null;
+  const headerCellStyle: React.CSSProperties = {
+    ...cellStyle,
+    background: '#4a6fa5',
+    color: 'white',
+    fontWeight: 'bold',
+    whiteSpace: 'nowrap',
+    width: '100px',
   };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '6px 8px',
+    border: '1px solid #ddd',
+    borderRadius: '3px',
+    fontSize: '12px',
+  };
+
+  const statusBadgeStyle = (filled: boolean): React.CSSProperties => ({
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: '3px',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    background: filled ? '#27ae60' : '#e74c3c',
+    color: 'white',
+  });
 
   return (
-    <div style={{ display: 'flex', gap: '20px' }}>
-      {/* 左側: PDFプレビュー */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* ヘッダー */}
       <div style={{
-        flex: '0 0 350px',
+        background: '#2c3e50',
+        color: 'white',
+        padding: '10px 16px',
+        marginBottom: '12px',
+        borderRadius: '4px',
         display: 'flex',
-        flexDirection: 'column',
-        borderRight: '1px solid #e0e0e0',
-        paddingRight: '20px'
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}>
-        <h3 style={{ fontSize: '14px', marginBottom: '10px', color: '#2c3e50' }}>
-          見積書プレビュー
-        </h3>
-        {pdfUrl ? (
-          <iframe
-            src={pdfUrl}
-            style={{
-              width: '100%',
-              height: '700px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              background: '#f5f5f5'
-            }}
-            title="見積書PDF"
-          />
-        ) : (
-          <div style={{
-            width: '100%',
-            height: '700px',
-            border: '1px solid #ddd',
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 'bold' }}>見積登録（購入）OCR明細確認</span>
+          <span style={{
+            background: '#e74c3c',
+            color: 'white',
+            padding: '2px 12px',
             borderRadius: '4px',
-            background: '#f5f5f5',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#999'
+            fontSize: '12px',
+            fontWeight: 'bold',
           }}>
-            PDFファイルがありません
-          </div>
-        )}
+            STEP 2
+          </span>
+        </div>
+        <div style={{
+          background: '#fff3cd',
+          color: '#856404',
+          padding: '4px 12px',
+          borderRadius: '4px',
+          fontSize: '11px',
+        }}>
+          フリーでの見積登録と合格基本情報を登録 → 仮登録を通知に送信
+        </div>
       </div>
 
-      {/* 右側: OCR結果 */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        {/* ヘッダー情報 */}
-        <div style={{ marginBottom: '12px', padding: '10px', background: '#e8f5e9', borderRadius: '4px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: '20px', fontSize: '12px', flexWrap: 'wrap' }}>
-            <span><strong>見積日:</strong> {ocrResult.quotationDate}</span>
-            <span><strong>業者:</strong> {ocrResult.vendorName}</span>
-            <span><strong>宛先:</strong> {ocrResult.facilityName}</span>
-            <span style={{ fontWeight: 'bold', color: '#1565c0' }}>
-              <strong>総額:</strong> ¥{ocrResult.totalAmount.toLocaleString()}
-            </span>
+      {/* メインコンテンツ */}
+      <div style={{ display: 'flex', gap: '16px', flex: 1, minHeight: 0 }}>
+        {/* 左側: 情報入力エリア */}
+        <div style={{
+          flex: '0 0 55%',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          background: 'white',
+        }}>
+          {/* タブヘッダー */}
+          <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
+            <button
+              onClick={() => setActiveTab('basic')}
+              style={{
+                padding: '10px 24px',
+                background: activeTab === 'basic' ? '#4a6fa5' : '#f5f5f5',
+                color: activeTab === 'basic' ? 'white' : '#333',
+                border: 'none',
+                borderRight: '1px solid #ddd',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }}
+            >
+              基本情報
+            </button>
+            <button
+              onClick={() => setActiveTab('category')}
+              style={{
+                padding: '10px 24px',
+                background: activeTab === 'category' ? '#4a6fa5' : '#f5f5f5',
+                color: activeTab === 'category' ? 'white' : '#333',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }}
+            >
+              category
+            </button>
+            <div style={{ flex: 1 }}></div>
+            <button
+              onClick={() => setActiveTab('category')}
+              style={{
+                padding: '10px 24px',
+                background: '#f5f5f5',
+                color: '#333',
+                border: 'none',
+                borderLeft: '1px solid #ddd',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }}
+            >
+              OC/詳細情報
+            </button>
           </div>
-        </div>
 
-        {/* 明細テーブル */}
-        <div style={{ marginBottom: '12px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexShrink: 0 }}>
-            <h3 style={{ fontSize: '13px', margin: 0, color: '#2c3e50' }}>
-              AI-OCR読み取り結果
-            </h3>
-            <span style={{ fontSize: '11px', color: '#666' }}>
-              ※ 全ての明細が登録されます。資産マスタ紐付けは任意です。
-            </span>
-          </div>
-          <div style={{ flex: 1, overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px', maxHeight: '500px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1100px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                {/* 2段ヘッダー：グループ名 */}
-                <tr>
-                  <th colSpan={5} style={{
-                    padding: '6px',
-                    textAlign: 'center',
-                    borderBottom: '2px solid #3498db',
-                    fontWeight: 'bold',
-                    color: '#3498db',
-                    background: '#e8f4fc',
-                    fontSize: '11px'
-                  }}>
-                    商品情報（原本情報）
-                  </th>
-                  <th style={{
-                    padding: '6px',
-                    textAlign: 'center',
-                    borderBottom: '2px solid #dee2e6',
-                    background: '#f8f9fa',
-                    width: '25px'
-                  }}>
-                    ⇒
-                  </th>
-                  <th colSpan={6} style={{
-                    padding: '6px',
-                    textAlign: 'center',
-                    borderBottom: '2px solid #9c27b0',
-                    fontWeight: 'bold',
-                    color: '#9c27b0',
-                    background: '#f3e5f5',
-                    fontSize: '11px'
-                  }}>
-                    AI判定（参考）
-                  </th>
-                  <th style={{
-                    padding: '6px',
-                    textAlign: 'center',
-                    borderBottom: '2px solid #dee2e6',
-                    background: '#f8f9fa',
-                    width: '150px',
-                    fontSize: '11px'
-                  }}>
-                    操作
-                  </th>
-                </tr>
-                {/* 2段ヘッダー：カラム名 */}
-                <tr style={{ background: '#f8f9fa' }}>
-                  {/* 原本情報 */}
-                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px', fontSize: '9px' }}>No</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px' }}>品名</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px' }}>メーカー</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px' }}>型式</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '35px', fontSize: '9px' }}>数量</th>
-                  {/* 矢印 */}
-                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '25px', background: '#fafafa', fontSize: '9px' }}>区分</th>
-                  {/* AI判定 */}
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>category</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '90px', fontSize: '9px', background: '#faf5fc' }}>大分類</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>中分類</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px', background: '#faf5fc' }}>個体管理品目</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '60px', fontSize: '9px', background: '#faf5fc' }}>メーカー</th>
-                  <th style={{ padding: '5px 3px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '60px', fontSize: '9px', background: '#faf5fc' }}>型式</th>
-                  {/* 操作 */}
-                  <th style={{ padding: '5px 3px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '150px', fontSize: '9px' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayRows.map((row, index) => {
-                  const confirmedInfo = getConfirmedInfo(row.ocrItemIndex);
-                  const rowIsConfirmed = confirmedInfo !== null;
-                  const isSelectingThisRow = selectingRow === row.ocrItemIndex;
-
-                  // 表示するデータを決定（確定済みの場合はassetInfoを表示）
-                  const displayData = confirmedInfo?.assetInfo || row.aiJudgment;
-
-                  const aiItemTypeColor = row.aiJudgment
-                    ? ITEM_TYPE_COLORS[row.aiJudgment.itemType] || { bg: '#f5f5f5', text: '#666' }
-                    : { bg: '#f5f5f5', text: '#666' };
-
-                  return (
-                    <tr key={index} style={{
-                      borderBottom: '1px solid #ddd',
-                      background: isSelectingThisRow ? '#fff3e0' : rowIsConfirmed ? '#e8f5e9' : 'transparent',
-                    }}>
-                      {/* 原本情報 */}
-                      <td style={{ padding: '5px 3px', textAlign: 'center', borderRight: '1px solid #eee' }}>
-                        {row.ocrItem.rowNo || '-'}
+          {/* タブコンテンツ */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
+            {activeTab === 'basic' && (
+              <div>
+                {/* 基本情報テーブル */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+                  <tbody>
+                    {/* 見積日付行 */}
+                    <tr>
+                      <th style={headerCellStyle}>見積日付</th>
+                      <td style={cellStyle}>
+                        <input
+                          type="text"
+                          placeholder="yyyy/mm/dd"
+                          value={basicInfo.quotationDate}
+                          onChange={(e) => handleBasicInfoChange('quotationDate', e.target.value)}
+                          style={inputStyle}
+                        />
                       </td>
-                      <td style={{ padding: '5px 3px', fontWeight: 'bold', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.ocrItem.itemName}>
-                        {row.ocrItem.itemName}
+                      <th style={headerCellStyle}>見積フェーズ</th>
+                      <td style={cellStyle}>
+                        <select
+                          value={basicInfo.quotationPhase}
+                          onChange={(e) => handleBasicInfoChange('quotationPhase', e.target.value)}
+                          style={inputStyle}
+                        >
+                          <option value="定価">定価</option>
+                          <option value="概算">概算</option>
+                          <option value="最終原本登録用">最終原本登録用</option>
+                        </select>
                       </td>
-                      <td style={{ padding: '5px 3px', color: '#555', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.ocrItem.manufacturer}>
-                        {row.ocrItem.manufacturer || '-'}
-                      </td>
-                      <td style={{ padding: '5px 3px', color: '#555', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.ocrItem.model}>
-                        {row.ocrItem.model || '-'}
-                      </td>
-                      <td style={{ padding: '5px 3px', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                        {row.ocrItem.quantity}
-                      </td>
-                      {/* 登録区分 */}
-                      <td style={{ padding: '5px 3px', textAlign: 'center', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fafafa' }}>
-                        {row.aiJudgment ? (
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '2px 5px',
-                            borderRadius: '3px',
-                            fontSize: '9px',
-                            fontWeight: 'bold',
-                            background: aiItemTypeColor.bg,
-                            color: aiItemTypeColor.text,
-                          }}>
-                            {ITEM_TYPE_LABELS[row.aiJudgment.itemType]}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#ccc' }}>-</span>
-                        )}
-                      </td>
-                      {/* AI判定結果（または資産マスタ選択結果） */}
-                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px' }}>
-                        {displayData && 'category' in displayData ? displayData.category : <span style={{ color: '#ccc' }}>-</span>}
-                      </td>
-                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px', maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData && 'majorCategory' in displayData ? displayData.majorCategory : ''}>
-                        {displayData && 'majorCategory' in displayData ? displayData.majorCategory : <span style={{ color: '#ccc' }}>-</span>}
-                      </td>
-                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px', maxWidth: '70px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData && 'middleCategory' in displayData ? displayData.middleCategory : ''}>
-                        {displayData && 'middleCategory' in displayData ? displayData.middleCategory : <span style={{ color: '#ccc' }}>-</span>}
-                      </td>
-                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontWeight: row.aiJudgment?.itemType === 'C_個体管理品目' ? 'bold' : 'normal', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData?.assetName || ''}>
-                        {displayData?.assetName || <span style={{ color: '#ccc' }}>-</span>}
-                      </td>
-                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', color: '#555', fontSize: '9px', maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData?.manufacturer || ''}>
-                        {displayData?.manufacturer || <span style={{ color: '#ccc' }}>-</span>}
-                      </td>
-                      <td style={{ padding: '5px 3px', background: isSelectingThisRow ? '#ffe0b2' : rowIsConfirmed ? '#c8e6c9' : '#fdfaff', color: '#555', fontSize: '9px', maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={displayData?.model || ''}>
-                        {displayData?.model || <span style={{ color: '#ccc' }}>-</span>}
-                      </td>
-                      {/* 操作ボタン */}
-                      <td style={{ padding: '5px 3px', textAlign: 'center' }}>
-                        {rowIsConfirmed ? (
-                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center' }}>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '3px 6px',
-                              background: confirmedInfo?.status === 'asset_master_selected' ? '#1976d2' : '#27ae60',
-                              color: 'white',
-                              borderRadius: '3px',
-                              fontSize: '8px',
-                              fontWeight: 'bold',
-                            }}>
-                              {confirmedInfo?.status === 'asset_master_selected' ? '紐付済' : 'AI適用'}
-                            </span>
-                            <button
-                              onClick={() => handleUnconfirm(row.ocrItemIndex)}
-                              style={{
-                                padding: '3px 5px',
-                                background: '#e74c3c',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '3px',
-                                cursor: 'pointer',
-                                fontSize: '8px',
-                                fontWeight: 'bold',
-                              }}
-                              title="紐付けを解除"
-                            >
-                              解除
-                            </button>
-                          </div>
-                        ) : isSelectingThisRow ? (
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '3px 8px',
-                            background: '#ff9800',
-                            color: 'white',
-                            borderRadius: '3px',
-                            fontSize: '8px',
-                            fontWeight: 'bold',
-                          }}>
-                            選択中...
-                          </span>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            {row.aiJudgment && (
-                              <button
-                                onClick={() => row.aiJudgment && handleConfirm(row.ocrItemIndex, row.aiJudgment)}
-                                style={{
-                                  padding: '3px 5px',
-                                  background: '#ff9800',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '3px',
-                                  cursor: 'pointer',
-                                  fontSize: '8px',
-                                  fontWeight: 'bold',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                AI適用
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleOpenAssetMasterForSelection(row.ocrItemIndex)}
-                              style={{
-                                padding: '3px 5px',
-                                background: '#1976d2',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '3px',
-                                cursor: 'pointer',
-                                fontSize: '8px',
-                                fontWeight: 'bold',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              マスタ選択
-                            </button>
-                          </div>
-                        )}
+                      <td style={{ ...cellStyle, width: '60px', textAlign: 'center' }}>
+                        <span style={statusBadgeStyle(isFieldFilled(basicInfo.quotationDate))}>
+                          {isFieldFilled(basicInfo.quotationDate) ? '入力済' : '未入力'}
+                        </span>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    {/* 販売店行 */}
+                    <tr>
+                      <th style={headerCellStyle}>販売店</th>
+                      <td style={cellStyle} colSpan={3}>
+                        <input
+                          type="text"
+                          placeholder="報告会 入力済"
+                          value={basicInfo.vendorName}
+                          onChange={(e) => handleBasicInfoChange('vendorName', e.target.value)}
+                          style={inputStyle}
+                        />
+                      </td>
+                      <td style={{ ...cellStyle, width: '60px', textAlign: 'center' }}>
+                        <span style={statusBadgeStyle(isFieldFilled(basicInfo.vendorName))}>
+                          {isFieldFilled(basicInfo.vendorName) ? '入力済' : '未入力'}
+                        </span>
+                      </td>
+                    </tr>
+                    {/* メーカー行 */}
+                    <tr>
+                      <th style={headerCellStyle}>メーカー</th>
+                      <td style={cellStyle} colSpan={3}>
+                        <input
+                          type="text"
+                          value={basicInfo.manufacturer}
+                          onChange={(e) => handleBasicInfoChange('manufacturer', e.target.value)}
+                          style={inputStyle}
+                        />
+                      </td>
+                      <td style={{ ...cellStyle, width: '60px', textAlign: 'center' }}>
+                        <span style={statusBadgeStyle(isFieldFilled(basicInfo.manufacturer))}>
+                          {isFieldFilled(basicInfo.manufacturer) ? '入力済' : '未入力'}
+                        </span>
+                      </td>
+                    </tr>
+                    {/* 担当行 */}
+                    <tr>
+                      <th style={headerCellStyle}>担当</th>
+                      <td style={cellStyle} colSpan={3}>
+                        <input
+                          type="text"
+                          value={basicInfo.personInCharge}
+                          onChange={(e) => handleBasicInfoChange('personInCharge', e.target.value)}
+                          style={inputStyle}
+                        />
+                      </td>
+                      <td style={{ ...cellStyle, width: '60px', textAlign: 'center' }}>
+                        <span style={statusBadgeStyle(isFieldFilled(basicInfo.personInCharge))}>
+                          {isFieldFilled(basicInfo.personInCharge) ? '入力済' : '未入力'}
+                        </span>
+                      </td>
+                    </tr>
+                    {/* 連絡先(TEL)行 */}
+                    <tr>
+                      <th style={headerCellStyle}>連絡先(TEL)</th>
+                      <td style={cellStyle} colSpan={3}>
+                        <input
+                          type="text"
+                          value={basicInfo.tel}
+                          onChange={(e) => handleBasicInfoChange('tel', e.target.value)}
+                          style={inputStyle}
+                        />
+                      </td>
+                      <td style={{ ...cellStyle, width: '60px', textAlign: 'center' }}>
+                        <span style={statusBadgeStyle(isFieldFilled(basicInfo.tel))}>
+                          {isFieldFilled(basicInfo.tel) ? '入力済' : '未入力'}
+                        </span>
+                      </td>
+                    </tr>
+                    {/* 連絡先(mail)行 */}
+                    <tr>
+                      <th style={headerCellStyle}>連絡先(mail)</th>
+                      <td style={cellStyle} colSpan={3}>
+                        <input
+                          type="text"
+                          value={basicInfo.email}
+                          onChange={(e) => handleBasicInfoChange('email', e.target.value)}
+                          style={inputStyle}
+                        />
+                      </td>
+                      <td style={{ ...cellStyle, width: '60px', textAlign: 'center' }}>
+                        <span style={statusBadgeStyle(isFieldFilled(basicInfo.email))}>
+                          {isFieldFilled(basicInfo.email) ? '入力済' : '未入力'}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
-        {/* 凡例 */}
-        <div style={{ marginBottom: '12px', padding: '8px', background: '#fafafa', borderRadius: '4px', fontSize: '9px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontWeight: 'bold', color: '#555' }}>登録区分：</span>
-            {Object.entries(ITEM_TYPE_COLORS).map(([type, colors]) => (
-              <span key={type} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                <span style={{
-                  display: 'inline-block',
-                  padding: '1px 3px',
-                  borderRadius: '2px',
-                  fontSize: '8px',
-                  fontWeight: 'bold',
-                  background: colors.bg,
-                  color: colors.text,
+                {/* 資産情報紐チェックボタン */}
+                <div style={{ marginBottom: '16px' }}>
+                  <button
+                    onClick={handleAssetInfoCheck}
+                    style={{
+                      padding: '8px 20px',
+                      background: '#9b59b6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    資産情報紐チェック
+                  </button>
+                </div>
+
+                {/* 明細テーブル */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                      <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa' }}>
+                        <tr>
+                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>項目</th>
+                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>金額</th>
+                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>category</th>
+                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>会計区分</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detailItems.map((item, index) => (
+                          <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                            <td style={{ padding: '6px 8px' }}>
+                              <div style={{ fontWeight: 'bold' }}>{item.itemName}</div>
+                              <div style={{ fontSize: '10px', color: '#666' }}>{item.manufacturer} {item.model}</div>
+                            </td>
+                            <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                              ¥{item.totalPrice.toLocaleString()}
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <select
+                                value={item.category || ''}
+                                onChange={(e) => handleDetailChange(index, 'category', e.target.value as AssetCategory)}
+                                style={{ width: '100%', padding: '4px', fontSize: '10px', border: '1px solid #ddd', borderRadius: '3px' }}
+                              >
+                                <option value="">選択...</option>
+                                {ASSET_CATEGORY_OPTIONS.map(opt => (
+                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '6px 8px' }}>
+                              <select
+                                value={item.accountingCategory || ''}
+                                onChange={(e) => handleDetailChange(index, 'accountingCategory', e.target.value as AccountingCategory)}
+                                style={{ width: '100%', padding: '4px', fontSize: '10px', border: '1px solid #ddd', borderRadius: '3px' }}
+                              >
+                                <option value="">選択...</option>
+                                {ACCOUNTING_CATEGORY_OPTIONS.map(opt => (
+                                  <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* 合計金額 */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px',
+                  background: '#f8f9fa',
+                  borderRadius: '4px',
+                  marginBottom: '16px',
                 }}>
-                  {ITEM_TYPE_LABELS[type as QuotationItemType]}
-                </span>
-                <span style={{ color: '#666' }}>{type}</span>
-              </span>
-            ))}
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>合計金額（税抜）</span>
+                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
+                    ¥{totalAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'category' && (
+              <div>
+                <div style={{ fontSize: '12px', color: '#666', padding: '20px', textAlign: 'center' }}>
+                  category設定画面
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 注記 */}
+          <div style={{ padding: '12px', borderTop: '1px solid #ddd', background: '#fafafa', fontSize: '11px', color: '#666', lineHeight: 1.8 }}>
+            <div>✓ 読み込んだ見積PDFファイルと相違ないか確認・修正を行って下さい</div>
+            <div>✓ 合計値が税抜か税込か確認して下さい</div>
+            <div style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+              ★ 全てのcategory、会計区分を登録して下さい
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexShrink: 0 }}>
-          <button
-            onClick={onBack}
-            style={{
-              padding: '10px 24px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-          >
-            戻る
-          </button>
-          <button
-            onClick={onNext}
-            style={{
-              padding: '10px 24px',
-              background: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-          >
-            次へ（申請確認）
-          </button>
+        {/* 右側: PDFプレビュー */}
+        <div style={{
+          flex: '0 0 43%',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          background: 'white',
+        }}>
+          {/* PDFプレビュー */}
+          <div style={{ flex: 1, position: 'relative' }}>
+            {pdfUrl ? (
+              <iframe
+                src={pdfUrl}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  background: '#f5f5f5'
+                }}
+                title="見積書PDF"
+              />
+            ) : (
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#f5f5f5',
+                color: '#999',
+                fontSize: '13px',
+              }}>
+                PDFファイルがありません
+              </div>
+            )}
+          </div>
+
+          {/* 登録ボタン */}
+          <div style={{ padding: '12px', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={onNext}
+              style={{
+                padding: '10px 24px',
+                background: '#e74c3c',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }}
+            >
+              登録BOXへの仮登録へ
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* フッターボタン */}
+      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start', marginTop: '16px' }}>
+        <button
+          onClick={onBack}
+          style={{
+            padding: '10px 24px',
+            background: '#95a5a6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 'bold'
+          }}
+        >
+          戻る
+        </button>
       </div>
     </div>
   );

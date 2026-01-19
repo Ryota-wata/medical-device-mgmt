@@ -8,13 +8,29 @@ export type QuotationPhase =
   | '概算見積'
   | '確定見積';
 
-// 明細分類
+// 明細分類（登録区分）
 export type QuotationItemType =
   | 'A_表紙明細'
   | 'B_明細代表'
   | 'C_個体管理品目'
   | 'D_付属品'
-  | 'E_その他役務';
+  | 'E_その他役務'
+  | 'F_値引き';
+
+// 資産区分（category）
+export type AssetCategory =
+  | '有形資産_医療用機器備品'
+  | '有形資産_器具備品'
+  | '有形資産_建物附属設備'
+  | '無形資産_ソフトウェア'
+  | '費用_消耗品経費'
+  | '長期前払費用_保守費';
+
+// 会計区分
+export type AccountingCategory =
+  | '資本的支出'
+  | '経費'
+  | '前払費用';
 
 // 受領見積グループ（ヘッダー情報）
 export interface ReceivedQuotationGroup {
@@ -174,11 +190,17 @@ export interface OCRResultItem {
   taxRate: number; // 税率
   totalWithTax: number; // 税込合計
   remarks?: string; // 備考
+  // 資産区分・会計区分（ユーザー入力/AI判定）
+  assetCategory?: AssetCategory; // 資産区分（category）
+  accountingCategory?: AccountingCategory; // 会計区分
   // 後方互換性のため残す
   sellingPriceUnit?: number; // 売価単価（非推奨：purchasePriceUnitを使用）
   sellingPriceTotal?: number; // 売価合計（非推奨：purchasePriceTotalを使用）
   // AI判定結果（1対1対応）
   aiJudgments: AIJudgmentResult[];
+  // 個体管理品目向け：親子関係
+  parentItemIndex?: number; // 親アイテムのインデックス（付属品の場合）
+  allocatedPrice?: number; // 案分後の金額
 }
 
 export interface OCRResult {

@@ -7,6 +7,8 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 
 interface HeaderProps {
   title?: string;
+  stepBadge?: string;
+  subInfo?: string;
   showBackButton?: boolean;
   resultCount?: number;
   showOriginalLabel?: boolean;
@@ -21,10 +23,13 @@ interface HeaderProps {
   targetFacilities?: string[];
   createdAt?: string;
   children?: React.ReactNode;
+  centerContent?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title = '資産リスト',
+  stepBadge,
+  subInfo,
   showBackButton = true,
   resultCount,
   showOriginalLabel = true,
@@ -38,7 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   department = '',
   targetFacilities,
   createdAt,
-  children
+  children,
+  centerContent
 }) => {
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -80,7 +86,36 @@ export const Header: React.FC<HeaderProps> = ({
             SHIP
           </div>
           <div className="font-bold" style={{ fontSize: isMobile ? '14px' : '16px' }}>{title}</div>
+          {stepBadge && (
+            <span
+              style={{
+                background: '#e74c3c',
+                color: 'white',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                marginLeft: '8px',
+              }}
+            >
+              {stepBadge}
+            </span>
+          )}
         </div>
+        {subInfo && (
+          <div
+            style={{
+              background: '#fff3cd',
+              color: '#856404',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              fontSize: '11px',
+              marginLeft: '12px',
+            }}
+          >
+            {subInfo}
+          </div>
+        )}
         {resultCount !== undefined && (
           <span style={{ color: '#ecf0f1', fontSize: isMobile ? '12px' : '14px' }}>
             {resultCount}件{showOriginalLabel && '（原本）'}
@@ -119,6 +154,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
       </div>
+
+      {/* 中央: カスタムコンテンツ */}
+      {centerContent && (
+        <div className="flex items-center justify-center" style={{ flex: 1 }}>
+          {centerContent}
+        </div>
+      )}
 
       {/* 右側: アクションボタン */}
       <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>

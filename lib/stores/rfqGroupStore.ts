@@ -18,7 +18,12 @@ const testRfqGroups: RfqGroup[] = [
     groupName: '2025年度放射線科機器更新',
     createdDate: '2025-01-10',
     applicationIds: [1, 3],
-    status: '回答受領'
+    status: '見積登録済',
+    vendorName: 'シーメンス・ジャパン',
+    personInCharge: '山田太郎',
+    email: 'yamada@siemens.co.jp',
+    tel: '03-1234-5678',
+    deadline: '2025-01-31'
   },
   {
     id: 2,
@@ -26,7 +31,12 @@ const testRfqGroups: RfqGroup[] = [
     groupName: '2025年度循環器科新規導入',
     createdDate: '2025-01-11',
     applicationIds: [2],
-    status: '送信済み'
+    status: '見積依頼済',
+    vendorName: 'GEヘルスケア',
+    personInCharge: '鈴木一郎',
+    email: 'suzuki@gehealthcare.co.jp',
+    tel: '03-2345-6789',
+    deadline: '2025-02-15'
   },
   {
     id: 3,
@@ -34,7 +44,25 @@ const testRfqGroups: RfqGroup[] = [
     groupName: '2025年度検査科・手術室機器更新',
     createdDate: '2025-01-13',
     applicationIds: [4, 5],
-    status: '未送信'
+    status: '見積依頼',
+    vendorName: 'フィリップス・ジャパン',
+    personInCharge: '佐藤花子',
+    email: 'sato@philips.co.jp',
+    tel: '03-3456-7890',
+    deadline: '2025-02-28'
+  },
+  {
+    id: 4,
+    rfqNo: 'RFQ-20250115-0004',
+    groupName: '2025年度内視鏡センター機器',
+    createdDate: '2025-01-15',
+    applicationIds: [6],
+    status: '登録依頼',
+    vendorName: 'オリンパス',
+    personInCharge: '田中次郎',
+    email: 'tanaka@olympus.co.jp',
+    tel: '03-4567-8901',
+    deadline: '2025-03-10'
   }
 ];
 

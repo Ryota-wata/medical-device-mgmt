@@ -9,11 +9,16 @@ export interface RfqGroup {
   createdDate: string;
   applicationIds: number[];
   status: RfqGroupStatus;
+  vendorName?: string;
+  personInCharge?: string;
+  email?: string;
+  tel?: string;
+  deadline?: string;
 }
 
 export type RfqGroupStatus =
-  | '未送信'
-  | '送信済み'
-  | '回答待ち'
-  | '回答受領'
-  | '完了';
+  | '見積依頼'
+  | '見積依頼済'
+  | '登録依頼'
+  | '見積登録済'
+  | '原本登録用最終見積登録';
