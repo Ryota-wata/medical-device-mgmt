@@ -17,8 +17,11 @@ export interface RfqGroup {
 }
 
 export type RfqGroupStatus =
+  | '下書き'
+  | '未送信'
   | '見積依頼'
   | '見積依頼済'
+  | '回答受領'
   | '登録依頼'
   | '見積登録済'
   | '原本登録用最終見積登録';

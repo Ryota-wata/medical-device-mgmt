@@ -131,8 +131,8 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   };
 
   // 入力済みかどうかの判定
-  const isFieldFilled = (value: string | undefined) => {
-    return value && value.trim() !== '';
+  const isFieldFilled = (value: string | undefined): boolean => {
+    return !!(value && value.trim() !== '');
   };
 
   // セルスタイル
