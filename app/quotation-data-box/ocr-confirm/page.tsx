@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
+import { StepProgressBar } from '../components/StepProgressBar';
 // 会計区分の型
 type AccountingCategoryType = '医療機器' | '什器備品' | '情報システム' | '消耗品' | '保守' | '';
 
@@ -300,8 +301,7 @@ export default function OcrConfirmPage() {
 
   // 登録区分のAI判定へ
   const handleAiJudgment = () => {
-    console.log('登録区分のAI判定実行');
-    router.push('/quotation-data-box');
+    router.push('/quotation-data-box/category-registration');
   };
 
   // セルスタイル
@@ -333,10 +333,11 @@ export default function OcrConfirmPage() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
       <Header
         title="見積登録（購入）OCR明細確認"
-        stepBadge="STEP 1"
+        stepBadge="STEP 2"
         hideMenu={true}
         showBackButton={false}
       />
+      <StepProgressBar currentStep={2} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '16px' }}>
         {/* メインコンテンツ */}
@@ -668,24 +669,6 @@ export default function OcrConfirmPage() {
               <div>③ 仮でのcategory、会計区分を登録して下さい</div>
             </div>
 
-            {/* 登録ボタンエリア */}
-            <div style={{ padding: '16px', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={handleAiJudgment}
-                style={{
-                  padding: '12px 28px',
-                  background: '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                登録区分のAI判定へ
-              </button>
-            </div>
           </div>
           {/* 見積明細チェックセクション 終了 */}
         </div>
@@ -741,7 +724,7 @@ export default function OcrConfirmPage() {
         </div>
 
         {/* フッターボタン */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-start', marginTop: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
           <button
             onClick={handleBack}
             style={{
@@ -755,7 +738,22 @@ export default function OcrConfirmPage() {
               fontWeight: 'bold'
             }}
           >
-            戻る
+            一つ前のSTEPに戻る
+          </button>
+          <button
+            onClick={handleAiJudgment}
+            style={{
+              padding: '12px 28px',
+              background: '#e74c3c',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+            }}
+          >
+            登録区分のAI判定へ
           </button>
         </div>
       </div>

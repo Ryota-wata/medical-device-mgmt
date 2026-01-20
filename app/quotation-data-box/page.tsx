@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useApplicationStore } from '@/lib/stores/applicationStore';
@@ -34,6 +34,20 @@ const SUB_TABS: { key: SubTabType; label: string }[] = [
   { key: 'makerMaintenance', label: 'メーカー保守一覧' },
   { key: 'inHouseInspection', label: '院内点検一覧' },
 ];
+
+// クエリパラメータを読み取るコンポーネント
+function TabSwitcher({ onTabChange }: { onTabChange: (tab: SubTabType) => void }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'quotations') {
+      onTabChange('quotations');
+    }
+  }, [searchParams, onTabChange]);
+
+  return null;
+}
 
 export default function QuotationManagementPage() {
   const router = useRouter();
@@ -243,6 +257,10 @@ export default function QuotationManagementPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5' }}>
+      {/* クエリパラメータでタブ切り替え */}
+      <Suspense fallback={null}>
+        <TabSwitcher onTabChange={setActiveSubTab} />
+      </Suspense>
       <Header
         title="見積・発注契約管理"
         showBackButton={true}
@@ -306,53 +324,55 @@ export default function QuotationManagementPage() {
             ))}
           </div>
 
-          {/* フィルター */}
-          <div style={{
-            background: 'white',
-            padding: '12px 16px',
-            borderBottom: '1px solid #ddd',
-            display: 'flex',
-            gap: '16px',
-            alignItems: 'center',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="purchase">購入</option>
-                <option value="lease">リース</option>
-                <option value="installment">割賦</option>
-                <option value="rental">レンタル</option>
-                <option value="trial">試用</option>
-                <option value="borrow">借用</option>
-                <option value="repair">修理</option>
-                <option value="maintenance">保守</option>
-                <option value="inspection">点検</option>
-                <option value="other">その他</option>
-              </select>
+          {/* フィルター（見積G一覧タブのみ表示） */}
+          {activeSubTab === 'rfqGroups' && (
+            <div style={{
+              background: 'white',
+              padding: '12px 16px',
+              borderBottom: '1px solid #ddd',
+              display: 'flex',
+              gap: '16px',
+              alignItems: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
+                <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                  <option value="">すべて</option>
+                  <option value="purchase">購入</option>
+                  <option value="lease">リース</option>
+                  <option value="installment">割賦</option>
+                  <option value="rental">レンタル</option>
+                  <option value="trial">試用</option>
+                  <option value="borrow">借用</option>
+                  <option value="repair">修理</option>
+                  <option value="maintenance">保守</option>
+                  <option value="inspection">点検</option>
+                  <option value="other">その他</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
+                <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                  <option value="">すべて</option>
+                  <option value="listPrice">定価</option>
+                  <option value="estimate">概算</option>
+                  <option value="final">最終原本登録用</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
+                <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                  <option value="">すべて</option>
+                  <option value="quotationRequest">見積依頼（未送信）</option>
+                  <option value="quotationRequested">見積依頼済（見積依頼中）</option>
+                  <option value="registrationRequest">登録依頼（SHRCへ登録依頼）</option>
+                  <option value="quotationRegistered">見積登録済（回答受領）</option>
+                  <option value="finalOriginal">原本登録用最終見積登録</option>
+                </select>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="listPrice">定価</option>
-                <option value="estimate">概算</option>
-                <option value="final">最終原本登録用</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="quotationRequest">見積依頼（未送信）</option>
-                <option value="quotationRequested">見積依頼済（見積依頼中）</option>
-                <option value="registrationRequest">登録依頼（SHRCへ登録依頼）</option>
-                <option value="quotationRegistered">見積登録済（回答受領）</option>
-                <option value="finalOriginal">原本登録用最終見積登録</option>
-              </select>
-            </div>
-          </div>
+          )}
 
           {/* テーブルエリア */}
           <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>

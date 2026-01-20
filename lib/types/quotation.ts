@@ -105,6 +105,10 @@ export interface ReceivedQuotationItem {
   allocTaxTotal?: number; // 税込金額
   accountTitle?: AccountTitle; // 勘定科目
 
+  // === 個体登録情報（STEP5/6から） ===
+  seqId?: string; // SEQ_ID（個体管理品目の連番）
+  parentSeqId?: string; // 親と紐付け
+
   // === その他 ===
   unit?: string;
   assetMasterId?: string; // 資産Masterとの紐づけ
