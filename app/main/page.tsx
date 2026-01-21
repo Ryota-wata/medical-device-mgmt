@@ -6,6 +6,8 @@ import { useAuthStore, useMasterStore, useEditListStore } from '@/lib/stores';
 import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { useToast } from '@/components/ui/Toast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function MainPage() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function MainPage() {
   const { facilities } = useMasterStore();
   const { editLists, addEditList, deleteEditList } = useEditListStore();
   const { isMobile, isTablet } = useResponsive();
+  const { showToast } = useToast();
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
@@ -26,6 +29,10 @@ export default function MainPage() {
   const [editListMode, setEditListMode] = useState<'select' | 'create'>('select');
   const [newEditListName, setNewEditListName] = useState('');
   const [selectedEditListFacilities, setSelectedEditListFacilities] = useState<string[]>([]);
+
+  // 削除確認ダイアログ用のstate
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteTargetList, setDeleteTargetList] = useState<{ id: string; name: string } | null>(null);
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = useMemo(() => {
@@ -43,7 +50,7 @@ export default function MainPage() {
   };
 
   const handleQRRead = () => {
-    alert('QR読取機能（開発中）');
+    showToast('QR読取機能（開発中）', 'info');
   };
 
   // 編集リスト関連の関数
@@ -71,11 +78,11 @@ export default function MainPage() {
 
   const handleCreateEditList = () => {
     if (!newEditListName.trim()) {
-      alert('編集リスト名を入力してください');
+      showToast('編集リスト名を入力してください', 'warning');
       return;
     }
     if (selectedEditListFacilities.length === 0) {
-      alert('施設を1つ以上選択してください');
+      showToast('施設を1つ以上選択してください', 'warning');
       return;
     }
 
@@ -84,7 +91,7 @@ export default function MainPage() {
       facilities: selectedEditListFacilities,
     });
 
-    alert(`編集リスト「${newEditListName.trim()}」を作成しました`);
+    showToast(`編集リスト「${newEditListName.trim()}」を作成しました`, 'success');
     closeEditListModal();
   };
 
@@ -155,156 +162,75 @@ export default function MainPage() {
   };
 
   const handleMaintenanceInspection = () => {
-    alert('保守・点検機能（開発中）');
+    showToast('保守・点検機能（開発中）', 'info');
   };
 
   const handleLendingManagement = () => {
-    alert('貸出管理機能（開発中）');
+    showToast('貸出管理機能（開発中）', 'info');
   };
 
   const handleRepairApplication = () => {
-    alert('修理申請機能（開発中）');
+    showToast('修理申請機能（開発中）', 'info');
   };
 
   const handleAllDataView = () => {
-    alert('全データ閲覧機能（開発中）');
+    showToast('全データ閲覧機能（開発中）', 'info');
+  };
+
+  const handleDeleteEditList = (list: { id: string; name: string }) => {
+    setDeleteTargetList(list);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteEditList = () => {
+    if (deleteTargetList) {
+      deleteEditList(deleteTargetList.id);
+      showToast(`「${deleteTargetList.name}」を削除しました`, 'success');
+      setDeleteTargetList(null);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5', padding: '20px' }}>
-      <div
-        style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          background: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          width: '100%'
-        }}
-      >
+    <div className="min-h-dvh flex flex-col bg-slate-100 p-5">
+      <div className="max-w-[1400px] mx-auto bg-white rounded-lg shadow-lg w-full">
         {/* ヘッダー */}
-        <header
-          style={{
-            background: '#2c3e50',
-            color: 'white',
-            padding: '15px 20px',
-            borderRadius: '8px 8px 0 0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '15px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  background: '#27ae60',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: '14px'
-                }}
-              >
+        <header className="bg-slate-700 text-white px-5 py-4 rounded-t-lg flex justify-between items-center flex-wrap gap-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="size-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
                 SHIP
               </div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+              <div className="text-lg font-bold text-balance">
                 HEALTHCARE 医療機器管理システム
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="flex gap-2.5 flex-wrap">
             {/* コンサルタント専用ボタン */}
             {isConsultant && (
               <>
                 <button
                   onClick={handleQRRead}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#229954';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                  }}
+                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
                 >
                   QR読取
                 </button>
                 <button
                   onClick={handleEditListManagement}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#229954';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                  }}
+                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
                 >
                   編集リスト
                 </button>
                 <button
                   onClick={handleQuotationManagement}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#229954';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                  }}
+                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
                 >
                   見積管理
                 </button>
                 <button
                   onClick={showMasterModal}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#34495e',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#2c3e50';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#34495e';
-                  }}
+                  className="px-4 py-2 bg-slate-600 text-white border-0 rounded cursor-pointer text-sm hover:bg-slate-700 transition-colors"
                 >
                   マスタ管理
                 </button>
@@ -316,43 +242,13 @@ export default function MainPage() {
               <>
                 <button
                   onClick={handleQRIssueFromModal}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#229954';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                  }}
+                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
                 >
                   QRコード発行
                 </button>
                 <button
                   onClick={() => setIsHospitalMasterModalOpen(true)}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#34495e',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: 'background 0.3s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#2c3e50';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#34495e';
-                  }}
+                  className="px-4 py-2 bg-slate-600 text-white border-0 rounded cursor-pointer text-sm hover:bg-slate-700 transition-colors"
                 >
                   マスタ管理
                 </button>
@@ -362,22 +258,7 @@ export default function MainPage() {
             {/* ログアウトボタン（全ユーザー共通） */}
             <button
               onClick={handleLogout}
-              style={{
-                padding: '8px 16px',
-                background: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                transition: 'background 0.3s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#c0392b';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#e74c3c';
-              }}
+              className="px-4 py-2 bg-red-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-red-600 transition-colors"
             >
               ログアウト
             </button>
@@ -385,174 +266,49 @@ export default function MainPage() {
         </header>
 
         {/* メニューセクション */}
-        <div style={{ padding: isMobile ? '15px 10px' : isTablet ? '20px 10px' : '30px 20px', background: '#f8f9fa' }}>
+        <div className={`bg-slate-50 ${isMobile ? 'px-2.5 py-4' : isTablet ? 'px-2.5 py-5' : 'px-5 py-8'}`}>
           <div
-            style={{
-              display: 'flex',
-              flexWrap: isMobile || isTablet ? 'wrap' : 'nowrap',
-              gap: isMobile ? '6px' : isTablet ? '8px' : '12px',
-              maxWidth: '1400px',
-              margin: '0 auto',
-              justifyContent: 'center'
-            }}
+            className={`flex max-w-[1400px] mx-auto justify-center ${
+              isMobile || isTablet ? 'flex-wrap' : 'flex-nowrap'
+            } ${isMobile ? 'gap-1.5' : isTablet ? 'gap-2' : 'gap-3'}`}
           >
             <button
               onClick={handleAssetBrowseAndApplication}
-              style={{
-                background: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '6px',
-                padding: isMobile ? '8px 10px' : isTablet ? '9px 12px' : '14px 20px',
-                fontSize: isMobile ? '11px' : isTablet ? '12px' : '15px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                flex: '0 0 auto'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#27ae60';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = '#27ae60';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(39, 174, 96, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#2c3e50';
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+              }`}
             >
               資産閲覧・申請
             </button>
             <button
               onClick={handleMaintenanceInspection}
-              style={{
-                background: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '6px',
-                padding: isMobile ? '8px 10px' : isTablet ? '9px 12px' : '14px 20px',
-                fontSize: isMobile ? '11px' : isTablet ? '12px' : '15px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                flex: '0 0 auto'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#27ae60';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = '#27ae60';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(39, 174, 96, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#2c3e50';
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+              }`}
             >
               保守・点検
             </button>
             <button
               onClick={handleLendingManagement}
-              style={{
-                background: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '6px',
-                padding: isMobile ? '8px 10px' : isTablet ? '9px 12px' : '14px 20px',
-                fontSize: isMobile ? '11px' : isTablet ? '12px' : '15px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                flex: '0 0 auto'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#27ae60';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = '#27ae60';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(39, 174, 96, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#2c3e50';
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+              }`}
             >
               貸出管理
             </button>
             <button
               onClick={handleRepairApplication}
-              style={{
-                background: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '6px',
-                padding: isMobile ? '8px 10px' : isTablet ? '9px 12px' : '14px 20px',
-                fontSize: isMobile ? '11px' : isTablet ? '12px' : '15px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                flex: '0 0 auto'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#27ae60';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = '#27ae60';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(39, 174, 96, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#2c3e50';
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+              }`}
             >
               修理申請
             </button>
             <button
               onClick={handleAllDataView}
-              style={{
-                background: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '6px',
-                padding: isMobile ? '8px 10px' : isTablet ? '9px 12px' : '14px 20px',
-                fontSize: isMobile ? '11px' : isTablet ? '12px' : '15px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                flex: '0 0 auto'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#27ae60';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = '#27ae60';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(39, 174, 96, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.color = '#2c3e50';
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+              }`}
             >
               全データ閲覧（閲覧・出力）
             </button>
@@ -560,29 +316,9 @@ export default function MainPage() {
         </div>
 
         {/* ダッシュボードボディ（次スコープ用） */}
-        <div
-          style={{
-            padding: '40px 20px',
-            minHeight: '300px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <div
-            style={{
-              textAlign: 'center',
-              color: '#7f8c8d',
-              fontSize: '16px',
-              padding: '40px',
-              background: 'white',
-              border: '2px dashed #ddd',
-              borderRadius: '8px',
-              maxWidth: '600px',
-              margin: '0 auto'
-            }}
-          >
-            <p>※ ダッシュボード機能は次スコープで実装予定です</p>
+        <div className="px-5 py-10 min-h-[300px] flex items-center justify-center">
+          <div className="text-center text-slate-500 text-base p-10 bg-white border-2 border-dashed border-slate-300 rounded-lg max-w-[600px] mx-auto">
+            <p className="text-pretty">※ ダッシュボード機能は次スコープで実装予定です</p>
           </div>
         </div>
       </div>
@@ -591,47 +327,28 @@ export default function MainPage() {
       {isListModalOpen && (
         <div
           onClick={closeListModal}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '8px',
-              width: '90%',
-              maxWidth: '600px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'hidden'
-            }}
+            className="bg-white rounded-lg w-[90%] max-w-[600px] shadow-xl overflow-hidden"
           >
             {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: '#27ae60',
-                color: 'white',
-                padding: '20px 24px',
-                fontSize: '20px',
-                fontWeight: 'bold',
-              }}
-            >
-              個体管理リスト作成
+            <div className="bg-emerald-500 text-white px-6 py-5 text-xl font-bold text-balance flex justify-between items-center">
+              <span>個体管理リスト作成</span>
+              <button
+                onClick={closeListModal}
+                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                aria-label="閉じる"
+              >
+                ×
+              </button>
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '24px' }}>
+            <div className="p-6">
               {/* 施設選択 */}
-              <div style={{ marginBottom: '32px' }}>
+              <div className="mb-8">
                 <SearchableSelect
                   label="施設を選択"
                   value={selectedFacility}
@@ -643,46 +360,15 @@ export default function MainPage() {
               </div>
 
               {/* メニューボタン */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr',
-                  gap: '16px',
-                }}
-              >
+              <div className="grid grid-cols-1 gap-4">
                 <button
                   onClick={() => handleMenuSelect('QRコード発行')}
                   disabled={!buttonsEnabled}
-                  style={{
-                    padding: '14px 18px',
-                    background: buttonsEnabled ? 'white' : '#f5f5f5',
-                    color: buttonsEnabled ? '#2c3e50' : '#999',
-                    border: buttonsEnabled ? '2px solid #27ae60' : '2px solid #ddd',
-                    borderRadius: '6px',
-                    cursor: buttonsEnabled ? 'pointer' : 'not-allowed',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    transition: 'all 0.3s',
-                    minHeight: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    opacity: buttonsEnabled ? 1 : 0.6,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = '#27ae60';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#2c3e50';
-                    }
-                  }}
+                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
+                    buttonsEnabled
+                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
+                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
+                  }`}
                 >
                   QRコード発行
                 </button>
@@ -690,36 +376,11 @@ export default function MainPage() {
                 <button
                   onClick={() => handleMenuSelect('現有品調査')}
                   disabled={!buttonsEnabled}
-                  style={{
-                    padding: '14px 18px',
-                    background: buttonsEnabled ? 'white' : '#f5f5f5',
-                    color: buttonsEnabled ? '#2c3e50' : '#999',
-                    border: buttonsEnabled ? '2px solid #27ae60' : '2px solid #ddd',
-                    borderRadius: '6px',
-                    cursor: buttonsEnabled ? 'pointer' : 'not-allowed',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    transition: 'all 0.3s',
-                    minHeight: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    opacity: buttonsEnabled ? 1 : 0.6,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = '#27ae60';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#2c3e50';
-                    }
-                  }}
+                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
+                    buttonsEnabled
+                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
+                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
+                  }`}
                 >
                   現有品調査
                 </button>
@@ -727,36 +388,11 @@ export default function MainPage() {
                 <button
                   onClick={() => handleMenuSelect('現有品調査内容修正')}
                   disabled={!buttonsEnabled}
-                  style={{
-                    padding: '14px 18px',
-                    background: buttonsEnabled ? 'white' : '#f5f5f5',
-                    color: buttonsEnabled ? '#2c3e50' : '#999',
-                    border: buttonsEnabled ? '2px solid #27ae60' : '2px solid #ddd',
-                    borderRadius: '6px',
-                    cursor: buttonsEnabled ? 'pointer' : 'not-allowed',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    transition: 'all 0.3s',
-                    minHeight: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    opacity: buttonsEnabled ? 1 : 0.6,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = '#27ae60';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#2c3e50';
-                    }
-                  }}
+                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
+                    buttonsEnabled
+                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
+                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
+                  }`}
                 >
                   現有品調査内容修正
                 </button>
@@ -764,36 +400,11 @@ export default function MainPage() {
                 <button
                   onClick={() => handleMenuSelect('資産台帳取込')}
                   disabled={!buttonsEnabled}
-                  style={{
-                    padding: '14px 18px',
-                    background: buttonsEnabled ? 'white' : '#f5f5f5',
-                    color: buttonsEnabled ? '#2c3e50' : '#999',
-                    border: buttonsEnabled ? '2px solid #27ae60' : '2px solid #ddd',
-                    borderRadius: '6px',
-                    cursor: buttonsEnabled ? 'pointer' : 'not-allowed',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    transition: 'all 0.3s',
-                    minHeight: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    opacity: buttonsEnabled ? 1 : 0.6,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = '#27ae60';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#2c3e50';
-                    }
-                  }}
+                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
+                    buttonsEnabled
+                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
+                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
+                  }`}
                 >
                   資産台帳取込
                 </button>
@@ -801,36 +412,11 @@ export default function MainPage() {
                 <button
                   onClick={() => handleMenuSelect('データ突合')}
                   disabled={!buttonsEnabled}
-                  style={{
-                    padding: '14px 18px',
-                    background: buttonsEnabled ? 'white' : '#f5f5f5',
-                    color: buttonsEnabled ? '#2c3e50' : '#999',
-                    border: buttonsEnabled ? '2px solid #27ae60' : '2px solid #ddd',
-                    borderRadius: '6px',
-                    cursor: buttonsEnabled ? 'pointer' : 'not-allowed',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    transition: 'all 0.3s',
-                    minHeight: '50px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    opacity: buttonsEnabled ? 1 : 0.6,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = '#27ae60';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (buttonsEnabled) {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#2c3e50';
-                    }
-                  }}
+                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
+                    buttonsEnabled
+                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
+                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
+                  }`}
                 >
                   データ突合
                 </button>
@@ -843,107 +429,39 @@ export default function MainPage() {
       {/* マスタ管理モーダル */}
       {isMasterModalOpen && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}
           onClick={closeMasterModal}
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-5"
         >
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              width: '100%',
-              maxWidth: '500px',
-              maxHeight: '80vh',
-              overflow: 'hidden',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-            }}
             onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl w-full max-w-[500px] max-h-[80vh] overflow-hidden shadow-xl"
           >
             {/* モーダルヘッダー */}
-            <div
-              style={{
-                padding: '24px',
-                borderBottom: '1px solid #e0e0e0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#2c3e50' }}>
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h2 className="m-0 text-xl font-semibold text-slate-700 text-balance">
                 マスタ管理
               </h2>
               <button
                 onClick={closeMasterModal}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#7f8c8d',
-                  padding: '0',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f0f0f0';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none';
-                }}
+                className="bg-transparent border-0 text-2xl cursor-pointer text-slate-400 p-0 size-8 flex items-center justify-center rounded-full transition-colors hover:bg-slate-100"
+                aria-label="閉じる"
               >
                 ×
               </button>
             </div>
 
             {/* モーダルコンテンツ */}
-            <div style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="p-6">
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
                     closeMasterModal();
                     router.push('/ship-asset-master');
                   }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #3498db',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#3498db';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
+                  className="px-6 py-4 bg-white border-2 border-sky-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-sky-500 hover:text-white"
                 >
                   <span>🏥 SHIP資産マスタ</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
+                  <span className="text-xl">→</span>
                 </button>
 
                 <button
@@ -951,31 +469,10 @@ export default function MainPage() {
                     closeMasterModal();
                     router.push('/ship-facility-master');
                   }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #27ae60',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
+                  className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
                 >
                   <span>🏥 SHIP施設マスタ</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
+                  <span className="text-xl">→</span>
                 </button>
 
                 <button
@@ -983,69 +480,25 @@ export default function MainPage() {
                     closeMasterModal();
                     router.push('/ship-department-master');
                   }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #27ae60',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
+                  className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
                 >
                   <span>🏢 SHIP部署マスタ</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
+                  <span className="text-xl">→</span>
                 </button>
 
                 <button
                   onClick={() => {
                     closeMasterModal();
                     if (isHospital && user?.hospital) {
-                      // 病院ユーザーは自身の病院の施設マスタへ直接遷移
                       router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
                     } else {
-                      // コンサルユーザーは施設選択モーダルを表示
                       setIsHospitalSelectModalOpen(true);
                     }
                   }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #8e44ad',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#8e44ad';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
+                  className="px-6 py-4 bg-white border-2 border-purple-600 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-600 hover:text-white"
                 >
                   <span>🏢 個別施設マスタ</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
+                  <span className="text-xl">→</span>
                 </button>
 
                 <button
@@ -1053,31 +506,10 @@ export default function MainPage() {
                     closeMasterModal();
                     router.push('/user-management');
                   }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #9b59b6',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#9b59b6';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
+                  className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
                 >
                   <span>👤 ユーザー管理</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
+                  <span className="text-xl">→</span>
                 </button>
 
                 <button
@@ -1085,35 +517,14 @@ export default function MainPage() {
                     closeMasterModal();
                     showListModal();
                   }}
-                  style={{
-                    padding: '16px 24px',
-                    background: 'white',
-                    border: '2px solid #e74c3c',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#2c3e50',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#e74c3c';
-                    e.currentTarget.style.color = 'white';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#2c3e50';
-                  }}
+                  className="px-6 py-4 bg-white border-2 border-red-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-red-500 hover:text-white"
                 >
                   <span>📋 個体管理リスト作成</span>
-                  <span style={{ fontSize: '20px' }}>→</span>
+                  <span className="text-xl">→</span>
                 </button>
               </div>
 
-              <p style={{ marginTop: '20px', fontSize: '13px', color: '#7f8c8d', textAlign: 'center' }}>
+              <p className="mt-5 text-sm text-slate-500 text-center text-pretty">
                 マスタ管理と各種リスト管理を行えます
               </p>
             </div>
@@ -1125,191 +536,80 @@ export default function MainPage() {
       {isEditListModalOpen && (
         <div
           onClick={closeEditListModal}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '600px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'visible',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
+            className="bg-white rounded-xl w-[90%] max-w-[600px] shadow-xl overflow-visible flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: '#27ae60',
-                color: 'white',
-                padding: '16px 20px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span>編集リスト</span>
+            <div className="bg-emerald-500 text-white px-5 py-4 text-lg font-bold flex justify-between items-center">
+              <span className="text-balance">編集リスト</span>
               <button
                 onClick={closeEditListModal}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: 'white',
-                  padding: '0',
-                  width: '28px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none';
-                }}
+                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                aria-label="閉じる"
               >
                 ×
               </button>
             </div>
 
             {/* タブ切り替え */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
+            <div className="flex border-b border-slate-300">
               <button
                 onClick={() => setEditListMode('select')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: editListMode === 'select' ? '#27ae60' : 'white',
-                  color: editListMode === 'select' ? 'white' : '#333',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  transition: 'all 0.2s',
-                }}
+                className={`flex-1 p-3 border-0 cursor-pointer font-semibold text-sm transition-all ${
+                  editListMode === 'select' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-700'
+                }`}
               >
                 作成済みリストを選択
               </button>
               <button
                 onClick={() => setEditListMode('create')}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  background: editListMode === 'create' ? '#27ae60' : 'white',
-                  color: editListMode === 'create' ? 'white' : '#333',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  transition: 'all 0.2s',
-                }}
+                className={`flex-1 p-3 border-0 cursor-pointer font-semibold text-sm transition-all ${
+                  editListMode === 'create' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-700'
+                }`}
               >
                 新規リスト作成
               </button>
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '24px', overflow: 'visible' }}>
+            <div className="p-6 overflow-visible">
               {editListMode === 'select' ? (
                 /* 作成済みリスト選択モード */
                 <div>
                   {editLists.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#7f8c8d', padding: '20px' }}>
+                    <p className="text-center text-slate-500 p-5 text-pretty">
                       作成済みの編集リストがありません
                     </p>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="flex flex-col gap-3">
                       {editLists.map((list) => (
                         <div
                           key={list.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'stretch',
-                            gap: '8px',
-                          }}
+                          className="flex items-stretch gap-2"
                         >
                           <button
                             onClick={() => handleSelectEditList(list.id)}
-                            style={{
-                              flex: 1,
-                              padding: '16px',
-                              background: 'white',
-                              border: '2px solid #27ae60',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#27ae60';
-                              e.currentTarget.style.color = 'white';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'white';
-                              e.currentTarget.style.color = '#333';
-                            }}
+                            className="flex-1 p-4 bg-white border-2 border-emerald-500 rounded-lg cursor-pointer text-left transition-all hover:bg-emerald-500 hover:text-white"
                           >
-                            <div style={{ fontWeight: 600, fontSize: '16px', marginBottom: '8px' }}>
+                            <div className="font-semibold text-base mb-2">
                               {list.name}
                             </div>
-                            <div style={{ fontSize: '13px', opacity: 0.8 }}>
+                            <div className="text-sm opacity-80">
                               施設: {list.facilities.join(', ')}
                             </div>
-                            <div style={{ fontSize: '12px', opacity: 0.6, marginTop: '4px' }}>
+                            <div className="text-xs opacity-60 mt-1">
                               作成日: {new Date(list.createdAt).toLocaleDateString('ja-JP')}
                             </div>
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm(`「${list.name}」を削除しますか？`)) {
-                                deleteEditList(list.id);
-                              }
+                              handleDeleteEditList({ id: list.id, name: list.name });
                             }}
-                            style={{
-                              padding: '12px 16px',
-                              background: 'white',
-                              border: '2px solid #e74c3c',
-                              borderRadius: '8px',
-                              cursor: 'pointer',
-                              color: '#e74c3c',
-                              fontSize: '14px',
-                              fontWeight: '600',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#e74c3c';
-                              e.currentTarget.style.color = 'white';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'white';
-                              e.currentTarget.style.color = '#e74c3c';
-                            }}
+                            className="px-4 py-3 bg-white border-2 border-red-500 rounded-lg cursor-pointer text-red-500 text-sm font-semibold flex items-center justify-center transition-all hover:bg-red-500 hover:text-white"
                             title="削除"
                           >
                             削除
@@ -1323,8 +623,8 @@ export default function MainPage() {
                 /* 新規作成モード */
                 <div>
                   {/* 編集リスト名称 */}
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#333' }}>
+                  <div className="mb-5">
+                    <label className="block mb-2 font-semibold text-slate-700">
                       編集リスト名称
                     </label>
                     <input
@@ -1332,62 +632,32 @@ export default function MainPage() {
                       value={newEditListName}
                       onChange={(e) => setNewEditListName(e.target.value)}
                       placeholder="例: 2025年度リモデル計画"
-                      style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '2px solid #ddd',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box',
-                      }}
+                      className="w-full p-3 border-2 border-slate-300 rounded-md text-sm"
                     />
                   </div>
 
                   {/* 施設選択 */}
-                  <div style={{ position: 'relative', zIndex: 10 }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#333' }}>
+                  <div className="relative z-10">
+                    <label className="block mb-2 font-semibold text-slate-700">
                       取り込む原本データ（施設）を選択
                     </label>
-                    <p style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '12px' }}>
+                    <p className="text-xs text-slate-500 mb-3 text-pretty">
                       複数選択可能です（選択後もプルダウンから追加できます）
                     </p>
 
                     {/* 選択済み施設タグ */}
                     {selectedEditListFacilities.length > 0 && (
-                      <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '8px',
-                        marginBottom: '12px',
-                      }}>
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {selectedEditListFacilities.map((facility) => (
                           <span
                             key={facility}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              padding: '6px 12px',
-                              background: '#e8f5e9',
-                              border: '1px solid #27ae60',
-                              borderRadius: '16px',
-                              fontSize: '13px',
-                              color: '#2c3e50',
-                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-500 rounded-full text-sm text-slate-700"
                           >
                             {facility}
                             <button
                               type="button"
                               onClick={() => handleFacilityToggle(facility)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '0',
-                                fontSize: '16px',
-                                color: '#e74c3c',
-                                lineHeight: 1,
-                              }}
+                              className="bg-transparent border-0 cursor-pointer p-0 text-base text-red-500 leading-none"
                             >
                               ×
                             </button>
@@ -1412,60 +682,28 @@ export default function MainPage() {
                     />
 
                     {selectedEditListFacilities.length > 0 && (
-                      <p style={{ fontSize: '13px', color: '#27ae60', marginTop: '8px' }}>
+                      <p className="text-sm text-emerald-500 mt-2">
                         {selectedEditListFacilities.length}件選択中
                       </p>
                     )}
                   </div>
 
                   {/* 作成ボタン */}
-                  <div style={{ marginTop: '24px', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <div className="mt-6 flex gap-3 justify-end">
                     <button
                       onClick={closeEditListModal}
-                      style={{
-                        padding: '10px 20px',
-                        background: '#95a5a6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        transition: 'background 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#7f8c8d';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#95a5a6';
-                      }}
+                      className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
                     >
                       キャンセル
                     </button>
                     <button
                       onClick={handleCreateEditList}
                       disabled={!newEditListName.trim() || selectedEditListFacilities.length === 0}
-                      style={{
-                        padding: '10px 20px',
-                        background: newEditListName.trim() && selectedEditListFacilities.length > 0 ? '#27ae60' : '#ddd',
-                        color: newEditListName.trim() && selectedEditListFacilities.length > 0 ? 'white' : '#999',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: newEditListName.trim() && selectedEditListFacilities.length > 0 ? 'pointer' : 'not-allowed',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        transition: 'background 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (newEditListName.trim() && selectedEditListFacilities.length > 0) {
-                          e.currentTarget.style.background = '#229954';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (newEditListName.trim() && selectedEditListFacilities.length > 0) {
-                          e.currentTarget.style.background = '#27ae60';
-                        }
-                      }}
+                      className={`px-5 py-2.5 border-0 rounded text-sm font-semibold transition-colors ${
+                        newEditListName.trim() && selectedEditListFacilities.length > 0
+                          ? 'bg-emerald-500 text-white cursor-pointer hover:bg-emerald-600'
+                          : 'bg-slate-300 text-slate-400 cursor-not-allowed'
+                      }`}
                     >
                       作成
                     </button>
@@ -1484,84 +722,31 @@ export default function MainPage() {
             setIsHospitalSelectModalOpen(false);
             setSelectedFacilityForMaster('');
           }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '500px',
-              maxHeight: '90vh',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'visible',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
+            className="bg-white rounded-xl w-[90%] max-w-[500px] max-h-[90vh] shadow-xl overflow-visible flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
-                color: 'white',
-                padding: '16px 20px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderRadius: '12px 12px 0 0',
-              }}
-            >
-              <span>個別施設マスタ - 施設選択</span>
+            <div className="bg-purple-600 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl">
+              <span className="text-balance">個別施設マスタ - 施設選択</span>
               <button
                 onClick={() => {
                   setIsHospitalSelectModalOpen(false);
                   setSelectedFacilityForMaster('');
                 }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: 'white',
-                  padding: '0',
-                  width: '28px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none';
-                }}
+                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                aria-label="閉じる"
               >
                 ×
               </button>
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '24px', overflow: 'visible' }}>
+            <div className="p-6 overflow-visible">
               {/* 施設選択 */}
-              <div style={{ marginBottom: '24px', position: 'relative', zIndex: 3 }}>
+              <div className="mb-6 relative z-[3]">
                 <SearchableSelect
                   label="施設を選択"
                   value={selectedFacilityForMaster}
@@ -1573,29 +758,13 @@ export default function MainPage() {
               </div>
 
               {/* 決定ボタン */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => {
                     setIsHospitalSelectModalOpen(false);
                     setSelectedFacilityForMaster('');
                   }}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#95a5a6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#7f8c8d';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#95a5a6';
-                  }}
+                  className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded-md cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
                 >
                   キャンセル
                 </button>
@@ -1608,19 +777,11 @@ export default function MainPage() {
                     }
                   }}
                   disabled={!selectedFacilityForMaster}
-                  style={{
-                    padding: '10px 20px',
-                    background: selectedFacilityForMaster
-                      ? 'linear-gradient(135deg, #8e44ad, #9b59b6)'
-                      : '#ddd',
-                    color: selectedFacilityForMaster ? 'white' : '#999',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: selectedFacilityForMaster ? 'pointer' : 'not-allowed',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    transition: 'background 0.2s',
-                  }}
+                  className={`px-5 py-2.5 border-0 rounded-md text-sm font-semibold transition-colors ${
+                    selectedFacilityForMaster
+                      ? 'bg-purple-600 text-white cursor-pointer hover:bg-purple-700'
+                      : 'bg-slate-300 text-slate-400 cursor-not-allowed'
+                  }`}
                 >
                   決定
                 </button>
@@ -1634,135 +795,45 @@ export default function MainPage() {
       {isHospitalMasterModalOpen && (
         <div
           onClick={() => setIsHospitalMasterModalOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px',
-          }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '500px',
-              maxHeight: '90vh',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
+            className="bg-white rounded-xl w-[90%] max-w-[500px] max-h-[90vh] shadow-xl overflow-hidden flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: '#34495e',
-                color: 'white',
-                padding: '16px 20px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderRadius: '12px 12px 0 0',
-              }}
-            >
-              <span>マスタ管理</span>
+            <div className="bg-slate-600 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl">
+              <span className="text-balance">マスタ管理</span>
               <button
                 onClick={() => setIsHospitalMasterModalOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: 'white',
-                  padding: '0',
-                  width: '28px',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none';
-                }}
+                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                aria-label="閉じる"
               >
                 ×
               </button>
             </div>
 
             {/* モーダルボディ */}
-            <div style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="p-6">
+              <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
                     setIsHospitalMasterModalOpen(false);
                     const hospitalName = user?.hospital || '東京中央病院';
                     router.push(`/hospital-facility-master?facility=${encodeURIComponent(hospitalName)}`);
                   }}
-                  style={{
-                    padding: '16px 20px',
-                    background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '15px',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(142, 68, 173, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                  className="px-5 py-4 bg-purple-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/40"
                 >
-                  <span style={{ fontSize: '20px' }}>🏢</span>
+                  <span className="text-xl">🏢</span>
                   <span>個別施設マスタ</span>
                 </button>
               </div>
 
               {/* 閉じるボタン */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <div className="flex justify-end mt-6">
                 <button
                   onClick={() => setIsHospitalMasterModalOpen(false)}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#95a5a6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#7f8c8d';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#95a5a6';
-                  }}
+                  className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded-md cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
                 >
                   閉じる
                 </button>
@@ -1771,6 +842,21 @@ export default function MainPage() {
           </div>
         </div>
       )}
+
+      {/* 削除確認ダイアログ */}
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteTargetList(null);
+        }}
+        onConfirm={confirmDeleteEditList}
+        title="編集リストの削除"
+        message={deleteTargetList ? `「${deleteTargetList.name}」を削除しますか？この操作は取り消せません。` : ''}
+        confirmLabel="削除"
+        cancelLabel="キャンセル"
+        variant="danger"
+      />
     </div>
   );
 }

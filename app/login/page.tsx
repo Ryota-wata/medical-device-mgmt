@@ -56,26 +56,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center fixed top-0 left-0 right-0 bottom-0"
-      style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-      }}
-    >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-5"
-           style={{ padding: '48px' }}>
+    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-slate-100">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-5 p-12">
         {/* ロゴ */}
-        <div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-8"
-          style={{
-            background: 'linear-gradient(135deg, #2ecc71, #27ae60)'
-          }}
-        >
+        <div className="size-20 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-8 bg-emerald-500">
           SHIP
         </div>
 
         {/* タイトル */}
-        <h1 className="text-3xl font-bold text-center mb-8" style={{ color: '#2c3e50' }}>
+        <h1 className="text-3xl font-bold text-center mb-8 text-balance text-slate-800">
           医療機器管理システム
         </h1>
 
@@ -83,7 +72,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           {/* メールアドレス */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#5a6c7d' }}>
+            <label className="block text-sm font-semibold mb-2 text-slate-500">
               メールアドレス
             </label>
             <input
@@ -91,24 +80,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="メールアドレスを入力"
-              className="w-full px-4 py-3 rounded-lg text-base transition-all"
-              style={{
-                border: '2px solid #e1e8ed'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#27ae60';
-                e.target.style.boxShadow = '0 0 0 3px rgba(39, 174, 96, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e1e8ed';
-                e.target.style.boxShadow = 'none';
-              }}
+              className="w-full px-4 py-3 rounded-lg text-base border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors"
             />
           </div>
 
           {/* パスワード */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#5a6c7d' }}>
+            <label className="block text-sm font-semibold mb-2 text-slate-500">
               パスワード
             </label>
             <input
@@ -116,18 +94,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="パスワードを入力"
-              className="w-full px-4 py-3 rounded-lg text-base transition-all"
-              style={{
-                border: '2px solid #e1e8ed'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#27ae60';
-                e.target.style.boxShadow = '0 0 0 3px rgba(39, 174, 96, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e1e8ed';
-                e.target.style.boxShadow = 'none';
-              }}
+              className="w-full px-4 py-3 rounded-lg text-base border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-colors"
             />
           </div>
 
@@ -138,12 +105,9 @@ export default function LoginPage() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-5 h-5 rounded cursor-pointer transition-all"
-                style={{
-                  accentColor: '#27ae60'
-                }}
+                className="size-5 rounded cursor-pointer accent-emerald-500"
               />
-              <span className="ml-2 text-sm" style={{ color: '#5a6c7d' }}>
+              <span className="ml-2 text-sm text-slate-500">
                 ログイン情報を記憶する
               </span>
             </label>
@@ -160,20 +124,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full text-white border-0 rounded-lg text-base font-semibold cursor-pointer transition-all"
-            style={{
-              padding: '14px 24px',
-              background: 'linear-gradient(135deg, #2ecc71, #27ae60)',
-              boxShadow: '0 4px 12px rgba(39, 174, 96, 0.3)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(39, 174, 96, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(39, 174, 96, 0.3)';
-            }}
+            className="w-full text-white border-0 rounded-lg text-base font-semibold cursor-pointer py-3.5 px-6 bg-emerald-500 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/40 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'ログイン中...' : 'ログイン'}
           </button>
@@ -184,14 +135,7 @@ export default function LoginPage() {
           <a
             href="#"
             onClick={handlePasswordReset}
-            className="text-sm transition-colors"
-            style={{ color: '#5a6c7d' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#27ae60';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#5a6c7d';
-            }}
+            className="text-sm text-slate-500 hover:text-emerald-500 transition-colors"
           >
             パスワードをお忘れの方
           </a>
