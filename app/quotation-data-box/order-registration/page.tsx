@@ -7,12 +7,11 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useOrderStore } from '@/lib/stores/orderStore';
-import { useAuthStore } from '@/lib/stores/authStore';
 import {
   OrderType,
   PaymentTerms,
-  InspectionCertType,
 } from '@/lib/types/order';
+import { OrderPreviewModal } from '@/components/modals/OrderPreviewModal';
 
 /** カラートークン */
 const COLORS = {
@@ -103,7 +102,6 @@ function RfqGroupIdReader({ onRead }: { onRead: (id: number | null) => void }) {
 
 export default function OrderRegistrationPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
   const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
   const { quotationGroups, quotationItems } = useQuotationStore();
   const { addOrderGroup, addOrderItems, generateOrderNo } = useOrderStore();
@@ -112,7 +110,6 @@ export default function OrderRegistrationPage() {
   const handleRfqGroupIdRead = useCallback((id: number | null) => setRfqGroupId(id), []);
 
   // --- フォーム項目 ---
-  const [inspectionCertType, setInspectionCertType] = useState<InspectionCertType>('本体のみ');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [orderType, setOrderType] = useState<OrderType>('購入');
   const [paymentTerms, setPaymentTerms] = useState<PaymentTerms>('検収後一括');
@@ -139,7 +136,9 @@ export default function OrderRegistrationPage() {
     orderNo: string;
     itemCount: number;
     totalAmount: number;
+    orderGroupId: number;
   } | null>(null);
+  const [showOrderPreview, setShowOrderPreview] = useState(false);
 
   const showDialog = useCallback((opts: {
     title: string;
@@ -205,7 +204,7 @@ export default function OrderRegistrationPage() {
           deliveryDate,
           paymentTerms,
           paymentDueDate,
-          inspectionCertType,
+          inspectionCertType: '本体のみ',
           storageFormat: '未指定',
           leaseCompany: isLeaseType ? leaseCompany : undefined,
           leaseStartDate: isLeaseType ? leaseStartDate : undefined,
@@ -235,6 +234,7 @@ export default function OrderRegistrationPage() {
           orderNo,
           itemCount: targetQuotationItems.length,
           totalAmount,
+          orderGroupId,
         });
         setIsSubmitting(false);
       },
@@ -286,12 +286,7 @@ export default function OrderRegistrationPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
                 <button
                   className="order-btn"
-                  onClick={() => showDialog({
-                    title: '発注書出力',
-                    message: '発注書を出力します（実装予定）',
-                    confirmLabel: '出力する',
-                    onConfirm: () => {},
-                  })}
+                  onClick={() => setShowOrderPreview(true)}
                   style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
                 >
                   発注書を出力する
@@ -370,42 +365,6 @@ export default function OrderRegistrationPage() {
                 </table>
               </div>
             </div>
-
-            {/* 発注登録フォーム */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.primary}`, marginBottom: '16px' }}>
-              <tbody>
-                {/* 申請者 */}
-                <tr>
-                  <th style={thStyle}>申請者</th>
-                  <td style={tdStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ padding: '6px 12px', background: COLORS.surfaceAlt, border: `1px solid ${COLORS.border}`, borderRadius: '4px', fontSize: '14px', color: COLORS.textSecondary }}>
-                        {rfqGroup.email || user?.email || 'user@company.com'}
-                      </span>
-                      <span style={{ fontSize: '14px', color: COLORS.textSecondary }}>
-                        {rfqGroup.personInCharge || user?.username || 'user'}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-                {/* 検収書の発行 */}
-                <tr>
-                  <th style={thStyle}>検収書の発行</th>
-                  <td style={tdStyle}>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px' }}>
-                        <input type="radio" name="inspectionCert" checked={inspectionCertType === '本体のみ'} onChange={() => setInspectionCertType('本体のみ')} />
-                        本体のみ
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px' }}>
-                        <input type="radio" name="inspectionCert" checked={inspectionCertType === '付属品含む'} onChange={() => setInspectionCertType('付属品含む')} />
-                        付属品を含む
-                      </label>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
 
             {/* 発注基本登録セクション */}
             <div style={{ border: `2px solid ${COLORS.accent}`, borderRadius: '8px', marginBottom: '16px' }}>
@@ -579,6 +538,15 @@ export default function OrderRegistrationPage() {
         message={confirmDialog.message}
         confirmLabel={confirmDialog.confirmLabel}
       />
+
+      {/* 発注書プレビューモーダル */}
+      {registrationComplete && (
+        <OrderPreviewModal
+          isOpen={showOrderPreview}
+          onClose={() => setShowOrderPreview(false)}
+          orderGroupId={registrationComplete.orderGroupId}
+        />
+      )}
     </div>
   );
 }
