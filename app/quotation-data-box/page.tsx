@@ -260,6 +260,11 @@ export default function QuotationManagementPage() {
     router.push(`/quotation-data-box/order-registration?rfqGroupId=${rfqGroupId}`);
   };
 
+  // 検収登録開始（画面遷移）
+  const handleStartInspectionRegistration = (rfqGroupId: number) => {
+    router.push(`/quotation-data-box/inspection-registration?rfqGroupId=${rfqGroupId}`);
+  };
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5' }}>
       {/* クエリパラメータでタブ切り替え */}
@@ -390,6 +395,7 @@ export default function QuotationManagementPage() {
                 onFilterChange={setRfqStatusFilter}
                 onRegisterQuotation={handleStartQuotationRegistration}
                 onRegisterOrder={handleStartOrderRegistration}
+                onRegisterInspection={handleStartInspectionRegistration}
                 onUpdateDeadline={(id, deadline) => updateRfqGroup(id, { deadline })}
               />
             )}

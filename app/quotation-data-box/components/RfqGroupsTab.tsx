@@ -7,6 +7,7 @@ interface RfqGroupsTabProps {
   onFilterChange: (filter: RfqGroupStatus | '') => void;
   onRegisterQuotation: (rfqGroupId: number) => void;
   onRegisterOrder: (rfqGroupId: number) => void;
+  onRegisterInspection: (rfqGroupId: number) => void;
   onUpdateDeadline: (rfqGroupId: number, deadline: string | undefined) => void;
 }
 
@@ -16,6 +17,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   onFilterChange,
   onRegisterQuotation,
   onRegisterOrder,
+  onRegisterInspection,
   onUpdateDeadline,
 }) => {
   const filteredRfqGroups = useMemo(() => {
@@ -139,7 +141,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                 )}
                 {group.status === '発注登録済' && (
                   <button
-                    onClick={() => {/* 検収登録処理 */}}
+                    onClick={() => onRegisterInspection(group.id)}
                     style={{
                       padding: '6px 12px',
                       background: '#e67e22',

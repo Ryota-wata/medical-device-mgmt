@@ -117,7 +117,7 @@ export default function OrderRegistrationPage() {
   const [leaseCompany, setLeaseCompany] = useState('');
   const [leaseStartDate, setLeaseStartDate] = useState('');
   const [leaseYears, setLeaseYears] = useState('');
-  const [itemDeliveryDates, setItemDeliveryDates] = useState<Record<number, string>>({});
+  const [itemDeliveryDates, setItemDeliveryDates] = useState<Record<string, string>>({});
 
   // --- ダイアログ・バリデーション ---
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -170,6 +170,14 @@ export default function OrderRegistrationPage() {
     );
   }, [rfqGroup, quotationGroups, quotationItems]);
 
+  // 個体管理: 数量分の行に展開した表示用データ
+  const expandedItems = useMemo(() => {
+    return targetQuotationItems.flatMap(qi => {
+      const qty = qi.aiQuantity || qi.originalQuantity || 1;
+      return Array.from({ length: qty }, (_, i) => ({ ...qi, _expandKey: `${qi.id}-${i}` }));
+    });
+  }, [targetQuotationItems]);
+
   const totalAmount = useMemo(() => {
     return targetQuotationItems.reduce((sum, item) => sum + (item.allocTaxTotal || 0), 0);
   }, [targetQuotationItems]);
@@ -185,7 +193,7 @@ export default function OrderRegistrationPage() {
 
     showDialog({
       title: '発注登録確認',
-      message: `発注を登録します。品目数: ${targetQuotationItems.length}件 / 合計金額: ¥${totalAmount.toLocaleString()}`,
+      message: `発注を登録します。品目数: ${expandedItems.length}件 / 合計金額: ¥${totalAmount.toLocaleString()}`,
       confirmLabel: '発注を登録する',
       onConfirm: () => {
         setIsSubmitting(true);
@@ -213,16 +221,23 @@ export default function OrderRegistrationPage() {
           orderDate: today,
         });
 
-        const orderItems = targetQuotationItems.map(qi => ({
-          orderGroupId,
-          quotationItemId: qi.id,
-          itemName: qi.itemName || qi.originalItemName,
-          manufacturer: qi.manufacturer || qi.originalManufacturer || '',
-          model: qi.model || qi.originalModel || '',
-          quantity: qi.aiQuantity || qi.originalQuantity,
-          unitPrice: qi.allocPriceUnit || 0,
-          totalPrice: qi.allocTaxTotal || 0,
-        }));
+        // 個体管理: 数量分の行に展開（1行1個体）
+        const orderItems = targetQuotationItems.flatMap(qi => {
+          const qty = qi.aiQuantity || qi.originalQuantity || 1;
+          const unitPrice = qi.allocPriceUnit || 0;
+          const itemBase = {
+            orderGroupId,
+            quotationItemId: qi.id,
+            itemName: qi.itemName || qi.originalItemName,
+            manufacturer: qi.manufacturer || qi.originalManufacturer || '',
+            model: qi.model || qi.originalModel || '',
+            registrationType: '本体' as const,
+            quantity: 1,
+            unitPrice,
+            totalPrice: unitPrice,
+          };
+          return Array.from({ length: qty }, () => ({ ...itemBase }));
+        });
         addOrderItems(orderItems);
 
         updateRfqGroup(rfqGroup.id, {
@@ -232,7 +247,7 @@ export default function OrderRegistrationPage() {
 
         setRegistrationComplete({
           orderNo,
-          itemCount: targetQuotationItems.length,
+          itemCount: expandedItems.length,
           totalAmount,
           orderGroupId,
         });
@@ -469,25 +484,25 @@ export default function OrderRegistrationPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {targetQuotationItems.map((item, idx) => (
-                      <tr key={item.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
+                    {expandedItems.map((item, idx) => (
+                      <tr key={item._expandKey} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                         <td style={{ padding: '8px', fontVariantNumeric: 'tabular-nums' }}>{idx + 1}</td>
                         <td style={{ padding: '8px', maxWidth: '200px', ...truncateStyle }}>{item.itemName || item.originalItemName}</td>
                         <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.manufacturer || item.originalManufacturer || '-'}</td>
                         <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.model || item.originalModel || '-'}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{item.aiQuantity || item.originalQuantity}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>¥{(item.allocTaxTotal || 0).toLocaleString()}</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>1</td>
+                        <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>¥{(item.allocPriceUnit || 0).toLocaleString()}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>
                           <input
                             type="date"
-                            value={itemDeliveryDates[item.id] || ''}
-                            onChange={(e) => setItemDeliveryDates((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                            style={{ ...inputStyle, width: '140px', fontSize: '12px', padding: '4px 8px', color: itemDeliveryDates[item.id] ? COLORS.textPrimary : COLORS.disabled }}
+                            value={itemDeliveryDates[item._expandKey] || ''}
+                            onChange={(e) => setItemDeliveryDates((prev) => ({ ...prev, [item._expandKey]: e.target.value }))}
+                            style={{ ...inputStyle, width: '140px', fontSize: '12px', padding: '4px 8px', color: itemDeliveryDates[item._expandKey] ? COLORS.textPrimary : COLORS.disabled }}
                           />
                         </td>
                       </tr>
                     ))}
-                    {targetQuotationItems.length === 0 && (
+                    {expandedItems.length === 0 && (
                       <tr>
                         <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
                           <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px' }}>発注対象の見積明細がありません</p>

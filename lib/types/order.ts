@@ -24,6 +24,9 @@ export type InspectionCertType = '本体のみ' | '付属品含む';
 /** 保存形式 */
 export type StorageFormat = '電子取引' | 'スキャナ保存' | '未指定';
 
+/** 登録区分 */
+export type RegistrationType = '本体' | '付属品';
+
 /** 発注グループ */
 export interface OrderGroup {
   id: number;
@@ -57,6 +60,8 @@ export interface OrderGroup {
   totalAmount: number;
   /** 発注日 */
   orderDate: string;
+  /** 検収日 */
+  inspectionDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -70,6 +75,8 @@ export interface OrderItem {
   itemName: string;
   manufacturer: string;
   model: string;
+  /** 登録区分 */
+  registrationType: RegistrationType;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
