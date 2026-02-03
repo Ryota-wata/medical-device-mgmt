@@ -8,6 +8,7 @@ interface RfqGroupsTabProps {
   onRegisterQuotation: (rfqGroupId: number) => void;
   onRegisterOrder: (rfqGroupId: number) => void;
   onRegisterInspection: (rfqGroupId: number) => void;
+  onRegisterAssetProvisional: (rfqGroupId: number) => void;
   onUpdateDeadline: (rfqGroupId: number, deadline: string | undefined) => void;
 }
 
@@ -18,6 +19,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   onRegisterQuotation,
   onRegisterOrder,
   onRegisterInspection,
+  onRegisterAssetProvisional,
   onUpdateDeadline,
 }) => {
   const filteredRfqGroups = useMemo(() => {
@@ -157,7 +159,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                 )}
                 {group.status === '検収登録済' && (
                   <button
-                    onClick={() => {/* 資産仮登録処理 */}}
+                    onClick={() => onRegisterAssetProvisional(group.id)}
                     style={{
                       padding: '6px 12px',
                       background: '#16a085',

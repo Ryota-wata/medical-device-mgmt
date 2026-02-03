@@ -35,6 +35,29 @@ export interface Individual {
   disposalDate?: string;
   disposalApplicationNo?: string;
   disposalDocuments?: IndividualDocument[];
+
+  /** 発注品目との紐付け（仮登録元） */
+  orderItemId?: number;
+  orderGroupId?: number;
+
+  /** 商品分類（asset-survey互換） */
+  largeClass?: string;
+  mediumClass?: string;
+  itemClass?: string;
+
+  /** サイズ */
+  width?: number;
+  depth?: number;
+  height?: number;
+
+  /** 写真撮影状態 */
+  photoTaken?: boolean;
+
+  /** QRラベル貼付状態 */
+  labelApplied?: boolean;
+
+  /** 備考 */
+  remarks?: string;
 }
 
 /**

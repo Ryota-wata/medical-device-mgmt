@@ -7,6 +7,7 @@ interface ApplicationState {
   updateApplication: (id: number, application: Partial<Application>) => void;
   deleteApplication: (id: number) => void;
   getApplicationById: (id: number) => Application | undefined;
+  getApplicationsByRfqNo: (rfqNo: string) => Application[];
 }
 
 // テストデータ
@@ -238,7 +239,153 @@ const testApplications: Application[] = [
     },
     freeInput: '',
     quotationInfo: []
-  }
+  },
+  // rfqGroupId=5 リハビリ科（検収登録済 → 資産仮登録対象）
+  {
+    id: 6,
+    applicationNo: 'APP-2025-006',
+    applicationDate: '2025-01-20',
+    applicationType: '新規申請',
+    facility: {
+      building: '本館',
+      floor: '2F',
+      department: 'リハビリテーション科',
+      section: '理学療法室'
+    },
+    roomName: 'PT室1',
+    asset: { name: '低周波治療器', model: 'EU-910' },
+    vendor: 'キヤノンメディカル',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '新規導入',
+    executionYear: '2025',
+    status: '承認済み',
+    approvalProgress: { current: 3, total: 3 },
+    freeInput: '',
+    rfqNo: 'RFQ-20250120-0005',
+    quotationInfo: []
+  },
+  {
+    id: 7,
+    applicationNo: 'APP-2025-007',
+    applicationDate: '2025-01-20',
+    applicationType: '新規申請',
+    facility: {
+      building: '本館',
+      floor: '2F',
+      department: 'リハビリテーション科',
+      section: '理学療法室'
+    },
+    roomName: 'PT室1',
+    asset: { name: '超音波治療器', model: 'US-750' },
+    vendor: 'キヤノンメディカル',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '新規導入',
+    executionYear: '2025',
+    status: '承認済み',
+    approvalProgress: { current: 3, total: 3 },
+    freeInput: '',
+    rfqNo: 'RFQ-20250120-0005',
+    quotationInfo: []
+  },
+  {
+    id: 8,
+    applicationNo: 'APP-2025-008',
+    applicationDate: '2025-01-20',
+    applicationType: '新規申請',
+    facility: {
+      building: '本館',
+      floor: '2F',
+      department: 'リハビリテーション科',
+      section: '物理療法室'
+    },
+    roomName: 'ウォーターベッド室',
+    asset: { name: 'ウォーターベッド型マッサージ器', model: 'WB-300' },
+    vendor: 'キヤノンメディカル',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '新規導入',
+    executionYear: '2025',
+    status: '承認済み',
+    approvalProgress: { current: 3, total: 3 },
+    freeInput: '',
+    rfqNo: 'RFQ-20250120-0005',
+    quotationInfo: []
+  },
+  // rfqGroupId=8 内視鏡センター（検収登録済 → 資産仮登録対象）
+  {
+    id: 9,
+    applicationNo: 'APP-2025-009',
+    applicationDate: '2025-01-28',
+    applicationType: '更新申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '内視鏡センター',
+      section: '検査室'
+    },
+    roomName: '内視鏡検査室1',
+    asset: { name: '内視鏡システム EVIS X1', model: 'CV-1500' },
+    vendor: 'オリンパス',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '老朽化による更新',
+    executionYear: '2025',
+    status: '承認済み',
+    approvalProgress: { current: 3, total: 3 },
+    freeInput: '',
+    rfqNo: 'RFQ-20250128-0008',
+    quotationInfo: []
+  },
+  {
+    id: 10,
+    applicationNo: 'APP-2025-010',
+    applicationDate: '2025-01-28',
+    applicationType: '更新申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '内視鏡センター',
+      section: '検査室'
+    },
+    roomName: '内視鏡検査室1',
+    asset: { name: '上部消化管汎用ビデオスコープ', model: 'GIF-1100' },
+    vendor: 'オリンパス',
+    quantity: '2',
+    unit: '本',
+    applicationReason: '老朽化による更新',
+    executionYear: '2025',
+    status: '承認済み',
+    approvalProgress: { current: 3, total: 3 },
+    freeInput: '',
+    rfqNo: 'RFQ-20250128-0008',
+    quotationInfo: []
+  },
+  {
+    id: 11,
+    applicationNo: 'APP-2025-011',
+    applicationDate: '2025-01-28',
+    applicationType: '更新申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '内視鏡センター',
+      section: '洗浄室'
+    },
+    roomName: '内視鏡洗浄室',
+    asset: { name: '内視鏡洗浄消毒装置', model: 'OER-5' },
+    vendor: 'オリンパス',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '老朽化による更新',
+    executionYear: '2025',
+    status: '承認済み',
+    approvalProgress: { current: 3, total: 3 },
+    freeInput: '',
+    rfqNo: 'RFQ-20250128-0008',
+    quotationInfo: []
+  },
 ];
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
@@ -275,5 +422,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
   getApplicationById: (id) => {
     return get().applications.find((app) => app.id === id);
+  },
+
+  getApplicationsByRfqNo: (rfqNo) => {
+    return get().applications.filter((app) => app.rfqNo === rfqNo);
   },
 }));

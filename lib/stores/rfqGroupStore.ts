@@ -10,7 +10,7 @@ interface RfqGroupState {
   generateRfqNo: () => string;
 }
 
-// テストデータ（全7ステータスパターン）
+// テストデータ（全7ステータスパターン + 資産仮登録用）
 const testRfqGroups: RfqGroup[] = [
   {
     id: 1,
@@ -99,6 +99,20 @@ const testRfqGroups: RfqGroup[] = [
     personInCharge: '伊藤裕子',
     email: 'ito@shimadzu.co.jp',
     tel: '03-7890-1234',
+  },
+  // 資産仮登録テスト用（発注データと紐付き）
+  {
+    id: 8,
+    rfqNo: 'RFQ-20250128-0008',
+    groupName: '2025年度内視鏡センター機器（検収済）',
+    createdDate: '2025-01-28',
+    applicationIds: [4],
+    status: '検収登録済',
+    vendorName: 'オリンパス',
+    personInCharge: '田中次郎',
+    email: 'tanaka@olympus.co.jp',
+    tel: '03-4567-8901',
+    deadline: '2025-05-31',
   },
 ];
 
