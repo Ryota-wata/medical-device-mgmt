@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface HistoryCardData {
   id: number;
@@ -15,9 +16,20 @@ interface HistoryCardData {
 
 export default function HistoryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const facilityName = searchParams.get('facility') || '';
   const { isMobile, isTablet } = useResponsive();
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
   const [editingCards, setEditingCards] = useState<Set<number>>(new Set());
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  const handleHomeClick = () => {
+    if (selectedCards.size > 0) {
+      setShowHomeConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
 
   const historyData: HistoryCardData[] = [
     {
@@ -81,7 +93,8 @@ export default function HistoryPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
+    router.push(`/survey-location${params}`);
   };
 
   const handleEdit = () => {
@@ -348,6 +361,37 @@ export default function HistoryPage() {
           margin: '0 auto'
         }}>
           <button
+            onClick={handleHomeClick}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              padding: isMobile ? '8px 16px' : '12px 24px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              fontSize: isMobile ? '12px' : '14px'
+            }}
+          >
+            <div style={{
+              width: isMobile ? '32px' : '40px',
+              height: isMobile ? '32px' : '40px',
+              borderRadius: '50%',
+              backgroundColor: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: isMobile ? '16px' : '20px'
+            }}>
+              🏠
+            </div>
+            <span>メイン画面</span>
+          </button>
+
+          <button
             onClick={handleBack}
             style={{
               display: 'flex',
@@ -375,7 +419,7 @@ export default function HistoryPage() {
             }}>
               ←
             </div>
-            <span>戻る</span>
+            <span>調査場所選択に戻る</span>
           </button>
 
           <button
@@ -446,6 +490,17 @@ export default function HistoryPage() {
           </button>
         </div>
       </footer>
+
+      <ConfirmDialog
+        isOpen={showHomeConfirm}
+        onClose={() => setShowHomeConfirm(false)}
+        onConfirm={() => router.push('/main')}
+        title="メイン画面に戻る"
+        message="選択状態が破棄されます。メイン画面に戻りますか？"
+        confirmLabel="メイン画面に戻る"
+        cancelLabel="選択を続ける"
+        variant="warning"
+      />
     </div>
   );
 }

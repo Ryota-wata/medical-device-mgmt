@@ -10,6 +10,8 @@ interface HeaderProps {
   stepBadge?: string;
   subInfo?: string;
   showBackButton?: boolean;
+  backHref?: string;
+  backLabel?: string;
   resultCount?: number;
   showOriginalLabel?: boolean;
   onExport?: () => void;
@@ -31,6 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   stepBadge,
   subInfo,
   showBackButton = true,
+  backHref,
+  backLabel,
   resultCount,
   showOriginalLabel = true,
   onExport,
@@ -52,7 +56,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleBack = () => {
-    router.back();
+    if (backHref) {
+      router.push(backHref);
+    } else {
+      router.back();
+    }
   };
 
   const handleLogout = () => {
@@ -339,6 +347,27 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
+        {/* メイン画面に戻るボタン（backHrefが/main以外の場合のみ表示） */}
+        {showBackButton && backHref && backHref !== '/main' && (
+          <button
+            onClick={() => router.push('/main')}
+            className="text-white border-0 rounded cursor-pointer transition-all whitespace-nowrap"
+            style={{
+              background: '#34495e',
+              padding: isMobile ? '6px 12px' : '8px 16px',
+              fontSize: isMobile ? '12px' : '14px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#2c3e50';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#34495e';
+            }}
+          >
+            メイン画面に戻る
+          </button>
+        )}
+
         {/* 戻るボタン */}
         {showBackButton && (
           <button
@@ -356,7 +385,7 @@ export const Header: React.FC<HeaderProps> = ({
               e.currentTarget.style.background = '#27ae60';
             }}
           >
-            戻る
+            {backLabel || '戻る'}
           </button>
         )}
       </div>

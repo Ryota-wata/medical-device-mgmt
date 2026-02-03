@@ -1,12 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function QRIssuePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
   const { isMobile, isTablet } = useResponsive();
+
+  // 戻り先マッピング
+  const backConfig = (() => {
+    switch (from) {
+      case 'inspection':
+        return { href: '/quotation-data-box', label: '見積書管理に戻る' };
+      default:
+        return { href: '/main', label: 'メイン画面に戻る' };
+    }
+  })();
   const [tab, setTab] = useState<'new' | 'reissue'>('new');
   const [alpha, setAlpha] = useState('R');
   const [twoDigit, setTwoDigit] = useState('07');
@@ -16,6 +29,17 @@ export default function QRIssuePage() {
   const [footerText, setFooterText] = useState('');
   const [footerCharMax, setFooterCharMax] = useState(12);
   const [issueCount, setIssueCount] = useState(50);
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  const isFormDirty = footerText !== '' || reissueNumber !== '' || template !== 'qr-12x12' || issueCount !== 50 || tab !== 'new';
+
+  const handleHomeClick = () => {
+    if (isFormDirty) {
+      setShowHomeConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
 
   // フッター文字数制限を更新
   useEffect(() => {
@@ -63,8 +87,29 @@ export default function QRIssuePage() {
           gap: isMobile ? '12px' : '20px',
         }}
       >
+        {backConfig.href !== '/main' && (
+          <button
+            onClick={handleHomeClick}
+            style={{
+              background: '#34495e',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: isMobile ? '6px 12px' : '8px 16px',
+              cursor: 'pointer',
+              fontSize: isMobile ? '13px' : '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#2c3e50'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#34495e'; }}
+          >
+            <span>メイン画面に戻る</span>
+          </button>
+        )}
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push(backConfig.href)}
           style={{
             background: '#34495e',
             color: 'white',
@@ -79,7 +124,7 @@ export default function QRIssuePage() {
           }}
         >
           <span>←</span>
-          <span>戻る</span>
+          <span>{backConfig.label}</span>
         </button>
         <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 'bold', margin: 0 }}>QRコード発行</h1>
       </div>
@@ -352,7 +397,7 @@ export default function QRIssuePage() {
           {/* ボタン */}
           <div style={{ display: 'flex', gap: isMobile ? '8px' : '10px', justifyContent: 'flex-end', flexDirection: isMobile ? 'column' : 'row' }}>
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push(backConfig.href)}
               style={{
                 padding: isMobile ? '12px 20px' : '12px 30px',
                 background: '#95a5a6',
@@ -386,6 +431,17 @@ export default function QRIssuePage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showHomeConfirm}
+        onClose={() => setShowHomeConfirm(false)}
+        onConfirm={() => router.push('/main')}
+        title="メイン画面に戻る"
+        message="入力内容が破棄されます。メイン画面に戻りますか？"
+        confirmLabel="メイン画面に戻る"
+        cancelLabel="入力を続ける"
+        variant="warning"
+      />
     </div>
   );
 }

@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function AssetSurveyIntegratedPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const facilityName = searchParams.get('facility') || '';
   const { isMobile, isTablet } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
   const [bulkMode, setBulkMode] = useState(false);
@@ -25,6 +28,17 @@ export default function AssetSurveyIntegratedPage() {
   const [purchaseYear, setPurchaseYear] = useState('');
   const [purchaseMonth, setPurchaseMonth] = useState('');
   const [purchaseDay, setPurchaseDay] = useState('');
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  const isFormDirty = qrScanned || photoTaken || largeClass !== '' || mediumClass !== '' || item !== '' || maker !== '' || model !== '' || purchaseYear !== '' || leaseToggle || rentalToggle;
+
+  const handleHomeClick = () => {
+    if (isFormDirty) {
+      setShowHomeConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
 
   // 日付ピッカーモーダル
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -200,11 +214,13 @@ export default function AssetSurveyIntegratedPage() {
   }, [assetMasters]);
 
   const handleBack = () => {
-    router.back();
+    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
+    router.push(`/survey-location${params}`);
   };
 
   const handleShowHistory = () => {
-    router.push('/history');
+    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
+    router.push(`/history${params}`);
   };
 
   const handleQRScan = () => {
@@ -816,6 +832,43 @@ export default function AssetSurveyIntegratedPage() {
         zIndex: 100
       }}>
         <button
+          onClick={handleHomeClick}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '5px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: isMobile ? '5px' : '8px',
+            borderRadius: '8px',
+            transition: 'background 0.3s',
+            minWidth: isMobile ? '60px' : '70px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#ecf0f1';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'none';
+          }}
+        >
+          <div style={{
+            width: isMobile ? '35px' : '40px',
+            height: isMobile ? '35px' : '40px',
+            borderRadius: '50%',
+            background: '#ecf0f1',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px'
+          }}>
+            🏠
+          </div>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>メイン画面</span>
+        </button>
+
+        <button
           onClick={handleBack}
           style={{
             display: 'flex',
@@ -854,7 +907,7 @@ export default function AssetSurveyIntegratedPage() {
               borderRight: '10px solid #34495e'
             }}></div>
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>戻る</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>調査場所選択に戻る</span>
         </button>
 
         <button
@@ -1296,6 +1349,17 @@ export default function AssetSurveyIntegratedPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showHomeConfirm}
+        onClose={() => setShowHomeConfirm(false)}
+        onConfirm={() => router.push('/main')}
+        title="メイン画面に戻る"
+        message="入力中の調査データが破棄されます。メイン画面に戻りますか？"
+        confirmLabel="メイン画面に戻る"
+        cancelLabel="調査を続ける"
+        variant="warning"
+      />
     </div>
   );
 }

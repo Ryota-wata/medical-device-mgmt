@@ -6,6 +6,7 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 function SurveyLocationContent() {
   const router = useRouter();
@@ -27,6 +28,17 @@ function SurveyLocationContent() {
   const [floor, setFloor] = useState('');
   const [department, setDepartment] = useState('');
   const [section, setSection] = useState('');
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  const isFormDirty = category !== '' || building !== '' || floor !== '' || department !== '' || section !== '';
+
+  const handleHomeClick = () => {
+    if (isFormDirty) {
+      setShowHomeConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
 
   // 資産マスタからカテゴリーオプションを生成
   const categoryOptions = useMemo(() => {
@@ -65,7 +77,8 @@ function SurveyLocationContent() {
   }, []);
 
   const handleBack = () => {
-    router.back();
+    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
+    router.push(`/offline-prep${params}`);
   };
 
   const handleNext = () => {
@@ -84,6 +97,9 @@ function SurveyLocationContent() {
       section,
       surveyDate
     });
+    if (facilityName) {
+      queryParams.set('facility', facilityName);
+    }
     router.push(`/asset-survey-integrated?${queryParams.toString()}`);
   };
 
@@ -246,6 +262,43 @@ function SurveyLocationContent() {
         zIndex: 1000
       }}>
         <button
+          onClick={handleHomeClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: isMobile ? '6px' : '5px',
+            padding: '8px',
+            borderRadius: '8px',
+            transition: 'background 0.3s',
+            minWidth: isMobile ? undefined : '70px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#ecf0f1';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'none';
+          }}
+        >
+          <div style={{
+            background: '#ecf0f1',
+            borderRadius: '50%',
+            width: isMobile ? '48px' : '52px',
+            height: isMobile ? '48px' : '52px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px'
+          }}>
+            🏠
+          </div>
+          <span style={{ fontSize: '12px', color: '#2c3e50' }}>メイン画面</span>
+        </button>
+
+        <button
           onClick={handleBack}
           style={{
             background: 'none',
@@ -284,7 +337,7 @@ function SurveyLocationContent() {
               borderBottom: isMobile ? '5px solid transparent' : '6px solid transparent'
             }}></div>
           </div>
-          <span style={{ fontSize: '12px', color: '#2c3e50' }}>戻る</span>
+          <span style={{ fontSize: '12px', color: '#2c3e50' }}>オフライン準備に戻る</span>
         </button>
 
         <button
@@ -329,6 +382,17 @@ function SurveyLocationContent() {
           <span style={{ fontSize: '12px', color: '#27ae60', fontWeight: 600 }}>次へ</span>
         </button>
       </footer>
+
+      <ConfirmDialog
+        isOpen={showHomeConfirm}
+        onClose={() => setShowHomeConfirm(false)}
+        onConfirm={() => router.push('/main')}
+        title="メイン画面に戻る"
+        message="選択内容が破棄されます。メイン画面に戻りますか？"
+        confirmLabel="メイン画面に戻る"
+        cancelLabel="選択を続ける"
+        variant="warning"
+      />
     </div>
   );
 }

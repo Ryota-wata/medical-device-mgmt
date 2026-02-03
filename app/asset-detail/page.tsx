@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Asset } from '@/lib/types';
 
 function AssetDetailContent() {
@@ -11,10 +12,33 @@ function AssetDetailContent() {
   const qrCode = searchParams.get('qrCode');
   const assetNo = searchParams.get('no');
   const isReadOnly = searchParams.get('readonly') === 'true';
+  const from = searchParams.get('from');
+
+  // 戻り先マッピング
+  const backConfig = (() => {
+    switch (from) {
+      case 'inventory':
+        return { href: '/inventory', label: '棚卸一覧に戻る' };
+      case 'remodel':
+        return { href: '/remodel-application', label: '編集リストに戻る' };
+      case 'asset-search':
+      default:
+        return { href: '/asset-search-result', label: '資産一覧に戻る' };
+    }
+  })();
 
   const [asset, setAsset] = useState<Asset | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  const handleHomeClick = () => {
+    if (isEditMode) {
+      setShowHomeConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
 
   // モックデータ
   useEffect(() => {
@@ -199,10 +223,18 @@ function AssetDetailContent() {
           )}
 
           <button
-            style={{ padding: '8px 16px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-            onClick={() => router.back()}
+            style={{ padding: '8px 16px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+            onClick={handleHomeClick}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#2c3e50'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#34495e'; }}
           >
-            戻る
+            メイン画面に戻る
+          </button>
+          <button
+            style={{ padding: '8px 16px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+            onClick={() => router.push(backConfig.href)}
+          >
+            {backConfig.label}
           </button>
         </div>
       </header>
@@ -921,6 +953,17 @@ function AssetDetailContent() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showHomeConfirm}
+        onClose={() => setShowHomeConfirm(false)}
+        onConfirm={() => router.push('/main')}
+        title="メイン画面に戻る"
+        message="編集中の内容は破棄されます。メイン画面に戻りますか？"
+        confirmLabel="メイン画面に戻る"
+        cancelLabel="編集を続ける"
+        variant="warning"
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 function QRPrintContent() {
   const router = useRouter();
@@ -13,6 +14,15 @@ function QRPrintContent() {
   const [qrNumbers, setQrNumbers] = useState<string[]>([]);
   const [template, setTemplate] = useState('');
   const [footerText, setFooterText] = useState('');
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  const handleHomeClick = () => {
+    if (qrNumbers.length > 0) {
+      setShowHomeConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
 
   useEffect(() => {
     // Get parameters from URL
@@ -85,7 +95,7 @@ function QRPrintContent() {
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push('/qr-issue');
   };
 
   const handlePrintStart = () => {
@@ -103,7 +113,27 @@ function QRPrintContent() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
           <button
-            onClick={() => router.back()}
+            onClick={handleHomeClick}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              color: 'white',
+              padding: isMobile ? '8px 12px' : '10px 16px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
+          >
+            <span>メイン画面に戻る</span>
+          </button>
+          <button
+            onClick={() => router.push('/qr-issue')}
             style={{
               background: 'rgba(255,255,255,0.15)',
               border: 'none',
@@ -119,7 +149,7 @@ function QRPrintContent() {
             }}
           >
             <span>←</span>
-            <span>戻る</span>
+            <span>QRラベル発行に戻る</span>
           </button>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '22px', fontWeight: 600, margin: 0 }}>QRコード印刷</h1>
@@ -492,6 +522,17 @@ function QRPrintContent() {
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showHomeConfirm}
+        onClose={() => setShowHomeConfirm(false)}
+        onConfirm={() => router.push('/main')}
+        title="メイン画面に戻る"
+        message="印刷フローを中断してメイン画面に戻りますか？"
+        confirmLabel="メイン画面に戻る"
+        cancelLabel="印刷を続ける"
+        variant="warning"
+      />
     </div>
   );
 }
