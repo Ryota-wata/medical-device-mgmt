@@ -10,20 +10,19 @@ interface RfqGroupState {
   generateRfqNo: () => string;
 }
 
-// テストデータ
+// テストデータ（全7ステータスパターン）
 const testRfqGroups: RfqGroup[] = [
   {
     id: 1,
     rfqNo: 'RFQ-20250110-0001',
     groupName: '2025年度放射線科機器更新',
     createdDate: '2025-01-10',
-    applicationIds: [1, 3],
-    status: '見積登録済',
+    applicationIds: [1],
+    status: '見積依頼',
     vendorName: 'シーメンス・ジャパン',
     personInCharge: '山田太郎',
     email: 'yamada@siemens.co.jp',
     tel: '03-1234-5678',
-    deadline: '2025-01-31'
   },
   {
     id: 2,
@@ -36,34 +35,71 @@ const testRfqGroups: RfqGroup[] = [
     personInCharge: '鈴木一郎',
     email: 'suzuki@gehealthcare.co.jp',
     tel: '03-2345-6789',
-    deadline: '2025-02-15'
+    deadline: '2025-02-15',
   },
   {
     id: 3,
     rfqNo: 'RFQ-20250113-0003',
     groupName: '2025年度検査科・手術室機器更新',
     createdDate: '2025-01-13',
-    applicationIds: [4, 5],
-    status: '見積依頼',
+    applicationIds: [3],
+    status: '見積登録済',
     vendorName: 'フィリップス・ジャパン',
     personInCharge: '佐藤花子',
     email: 'sato@philips.co.jp',
     tel: '03-3456-7890',
-    deadline: '2025-02-28'
+    deadline: '2025-03-31',
   },
   {
     id: 4,
     rfqNo: 'RFQ-20250115-0004',
     groupName: '2025年度内視鏡センター機器',
     createdDate: '2025-01-15',
-    applicationIds: [6],
-    status: '登録依頼',
+    applicationIds: [4],
+    status: '発注登録済',
     vendorName: 'オリンパス',
     personInCharge: '田中次郎',
     email: 'tanaka@olympus.co.jp',
     tel: '03-4567-8901',
-    deadline: '2025-03-10'
-  }
+    deadline: '2025-04-30',
+  },
+  {
+    id: 5,
+    rfqNo: 'RFQ-20250120-0005',
+    groupName: '2025年度リハビリ科機器導入',
+    createdDate: '2025-01-20',
+    applicationIds: [5],
+    status: '検収登録済',
+    vendorName: 'キヤノンメディカル',
+    personInCharge: '高橋美咲',
+    email: 'takahashi@canon-med.co.jp',
+    tel: '03-5678-9012',
+  },
+  {
+    id: 6,
+    rfqNo: 'RFQ-20250122-0006',
+    groupName: '2025年度眼科機器更新',
+    createdDate: '2025-01-22',
+    applicationIds: [6],
+    status: '資産仮登録済',
+    vendorName: 'トプコン',
+    personInCharge: '中村健一',
+    email: 'nakamura@topcon.co.jp',
+    tel: '03-6789-0123',
+    deadline: '2025-06-30',
+  },
+  {
+    id: 7,
+    rfqNo: 'RFQ-20250125-0007',
+    groupName: '2024年度病理科機器更新',
+    createdDate: '2025-01-25',
+    applicationIds: [7],
+    status: '資産登録済',
+    vendorName: '島津製作所',
+    personInCharge: '伊藤裕子',
+    email: 'ito@shimadzu.co.jp',
+    tel: '03-7890-1234',
+  },
 ];
 
 export const useRfqGroupStore = create<RfqGroupState>((set, get) => ({

@@ -4,9 +4,11 @@ import React from 'react';
 
 interface StepProgressBarProps {
   currentStep: number;
+  steps?: { step: number; label: string }[];
+  activeColor?: string;
 }
 
-const STEPS = [
+const DEFAULT_STEPS = [
   { step: 1, label: '見積情報入力' },
   { step: 2, label: 'OCR明細確認' },
   { step: 3, label: '登録区分登録' },
@@ -15,7 +17,11 @@ const STEPS = [
   { step: 6, label: '登録確認' },
 ];
 
-export const StepProgressBar: React.FC<StepProgressBarProps> = ({ currentStep }) => {
+export const StepProgressBar: React.FC<StepProgressBarProps> = ({ currentStep, steps, activeColor }) => {
+  const displaySteps = steps || DEFAULT_STEPS;
+  const currentColor = activeColor || '#3498db';
+  const currentBorderColor = activeColor || '#2980b9';
+
   return (
     <div style={{
       display: 'flex',
@@ -25,7 +31,7 @@ export const StepProgressBar: React.FC<StepProgressBarProps> = ({ currentStep })
       background: '#f8f9fa',
       borderBottom: '1px solid #dee2e6',
     }}>
-      {STEPS.map((item, index) => (
+      {displaySteps.map((item, index) => (
         <React.Fragment key={item.step}>
           {/* ステップ */}
           <div style={{
@@ -43,16 +49,16 @@ export const StepProgressBar: React.FC<StepProgressBarProps> = ({ currentStep })
               justifyContent: 'center',
               fontSize: '12px',
               fontWeight: 'bold',
-              background: item.step < currentStep ? '#27ae60' : item.step === currentStep ? '#3498db' : '#dee2e6',
+              background: item.step < currentStep ? '#27ae60' : item.step === currentStep ? currentColor : '#dee2e6',
               color: item.step <= currentStep ? 'white' : '#6c757d',
-              border: item.step === currentStep ? '2px solid #2980b9' : 'none',
+              border: item.step === currentStep ? `2px solid ${currentBorderColor}` : 'none',
             }}>
               {item.step < currentStep ? '✓' : item.step}
             </div>
             <span style={{
               fontSize: '10px',
               marginTop: '4px',
-              color: item.step === currentStep ? '#3498db' : item.step < currentStep ? '#27ae60' : '#6c757d',
+              color: item.step === currentStep ? currentColor : item.step < currentStep ? '#27ae60' : '#6c757d',
               fontWeight: item.step === currentStep ? 'bold' : 'normal',
               textAlign: 'center',
               whiteSpace: 'nowrap',
@@ -61,7 +67,7 @@ export const StepProgressBar: React.FC<StepProgressBarProps> = ({ currentStep })
             </span>
           </div>
           {/* コネクター */}
-          {index < STEPS.length - 1 && (
+          {index < displaySteps.length - 1 && (
             <div style={{
               flex: 1,
               height: '3px',

@@ -13,3 +13,4 @@ export * from './remodelProjectStore';
 export * from './quotationStore';
 export * from './rfqGroupStore';
 export * from './editListStore';
+export * from './orderStore';

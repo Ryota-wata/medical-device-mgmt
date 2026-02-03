@@ -202,6 +202,125 @@ create_multi_device_sheet(
 wb.save("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
 ```
 
+## モーダル対応
+
+画面内で開くモーダルも設計書に含める場合の手順。
+
+### モーダル対応 Step 1: モーダルスクリーンショット取得
+
+ボタンクリック → モーダル表示 → キャプチャの流れ。
+
+```bash
+# 編集リストモーダルのキャプチャ（PC）
+node /Users/watanaberyouta/Desktop/medical-device-mgmt/.claude/skills/screen-design-doc-generator/capture_screenshot.js \
+  --url "http://localhost:3000/main" \
+  --output "/Users/watanaberyouta/Desktop/画面設計書/screenshots/メイン画面_編集リストモーダル_PC.png" \
+  --width 1920 \
+  --height 1080 \
+  --click "button:has-text('編集リスト')" \
+  --wait-for ".fixed.inset-0" \
+  --wait 2000
+```
+
+**モーダル用オプション:**
+| オプション | 説明 | 例 |
+|------------|------|-----|
+| --click | クリックするボタンのセレクタ | `button:has-text('編集リスト')` |
+| --wait-for | モーダル表示を待つセレクタ | `.fixed.inset-0` |
+| --click-wait | クリック後の追加待機時間(ms) | `500` |
+
+### モーダル対応 Step 2: モーダル要素一覧MD作成
+
+モーダル要素は `M` プレフィックス付きの番号で採番する。
+
+**フォーマット:**
+```markdown
+# メイン画面 要素一覧
+
+## 通常画面要素
+
+| No | 要素名 | 要素種別 | 必須 | 機能説明 | 初期値 | バリデーション | 備考 |
+|----|--------|----------|------|----------|--------|----------------|------|
+| 1 | 背景 | 背景 | - | グレー背景を表示 | - | - | - |
+| 2 | ヘッダー | コンテナ | - | ... | - | - | - |
+...
+
+## 編集リストモーダル要素
+
+| No | 要素名 | 要素種別 | 必須 | 機能説明 | 初期値 | バリデーション | 備考 |
+|----|--------|----------|------|----------|--------|----------------|------|
+| M1 | モーダル背景 | モーダル | - | オーバーレイ背景 | - | - | クリックで閉じる |
+| M2 | モーダルタイトル | ラベル | - | 「編集リスト」を表示 | - | - | - |
+| M3 | 閉じるボタン | ボタン | - | モーダルを閉じる | - | - | × |
+...
+```
+
+### モーダル対応 Step 3: モーダル位置MD作成
+
+モーダル専用の位置定義ファイルを作成。
+
+ファイル名: `{画面名}_{モーダル名}_positions.md`
+
+```markdown
+# メイン画面_編集リストモーダル 要素位置定義
+
+## PC (1920x1080)
+
+| No | デバイス | X | Y |
+|----|----------|-----|-----|
+| 1 | PC | 660 | 200 |
+| 2 | PC | 680 | 220 |
+| 3 | PC | 1230 | 220 |
+...
+```
+
+### モーダル対応 Step 4: Excel生成（別シート方式・推奨）
+
+モーダルは親画面とは別シートで作成する。シート名は `{画面名}_{モーダル名}` とする。
+
+```python
+import sys
+sys.path.insert(0, '/Users/watanaberyouta/Desktop/medical-device-mgmt/.claude/skills/screen-design-doc-generator')
+
+from openpyxl import load_workbook
+from generate_excel import create_multi_device_sheet, parse_elements_md
+
+wb = load_workbook("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
+
+# 要素一覧をパース
+all_elements = parse_elements_md("/path/to/メイン画面_elements.md")
+
+# 通常画面要素（M プレフィックスなし）
+base_elements = [e for e in all_elements if not e.get('no', '').startswith('M')]
+
+# モーダル要素（M プレフィックスあり）
+modal_elements = [e for e in all_elements if e.get('no', '').startswith('M') and not e.get('no', '').startswith('M2')]
+
+# 1. 通常画面シート
+create_multi_device_sheet(wb, "メイン画面", base_elements, screenshots_dir, ...)
+
+# 2. モーダルシート（別シート）
+create_multi_device_sheet(wb, "メイン画面_編集リストモーダル", modal_elements, screenshots_dir, ...)
+
+wb.save("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
+```
+
+### Excelレイアウト（モーダル別シート方式）
+
+```
+画面設計書.xlsx
+├── 目次
+├── No.画像
+├── メイン画面                      ← 通常画面（左:スクショ、右:要素一覧）
+├── メイン画面_編集リストモーダル    ← モーダル別シート
+├── メイン画面_マスタ管理モーダル    ← モーダル別シート
+└── ...
+```
+
+**各シートのレイアウト（従来通り）:**
+- 左側: PC/タブレット/スマホのスクリーンショット（番号マーカー付き）
+- 右側: 要素一覧テーブル
+
 ### Step 7: 完了報告
 
 ```

@@ -2117,7 +2117,7 @@ function RemodelApplicationContent() {
             groupName: rfqGroupName.trim(),
             createdDate,
             applicationIds: Array.from(selectedItems),
-            status: '未送信',
+            status: '見積依頼',
           });
 
           setMockAssets(prev => prev.map(asset => {

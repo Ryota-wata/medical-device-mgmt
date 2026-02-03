@@ -192,7 +192,7 @@ function RemodelApplicationListContent() {
         groupName: rfqGroupName,
         createdDate,
         applicationIds: Array.from(selectedRows),
-        status: '未送信'
+        status: '見積依頼'
       });
 
       selectedRows.forEach(id => {

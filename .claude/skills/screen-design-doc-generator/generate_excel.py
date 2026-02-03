@@ -433,6 +433,299 @@ def create_multi_device_sheet(wb, screen_name: str, elements: list[dict], screen
     return ws
 
 
+def create_multi_device_sheet_with_modals(wb, screen_name: str, elements: list[dict], screenshots_dir: str,
+                                          devices: list[str] = None, positions_dir: str = None,
+                                          modals: list[dict] = None):
+    """
+    複数デバイス対応 + モーダル対応の要素シートを作成
+
+    Args:
+        wb: Workbook
+        screen_name: 画面名
+        elements: 要素リスト（通常画面 + モーダル要素を含む）
+        screenshots_dir: スクリーンショットディレクトリ
+        devices: デバイスリスト ['PC', 'タブレット', 'スマホ']
+        positions_dir: 要素位置定義ファイルのディレクトリ
+        modals: モーダル情報リスト [{'name': 'モーダル名', 'elements_start': 18, 'elements_end': 25}]
+    """
+    import tempfile
+
+    if devices is None:
+        devices = ['PC', 'タブレット', 'スマホ']
+
+    if modals is None:
+        modals = []
+
+    ws = wb.create_sheet(title=screen_name)
+
+    # 列幅設定
+    col_width = 2.5
+    pixels_per_col = 17
+    row_height_px = 15
+    marker_size = 24
+
+    # 一時ディレクトリ
+    temp_dir = tempfile.mkdtemp()
+
+    current_row = 1
+    max_screenshot_cols = 60  # 固定値
+
+    # === ベース画面セクション ===
+    # セクションヘッダー
+    ws.cell(row=current_row, column=1, value=f"■ {screen_name}（通常画面）")
+    header_cell = ws.cell(row=current_row, column=1)
+    header_cell.font = Font(bold=True, size=14)
+    current_row += 2
+
+    # ベース画面の要素位置を読み込み
+    base_positions = {}
+    if positions_dir:
+        positions_file = os.path.join(positions_dir, f"{screen_name}_positions.md")
+        base_positions = parse_positions_md(positions_file)
+        if base_positions:
+            print(f"  ベース画面位置定義を読み込み: {positions_file}")
+
+    # 通常要素（モーダル要素以外）を抽出
+    base_elements = [e for e in elements if not e.get('no', '').startswith('M')]
+
+    # 各デバイスのスクリーンショットを配置
+    for device in devices:
+        screenshot_path = os.path.join(screenshots_dir, f"{screen_name}_{device}.png")
+
+        if os.path.exists(screenshot_path):
+            try:
+                img = XLImage(screenshot_path)
+                original_width = img.width
+                original_height = img.height
+
+                # デバイスに応じたスケール設定
+                if device == 'PC':
+                    scale = 0.5
+                elif device == 'タブレット':
+                    scale = 0.6
+                else:
+                    scale = 0.7
+
+                target_width = int(original_width * scale)
+                target_height = int(original_height * scale)
+
+                # ヘッダー行
+                ws.cell(row=current_row, column=1, value=f"スクリーンショット（{device}）")
+                header_cell = ws.cell(row=current_row, column=1)
+                header_cell.fill = HEADER_FILL
+                header_cell.font = HEADER_FONT
+                header_cell.border = BORDER
+                header_cell.alignment = CENTER_ALIGN
+                ws.merge_cells(f'A{current_row}:{get_column_letter(max_screenshot_cols)}{current_row}')
+
+                # 画像配置行
+                img_start_row = current_row + 1
+                img.width = target_width
+                img.height = target_height
+                ws.add_image(img, f'A{img_start_row}')
+
+                # マーカー配置
+                device_positions = base_positions.get(device, {})
+                for elem_no, (orig_x, orig_y) in device_positions.items():
+                    scaled_x = int(orig_x * scale)
+                    scaled_y = int(orig_y * scale)
+
+                    img_path = os.path.join(temp_dir, f"marker_base_{device}_{elem_no}.png")
+                    create_number_image(elem_no, img_path, marker_size)
+
+                    marker_img = XLImage(img_path)
+                    marker_img.width = marker_size
+                    marker_img.height = marker_size
+
+                    col_offset = int(scaled_x // pixels_per_col)
+                    row_offset = int(scaled_y // row_height_px)
+                    target_col = 1 + col_offset
+                    target_row = img_start_row + row_offset
+
+                    cell_ref = f"{get_column_letter(target_col)}{target_row}"
+                    ws.add_image(marker_img, cell_ref)
+
+                rows_needed = (target_height // row_height_px) + 2
+                print(f"  {device}: {original_width}x{original_height} -> {target_width}x{target_height}, マーカー: {len(device_positions)}個")
+
+                current_row += rows_needed + 2
+
+            except Exception as e:
+                print(f"警告: {device}スクリーンショット挿入エラー: {e}")
+                current_row += 3
+
+    # ベース画面の要素一覧
+    current_row += 1
+    ws.cell(row=current_row, column=1, value="要素一覧（通常画面）")
+    header_cell = ws.cell(row=current_row, column=1)
+    header_cell.font = Font(bold=True, size=12)
+    current_row += 1
+
+    headers = ["No", "要素名", "要素種別", "必須", "機能説明", "初期値", "バリデーション", "備考"]
+    for col_idx, header in enumerate(headers):
+        cell = ws.cell(row=current_row, column=col_idx + 1, value=header)
+        cell.fill = HEADER_FILL
+        cell.font = HEADER_FONT
+        cell.border = BORDER
+        cell.alignment = CENTER_ALIGN
+    current_row += 1
+
+    for elem in base_elements:
+        row_data = [
+            elem.get('no', ''),
+            elem.get('element_name', ''),
+            elem.get('element_type', ''),
+            elem.get('required', ''),
+            elem.get('function', ''),
+            elem.get('initial_value', ''),
+            elem.get('validation', ''),
+            elem.get('remarks', '')
+        ]
+        for col_idx, value in enumerate(row_data):
+            cell = ws.cell(row=current_row, column=col_idx + 1, value=value)
+            cell.border = BORDER
+            cell.alignment = CENTER_ALIGN if col_idx in [0, 2, 3] else LEFT_ALIGN
+        current_row += 1
+
+    current_row += 3
+
+    # === モーダルセクション ===
+    for modal in modals:
+        modal_name = modal['name']
+
+        # セクションヘッダー
+        ws.cell(row=current_row, column=1, value=f"■ {modal_name}（モーダル）")
+        header_cell = ws.cell(row=current_row, column=1)
+        header_cell.font = Font(bold=True, size=14)
+        current_row += 2
+
+        # モーダルの位置定義を読み込み
+        modal_positions = {}
+        if positions_dir:
+            modal_positions_file = os.path.join(positions_dir, f"{screen_name}_{modal_name}_positions.md")
+            modal_positions = parse_positions_md(modal_positions_file)
+            if modal_positions:
+                print(f"  モーダル位置定義を読み込み: {modal_positions_file}")
+
+        # 各デバイスのモーダルスクリーンショット
+        for device in devices:
+            modal_screenshot = os.path.join(screenshots_dir, f"{screen_name}_{modal_name}_{device}.png")
+
+            if os.path.exists(modal_screenshot):
+                try:
+                    img = XLImage(modal_screenshot)
+                    original_width = img.width
+                    original_height = img.height
+
+                    if device == 'PC':
+                        scale = 0.5
+                    elif device == 'タブレット':
+                        scale = 0.6
+                    else:
+                        scale = 0.7
+
+                    target_width = int(original_width * scale)
+                    target_height = int(original_height * scale)
+
+                    # ヘッダー
+                    ws.cell(row=current_row, column=1, value=f"{modal_name}（{device}）")
+                    header_cell = ws.cell(row=current_row, column=1)
+                    header_cell.fill = PatternFill(start_color="27AE60", end_color="27AE60", fill_type="solid")
+                    header_cell.font = HEADER_FONT
+                    header_cell.border = BORDER
+                    header_cell.alignment = CENTER_ALIGN
+                    ws.merge_cells(f'A{current_row}:{get_column_letter(max_screenshot_cols)}{current_row}')
+
+                    # 画像配置
+                    img_start_row = current_row + 1
+                    img.width = target_width
+                    img.height = target_height
+                    ws.add_image(img, f'A{img_start_row}')
+
+                    # モーダル用マーカー配置
+                    device_positions = modal_positions.get(device, {})
+                    for elem_no, (orig_x, orig_y) in device_positions.items():
+                        scaled_x = int(orig_x * scale)
+                        scaled_y = int(orig_y * scale)
+
+                        # Mプレフィックス付き番号用
+                        display_no = f"M{elem_no}" if isinstance(elem_no, int) else elem_no
+                        img_path = os.path.join(temp_dir, f"marker_modal_{modal_name}_{device}_{elem_no}.png")
+                        create_number_image(elem_no, img_path, marker_size)
+
+                        marker_img = XLImage(img_path)
+                        marker_img.width = marker_size
+                        marker_img.height = marker_size
+
+                        col_offset = int(scaled_x // pixels_per_col)
+                        row_offset = int(scaled_y // row_height_px)
+                        target_col = 1 + col_offset
+                        target_row = img_start_row + row_offset
+
+                        cell_ref = f"{get_column_letter(target_col)}{target_row}"
+                        ws.add_image(marker_img, cell_ref)
+
+                    rows_needed = (target_height // row_height_px) + 2
+                    print(f"  {modal_name}({device}): {original_width}x{original_height} -> {target_width}x{target_height}")
+
+                    current_row += rows_needed + 2
+
+                except Exception as e:
+                    print(f"警告: {modal_name}({device})スクリーンショット挿入エラー: {e}")
+                    current_row += 3
+            else:
+                print(f"警告: モーダルスクリーンショットが見つかりません: {modal_screenshot}")
+
+        # モーダル要素一覧
+        modal_elements = [e for e in elements if e.get('no', '').startswith('M') and
+                        modal.get('prefix', 'M') in e.get('no', '')]
+
+        if modal_elements:
+            current_row += 1
+            ws.cell(row=current_row, column=1, value=f"要素一覧（{modal_name}）")
+            header_cell = ws.cell(row=current_row, column=1)
+            header_cell.font = Font(bold=True, size=12)
+            current_row += 1
+
+            for col_idx, header in enumerate(headers):
+                cell = ws.cell(row=current_row, column=col_idx + 1, value=header)
+                cell.fill = PatternFill(start_color="27AE60", end_color="27AE60", fill_type="solid")
+                cell.font = HEADER_FONT
+                cell.border = BORDER
+                cell.alignment = CENTER_ALIGN
+            current_row += 1
+
+            for elem in modal_elements:
+                row_data = [
+                    elem.get('no', ''),
+                    elem.get('element_name', ''),
+                    elem.get('element_type', ''),
+                    elem.get('required', ''),
+                    elem.get('function', ''),
+                    elem.get('initial_value', ''),
+                    elem.get('validation', ''),
+                    elem.get('remarks', '')
+                ]
+                for col_idx, value in enumerate(row_data):
+                    cell = ws.cell(row=current_row, column=col_idx + 1, value=value)
+                    cell.border = BORDER
+                    cell.alignment = CENTER_ALIGN if col_idx in [0, 2, 3] else LEFT_ALIGN
+                current_row += 1
+
+        current_row += 3
+
+    # 列幅設定
+    for col in range(1, max_screenshot_cols + 1):
+        ws.column_dimensions[get_column_letter(col)].width = col_width
+
+    # 要素一覧の列幅
+    col_widths = [8, 25, 15, 6, 35, 15, 15, 20]
+    for idx, width in enumerate(col_widths):
+        ws.column_dimensions[get_column_letter(idx + 1)].width = width
+
+    return ws
+
+
 def create_element_sheet(wb, screen_name: str, elements: list[dict], screenshot_path: str = None):
     """要素シートを作成（左：スクリーンショット、右：要素一覧）- 単一スクリーンショット版"""
     ws = wb.create_sheet(title=screen_name)

@@ -245,7 +245,7 @@ export default function QuotationManagementPage() {
     addQuotationItems(itemsToAdd);
 
     if (rfqGroup) {
-      updateRfqGroup(rfqGroup.id, { status: '回答受領' });
+      updateRfqGroup(rfqGroup.id, { status: '見積登録済' });
     }
 
     alert(MESSAGES.QUOTATION_REGISTERED(quotationNo, itemsToAdd.length));
@@ -255,6 +255,11 @@ export default function QuotationManagementPage() {
     setActiveSubTab('quotations');
   };
 
+  // 発注登録開始（画面遷移）
+  const handleStartOrderRegistration = (rfqGroupId: number) => {
+    router.push(`/quotation-data-box/order-registration?rfqGroupId=${rfqGroupId}`);
+  };
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#f5f5f5' }}>
       {/* クエリパラメータでタブ切り替え */}
@@ -262,7 +267,7 @@ export default function QuotationManagementPage() {
         <TabSwitcher onTabChange={setActiveSubTab} />
       </Suspense>
       <Header
-        title="見積・発注契約管理"
+        title="タスク管理"
         showBackButton={true}
         hideMenu={true}
         centerContent={
@@ -364,11 +369,13 @@ export default function QuotationManagementPage() {
                 <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
                 <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
                   <option value="">すべて</option>
-                  <option value="quotationRequest">見積依頼（未送信）</option>
-                  <option value="quotationRequested">見積依頼済（見積依頼中）</option>
-                  <option value="registrationRequest">登録依頼（SHRCへ登録依頼）</option>
-                  <option value="quotationRegistered">見積登録済（回答受領）</option>
-                  <option value="finalOriginal">原本登録用最終見積登録</option>
+                  <option value="見積依頼">見積依頼</option>
+                  <option value="見積依頼済">見積依頼済</option>
+                  <option value="見積登録済">見積登録済</option>
+                  <option value="発注登録済">発注登録済</option>
+                  <option value="検収登録済">検収登録済</option>
+                  <option value="資産仮登録済">資産仮登録済</option>
+                  <option value="資産登録済">資産登録済</option>
                 </select>
               </div>
             </div>
@@ -382,6 +389,8 @@ export default function QuotationManagementPage() {
                 rfqStatusFilter={rfqStatusFilter}
                 onFilterChange={setRfqStatusFilter}
                 onRegisterQuotation={handleStartQuotationRegistration}
+                onRegisterOrder={handleStartOrderRegistration}
+                onUpdateDeadline={(id, deadline) => updateRfqGroup(id, { deadline })}
               />
             )}
             {activeSubTab === 'quotations' && (
