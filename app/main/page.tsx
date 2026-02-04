@@ -434,10 +434,10 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-full max-w-[500px] max-h-[80vh] overflow-hidden shadow-xl"
+            className="bg-white rounded-xl w-full max-w-[500px] max-h-[80vh] flex flex-col shadow-xl"
           >
             {/* モーダルヘッダー */}
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center shrink-0">
               <h2 className="m-0 text-xl font-semibold text-slate-700 text-balance">
                 マスタ管理
               </h2>
@@ -451,7 +451,7 @@ export default function MainPage() {
             </div>
 
             {/* モーダルコンテンツ */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto">
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
@@ -799,10 +799,10 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-[90%] max-w-[500px] max-h-[90vh] shadow-xl overflow-hidden flex flex-col"
+            className="bg-white rounded-xl w-[90%] max-w-[500px] max-h-[90vh] shadow-xl flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div className="bg-slate-600 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl">
+            <div className="bg-slate-600 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl shrink-0">
               <span className="text-balance">マスタ管理</span>
               <button
                 onClick={() => setIsHospitalMasterModalOpen(false)}
@@ -814,7 +814,7 @@ export default function MainPage() {
             </div>
 
             {/* モーダルボディ */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto">
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => {
