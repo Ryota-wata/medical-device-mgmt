@@ -392,7 +392,7 @@ export default function AssetProvisionalRegistrationPage() {
             qrCode: rowData.qrCode,
             assetName: item.itemName,
             model: item.model,
-            location: { floor: rowData.floor, department: rowData.department, section: rowData.section, room: rowData.roomName },
+            location: { building: '', floor: rowData.floor, department: rowData.department, section: rowData.section },
             registrationDate: new Date().toISOString().split('T')[0],
             applicationNo: rfqGroup.rfqNo || '',
             applicationType: '新規申請',

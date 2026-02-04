@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -14,7 +14,7 @@ interface HistoryCardData {
   size: string;
 }
 
-export default function HistoryPage() {
+function HistoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const facilityName = searchParams.get('facility') || '';
@@ -502,5 +502,13 @@ export default function HistoryPage() {
         variant="warning"
       />
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <HistoryContent />
+    </Suspense>
   );
 }

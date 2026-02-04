@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
-export default function QRIssuePage() {
+function QRIssueContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
@@ -443,5 +443,13 @@ export default function QRIssuePage() {
         variant="warning"
       />
     </div>
+  );
+}
+
+export default function QRIssuePage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <QRIssueContent />
+    </Suspense>
   );
 }

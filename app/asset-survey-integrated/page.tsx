@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
-export default function AssetSurveyIntegratedPage() {
+function AssetSurveyIntegratedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const facilityName = searchParams.get('facility') || '';
@@ -1361,5 +1361,13 @@ export default function AssetSurveyIntegratedPage() {
         variant="warning"
       />
     </div>
+  );
+}
+
+export default function AssetSurveyIntegratedPage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <AssetSurveyIntegratedContent />
+    </Suspense>
   );
 }
