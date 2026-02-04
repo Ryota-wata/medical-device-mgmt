@@ -481,7 +481,7 @@ export default function AssetImportPage() {
             justifyContent: 'space-between'
           }}>
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/main')}
               style={{
                 flex: isMobile ? 'none' : 1,
                 padding: '14px 24px',
@@ -499,7 +499,7 @@ export default function AssetImportPage() {
               }}
             >
               <span>←</span>
-              <span>戻る</span>
+              <span>メイン画面に戻る</span>
             </button>
             {selectedFile && fileInfo ? (
               <button

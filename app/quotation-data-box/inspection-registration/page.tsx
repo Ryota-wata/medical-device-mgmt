@@ -210,7 +210,7 @@ export default function InspectionRegistrationPage() {
                 </button>
                 <button
                   className="insp-btn-secondary"
-                  onClick={() => router.push('/qr-issue')}
+                  onClick={() => router.push('/qr-issue?from=inspection')}
                   style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.primary, border: `1px solid ${COLORS.primary}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px', minHeight: '44px' }}
                 >
                   QRラベルを発行する

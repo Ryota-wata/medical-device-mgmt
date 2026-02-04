@@ -234,7 +234,7 @@ function AssetSurveyContent() {
   const [endSealNo, setEndSealNo] = useState('');
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleShowHistory = () => {
@@ -952,7 +952,7 @@ function AssetSurveyContent() {
               borderBottom: '6px solid transparent'
             }}></div>
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>戻る</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>メイン画面に戻る</span>
         </button>
 
         {/* History Button */}

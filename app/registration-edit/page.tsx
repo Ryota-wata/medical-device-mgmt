@@ -478,7 +478,7 @@ export default function RegistrationEditPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const toggleSelectAll = (checked: boolean) => {
@@ -728,7 +728,7 @@ export default function RegistrationEditPage() {
             fontSize: '16px'
           }}
         >
-          戻る
+          メイン画面に戻る
         </button>
       </div>
     );
@@ -775,7 +775,7 @@ export default function RegistrationEditPage() {
             fontSize: '14px'
           }}
         >
-          戻る
+          メイン画面に戻る
         </button>
       </header>
 

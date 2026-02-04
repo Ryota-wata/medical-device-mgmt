@@ -112,7 +112,7 @@ export default function UserManagementPage() {
   const hospitalOptions = Array.from(new Set(users.map(u => u.hospital).filter(Boolean))) as string[];
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleEdit = (user: User) => {
@@ -416,7 +416,7 @@ export default function UserManagementPage() {
               whiteSpace: 'nowrap'
             }}
           >
-            戻る
+            メイン画面に戻る
           </button>
         </div>
       </header>

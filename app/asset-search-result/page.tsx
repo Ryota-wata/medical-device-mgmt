@@ -186,7 +186,7 @@ export default function AssetSearchResultPage() {
   };
 
   const handleRowClick = (asset: Asset) => {
-    router.push(`/asset-detail?qrCode=${asset.qrCode}`);
+    router.push(`/asset-detail?qrCode=${asset.qrCode}&from=asset-search`);
   };
 
   // 新規申請ボタンのクリックハンドラー
@@ -353,6 +353,8 @@ export default function AssetSearchResultPage() {
         onPrint={() => window.print()}
         onColumnSettings={() => setIsColumnSettingsOpen(true)}
         showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
       />
 
       {/* フィルターヘッダー */}
@@ -591,7 +593,7 @@ export default function AssetSearchResultPage() {
                     cursor: 'pointer',
                     background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white'
                   }}
-                  onDoubleClick={() => router.push(`/asset-detail?no=${asset.no}`)}
+                  onDoubleClick={() => router.push(`/asset-detail?no=${asset.no}&from=asset-search`)}
                   onMouseEnter={(e) => {
                     if (!selectedItems.has(asset.no)) {
                       e.currentTarget.style.background = '#f8f9fa';

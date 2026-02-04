@@ -27,7 +27,7 @@ function OfflinePrepContent() {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleStartSurvey = () => {
@@ -330,7 +330,7 @@ function OfflinePrepContent() {
               borderBottom: isMobile ? '5px solid transparent' : '6px solid transparent'
             }}></div>
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>戻る</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>メイン画面に戻る</span>
         </button>
 
         <button

@@ -363,6 +363,8 @@ function RemodelApplicationListContent() {
         resultCount={filteredApplications.length}
         showOriginalLabel={false}
         showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
         hideMenu={true}
       >
         <button

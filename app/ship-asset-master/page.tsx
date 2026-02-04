@@ -123,7 +123,7 @@ function ShipAssetMasterContent() {
   });
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleEdit = (asset: AssetMaster) => {
@@ -287,7 +287,7 @@ function ShipAssetMasterContent() {
               whiteSpace: 'nowrap'
             }}
           >
-            戻る
+            メイン画面に戻る
           </button>
         </div>
       </header>

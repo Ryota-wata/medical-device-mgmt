@@ -90,7 +90,7 @@ export default function ShipFacilityMasterPage() {
   });
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleEdit = (facility: FacilityMaster) => {
@@ -207,7 +207,7 @@ export default function ShipFacilityMasterPage() {
               whiteSpace: 'nowrap'
             }}
           >
-            戻る
+            メイン画面に戻る
           </button>
         </div>
       </header>

@@ -291,6 +291,8 @@ export default function QuotationManagementPage() {
       <Header
         title="タスク管理"
         showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
         hideMenu={true}
         centerContent={
           <div style={{

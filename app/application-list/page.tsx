@@ -241,7 +241,7 @@ export default function ApplicationListPage() {
             )}
           </div>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/main')}
             style={{
               padding: '8px 16px',
               background: '#95a5a6',
@@ -252,7 +252,7 @@ export default function ApplicationListPage() {
               fontSize: '14px',
             }}
           >
-            戻る
+            メイン画面に戻る
           </button>
         </div>
       </header>

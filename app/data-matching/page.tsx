@@ -123,7 +123,7 @@ export default function DataMatchingPage() {
   }, [setFilters]);
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const openLedgerWindow = () => {
@@ -537,7 +537,7 @@ export default function DataMatchingPage() {
             fontSize: '16px'
           }}
         >
-          戻る
+          メイン画面に戻る
         </button>
       </div>
     );
@@ -578,7 +578,7 @@ export default function DataMatchingPage() {
                 gap: '8px'
               }}
             >
-              <span>←</span> 戻る
+              <span>←</span> メイン画面に戻る
             </button>
             <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
               データ突合

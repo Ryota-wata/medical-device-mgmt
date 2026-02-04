@@ -485,7 +485,7 @@ export default function InventoryPage() {
 
   // カルテ画面（資産詳細画面）に遷移
   const handleViewKarte = (asset: Asset) => {
-    router.push(`/asset-detail?no=${asset.no}&readonly=true`);
+    router.push(`/asset-detail?no=${asset.no}&readonly=true&from=inventory`);
   };
 
   if (!isLoaded) {
@@ -502,6 +502,8 @@ export default function InventoryPage() {
         title="棚卸し"
         resultCount={filteredItems.length}
         showBackButton={true}
+        backHref="/asset-search-result"
+        backLabel="資産一覧に戻る"
       />
 
       {/* 進捗バー */}
@@ -941,7 +943,7 @@ export default function InventoryPage() {
         gap: '16px'
       }}>
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/asset-search-result')}
           style={{
             padding: '12px 24px',
             background: '#95a5a6',
@@ -953,7 +955,7 @@ export default function InventoryPage() {
             fontWeight: 'bold'
           }}
         >
-          戻る
+          資産一覧に戻る
         </button>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button

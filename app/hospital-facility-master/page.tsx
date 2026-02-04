@@ -173,7 +173,7 @@ function HospitalFacilityMasterContent() {
   });
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleEdit = (facility: HospitalFacilityMaster) => {
@@ -306,7 +306,7 @@ function HospitalFacilityMasterContent() {
               whiteSpace: 'nowrap',
             }}
           >
-            戻る
+            メイン画面に戻る
           </button>
         </div>
       </header>

@@ -239,7 +239,7 @@ function RemodelApplicationContent() {
   };
 
   const handleRowClick = (asset: Asset) => {
-    router.push(`/asset-detail?qrCode=${asset.qrCode}&readonly=true`);
+    router.push(`/asset-detail?qrCode=${asset.qrCode}&readonly=true&from=remodel`);
   };
 
   // 資産の申請ステータスを取得
@@ -590,6 +590,8 @@ function RemodelApplicationContent() {
         onPrint={() => window.print()}
         onColumnSettings={() => setIsColumnSettingsOpen(true)}
         showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
         hideMenu={true}
         facility={facility}
         department={department}

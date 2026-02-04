@@ -35,7 +35,7 @@ export default function ShipDepartmentMasterPage() {
   });
 
   const handleBack = () => {
-    router.back();
+    router.push('/main');
   };
 
   const handleEdit = (dept: DepartmentMaster) => {
@@ -157,7 +157,7 @@ export default function ShipDepartmentMasterPage() {
               whiteSpace: 'nowrap'
             }}
           >
-            戻る
+            メイン画面に戻る
           </button>
         </div>
       </header>
