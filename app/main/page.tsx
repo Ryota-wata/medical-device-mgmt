@@ -170,7 +170,7 @@ export default function MainPage() {
   };
 
   const handleRepairApplication = () => {
-    showToast('修理申請機能（開発中）', 'info');
+    router.push('/repair-request');
   };
 
   const handleAllDataView = () => {
