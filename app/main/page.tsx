@@ -281,49 +281,41 @@ export default function MainPage() {
         {/* メニューセクション */}
         <div className={`bg-slate-50 ${isMobile ? 'px-2.5 py-4' : isTablet ? 'px-2.5 py-5' : 'px-5 py-8'}`}>
           {isHospital ? (
-            /* 病院ユーザー用メニュー - カード型レイアウト */
-            <div className={`grid max-w-[800px] mx-auto ${
-              isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-4 gap-4'
+            /* 病院ユーザー用メニュー - 横一列（デスクトップ）/ 2×2グリッド（モバイル） */
+            <div className={`max-w-[1400px] mx-auto justify-center ${
+              isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-nowrap gap-3'
             }`}>
               <button
                 onClick={handleAssetListForHospital}
-                className={`bg-white border-2 border-sky-400 rounded-xl font-semibold text-slate-700 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 hover:bg-sky-500 hover:text-white hover:border-sky-500 hover:-translate-y-1 hover:shadow-lg hover:shadow-sky-500/30 ${
-                  isMobile ? 'p-4 min-h-[100px]' : 'p-5 min-h-[120px]'
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                <span className={isMobile ? 'text-2xl' : 'text-3xl'}>📋</span>
-                <span className={isMobile ? 'text-xs' : 'text-sm'}>資産リスト</span>
-                <span className={`text-slate-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>各種申請</span>
+                資産リスト（各種申請）
               </button>
               <button
                 onClick={handleAvailableDevices}
-                className={`bg-white border-2 border-emerald-400 rounded-xl font-semibold text-slate-700 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-500/30 ${
-                  isMobile ? 'p-4 min-h-[100px]' : 'p-5 min-h-[120px]'
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                <span className={isMobile ? 'text-2xl' : 'text-3xl'}>🏥</span>
-                <span className={isMobile ? 'text-xs' : 'text-sm'}>貸出可能機器</span>
-                <span className={`text-slate-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>閲覧</span>
+                貸出可能機器閲覧
               </button>
               <button
                 onClick={handleRepairApplication}
-                className={`bg-white border-2 border-amber-400 rounded-xl font-semibold text-slate-700 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 hover:-translate-y-1 hover:shadow-lg hover:shadow-amber-500/30 ${
-                  isMobile ? 'p-4 min-h-[100px]' : 'p-5 min-h-[120px]'
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                <span className={isMobile ? 'text-2xl' : 'text-3xl'}>🔧</span>
-                <span className={isMobile ? 'text-xs' : 'text-sm'}>修理申請</span>
-                <span className={`text-slate-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>新規申請</span>
+                修理申請
               </button>
               <button
                 onClick={handleRepairStatus}
-                className={`bg-white border-2 border-purple-400 rounded-xl font-semibold text-slate-700 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 hover:bg-purple-500 hover:text-white hover:border-purple-500 hover:-translate-y-1 hover:shadow-lg hover:shadow-purple-500/30 ${
-                  isMobile ? 'p-4 min-h-[100px]' : 'p-5 min-h-[120px]'
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                <span className={isMobile ? 'text-2xl' : 'text-3xl'}>📊</span>
-                <span className={isMobile ? 'text-xs' : 'text-sm'}>修理ステータス</span>
-                <span className={`text-slate-400 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>進捗確認</span>
+                修理ステータス
               </button>
             </div>
           ) : (
