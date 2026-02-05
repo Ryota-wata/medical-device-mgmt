@@ -177,6 +177,19 @@ export default function MainPage() {
     showToast('全データ閲覧機能（開発中）', 'info');
   };
 
+  // 病院ユーザー用ハンドラー
+  const handleAssetListForHospital = () => {
+    router.push('/asset-search-result');
+  };
+
+  const handleAvailableDevices = () => {
+    showToast('貸出可能機器閲覧機能（開発中）', 'info');
+  };
+
+  const handleRepairStatus = () => {
+    showToast('修理ステータス機能（開発中）', 'info');
+  };
+
   const handleDeleteEditList = (list: { id: string; name: string }) => {
     setDeleteTargetList(list);
     setDeleteConfirmOpen(true);
@@ -267,52 +280,96 @@ export default function MainPage() {
 
         {/* メニューセクション */}
         <div className={`bg-slate-50 ${isMobile ? 'px-2.5 py-4' : isTablet ? 'px-2.5 py-5' : 'px-5 py-8'}`}>
-          <div
-            className={`flex max-w-[1400px] mx-auto justify-center ${
-              isMobile || isTablet ? 'flex-wrap' : 'flex-nowrap'
-            } ${isMobile ? 'gap-1.5' : isTablet ? 'gap-2' : 'gap-3'}`}
-          >
-            <button
-              onClick={handleAssetBrowseAndApplication}
-              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-              }`}
+          {isHospital ? (
+            /* 病院ユーザー用メニュー */
+            <div className={`flex max-w-[1400px] mx-auto justify-center items-start ${
+              isMobile ? 'gap-1.5' : isTablet ? 'gap-2' : 'gap-3'
+            } ${isMobile || isTablet ? 'flex-wrap' : 'flex-nowrap'}`}>
+              <button
+                onClick={handleAssetListForHospital}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                資産リスト（各種申請）
+              </button>
+              <button
+                onClick={handleAvailableDevices}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                貸出可能機器閲覧
+              </button>
+              {/* 修理申請と修理ステータスを縦に並べる */}
+              <div className={`flex flex-col ${isMobile ? 'gap-1.5' : isTablet ? 'gap-2' : 'gap-2'}`}>
+                <button
+                  onClick={handleRepairApplication}
+                  className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                    isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                  }`}
+                >
+                  修理申請
+                </button>
+                <button
+                  onClick={handleRepairStatus}
+                  className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                    isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                  }`}
+                >
+                  修理ステータス
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* SHIPユーザー用メニュー */
+            <div
+              className={`flex max-w-[1400px] mx-auto justify-center ${
+                isMobile || isTablet ? 'flex-wrap' : 'flex-nowrap'
+              } ${isMobile ? 'gap-1.5' : isTablet ? 'gap-2' : 'gap-3'}`}
             >
-              資産閲覧・申請
-            </button>
-            <button
-              onClick={handleMaintenanceInspection}
-              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-              }`}
-            >
-              保守・点検
-            </button>
-            <button
-              onClick={handleLendingManagement}
-              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-              }`}
-            >
-              貸出管理
-            </button>
-            <button
-              onClick={handleRepairApplication}
-              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-              }`}
-            >
-              修理申請
-            </button>
-            <button
-              onClick={handleAllDataView}
-              className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-              }`}
-            >
-              全データ閲覧（閲覧・出力）
-            </button>
-          </div>
+              <button
+                onClick={handleAssetBrowseAndApplication}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                資産閲覧・申請
+              </button>
+              <button
+                onClick={handleMaintenanceInspection}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                保守・点検
+              </button>
+              <button
+                onClick={handleLendingManagement}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                貸出管理
+              </button>
+              <button
+                onClick={handleRepairApplication}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                修理申請
+              </button>
+              <button
+                onClick={handleAllDataView}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                全データ閲覧（閲覧・出力）
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ダッシュボードボディ（次スコープ用） */}
