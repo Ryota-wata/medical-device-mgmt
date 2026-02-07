@@ -12,6 +12,8 @@ interface HeaderProps {
   showBackButton?: boolean;
   backHref?: string;
   backLabel?: string;
+  backButtonVariant?: 'primary' | 'secondary';
+  hideHomeButton?: boolean;
   resultCount?: number;
   showOriginalLabel?: boolean;
   onExport?: () => void;
@@ -35,6 +37,8 @@ export const Header: React.FC<HeaderProps> = ({
   showBackButton = true,
   backHref,
   backLabel,
+  backButtonVariant = 'primary',
+  hideHomeButton = false,
   resultCount,
   showOriginalLabel = true,
   onExport,
@@ -348,7 +352,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* メイン画面に戻るボタン（backHrefが/main以外の場合のみ表示） */}
-        {showBackButton && backHref && backHref !== '/main' && (
+        {showBackButton && backHref && backHref !== '/main' && !hideHomeButton && (
           <button
             onClick={() => router.push('/main')}
             className="text-white border-0 rounded cursor-pointer transition-all whitespace-nowrap"
@@ -374,15 +378,15 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={handleBack}
             className="text-white border-0 rounded cursor-pointer transition-all whitespace-nowrap"
             style={{
-              background: '#27ae60',
+              background: backButtonVariant === 'secondary' ? '#34495e' : '#27ae60',
               padding: isMobile ? '6px 12px' : '8px 16px',
               fontSize: isMobile ? '12px' : '14px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#229954';
+              e.currentTarget.style.background = backButtonVariant === 'secondary' ? '#2c3e50' : '#229954';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#27ae60';
+              e.currentTarget.style.background = backButtonVariant === 'secondary' ? '#34495e' : '#27ae60';
             }}
           >
             {backLabel || '戻る'}

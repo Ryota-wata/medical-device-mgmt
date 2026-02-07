@@ -44,7 +44,7 @@ const REPAIR_STEPS = [
 ];
 
 // 修理依頼のステータス
-type RepairStatus = '新規申請' | '受付済' | '依頼済' | '修理中' | '完了';
+type RepairStatus = '新規申請' | '受付済' | '依頼済' | '修理中' | '院内対応中' | '完了';
 
 // 修理依頼データ型
 interface RepairRequest {
@@ -184,6 +184,7 @@ const getActiveStep = (status: RepairStatus): number => {
     case '受付済': return 2;
     case '依頼済': return 3;
     case '修理中': return 4;
+    case '院内対応中': return 5; // 院内修理の場合はSTEP5へ直接遷移
     case '完了': return 5;
     default: return 1;
   }
@@ -211,6 +212,94 @@ const labelStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// セクションコンポーネント（コンポーネント外に定義してリレンダリング問題を回避）
+const Section = ({
+  step,
+  title,
+  children,
+  accentColor = COLORS.primary,
+  headerAction,
+  enabled,
+  completed,
+}: {
+  step: number;
+  title: string;
+  children: React.ReactNode;
+  accentColor?: string;
+  headerAction?: React.ReactNode;
+  enabled: boolean;
+  completed: boolean;
+}) => {
+  return (
+    <div style={{
+      background: COLORS.white,
+      border: enabled ? `2px solid ${accentColor}` : `1px solid ${COLORS.borderLight}`,
+      borderRadius: '8px',
+      marginBottom: '16px',
+      opacity: enabled ? 1 : 0.7,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '10px 16px',
+        background: enabled ? accentColor : completed ? COLORS.success : COLORS.sectionHeader,
+        color: COLORS.textOnColor,
+        borderRadius: '6px 6px 0 0',
+      }}>
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.2)',
+          fontSize: '12px',
+          fontWeight: 'bold',
+        }}>
+          {completed ? '✓' : step}
+        </span>
+        <span style={{ fontSize: '14px', fontWeight: 'bold', flex: 1 }}>{title}</span>
+        {completed && (
+          <span style={{
+            fontSize: '11px',
+            background: 'rgba(255,255,255,0.2)',
+            padding: '2px 8px',
+            borderRadius: '10px',
+          }}>
+            完了
+          </span>
+        )}
+        {enabled && !headerAction && (
+          <span style={{
+            fontSize: '11px',
+            background: 'rgba(255,255,255,0.3)',
+            padding: '2px 8px',
+            borderRadius: '10px',
+          }}>
+            作業中
+          </span>
+        )}
+        {headerAction}
+      </div>
+      <div style={{
+        padding: '16px',
+        pointerEvents: enabled ? 'auto' : 'none',
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// フォーム行コンポーネント（コンポーネント外に定義してリレンダリング問題を回避）
+const FormRow = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap', ...style }}>
+    {children}
+  </div>
+);
+
 function RepairTaskContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -220,6 +309,10 @@ function RepairTaskContent() {
   const [formData, setFormData] = useState<RepairRequest | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  // STEP2用：プレビュー対象の業者インデックス（null=非表示）
+  const [previewVendorIndex, setPreviewVendorIndex] = useState<number | null>(null);
+  // プレビュータイプ
+  const [previewType, setPreviewType] = useState<'step1' | 'step2' | null>(null);
 
   // パネル幅の状態（左パネルの幅をパーセントで管理）
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
@@ -271,10 +364,6 @@ function RepairTaskContent() {
     );
   }
 
-  const handleBack = () => {
-    router.push('/quotation-data-box?tab=repairRequests');
-  };
-
   const updateFormData = (updates: Partial<RepairRequest>) => {
     setFormData(prev => prev ? { ...prev, ...updates } : prev);
   };
@@ -291,10 +380,8 @@ function RepairTaskContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       if (category === '院内修理') {
-        alert('院内修理として受付しました。STEP5へスキップします。');
-        setRequest(prev => prev ? { ...prev, status: '修理中', repairCategory: category } : prev);
+        setRequest(prev => prev ? { ...prev, status: '院内対応中', repairCategory: category } : prev);
       } else {
-        alert('院外修理として受付しました。STEP2へ進みます。');
         setRequest(prev => prev ? { ...prev, status: '受付済', repairCategory: category } : prev);
       }
       setIsSubmitting(false);
@@ -363,93 +450,6 @@ function RepairTaskContent() {
       router.push('/quotation-data-box?tab=repairRequests');
     }, 500);
   };
-
-  // セクションコンポーネント
-  const Section = ({
-    step,
-    title,
-    children,
-    accentColor = COLORS.primary,
-    headerAction,
-  }: {
-    step: number;
-    title: string;
-    children: React.ReactNode;
-    accentColor?: string;
-    headerAction?: React.ReactNode;
-  }) => {
-    const enabled = isStepEnabled(step);
-    const completed = step < activeStep;
-
-    return (
-      <div style={{
-        background: COLORS.white,
-        border: enabled ? `2px solid ${accentColor}` : `1px solid ${COLORS.borderLight}`,
-        borderRadius: '8px',
-        marginBottom: '16px',
-        opacity: enabled ? 1 : 0.7,
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '10px 16px',
-          background: enabled ? accentColor : completed ? COLORS.success : COLORS.sectionHeader,
-          color: COLORS.textOnColor,
-          borderRadius: '6px 6px 0 0',
-        }}>
-          <span style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.2)',
-            fontSize: '12px',
-            fontWeight: 'bold',
-          }}>
-            {completed ? '✓' : step}
-          </span>
-          <span style={{ fontSize: '14px', fontWeight: 'bold', flex: 1 }}>{title}</span>
-          {completed && (
-            <span style={{
-              fontSize: '11px',
-              background: 'rgba(255,255,255,0.2)',
-              padding: '2px 8px',
-              borderRadius: '10px',
-            }}>
-              完了
-            </span>
-          )}
-          {enabled && !headerAction && (
-            <span style={{
-              fontSize: '11px',
-              background: 'rgba(255,255,255,0.3)',
-              padding: '2px 8px',
-              borderRadius: '10px',
-            }}>
-              作業中
-            </span>
-          )}
-          {headerAction}
-        </div>
-        <div style={{
-          padding: '16px',
-          pointerEvents: enabled ? 'auto' : 'none',
-        }}>
-          {children}
-        </div>
-      </div>
-    );
-  };
-
-  // フォーム行コンポーネント
-  const FormRow = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap', ...style }}>
-      {children}
-    </div>
-  );
 
   // プログレスバー
   const ProgressBar = () => (
@@ -531,7 +531,11 @@ function RepairTaskContent() {
       <Header
         title="修理申請タスク"
         hideMenu={true}
-        showBackButton={false}
+        showBackButton={true}
+        backHref="/quotation-data-box?tab=repairRequests"
+        backLabel="一覧に戻る"
+        backButtonVariant="secondary"
+        hideHomeButton={true}
       />
 
       <ProgressBar />
@@ -569,10 +573,16 @@ function RepairTaskContent() {
           step={1}
           title="STEP1. 修理依頼の受付"
           accentColor="#3498db"
+          enabled={isStepEnabled(1)}
+          completed={1 < activeStep}
           headerAction={
             <button
               className="repair-btn"
-              onClick={() => setShowPreview(true)}
+              onClick={() => {
+                setShowPreview(true);
+                setPreviewType('step1');
+                setPreviewVendorIndex(null);
+              }}
               disabled={!isStepEnabled(1)}
               style={{
                 padding: '4px 12px',
@@ -726,93 +736,138 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP2: 修理見積の依頼 */}
-        <Section step={2} title="STEP2. 修理見積の依頼" accentColor="#9c27b0">
+        <Section step={2} title="STEP2. 修理見積の依頼" accentColor="#9c27b0" enabled={isStepEnabled(2)} completed={2 < activeStep}>
+          <div style={{
+            padding: '12px 16px',
+            background: '#f3e5f5',
+            borderRadius: '4px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            color: '#6a1b9a',
+          }}>
+            修理業者を登録し、修理見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。
+          </div>
           <div style={{ overflowX: 'auto', marginBottom: '12px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '700px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '850px' }}>
               <thead>
                 <tr style={{ background: COLORS.surfaceAlt }}>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '80px' }}></th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '70px' }}></th>
                   <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>業者名 <span style={{ color: COLORS.error }}>*</span></th>
                   <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>担当者名</th>
                   <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>メール <span style={{ color: COLORS.error }}>*</span></th>
                   <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>連絡先</th>
                   <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '130px' }}>提出期限</th>
-                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '80px' }}></th>
+                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '150px' }}>アクション</th>
                 </tr>
               </thead>
               <tbody>
-                {[0, 1, 2].map((i) => (
-                  <tr key={i} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted, fontSize: '11px' }}>依頼先{i + 1}</td>
-                    <td style={{ padding: '4px' }}>
-                      <input
-                        type="text"
-                        value={formData.vendors[i]?.name || ''}
-                        onChange={(e) => updateVendor(i, 'name', e.target.value)}
-                        placeholder="業者名"
-                        {...getInputProps(2)}
-                        style={{ ...getInputProps(2).style, width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px' }}>
-                      <input
-                        type="text"
-                        value={formData.vendors[i]?.person || ''}
-                        onChange={(e) => updateVendor(i, 'person', e.target.value)}
-                        placeholder="担当者"
-                        {...getInputProps(2)}
-                        style={{ ...getInputProps(2).style, width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px' }}>
-                      <input
-                        type="email"
-                        value={formData.vendors[i]?.email || ''}
-                        onChange={(e) => updateVendor(i, 'email', e.target.value)}
-                        placeholder="email@example.com"
-                        {...getInputProps(2)}
-                        style={{ ...getInputProps(2).style, width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px' }}>
-                      <input
-                        type="tel"
-                        value={formData.vendors[i]?.contact || ''}
-                        onChange={(e) => updateVendor(i, 'contact', e.target.value)}
-                        placeholder="03-0000-0000"
-                        {...getInputProps(2)}
-                        style={{ ...getInputProps(2).style, width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px' }}>
-                      <input
-                        type="date"
-                        value={formData.vendors[i]?.deadline || ''}
-                        onChange={(e) => updateVendor(i, 'deadline', e.target.value)}
-                        {...getInputProps(2)}
-                        style={{ ...getInputProps(2).style, width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px', textAlign: 'center' }}>
-                      <button
-                        className="repair-btn"
-                        onClick={() => handleStep2Submit(i)}
-                        disabled={!isStepEnabled(2)}
-                        style={{
-                          padding: '4px 10px',
-                          background: COLORS.primary,
-                          color: COLORS.textOnColor,
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '11px',
-                        }}
-                      >
-                        依頼送信
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {[0, 1, 2].map((i) => {
+                  const vendor = formData.vendors[i];
+                  const hasVendorData = vendor?.name && vendor?.email;
+                  const isSelected = previewType === 'step2' && previewVendorIndex === i;
+                  return (
+                    <tr
+                      key={i}
+                      style={{
+                        borderBottom: `1px solid ${COLORS.borderLight}`,
+                        background: isSelected ? '#f3e5f5' : 'transparent',
+                      }}
+                    >
+                      <td style={{ padding: '6px 8px', color: COLORS.textMuted, fontSize: '11px' }}>依頼先{i + 1}</td>
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="text"
+                          value={vendor?.name || ''}
+                          onChange={(e) => updateVendor(i, 'name', e.target.value)}
+                          placeholder="業者名"
+                          {...getInputProps(2)}
+                          style={{ ...getInputProps(2).style, width: '100%' }}
+                        />
+                      </td>
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="text"
+                          value={vendor?.person || ''}
+                          onChange={(e) => updateVendor(i, 'person', e.target.value)}
+                          placeholder="担当者"
+                          {...getInputProps(2)}
+                          style={{ ...getInputProps(2).style, width: '100%' }}
+                        />
+                      </td>
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="email"
+                          value={vendor?.email || ''}
+                          onChange={(e) => updateVendor(i, 'email', e.target.value)}
+                          placeholder="email@example.com"
+                          {...getInputProps(2)}
+                          style={{ ...getInputProps(2).style, width: '100%' }}
+                        />
+                      </td>
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="tel"
+                          value={vendor?.contact || ''}
+                          onChange={(e) => updateVendor(i, 'contact', e.target.value)}
+                          placeholder="03-0000-0000"
+                          {...getInputProps(2)}
+                          style={{ ...getInputProps(2).style, width: '100%' }}
+                        />
+                      </td>
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="date"
+                          value={vendor?.deadline || ''}
+                          onChange={(e) => updateVendor(i, 'deadline', e.target.value)}
+                          {...getInputProps(2)}
+                          style={{ ...getInputProps(2).style, width: '100%' }}
+                        />
+                      </td>
+                      <td style={{ padding: '4px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                          <button
+                            className="repair-btn"
+                            onClick={() => {
+                              setShowPreview(true);
+                              setPreviewType('step2');
+                              setPreviewVendorIndex(i);
+                            }}
+                            disabled={!isStepEnabled(2) || !hasVendorData}
+                            style={{
+                              padding: '4px 8px',
+                              background: hasVendorData ? '#9c27b0' : COLORS.disabled,
+                              color: COLORS.textOnColor,
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: hasVendorData ? 'pointer' : 'not-allowed',
+                              fontSize: '11px',
+                            }}
+                            title={hasVendorData ? 'プレビュー表示' : '業者名とメールを入力してください'}
+                          >
+                            プレビュー
+                          </button>
+                          <button
+                            className="repair-btn"
+                            onClick={() => handleStep2Submit(i)}
+                            disabled={!isStepEnabled(2) || !hasVendorData}
+                            style={{
+                              padding: '4px 8px',
+                              background: hasVendorData ? COLORS.primary : COLORS.disabled,
+                              color: COLORS.textOnColor,
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: hasVendorData ? 'pointer' : 'not-allowed',
+                              fontSize: '11px',
+                            }}
+                            title={hasVendorData ? '依頼を送信' : '業者名とメールを入力してください'}
+                          >
+                            依頼送信
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -839,7 +894,7 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP3: 修理見積の登録 */}
-        <Section step={3} title="STEP3. 修理見積の登録" accentColor="#27ae60">
+        <Section step={3} title="STEP3. 修理見積の登録" accentColor="#27ae60" enabled={isStepEnabled(3)} completed={3 < activeStep}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
             <div>
               <FormRow>
@@ -964,7 +1019,7 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP4: 修理の依頼（発注） */}
-        <Section step={4} title="STEP4. 修理の依頼（発注）" accentColor="#e67e22">
+        <Section step={4} title="STEP4. 修理の依頼（発注）" accentColor="#e67e22" enabled={isStepEnabled(4)} completed={4 < activeStep}>
           <FormRow>
             <span style={labelStyle}>対応区分</span>
             <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1115,7 +1170,7 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP5: 完了登録 */}
-        <Section step={5} title="STEP5. 完了登録（修理報告書の登録）" accentColor="#e74c3c">
+        <Section step={5} title="STEP5. 完了登録（修理報告書の登録）" accentColor="#e74c3c" enabled={isStepEnabled(5)} completed={5 < activeStep}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
             <div>
               <FormRow>
@@ -1200,25 +1255,6 @@ function RepairTaskContent() {
           </div>
         </Section>
 
-        {/* フッター */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', paddingBottom: '24px' }}>
-          <button
-            className="repair-btn"
-            onClick={handleBack}
-            style={{
-              padding: '12px 24px',
-              background: COLORS.white,
-              color: COLORS.textMuted,
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
-          >
-            ← 一覧に戻る
-          </button>
-        </div>
         </div>
         {/* 左側パネル終了 */}
 
@@ -1257,7 +1293,7 @@ function RepairTaskContent() {
           {/* プレビューヘッダー */}
           <div style={{
             padding: '12px 16px',
-            background: COLORS.primary,
+            background: previewType === 'step2' ? '#9c27b0' : COLORS.primary,
             color: 'white',
             fontSize: '14px',
             fontWeight: 'bold',
@@ -1265,11 +1301,20 @@ function RepairTaskContent() {
             alignItems: 'center',
             justifyContent: 'space-between',
           }}>
-            <span>修理申請書プレビュー</span>
-            {showPreview && (
+            <span>
+              {previewType === 'step1' && '修理申請書プレビュー'}
+              {previewType === 'step2' && previewVendorIndex !== null && `修理見積依頼書 - ${formData?.vendors[previewVendorIndex]?.name || `依頼先${previewVendorIndex + 1}`}`}
+              {!previewType && 'プレビュー'}
+            </span>
+            {showPreview && previewType && (
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   className="repair-btn"
+                  onClick={() => {
+                    setShowPreview(false);
+                    setPreviewType(null);
+                    setPreviewVendorIndex(null);
+                  }}
                   style={{
                     padding: '4px 12px',
                     background: 'rgba(255,255,255,0.2)',
@@ -1280,7 +1325,7 @@ function RepairTaskContent() {
                     fontSize: '11px',
                   }}
                 >
-                  拡大
+                  閉じる
                 </button>
                 <button
                   className="repair-btn"
@@ -1294,7 +1339,7 @@ function RepairTaskContent() {
                     fontSize: '11px',
                   }}
                 >
-                  ダウンロード
+                  PDF出力
                 </button>
               </div>
             )}
@@ -1304,12 +1349,12 @@ function RepairTaskContent() {
             flex: 1,
             overflow: 'auto',
             background: '#f5f5f5',
-            padding: showPreview ? '24px' : '0',
-            display: showPreview ? 'block' : 'flex',
+            padding: showPreview && previewType ? '24px' : '0',
+            display: showPreview && previewType ? 'block' : 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            {showPreview ? (
+            {showPreview && previewType === 'step1' && (
               /* 修理申請書プレビュー（ユーザーからの申請） */
               <div style={{
                 background: 'white',
@@ -1458,17 +1503,230 @@ function RepairTaskContent() {
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+
+            {showPreview && previewType === 'step2' && previewVendorIndex !== null && formData && (() => {
+              const vendor = formData.vendors[previewVendorIndex];
+              const today = new Date();
+              const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
+              return (
+                <div style={{
+                  background: 'white',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  padding: '40px',
+                  maxWidth: '600px',
+                  margin: '0 auto',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  fontFamily: '"Noto Sans JP", "Hiragino Sans", sans-serif',
+                }}>
+                  {/* 日付（右寄せ） */}
+                  <div style={{
+                    textAlign: 'right',
+                    fontSize: '13px',
+                    marginBottom: '24px',
+                  }}>
+                    {dateStr}
+                  </div>
+
+                  {/* 宛先 */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                      {vendor?.name || '○○○○'}　御中
+                    </div>
+                    {vendor?.person && (
+                      <div style={{ fontSize: '14px', marginTop: '4px', paddingLeft: '16px' }}>
+                        {vendor.person}　様
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 差出人（右寄せ） */}
+                  <div style={{
+                    textAlign: 'right',
+                    fontSize: '13px',
+                    marginBottom: '32px',
+                    lineHeight: '1.8',
+                  }}>
+                    <div style={{ fontWeight: 'bold' }}>医療法人○○会　○○病院</div>
+                    <div>{formData.receptionDepartment || request.applicantDepartment}</div>
+                    <div>担当：{formData.receptionPerson || request.applicantName}</div>
+                    <div>TEL：{formData.receptionContact || request.applicantContact}</div>
+                  </div>
+
+                  {/* タイトル */}
+                  <h2 style={{
+                    textAlign: 'center',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    marginBottom: '24px',
+                    paddingBottom: '8px',
+                    borderBottom: '2px solid #333',
+                  }}>
+                    修理見積依頼
+                  </h2>
+
+                  {/* 本文 */}
+                  <div style={{
+                    fontSize: '13px',
+                    lineHeight: '2',
+                    marginBottom: '24px',
+                  }}>
+                    <p style={{ margin: '0 0 16px 0' }}>
+                      拝啓　時下ますますご清栄のこととお慶び申し上げます。
+                    </p>
+                    <p style={{ margin: '0 0 16px 0' }}>
+                      さて、下記機器につきまして故障が発生いたしましたので、修理見積のご提出をお願い申し上げます。
+                    </p>
+                  </div>
+
+                  {/* 記 */}
+                  <div style={{
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    marginBottom: '20px',
+                  }}>
+                    記
+                  </div>
+
+                  {/* 修理対象機器 */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      marginBottom: '8px',
+                      color: '#333',
+                    }}>
+                      【対象機器】
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <tbody>
+                        <tr>
+                          <th style={{ padding: '8px 12px', background: '#f5f5f5', border: '1px solid #ccc', width: '100px', textAlign: 'left' }}>品名</th>
+                          <td style={{ padding: '8px 12px', border: '1px solid #ccc', fontWeight: 'bold' }}>{request.itemName}</td>
+                        </tr>
+                        <tr>
+                          <th style={{ padding: '8px 12px', background: '#f5f5f5', border: '1px solid #ccc', textAlign: 'left' }}>メーカー</th>
+                          <td style={{ padding: '8px 12px', border: '1px solid #ccc' }}>{request.maker}</td>
+                        </tr>
+                        <tr>
+                          <th style={{ padding: '8px 12px', background: '#f5f5f5', border: '1px solid #ccc', textAlign: 'left' }}>型式</th>
+                          <td style={{ padding: '8px 12px', border: '1px solid #ccc' }}>{request.model}</td>
+                        </tr>
+                        <tr>
+                          <th style={{ padding: '8px 12px', background: '#f5f5f5', border: '1px solid #ccc', textAlign: 'left' }}>シリアルNo.</th>
+                          <td style={{ padding: '8px 12px', border: '1px solid #ccc', fontFamily: 'monospace' }}>{request.serialNo}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* 故障状況 */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      marginBottom: '8px',
+                      color: '#333',
+                    }}>
+                      【故障状況】
+                    </div>
+                    <div style={{
+                      padding: '12px 16px',
+                      border: '1px solid #ccc',
+                      background: '#fafafa',
+                      fontSize: '13px',
+                      lineHeight: '1.6',
+                      minHeight: '60px',
+                    }}>
+                      {request.symptoms}
+                    </div>
+                  </div>
+
+                  {/* ご依頼事項 */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      marginBottom: '8px',
+                      color: '#333',
+                    }}>
+                      【ご依頼事項】
+                    </div>
+                    <div style={{
+                      padding: '12px 16px',
+                      border: '1px solid #ccc',
+                      background: '#fafafa',
+                      fontSize: '13px',
+                      lineHeight: '1.8',
+                    }}>
+                      <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                        <li>上記機器の修理をお願いいたします。</li>
+                        <li>修理着手前に見積書をご提出ください。</li>
+                        <li>修理期間の目安をご連絡ください。</li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  {/* 見積提出期限 */}
+                  <div style={{
+                    padding: '16px',
+                    background: '#fff3e0',
+                    border: '1px solid #ffb74d',
+                    borderRadius: '4px',
+                    marginBottom: '24px',
+                  }}>
+                    <div style={{ fontSize: '13px' }}>
+                      <strong>見積提出期限：</strong>
+                      <span style={{
+                        fontSize: '15px',
+                        fontWeight: 'bold',
+                        color: '#e65100',
+                        marginLeft: '8px',
+                      }}>
+                        {vendor?.deadline ? new Date(vendor.deadline).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '（別途ご相談）'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 結び */}
+                  <div style={{
+                    fontSize: '13px',
+                    lineHeight: '2',
+                    marginBottom: '16px',
+                  }}>
+                    <p style={{ margin: '0 0 16px 0' }}>
+                      ご多忙のところ恐れ入りますが、何卒よろしくお願い申し上げます。
+                    </p>
+                    <p style={{ margin: 0, textAlign: 'right' }}>
+                      敬具
+                    </p>
+                  </div>
+
+                  {/* 以上 */}
+                  <div style={{
+                    textAlign: 'right',
+                    fontSize: '13px',
+                    marginTop: '24px',
+                  }}>
+                    以上
+                  </div>
+                </div>
+              );
+            })()}
+
+            {!showPreview || !previewType ? (
               /* プレビュー未表示時のプレースホルダー */
               <div style={{
                 textAlign: 'center',
                 color: '#999',
               }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
-                <div style={{ fontSize: '14px' }}>STEP1の「プレビュー」ボタンを押すと</div>
-                <div style={{ fontSize: '14px' }}>修理申請書のプレビューが表示されます</div>
+                <div style={{ fontSize: '14px' }}>各STEPの「プレビュー」ボタンを押すと</div>
+                <div style={{ fontSize: '14px' }}>帳票のプレビューが表示されます</div>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
