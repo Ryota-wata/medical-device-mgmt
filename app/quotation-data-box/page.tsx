@@ -20,6 +20,7 @@ import { WINDOW_SIZES, TIMEOUTS, MESSAGES } from '@/lib/constants/quotation';
 import { MOCK_OCR_RESULT } from '@/lib/mocks/quotationMockData';
 import { RfqGroupsTab } from './components/RfqGroupsTab';
 import { QuotationsTab } from './components/QuotationsTab';
+import { RepairRequestsTab } from './components/RepairRequestsTab';
 import { QuotationRegistrationModal } from './components/QuotationRegistrationModal';
 import { ApplicationFormData } from './components/QuotationRegistrationModal/ApplicationCreationModal';
 
@@ -40,9 +41,9 @@ function TabSwitcher({ onTabChange }: { onTabChange: (tab: SubTabType) => void }
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'quotations') {
-      onTabChange('quotations');
+    const tab = searchParams.get('tab') as SubTabType | null;
+    if (tab && SUB_TABS.some(t => t.key === tab)) {
+      onTabChange(tab);
     }
   }, [searchParams, onTabChange]);
 
@@ -430,27 +431,7 @@ export default function QuotationManagementPage() {
               />
             )}
             {activeSubTab === 'repairRequests' && (
-              <div style={{ padding: '16px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ background: '#f8f9fa' }}>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>依頼No</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>依頼日</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>資産名</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>故障内容</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>依頼先</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>ステータス</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                        データがありません
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <RepairRequestsTab />
             )}
             {activeSubTab === 'repairDetails' && (
               <div style={{ padding: '16px' }}>
