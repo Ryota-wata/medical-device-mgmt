@@ -167,7 +167,7 @@ export default function MainPage() {
   };
 
   const handleLendingManagement = () => {
-    showToast('貸出管理機能（開発中）', 'info');
+    setIsLendingMenuModalOpen(true);
   };
 
   const handleRepairApplication = () => {
