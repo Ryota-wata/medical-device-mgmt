@@ -36,21 +36,31 @@ const COLORS = {
 
 /** 修理フローのステップ定義 */
 const REPAIR_STEPS = [
-  { step: 1, label: '修理受付', status: '受付済' },
-  { step: 2, label: '見積依頼', status: '依頼済' },
-  { step: 3, label: '見積登録', status: '依頼済' },
-  { step: 4, label: '修理発注', status: '修理中' },
+  { step: 1, label: '受付', status: '受付済' },
+  { step: 2, label: '見積依頼', status: '受付済' },   // 見積依頼しても受付済のまま
+  { step: 3, label: '見積登録', status: '依頼済' },   // 見積登録完了で依頼済へ
+  { step: 4, label: '発注・引取', status: '修理中' }, // 発注・引取登録で修理中へ
   { step: 5, label: '完了登録', status: '完了' },
 ];
 
 // 修理依頼のステータス
 type RepairStatus = '新規申請' | '受付済' | '依頼済' | '修理中' | '院内対応中' | '完了';
 
-// 登録済み見積の型
+// 登録済み見積の型（STEP3用）
 interface RegisteredQuotation {
   id: number;
   phase: '発注用' | '参考' | '追加';
   saveFormat: '電子取引' | 'スキャナ保存' | '未指定';
+  fileName: string;
+  registeredAt: string;
+}
+
+// 登録済みドキュメントの型（STEP5用）
+interface RegisteredDocument {
+  id: number;
+  documentType: '修理報告書' | '納品書' | 'その他';
+  accountType: '修繕費' | 'その他';
+  accountOther?: string;
   fileName: string;
   registeredAt: string;
 }
@@ -186,14 +196,14 @@ const getMockRequest = (id: string): RepairRequest => {
   };
 };
 
-// ステータスからアクティブなステップを取得
-const getActiveStep = (status: RepairStatus): number => {
+// ステータスから初期ステップを取得（初期表示用）
+const getInitialStep = (status: RepairStatus): number => {
   switch (status) {
     case '新規申請': return 1;
     case '受付済': return 2;
-    case '依頼済': return 3;
-    case '修理中': return 4;
-    case '院内対応中': return 5; // 院内修理の場合はSTEP5へ直接遷移
+    case '依頼済': return 4;
+    case '修理中': return 5;
+    case '院内対応中': return 5;
     case '完了': return 5;
     default: return 1;
   }
@@ -317,15 +327,24 @@ function RepairTaskContent() {
   const [request, setRequest] = useState<RepairRequest | null>(null);
   const [formData, setFormData] = useState<RepairRequest | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  // STEP2用：プレビュー対象の業者インデックス（null=非表示）
+  // STEP2用：プレビュー対象の業者インデックス（null=一覧表示）
   const [previewVendorIndex, setPreviewVendorIndex] = useState<number | null>(null);
-  // プレビュータイプ
-  const [previewType, setPreviewType] = useState<'step1' | 'step2' | 'step4' | null>(null);
   // STEP3用：登録済み見積リスト
   const [registeredQuotations, setRegisteredQuotations] = useState<RegisteredQuotation[]>([]);
   // STEP3用：選択中のファイル名
   const [selectedFileName, setSelectedFileName] = useState<string>('');
+  // STEP5用：登録済みドキュメントリスト
+  const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
+  // STEP5用：選択中のファイル名
+  const [selectedDocFileName, setSelectedDocFileName] = useState<string>('');
+  // 現在のステップ（ステータスとは別に管理）
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  // プレビュータブ（右端縦型タブ）
+  const [previewTab, setPreviewTab] = useState<1 | 2 | 3 | 4 | 5>(1);
+  // STEP3プレビュー用：選択中の見積インデックス
+  const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
+  // STEP5プレビュー用：選択中のドキュメントインデックス
+  const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
 
   // パネル幅の状態（左パネルの幅をパーセントで管理）
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
@@ -358,13 +377,14 @@ function RepairTaskContent() {
     const data = getMockRequest(requestId);
     setRequest(data);
     setFormData({ ...data });
+    // 初期ステップを設定
+    setCurrentStep(getInitialStep(data.status));
   }, [requestId]);
 
-  const activeStep = useMemo(() => {
-    return request ? getActiveStep(request.status) : 1;
-  }, [request]);
+  // currentStepをactiveStepとして使用
+  const activeStep = currentStep;
 
-  const isStepEnabled = (step: number) => step === activeStep;
+  const isStepEnabled = (step: number) => step <= activeStep;
 
   if (!request || !formData) {
     return (
@@ -394,8 +414,10 @@ function RepairTaskContent() {
     setTimeout(() => {
       if (category === '院内修理') {
         setRequest(prev => prev ? { ...prev, status: '院内対応中', repairCategory: category } : prev);
+        setCurrentStep(5); // 院内修理はSTEP5へ
       } else {
         setRequest(prev => prev ? { ...prev, status: '受付済', repairCategory: category } : prev);
+        setCurrentStep(2); // 院外修理はSTEP2へ
       }
       setIsSubmitting(false);
     }, 500);
@@ -415,7 +437,8 @@ function RepairTaskContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       alert('見積依頼を完了しました。STEP3へ進みます。');
-      setRequest(prev => prev ? { ...prev, status: '依頼済' } : prev);
+      // ステータスは「受付済」のまま維持（見積登録完了時に「依頼済」へ遷移）
+      setCurrentStep(3); // STEP3へ
       setIsSubmitting(false);
     }, 500);
   };
@@ -450,9 +473,10 @@ function RepairTaskContent() {
     }
   };
 
-  // STEP3 → STEP4へ進む
+  // STEP3 → STEP4へ進む（見積登録完了で「依頼済」へ遷移）
   const handleGoToStep4 = () => {
-    setRequest(prev => prev ? { ...prev, status: '修理中' } : prev);
+    setRequest(prev => prev ? { ...prev, status: '依頼済' } : prev);
+    setCurrentStep(4); // STEP4へ
   };
 
   // STEP4: 院内対応（タスククローズ）
@@ -472,23 +496,46 @@ function RepairTaskContent() {
 
   // STEP4: 発注書プレビュー表示
   const handleShowOrderPreview = () => {
-    setShowPreview(true);
-    setPreviewType('step4');
-    setPreviewVendorIndex(null);
+    setPreviewTab(4);
   };
 
-  // STEP4: 発注書発行（STEP5へ）
+  // STEP4: 発注書発行（STEP5へ）- モックなのでバリデーション緩和
   const handleStep4Order = () => {
     setRequest(prev => prev ? { ...prev, status: '修理中' } : prev);
+    setCurrentStep(5); // STEP5へ
     alert('発注書を発行しました。STEP5へ進みます。');
   };
 
-  // STEP5: 完了
-  const handleStep5Complete = () => {
-    if (!formData.deliveryDate) {
-      alert('納品日を入力してください');
+  // STEP5: ドキュメント登録（リストに追加）
+  const handleAddDocument = () => {
+    if (!selectedDocFileName) {
+      alert('ファイルを選択してください');
       return;
     }
+
+    const newDocument: RegisteredDocument = {
+      id: Date.now(),
+      documentType: formData.documentType,
+      accountType: formData.accountType,
+      accountOther: formData.accountType === 'その他' ? formData.accountOther : undefined,
+      fileName: selectedDocFileName,
+      registeredAt: new Date().toISOString(),
+    };
+
+    setRegisteredDocuments(prev => [...prev, newDocument]);
+    setSelectedDocFileName('');
+    alert('ドキュメントを登録しました');
+  };
+
+  // STEP5: ドキュメント削除
+  const handleDeleteDocument = (id: number) => {
+    if (confirm('このドキュメントを削除しますか？')) {
+      setRegisteredDocuments(prev => prev.filter(d => d.id !== id));
+    }
+  };
+
+  // STEP5: 完了（モックなのでバリデーション緩和）
+  const handleStep5Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
       alert('修理完了を登録しました。タスク管理画面に戻ります。');
@@ -623,11 +670,7 @@ function RepairTaskContent() {
           headerAction={
             <button
               className="repair-btn"
-              onClick={() => {
-                setShowPreview(true);
-                setPreviewType('step1');
-                setPreviewVendorIndex(null);
-              }}
+              onClick={() => setPreviewTab(1)}
               disabled={!isStepEnabled(1)}
               style={{
                 padding: '4px 12px',
@@ -781,7 +824,35 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP2: 修理見積の依頼 */}
-        <Section step={2} title="STEP2. 修理見積の依頼" accentColor="#9c27b0" enabled={isStepEnabled(2)} completed={2 < activeStep}>
+        <Section
+          step={2}
+          title="STEP2. 修理見積の依頼"
+          accentColor="#9c27b0"
+          enabled={isStepEnabled(2)}
+          completed={2 < activeStep}
+          headerAction={
+            <button
+              className="repair-btn"
+              onClick={() => {
+                setPreviewTab(2);
+                setPreviewVendorIndex(null);
+              }}
+              disabled={!isStepEnabled(2)}
+              style={{
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.9)',
+                color: '#9c27b0',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              }}
+            >
+              一覧表示
+            </button>
+          }
+        >
           <div style={{
             padding: '12px 16px',
             background: '#f3e5f5',
@@ -809,7 +880,7 @@ function RepairTaskContent() {
                 {[0, 1, 2].map((i) => {
                   const vendor = formData.vendors[i];
                   const hasVendorData = vendor?.name && vendor?.email;
-                  const isSelected = previewType === 'step2' && previewVendorIndex === i;
+                  const isSelected = previewTab === 2 && previewVendorIndex === i;
                   return (
                     <tr
                       key={i}
@@ -873,8 +944,7 @@ function RepairTaskContent() {
                           <button
                             className="repair-btn"
                             onClick={() => {
-                              setShowPreview(true);
-                              setPreviewType('step2');
+                              setPreviewTab(2);
                               setPreviewVendorIndex(i);
                             }}
                             disabled={!isStepEnabled(2) || !hasVendorData}
@@ -939,7 +1009,35 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP3: 修理見積の登録 */}
-        <Section step={3} title="STEP3. 修理見積の登録" accentColor="#27ae60" enabled={isStepEnabled(3)} completed={3 < activeStep}>
+        <Section
+          step={3}
+          title="STEP3. 修理見積の登録"
+          accentColor="#27ae60"
+          enabled={isStepEnabled(3)}
+          completed={3 < activeStep}
+          headerAction={
+            <button
+              className="repair-btn"
+              onClick={() => {
+                setPreviewTab(3);
+                setPreviewQuotationIndex(null);
+              }}
+              disabled={!isStepEnabled(3)}
+              style={{
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.9)',
+                color: '#27ae60',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              }}
+            >
+              一覧表示
+            </button>
+          }
+        >
           {/* ガイドメッセージ */}
           <div style={{
             padding: '12px 16px',
@@ -1020,103 +1118,186 @@ function RepairTaskContent() {
             </div>
           )}
 
-          {/* 見積入力フォーム */}
-          <div style={{
-            padding: '16px',
-            background: COLORS.surfaceAlt,
-            borderRadius: '8px',
-            border: `1px solid ${COLORS.borderLight}`,
-          }}>
+          {/* 見積入力フォーム（テーブル形式） */}
+          <div style={{ marginBottom: '16px' }}>
             <div style={{
               fontSize: '13px',
               fontWeight: 'bold',
               color: COLORS.textPrimary,
-              marginBottom: '12px',
+              marginBottom: '8px',
             }}>
               見積を追加
             </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #27ae60' }}>
+              <tbody>
+                {/* 添付ファイル */}
+                <tr>
+                  <th style={{
+                    background: '#27ae60',
+                    color: 'white',
+                    padding: '10px 12px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    width: '120px',
+                    border: '1px solid #27ae60',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    添付ファイル
+                  </th>
+                  <td style={{
+                    background: 'white',
+                    padding: '10px 12px',
+                    border: '1px solid #27ae60',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <label style={{
+                        padding: '6px 16px',
+                        background: '#f5f5f5',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        cursor: isStepEnabled(3) ? 'pointer' : 'not-allowed',
+                        fontSize: '13px',
+                        whiteSpace: 'nowrap',
+                        opacity: isStepEnabled(3) ? 1 : 0.6,
+                      }}>
+                        ファイルの選択
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          disabled={!isStepEnabled(3)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSelectedFileName(file.name);
+                            }
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                      <span style={{ color: selectedFileName ? COLORS.success : '#666', fontSize: '13px' }}>
+                        {selectedFileName || 'ファイルが選択されていません'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
 
-            {/* ファイル選択エリア */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                添付ファイル <span style={{ color: COLORS.error }}>*</span>
-              </div>
-              <label
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '24px',
-                  border: `2px dashed ${selectedFileName ? COLORS.success : COLORS.border}`,
-                  borderRadius: '8px',
-                  background: selectedFileName ? '#e8f5e9' : COLORS.white,
-                  cursor: isStepEnabled(3) ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.2s',
-                  opacity: isStepEnabled(3) ? 1 : 0.6,
-                }}
-              >
-                {selectedFileName ? (
-                  <>
-                    <span style={{ fontSize: '32px', marginBottom: '8px' }}>✅</span>
-                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.success }}>{selectedFileName}</span>
-                    <span style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '4px' }}>クリックして変更</span>
-                  </>
-                ) : (
-                  <>
-                    <span style={{ fontSize: '32px', marginBottom: '8px' }}>📁</span>
-                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary }}>クリックしてファイルを選択</span>
-                    <span style={{ fontSize: '11px', color: COLORS.textMuted, marginTop: '4px' }}>PDF, JPG, PNG対応</span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  disabled={!isStepEnabled(3)}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setSelectedFileName(file.name);
-                    }
-                  }}
-                  style={{ display: 'none' }}
-                />
-              </label>
-            </div>
+                {/* 見積フェーズ */}
+                <tr>
+                  <th style={{
+                    background: '#27ae60',
+                    color: 'white',
+                    padding: '10px 12px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    width: '120px',
+                    border: '1px solid #27ae60',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'top',
+                  }}>
+                    見積フェーズ
+                  </th>
+                  <td style={{
+                    background: 'white',
+                    padding: '10px 12px',
+                    border: '1px solid #27ae60',
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="quotationPhase"
+                          checked={formData.quotationPhase === '発注用'}
+                          onChange={() => updateFormData({ quotationPhase: '発注用' })}
+                          disabled={!isStepEnabled(3)}
+                        />
+                        修理発注登録用見積
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="quotationPhase"
+                          checked={formData.quotationPhase === '参考'}
+                          onChange={() => updateFormData({ quotationPhase: '参考' })}
+                          disabled={!isStepEnabled(3)}
+                        />
+                        参考見積
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="quotationPhase"
+                          checked={formData.quotationPhase === '追加'}
+                          onChange={() => updateFormData({ quotationPhase: '追加' })}
+                          disabled={!isStepEnabled(3)}
+                        />
+                        追加見積（部品交換など）
+                      </label>
+                    </div>
+                  </td>
+                </tr>
 
-            {/* フェーズと保存形式 */}
-            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '16px' }}>
-              <FormRow style={{ marginBottom: 0 }}>
-                <span style={labelStyle}>見積フェーズ <span style={{ color: COLORS.error }}>*</span></span>
-                <select
-                  value={formData.quotationPhase}
-                  onChange={(e) => updateFormData({ quotationPhase: e.target.value as '発注用' | '参考' | '追加' })}
-                  {...getInputProps(3)}
-                  style={{ ...getInputProps(3).style, width: '200px' }}
-                >
-                  <option value="発注用">修理発注登録用見積</option>
-                  <option value="参考">参考見積</option>
-                  <option value="追加">追加見積（部品交換など）</option>
-                </select>
-              </FormRow>
-
-              <FormRow style={{ marginBottom: 0 }}>
-                <span style={labelStyle}>保存形式 <span style={{ color: COLORS.error }}>*</span></span>
-                <select
-                  value={formData.saveFormat}
-                  onChange={(e) => updateFormData({ saveFormat: e.target.value as '電子取引' | 'スキャナ保存' | '未指定' })}
-                  {...getInputProps(3)}
-                  style={{ ...getInputProps(3).style, width: '140px' }}
-                >
-                  <option value="電子取引">電子取引</option>
-                  <option value="スキャナ保存">スキャナ保存</option>
-                  <option value="未指定">未指定</option>
-                </select>
-              </FormRow>
-            </div>
+                {/* 保存形式 */}
+                <tr>
+                  <th style={{
+                    background: '#27ae60',
+                    color: 'white',
+                    padding: '10px 12px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    width: '120px',
+                    border: '1px solid #27ae60',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'top',
+                  }}>
+                    保存形式
+                  </th>
+                  <td style={{
+                    background: 'white',
+                    padding: '10px 12px',
+                    border: '1px solid #27ae60',
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="saveFormat"
+                          checked={formData.saveFormat === '電子取引'}
+                          onChange={() => updateFormData({ saveFormat: '電子取引' })}
+                          disabled={!isStepEnabled(3)}
+                        />
+                        電子取引
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="saveFormat"
+                          checked={formData.saveFormat === 'スキャナ保存'}
+                          onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })}
+                          disabled={!isStepEnabled(3)}
+                        />
+                        スキャナ保存
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="saveFormat"
+                          checked={formData.saveFormat === '未指定'}
+                          onChange={() => updateFormData({ saveFormat: '未指定' })}
+                          disabled={!isStepEnabled(3)}
+                        />
+                        未指定
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             {/* 登録ボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
               <button
                 className="repair-btn"
                 onClick={handleAddQuotation}
@@ -1159,8 +1340,33 @@ function RepairTaskContent() {
           </FormRow>
         </Section>
 
-        {/* STEP4: 修理の依頼（発注） */}
-        <Section step={4} title="STEP4. 修理の依頼（発注）" accentColor="#e67e22" enabled={isStepEnabled(4)} completed={4 < activeStep}>
+        {/* STEP4: 発注・引取登録 */}
+        <Section
+          step={4}
+          title="STEP4. 発注・引取登録"
+          accentColor="#e67e22"
+          enabled={isStepEnabled(4)}
+          completed={4 < activeStep}
+          headerAction={
+            <button
+              className="repair-btn"
+              onClick={() => setPreviewTab(4)}
+              disabled={!isStepEnabled(4)}
+              style={{
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.9)',
+                color: '#e67e22',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              }}
+            >
+              発注書表示
+            </button>
+          }
+        >
           {/* ガイドメッセージ */}
           <div style={{
             padding: '12px 16px',
@@ -1339,6 +1545,31 @@ function RepairTaskContent() {
                   />
                 </FormRow>
               </div>
+
+              {/* 引取日入力 */}
+              <div style={{
+                marginTop: '16px',
+                padding: '12px 16px',
+                background: '#fff8e1',
+                borderRadius: '4px',
+                border: '1px solid #ffcc80',
+              }}>
+                <FormRow style={{ marginBottom: 0, alignItems: 'center' }}>
+                  <span style={{ ...labelStyle, color: '#e65100', fontWeight: 'bold' }}>
+                    引取日 <span style={{ color: COLORS.error }}>*</span>
+                  </span>
+                  <input
+                    type="date"
+                    value={formData.pickupDate}
+                    onChange={(e) => updateFormData({ pickupDate: e.target.value })}
+                    {...getInputProps(4)}
+                    style={{ ...getInputProps(4).style, width: '160px' }}
+                  />
+                  <span style={{ fontSize: '12px', color: COLORS.textMuted, marginLeft: '8px' }}>
+                    ※機器を引き取る日を入力してください
+                  </span>
+                </FormRow>
+              </div>
             </div>
           )}
 
@@ -1423,89 +1654,360 @@ function RepairTaskContent() {
         </Section>
 
         {/* STEP5: 完了登録 */}
-        <Section step={5} title="STEP5. 完了登録（修理報告書の登録）" accentColor="#e74c3c" enabled={isStepEnabled(5)} completed={5 < activeStep}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-            <div>
-              <FormRow>
-                <span style={labelStyle}>添付ファイル</span>
-                <input
-                  type="file"
-                  accept=".pdf,.jpg,.png"
-                  disabled={!isStepEnabled(5)}
-                  style={{ fontSize: '12px' }}
-                />
-              </FormRow>
+        <Section
+          step={5}
+          title="STEP5. 完了登録（修理報告書の登録）"
+          accentColor="#e74c3c"
+          enabled={isStepEnabled(5)}
+          completed={5 < activeStep}
+          headerAction={
+            <button
+              className="repair-btn"
+              onClick={() => {
+                setPreviewTab(5);
+                setPreviewDocumentIndex(null);
+              }}
+              disabled={!isStepEnabled(5)}
+              style={{
+                padding: '4px 12px',
+                background: 'rgba(255,255,255,0.9)',
+                color: '#e74c3c',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              }}
+            >
+              一覧表示
+            </button>
+          }
+        >
+          {/* ガイドメッセージ */}
+          <div style={{
+            padding: '12px 16px',
+            background: '#ffebee',
+            borderRadius: '4px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            color: '#c62828',
+          }}>
+            修理報告書・納品書などのドキュメントを登録してください。複数のファイルを登録できます。
+          </div>
 
-              <FormRow>
-                <span style={labelStyle}>ドキュメント種別</span>
-                <select
-                  value={formData.documentType}
-                  onChange={(e) => updateFormData({ documentType: e.target.value as '修理報告書' | '納品書' })}
-                  {...getInputProps(5)}
-                  style={{ ...getInputProps(5).style, width: '140px' }}
-                >
-                  <option value="修理報告書">修理報告書</option>
-                  <option value="納品書">納品書</option>
-                </select>
-              </FormRow>
+          {/* 登録済みドキュメント一覧 */}
+          {registeredDocuments.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{
+                fontSize: '13px',
+                fontWeight: 'bold',
+                color: COLORS.textPrimary,
+                marginBottom: '8px',
+              }}>
+                登録済みドキュメント（{registeredDocuments.length}件）
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: COLORS.surfaceAlt }}>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>種別</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>勘定科目</th>
+                      <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registeredDocuments.map((d) => (
+                      <tr key={d.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
+                        <td style={{ padding: '8px' }}>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            background: d.documentType === '修理報告書' ? '#e3f2fd' : d.documentType === '納品書' ? '#fff3e0' : '#f3e5f5',
+                            color: d.documentType === '修理報告書' ? '#1565c0' : d.documentType === '納品書' ? '#e65100' : '#7b1fa2',
+                          }}>
+                            {d.documentType}
+                          </span>
+                        </td>
+                        <td style={{ padding: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '14px' }}>📄</span>
+                            <span>{d.fileName}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '8px', fontSize: '11px', color: COLORS.textMuted }}>
+                          {d.accountType === 'その他' ? d.accountOther : d.accountType}
+                        </td>
+                        <td style={{ padding: '8px', textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleDeleteDocument(d.id)}
+                            disabled={!isStepEnabled(5)}
+                            style={{
+                              padding: '2px 8px',
+                              background: 'transparent',
+                              color: COLORS.error,
+                              border: `1px solid ${COLORS.error}`,
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                            }}
+                          >
+                            削除
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+          )}
 
-            <div>
-              <FormRow>
-                <span style={labelStyle}>勘定科目</span>
-                <select
-                  value={formData.accountType}
-                  onChange={(e) => updateFormData({ accountType: e.target.value as '修繕費' | 'その他' })}
-                  {...getInputProps(5)}
-                  style={{ ...getInputProps(5).style, width: '120px' }}
-                >
-                  <option value="修繕費">修繕費</option>
-                  <option value="その他">その他</option>
-                </select>
-                {formData.accountType === 'その他' && (
-                  <input
-                    type="text"
-                    value={formData.accountOther}
-                    onChange={(e) => updateFormData({ accountOther: e.target.value })}
-                    placeholder="科目名"
-                    {...getInputProps(5)}
-                    style={{ ...getInputProps(5).style, width: '120px' }}
-                  />
-                )}
-              </FormRow>
-
-              <FormRow>
-                <span style={labelStyle}>納品日（修理完了日）<span style={{ color: COLORS.error }}>*</span></span>
-                <input
-                  type="date"
-                  value={formData.deliveryDate}
-                  onChange={(e) => updateFormData({ deliveryDate: e.target.value })}
-                  {...getInputProps(5)}
-                  style={{ ...getInputProps(5).style, width: '150px' }}
-                />
-              </FormRow>
-
-              <FormRow style={{ justifyContent: 'flex-end', marginTop: '24px' }}>
-                <button
-                  className="repair-btn"
-                  onClick={handleStep5Complete}
-                  disabled={!isStepEnabled(5) || isSubmitting}
-                  style={{
-                    padding: '10px 24px',
-                    background: COLORS.error,
-                    color: COLORS.textOnColor,
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
+          {/* ドキュメント入力フォーム（テーブル形式） */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              fontSize: '13px',
+              fontWeight: 'bold',
+              color: COLORS.textPrimary,
+              marginBottom: '8px',
+            }}>
+              ドキュメントを追加
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e74c3c' }}>
+              <tbody>
+                {/* 添付ファイル */}
+                <tr>
+                  <th style={{
+                    background: '#e74c3c',
+                    color: 'white',
+                    padding: '10px 12px',
+                    fontSize: '13px',
                     fontWeight: 'bold',
-                  }}
-                >
-                  {isSubmitting ? '登録中...' : '修理完了を登録'}
-                </button>
-              </FormRow>
+                    textAlign: 'left',
+                    width: '150px',
+                    border: '1px solid #e74c3c',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    添付ファイル
+                  </th>
+                  <td style={{
+                    background: 'white',
+                    padding: '10px 12px',
+                    border: '1px solid #e74c3c',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <label style={{
+                        padding: '6px 16px',
+                        background: '#f5f5f5',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        cursor: isStepEnabled(5) ? 'pointer' : 'not-allowed',
+                        fontSize: '13px',
+                        whiteSpace: 'nowrap',
+                        opacity: isStepEnabled(5) ? 1 : 0.6,
+                      }}>
+                        ファイルの選択
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.png"
+                          disabled={!isStepEnabled(5)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSelectedDocFileName(file.name);
+                            }
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                      <span style={{ color: selectedDocFileName ? COLORS.success : '#666', fontSize: '13px' }}>
+                        {selectedDocFileName || 'ファイルが選択されていません'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* ドキュメント種別 */}
+                <tr>
+                  <th style={{
+                    background: '#e74c3c',
+                    color: 'white',
+                    padding: '10px 12px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    width: '150px',
+                    border: '1px solid #e74c3c',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'top',
+                  }}>
+                    ドキュメント種別
+                  </th>
+                  <td style={{
+                    background: 'white',
+                    padding: '10px 12px',
+                    border: '1px solid #e74c3c',
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="documentType"
+                          checked={formData.documentType === '修理報告書'}
+                          onChange={() => updateFormData({ documentType: '修理報告書' })}
+                          disabled={!isStepEnabled(5)}
+                        />
+                        修理報告書
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="documentType"
+                          checked={formData.documentType === '納品書'}
+                          onChange={() => updateFormData({ documentType: '納品書' })}
+                          disabled={!isStepEnabled(5)}
+                        />
+                        納品書
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 勘定科目 */}
+                <tr>
+                  <th style={{
+                    background: '#e74c3c',
+                    color: 'white',
+                    padding: '10px 12px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    textAlign: 'left',
+                    width: '150px',
+                    border: '1px solid #e74c3c',
+                    whiteSpace: 'nowrap',
+                    verticalAlign: 'top',
+                  }}>
+                    勘定科目
+                  </th>
+                  <td style={{
+                    background: 'white',
+                    padding: '10px 12px',
+                    border: '1px solid #e74c3c',
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="accountType"
+                          checked={formData.accountType === '修繕費'}
+                          onChange={() => updateFormData({ accountType: '修繕費' })}
+                          disabled={!isStepEnabled(5)}
+                        />
+                        修繕費
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input
+                          type="radio"
+                          name="accountType"
+                          checked={formData.accountType === 'その他'}
+                          onChange={() => updateFormData({ accountType: 'その他' })}
+                          disabled={!isStepEnabled(5)}
+                        />
+                        その他
+                        {formData.accountType === 'その他' && (
+                          <input
+                            type="text"
+                            value={formData.accountOther}
+                            onChange={(e) => updateFormData({ accountOther: e.target.value })}
+                            placeholder="科目名を入力"
+                            disabled={!isStepEnabled(5)}
+                            style={{
+                              marginLeft: '8px',
+                              padding: '4px 8px',
+                              border: '1px solid #ccc',
+                              borderRadius: '4px',
+                              fontSize: '13px',
+                              width: '120px',
+                            }}
+                          />
+                        )}
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* 登録ボタン */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+              <button
+                className="repair-btn"
+                onClick={handleAddDocument}
+                disabled={!isStepEnabled(5) || isSubmitting || !selectedDocFileName}
+                style={{
+                  padding: '8px 20px',
+                  background: selectedDocFileName ? '#e74c3c' : COLORS.disabled,
+                  color: COLORS.textOnColor,
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: selectedDocFileName ? 'pointer' : 'not-allowed',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                }}
+              >
+                + ドキュメントを登録
+              </button>
             </div>
           </div>
+
+          {/* 納品日入力 */}
+          <div style={{
+            padding: '16px',
+            background: COLORS.surfaceAlt,
+            borderRadius: '8px',
+            border: `1px solid ${COLORS.borderLight}`,
+            marginBottom: '16px',
+          }}>
+            <FormRow style={{ marginBottom: 0 }}>
+              <span style={{ ...labelStyle, fontWeight: 'bold' }}>納品日（修理完了日）</span>
+              <input
+                type="date"
+                value={formData.deliveryDate}
+                onChange={(e) => updateFormData({ deliveryDate: e.target.value })}
+                disabled={!isStepEnabled(5)}
+                style={{
+                  padding: '6px 12px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  width: '160px',
+                }}
+              />
+            </FormRow>
+          </div>
+
+          {/* 完了ボタン */}
+          <FormRow style={{ justifyContent: 'flex-end' }}>
+            <button
+              className="repair-btn"
+              onClick={handleStep5Complete}
+              disabled={!isStepEnabled(5) || isSubmitting}
+              style={{
+                padding: '10px 24px',
+                background: COLORS.error,
+                color: COLORS.textOnColor,
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+              }}
+            >
+              {isSubmitting ? '登録中...' : '修理完了を登録'}
+            </button>
+          </FormRow>
         </Section>
 
         </div>
@@ -1532,82 +2034,70 @@ function RepairTaskContent() {
           }} />
         </div>
 
-        {/* 右側: プレビューエリア */}
+        {/* 右側: プレビューエリア（縦型タブ付き） */}
         <div style={{
           flex: 1,
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           border: '1px solid #ddd',
           borderRadius: '4px',
           overflow: 'hidden',
           background: 'white',
           margin: '16px 16px 16px 0',
         }}>
-          {/* プレビューヘッダー */}
-          <div style={{
-            padding: '12px 16px',
-            background: previewType === 'step2' ? '#9c27b0' : COLORS.primary,
-            color: 'white',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <span>
-              {previewType === 'step1' && '修理申請書プレビュー'}
-              {previewType === 'step2' && previewVendorIndex !== null && `修理見積依頼書 - ${formData?.vendors[previewVendorIndex]?.name || `依頼先${previewVendorIndex + 1}`}`}
-              {!previewType && 'プレビュー'}
-            </span>
-            {showPreview && previewType && (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  className="repair-btn"
-                  onClick={() => {
-                    setShowPreview(false);
-                    setPreviewType(null);
-                    setPreviewVendorIndex(null);
-                  }}
-                  style={{
-                    padding: '4px 12px',
-                    background: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                  }}
-                >
-                  閉じる
-                </button>
-                <button
-                  className="repair-btn"
-                  style={{
-                    padding: '4px 12px',
-                    background: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                  }}
-                >
-                  PDF出力
-                </button>
-              </div>
-            )}
-          </div>
+          {/* メインプレビューエリア */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {/* プレビューヘッダー */}
+            <div style={{
+              padding: '12px 16px',
+              background: previewTab === 2 ? '#9c27b0' :
+                         previewTab === 3 ? COLORS.success :
+                         previewTab === 4 ? '#1565c0' :
+                         previewTab === 5 ? COLORS.error : COLORS.primary,
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <span>
+                {previewTab === 1 && '修理申請書プレビュー'}
+                {previewTab === 2 && (previewVendorIndex !== null
+                  ? `見積依頼書 - ${formData?.vendors[previewVendorIndex]?.name || `依頼先${previewVendorIndex + 1}`}`
+                  : '見積依頼書（業者を選択）')}
+                {previewTab === 3 && (previewQuotationIndex !== null
+                  ? `登録済み見積 - ${registeredQuotations[previewQuotationIndex]?.fileName || ''}`
+                  : '登録済み見積一覧')}
+                {previewTab === 4 && '発注書プレビュー'}
+                {previewTab === 5 && (previewDocumentIndex !== null
+                  ? `ドキュメント - ${registeredDocuments[previewDocumentIndex]?.fileName || ''}`
+                  : '登録済みドキュメント一覧')}
+              </span>
+              <button
+                className="repair-btn"
+                style={{
+                  padding: '4px 12px',
+                  background: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                }}
+              >
+                PDF出力
+              </button>
+            </div>
           {/* プレビューコンテンツ */}
           <div style={{
             flex: 1,
             overflow: 'auto',
             background: '#f5f5f5',
-            padding: showPreview && previewType ? '24px' : '0',
-            display: showPreview && previewType ? 'block' : 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            padding: '24px',
           }}>
-            {showPreview && previewType === 'step1' && (
+            {/* STEP1: 修理申請書プレビュー */}
+            {previewTab === 1 && (
               /* 修理申請書プレビュー（ユーザーからの申請） */
               <div style={{
                 background: 'white',
@@ -1758,7 +2248,8 @@ function RepairTaskContent() {
               </div>
             )}
 
-            {showPreview && previewType === 'step2' && previewVendorIndex !== null && formData && (() => {
+            {/* STEP2: 見積依頼書プレビュー */}
+            {previewTab === 2 && previewVendorIndex !== null && formData && (() => {
               const vendor = formData.vendors[previewVendorIndex];
               const today = new Date();
               const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
@@ -1970,7 +2461,8 @@ function RepairTaskContent() {
             })()}
 
             {/* STEP4: 発注書プレビュー */}
-            {showPreview && previewType === 'step4' && formData && (() => {
+            {/* STEP4: 発注書プレビュー */}
+            {previewTab === 4 && formData && (() => {
               const vendor = formData.vendors[0]; // STEP2で登録した発注用見積の業者
               const today = new Date();
               const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`;
@@ -2208,17 +2700,343 @@ function RepairTaskContent() {
               );
             })()}
 
-            {!showPreview || !previewType ? (
-              /* プレビュー未表示時のプレースホルダー */
+            {/* STEP2: 業者選択リスト（業者未選択時） */}
+            {previewTab === 2 && previewVendorIndex === null && formData && (
               <div style={{
-                textAlign: 'center',
-                color: '#999',
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '24px',
+                maxWidth: '500px',
+                margin: '0 auto',
               }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
-                <div style={{ fontSize: '14px' }}>各STEPの「プレビュー」ボタンを押すと</div>
-                <div style={{ fontSize: '14px' }}>帳票のプレビューが表示されます</div>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  marginBottom: '16px',
+                  color: '#9c27b0',
+                }}>
+                  見積依頼書を表示する業者を選択
+                </h3>
+                {formData.vendors.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {formData.vendors.map((vendor, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setPreviewVendorIndex(idx)}
+                        style={{
+                          padding: '12px 16px',
+                          background: '#f3e5f5',
+                          border: '1px solid #9c27b0',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontSize: '14px',
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', color: '#9c27b0' }}>{vendor.name || `依頼先${idx + 1}`}</div>
+                        {vendor.person && <div style={{ fontSize: '12px', color: '#666' }}>{vendor.person}</div>}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: '#666', fontSize: '14px' }}>
+                    STEP2で依頼先を追加してください
+                  </p>
+                )}
               </div>
-            ) : null}
+            )}
+
+            {/* STEP3: 登録済み見積一覧 */}
+            {previewTab === 3 && previewQuotationIndex === null && (
+              <div style={{
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '24px',
+                maxWidth: '600px',
+                margin: '0 auto',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  marginBottom: '16px',
+                  color: COLORS.success,
+                }}>
+                  登録済み見積一覧
+                </h3>
+                {registeredQuotations.length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: COLORS.success, color: 'white' }}>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>フェーズ</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '100px' }}>登録日時</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registeredQuotations.map((q, idx) => (
+                        <tr key={q.id} style={{ background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{q.fileName}</td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '11px',
+                              background: q.phase === '発注用' ? '#e3f2fd' : q.phase === '参考' ? '#fff8e1' : '#f3e5f5',
+                              color: q.phase === '発注用' ? '#1565c0' : q.phase === '参考' ? '#f57c00' : '#7b1fa2',
+                            }}>
+                              {q.phase}
+                            </span>
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center', fontSize: '11px' }}>
+                            {new Date(q.registeredAt).toLocaleString('ja-JP')}
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <button
+                              onClick={() => setPreviewQuotationIndex(idx)}
+                              style={{
+                                padding: '4px 10px',
+                                background: COLORS.success,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              表示
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#999', padding: '32px' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
+                    <div>登録済みの見積はありません</div>
+                    <div style={{ fontSize: '12px', marginTop: '8px' }}>STEP3で見積を登録してください</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP3: 見積プレビュー（選択時） */}
+            {previewTab === 3 && previewQuotationIndex !== null && registeredQuotations[previewQuotationIndex] && (
+              <div style={{
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '24px',
+                maxWidth: '600px',
+                margin: '0 auto',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <button
+                    onClick={() => setPreviewQuotationIndex(null)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#f0f0f0',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ← 一覧に戻る
+                  </button>
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '48px',
+                  background: '#f5f5f5',
+                  borderRadius: '4px',
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {registeredQuotations[previewQuotationIndex].fileName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    フェーズ: {registeredQuotations[previewQuotationIndex].phase}<br />
+                    保存形式: {registeredQuotations[previewQuotationIndex].saveFormat}<br />
+                    登録日時: {new Date(registeredQuotations[previewQuotationIndex].registeredAt).toLocaleString('ja-JP')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP5: 登録済みドキュメント一覧 */}
+            {previewTab === 5 && previewDocumentIndex === null && (
+              <div style={{
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '24px',
+                maxWidth: '600px',
+                margin: '0 auto',
+              }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  marginBottom: '16px',
+                  color: COLORS.error,
+                }}>
+                  登録済みドキュメント一覧
+                </h3>
+                {registeredDocuments.length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: COLORS.error, color: 'white' }}>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '90px' }}>種別</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>勘定科目</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registeredDocuments.map((d, idx) => (
+                        <tr key={d.id} style={{ background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{d.fileName}</td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '11px',
+                              background: d.documentType === '修理報告書' ? '#e3f2fd' : d.documentType === '納品書' ? '#e8f5e9' : '#f5f5f5',
+                              color: d.documentType === '修理報告書' ? '#1565c0' : d.documentType === '納品書' ? '#2e7d32' : '#616161',
+                            }}>
+                              {d.documentType}
+                            </span>
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center', fontSize: '11px' }}>
+                            {d.accountType}{d.accountOther ? `(${d.accountOther})` : ''}
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <button
+                              onClick={() => setPreviewDocumentIndex(idx)}
+                              style={{
+                                padding: '4px 10px',
+                                background: COLORS.error,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              表示
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#999', padding: '32px' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
+                    <div>登録済みのドキュメントはありません</div>
+                    <div style={{ fontSize: '12px', marginTop: '8px' }}>STEP5でドキュメントを登録してください</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP5: ドキュメントプレビュー（選択時） */}
+            {previewTab === 5 && previewDocumentIndex !== null && registeredDocuments[previewDocumentIndex] && (
+              <div style={{
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '24px',
+                maxWidth: '600px',
+                margin: '0 auto',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <button
+                    onClick={() => setPreviewDocumentIndex(null)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#f0f0f0',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ← 一覧に戻る
+                  </button>
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '48px',
+                  background: '#f5f5f5',
+                  borderRadius: '4px',
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {registeredDocuments[previewDocumentIndex].fileName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    種別: {registeredDocuments[previewDocumentIndex].documentType}<br />
+                    勘定科目: {registeredDocuments[previewDocumentIndex].accountType}
+                    {registeredDocuments[previewDocumentIndex].accountOther ? ` (${registeredDocuments[previewDocumentIndex].accountOther})` : ''}<br />
+                    登録日時: {new Date(registeredDocuments[previewDocumentIndex].registeredAt).toLocaleString('ja-JP')}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          </div>
+
+          {/* 縦型タブバー（右端） */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#f0f0f0',
+            borderLeft: '1px solid #ddd',
+            width: '40px',
+            flexShrink: 0,
+          }}>
+            {[1, 2, 3, 4, 5].map((step) => (
+              <button
+                key={step}
+                onClick={() => {
+                  setPreviewTab(step as 1 | 2 | 3 | 4 | 5);
+                  // タブ変更時にサブインデックスをリセット
+                  if (step === 2) setPreviewVendorIndex(null);
+                  if (step === 3) setPreviewQuotationIndex(null);
+                  if (step === 5) setPreviewDocumentIndex(null);
+                }}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: 'none',
+                  borderBottom: '1px solid #ddd',
+                  background: previewTab === step
+                    ? step === 1 ? COLORS.primary
+                    : step === 2 ? '#9c27b0'
+                    : step === 3 ? COLORS.success
+                    : step === 4 ? '#1565c0'
+                    : COLORS.error
+                    : 'transparent',
+                  color: previewTab === step ? 'white' : '#666',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: previewTab === step ? 'bold' : 'normal',
+                  transition: 'all 0.2s',
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                  padding: '8px 0',
+                }}
+                title={`STEP${step}`}
+              >
+                S{step}
+              </button>
+            ))}
           </div>
         </div>
       </div>
