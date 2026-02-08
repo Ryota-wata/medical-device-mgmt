@@ -21,6 +21,7 @@ export default function MainPage() {
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
   const [isHospitalSelectModalOpen, setIsHospitalSelectModalOpen] = useState(false);
   const [isHospitalMasterModalOpen, setIsHospitalMasterModalOpen] = useState(false);
+  const [isLendingMenuModalOpen, setIsLendingMenuModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedFacilityForMaster, setSelectedFacilityForMaster] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
@@ -182,8 +183,18 @@ export default function MainPage() {
     router.push('/asset-search-result');
   };
 
+  const handleLendingMenu = () => {
+    setIsLendingMenuModalOpen(true);
+  };
+
   const handleAvailableDevices = () => {
-    showToast('貸出可能機器閲覧機能（開発中）', 'info');
+    setIsLendingMenuModalOpen(false);
+    router.push('/lending-available');
+  };
+
+  const handleLendingCheckout = () => {
+    setIsLendingMenuModalOpen(false);
+    router.push('/lending-checkout');
   };
 
   const handleRepairStatus = () => {
@@ -294,12 +305,12 @@ export default function MainPage() {
                 資産リスト（各種申請）
               </button>
               <button
-                onClick={handleAvailableDevices}
+                onClick={handleLendingMenu}
                 className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
                   isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                貸出可能機器閲覧
+                貸出
               </button>
               <button
                 onClick={handleRepairApplication}
@@ -890,6 +901,51 @@ export default function MainPage() {
                   className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded-md cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
                 >
                   閉じる
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 貸出メニューモーダル */}
+      {isLendingMenuModalOpen && (
+        <div
+          onClick={() => setIsLendingMenuModalOpen(false)}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl w-[90%] max-w-[400px] shadow-xl flex flex-col"
+          >
+            {/* モーダルヘッダー */}
+            <div className="bg-emerald-500 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl shrink-0">
+              <span className="text-balance">貸出メニュー</span>
+              <button
+                onClick={() => setIsLendingMenuModalOpen(false)}
+                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                aria-label="閉じる"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* モーダルボディ */}
+            <div className="p-6">
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleAvailableDevices}
+                  className="px-5 py-4 bg-white border-2 border-emerald-500 rounded-lg cursor-pointer text-[15px] font-semibold text-slate-700 flex items-center gap-3 transition-all hover:bg-emerald-500 hover:text-white"
+                >
+                  <span className="text-xl">📋</span>
+                  <span>貸出可能機器閲覧</span>
+                </button>
+                <button
+                  onClick={handleLendingCheckout}
+                  className="px-5 py-4 bg-white border-2 border-sky-500 rounded-lg cursor-pointer text-[15px] font-semibold text-slate-700 flex items-center gap-3 transition-all hover:bg-sky-500 hover:text-white"
+                >
+                  <span className="text-xl">🔄</span>
+                  <span>貸出・返却</span>
                 </button>
               </div>
             </div>

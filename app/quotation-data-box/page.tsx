@@ -21,11 +21,12 @@ import { MOCK_OCR_RESULT } from '@/lib/mocks/quotationMockData';
 import { RfqGroupsTab } from './components/RfqGroupsTab';
 import { QuotationsTab } from './components/QuotationsTab';
 import { RepairRequestsTab } from './components/RepairRequestsTab';
+import { LendingManagementTab } from './components/LendingManagementTab';
 import { QuotationRegistrationModal } from './components/QuotationRegistrationModal';
 import { ApplicationFormData } from './components/QuotationRegistrationModal/ApplicationCreationModal';
 
 // サブタブ
-type SubTabType = 'rfqGroups' | 'quotations' | 'repairRequests' | 'repairDetails' | 'makerMaintenance' | 'inHouseInspection';
+type SubTabType = 'rfqGroups' | 'quotations' | 'repairRequests' | 'repairDetails' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
 
 const SUB_TABS: { key: SubTabType; label: string }[] = [
   { key: 'rfqGroups', label: '見積G一覧' },
@@ -34,6 +35,7 @@ const SUB_TABS: { key: SubTabType; label: string }[] = [
   { key: 'repairDetails', label: '修理明細' },
   { key: 'makerMaintenance', label: 'メーカー保守一覧' },
   { key: 'inHouseInspection', label: '院内点検一覧' },
+  { key: 'lendingManagement', label: '貸出管理' },
 ];
 
 // クエリパラメータを読み取るコンポーネント
@@ -501,6 +503,9 @@ export default function QuotationManagementPage() {
                   </tbody>
                 </table>
               </div>
+            )}
+            {activeSubTab === 'lendingManagement' && (
+              <LendingManagementTab />
             )}
           </div>
         </div>
