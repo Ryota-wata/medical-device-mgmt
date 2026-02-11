@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useApplicationStore } from '@/lib/stores/applicationStore';
@@ -28,26 +28,41 @@ import { ApplicationFormData } from './components/QuotationRegistrationModal/App
 // サブタブ
 type SubTabType = 'rfqGroups' | 'quotations' | 'repairRequests' | 'repairDetails' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
 
-const SUB_TABS: { key: SubTabType; label: string }[] = [
-  { key: 'rfqGroups', label: '見積G一覧' },
-  { key: 'quotations', label: '見積明細' },
-  { key: 'repairRequests', label: '修理依頼一覧' },
-  { key: 'repairDetails', label: '修理明細' },
-  { key: 'makerMaintenance', label: 'メーカー保守一覧' },
-  { key: 'inHouseInspection', label: '院内点検一覧' },
-  { key: 'lendingManagement', label: '貸出管理' },
+const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
+  { key: 'rfqGroups', label: '見積G一覧', path: '/quotation-data-box' },
+  { key: 'quotations', label: '見積明細', path: '/quotation-data-box/quotations' },
+  { key: 'repairRequests', label: '修理申請', path: '/quotation-data-box/repair-requests' },
+  { key: 'repairDetails', label: '修理明細', path: '/quotation-data-box/repair-details' },
+  { key: 'makerMaintenance', label: '保守契約管理', path: '/quotation-data-box/maintenance-contracts' },
+  { key: 'inHouseInspection', label: '保守・点検機器申請', path: '/quotation-data-box/inspection-requests' },
+  { key: 'lendingManagement', label: '貸出管理', path: '/quotation-data-box/lending-management' },
 ];
 
-// クエリパラメータを読み取るコンポーネント
+// パスからタブを特定する関数
+const getTabFromPath = (pathname: string): SubTabType => {
+  const tab = SUB_TABS.find(t => t.path === pathname);
+  return tab?.key || 'rfqGroups';
+};
+
+// URLパスまたはクエリパラメータを読み取るコンポーネント
 function TabSwitcher({ onTabChange }: { onTabChange: (tab: SubTabType) => void }) {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   useEffect(() => {
+    // まずURLパスをチェック
+    const tabFromPath = getTabFromPath(pathname);
+    if (tabFromPath !== 'rfqGroups' || pathname === '/quotation-data-box') {
+      onTabChange(tabFromPath);
+      return;
+    }
+
+    // 後方互換性のためクエリパラメータもチェック
     const tab = searchParams.get('tab') as SubTabType | null;
     if (tab && SUB_TABS.some(t => t.key === tab)) {
       onTabChange(tab);
     }
-  }, [searchParams, onTabChange]);
+  }, [searchParams, pathname, onTabChange]);
 
   return null;
 }
@@ -335,11 +350,14 @@ export default function QuotationManagementPage() {
         {/* 左側：メインパネル */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
           {/* サブタブ */}
-          <div style={{ background: 'white', borderBottom: '2px solid #dee2e6', display: 'flex', borderRadius: '4px 4px 0 0' }}>
+          <div style={{ background: 'white', borderBottom: '2px solid #dee2e6', display: 'flex', borderRadius: '4px 4px 0 0', flexWrap: 'wrap' }}>
             {SUB_TABS.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveSubTab(tab.key)}
+                onClick={() => {
+                  setActiveSubTab(tab.key);
+                  router.push(tab.path);
+                }}
                 style={{
                   padding: '10px 20px',
                   background: activeSubTab === tab.key ? '#3498db' : 'transparent',

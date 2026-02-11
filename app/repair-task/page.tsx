@@ -543,7 +543,7 @@ function RepairTaskContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       alert('修理完了を登録しました。タスク管理画面に戻ります。');
-      router.push('/quotation-data-box?tab=repairRequests');
+      router.push('/quotation-data-box/repair-requests');
     }, 500);
   };
 
@@ -628,7 +628,7 @@ function RepairTaskContent() {
         title="修理申請タスク"
         hideMenu={true}
         showBackButton={true}
-        backHref="/quotation-data-box?tab=repairRequests"
+        backHref="/quotation-data-box/repair-requests"
         backLabel="一覧に戻る"
         backButtonVariant="secondary"
         hideHomeButton={true}
