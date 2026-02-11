@@ -337,6 +337,8 @@ function RepairTaskContent() {
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
   // STEP5用：選択中のファイル名
   const [selectedDocFileName, setSelectedDocFileName] = useState<string>('');
+  // STEP5用：納期確定フラグ
+  const [isDeliveryDateConfirmed, setIsDeliveryDateConfirmed] = useState<boolean>(false);
   // 現在のステップ（ステータスとは別に管理）
   const [currentStep, setCurrentStep] = useState<number>(1);
   // プレビュータブ（右端縦型タブ）
@@ -479,14 +481,6 @@ function RepairTaskContent() {
     setCurrentStep(4); // STEP4へ
   };
 
-  // STEP4: 院内対応（タスククローズ）
-  const handleStep4Internal = () => {
-    if (confirm('院内対応としてこのタスクを完了しますか？')) {
-      alert('タスクを完了しました。一覧に戻ります。');
-      router.push('/quotation-data-box?tab=repairRequests');
-    }
-  };
-
   // STEP4: 申請却下・修理不能（購入申請へ）
   const handleStep4Rejected = () => {
     if (confirm('修理不能のため購入申請画面へ移動しますか？')) {
@@ -532,6 +526,16 @@ function RepairTaskContent() {
     if (confirm('このドキュメントを削除しますか？')) {
       setRegisteredDocuments(prev => prev.filter(d => d.id !== id));
     }
+  };
+
+  // STEP5: 納期確定
+  const handleConfirmDeliveryDate = () => {
+    if (!formData.deliveryDate) {
+      alert('納期を入力してください');
+      return;
+    }
+    setIsDeliveryDateConfirmed(true);
+    alert(`納期を ${formData.deliveryDate} で確定しました`);
   };
 
   // STEP5: 完了（モックなのでバリデーション緩和）
@@ -1386,41 +1390,14 @@ function RepairTaskContent() {
             gap: '12px',
             marginBottom: '20px',
           }}>
-            {/* 院内対応 */}
-            <div
-              onClick={() => isStepEnabled(4) && updateFormData({ isInHouse: true, isRejected: false })}
-              style={{
-                padding: '16px',
-                border: `2px solid ${formData.isInHouse ? COLORS.primary : COLORS.border}`,
-                borderRadius: '8px',
-                background: formData.isInHouse ? '#e3f2fd' : COLORS.white,
-                cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed',
-                opacity: isStepEnabled(4) ? 1 : 0.6,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <input
-                  type="radio"
-                  name="step4Action"
-                  checked={formData.isInHouse}
-                  onChange={() => updateFormData({ isInHouse: true, isRejected: false })}
-                  disabled={!isStepEnabled(4)}
-                />
-                <span style={{ fontWeight: 'bold', color: COLORS.primary }}>院内対応</span>
-              </div>
-              <div style={{ fontSize: '12px', color: COLORS.textMuted, paddingLeft: '24px' }}>
-                院内で修理対応を行い、タスクを完了します
-              </div>
-            </div>
-
-            {/* 外部発注 */}
+            {/* 発注書の発行 */}
             <div
               onClick={() => isStepEnabled(4) && updateFormData({ isInHouse: false, isRejected: false })}
               style={{
                 padding: '16px',
-                border: `2px solid ${!formData.isInHouse && !formData.isRejected ? COLORS.accent : COLORS.border}`,
+                border: `2px solid ${!formData.isRejected ? COLORS.accent : COLORS.border}`,
                 borderRadius: '8px',
-                background: !formData.isInHouse && !formData.isRejected ? '#fff3e0' : COLORS.white,
+                background: !formData.isRejected ? '#fff3e0' : COLORS.white,
                 cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed',
                 opacity: isStepEnabled(4) ? 1 : 0.6,
               }}
@@ -1429,7 +1406,7 @@ function RepairTaskContent() {
                 <input
                   type="radio"
                   name="step4Action"
-                  checked={!formData.isInHouse && !formData.isRejected}
+                  checked={!formData.isRejected}
                   onChange={() => updateFormData({ isInHouse: false, isRejected: false })}
                   disabled={!isStepEnabled(4)}
                 />
@@ -1468,8 +1445,8 @@ function RepairTaskContent() {
             </div>
           </div>
 
-          {/* 外部発注の場合：発注先情報（STEP2から自動取得） */}
-          {!formData.isInHouse && !formData.isRejected && (
+          {/* 発注書発行の場合：発注先情報（STEP2から自動取得） */}
+          {!formData.isRejected && (
             <div style={{
               padding: '16px',
               background: COLORS.surfaceAlt,
@@ -1575,26 +1552,7 @@ function RepairTaskContent() {
 
           {/* アクションボタン */}
           <FormRow style={{ justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-            {formData.isInHouse && (
-              <button
-                className="repair-btn"
-                onClick={handleStep4Internal}
-                disabled={!isStepEnabled(4) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: COLORS.primary,
-                  color: COLORS.textOnColor,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                タスクを完了する
-              </button>
-            )}
-            {!formData.isInHouse && !formData.isRejected && (
+            {!formData.isRejected && (
               <>
                 <button
                   className="repair-btn"
@@ -1962,7 +1920,7 @@ function RepairTaskContent() {
             </div>
           </div>
 
-          {/* 納品日入力 */}
+          {/* 納期入力 */}
           <div style={{
             padding: '16px',
             background: COLORS.surfaceAlt,
@@ -1970,12 +1928,15 @@ function RepairTaskContent() {
             border: `1px solid ${COLORS.borderLight}`,
             marginBottom: '16px',
           }}>
-            <FormRow style={{ marginBottom: 0 }}>
-              <span style={{ ...labelStyle, fontWeight: 'bold' }}>納品日（修理完了日）</span>
+            <FormRow style={{ marginBottom: 0, alignItems: 'center' }}>
+              <span style={{ ...labelStyle, fontWeight: 'bold' }}>納期（出張修理日）</span>
               <input
                 type="date"
                 value={formData.deliveryDate}
-                onChange={(e) => updateFormData({ deliveryDate: e.target.value })}
+                onChange={(e) => {
+                  updateFormData({ deliveryDate: e.target.value });
+                  setIsDeliveryDateConfirmed(false); // 日付変更時は確定を解除
+                }}
                 disabled={!isStepEnabled(5)}
                 style={{
                   padding: '6px 12px',
@@ -1985,11 +1946,41 @@ function RepairTaskContent() {
                   width: '160px',
                 }}
               />
+              {isDeliveryDateConfirmed && (
+                <span style={{
+                  marginLeft: '12px',
+                  padding: '4px 12px',
+                  background: '#e8f5e9',
+                  color: '#2e7d32',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                }}>
+                  ✓ 確定済み
+                </span>
+              )}
             </FormRow>
           </div>
 
-          {/* 完了ボタン */}
-          <FormRow style={{ justifyContent: 'flex-end' }}>
+          {/* アクションボタン */}
+          <FormRow style={{ justifyContent: 'flex-end', gap: '12px' }}>
+            <button
+              className="repair-btn"
+              onClick={handleConfirmDeliveryDate}
+              disabled={!isStepEnabled(5) || isSubmitting || !formData.deliveryDate || isDeliveryDateConfirmed}
+              style={{
+                padding: '10px 24px',
+                background: isDeliveryDateConfirmed ? '#9e9e9e' : COLORS.primary,
+                color: COLORS.textOnColor,
+                border: 'none',
+                borderRadius: '4px',
+                cursor: isDeliveryDateConfirmed ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+              }}
+            >
+              {isDeliveryDateConfirmed ? '納期確定済み' : '納期確定'}
+            </button>
             <button
               className="repair-btn"
               onClick={handleStep5Complete}

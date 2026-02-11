@@ -22,6 +22,7 @@ export default function MainPage() {
   const [isHospitalSelectModalOpen, setIsHospitalSelectModalOpen] = useState(false);
   const [isHospitalMasterModalOpen, setIsHospitalMasterModalOpen] = useState(false);
   const [isLendingMenuModalOpen, setIsLendingMenuModalOpen] = useState(false);
+  const [isRepairStatusModalOpen, setIsRepairStatusModalOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedFacilityForMaster, setSelectedFacilityForMaster] = useState('');
   const [buttonsEnabled, setButtonsEnabled] = useState(false);
@@ -44,6 +45,115 @@ export default function MainPage() {
   const userType = user ? getUserType(user.email) : 'consultant';
   const isConsultant = userType === 'consultant';
   const isHospital = userType === 'hospital';
+
+  // 修理ステータス用モックデータ（病院ユーザー向け）
+  type RepairStatusType = '受付' | '依頼済' | '引取済' | '修理中' | '完了';
+
+  interface HospitalRepairRequest {
+    id: number;
+    requestNo: string;
+    requestDate: string;
+    applicantDepartment: string;
+    applicantName: string;
+    qrLabel: string;
+    itemName: string;
+    maker: string;
+    model: string;
+    serialNo: string;
+    installDepartment: string;
+    roomName: string;
+    receptionDepartment: string;
+    receptionPerson: string;
+    receptionContact: string;
+    status: RepairStatusType;
+    pickupDate: string | null;
+    deliveryDate: string | null;
+    alternativeDevice: string | null;
+    alternativeReturnDate: string | null;
+  }
+
+  const hospitalRepairRequests: HospitalRepairRequest[] = [
+    {
+      id: 1,
+      requestNo: 'REP-20260205-001',
+      requestDate: '2026-02-05',
+      applicantDepartment: '手術部門',
+      applicantName: '田中花子',
+      qrLabel: 'QR-001',
+      itemName: '人工呼吸器',
+      maker: 'フクダ電子',
+      model: 'FV-500',
+      serialNo: 'SN-001234',
+      installDepartment: '手術部門',
+      roomName: '手術室1',
+      receptionDepartment: 'ME室',
+      receptionPerson: '鈴木太郎',
+      receptionContact: '内線2345',
+      status: '修理中',
+      pickupDate: '2026-02-09',
+      deliveryDate: '2026-02-12',
+      alternativeDevice: '代替人工呼吸器 FV-300',
+      alternativeReturnDate: '2026-02-12',
+    },
+    {
+      id: 2,
+      requestNo: 'REP-20260204-001',
+      requestDate: '2026-02-04',
+      applicantDepartment: '手術部門',
+      applicantName: '佐藤一郎',
+      qrLabel: 'QR-002',
+      itemName: '輸液ポンプ',
+      maker: 'テルモ',
+      model: 'TE-LM700',
+      serialNo: 'SN-002345',
+      installDepartment: '手術部門',
+      roomName: '手術室2',
+      receptionDepartment: 'ME室',
+      receptionPerson: '鈴木太郎',
+      receptionContact: '内線2345',
+      status: '受付',
+      pickupDate: null,
+      deliveryDate: null,
+      alternativeDevice: null,
+      alternativeReturnDate: null,
+    },
+    {
+      id: 3,
+      requestNo: 'REP-20260201-001',
+      requestDate: '2026-02-01',
+      applicantDepartment: '手術部門',
+      applicantName: '高橋三郎',
+      qrLabel: 'QR-003',
+      itemName: 'ベッドサイドモニター',
+      maker: '日本光電',
+      model: 'BSM-2301',
+      serialNo: 'SN-003456',
+      installDepartment: '手術部門',
+      roomName: '手術準備室',
+      receptionDepartment: 'ME室',
+      receptionPerson: '鈴木太郎',
+      receptionContact: '内線2345',
+      status: '完了',
+      pickupDate: '2026-02-03',
+      deliveryDate: '2026-02-08',
+      alternativeDevice: null,
+      alternativeReturnDate: null,
+    },
+  ];
+
+  // ユーザーの所属部署
+  const userDepartment = user?.department || '未設定';
+
+  // ユーザーの所属部署でフィルタした修理依頼
+  const filteredRepairRequests = useMemo(() => {
+    return hospitalRepairRequests.filter(req => req.applicantDepartment === userDepartment);
+  }, [userDepartment]);
+
+  // ステータスの進捗インデックスを取得
+  const getStatusIndex = (status: RepairStatusType): number => {
+    const statuses: RepairStatusType[] = ['受付', '依頼済', '引取済', '修理中', '完了'];
+    return statuses.indexOf(status);
+  };
 
   const handleLogout = () => {
     logout();
@@ -198,7 +308,7 @@ export default function MainPage() {
   };
 
   const handleRepairStatus = () => {
-    showToast('修理ステータス機能（開発中）', 'info');
+    setIsRepairStatusModalOpen(true);
   };
 
   const handleDeleteEditList = (list: { id: string; name: string }) => {
@@ -948,6 +1058,285 @@ export default function MainPage() {
                   <span>貸出・返却</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 修理ステータスモーダル */}
+      {isRepairStatusModalOpen && (
+        <div
+          onClick={() => setIsRepairStatusModalOpen(false)}
+          className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isMobile ? 'p-2' : 'p-5'}`}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`bg-white rounded-xl w-full max-h-[95vh] shadow-xl flex flex-col ${
+              isMobile ? 'max-w-full mx-2' : isTablet ? 'max-w-[600px]' : 'max-w-[800px]'
+            }`}
+          >
+            {/* モーダルヘッダー */}
+            <div className={`bg-red-500 text-white ${isMobile ? 'px-3 py-3 text-base' : 'px-5 py-4 text-lg'} font-bold flex justify-between items-center rounded-t-xl shrink-0`}>
+              <span className="text-balance">修理ステータス</span>
+              <button
+                onClick={() => setIsRepairStatusModalOpen(false)}
+                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                aria-label="閉じる"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 所属部署表示 */}
+            <div className={`${isMobile ? 'px-3 py-2' : 'px-5 py-3'} border-b border-slate-200 bg-slate-50 shrink-0`}>
+              <div className="flex items-center gap-2">
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 whitespace-nowrap`}>申請部署</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-slate-800`}>{userDepartment}</span>
+              </div>
+            </div>
+
+            {/* モーダルボディ */}
+            <div className={`${isMobile ? 'p-3' : 'p-5'} overflow-y-auto flex-1`}>
+              {filteredRepairRequests.length === 0 ? (
+                <div className="text-center py-10 text-slate-500">
+                  該当する修理依頼がありません
+                </div>
+              ) : (
+                <div className={`flex flex-col ${isMobile ? 'gap-4' : 'gap-6'}`}>
+                  {filteredRepairRequests.map((req) => {
+                    const statusIndex = getStatusIndex(req.status);
+                    const statuses: RepairStatusType[] = ['受付', '依頼済', '引取済', '修理中', '完了'];
+
+                    return (
+                      <div
+                        key={req.id}
+                        className="border border-slate-300 rounded-lg overflow-hidden"
+                      >
+                        {/* ステータス進捗バー */}
+                        <div className={`bg-slate-100 ${isMobile ? 'px-2 py-2' : 'px-4 py-3'} border-b border-slate-200`}>
+                          <div className={`flex items-center justify-between ${isMobile ? '' : 'max-w-md mx-auto'}`}>
+                            {statuses.map((status, index) => (
+                              <React.Fragment key={status}>
+                                <div className="flex flex-col items-center">
+                                  <div
+                                    className={`${isMobile ? 'size-3' : 'size-4'} rounded-full border-2 ${
+                                      index <= statusIndex
+                                        ? 'bg-red-500 border-red-500'
+                                        : 'bg-white border-slate-300'
+                                    }`}
+                                  />
+                                  <span className={`${isMobile ? 'text-[10px]' : 'text-xs'} mt-1 ${
+                                    index <= statusIndex ? 'text-red-600 font-semibold' : 'text-slate-400'
+                                  }`}>
+                                    {status}
+                                  </span>
+                                </div>
+                                {index < statuses.length - 1 && (
+                                  <div
+                                    className={`flex-1 h-0.5 ${isMobile ? 'mx-1' : 'mx-2'} ${
+                                      index < statusIndex ? 'bg-red-500' : 'bg-slate-300'
+                                    }`}
+                                  />
+                                )}
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* 修理依頼詳細 - 表形式（レスポンシブ） */}
+                        <div className={isMobile ? 'p-2' : 'p-4'}>
+                          {isMobile ? (
+                            /* モバイル: 2カラム縦積みレイアウト */
+                            <div className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-xs">
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">依頼No.</div>
+                              <div className="py-1.5 px-2 font-mono font-semibold truncate">{req.requestNo}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">依頼日</div>
+                              <div className="py-1.5 px-2">{req.requestDate}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">申請部署</div>
+                              <div className="py-1.5 px-2">{req.applicantDepartment}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">申請者</div>
+                              <div className="py-1.5 px-2">{req.applicantName}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">QRラベル</div>
+                              <div className="py-1.5 px-2 font-mono text-sky-600 font-semibold">{req.qrLabel}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">品目</div>
+                              <div className="py-1.5 px-2">{req.itemName}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">メーカー</div>
+                              <div className="py-1.5 px-2">{req.maker}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">型式</div>
+                              <div className="py-1.5 px-2">{req.model}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">シリアルNo.</div>
+                              <div className="py-1.5 px-2 font-mono truncate">{req.serialNo}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">設置場所</div>
+                              <div className="py-1.5 px-2">{req.installDepartment} / {req.roomName}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">受付部署</div>
+                              <div className="py-1.5 px-2">{req.receptionDepartment}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">担当者</div>
+                              <div className="py-1.5 px-2">{req.receptionPerson}</div>
+
+                              <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">連絡先</div>
+                              <div className="py-1.5 px-2">{req.receptionContact}</div>
+
+                              {req.status !== '受付' && (
+                                <>
+                                  <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">引取日</div>
+                                  <div className="py-1.5 px-2 text-orange-600 font-semibold">
+                                    {req.pickupDate ? new Date(req.pickupDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '-'}
+                                  </div>
+
+                                  <div className="py-1.5 px-2 bg-slate-50 text-slate-600 font-medium">お届け日</div>
+                                  <div className="py-1.5 px-2 text-emerald-600 font-semibold">
+                                    {req.deliveryDate ? new Date(req.deliveryDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '-'}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ) : isTablet ? (
+                            /* タブレット: 2カラム×2の表形式 */
+                            <table className="w-full text-xs border-collapse">
+                              <tbody>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium w-24 whitespace-nowrap">依頼No.</th>
+                                  <td className="py-2 px-2 font-mono font-semibold">{req.requestNo}</td>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium w-20 whitespace-nowrap">依頼日</th>
+                                  <td className="py-2 px-2">{req.requestDate}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">申請部署</th>
+                                  <td className="py-2 px-2">{req.applicantDepartment}</td>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">申請者</th>
+                                  <td className="py-2 px-2">{req.applicantName}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">QRラベル</th>
+                                  <td className="py-2 px-2 font-mono text-sky-600 font-semibold">{req.qrLabel}</td>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">品目</th>
+                                  <td className="py-2 px-2">{req.itemName}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">メーカー</th>
+                                  <td className="py-2 px-2">{req.maker}</td>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">型式</th>
+                                  <td className="py-2 px-2">{req.model}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">シリアルNo.</th>
+                                  <td className="py-2 px-2 font-mono">{req.serialNo}</td>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">設置場所</th>
+                                  <td className="py-2 px-2">{req.installDepartment} / {req.roomName}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">受付部署</th>
+                                  <td className="py-2 px-2">{req.receptionDepartment}</td>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">担当者</th>
+                                  <td className="py-2 px-2">{req.receptionPerson}</td>
+                                </tr>
+                                <tr className={req.status !== '受付' ? 'border-b border-slate-200' : ''}>
+                                  <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">連絡先</th>
+                                  <td className="py-2 px-2" colSpan={3}>{req.receptionContact}</td>
+                                </tr>
+                                {req.status !== '受付' && (
+                                  <tr>
+                                    <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">引取日</th>
+                                    <td className="py-2 px-2 text-orange-600 font-semibold">
+                                      {req.pickupDate ? new Date(req.pickupDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '-'}
+                                    </td>
+                                    <th className="py-2 px-2 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">お届け日</th>
+                                    <td className="py-2 px-2 text-emerald-600 font-semibold">
+                                      {req.deliveryDate ? new Date(req.deliveryDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '-'}
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          ) : (
+                            /* PC: 4カラム表形式 */
+                            <table className="w-full text-sm border-collapse">
+                              <tbody>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium w-28 whitespace-nowrap">修理依頼No.</th>
+                                  <td className="py-2 px-3 font-mono font-semibold">{req.requestNo}</td>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium w-20 whitespace-nowrap">依頼日</th>
+                                  <td className="py-2 px-3">{req.requestDate}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">申請部署</th>
+                                  <td className="py-2 px-3">{req.applicantDepartment}</td>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">申請者</th>
+                                  <td className="py-2 px-3">{req.applicantName}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">QRラベル</th>
+                                  <td className="py-2 px-3 font-mono text-sky-600 font-semibold">{req.qrLabel}</td>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">品目</th>
+                                  <td className="py-2 px-3">{req.itemName}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">メーカー</th>
+                                  <td className="py-2 px-3">{req.maker}</td>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">型式</th>
+                                  <td className="py-2 px-3">{req.model}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">シリアルNo.</th>
+                                  <td className="py-2 px-3 font-mono">{req.serialNo}</td>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">設置場所</th>
+                                  <td className="py-2 px-3">{req.installDepartment} / {req.roomName}</td>
+                                </tr>
+                                <tr className="border-b border-slate-200">
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">受付担当部署</th>
+                                  <td className="py-2 px-3">{req.receptionDepartment}</td>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">担当者</th>
+                                  <td className="py-2 px-3">{req.receptionPerson}</td>
+                                </tr>
+                                <tr className={req.status !== '受付' ? 'border-b border-slate-200' : ''}>
+                                  <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">連絡先</th>
+                                  <td className="py-2 px-3" colSpan={3}>{req.receptionContact}</td>
+                                </tr>
+                                {req.status !== '受付' && (
+                                  <tr>
+                                    <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">引き取り日</th>
+                                    <td className="py-2 px-3 text-orange-600 font-semibold">
+                                      {req.pickupDate ? new Date(req.pickupDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '-'}
+                                    </td>
+                                    <th className="py-2 px-3 text-left bg-slate-50 text-slate-600 font-medium whitespace-nowrap">お届け日</th>
+                                    <td className="py-2 px-3 text-emerald-600 font-semibold">
+                                      {req.deliveryDate ? new Date(req.deliveryDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '-'}
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          )}
+
+                          {/* 代替機情報 */}
+                          {req.alternativeDevice && req.alternativeReturnDate && (
+                            <div className={`mt-3 ${isMobile ? 'p-2 text-xs' : 'p-3 text-sm'} bg-amber-50 border border-amber-200 rounded-md`}>
+                              <span className="text-amber-700">
+                                ※代替え機は
+                                <span className="font-semibold mx-1">
+                                  {new Date(req.alternativeReturnDate).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' })}
+                                </span>
+                                に返却してください。
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
