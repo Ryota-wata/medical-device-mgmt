@@ -728,21 +728,6 @@ export default function DataMatchingPage() {
                 データ統合
               </h1>
             </div>
-            <button
-              onClick={() => setShowResultModal(true)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}
-            >
-              統合リスト確認（{mergedList.length}件）
-            </button>
           </div>
         </header>
 
@@ -947,9 +932,6 @@ export default function DataMatchingPage() {
             </div>
           </div>
         </main>
-
-        {/* 統合リストモーダル */}
-        {showResultModal && renderResultModal()}
       </div>
     );
   }
