@@ -633,16 +633,6 @@ export default function DataMatchingPage() {
     currentLedgerMatched: currentLedgerData.filter(d => d.matchingStatus).length,
   };
 
-  // 統合リストの状況別件数
-  const mergedStats = {
-    完全一致: mergedList.filter(m => m.matchingStatus === '完全一致').length,
-    部分一致: mergedList.filter(m => m.matchingStatus === '部分一致').length,
-    数量不一致: mergedList.filter(m => m.matchingStatus === '数量不一致').length,
-    再確認: mergedList.filter(m => m.matchingStatus === '再確認').length,
-    未確認: mergedList.filter(m => m.matchingStatus === '未確認').length,
-    未登録: mergedList.filter(m => m.matchingStatus === '未登録').length,
-  };
-
   // タブ別件数計算
   // 対応中: 現在の台帳とまだ突合されていないもの + 再確認
   const pendingItems = workingMergedData.filter(item => {
@@ -818,23 +808,6 @@ export default function DataMatchingPage() {
                     統合リスト: {mergedList.length}件
                   </span>
                 </div>
-              </div>
-
-              {/* 統合リストの状況 */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px' }}>
-                {Object.entries(mergedStats).map(([status, count]) => (
-                  <div key={status} style={{
-                    padding: '12px',
-                    backgroundColor: getStatusColor(status as MatchingStatus) + '15',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '20px', fontWeight: '600', color: getStatusColor(status as MatchingStatus), fontVariantNumeric: 'tabular-nums' }}>
-                      {count}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#5a6c7d' }}>{status}</div>
-                  </div>
-                ))}
               </div>
             </div>
 
