@@ -22,6 +22,7 @@ import { RfqGroupsTab } from './components/RfqGroupsTab';
 import { QuotationsTab } from './components/QuotationsTab';
 import { RepairRequestsTab } from './components/RepairRequestsTab';
 import { LendingManagementTab } from './components/LendingManagementTab';
+import { InspectionManagementTab } from './components/InspectionManagementTab';
 import { QuotationRegistrationModal } from './components/QuotationRegistrationModal';
 import { ApplicationFormData } from './components/QuotationRegistrationModal/ApplicationCreationModal';
 
@@ -34,7 +35,7 @@ const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
   { key: 'repairRequests', label: '修理申請', path: '/quotation-data-box/repair-requests' },
   { key: 'repairDetails', label: '修理明細', path: '/quotation-data-box/repair-details' },
   { key: 'makerMaintenance', label: '保守契約管理', path: '/quotation-data-box/maintenance-contracts' },
-  { key: 'inHouseInspection', label: '保守・点検機器申請', path: '/quotation-data-box/inspection-requests' },
+  { key: 'inHouseInspection', label: '点検管理', path: '/quotation-data-box/inspection-requests' },
   { key: 'lendingManagement', label: '貸出管理', path: '/quotation-data-box/lending-management' },
 ];
 
@@ -500,27 +501,7 @@ export default function QuotationManagementPage() {
               </div>
             )}
             {activeSubTab === 'inHouseInspection' && (
-              <div style={{ padding: '16px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ background: '#f8f9fa' }}>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>点検No</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>資産名</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>点検種別</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>前回点検日</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>次回点検日</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>ステータス</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                        データがありません
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <InspectionManagementTab />
             )}
             {activeSubTab === 'lendingManagement' && (
               <LendingManagementTab />

@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAssetStore } from '@/lib/stores';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { Asset } from '@/lib/types';
 
 // 貸出機器データ型
 interface LendingDevice {
@@ -23,7 +26,18 @@ interface LendingDevice {
   freeComment: string;
 }
 
-// モックデータ
+// 資産検索フィルター
+interface AssetSearchFilter {
+  building: string;
+  floor: string;
+  department: string;
+  section: string;
+  category: string;
+  largeClass: string;
+  mediumClass: string;
+}
+
+// モックデータ: 貸出登録済み機器
 const MOCK_LENDING_DEVICES: LendingDevice[] = [
   {
     id: 1,
@@ -137,7 +151,9 @@ interface LendingFilter {
 }
 
 export const LendingManagementTab: React.FC = () => {
-  const [devices] = useState<LendingDevice[]>(MOCK_LENDING_DEVICES);
+  const { assets } = useAssetStore();
+
+  const [devices, setDevices] = useState<LendingDevice[]>(MOCK_LENDING_DEVICES);
   const [filter, setFilter] = useState<LendingFilter>({
     category: '',
     majorCategory: '',
@@ -151,7 +167,97 @@ export const LendingManagementTab: React.FC = () => {
     fixedPlacementOnly: false,
   });
 
-  // フィルター適用
+  // モーダル状態
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+
+  // 資産検索関連
+  const [assetSearchFilter, setAssetSearchFilter] = useState<AssetSearchFilter>({
+    building: '',
+    floor: '',
+    department: '',
+    section: '',
+    category: '',
+    largeClass: '',
+    mediumClass: '',
+  });
+  const [searchResults, setSearchResults] = useState<Asset[]>([]);
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set());
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // 登録モーダル関連
+  const [selectedAssetsForRegistration, setSelectedAssetsForRegistration] = useState<Asset[]>([]);
+  const [returnPeriodDays, setReturnPeriodDays] = useState<number>(90);
+
+  // マスタからフィルターオプションを生成（assetStoreのassetsを使用）
+  const buildingOptions = useMemo(() => {
+    const unique = Array.from(new Set(assets.map(a => a.building)));
+    return unique.filter(Boolean) as string[];
+  }, [assets]);
+
+  const floorOptions = useMemo(() => {
+    let filtered = assets;
+    if (assetSearchFilter.building) {
+      filtered = filtered.filter(a => a.building === assetSearchFilter.building);
+    }
+    const unique = Array.from(new Set(filtered.map(a => a.floor)));
+    return unique.filter(Boolean) as string[];
+  }, [assets, assetSearchFilter.building]);
+
+  const departmentOptions = useMemo(() => {
+    let filtered = assets;
+    if (assetSearchFilter.building) {
+      filtered = filtered.filter(a => a.building === assetSearchFilter.building);
+    }
+    if (assetSearchFilter.floor) {
+      filtered = filtered.filter(a => a.floor === assetSearchFilter.floor);
+    }
+    const unique = Array.from(new Set(filtered.map(a => a.department)));
+    return unique.filter(Boolean) as string[];
+  }, [assets, assetSearchFilter.building, assetSearchFilter.floor]);
+
+  const sectionOptions = useMemo(() => {
+    let filtered = assets;
+    if (assetSearchFilter.building) {
+      filtered = filtered.filter(a => a.building === assetSearchFilter.building);
+    }
+    if (assetSearchFilter.floor) {
+      filtered = filtered.filter(a => a.floor === assetSearchFilter.floor);
+    }
+    if (assetSearchFilter.department) {
+      filtered = filtered.filter(a => a.department === assetSearchFilter.department);
+    }
+    const unique = Array.from(new Set(filtered.map(a => a.section)));
+    return unique.filter(Boolean) as string[];
+  }, [assets, assetSearchFilter.building, assetSearchFilter.floor, assetSearchFilter.department]);
+
+  const categoryOptions = useMemo(() => {
+    const unique = Array.from(new Set(assets.map(a => a.category)));
+    return unique.filter(Boolean) as string[];
+  }, [assets]);
+
+  const largeClassOptions = useMemo(() => {
+    let filtered = assets;
+    if (assetSearchFilter.category) {
+      filtered = filtered.filter(a => a.category === assetSearchFilter.category);
+    }
+    const unique = Array.from(new Set(filtered.map(a => a.largeClass)));
+    return unique.filter(Boolean) as string[];
+  }, [assets, assetSearchFilter.category]);
+
+  const mediumClassOptions = useMemo(() => {
+    let filtered = assets;
+    if (assetSearchFilter.category) {
+      filtered = filtered.filter(a => a.category === assetSearchFilter.category);
+    }
+    if (assetSearchFilter.largeClass) {
+      filtered = filtered.filter(a => a.largeClass === assetSearchFilter.largeClass);
+    }
+    const unique = Array.from(new Set(filtered.map(a => a.mediumClass)));
+    return unique.filter(Boolean) as string[];
+  }, [assets, assetSearchFilter.category, assetSearchFilter.largeClass]);
+
+  // フィルター適用（一覧用）
   const filteredDevices = devices.filter(device => {
     if (filter.category && device.category !== filter.category) return false;
     if (filter.majorCategory && device.majorCategory !== filter.majorCategory) return false;
@@ -166,7 +272,7 @@ export const LendingManagementTab: React.FC = () => {
     return true;
   });
 
-  // ユニークな値を取得
+  // ユニークな値を取得（一覧用）
   const uniqueCategories = [...new Set(devices.map(d => d.category))];
   const uniqueMajorCategories = [...new Set(devices.map(d => d.majorCategory))];
   const uniqueMiddleCategories = [...new Set(devices.map(d => d.middleCategory))];
@@ -197,8 +303,193 @@ export const LendingManagementTab: React.FC = () => {
     }
   };
 
+  // 既に貸出登録済みの資産QRコードを取得
+  const registeredAssetQrCodes = useMemo(() => {
+    return new Set(devices.map(d => d.qrLabel));
+  }, [devices]);
+
+  // 資産検索実行（曖昧検索: 部分一致）
+  const handleAssetSearch = () => {
+    const results = assets.filter(asset => {
+      // 既に貸出登録済みは除外
+      if (registeredAssetQrCodes.has(asset.qrCode)) return false;
+
+      // 曖昧検索（部分一致）
+      if (assetSearchFilter.building && !asset.building.includes(assetSearchFilter.building)) return false;
+      if (assetSearchFilter.floor && !asset.floor.includes(assetSearchFilter.floor)) return false;
+      if (assetSearchFilter.department && !asset.department.includes(assetSearchFilter.department)) return false;
+      if (assetSearchFilter.section && !asset.section.includes(assetSearchFilter.section)) return false;
+      if (assetSearchFilter.category && !asset.category.includes(assetSearchFilter.category)) return false;
+      if (assetSearchFilter.largeClass && !asset.largeClass.includes(assetSearchFilter.largeClass)) return false;
+      if (assetSearchFilter.mediumClass && !asset.mediumClass.includes(assetSearchFilter.mediumClass)) return false;
+      return true;
+    });
+    setSearchResults(results);
+    setSelectedAssetIds(new Set());
+    setHasSearched(true);
+  };
+
+  // 資産選択トグル
+  const toggleAssetSelection = (qrCode: string) => {
+    const newSelected = new Set(selectedAssetIds);
+    if (newSelected.has(qrCode)) {
+      newSelected.delete(qrCode);
+    } else {
+      newSelected.add(qrCode);
+    }
+    setSelectedAssetIds(newSelected);
+  };
+
+  // 全選択/全解除
+  const toggleSelectAll = () => {
+    if (selectedAssetIds.size === searchResults.length) {
+      setSelectedAssetIds(new Set());
+    } else {
+      setSelectedAssetIds(new Set(searchResults.map(a => a.qrCode)));
+    }
+  };
+
+  // 選択した資産を登録モーダルへ
+  const proceedToRegistration = () => {
+    const selected = searchResults.filter(a => selectedAssetIds.has(a.qrCode));
+    setSelectedAssetsForRegistration(selected);
+    setShowSearchModal(false);
+    setShowRegistrationModal(true);
+  };
+
+  // 貸出登録実行
+  const handleRegisterLending = () => {
+    // 新しい貸出機器を追加
+    const newDevices: LendingDevice[] = selectedAssetsForRegistration.map((asset, index) => ({
+      id: devices.length + index + 1,
+      qrLabel: asset.qrCode,
+      meManagementNo: '',
+      itemName: asset.name,
+      maker: asset.maker,
+      model: asset.model,
+      category: asset.category,
+      majorCategory: asset.largeClass,
+      middleCategory: asset.mediumClass,
+      status: '貸出可' as const,
+      installedDepartment: asset.section,
+      lendingDate: null,
+      expectedReturnDate: null,
+      overduedays: 0,
+      inspectionMarginDays: returnPeriodDays,
+      isFixedPlacement: false,
+      freeComment: '',
+    }));
+
+    setDevices(prev => [...prev, ...newDevices]);
+    setShowRegistrationModal(false);
+    setSelectedAssetsForRegistration([]);
+    setReturnPeriodDays(90);
+
+    // 検索状態もリセット
+    setAssetSearchFilter({
+      building: '',
+      floor: '',
+      department: '',
+      section: '',
+      category: '',
+      largeClass: '',
+      mediumClass: '',
+    });
+    setSearchResults([]);
+    setSelectedAssetIds(new Set());
+    setHasSearched(false);
+
+    alert(`${newDevices.length}件の機器を貸出管理タスクリストに追加しました`);
+  };
+
+  // 検索モーダルを開く
+  const openSearchModal = () => {
+    setShowSearchModal(true);
+    setHasSearched(false);
+    setSearchResults([]);
+    setSelectedAssetIds(new Set());
+  };
+
+  // フィルター変更時に依存する下位フィルターをリセット
+  const handleBuildingChange = (value: string) => {
+    setAssetSearchFilter(prev => ({
+      ...prev,
+      building: value,
+      floor: '',
+      department: '',
+      section: '',
+    }));
+  };
+
+  const handleFloorChange = (value: string) => {
+    setAssetSearchFilter(prev => ({
+      ...prev,
+      floor: value,
+      department: '',
+      section: '',
+    }));
+  };
+
+  const handleDepartmentChange = (value: string) => {
+    setAssetSearchFilter(prev => ({
+      ...prev,
+      department: value,
+      section: '',
+    }));
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setAssetSearchFilter(prev => ({
+      ...prev,
+      category: value,
+      largeClass: '',
+      mediumClass: '',
+    }));
+  };
+
+  const handleLargeClassChange = (value: string) => {
+    setAssetSearchFilter(prev => ({
+      ...prev,
+      largeClass: value,
+      mediumClass: '',
+    }));
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* ヘッダー: 追加ボタン */}
+      <div style={{
+        background: '#f8f9fa',
+        padding: '12px 16px',
+        borderBottom: '1px solid #ddd',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <div style={{ fontSize: '14px', color: '#333' }}>
+          登録済み機器: <strong>{devices.length}件</strong>
+        </div>
+        <button
+          onClick={openSearchModal}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#27ae60',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span style={{ fontSize: '16px' }}>+</span>
+          貸出機器を追加
+        </button>
+      </div>
+
       {/* フィルター */}
       <div style={{
         background: 'white',
@@ -210,7 +501,7 @@ export const LendingManagementTab: React.FC = () => {
         flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <label style={{ fontSize: '12px', color: '#555' }}>category</label>
+          <label style={{ fontSize: '12px', color: '#555' }}>カテゴリ</label>
           <select
             value={filter.category}
             onChange={(e) => setFilter(prev => ({ ...prev, category: e.target.value }))}
@@ -337,24 +628,19 @@ export const LendingManagementTab: React.FC = () => {
             </tr>
             {/* カラムヘッダー */}
             <tr style={{ background: '#f8f9fa' }}>
-              {/* 商品情報 */}
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>QRラベル</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>ME管理No.</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>品目</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>メーカー</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>型式</th>
-              {/* セパレータ */}
               <th style={{ borderLeft: '2px solid #ccc', border: '1px solid #ddd', width: '1px', padding: 0 }}></th>
-              {/* 貸出機器状況 */}
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>ステータス</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部署</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>貸出日</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>返却予定日</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>返却超過日数</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>点検余裕日数</th>
-              {/* セパレータ */}
               <th style={{ borderLeft: '2px solid #ccc', border: '1px solid #ddd', width: '1px', padding: 0 }}></th>
-              {/* 操作 */}
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap', color: '#c0392b' }}>返却期間設定</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap', color: '#c0392b' }}>定数機器設定</th>
               <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap', color: '#c0392b' }}>フリーコメント</th>
@@ -376,15 +662,12 @@ export const LendingManagementTab: React.FC = () => {
                     ...(device.overduedays > 0 ? { background: '#fff5f5' } : {}),
                   }}
                 >
-                  {/* 商品情報 */}
                   <td style={{ padding: '8px', border: '1px solid #ddd', fontFamily: 'monospace' }}>{device.qrLabel}</td>
                   <td style={{ padding: '8px', border: '1px solid #ddd', fontFamily: 'monospace' }}>{device.meManagementNo}</td>
                   <td style={{ padding: '8px', border: '1px solid #ddd' }}>{device.itemName}</td>
                   <td style={{ padding: '8px', border: '1px solid #ddd' }}>{device.maker}</td>
                   <td style={{ padding: '8px', border: '1px solid #ddd' }}>{device.model}</td>
-                  {/* セパレータ */}
                   <td style={{ borderLeft: '2px solid #ccc', border: '1px solid #ddd', width: '1px', padding: 0 }}></td>
-                  {/* 貸出機器状況 */}
                   <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                     <span style={getStatusStyle(device.status)}>{device.status}</span>
                   </td>
@@ -412,9 +695,7 @@ export const LendingManagementTab: React.FC = () => {
                   }}>
                     {device.inspectionMarginDays}日
                   </td>
-                  {/* セパレータ */}
                   <td style={{ borderLeft: '2px solid #ccc', border: '1px solid #ddd', width: '1px', padding: 0 }}></td>
-                  {/* 操作 */}
                   <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                     <a
                       href="#"
@@ -460,6 +741,361 @@ export const LendingManagementTab: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* 資産検索モーダル */}
+      {showSearchModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '1000px',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}>
+            {/* モーダルヘッダー */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #ddd',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>貸出機器を追加</h3>
+              <button
+                onClick={() => setShowSearchModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 検索フィルター（資産一覧画面と同じ項目）- 曖昧検索対応 */}
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-end' }}>
+                <div style={{ width: '120px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>棟</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.building}
+                    onChange={(value) => handleBuildingChange(value)}
+                    options={buildingOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="120px"
+                  />
+                </div>
+                <div style={{ width: '100px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>階</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.floor}
+                    onChange={(value) => handleFloorChange(value)}
+                    options={floorOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="100px"
+                  />
+                </div>
+                <div style={{ width: '120px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>部門</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.department}
+                    onChange={(value) => handleDepartmentChange(value)}
+                    options={departmentOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="140px"
+                  />
+                </div>
+                <div style={{ width: '120px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>部署</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.section}
+                    onChange={(value) => setAssetSearchFilter(prev => ({ ...prev, section: value }))}
+                    options={sectionOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="140px"
+                  />
+                </div>
+                <div style={{ width: '120px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>Category</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.category}
+                    onChange={(value) => handleCategoryChange(value)}
+                    options={categoryOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="140px"
+                  />
+                </div>
+                <div style={{ width: '140px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>大分類</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.largeClass}
+                    onChange={(value) => handleLargeClassChange(value)}
+                    options={largeClassOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="180px"
+                  />
+                </div>
+                <div style={{ width: '140px' }}>
+                  <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>中分類</label>
+                  <SearchableSelect
+                    value={assetSearchFilter.mediumClass}
+                    onChange={(value) => setAssetSearchFilter(prev => ({ ...prev, mediumClass: value }))}
+                    options={mediumClassOptions}
+                    placeholder="すべて"
+                    dropdownMinWidth="180px"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={handleAssetSearch}
+                  style={{
+                    padding: '8px 24px',
+                    backgroundColor: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  検索
+                </button>
+              </div>
+            </div>
+
+            {/* 検索結果 */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '0' }}>
+              {!hasSearched ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+                  検索条件を入力して「検索」ボタンをクリックしてください
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+                  該当する未登録の機器がありません
+                </div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ background: '#f8f9fa' }}>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '40px' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedAssetIds.size === searchResults.length && searchResults.length > 0}
+                          onChange={toggleSelectAll}
+                        />
+                      </th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>施設名</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>QRコード</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>棟</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>階</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>部門</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>個体管理名称</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>メーカー名</th>
+                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>型式</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchResults.map((asset, index) => (
+                      <tr
+                        key={asset.qrCode}
+                        style={{
+                          background: selectedAssetIds.has(asset.qrCode) ? '#e3f2fd' : (index % 2 === 0 ? 'white' : '#fafafa'),
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => toggleAssetSelection(asset.qrCode)}
+                      >
+                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedAssetIds.has(asset.qrCode)}
+                            onChange={() => toggleAssetSelection(asset.qrCode)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.facility}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', fontFamily: 'monospace', fontVariantNumeric: 'tabular-nums' }}>{asset.qrCode}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.building}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.floor}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.department}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.name}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.maker}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.model}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* モーダルフッター */}
+            <div style={{
+              padding: '16px 20px',
+              borderTop: '1px solid #ddd',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f8f9fa',
+            }}>
+              <div style={{ fontSize: '13px', color: '#666' }}>
+                {searchResults.length > 0 && `${selectedAssetIds.size}件選択中`}
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setShowSearchModal(false)}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: '#fff',
+                    color: '#666',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                  }}
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={proceedToRegistration}
+                  disabled={selectedAssetIds.size === 0}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: selectedAssetIds.size > 0 ? '#27ae60' : '#ccc',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: selectedAssetIds.size > 0 ? 'pointer' : 'not-allowed',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  選択した機器を貸出登録（{selectedAssetIds.size}件）
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 貸出管理登録モーダル */}
+      {showRegistrationModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: '#f5f5f5',
+            borderRadius: '12px',
+            width: '500px',
+            padding: '32px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}>
+            <h3 style={{ margin: '0 0 32px 0', fontSize: '22px', fontWeight: 'bold', color: '#333' }}>
+              貸出機器登録
+            </h3>
+
+            {/* 選択された機器数 */}
+            <div style={{ marginBottom: '24px', padding: '12px 16px', backgroundColor: '#e3f2fd', borderRadius: '8px' }}>
+              <span style={{ fontSize: '14px', color: '#1565c0' }}>
+                選択機器: <strong>{selectedAssetsForRegistration.length}件</strong>
+              </span>
+            </div>
+
+            {/* 返却までの期限 */}
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '16px',
+              }}>
+                <span style={{ fontSize: '16px', color: '#333' }}>返却までの期限</span>
+                <input
+                  type="number"
+                  value={returnPeriodDays}
+                  onChange={(e) => setReturnPeriodDays(Number(e.target.value))}
+                  min={1}
+                  max={365}
+                  style={{
+                    width: '80px',
+                    padding: '10px 12px',
+                    fontSize: '18px',
+                    fontVariantNumeric: 'tabular-nums',
+                    border: '1px solid #ccc',
+                    borderRadius: '8px',
+                    textAlign: 'center',
+                  }}
+                />
+                <span style={{ fontSize: '16px', color: '#333' }}>日</span>
+              </div>
+            </div>
+
+            {/* 登録ボタン */}
+            <button
+              onClick={handleRegisterLending}
+              style={{
+                width: '100%',
+                padding: '16px',
+                backgroundColor: '#d4edda',
+                color: '#333',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+              }}
+            >
+              貸出管理タスクリストに追加する
+            </button>
+
+            {/* キャンセルリンク */}
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <button
+                onClick={() => {
+                  setShowRegistrationModal(false);
+                  setShowSearchModal(true);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#666',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+              >
+                戻る
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
