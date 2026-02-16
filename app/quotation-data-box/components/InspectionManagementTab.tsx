@@ -6,6 +6,7 @@ import { useInspectionStore, useMasterStore } from '@/lib/stores';
 import { InspectionTask, InspectionTaskStatus } from '@/lib/types';
 import { InspectionMenuModal } from './InspectionMenuModal';
 import { InspectionRegistrationModal } from './InspectionRegistrationModal';
+import { InspectionExecutionModal, InspectionResult } from './InspectionExecutionModal';
 
 interface InspectionManagementTabProps {
   isMobile?: boolean;
@@ -60,6 +61,10 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [selectedTaskForDate, setSelectedTaskForDate] = useState<InspectionTask | null>(null);
   const [newDate, setNewDate] = useState('');
+
+  // 点検実施モーダル
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
+  const [selectedTaskForExecution, setSelectedTaskForExecution] = useState<InspectionTask | null>(null);
 
   // フィルタリング
   const filteredTasks = useMemo(() => {
@@ -130,7 +135,17 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   };
 
   const handleStartInspection = (task: InspectionTask) => {
-    startInspection(task.id);
+    setSelectedTaskForExecution(task);
+    setIsExecutionModalOpen(true);
+  };
+
+  const handleCompleteInspection = (result: InspectionResult) => {
+    // 点検完了処理
+    if (result.taskId) {
+      startInspection(result.taskId);
+    }
+    // TODO: result の詳細データ（itemResults, remarks, overallResult等）を保存する処理を追加
+    console.log('点検完了:', result);
   };
 
   const handleSkipInspection = (task: InspectionTask) => {
@@ -431,6 +446,18 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
           </div>
         </div>
       )}
+
+      {/* 点検実施モーダル */}
+      <InspectionExecutionModal
+        isOpen={isExecutionModalOpen}
+        task={selectedTaskForExecution}
+        menu={selectedTaskForExecution?.periodicMenuIds[0] ? getMenuById(selectedTaskForExecution.periodicMenuIds[0]) ?? null : null}
+        onClose={() => {
+          setIsExecutionModalOpen(false);
+          setSelectedTaskForExecution(null);
+        }}
+        onComplete={handleCompleteInspection}
+      />
     </div>
   );
 }

@@ -273,7 +273,7 @@ export default function MainPage() {
   };
 
   const handleMaintenanceInspection = () => {
-    showToast('保守・点検機能（開発中）', 'info');
+    router.push('/inspection-prep');
   };
 
   const handleLendingManagement = () => {
