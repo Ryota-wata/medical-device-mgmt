@@ -23,6 +23,7 @@ import { QuotationsTab } from './components/QuotationsTab';
 import { RepairRequestsTab } from './components/RepairRequestsTab';
 import { LendingManagementTab } from './components/LendingManagementTab';
 import { InspectionManagementTab } from './components/InspectionManagementTab';
+import { MaintenanceContractsTab } from './components/MaintenanceContractsTab';
 import { QuotationRegistrationModal } from './components/QuotationRegistrationModal';
 import { ApplicationFormData } from './components/QuotationRegistrationModal/ApplicationCreationModal';
 
@@ -478,27 +479,7 @@ export default function QuotationManagementPage() {
               </div>
             )}
             {activeSubTab === 'makerMaintenance' && (
-              <div style={{ padding: '16px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ background: '#f8f9fa' }}>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>保守No</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>資産名</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>契約期間</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>次回点検日</th>
-                      <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>ステータス</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                        データがありません
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <MaintenanceContractsTab />
             )}
             {activeSubTab === 'inHouseInspection' && (
               <InspectionManagementTab />
