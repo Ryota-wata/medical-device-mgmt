@@ -113,8 +113,33 @@ function InspectionResultContent() {
           updateTask(resultData.taskId, { status: '再点検' });
           break;
         case '修理申請':
-          // 修理申請: タスクを削除し、修理申請画面に遷移
-          deleteTask(resultData.taskId);
+          // 修理申請: 点検周期に基づき次回点検予定日とステータスを更新し、修理申請画面に遷移
+          if (task) {
+            // 点検メニューから周期を取得（デフォルト1ヶ月）
+            const menu = task.periodicMenuIds.length > 0
+              ? getMenuById(task.periodicMenuIds[0])
+              : null;
+            const cycleMonths = menu?.cycleMonths || 1;
+
+            // 次回点検予定日を計算
+            const nextDate = new Date();
+            nextDate.setMonth(nextDate.getMonth() + cycleMonths);
+            const nextInspectionDate = nextDate.toISOString().split('T')[0];
+
+            // ステータスを計算
+            const diffDays = Math.ceil((nextDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            let newStatus: '点検2ヶ月前' | '点検月' | '点検月超過' = '点検2ヶ月前';
+            if (diffDays < 0) newStatus = '点検月超過';
+            else if (diffDays <= 30) newStatus = '点検月';
+            else if (diffDays <= 60) newStatus = '点検2ヶ月前';
+
+            updateTask(resultData.taskId, {
+              lastInspectionDate: resultData.inspectionDate,
+              nextInspectionDate: nextInspectionDate,
+              status: newStatus,
+              completedCount: task.completedCount + 1,
+            });
+          }
           // 修理申請用のデータをsessionStorageに保存
           sessionStorage.setItem('repairRequestData', JSON.stringify({
             qrCode: resultData.qrCode,
