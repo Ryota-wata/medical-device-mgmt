@@ -187,7 +187,7 @@ interface InspectionStore {
   // 点検実施
   startInspection: (taskId: string) => void;
   completeInspection: (taskId: string, record: Omit<InspectionRecord, 'id' | 'createdAt'>) => void;
-  skipInspection: (taskId: string, reason: string) => void;
+  skipInspection: (taskId: string) => void;
 
   // 日程調整（メーカー保守用）
   setInspectionDate: (taskId: string, date: string) => void;
@@ -347,13 +347,19 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
     }));
   },
 
-  skipInspection: (taskId, reason) => {
-    // スキップの場合は次回予定日を1ヶ月延長
+  skipInspection: (taskId) => {
+    // スキップの場合は点検周期に基づき次回予定日を更新
     const task = get().getTaskById(taskId);
     if (!task) return;
 
+    // 点検メニューから周期を取得（デフォルト1ヶ月）
+    const menu = task.periodicMenuIds.length > 0
+      ? get().getMenuById(task.periodicMenuIds[0])
+      : null;
+    const cycleMonths = menu?.cycleMonths || 1;
+
     const nextDate = new Date(task.nextInspectionDate);
-    nextDate.setMonth(nextDate.getMonth() + 1);
+    nextDate.setMonth(nextDate.getMonth() + cycleMonths);
 
     set((state) => ({
       tasks: state.tasks.map((t) =>

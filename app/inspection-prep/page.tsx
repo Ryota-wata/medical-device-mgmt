@@ -155,7 +155,7 @@ function InspectionPrepContent() {
               gap: '8px'
             }}>
               <span style={{ fontSize: isMobile ? '18px' : '20px' }}>📥</span>
-              点検データダウンロード
+              点検メニュー　データダウンロード
             </h2>
 
             <div style={{

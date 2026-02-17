@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useInspectionStore, useMasterStore } from '@/lib/stores';
 import { InspectionTask, InspectionTaskStatus } from '@/lib/types';
@@ -13,6 +14,7 @@ interface InspectionManagementTabProps {
 }
 
 export function InspectionManagementTab({ isMobile = false }: InspectionManagementTabProps) {
+  const router = useRouter();
   const { tasks, menus, startInspection, skipInspection, setInspectionDate, getMenuById } = useInspectionStore();
   const { assets, departments } = useMasterStore();
 
@@ -112,6 +114,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
         return { backgroundColor: '#e67e22', color: 'white' };
       case '点検完了':
         return { backgroundColor: '#27ae60', color: 'white' };
+      case '再点検':
+        return { backgroundColor: '#c0392b', color: 'white' };
       default:
         return { backgroundColor: '#95a5a6', color: 'white' };
     }
@@ -149,10 +153,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   };
 
   const handleSkipInspection = (task: InspectionTask) => {
-    const reason = window.prompt('スキップ理由を入力してください');
-    if (reason) {
-      skipInspection(task.id, reason);
-    }
+    skipInspection(task.id);
   };
 
   const handleOpenDateModal = (task: InspectionTask) => {
@@ -369,12 +370,25 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                     <td style={styles.td}>
                       <div style={styles.actionButtons}>
                         {task.inspectionType === 'メーカー保守' ? (
-                          <button
-                            style={styles.actionButton}
-                            onClick={() => handleOpenDateModal(task)}
-                          >
-                            日程調整
-                          </button>
+                          task.status === '点検日調整' ? (
+                            <button
+                              style={styles.actionButton}
+                              onClick={() => handleOpenDateModal(task)}
+                            >
+                              点検日登録
+                            </button>
+                          ) : (
+                            <button
+                              style={{ ...styles.actionButton, ...styles.makerMaintenanceAction }}
+                              onClick={() => {
+                                sessionStorage.setItem('makerMaintenanceTask', JSON.stringify(task));
+                                router.push('/maker-maintenance-result');
+                              }}
+                              disabled={task.status === '点検完了'}
+                            >
+                              点検記録登録
+                            </button>
+                          )
                         ) : (
                           <>
                             <button
@@ -653,6 +667,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#27ae60',
     color: 'white',
     borderColor: '#27ae60',
+  },
+  makerMaintenanceAction: {
+    backgroundColor: '#9b59b6',
+    color: 'white',
+    borderColor: '#9b59b6',
   },
   notes: {
     padding: '12px 16px',

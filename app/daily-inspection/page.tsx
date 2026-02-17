@@ -180,31 +180,31 @@ function DailyInspectionContent() {
       alert('実施者名を入力してください');
       return;
     }
-    if (!selectedMenuId) {
-      alert('点検メニューを選択してください');
-      return;
-    }
 
-    const result = {
-      assetQrCode: selectedAsset?.qrCode,
+    const resultData = {
+      source: 'daily' as const,
+      qrCode: selectedAsset?.qrCode || '',
+      largeClass: selectedAsset?.largeClass || '',
+      mediumClass: selectedAsset?.mediumClass || '',
+      item: selectedAsset?.item || '',
+      maker: selectedAsset?.maker || '',
+      model: selectedAsset?.model || '',
+      inspectionType: '日常点検' as const,
+      usageTiming,
+      menuName: selectedMenu?.name || '（メニュー未選択）',
       inspectorName,
       inspectionDate: new Date().toISOString().split('T')[0],
-      inspectionType: '日常点検',
-      usageTiming,
-      menuId: selectedMenuId,
-      menuName: selectedMenu?.name,
       itemResults,
       remarks,
       overallResult,
     };
 
     // TODO: IndexedDBに保存
-    console.log('点検完了:', result);
-    alert('点検が完了しました');
+    console.log('点検完了:', resultData);
 
-    // リセットしてQRスキャンに戻る
-    resetState();
-    setStep('qr-scan');
+    // sessionStorageに結果を保存して結果画面に遷移
+    sessionStorage.setItem('inspectionResult', JSON.stringify(resultData));
+    router.push('/inspection-result');
   };
 
   // 状態リセット

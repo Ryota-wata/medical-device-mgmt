@@ -1,0 +1,542 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useResponsive } from '@/lib/hooks/useResponsive';
+import { useInspectionStore } from '@/lib/stores';
+
+interface InspectionResultData {
+  // 点検元情報
+  source: 'daily' | 'periodic';
+  taskId?: string;
+  // 機器情報
+  qrCode: string;
+  largeClass: string;
+  mediumClass: string;
+  item: string;
+  maker: string;
+  model: string;
+  // 点検情報
+  inspectionType: '日常点検' | '定期点検';
+  usageTiming?: '使用前' | '使用中' | '使用後';
+  menuName: string;
+  inspectorName: string;
+  inspectionDate: string;
+  // 結果
+  itemResults: {
+    itemName: string;
+    content: string;
+    result: string;
+    unit?: string;
+  }[];
+  remarks: string;
+  overallResult: '合格' | '再点検' | '修理申請';
+}
+
+function InspectionResultContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isMobile, isTablet } = useResponsive();
+  const { updateTask, deleteTask } = useInspectionStore();
+
+  const [resultData, setResultData] = useState<InspectionResultData | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    // sessionStorageから点検結果を取得
+    const storedResult = sessionStorage.getItem('inspectionResult');
+    if (storedResult) {
+      setResultData(JSON.parse(storedResult));
+    }
+  }, []);
+
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    // TODO: 実際のPDF生成処理
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsExporting(false);
+    alert('点検結果報告書を出力しました');
+  };
+
+  const handleNextInspection = () => {
+    // sessionStorageをクリア
+    sessionStorage.removeItem('inspectionResult');
+
+    if (resultData?.source === 'daily') {
+      // 日常点検: QRスキャン画面に戻る
+      router.push('/daily-inspection');
+    } else {
+      // 定期点検: 点検管理一覧に戻る
+      router.push('/quotation-data-box/inspection-requests');
+    }
+  };
+
+  const handleComplete = () => {
+    if (!resultData) return;
+
+    // 定期点検の場合、結果に応じてタスクを処理
+    if (resultData.source === 'periodic' && resultData.taskId) {
+      switch (resultData.overallResult) {
+        case '合格':
+          // 合格: タスクを削除
+          deleteTask(resultData.taskId);
+          break;
+        case '再点検':
+          // 再点検: ステータスを「再点検」に更新（タスクは残る）
+          updateTask(resultData.taskId, { status: '再点検' });
+          break;
+        case '修理申請':
+          // 修理申請: タスクを削除し、修理申請画面に遷移
+          deleteTask(resultData.taskId);
+          // 修理申請用のデータをsessionStorageに保存
+          sessionStorage.setItem('repairRequestData', JSON.stringify({
+            qrCode: resultData.qrCode,
+            largeClass: resultData.largeClass,
+            mediumClass: resultData.mediumClass,
+            item: resultData.item,
+            maker: resultData.maker,
+            model: resultData.model,
+            inspectionRemarks: resultData.remarks,
+            inspectionDate: resultData.inspectionDate,
+            inspectorName: resultData.inspectorName,
+          }));
+          sessionStorage.removeItem('inspectionResult');
+          router.push('/repair-request');
+          return;
+      }
+    }
+
+    // sessionStorageをクリア
+    sessionStorage.removeItem('inspectionResult');
+
+    if (resultData.source === 'daily') {
+      // 日常点検: オフライン準備画面に戻る
+      router.push('/inspection-prep');
+    } else {
+      // 定期点検: 点検管理一覧に戻る
+      router.push('/quotation-data-box/inspection-requests');
+    }
+  };
+
+  const getOverallResultStyle = (result: string) => {
+    switch (result) {
+      case '合格':
+        return { backgroundColor: '#e8f5e9', color: '#27ae60', borderColor: '#27ae60' };
+      case '再点検':
+        return { backgroundColor: '#fff3e0', color: '#f39c12', borderColor: '#f39c12' };
+      case '修理申請':
+        return { backgroundColor: '#ffebee', color: '#e74c3c', borderColor: '#e74c3c' };
+      default:
+        return { backgroundColor: '#f5f5f5', color: '#666', borderColor: '#ddd' };
+    }
+  };
+
+  const getOverallResultIcon = (result: string) => {
+    switch (result) {
+      case '合格':
+        return '✓';
+      case '再点検':
+        return '⟳';
+      case '修理申請':
+        return '⚠';
+      default:
+        return '?';
+    }
+  };
+
+  if (!resultData) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100dvh',
+        background: '#f5f5f5',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px'
+      }}>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          padding: '32px',
+          textAlign: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ fontSize: '18px', color: '#333', marginBottom: '8px' }}>点検結果がありません</h2>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
+            点検を実施してからこの画面にアクセスしてください。
+          </p>
+          <button
+            onClick={() => router.push('/main')}
+            style={{
+              backgroundColor: '#2c3e50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer'
+            }}
+          >
+            メイン画面に戻る
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
+      {/* Header */}
+      <header style={{
+        background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+        color: 'white',
+        padding: isMobile ? '16px' : '20px 24px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        textAlign: 'center'
+      }}>
+        <h1 style={{
+          fontSize: isMobile ? '18px' : '22px',
+          fontWeight: 600,
+          margin: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px'
+        }}>
+          <span style={{ fontSize: isMobile ? '20px' : '24px' }}>✓</span>
+          点検完了
+        </h1>
+      </header>
+
+      {/* Main Content */}
+      <main style={{
+        flex: 1,
+        padding: isMobile ? '16px 12px' : isTablet ? '24px 20px' : '32px 40px',
+        overflowY: 'auto',
+        paddingBottom: '160px'
+      }}>
+        <div style={{
+          maxWidth: '700px',
+          margin: '0 auto'
+        }}>
+          {/* 総合評価 */}
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: isMobile ? '20px 16px' : '28px 32px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>総合評価</div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '16px 32px',
+              borderRadius: '12px',
+              border: `2px solid`,
+              ...getOverallResultStyle(resultData.overallResult)
+            }}>
+              <span style={{ fontSize: '32px', fontWeight: 700 }}>
+                {getOverallResultIcon(resultData.overallResult)}
+              </span>
+              <span style={{ fontSize: '24px', fontWeight: 700 }}>
+                {resultData.overallResult}
+              </span>
+            </div>
+          </div>
+
+          {/* 機器情報 */}
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: isMobile ? '16px' : '20px 24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            marginBottom: '16px'
+          }}>
+            <h2 style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#333',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>🏥</span> 点検対象機器
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr',
+              gap: '8px'
+            }}>
+              <InfoItem label="QRコード" value={resultData.qrCode} tabular />
+              <InfoItem label="大分類" value={resultData.largeClass} />
+              <InfoItem label="中分類" value={resultData.mediumClass} />
+              <InfoItem label="品目" value={resultData.item} />
+              <InfoItem label="メーカー" value={resultData.maker} />
+              <InfoItem label="型式" value={resultData.model} />
+            </div>
+          </div>
+
+          {/* 点検情報 */}
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: isMobile ? '16px' : '20px 24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            marginBottom: '16px'
+          }}>
+            <h2 style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#333',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>📋</span> 点検情報
+            </h2>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr',
+              gap: '8px'
+            }}>
+              <InfoItem label="点検種別" value={resultData.inspectionType} />
+              {resultData.usageTiming && (
+                <InfoItem label="タイミング" value={resultData.usageTiming} />
+              )}
+              <InfoItem label="点検メニュー" value={resultData.menuName} />
+              <InfoItem label="実施者" value={resultData.inspectorName} />
+              <InfoItem label="実施日" value={resultData.inspectionDate} />
+            </div>
+          </div>
+
+          {/* 点検項目結果 */}
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: isMobile ? '16px' : '20px 24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            marginBottom: '16px'
+          }}>
+            <h2 style={{
+              fontSize: '15px',
+              fontWeight: 600,
+              color: '#333',
+              marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>✅</span> 点検項目結果
+            </h2>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                fontSize: '13px',
+                minWidth: '400px'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8f9fa' }}>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #e0e0e0' }}>項目</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #e0e0e0' }}>点検内容</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderBottom: '2px solid #e0e0e0', width: '80px' }}>評価</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resultData.itemResults.map((item, index) => (
+                    <tr key={index}>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.itemName}</td>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.content}</td>
+                      <td style={{
+                        padding: '10px 12px',
+                        borderBottom: '1px solid #eee',
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        color: item.result === '合' ? '#27ae60' : item.result === '否' ? '#e74c3c' : '#333'
+                      }}>
+                        {item.unit ? `${item.result} ${item.unit}` : item.result}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 備考 */}
+          {resultData.remarks && (
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px 24px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#333',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span>📝</span> 備考
+              </h2>
+              <p style={{ fontSize: '14px', color: '#555', margin: 0, lineHeight: '1.6' }}>
+                {resultData.remarks}
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#ffffff',
+        borderTop: '1px solid #e0e0e0',
+        padding: isMobile ? '16px' : '20px 24px',
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <div style={{
+          maxWidth: '700px',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: '12px',
+          justifyContent: 'center'
+        }}>
+          <button
+            onClick={handleExportReport}
+            disabled={isExporting}
+            style={{
+              flex: isMobile ? 'none' : '1',
+              maxWidth: isMobile ? 'none' : '200px',
+              backgroundColor: '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '14px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              opacity: isExporting ? 0.7 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              minHeight: '48px'
+            }}
+          >
+            <span>📄</span>
+            {isExporting ? '出力中...' : '報告書出力'}
+          </button>
+
+          {/* 日常点検のみ「次の点検へ」ボタンを表示 */}
+          {resultData?.source === 'daily' && (
+            <button
+              onClick={handleNextInspection}
+              style={{
+                flex: isMobile ? 'none' : '1',
+                maxWidth: isMobile ? 'none' : '200px',
+                backgroundColor: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '14px 24px',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                minHeight: '48px'
+              }}
+            >
+              <span>→</span>
+              次の点検へ
+            </button>
+          )}
+
+          <button
+            onClick={handleComplete}
+            style={{
+              flex: isMobile ? 'none' : '1',
+              maxWidth: isMobile ? 'none' : '200px',
+              backgroundColor: resultData?.overallResult === '修理申請' ? '#e74c3c' : '#2c3e50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '14px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              minHeight: '48px'
+            }}
+          >
+            <span>{resultData?.overallResult === '修理申請' ? '🔧' : '✓'}</span>
+            {resultData?.overallResult === '修理申請' ? '修理申請へ' : '完了'}
+          </button>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function InfoItem({ label, value, tabular }: { label: string; value: string; tabular?: boolean }) {
+  return (
+    <div style={{
+      backgroundColor: '#f8f9fa',
+      borderRadius: '6px',
+      padding: '8px 12px'
+    }}>
+      <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>{label}</div>
+      <div style={{
+        fontSize: '13px',
+        color: '#333',
+        fontWeight: 500,
+        fontVariantNumeric: tabular ? 'tabular-nums' : 'normal',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }}>
+        {value || '-'}
+      </div>
+    </div>
+  );
+}
+
+export default function InspectionResultPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100dvh',
+        background: '#f5f5f5'
+      }}>
+        <div>読み込み中...</div>
+      </div>
+    }>
+      <InspectionResultContent />
+    </Suspense>
+  );
+}

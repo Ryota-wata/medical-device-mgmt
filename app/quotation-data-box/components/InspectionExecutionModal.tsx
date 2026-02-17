@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { InspectionTask, InspectionMenu } from '@/lib/types';
 import { Asset } from '@/lib/types/asset';
 import { useInspectionStore } from '@/lib/stores';
@@ -55,6 +56,7 @@ export function InspectionExecutionModal({
   onClose,
   onComplete,
 }: InspectionExecutionModalProps) {
+  const router = useRouter();
   const { menus } = useInspectionStore();
 
   const [inspectorName, setInspectorName] = useState('');
@@ -123,7 +125,7 @@ export function InspectionExecutionModal({
       return;
     }
 
-    onComplete({
+    const result: InspectionResult = {
       taskId: task?.id,
       assetQrCode: mode === 'daily' ? asset?.qrCode : task?.assetId,
       inspectorName,
@@ -135,8 +137,36 @@ export function InspectionExecutionModal({
       itemResults,
       remarks,
       overallResult,
-    });
+    };
+
+    // 親コンポーネントに結果を通知
+    onComplete(result);
+
+    // sessionStorageに結果を保存して結果画面に遷移
+    const resultData = {
+      source: mode,
+      taskId: task?.id,
+      qrCode: mode === 'daily' ? asset?.qrCode || '' : task?.assetId || '',
+      largeClass: mode === 'daily' ? asset?.largeClass || '' : task?.largeClass || '',
+      mediumClass: mode === 'daily' ? asset?.mediumClass || '' : task?.mediumClass || '',
+      item: mode === 'daily' ? asset?.item || '' : task?.assetName || '',
+      maker: mode === 'daily' ? asset?.maker || '' : task?.maker || '',
+      model: mode === 'daily' ? asset?.model || '' : task?.model || '',
+      inspectionType: mode === 'daily' ? '日常点検' : '定期点検',
+      usageTiming: mode === 'daily' ? usageTiming : undefined,
+      menuName: selectedMenu?.name || (task?.assetName + ' 定期点検①'),
+      inspectorName,
+      inspectionDate: new Date().toISOString().split('T')[0],
+      itemResults,
+      remarks,
+      overallResult,
+    };
+
+    sessionStorage.setItem('inspectionResult', JSON.stringify(resultData));
+
+    // モーダルを閉じてから遷移
     handleClose();
+    router.push('/inspection-result');
   };
 
   const handleClose = () => {
@@ -212,25 +242,27 @@ export function InspectionExecutionModal({
             </div>
           </div>
 
-          {/* 点検タイミング */}
-          <div style={styles.infoRow}>
-            <span style={{ ...styles.infoLabel, marginRight: '8px', alignSelf: 'center' }}>点検タイミング</span>
-            <div style={styles.tabGroup}>
-              {(['使用前', '使用中', '使用後'] as const).map((timing) => (
-                <label key={timing} style={usageTiming === timing ? styles.tabActive : styles.tab}>
-                  <input
-                    type="radio"
-                    name="usageTiming"
-                    value={timing}
-                    checked={usageTiming === timing}
-                    onChange={() => setUsageTiming(timing)}
-                    style={{ display: 'none' }}
-                  />
-                  {timing}
-                </label>
-              ))}
+          {/* 点検タイミング（日常点検モードのみ） */}
+          {mode === 'daily' && (
+            <div style={styles.infoRow}>
+              <span style={{ ...styles.infoLabel, marginRight: '8px', alignSelf: 'center' }}>点検タイミング</span>
+              <div style={styles.tabGroup}>
+                {(['使用前', '使用中', '使用後'] as const).map((timing) => (
+                  <label key={timing} style={usageTiming === timing ? styles.tabActive : styles.tab}>
+                    <input
+                      type="radio"
+                      name="usageTiming"
+                      value={timing}
+                      checked={usageTiming === timing}
+                      onChange={() => setUsageTiming(timing)}
+                      style={{ display: 'none' }}
+                    />
+                    {timing}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 点検メニュー選択（日常点検モード）または表示（定期点検モード） */}
           <div style={styles.infoRow}>
