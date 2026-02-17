@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 
-export type SubTabType = 'purchaseManagement' | 'quotations' | 'borrowingManagement' | 'transferManagement' | 'disposalManagement' | 'repairRequests' | 'repairDetails' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
+export type SubTabType = 'remodelManagement' | 'purchaseManagement' | 'quotations' | 'borrowingManagement' | 'transferManagement' | 'disposalManagement' | 'repairRequests' | 'repairDetails' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
 
 export const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
+  { key: 'remodelManagement', label: 'リモデル管理', path: '/quotation-data-box/remodel-management' },
   { key: 'purchaseManagement', label: '購入管理', path: '/quotation-data-box/purchase-management' },
   { key: 'quotations', label: '見積明細', path: '/quotation-data-box/quotations' },
   { key: 'borrowingManagement', label: '借用管理', path: '/quotation-data-box/borrowing-management' },

@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useApplicationStore } from '@/lib/stores/applicationStore';
 import { useMasterStore } from '@/lib/stores';
-import { useEditListStore } from '@/lib/stores/editListStore';
 import { RfqGroupStatus } from '@/lib/types';
 import {
   OCRResult,
@@ -20,6 +19,90 @@ import { RfqGroupsTab } from '../components/RfqGroupsTab';
 import { QuotationRegistrationModal } from '../components/QuotationRegistrationModal';
 import { SubTabNavigation } from '../components/SubTabNavigation';
 
+// 購入申請のステータス
+type PurchaseApplicationStatus = '申請中' | '対応中' | '見積中' | '発注済' | '検収待ち' | '完了';
+
+// 購入申請データの型
+interface PurchaseApplication {
+  id: number;
+  applicationNo: string;
+  applicationDate: string;
+  applicantName: string;
+  applicantDepartment: string;
+  applicationType: '更新申請' | '増設申請' | '新規申請';
+  targetAssetId?: string;
+  targetAssetName: string;
+  reason: string;
+  desiredDeliveryDate: string;
+  isUrgent: boolean;
+  status: PurchaseApplicationStatus;
+  rfqNo?: string;
+  assignedTo?: string;
+}
+
+// モック購入申請データ
+const MOCK_PURCHASE_APPLICATIONS: PurchaseApplication[] = [
+  {
+    id: 1,
+    applicationNo: 'PA-2025-001',
+    applicationDate: '2025-02-15',
+    applicantName: '佐藤 美咲',
+    applicantDepartment: '外科',
+    applicationType: '更新申請',
+    targetAssetId: 'CT-001',
+    targetAssetName: 'CTスキャナー SOMATOM Drive',
+    reason: '老朽化・故障頻発',
+    desiredDeliveryDate: '2025-04',
+    isUrgent: false,
+    status: '申請中',
+  },
+  {
+    id: 2,
+    applicationNo: 'PA-2025-002',
+    applicationDate: '2025-02-14',
+    applicantName: '田中 一郎',
+    applicantDepartment: '内科',
+    applicationType: '増設申請',
+    targetAssetId: 'US-003',
+    targetAssetName: 'エコー装置 Aplio i800',
+    reason: '業務拡大',
+    desiredDeliveryDate: '2025-05',
+    isUrgent: false,
+    status: '申請中',
+  },
+  {
+    id: 3,
+    applicationNo: 'PA-2025-003',
+    applicationDate: '2025-02-13',
+    applicantName: '鈴木 花子',
+    applicantDepartment: '検査科',
+    applicationType: '更新申請',
+    targetAssetId: 'XR-002',
+    targetAssetName: 'X線撮影装置 CALNEO Smart',
+    reason: '保守終了',
+    desiredDeliveryDate: '2025-03',
+    isUrgent: true,
+    status: '対応中',
+    rfqNo: 'RFQ-2025-015',
+    assignedTo: '高橋 健二',
+  },
+  {
+    id: 4,
+    applicationNo: 'PA-2025-004',
+    applicationDate: '2025-02-10',
+    applicantName: '渡辺 真理',
+    applicantDepartment: 'リハビリ科',
+    applicationType: '新規申請',
+    targetAssetName: '超音波治療器',
+    reason: '新規導入',
+    desiredDeliveryDate: '2025-06',
+    isUrgent: false,
+    status: '見積中',
+    rfqNo: 'RFQ-2025-012',
+    assignedTo: '高橋 健二',
+  },
+];
+
 function PurchaseManagementContent() {
   const router = useRouter();
   const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
@@ -30,10 +113,13 @@ function PurchaseManagementContent() {
   } = useQuotationStore();
   const { applications, addApplication } = useApplicationStore();
   const { assets: assetMasterData } = useMasterStore();
-  const { editLists } = useEditListStore();
 
-  // 選択中の編集リスト
-  const [selectedEditListId, setSelectedEditListId] = useState<string>('');
+  // 購入申請一覧（モック）
+  const [purchaseApplications, setPurchaseApplications] = useState<PurchaseApplication[]>(MOCK_PURCHASE_APPLICATIONS);
+
+  // フィルター
+  const [statusFilter, setStatusFilter] = useState<PurchaseApplicationStatus | ''>('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
 
   // 見積依頼グループタブ用のステータスフィルター
   const [rfqStatusFilter, setRfqStatusFilter] = useState<RfqGroupStatus | ''>('');
@@ -47,6 +133,41 @@ function PurchaseManagementContent() {
   });
   const [ocrProcessing, setOcrProcessing] = useState(false);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
+
+  // 対応開始モーダル
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<PurchaseApplication | null>(null);
+
+  // フィルタリングされた申請一覧
+  const filteredApplications = purchaseApplications.filter(app => {
+    if (statusFilter && app.status !== statusFilter) return false;
+    if (typeFilter && app.applicationType !== typeFilter) return false;
+    return true;
+  });
+
+  // 対応開始
+  const handleStartResponse = (application: PurchaseApplication) => {
+    setSelectedApplication(application);
+    setShowStartModal(true);
+  };
+
+  // 対応開始確定
+  const handleConfirmStartResponse = () => {
+    if (!selectedApplication) return;
+
+    // ステータスを「対応中」に更新し、見積依頼No.を採番
+    const newRfqNo = `RFQ-2025-${String(rfqGroups.length + 16).padStart(3, '0')}`;
+    setPurchaseApplications(prev => prev.map(app =>
+      app.id === selectedApplication.id
+        ? { ...app, status: '対応中' as PurchaseApplicationStatus, rfqNo: newRfqNo, assignedTo: '現在のユーザー' }
+        : app
+    ));
+
+    setShowStartModal(false);
+    setSelectedApplication(null);
+
+    alert(`対応を開始しました。\n見積依頼No.: ${newRfqNo}`);
+  };
 
   // 見積書登録開始
   const handleStartQuotationRegistration = (rfqGroupId?: number) => {
@@ -190,6 +311,32 @@ function PurchaseManagementContent() {
     setPendingRfqGroupId(null);
   };
 
+  // ステータスバッジの色
+  const getStatusColor = (status: PurchaseApplicationStatus) => {
+    switch (status) {
+      case '申請中': return { bg: '#fef3c7', text: '#92400e' };
+      case '対応中': return { bg: '#dbeafe', text: '#1e40af' };
+      case '見積中': return { bg: '#e0e7ff', text: '#3730a3' };
+      case '発注済': return { bg: '#d1fae5', text: '#065f46' };
+      case '検収待ち': return { bg: '#fce7f3', text: '#9d174d' };
+      case '完了': return { bg: '#f3f4f6', text: '#374151' };
+      default: return { bg: '#f3f4f6', text: '#374151' };
+    }
+  };
+
+  // 申請種別バッジの色
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case '更新申請': return { bg: '#fee2e2', text: '#991b1b' };
+      case '増設申請': return { bg: '#fef3c7', text: '#92400e' };
+      case '新規申請': return { bg: '#d1fae5', text: '#065f46' };
+      default: return { bg: '#f3f4f6', text: '#374151' };
+    }
+  };
+
+  // 未対応申請件数
+  const pendingCount = purchaseApplications.filter(app => app.status === '申請中').length;
+
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
       <Header
@@ -200,33 +347,26 @@ function PurchaseManagementContent() {
         hideMenu={true}
         centerContent={
           <div style={{
-            background: '#c0392b',
+            background: '#27ae60',
             padding: '6px 16px',
             borderRadius: '4px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
           }}>
-            <span style={{ fontSize: '12px', color: 'white', fontWeight: 'bold' }}>編集リスト:</span>
-            <select
-              value={selectedEditListId}
-              onChange={(e) => setSelectedEditListId(e.target.value)}
-              style={{
-                padding: '4px 8px',
-                fontSize: '12px',
-                border: 'none',
-                borderRadius: '3px',
-                background: 'white',
-                minWidth: '180px',
-              }}
-            >
-              <option value="">選択してください</option>
-              {editLists.map((list) => (
-                <option key={list.id} value={list.id}>
-                  {list.name}
-                </option>
-              ))}
-            </select>
+            <span style={{ fontSize: '12px', color: 'white', fontWeight: 'bold' }}>購入申請受付</span>
+            {pendingCount > 0 && (
+              <span style={{
+                background: '#e74c3c',
+                color: 'white',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '11px',
+                fontWeight: 'bold',
+              }}>
+                未対応 {pendingCount}件
+              </span>
+            )}
           </div>
         }
       />
@@ -248,60 +388,250 @@ function PurchaseManagementContent() {
             flexWrap: 'wrap'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+              <label style={{ fontSize: '12px', color: '#555' }}>申請種別</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}
+              >
                 <option value="">すべて</option>
-                <option value="purchase">購入</option>
-                <option value="lease">リース</option>
-                <option value="installment">割賦</option>
-                <option value="rental">レンタル</option>
-                <option value="trial">試用</option>
-                <option value="borrow">借用</option>
-                <option value="repair">修理</option>
-                <option value="maintenance">保守</option>
-                <option value="inspection">点検</option>
-                <option value="other">その他</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="listPrice">定価</option>
-                <option value="estimate">概算</option>
-                <option value="final">最終原本登録用</option>
+                <option value="更新申請">更新申請</option>
+                <option value="増設申請">増設申請</option>
+                <option value="新規申請">新規申請</option>
               </select>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as PurchaseApplicationStatus | '')}
+                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}
+              >
                 <option value="">すべて</option>
-                <option value="見積依頼">見積依頼</option>
-                <option value="見積依頼済">見積依頼済</option>
-                <option value="見積登録済">見積登録済</option>
-                <option value="発注登録済">発注登録済</option>
-                <option value="検収登録済">検収登録済</option>
-                <option value="資産仮登録済">資産仮登録済</option>
-                <option value="資産登録済">資産登録済</option>
+                <option value="申請中">申請中</option>
+                <option value="対応中">対応中</option>
+                <option value="見積中">見積中</option>
+                <option value="発注済">発注済</option>
+                <option value="検収待ち">検収待ち</option>
+                <option value="完了">完了</option>
               </select>
             </div>
           </div>
 
-          {/* テーブルエリア */}
+          {/* 申請一覧テーブル */}
           <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
-            <RfqGroupsTab
-              rfqGroups={rfqGroups}
-              rfqStatusFilter={rfqStatusFilter}
-              onFilterChange={setRfqStatusFilter}
-              onRegisterQuotation={handleStartQuotationRegistration}
-              onRegisterOrder={handleStartOrderRegistration}
-              onRegisterInspection={handleStartInspectionRegistration}
-              onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
-              onUpdateDeadline={(id, deadline) => updateRfqGroup(id, { deadline })}
-            />
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead style={{ background: '#f8fafc', position: 'sticky', top: 0 }}>
+                <tr>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>申請No.</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>申請日</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>申請者</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>種別</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569' }}>対象資産</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569' }}>申請理由</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>希望納期</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>ステータス</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>見積依頼No.</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap' }}>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredApplications.map((app, index) => {
+                  const statusColor = getStatusColor(app.status);
+                  const typeColor = getTypeColor(app.applicationType);
+                  return (
+                    <tr key={app.id} style={{ background: index % 2 === 0 ? 'white' : '#f8fafc' }}>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', fontWeight: 500, color: '#1e293b' }}>
+                        {app.applicationNo}
+                        {app.isUrgent && (
+                          <span style={{ marginLeft: '6px', background: '#ef4444', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>緊急</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>{app.applicationDate}</td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+                        <div style={{ fontWeight: 500, color: '#1e293b' }}>{app.applicantName}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{app.applicantDepartment}</div>
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600, background: typeColor.bg, color: typeColor.text }}>
+                          {app.applicationType}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', maxWidth: '200px' }}>
+                        <div style={{ fontWeight: 500, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={app.targetAssetName}>
+                          {app.targetAssetName}
+                        </div>
+                        {app.targetAssetId && (
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{app.targetAssetId}</div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', color: '#475569', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={app.reason}>
+                        {app.reason}
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', textAlign: 'center', color: '#475569' }}>{app.desiredDeliveryDate}</td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: statusColor.bg, color: statusColor.text }}>
+                          {app.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', textAlign: 'center', color: '#3b82f6', fontWeight: 500 }}>
+                        {app.rfqNo || '-'}
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
+                        {app.status === '申請中' && (
+                          <button
+                            onClick={() => handleStartResponse(app)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#3b82f6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            対応開始
+                          </button>
+                        )}
+                        {app.status === '対応中' && (
+                          <button
+                            onClick={() => handleStartQuotationRegistration()}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#10b981',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            見積登録
+                          </button>
+                        )}
+                        {app.status === '見積中' && (
+                          <button
+                            onClick={() => handleStartOrderRegistration(app.id)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#8b5cf6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            発注登録
+                          </button>
+                        )}
+                        {app.status === '発注済' && (
+                          <button
+                            onClick={() => handleStartInspectionRegistration(app.id)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#f59e0b',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            検収登録
+                          </button>
+                        )}
+                        {app.status === '検収待ち' && (
+                          <button
+                            onClick={() => handleStartAssetProvisionalRegistration(app.id)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#ec4899',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            資産登録
+                          </button>
+                        )}
+                        {app.status === '完了' && (
+                          <span style={{ color: '#9ca3af', fontSize: '12px' }}>完了</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {filteredApplications.length === 0 && (
+              <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+                <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>申請がありません</div>
+                <div style={{ fontSize: '13px' }}>購入申請が届くとここに表示されます</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* 対応開始確認モーダル */}
+      {showStartModal && selectedApplication && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
+          <div style={{ background: 'white', borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16, textWrap: 'balance' }}>対応を開始しますか？</h2>
+
+            <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gap: 12, fontSize: 13 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ color: '#64748b', minWidth: 80 }}>申請No.</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{selectedApplication.applicationNo}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ color: '#64748b', minWidth: 80 }}>申請者</span>
+                  <span style={{ color: '#1e293b' }}>{selectedApplication.applicantName}（{selectedApplication.applicantDepartment}）</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ color: '#64748b', minWidth: 80 }}>対象資産</span>
+                  <span style={{ color: '#1e293b' }}>{selectedApplication.targetAssetName}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ color: '#64748b', minWidth: 80 }}>申請種別</span>
+                  <span style={{ color: '#1e293b' }}>{selectedApplication.applicationType}</span>
+                </div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
+              対応を開始すると、見積依頼No.が自動採番され、購入プロセスが開始されます。
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button
+                onClick={() => { setShowStartModal(false); setSelectedApplication(null); }}
+                style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#6b7280' }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmStartResponse}
+                style={{ padding: '10px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+              >
+                対応を開始する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 資産仮登録モード選択ダイアログ */}
       {showModeSelection && (
