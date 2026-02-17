@@ -349,7 +349,7 @@ export default function LendingCheckoutPage() {
                   setIsProcessed(false);
                   setProcessedAction(null);
                 }}
-                placeholder="QRコードを入力"
+                placeholder="例: QR001（貸出）/ QR002（返却）"
                 style={{
                   flex: 1,
                   padding: '12px 16px',
@@ -379,6 +379,34 @@ export default function LendingCheckoutPage() {
                   <span style={{ fontSize: '14px' }}>読取</span>
                 </button>
               )}
+            </div>
+            {/* テスト用QRコード例 */}
+            <div style={{
+              marginTop: '8px',
+              fontSize: '11px',
+              color: '#888',
+              display: 'flex',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}>
+              <span
+                onClick={() => { setQrLabel('QR001'); setIsProcessed(false); setProcessedAction(null); }}
+                style={{ cursor: 'pointer', textDecoration: 'underline', color: '#1976d2' }}
+              >
+                QR001（在庫中→貸出）
+              </span>
+              <span
+                onClick={() => { setQrLabel('QR002'); setIsProcessed(false); setProcessedAction(null); }}
+                style={{ cursor: 'pointer', textDecoration: 'underline', color: '#ff9800' }}
+              >
+                QR002（貸出中→返却）
+              </span>
+              <span
+                onClick={() => { setQrLabel('QR003'); setIsProcessed(false); setProcessedAction(null); }}
+                style={{ cursor: 'pointer', textDecoration: 'underline', color: '#1976d2' }}
+              >
+                QR003（在庫中→貸出）
+              </span>
             </div>
           </div>
 
@@ -455,7 +483,7 @@ export default function LendingCheckoutPage() {
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
-                    placeholder="担当者IDを入力"
+                    placeholder="例: 12345"
                     style={{
                       flex: 1,
                       padding: '12px 16px',
@@ -484,7 +512,7 @@ export default function LendingCheckoutPage() {
                     </button>
                   )}
                 </div>
-                {userInfo && (
+                {userInfo ? (
                   <div style={{
                     marginTop: '8px',
                     fontSize: '14px',
@@ -492,6 +520,34 @@ export default function LendingCheckoutPage() {
                     fontWeight: 'bold',
                   }}>
                     {userInfo.name}（{userInfo.department}）
+                  </div>
+                ) : (
+                  <div style={{
+                    marginTop: '8px',
+                    fontSize: '11px',
+                    color: '#888',
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}>
+                    <span
+                      onClick={() => setUserId('12345')}
+                      style={{ cursor: 'pointer', textDecoration: 'underline', color: '#666' }}
+                    >
+                      12345（山田太郎）
+                    </span>
+                    <span
+                      onClick={() => setUserId('12346')}
+                      style={{ cursor: 'pointer', textDecoration: 'underline', color: '#666' }}
+                    >
+                      12346（佐藤花子）
+                    </span>
+                    <span
+                      onClick={() => setUserId('12347')}
+                      style={{ cursor: 'pointer', textDecoration: 'underline', color: '#666' }}
+                    >
+                      12347（鈴木一郎）
+                    </span>
                   </div>
                 )}
               </div>
