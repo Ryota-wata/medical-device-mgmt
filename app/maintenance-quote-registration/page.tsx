@@ -945,52 +945,6 @@ function MaintenanceQuoteRegistrationContent() {
               </div>
             )}
 
-            {/* 入力内容サマリー */}
-            <div style={{
-              marginTop: '24px',
-              background: COLORS.white,
-              borderRadius: '8px',
-              padding: '16px',
-              border: `1px solid ${COLORS.borderLight}`,
-            }}>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary }}>
-                入力内容サマリー
-              </h4>
-              <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted, width: '120px' }}>申請部署:</td>
-                    <td style={{ padding: '6px 8px', color: COLORS.textPrimary }}>
-                      {formData.applicationDepartment || '-'} / {formData.applicationPerson || '-'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted }}>契約グループ名:</td>
-                    <td style={{ padding: '6px 8px', color: COLORS.textPrimary }}>{formData.contractGroupName || '-'}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted }}>契約期間:</td>
-                    <td style={{ padding: '6px 8px', color: COLORS.textPrimary }}>{formData.contractPeriod || '-'}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted }}>保守種別:</td>
-                    <td style={{ padding: '6px 8px', color: COLORS.textPrimary }}>{formData.maintenanceType}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted }}>業者:</td>
-                    <td style={{ padding: '6px 8px', color: COLORS.textPrimary }}>
-                      {formData.vendorName || '-'} / {formData.vendorPerson || '-'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '6px 8px', color: COLORS.textMuted }}>合計金額:</td>
-                    <td style={{ padding: '6px 8px', color: COLORS.textPrimary, fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>
-                      {formData.totalAmount > 0 ? `¥${formData.totalAmount.toLocaleString()}` : '-'}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       </div>
