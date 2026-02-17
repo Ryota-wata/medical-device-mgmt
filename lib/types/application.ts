@@ -115,7 +115,12 @@ export type ApplicationStatus =
   | '承認済み'
   | '差し戻し'
   | '却下'
-  | '執行済み';
+  | '執行済み'
+  | '見積依頼中'
+  | '発注済み'
+  | '検収済み'
+  | '廃棄完了'
+  | '移動完了';
 
 /**
  * 見積情報
@@ -178,6 +183,11 @@ export function getStatusBadgeStyle(status: ApplicationStatus): {
     '差し戻し': { background: '#e67e22', color: 'white' },
     '却下': { background: '#e74c3c', color: 'white' },
     '執行済み': { background: '#2c3e50', color: 'white' },
+    '見積依頼中': { background: '#c2185b', color: 'white' },
+    '発注済み': { background: '#00796b', color: 'white' },
+    '検収済み': { background: '#00695c', color: 'white' },
+    '廃棄完了': { background: '#7b1fa2', color: 'white' },
+    '移動完了': { background: '#3f51b5', color: 'white' },
   };
   return styles[status];
 }
