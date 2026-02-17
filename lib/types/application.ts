@@ -93,6 +93,8 @@ export interface Application {
     section: string;
     roomName: string;
   };
+  // 廃棄申請用：添付ファイル
+  attachedFiles?: string[];
 }
 
 /**

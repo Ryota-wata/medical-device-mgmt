@@ -9,21 +9,18 @@ interface DisposalApplication {
   id: number;
   applicationNo: string;
   applicationDate: string;
-  assetName: string;
-  model: string;
+  applicant: string;
   department: string;
   section: string;
   roomName?: string;
-  reason: string;
+  comment: string;
+  attachedFiles?: string[];
   status: ApplicationStatus;
-  // 廃棄業者情報
+  // 廃棄業者情報（タスク管理用）
   disposalVendor?: string;
   quotationDate?: string;
   orderDate?: string;
   acceptanceDate?: string;
-  // ドキュメント
-  documents?: string[];
-  comment?: string;
 }
 
 export function DisposalManagementTab() {
@@ -54,28 +51,28 @@ export function DisposalManagementTab() {
       .filter(app => app.applicationType === '廃棄申請')
       .map(app => {
         // freeInputから業者情報をパース
-        const comment = app.freeInput || '';
-        const vendorMatch = comment.match(/廃棄業者: (.+)/);
-        const quotationMatch = comment.match(/見積日: (\d{4}-\d{2}-\d{2})?/);
-        const orderMatch = comment.match(/発注日: (\d{4}-\d{2}-\d{2})?/);
-        const acceptanceMatch = comment.match(/検収日: (\d{4}-\d{2}-\d{2})?/);
+        const freeInput = app.freeInput || '';
+        const vendorMatch = freeInput.match(/廃棄業者: (.+)/);
+        const quotationMatch = freeInput.match(/見積日: (\d{4}-\d{2}-\d{2})?/);
+        const orderMatch = freeInput.match(/発注日: (\d{4}-\d{2}-\d{2})?/);
+        const acceptanceMatch = freeInput.match(/検収日: (\d{4}-\d{2}-\d{2})?/);
+        const comment = freeInput.split('\n').filter(line => !line.match(/^(廃棄業者|見積日|発注日|検収日):/)).join('\n').trim();
 
         return {
           id: app.id,
           applicationNo: app.applicationNo,
           applicationDate: app.applicationDate,
-          assetName: app.asset.name,
-          model: app.asset.model,
+          applicant: '手部 術太郎', // モーダルと同じ固定値
           department: app.facility.department,
           section: app.facility.section,
           roomName: app.roomName,
-          reason: app.applicationReason || '',
+          comment: comment || app.applicationReason || '',
+          attachedFiles: app.attachedFiles,
           status: app.status,
           disposalVendor: vendorMatch?.[1] || '',
           quotationDate: quotationMatch?.[1] || '',
           orderDate: orderMatch?.[1] || '',
           acceptanceDate: acceptanceMatch?.[1] || '',
-          comment: comment.split('\n').filter(line => !line.match(/^(廃棄業者|見積日|発注日|検収日):/)).join('\n').trim(),
         };
       });
   }, [applications]);
@@ -150,7 +147,7 @@ export function DisposalManagementTab() {
   // ドキュメント登録モーダルを開く
   const handleOpenDocumentModal = (app: DisposalApplication) => {
     setSelectedApplication(app);
-    setDocuments(app.documents || []);
+    setDocuments([]);
     setIsDocumentModalOpen(true);
   };
 
@@ -197,13 +194,6 @@ export function DisposalManagementTab() {
     }
   };
 
-  // 進捗表示
-  const getProgressStep = (status: ApplicationStatus) => {
-    const steps = ['承認済み', '見積依頼中', '発注済み', '検収済み', '廃棄完了'];
-    const index = steps.indexOf(status);
-    return index >= 0 ? index + 1 : 0;
-  };
-
   return (
     <div style={{ padding: '16px' }}>
       {/* フィルターエリア */}
@@ -229,7 +219,7 @@ export function DisposalManagementTab() {
 
           <div style={{ minWidth: '180px' }}>
             <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-              部門
+              設置部門
             </label>
             <SearchableSelect
               value={filterDepartment}
@@ -261,70 +251,64 @@ export function DisposalManagementTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
             <tr style={{ background: '#f8f9fa' }}>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請No</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請日</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>資産名</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>型式</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置場所</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>廃棄理由</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>廃棄業者</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>進捗</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>ステータス</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>操作</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請No</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請日</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請者</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部門</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部署</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置室名</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>コメント</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>添付ファイル</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>廃棄業者</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>ステータス</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>操作</th>
             </tr>
           </thead>
           <tbody>
             {filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                <td colSpan={11} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
                   廃棄申請データがありません
                 </td>
               </tr>
             ) : (
               filteredApplications.map((app) => {
                 const statusColor = getStatusColor(app.status);
-                const progressStep = getProgressStep(app.status);
                 return (
                   <tr key={app.id} style={{ background: 'white' }}>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.applicationDate}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.assetName}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.model}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {app.department} / {app.section}
-                      {app.roomName && ` / ${app.roomName}`}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', maxWidth: '150px' }}>
-                      <span style={{
-                        display: 'block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }} title={app.reason}>
-                        {app.reason || '-'}
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationDate}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicant}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.department}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.section}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.roomName || '-'}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd', minWidth: '200px', maxWidth: '300px' }}>
+                      <span style={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {app.comment || '-'}
                       </span>
                     </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {app.disposalVendor || <span style={{ color: '#999' }}>未登録</span>}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
-                      {app.status !== '承認待ち' && (
-                        <div style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
-                          {[1, 2, 3, 4, 5].map(step => (
-                            <div
-                              key={step}
-                              style={{
-                                width: '16px',
-                                height: '6px',
-                                borderRadius: '3px',
-                                background: step <= progressStep ? '#4caf50' : '#e0e0e0',
-                              }}
-                            />
-                          ))}
-                        </div>
+                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                      {app.attachedFiles && app.attachedFiles.length > 0 ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '4px 8px',
+                          background: '#e3f2fd',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          color: '#1565c0',
+                        }}>
+                          📎 {app.attachedFiles.length}件
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999' }}>-</span>
                       )}
                     </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                      {app.disposalVendor || <span style={{ color: '#999' }}>未登録</span>}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                       <span style={{
                         padding: '4px 10px',
                         borderRadius: '12px',
@@ -336,7 +320,7 @@ export function DisposalManagementTab() {
                         {app.status}
                       </span>
                     </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
+                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         {/* 承認待ち */}
                         {app.status === '承認待ち' && (
@@ -450,7 +434,7 @@ export function DisposalManagementTab() {
             <div style={{ padding: '24px' }}>
               <div style={{ marginBottom: '16px', padding: '12px', background: '#f8f9fa', borderRadius: '4px' }}>
                 <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
-                  対象: {selectedApplication.assetName} ({selectedApplication.model})
+                  対象: {selectedApplication.applicationNo}
                 </p>
               </div>
 
@@ -531,20 +515,6 @@ export function DisposalManagementTab() {
                 </div>
               </div>
 
-              {/* 進捗表示 */}
-              <div style={{ marginBottom: '24px', padding: '12px', background: '#f0f4f8', borderRadius: '4px' }}>
-                <p style={{ fontSize: '12px', color: '#666', margin: '0 0 8px 0' }}>ワークフロー:</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                  <span style={{ color: vendorForm.quotationDate ? '#4caf50' : '#999' }}>見積依頼</span>
-                  <span style={{ color: '#999' }}>→</span>
-                  <span style={{ color: vendorForm.orderDate ? '#4caf50' : '#999' }}>発注</span>
-                  <span style={{ color: '#999' }}>→</span>
-                  <span style={{ color: vendorForm.acceptanceDate ? '#4caf50' : '#999' }}>検収</span>
-                  <span style={{ color: '#999' }}>→</span>
-                  <span style={{ color: '#999' }}>廃棄完了</span>
-                </div>
-              </div>
-
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button
                   onClick={() => setIsVendorModalOpen(false)}
@@ -621,7 +591,7 @@ export function DisposalManagementTab() {
             <div style={{ padding: '24px' }}>
               <div style={{ marginBottom: '16px', padding: '12px', background: '#f8f9fa', borderRadius: '4px' }}>
                 <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
-                  対象: {selectedApplication.assetName} ({selectedApplication.model})
+                  対象: {selectedApplication.applicationNo}
                 </p>
               </div>
 

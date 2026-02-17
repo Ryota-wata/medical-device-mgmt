@@ -3,24 +3,21 @@
 import React, { useState, useMemo } from 'react';
 import { useApplicationStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { ApplicationStatus } from '@/lib/types';
 
 interface TransferApplication {
   id: number;
   applicationNo: string;
   applicationDate: string;
-  assetName: string;
-  model: string;
-  // 現設置場所
-  currentDepartment: string;
-  currentSection: string;
-  currentRoomName?: string;
+  applicant: string;
+  // 設置場所（管理部署と同じ）
+  department: string;
+  section: string;
+  roomName?: string;
   // 移動先
   destDepartment: string;
   destSection: string;
   destRoomName: string;
-  // その他
-  status: ApplicationStatus;
+  // コメント
   comment?: string;
 }
 
@@ -28,30 +25,27 @@ export function TransferManagementTab() {
   const { applications, updateApplication } = useApplicationStore();
 
   // フィルター状態
-  const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterDepartment, setFilterDepartment] = useState<string>('');
 
   // 詳細モーダル
   const [selectedApplication, setSelectedApplication] = useState<TransferApplication | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // 移動申請をフィルタリング
+  // 移動申請をフィルタリング（承認待ちのみ表示）
   const transferApplications = useMemo(() => {
     return applications
-      .filter(app => app.applicationType === '移動申請')
+      .filter(app => app.applicationType === '移動申請' && app.status === '承認待ち')
       .map(app => ({
         id: app.id,
         applicationNo: app.applicationNo,
         applicationDate: app.applicationDate,
-        assetName: app.asset.name,
-        model: app.asset.model,
-        currentDepartment: app.facility.department,
-        currentSection: app.facility.section,
-        currentRoomName: app.roomName,
+        applicant: '手部 術太郎', // モーダルと同じ固定値
+        department: app.facility.department,
+        section: app.facility.section,
+        roomName: app.roomName,
         destDepartment: app.transferDestination?.department || '',
         destSection: app.transferDestination?.section || '',
         destRoomName: app.transferDestination?.roomName || '',
-        status: app.status,
         comment: app.freeInput,
       }));
   }, [applications]);
@@ -59,20 +53,16 @@ export function TransferManagementTab() {
   // フィルター適用
   const filteredApplications = useMemo(() => {
     return transferApplications.filter(app => {
-      if (filterStatus && app.status !== filterStatus) return false;
-      if (filterDepartment && app.currentDepartment !== filterDepartment) return false;
+      if (filterDepartment && app.department !== filterDepartment) return false;
       return true;
     });
-  }, [transferApplications, filterStatus, filterDepartment]);
+  }, [transferApplications, filterDepartment]);
 
   // 部門オプション
   const departmentOptions = useMemo(() => {
-    const departments = new Set(transferApplications.map(app => app.currentDepartment));
+    const departments = new Set(transferApplications.map(app => app.department));
     return Array.from(departments).filter(Boolean);
   }, [transferApplications]);
-
-  // ステータスオプション
-  const statusOptions = ['承認待ち', '移動完了'];
 
   // 移動承認
   const handleApproveTransfer = (app: TransferApplication) => {
@@ -92,17 +82,7 @@ export function TransferManagementTab() {
 
   // フィルタークリア
   const handleClearFilters = () => {
-    setFilterStatus('');
     setFilterDepartment('');
-  };
-
-  // ステータスバッジの色
-  const getStatusColor = (status: ApplicationStatus) => {
-    switch (status) {
-      case '承認待ち': return { bg: '#fff3e0', color: '#e65100' };
-      case '移動完了': return { bg: '#e8eaf6', color: '#3f51b5' };
-      default: return { bg: '#f5f5f5', color: '#666' };
-    }
   };
 
   return (
@@ -116,21 +96,9 @@ export function TransferManagementTab() {
         border: '1px solid #e0e0e0',
       }}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ minWidth: '150px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-              ステータス
-            </label>
-            <SearchableSelect
-              value={filterStatus}
-              onChange={setFilterStatus}
-              options={statusOptions}
-              placeholder="すべて"
-            />
-          </div>
-
           <div style={{ minWidth: '180px' }}>
             <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-              現設置部門
+              設置部門
             </label>
             <SearchableSelect
               value={filterDepartment}
@@ -162,75 +130,62 @@ export function TransferManagementTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
             <tr style={{ background: '#f8f9fa' }}>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請No</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請日</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>資産名</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>型式</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>現設置場所</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>移動先</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>ステータス</th>
-              <th style={{ padding: '12px 10px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>操作</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請No</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請日</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請者</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部門</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部署</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置室名</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>移動先部門</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>移動先部署</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>移動先室名</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>コメント</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>操作</th>
             </tr>
           </thead>
           <tbody>
             {filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                <td colSpan={11} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
                   移動申請データがありません
                 </td>
               </tr>
             ) : (
-              filteredApplications.map((app) => {
-                const statusColor = getStatusColor(app.status);
-                return (
-                  <tr key={app.id} style={{ background: 'white' }}>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.applicationDate}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.assetName}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{app.model}</td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>
-                      {app.currentDepartment} / {app.currentSection}
-                      {app.currentRoomName && ` / ${app.currentRoomName}`}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', color: '#1565c0' }}>
-                      {app.destDepartment} / {app.destSection} / {app.destRoomName}
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '12px',
+              filteredApplications.map((app) => (
+                <tr key={app.id} style={{ background: 'white' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationDate}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicant}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.department}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.section}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.roomName || '-'}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', color: '#1565c0' }}>{app.destDepartment}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', color: '#1565c0' }}>{app.destSection}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', color: '#1565c0' }}>{app.destRoomName}</td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', minWidth: '200px', maxWidth: '300px' }}>
+                    <span style={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {app.comment || '-'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
+                    <button
+                      onClick={() => handleApproveTransfer(app)}
+                      style={{
+                        padding: '6px 16px',
+                        background: '#4caf50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
                         fontSize: '12px',
-                        background: statusColor.bg,
-                        color: statusColor.color,
                         fontWeight: 'bold',
-                      }}>
-                        {app.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>
-                      {app.status === '承認待ち' ? (
-                        <button
-                          onClick={() => handleApproveTransfer(app)}
-                          style={{
-                            padding: '6px 16px',
-                            background: '#4caf50',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          承認
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: '12px', color: '#666' }}>完了</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
+                      }}
+                    >
+                      承認
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -289,33 +244,41 @@ export function TransferManagementTab() {
                 borderRadius: '8px',
                 marginBottom: '20px',
               }}>
-                <div style={{ marginBottom: '12px' }}>
-                  <span style={{ fontSize: '12px', color: '#666' }}>申請No:</span>
-                  <span style={{ fontSize: '14px', fontWeight: 'bold', marginLeft: '8px' }}>{selectedApplication.applicationNo}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px 12px', fontSize: '13px' }}>
+                  <span style={{ color: '#666' }}>申請No:</span>
+                  <span style={{ fontWeight: 'bold' }}>{selectedApplication.applicationNo}</span>
+
+                  <span style={{ color: '#666' }}>申請日:</span>
+                  <span>{selectedApplication.applicationDate}</span>
+
+                  <span style={{ color: '#666' }}>申請者:</span>
+                  <span>{selectedApplication.applicant}</span>
+
+                  <span style={{ color: '#666' }}>設置部門:</span>
+                  <span>{selectedApplication.department}</span>
+
+                  <span style={{ color: '#666' }}>設置部署:</span>
+                  <span>{selectedApplication.section}</span>
+
+                  <span style={{ color: '#666' }}>設置室名:</span>
+                  <span>{selectedApplication.roomName || '-'}</span>
+
+                  <span style={{ color: '#666' }}>移動先部門:</span>
+                  <span style={{ color: '#1565c0', fontWeight: 'bold' }}>{selectedApplication.destDepartment}</span>
+
+                  <span style={{ color: '#666' }}>移動先部署:</span>
+                  <span style={{ color: '#1565c0', fontWeight: 'bold' }}>{selectedApplication.destSection}</span>
+
+                  <span style={{ color: '#666' }}>移動先室名:</span>
+                  <span style={{ color: '#1565c0', fontWeight: 'bold' }}>{selectedApplication.destRoomName}</span>
+
+                  {selectedApplication.comment && (
+                    <>
+                      <span style={{ color: '#666' }}>コメント:</span>
+                      <span>{selectedApplication.comment}</span>
+                    </>
+                  )}
                 </div>
-                <div style={{ marginBottom: '12px' }}>
-                  <span style={{ fontSize: '12px', color: '#666' }}>資産:</span>
-                  <span style={{ fontSize: '14px', marginLeft: '8px' }}>{selectedApplication.assetName} ({selectedApplication.model})</span>
-                </div>
-                <div style={{ marginBottom: '12px' }}>
-                  <span style={{ fontSize: '12px', color: '#666' }}>現設置場所:</span>
-                  <span style={{ fontSize: '14px', marginLeft: '8px' }}>
-                    {selectedApplication.currentDepartment} / {selectedApplication.currentSection}
-                    {selectedApplication.currentRoomName && ` / ${selectedApplication.currentRoomName}`}
-                  </span>
-                </div>
-                <div style={{ marginBottom: '12px' }}>
-                  <span style={{ fontSize: '12px', color: '#666' }}>移動先:</span>
-                  <span style={{ fontSize: '14px', marginLeft: '8px', color: '#1565c0', fontWeight: 'bold' }}>
-                    {selectedApplication.destDepartment} / {selectedApplication.destSection} / {selectedApplication.destRoomName}
-                  </span>
-                </div>
-                {selectedApplication.comment && (
-                  <div>
-                    <span style={{ fontSize: '12px', color: '#666' }}>コメント:</span>
-                    <p style={{ fontSize: '13px', marginTop: '4px', marginBottom: 0, color: '#555' }}>{selectedApplication.comment}</p>
-                  </div>
-                )}
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
