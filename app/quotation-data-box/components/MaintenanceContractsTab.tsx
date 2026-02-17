@@ -9,8 +9,8 @@ interface MaintenanceContractsTabProps {
   isMobile?: boolean;
 }
 
-// 保守契約ステータス
-type ContractStatus = '未契約' | '契約中' | '契約終了間近' | '契約延長検討' | '廃棄申請あり';
+// 保守契約ステータス（ワークフロー）
+type ContractStatus = '保守・点検申請' | '見積依頼済' | '登録済' | '廃棄申請';
 
 // 契約グループ内の資産詳細
 interface ContractAsset {
@@ -55,8 +55,10 @@ interface MaintenanceContract {
   contractAmount: number;
   // ステータス
   status: ContractStatus;
-  // 期限
-  deadline: string;
+  // 保証期間終了日
+  warrantyEndDate: string;
+  // 期限（日数: 負の値は期限超過）
+  deadlineDays: number | null;
   // フリーコメント
   comment: string;
   // フィルター用
@@ -76,47 +78,49 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     id: '1',
     managementDepartment: '臨床工学部',
     installationDepartment: '外科',
-    contractGroupName: '人工呼吸器保守契約2024',
-    maintenanceType: 'フルメンテナンス',
-    acceptanceDate: '2023/04/01',
-    contractStartDate: '2024/04/01',
-    contractEndDate: '2025/03/31',
-    contractorName: 'フィリップスジャパン',
-    contractorPerson: '山田太郎',
-    contractorEmail: 'yamada@philips.co.jp',
+    contractGroupName: '',
+    maintenanceType: '',
+    acceptanceDate: '2025/04/01',
+    contractStartDate: '',
+    contractEndDate: '',
+    contractorName: '',
+    contractorPerson: '',
+    contractorEmail: 'info@philips.co.jp',
     contractorPhone: '03-1234-5678',
-    contractAmount: 1200000,
-    status: '契約中',
-    deadline: '',
+    contractAmount: 0,
+    status: '保守・点検申請',
+    warrantyEndDate: '2026/03/31',
+    deadlineDays: 42, // 保証期間42日前
     comment: '',
     category: '医療機器',
     largeClass: '人工呼吸器',
     mediumClass: '集中治療用',
     item: '人工呼吸器',
     maker: 'フィリップス',
-    hasRemoteMaintenance: true,
+    hasRemoteMaintenance: false,
     assets: [
-      { qrLabel: 'QR-2025-0001', managementDepartment: '臨床工学部', installationDepartment: '外科', item: '人工呼吸器', maker: 'フィリップス', model: 'V680', maintenanceType: 'フルメンテナンス', acceptanceDate: '2023/04/01', contractStartDate: '2024/04/01', contractEndDate: '2025/03/31', inspectionCountPerYear: 2, partsExemption: '100万', onCall: true, hasRemote: true, comment: 'ソフトバージョンアップ込み' },
-      { qrLabel: 'QR-2025-0016', managementDepartment: '臨床工学部', installationDepartment: 'ICU', item: '人工呼吸器', maker: 'フィリップス', model: 'V680', maintenanceType: 'フルメンテナンス', acceptanceDate: '2023/04/01', contractStartDate: '2024/04/01', contractEndDate: '2025/03/31', inspectionCountPerYear: 2, partsExemption: '100万', onCall: true, hasRemote: true, comment: '' },
+      { qrLabel: 'QR-2025-0001', managementDepartment: '臨床工学部', installationDepartment: '外科', item: '人工呼吸器', maker: 'フィリップス', model: 'V680', maintenanceType: '', acceptanceDate: '2025/04/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
+      { qrLabel: 'QR-2025-0016', managementDepartment: '臨床工学部', installationDepartment: 'ICU', item: '人工呼吸器', maker: 'フィリップス', model: 'V680', maintenanceType: '', acceptanceDate: '2025/04/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
     ],
   },
   {
     id: '2',
     managementDepartment: '放射線部',
     installationDepartment: '内科',
-    contractGroupName: '超音波診断装置保守契約2024',
-    maintenanceType: '定期点検',
-    acceptanceDate: '2022/04/01',
-    contractStartDate: '2023/04/01',
-    contractEndDate: '2024/03/31',
+    contractGroupName: '超音波診断装置保守',
+    maintenanceType: '',
+    acceptanceDate: '2024/04/01',
+    contractStartDate: '',
+    contractEndDate: '',
     contractorName: 'GEヘルスケアジャパン',
-    contractorPerson: '佐藤花子',
-    contractorEmail: 'sato@ge.com',
+    contractorPerson: '',
+    contractorEmail: 'service@ge.com',
     contractorPhone: '03-2345-6789',
-    contractAmount: 800000,
-    status: '契約終了間近',
-    deadline: '2024/03/31',
-    comment: '契約更新要検討',
+    contractAmount: 0,
+    status: '見積依頼済',
+    warrantyEndDate: '2025/03/31',
+    deadlineDays: null, // 見積依頼済は期限表示なし
+    comment: '見積回答待ち',
     category: '医療機器',
     largeClass: '検査機器',
     mediumClass: '超音波診断装置',
@@ -124,26 +128,27 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     maker: 'GEヘルスケア',
     hasRemoteMaintenance: false,
     assets: [
-      { qrLabel: 'QR-2025-0002', managementDepartment: '放射線部', installationDepartment: '内科', item: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', maintenanceType: '定期点検', acceptanceDate: '2022/04/01', contractStartDate: '2023/04/01', contractEndDate: '2024/03/31', inspectionCountPerYear: 1, partsExemption: '50万', onCall: false, hasRemote: false, comment: '' },
+      { qrLabel: 'QR-2025-0002', managementDepartment: '放射線部', installationDepartment: '内科', item: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', maintenanceType: '', acceptanceDate: '2024/04/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
     ],
   },
   {
     id: '3',
     managementDepartment: '臨床工学部',
     installationDepartment: '外科',
-    contractGroupName: '',
-    maintenanceType: '',
+    contractGroupName: '電気手術器保守契約',
+    maintenanceType: 'フルメンテナンス',
     acceptanceDate: '2023/06/01',
-    contractStartDate: '',
-    contractEndDate: '',
-    contractorName: '',
-    contractorPerson: '',
-    contractorEmail: '',
-    contractorPhone: '',
-    contractAmount: 0,
-    status: '未契約',
-    deadline: '2024/06/30',
-    comment: '保証期限前に契約検討必要',
+    contractStartDate: '2024/06/01',
+    contractEndDate: '2026/05/31',
+    contractorName: 'オリンパスメディカルサービス',
+    contractorPerson: '鈴木一郎',
+    contractorEmail: 'suzuki@olympus.co.jp',
+    contractorPhone: '03-3456-7890',
+    contractAmount: 500000,
+    status: '登録済',
+    warrantyEndDate: '2024/05/31',
+    deadlineDays: 75, // 契約期限75日前
+    comment: '',
     category: '医療機器',
     largeClass: '手術関連機器',
     mediumClass: '電気メス 双極',
@@ -151,7 +156,7 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     maker: 'オリンパス',
     hasRemoteMaintenance: false,
     assets: [
-      { qrLabel: 'QR-2025-0013', managementDepartment: '臨床工学部', installationDepartment: '外科', item: '電気手術器', maker: 'オリンパス', model: 'ESG-400', maintenanceType: '', acceptanceDate: '2023/06/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
+      { qrLabel: 'QR-2025-0013', managementDepartment: '臨床工学部', installationDepartment: '外科', item: '電気手術器', maker: 'オリンパス', model: 'ESG-400', maintenanceType: 'フルメンテナンス', acceptanceDate: '2023/06/01', contractStartDate: '2024/06/01', contractEndDate: '2026/05/31', inspectionCountPerYear: 2, partsExemption: '50万', onCall: true, hasRemote: false, comment: '' },
     ],
   },
   {
@@ -161,16 +166,17 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractGroupName: 'CTスキャナー保守契約2024',
     maintenanceType: 'フルメンテナンス',
     acceptanceDate: '2021/04/01',
-    contractStartDate: '2022/04/01',
-    contractEndDate: '2024/03/31',
+    contractStartDate: '2024/04/01',
+    contractEndDate: '2026/03/31',
     contractorName: 'シーメンスヘルスケア',
-    contractorPerson: '鈴木一郎',
-    contractorEmail: 'suzuki@siemens.com',
-    contractorPhone: '03-3456-7890',
+    contractorPerson: '田中次郎',
+    contractorEmail: 'tanaka@siemens.com',
+    contractorPhone: '03-4567-8901',
     contractAmount: 3500000,
-    status: '契約延長検討',
-    deadline: '2024/01/01',
-    comment: '契約延長の判断が必要',
+    status: '登録済',
+    warrantyEndDate: '2022/03/31',
+    deadlineDays: 30, // 契約期限30日前
+    comment: '契約更新検討時期',
     category: '医療機器',
     largeClass: '画像診断機器',
     mediumClass: 'CT関連',
@@ -178,7 +184,7 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     maker: 'シーメンス',
     hasRemoteMaintenance: true,
     assets: [
-      { qrLabel: 'QR-2025-0014', managementDepartment: '放射線部', installationDepartment: '放射線科', item: 'CTスキャナー', maker: 'シーメンス', model: 'SOMATOM Drive', maintenanceType: 'フルメンテナンス', acceptanceDate: '2021/04/01', contractStartDate: '2022/04/01', contractEndDate: '2024/03/31', inspectionCountPerYear: 4, partsExemption: '200万', onCall: true, hasRemote: true, comment: 'ソフトバージョンアップ込み' },
+      { qrLabel: 'QR-2025-0014', managementDepartment: '放射線部', installationDepartment: '放射線科', item: 'CTスキャナー', maker: 'シーメンス', model: 'SOMATOM Drive', maintenanceType: 'フルメンテナンス', acceptanceDate: '2021/04/01', contractStartDate: '2024/04/01', contractEndDate: '2026/03/31', inspectionCountPerYear: 4, partsExemption: '200万', onCall: true, hasRemote: true, comment: 'ソフトバージョンアップ込み' },
     ],
   },
   {
@@ -191,12 +197,13 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractStartDate: '2023/04/01',
     contractEndDate: '2025/03/31',
     contractorName: '日機装',
-    contractorPerson: '田中次郎',
-    contractorEmail: 'tanaka@nikkiso.co.jp',
-    contractorPhone: '03-4567-8901',
+    contractorPerson: '高橋三郎',
+    contractorEmail: 'takahashi@nikkiso.co.jp',
+    contractorPhone: '03-5678-9012',
     contractAmount: 600000,
-    status: '廃棄申請あり',
-    deadline: '',
+    status: '廃棄申請',
+    warrantyEndDate: '2023/03/31',
+    deadlineDays: null, // 廃棄申請は「至急対応」表示
     comment: '機器廃棄に伴い契約変更要',
     category: '医療機器',
     largeClass: '透析関連機器',
@@ -216,14 +223,15 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     maintenanceType: 'POG契約',
     acceptanceDate: '2019/01/01',
     contractStartDate: '2024/01/01',
-    contractEndDate: '2024/12/31',
+    contractEndDate: '2026/12/31',
     contractorName: '三菱電機ビルソリューションズ',
-    contractorPerson: '高橋三郎',
-    contractorEmail: 'takahashi@meltec.co.jp',
-    contractorPhone: '03-5678-9012',
+    contractorPerson: '山田太郎',
+    contractorEmail: 'yamada@meltec.co.jp',
+    contractorPhone: '03-6789-0123',
     contractAmount: 480000,
-    status: '契約中',
-    deadline: '',
+    status: '登録済',
+    warrantyEndDate: '2020/12/31',
+    deadlineDays: 320, // 契約期限320日前
     comment: '',
     category: '建物設備',
     largeClass: '搬送設備',
@@ -232,13 +240,13 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     maker: '三菱電機',
     hasRemoteMaintenance: true,
     assets: [
-      { qrLabel: 'EV-001', managementDepartment: '施設管理部', installationDepartment: '本館', item: '乗用エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', maintenanceType: 'POG契約', acceptanceDate: '2019/01/01', contractStartDate: '2024/01/01', contractEndDate: '2024/12/31', inspectionCountPerYear: 12, partsExemption: '', onCall: true, hasRemote: true, comment: '' },
-      { qrLabel: 'EV-002', managementDepartment: '施設管理部', installationDepartment: '本館', item: '乗用エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', maintenanceType: 'POG契約', acceptanceDate: '2019/01/01', contractStartDate: '2024/01/01', contractEndDate: '2024/12/31', inspectionCountPerYear: 12, partsExemption: '', onCall: true, hasRemote: true, comment: '' },
+      { qrLabel: 'EV-001', managementDepartment: '施設管理部', installationDepartment: '本館', item: '乗用エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', maintenanceType: 'POG契約', acceptanceDate: '2019/01/01', contractStartDate: '2024/01/01', contractEndDate: '2026/12/31', inspectionCountPerYear: 12, partsExemption: '', onCall: true, hasRemote: true, comment: '' },
+      { qrLabel: 'EV-002', managementDepartment: '施設管理部', installationDepartment: '本館', item: '乗用エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', maintenanceType: 'POG契約', acceptanceDate: '2019/01/01', contractStartDate: '2024/01/01', contractEndDate: '2026/12/31', inspectionCountPerYear: 12, partsExemption: '', onCall: true, hasRemote: true, comment: '' },
     ],
   },
 ];
 
-const CONTRACT_STATUSES: ContractStatus[] = ['未契約', '契約中', '契約終了間近', '契約延長検討', '廃棄申請あり'];
+const CONTRACT_STATUSES: ContractStatus[] = ['保守・点検申請', '見積依頼済', '登録済', '廃棄申請'];
 
 export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContractsTabProps) {
   const { assets, departments } = useMasterStore();
@@ -321,14 +329,10 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
       if (filters.category && contract.category !== filters.category) return false;
       if (filters.status && contract.status !== filters.status) return false;
       if (filters.deadline === 'near') {
-        // 契約終了3ヶ月以内または期限3ヶ月以内
-        const today = new Date();
-        const threeMonthsLater = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
-        const contractEnd = contract.contractEndDate ? new Date(contract.contractEndDate.replace(/\//g, '-')) : null;
-        const deadlineDate = contract.deadline ? new Date(contract.deadline.replace(/\//g, '-')) : null;
+        // 期限90日以内または廃棄申請
         const isNearDeadline =
-          (contractEnd && contractEnd <= threeMonthsLater && contractEnd >= today) ||
-          (deadlineDate && deadlineDate <= threeMonthsLater && deadlineDate >= today);
+          (contract.deadlineDays !== null && contract.deadlineDays <= 90) ||
+          contract.status === '廃棄申請';
         if (!isNearDeadline) return false;
       }
       if (filters.managementDepartment && contract.managementDepartment !== filters.managementDepartment) return false;
@@ -391,13 +395,23 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
   const handleRegisterContract = (data: MaintenanceContractFormData) => {
     // 1契約グループ = 1レコード（複数資産を内包）
     const firstAsset = data.selectedAssets[0];
+
+    // 保証期間終了日を1年後として設定（仮）
+    const warrantyEnd = new Date();
+    warrantyEnd.setFullYear(warrantyEnd.getFullYear() + 1);
+    const warrantyEndDate = `${warrantyEnd.getFullYear()}/${String(warrantyEnd.getMonth() + 1).padStart(2, '0')}/${String(warrantyEnd.getDate()).padStart(2, '0')}`;
+
+    // 保証期間までの日数を計算
+    const today = new Date();
+    const deadlineDays = Math.ceil((warrantyEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
     const newContract: MaintenanceContract = {
       id: `new-${Date.now()}`,
       managementDepartment: data.managementDepartment,
       installationDepartment: firstAsset?.section || '',
       contractGroupName: data.contractGroupName,
       maintenanceType: data.maintenanceType,
-      acceptanceDate: '',
+      acceptanceDate: `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`,
       contractStartDate: '',
       contractEndDate: '',
       contractorName: '',
@@ -405,8 +419,9 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
       contractorEmail: '',
       contractorPhone: '',
       contractAmount: 0,
-      status: '未契約' as ContractStatus,
-      deadline: '',
+      status: '保守・点検申請' as ContractStatus,
+      warrantyEndDate,
+      deadlineDays,
       comment: data.hasLegalInspection ? '法令点検あり' : '',
       category: firstAsset?.category || '',
       largeClass: firstAsset?.largeClass || '',
@@ -433,24 +448,218 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
       })),
     };
     setContracts((prev) => [...prev, newContract]);
-    alert(`契約グループ「${data.contractGroupName}」を登録しました（${data.selectedAssets.length}件の資産）`);
+    alert(`契約グループ「${data.contractGroupName}」を登録しました（${data.selectedAssets.length}件の資産）\n\nステータス: 保守・点検申請\n次のタスク: 見積依頼（mail送信）`);
   };
 
   const getStatusStyle = (status: ContractStatus): React.CSSProperties => {
     switch (status) {
-      case '未契約':
+      case '保守・点検申請':
         return { backgroundColor: '#e74c3c', color: 'white' };
-      case '契約終了間近':
+      case '見積依頼済':
         return { backgroundColor: '#f39c12', color: 'white' };
-      case '契約延長検討':
-        return { backgroundColor: '#9b59b6', color: 'white' };
-      case '廃棄申請あり':
-        return { backgroundColor: '#34495e', color: 'white' };
-      case '契約中':
+      case '登録済':
         return { backgroundColor: '#27ae60', color: 'white' };
+      case '廃棄申請':
+        return { backgroundColor: '#34495e', color: 'white' };
       default:
         return { backgroundColor: '#95a5a6', color: 'white' };
     }
+  };
+
+  // 期限表示の生成
+  const getDeadlineDisplay = (contract: MaintenanceContract): { text: string; style: React.CSSProperties } => {
+    switch (contract.status) {
+      case '保守・点検申請':
+        if (contract.deadlineDays !== null) {
+          const isUrgent = contract.deadlineDays <= 30;
+          return {
+            text: `保証期間${contract.deadlineDays}日前`,
+            style: { color: isUrgent ? '#e74c3c' : '#f39c12', fontWeight: isUrgent ? 'bold' : 'normal' },
+          };
+        }
+        return { text: '-', style: {} };
+      case '見積依頼済':
+        return { text: '-', style: { color: '#999' } };
+      case '登録済':
+        if (contract.deadlineDays !== null) {
+          const isUrgent = contract.deadlineDays <= 30;
+          return {
+            text: `契約期限${contract.deadlineDays}日前`,
+            style: { color: isUrgent ? '#e74c3c' : '#f39c12', fontWeight: isUrgent ? 'bold' : 'normal' },
+          };
+        }
+        return { text: '-', style: {} };
+      case '廃棄申請':
+        return { text: '至急対応', style: { color: '#e74c3c', fontWeight: 'bold' } };
+      default:
+        return { text: '-', style: {} };
+    }
+  };
+
+  // 操作ボタンの生成
+  const getActionButton = (contract: MaintenanceContract): { label: string; style: React.CSSProperties; onClick: () => void } => {
+    switch (contract.status) {
+      case '保守・点検申請':
+        return {
+          label: '見積依頼',
+          style: { backgroundColor: '#3498db' },
+          onClick: () => handleQuoteRequest(contract),
+        };
+      case '見積依頼済':
+        return {
+          label: '見積登録',
+          style: { backgroundColor: '#27ae60' },
+          onClick: () => handleQuoteRegistration(contract),
+        };
+      case '登録済':
+        return {
+          label: '見積依頼',
+          style: { backgroundColor: '#3498db' },
+          onClick: () => handleQuoteRequest(contract),
+        };
+      case '廃棄申請':
+        return {
+          label: '契約内容見直し',
+          style: { backgroundColor: '#e74c3c' },
+          onClick: () => handleContractReview(contract),
+        };
+      default:
+        return {
+          label: '詳細',
+          style: { backgroundColor: '#95a5a6' },
+          onClick: () => setSelectedContractForDetail(contract),
+        };
+    }
+  };
+
+  // 見積依頼（メール送信）
+  const handleQuoteRequest = (contract: MaintenanceContract) => {
+    const email = contract.contractorEmail || '';
+    if (!email) {
+      alert('業者のメールアドレスが登録されていません');
+      return;
+    }
+
+    const subject = encodeURIComponent(`【見積依頼】${contract.item} 保守契約について`);
+    const body = encodeURIComponent(
+      `${contract.contractorName || '担当者'} 様\n\n` +
+      `お世話になっております。\n\n` +
+      `下記機器の保守契約につきまして、見積をお願いいたします。\n\n` +
+      `■対象機器\n` +
+      `・品目: ${contract.item}\n` +
+      `・メーカー: ${contract.maker}\n` +
+      `・管理部署: ${contract.managementDepartment}\n` +
+      `・台数: ${contract.assets.length}台\n` +
+      (contract.warrantyEndDate ? `・保証期間終了日: ${contract.warrantyEndDate}\n` : '') +
+      `\n` +
+      `お忙しいところ恐れ入りますが、ご対応のほどよろしくお願いいたします。`
+    );
+
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+
+    // ステータスを見積依頼済に更新
+    setContracts((prev) =>
+      prev.map((c) =>
+        c.id === contract.id
+          ? { ...c, status: '見積依頼済' as ContractStatus, deadlineDays: null }
+          : c
+      )
+    );
+
+    alert('メーラーを起動しました。送信後、ステータスが「見積依頼済」に更新されました。');
+  };
+
+  // 見積登録
+  const handleQuoteRegistration = (contract: MaintenanceContract) => {
+    // 見積登録モーダルを開く（簡易実装としてalertで代用）
+    const contractAmount = prompt('契約金額（税別）を入力してください:', '0');
+    if (contractAmount === null) return;
+
+    const amount = parseInt(contractAmount, 10);
+    if (isNaN(amount) || amount < 0) {
+      alert('正しい金額を入力してください');
+      return;
+    }
+
+    const contractStartDate = prompt('契約開始日を入力してください（例: 2026/04/01）:', '');
+    if (!contractStartDate) return;
+
+    const contractEndDate = prompt('契約終了日を入力してください（例: 2027/03/31）:', '');
+    if (!contractEndDate) return;
+
+    const maintenanceType = prompt('保守種別を入力してください（例: フルメンテナンス、定期点検）:', '');
+    if (!maintenanceType) return;
+
+    // 契約期限までの日数を計算
+    const endDate = new Date(contractEndDate.replace(/\//g, '-'));
+    const today = new Date();
+    const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    // ステータスを登録済に更新
+    setContracts((prev) =>
+      prev.map((c) =>
+        c.id === contract.id
+          ? {
+              ...c,
+              status: '登録済' as ContractStatus,
+              contractAmount: amount,
+              contractStartDate,
+              contractEndDate,
+              maintenanceType,
+              deadlineDays: diffDays > 0 ? diffDays : 0,
+              contractGroupName: c.contractGroupName || `${c.item}保守契約`,
+            }
+          : c
+      )
+    );
+
+    alert(`見積を登録しました。\n契約金額: ${amount.toLocaleString()}円\n契約期間: ${contractStartDate}〜${contractEndDate}`);
+  };
+
+  // 契約内容見直し登録
+  const handleContractReview = (contract: MaintenanceContract) => {
+    const confirmed = confirm(
+      `「${contract.contractGroupName || contract.item}」の契約内容を見直しますか？\n\n` +
+      `廃棄申請があるため、以下の対応が必要です:\n` +
+      `・対象機器の削除\n` +
+      `・契約金額の見直し\n` +
+      `・契約期間の変更`
+    );
+
+    if (!confirmed) return;
+
+    // 見直し後の契約金額を入力
+    const newAmount = prompt('見直し後の契約金額（税別）を入力してください:', contract.contractAmount.toString());
+    if (newAmount === null) return;
+
+    const amount = parseInt(newAmount, 10);
+    if (isNaN(amount) || amount < 0) {
+      alert('正しい金額を入力してください');
+      return;
+    }
+
+    // ステータスを登録済に更新（廃棄対応完了）
+    setContracts((prev) =>
+      prev.map((c) =>
+        c.id === contract.id
+          ? {
+              ...c,
+              status: '登録済' as ContractStatus,
+              contractAmount: amount,
+              comment: `${c.comment}（廃棄対応済）`,
+              // 契約期限を再計算
+              deadlineDays: c.contractEndDate
+                ? Math.ceil(
+                    (new Date(c.contractEndDate.replace(/\//g, '-')).getTime() - new Date().getTime()) /
+                      (1000 * 60 * 60 * 24)
+                  )
+                : null,
+            }
+          : c
+      )
+    );
+
+    alert('契約内容の見直しを完了しました。');
   };
 
   const styles: Record<string, React.CSSProperties> = {
@@ -818,9 +1027,24 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
                   <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>
                     <span style={{ ...styles.statusBadge, ...getStatusStyle(contract.status) }}>{contract.status}</span>
                   </td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.deadline || '-'}</td>
+                  <td style={{ ...styles.td, ...styles.tdFirstInGroup, ...getDeadlineDisplay(contract).style, whiteSpace: 'nowrap' }}>
+                    {getDeadlineDisplay(contract).text}
+                  </td>
                   <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>
-                    <button style={styles.editButton}>編集</button>
+                    {(() => {
+                      const action = getActionButton(contract);
+                      return (
+                        <button
+                          style={{ ...styles.editButton, ...action.style, whiteSpace: 'nowrap' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            action.onClick();
+                          }}
+                        >
+                          {action.label}
+                        </button>
+                      );
+                    })()}
                   </td>
                   <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.comment || '-'}</td>
                 </tr>
