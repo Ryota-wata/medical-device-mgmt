@@ -189,6 +189,22 @@ export const LendingManagementTab: React.FC = () => {
   const [selectedAssetsForRegistration, setSelectedAssetsForRegistration] = useState<Asset[]>([]);
   const [returnPeriodDays, setReturnPeriodDays] = useState<number>(90);
 
+  // 返却期間設定モーダル
+  const [showReturnPeriodModal, setShowReturnPeriodModal] = useState(false);
+  const [returnPeriodTarget, setReturnPeriodTarget] = useState<'single' | 'deviceType'>('single');
+  const [selectedDeviceForReturnPeriod, setSelectedDeviceForReturnPeriod] = useState<LendingDevice | null>(null);
+  const [newReturnPeriodDays, setNewReturnPeriodDays] = useState<number>(90);
+
+  // 定数機器設定モーダル
+  const [showFixedPlacementModal, setShowFixedPlacementModal] = useState(false);
+  const [selectedDeviceForFixedPlacement, setSelectedDeviceForFixedPlacement] = useState<LendingDevice | null>(null);
+  const [fixedPlacementDepartment, setFixedPlacementDepartment] = useState<string>('');
+
+  // フリーコメントモーダル
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [selectedDeviceForComment, setSelectedDeviceForComment] = useState<LendingDevice | null>(null);
+  const [newComment, setNewComment] = useState<string>('');
+
   // マスタからフィルターオプションを生成（assetStoreのassetsを使用）
   const buildingOptions = useMemo(() => {
     const unique = Array.from(new Set(assets.map(a => a.building)));
@@ -408,6 +424,87 @@ export const LendingManagementTab: React.FC = () => {
     setHasSearched(false);
     setSearchResults([]);
     setSelectedAssetIds(new Set());
+  };
+
+  // 返却期間設定モーダルを開く
+  const openReturnPeriodModal = (device: LendingDevice) => {
+    setSelectedDeviceForReturnPeriod(device);
+    setNewReturnPeriodDays(device.inspectionMarginDays);
+    setReturnPeriodTarget('single');
+    setShowReturnPeriodModal(true);
+  };
+
+  // 返却期間を保存
+  const handleSaveReturnPeriod = () => {
+    if (!selectedDeviceForReturnPeriod) return;
+
+    if (returnPeriodTarget === 'single') {
+      // 単一機器のみ更新
+      setDevices(prev => prev.map(d =>
+        d.id === selectedDeviceForReturnPeriod.id
+          ? { ...d, inspectionMarginDays: newReturnPeriodDays }
+          : d
+      ));
+    } else {
+      // 同じ機種（品目+メーカー+型式）をまとめて更新
+      setDevices(prev => prev.map(d =>
+        d.itemName === selectedDeviceForReturnPeriod.itemName &&
+        d.maker === selectedDeviceForReturnPeriod.maker &&
+        d.model === selectedDeviceForReturnPeriod.model
+          ? { ...d, inspectionMarginDays: newReturnPeriodDays }
+          : d
+      ));
+    }
+
+    setShowReturnPeriodModal(false);
+    setSelectedDeviceForReturnPeriod(null);
+  };
+
+  // 定数機器設定モーダルを開く
+  const openFixedPlacementModal = (device: LendingDevice) => {
+    setSelectedDeviceForFixedPlacement(device);
+    setFixedPlacementDepartment(device.isFixedPlacement ? device.installedDepartment : '');
+    setShowFixedPlacementModal(true);
+  };
+
+  // 定数機器設定を保存
+  const handleSaveFixedPlacement = (isFixed: boolean) => {
+    if (!selectedDeviceForFixedPlacement) return;
+
+    setDevices(prev => prev.map(d =>
+      d.id === selectedDeviceForFixedPlacement.id
+        ? {
+            ...d,
+            isFixedPlacement: isFixed,
+            installedDepartment: isFixed ? fixedPlacementDepartment : d.installedDepartment,
+            expectedReturnDate: isFixed ? null : d.expectedReturnDate,
+          }
+        : d
+    ));
+
+    setShowFixedPlacementModal(false);
+    setSelectedDeviceForFixedPlacement(null);
+  };
+
+  // フリーコメントモーダルを開く
+  const openCommentModal = (device: LendingDevice) => {
+    setSelectedDeviceForComment(device);
+    setNewComment(device.freeComment);
+    setShowCommentModal(true);
+  };
+
+  // フリーコメントを保存
+  const handleSaveComment = () => {
+    if (!selectedDeviceForComment) return;
+
+    setDevices(prev => prev.map(d =>
+      d.id === selectedDeviceForComment.id
+        ? { ...d, freeComment: newComment }
+        : d
+    ));
+
+    setShowCommentModal(false);
+    setSelectedDeviceForComment(null);
   };
 
   // フィルター変更時に依存する下位フィルターをリセット
@@ -697,43 +794,97 @@ export const LendingManagementTab: React.FC = () => {
                   </td>
                   <td style={{ borderLeft: '2px solid #ccc', border: '1px solid #ddd', width: '1px', padding: 0 }}></td>
                   <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        alert(`返却期間設定: ${device.qrLabel}`);
-                      }}
-                      style={{ color: '#c0392b', textDecoration: 'underline', fontSize: '11px' }}
-                    >
-                      設定
-                    </a>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                        {device.isFixedPlacement ? '-' : `${device.inspectionMarginDays}日`}
+                      </span>
+                      {!device.isFixedPlacement && (
+                        <button
+                          onClick={() => openReturnPeriodModal(device)}
+                          style={{
+                            padding: '2px 8px',
+                            fontSize: '10px',
+                            background: '#fff',
+                            border: '1px solid #c0392b',
+                            color: '#c0392b',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          変更
+                        </button>
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        alert(`定数機器設定: ${device.qrLabel}`);
-                      }}
-                      style={{ color: '#c0392b', textDecoration: 'underline', fontSize: '11px' }}
-                    >
-                      {device.isFixedPlacement ? '解除' : '設定'}
-                    </a>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      {device.isFixedPlacement ? (
+                        <>
+                          <span style={{
+                            fontSize: '10px',
+                            padding: '2px 6px',
+                            background: '#e8f5e9',
+                            color: '#2e7d32',
+                            borderRadius: '3px',
+                            fontWeight: 500,
+                          }}>
+                            定数配置
+                          </span>
+                          <span style={{ fontSize: '11px', color: '#666' }}>
+                            {device.installedDepartment}
+                          </span>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: '#999' }}>未設定</span>
+                      )}
+                      <button
+                        onClick={() => openFixedPlacementModal(device)}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '10px',
+                          background: '#fff',
+                          border: '1px solid #c0392b',
+                          color: '#c0392b',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {device.isFixedPlacement ? '解除' : '設定'}
+                      </button>
+                    </div>
                   </td>
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const comment = prompt('コメントを入力', device.freeComment);
-                        if (comment !== null) {
-                          alert(`コメント保存: ${comment}`);
-                        }
-                      }}
-                      style={{ color: '#c0392b', textDecoration: 'underline', fontSize: '11px' }}
-                    >
-                      {device.freeComment ? '編集' : '入力'}
-                    </a>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {device.freeComment ? (
+                        <span style={{
+                          fontSize: '11px',
+                          color: '#333',
+                          maxWidth: '150px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {device.freeComment}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: '#999' }}>-</span>
+                      )}
+                      <button
+                        onClick={() => openCommentModal(device)}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '10px',
+                          background: '#fff',
+                          border: '1px solid #c0392b',
+                          color: '#c0392b',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        {device.freeComment ? '編集' : '入力'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -1091,6 +1242,408 @@ export const LendingManagementTab: React.FC = () => {
                 }}
               >
                 戻る
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 返却期間設定モーダル */}
+      {showReturnPeriodModal && selectedDeviceForReturnPeriod && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '450px',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+              デフォルト返却期間の設定
+            </h3>
+
+            {/* 対象機器情報 */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '13px',
+            }}>
+              <div><strong>品目:</strong> {selectedDeviceForReturnPeriod.itemName}</div>
+              <div><strong>メーカー:</strong> {selectedDeviceForReturnPeriod.maker}</div>
+              <div><strong>型式:</strong> {selectedDeviceForReturnPeriod.model}</div>
+            </div>
+
+            {/* 設定対象の選択 */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                設定対象
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="returnPeriodTarget"
+                    checked={returnPeriodTarget === 'single'}
+                    onChange={() => setReturnPeriodTarget('single')}
+                  />
+                  <span style={{ fontSize: '13px' }}>この機器のみ</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="returnPeriodTarget"
+                    checked={returnPeriodTarget === 'deviceType'}
+                    onChange={() => setReturnPeriodTarget('deviceType')}
+                  />
+                  <span style={{ fontSize: '13px' }}>
+                    同じ機種をまとめて設定
+                    <span style={{ color: '#666', fontSize: '11px', marginLeft: '4px' }}>
+                      （{selectedDeviceForReturnPeriod.itemName} / {selectedDeviceForReturnPeriod.maker} / {selectedDeviceForReturnPeriod.model}）
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* 返却期間入力 */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                返却期間
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="number"
+                  value={newReturnPeriodDays}
+                  onChange={(e) => setNewReturnPeriodDays(Number(e.target.value))}
+                  min={1}
+                  max={365}
+                  style={{
+                    width: '100px',
+                    padding: '10px 12px',
+                    fontSize: '16px',
+                    fontVariantNumeric: 'tabular-nums',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    textAlign: 'right',
+                  }}
+                />
+                <span style={{ fontSize: '14px' }}>日</span>
+              </div>
+            </div>
+
+            {/* ボタン */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowReturnPeriodModal(false);
+                  setSelectedDeviceForReturnPeriod(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#fff',
+                  color: '#666',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveReturnPeriod}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 定数機器設定モーダル */}
+      {showFixedPlacementModal && selectedDeviceForFixedPlacement && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '450px',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+              定数設置機器の設定
+            </h3>
+
+            {/* 対象機器情報 */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '13px',
+            }}>
+              <div><strong>QRラベル:</strong> {selectedDeviceForFixedPlacement.qrLabel}</div>
+              <div><strong>品目:</strong> {selectedDeviceForFixedPlacement.itemName}</div>
+              <div><strong>メーカー:</strong> {selectedDeviceForFixedPlacement.maker}</div>
+            </div>
+
+            {selectedDeviceForFixedPlacement.isFixedPlacement ? (
+              // 解除モード
+              <div>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#fff3e0',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#e65100',
+                }}>
+                  この機器は現在「{selectedDeviceForFixedPlacement.installedDepartment}」に定数配置されています。
+                  解除すると返却期間が適用されます。
+                </div>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => {
+                      setShowFixedPlacementModal(false);
+                      setSelectedDeviceForFixedPlacement(null);
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#fff',
+                      color: '#666',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                    }}
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={() => handleSaveFixedPlacement(false)}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    定数配置を解除
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // 設定モード
+              <div>
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#e8f5e9',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#2e7d32',
+                }}>
+                  定数設置機器に設定すると、返却期間が無しとなります。
+                </div>
+
+                {/* 配置部署選択 */}
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                    定数配置する部署 <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <select
+                    value={fixedPlacementDepartment}
+                    onChange={(e) => setFixedPlacementDepartment(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <option value="">部署を選択...</option>
+                    {uniqueDepartments.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                    <option value="ICU">ICU</option>
+                    <option value="手術室">手術室</option>
+                    <option value="救急外来">救急外来</option>
+                    <option value="ME室">ME室</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => {
+                      setShowFixedPlacementModal(false);
+                      setSelectedDeviceForFixedPlacement(null);
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#fff',
+                      color: '#666',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                    }}
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={() => handleSaveFixedPlacement(true)}
+                    disabled={!fixedPlacementDepartment}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: fixedPlacementDepartment ? '#27ae60' : '#ccc',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: fixedPlacementDepartment ? 'pointer' : 'not-allowed',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    定数配置に設定
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* フリーコメントモーダル */}
+      {showCommentModal && selectedDeviceForComment && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '450px',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+              フリーコメント
+            </h3>
+
+            {/* 対象機器情報 */}
+            <div style={{
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '6px',
+              marginBottom: '20px',
+              fontSize: '13px',
+            }}>
+              <div><strong>QRラベル:</strong> {selectedDeviceForComment.qrLabel}</div>
+              <div><strong>品目:</strong> {selectedDeviceForComment.itemName}</div>
+            </div>
+
+            {/* コメント入力 */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                コメント
+              </label>
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="コメントを入力..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  minHeight: '100px',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* ボタン */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setShowCommentModal(false);
+                  setSelectedDeviceForComment(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#fff',
+                  color: '#666',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveComment}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                保存
               </button>
             </div>
           </div>
