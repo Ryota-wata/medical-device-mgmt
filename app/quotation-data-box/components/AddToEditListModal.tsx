@@ -1,0 +1,354 @@
+'use client';
+
+import React, { useState } from 'react';
+import { EditList, CreateEditListInput } from '@/lib/types';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { useMasterStore } from '@/lib/stores';
+
+interface AddToEditListModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  editLists: EditList[];
+  selectedApplicationIds: string[];
+  onAddToExisting: (editListId: string) => void;
+  onCreateAndAdd: (input: CreateEditListInput) => void;
+}
+
+export function AddToEditListModal({
+  isOpen,
+  onClose,
+  editLists,
+  selectedApplicationIds,
+  onAddToExisting,
+  onCreateAndAdd,
+}: AddToEditListModalProps) {
+  const { facilities } = useMasterStore();
+  const [mode, setMode] = useState<'existing' | 'new'>(editLists.length > 0 ? 'existing' : 'new');
+  const [selectedEditListId, setSelectedEditListId] = useState<string>('');
+  const [newListName, setNewListName] = useState('');
+  const [newListFacility, setNewListFacility] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    if (mode === 'existing') {
+      if (!selectedEditListId) {
+        alert('編集リストを選択してください');
+        return;
+      }
+      onAddToExisting(selectedEditListId);
+    } else {
+      if (!newListName.trim()) {
+        alert('編集リスト名を入力してください');
+        return;
+      }
+      if (!newListFacility) {
+        alert('対象施設を選択してください');
+        return;
+      }
+      onCreateAndAdd({
+        name: newListName.trim(),
+        facilities: [newListFacility],
+      });
+    }
+    onClose();
+  };
+
+  const facilityOptions = facilities.map(f => f.facilityName);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: '12px',
+          width: '90%',
+          maxWidth: '500px',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* ヘッダー */}
+        <div
+          style={{
+            background: '#27ae60',
+            color: 'white',
+            padding: '16px 24px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTopLeftRadius: '12px',
+            borderTopRightRadius: '12px',
+          }}
+        >
+          <span>編集リストへ追加</span>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'white',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: '0',
+              width: '30px',
+              height: '30px',
+            }}
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* ボディ */}
+        <div style={{ padding: '24px' }}>
+          {/* 編集リストがない場合の警告 */}
+          {editLists.length === 0 && (
+            <div
+              style={{
+                background: '#fff3cd',
+                border: '1px solid #ffc107',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <span style={{ fontSize: '14px', color: '#856404' }}>
+                編集リストがありません。新規作成してください。
+              </span>
+            </div>
+          )}
+
+          {/* モード選択 */}
+          {editLists.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px' }}>
+                追加先を選択してください:
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    background: mode === 'existing' ? '#e8f5e9' : 'transparent',
+                    border: mode === 'existing' ? '1px solid #27ae60' : '1px solid transparent',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    checked={mode === 'existing'}
+                    onChange={() => setMode('existing')}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#2c3e50' }}>既存の編集リストに追加</span>
+                </label>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    background: mode === 'new' ? '#e8f5e9' : 'transparent',
+                    border: mode === 'new' ? '1px solid #27ae60' : '1px solid transparent',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    checked={mode === 'new'}
+                    onChange={() => setMode('new')}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#2c3e50' }}>新規編集リストを作成</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* 既存リスト選択 */}
+          {mode === 'existing' && editLists.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <div
+                style={{
+                  border: '1px solid #dee2e6',
+                  borderRadius: '8px',
+                  maxHeight: '200px',
+                  overflow: 'auto',
+                }}
+              >
+                {editLists.map((list) => (
+                  <label
+                    key={list.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #f0f0f0',
+                      background: selectedEditListId === list.id ? '#e3f2fd' : 'transparent',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="editList"
+                      checked={selectedEditListId === list.id}
+                      onChange={() => setSelectedEditListId(list.id)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50' }}>
+                        {list.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                        施設: {list.facilities.join(', ')}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 新規作成フォーム */}
+          {(mode === 'new' || editLists.length === 0) && (
+            <div
+              style={{
+                border: '1px solid #dee2e6',
+                borderRadius: '8px',
+                padding: '16px',
+                background: '#f8f9fa',
+              }}
+            >
+              <div style={{ marginBottom: '16px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    marginBottom: '8px',
+                  }}
+                >
+                  編集リスト名 <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newListName}
+                  onChange={(e) => setNewListName(e.target.value)}
+                  placeholder="例: 2025年2月_手術部門"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d0d0d0',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: '#2c3e50',
+                    marginBottom: '8px',
+                  }}
+                >
+                  対象施設 <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <SearchableSelect
+                  value={newListFacility}
+                  onChange={setNewListFacility}
+                  options={facilityOptions}
+                  placeholder="施設を選択"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 対象申請 */}
+          <div style={{ marginTop: '20px', padding: '12px', background: '#f0f0f0', borderRadius: '6px' }}>
+            <span style={{ fontSize: '13px', color: '#5a6c7d' }}>
+              対象申請: {selectedApplicationIds.length}件
+            </span>
+          </div>
+        </div>
+
+        {/* フッター */}
+        <div
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #dee2e6',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: '12px',
+            background: '#f8f9fa',
+            borderBottomLeftRadius: '12px',
+            borderBottomRightRadius: '12px',
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: '#95a5a6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            style={{
+              padding: '10px 20px',
+              background: '#27ae60',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+            }}
+          >
+            {mode === 'new' || editLists.length === 0 ? '作成して追加' : '追加する'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
