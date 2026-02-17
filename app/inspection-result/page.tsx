@@ -158,6 +158,25 @@ function InspectionResultContent() {
       }
     }
 
+    // 日常点検で修理申請の場合
+    if (resultData.source === 'daily' && resultData.overallResult === '修理申請') {
+      // 修理申請用のデータをsessionStorageに保存
+      sessionStorage.setItem('repairRequestData', JSON.stringify({
+        qrCode: resultData.qrCode,
+        largeClass: resultData.largeClass,
+        mediumClass: resultData.mediumClass,
+        item: resultData.item,
+        maker: resultData.maker,
+        model: resultData.model,
+        inspectionRemarks: resultData.remarks,
+        inspectionDate: resultData.inspectionDate,
+        inspectorName: resultData.inspectorName,
+      }));
+      sessionStorage.removeItem('inspectionResult');
+      router.push('/repair-request');
+      return;
+    }
+
     // sessionStorageをクリア
     sessionStorage.removeItem('inspectionResult');
 
