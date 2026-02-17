@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore } from '@/lib/stores';
 import { MaintenanceContractRegistrationModal, MaintenanceContractFormData } from './MaintenanceContractRegistrationModal';
@@ -249,6 +250,7 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
 const CONTRACT_STATUSES: ContractStatus[] = ['保守・点検申請', '見積依頼済', '登録済', '廃棄申請'];
 
 export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContractsTabProps) {
+  const router = useRouter();
   const { assets, departments } = useMasterStore();
 
   // マスタデータからユニーク値を抽出
@@ -571,49 +573,9 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
 
   // 見積登録
   const handleQuoteRegistration = (contract: MaintenanceContract) => {
-    // 見積登録モーダルを開く（簡易実装としてalertで代用）
-    const contractAmount = prompt('契約金額（税別）を入力してください:', '0');
-    if (contractAmount === null) return;
-
-    const amount = parseInt(contractAmount, 10);
-    if (isNaN(amount) || amount < 0) {
-      alert('正しい金額を入力してください');
-      return;
-    }
-
-    const contractStartDate = prompt('契約開始日を入力してください（例: 2026/04/01）:', '');
-    if (!contractStartDate) return;
-
-    const contractEndDate = prompt('契約終了日を入力してください（例: 2027/03/31）:', '');
-    if (!contractEndDate) return;
-
-    const maintenanceType = prompt('保守種別を入力してください（例: フルメンテナンス、定期点検）:', '');
-    if (!maintenanceType) return;
-
-    // 契約期限までの日数を計算
-    const endDate = new Date(contractEndDate.replace(/\//g, '-'));
-    const today = new Date();
-    const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    // ステータスを登録済に更新
-    setContracts((prev) =>
-      prev.map((c) =>
-        c.id === contract.id
-          ? {
-              ...c,
-              status: '登録済' as ContractStatus,
-              contractAmount: amount,
-              contractStartDate,
-              contractEndDate,
-              maintenanceType,
-              deadlineDays: diffDays > 0 ? diffDays : 0,
-              contractGroupName: c.contractGroupName || `${c.item}保守契約`,
-            }
-          : c
-      )
-    );
-
-    alert(`見積を登録しました。\n契約金額: ${amount.toLocaleString()}円\n契約期間: ${contractStartDate}〜${contractEndDate}`);
+    // 見積登録画面へ遷移（contractデータをsessionStorageに保存）
+    sessionStorage.setItem('maintenanceContract', JSON.stringify(contract));
+    router.push(`/maintenance-quote-registration?id=${contract.id}`);
   };
 
   // 契約内容見直し登録
