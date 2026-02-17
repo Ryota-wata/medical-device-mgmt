@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import { FacilityMaster, AssetMaster, DepartmentMaster } from '@/lib/types/master';
+import { FacilityMaster, AssetMaster, DepartmentMaster, VendorMaster } from '@/lib/types/master';
 
 interface MasterStore {
   facilities: FacilityMaster[];
   assets: AssetMaster[];
   departments: DepartmentMaster[];
+  vendors: VendorMaster[];
 
   // Facility actions
   setFacilities: (facilities: FacilityMaster[]) => void;
@@ -27,10 +28,18 @@ interface MasterStore {
   deleteDepartment: (id: string) => void;
   getDepartmentById: (id: string) => DepartmentMaster | undefined;
 
+  // Vendor actions
+  setVendors: (vendors: VendorMaster[]) => void;
+  addVendor: (vendor: VendorMaster) => void;
+  updateVendor: (id: string, vendor: Partial<VendorMaster>) => void;
+  deleteVendor: (id: string) => void;
+  getVendorById: (id: string) => VendorMaster | undefined;
+
   // Search functions
   searchFacilities: (query: string) => FacilityMaster[];
   searchAssets: (query: string) => AssetMaster[];
   searchDepartments: (query: string) => DepartmentMaster[];
+  searchVendors: (query: string) => VendorMaster[];
 }
 
 // サンプル施設マスタデータ（20件）
@@ -883,6 +892,160 @@ const initialAssets: AssetMaster[] = [
   },
 ];
 
+// サンプル業者マスタデータ
+const initialVendors: VendorMaster[] = [
+  {
+    id: 'VND001',
+    vendorName: 'オリンパスメディカルシステムズ株式会社',
+    contactPerson: '山田 太郎',
+    phone: '03-1234-5678',
+    email: 'yamada@olympus-med.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND002',
+    vendorName: 'GEヘルスケア・ジャパン株式会社',
+    contactPerson: '鈴木 一郎',
+    phone: '03-2345-6789',
+    email: 'suzuki@ge-healthcare.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND003',
+    vendorName: 'シーメンスヘルスケア株式会社',
+    contactPerson: '佐藤 花子',
+    phone: '03-3456-7890',
+    email: 'sato@siemens-healthcare.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND004',
+    vendorName: '日本光電工業株式会社',
+    contactPerson: '田中 健一',
+    phone: '03-4567-8901',
+    email: 'tanaka@nihonkohden.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND005',
+    vendorName: 'フィリップス・ジャパン株式会社',
+    contactPerson: '伊藤 美咲',
+    phone: '03-5678-9012',
+    email: 'ito@philips.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND006',
+    vendorName: '東芝メディカルシステムズ株式会社',
+    contactPerson: '高橋 直人',
+    phone: '03-6789-0123',
+    email: 'takahashi@toshiba-med.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND007',
+    vendorName: '株式会社日立ハイテク',
+    contactPerson: '渡辺 誠',
+    phone: '03-7890-1234',
+    email: 'watanabe@hitachi-hightech.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND008',
+    vendorName: 'パラマウントベッド株式会社',
+    contactPerson: '小林 真理',
+    phone: '03-8901-2345',
+    email: 'kobayashi@paramount-bed.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND009',
+    vendorName: 'テルモ株式会社',
+    contactPerson: '加藤 隆',
+    phone: '03-9012-3456',
+    email: 'kato@terumo.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND010',
+    vendorName: '富士フイルムメディカル株式会社',
+    contactPerson: '吉田 裕子',
+    phone: '03-0123-4567',
+    email: 'yoshida@fujifilm-med.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND011',
+    vendorName: 'ドレーゲルジャパン株式会社',
+    contactPerson: '中村 大輔',
+    phone: '03-1111-2222',
+    email: 'nakamura@draeger.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND012',
+    vendorName: 'ストライカージャパン株式会社',
+    contactPerson: '山本 和子',
+    phone: '03-2222-3333',
+    email: 'yamamoto@stryker.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND013',
+    vendorName: '日機装株式会社',
+    contactPerson: '松田 浩一',
+    phone: '03-3333-4444',
+    email: 'matsuda@nikkiso.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND014',
+    vendorName: 'シスメックス株式会社',
+    contactPerson: '井上 早苗',
+    phone: '03-4444-5555',
+    email: 'inoue@sysmex.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'VND015',
+    vendorName: 'サクラ精機株式会社',
+    contactPerson: '森 健二',
+    phone: '03-5555-6666',
+    email: 'mori@sakura-seiki.co.jp',
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
+];
+
 // サンプル部署マスタデータ
 const initialDepartments: DepartmentMaster[] = [
   {
@@ -1041,6 +1204,7 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
   facilities: initialFacilities,
   assets: initialAssets,
   departments: initialDepartments,
+  vendors: initialVendors,
 
   // Facility actions
   setFacilities: (facilities) => set({ facilities }),
@@ -1144,6 +1308,40 @@ export const useMasterStore = create<MasterStore>((set, get) => ({
       d.department.toLowerCase().includes(lowerQuery) ||
       d.roomCategory1.toLowerCase().includes(lowerQuery) ||
       d.roomCategory2.toLowerCase().includes(lowerQuery)
+    );
+  },
+
+  // Vendor actions
+  setVendors: (vendors) => set({ vendors }),
+
+  addVendor: (vendor) => set((state) => ({
+    vendors: [...state.vendors, vendor]
+  })),
+
+  updateVendor: (id, vendor) => set((state) => ({
+    vendors: state.vendors.map((v) =>
+      v.id === id ? { ...v, ...vendor, updatedAt: new Date().toISOString() } : v
+    )
+  })),
+
+  deleteVendor: (id) => set((state) => ({
+    vendors: state.vendors.filter((v) => v.id !== id)
+  })),
+
+  getVendorById: (id) => {
+    return get().vendors.find((v) => v.id === id);
+  },
+
+  searchVendors: (query) => {
+    const vendors = get().vendors;
+    if (!query) return vendors;
+
+    const lowerQuery = query.toLowerCase();
+    return vendors.filter((v) =>
+      v.vendorName.toLowerCase().includes(lowerQuery) ||
+      v.contactPerson.toLowerCase().includes(lowerQuery) ||
+      v.phone.toLowerCase().includes(lowerQuery) ||
+      v.email.toLowerCase().includes(lowerQuery)
     );
   },
 }));

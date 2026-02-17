@@ -87,6 +87,12 @@ export interface Application {
   // 編集用フリーカラム
   editColumn1?: string;
   editColumn2?: string;
+  // 移動申請用：移動先情報
+  transferDestination?: {
+    department: string;
+    section: string;
+    roomName: string;
+  };
 }
 
 /**

@@ -679,6 +679,17 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     closeMasterModal();
+                    router.push('/vendor-master');
+                  }}
+                  className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
+                >
+                  <span>🏭 業者マスタ</span>
+                  <span className="text-xl">→</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    closeMasterModal();
                     router.push('/user-management');
                   }}
                   className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"

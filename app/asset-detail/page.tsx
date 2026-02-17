@@ -177,25 +177,6 @@ function AssetDetailContent() {
         <div className="flex items-center gap-2">
           {!isReadOnly && (
             <>
-              <button
-                style={{ padding: '8px 16px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-                onClick={() => alert('移動申請')}
-              >
-                移動申請
-              </button>
-              <button
-                style={{ padding: '8px 16px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-                onClick={() => alert('廃棄申請')}
-              >
-                廃棄申請
-              </button>
-              <button
-                style={{ padding: '8px 16px', background: '#f39c12', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-                onClick={() => alert('修理申請')}
-              >
-                修理申請
-              </button>
-
               {!isEditMode ? (
                 <button
                   style={{ padding: '8px 16px', background: '#9b59b6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}

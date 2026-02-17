@@ -7,6 +7,8 @@ import { useAssetStore, useMasterStore, useApplicationStore } from '@/lib/stores
 import { Asset, Application } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
+import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
+import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -22,6 +24,12 @@ export default function AssetSearchResultPage() {
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+
+  // 移動申請モーダル関連の状態
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+
+  // 廃棄申請モーダル関連の状態
+  const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
 
   // 新規申請モーダル関連の状態
   const [isNewApplicationModalOpen, setIsNewApplicationModalOpen] = useState(false);
@@ -153,6 +161,7 @@ export default function AssetSearchResultPage() {
     floorOptions,
     departmentOptions,
     sectionOptions,
+    itemOptions,
   } = useAssetFilter(mockAssets);
 
   // useAssetTableフックを使用
@@ -357,153 +366,216 @@ export default function AssetSearchResultPage() {
         backLabel="メイン画面に戻る"
       />
 
-      {/* フィルターヘッダー */}
-      <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="棟"
-              value={filters.building}
-              onChange={(value) => setFilters({...filters, building: value})}
-              options={['', ...buildingOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
+      {/* 申請エリア */}
+      <div style={{ background: '#4a6741', padding: '12px 20px' }}>
+        <div style={{ color: '#fff', fontSize: '13px', marginBottom: '10px' }}>
+          購入申請：対象となる資産を選択し申請を行ってください
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* 左側ボタン群 */}
+          <button
+            style={{
+              padding: '6px 16px',
+              background: '#fff',
+              color: '#333',
+              border: '1px solid #4a6741',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'normal',
+            }}
+            onClick={() => alert('更新申請')}
+          >
+            更新申請
+          </button>
+          <button
+            style={{
+              padding: '6px 16px',
+              background: '#fff',
+              color: '#333',
+              border: '1px solid #4a6741',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'normal',
+            }}
+            onClick={() => alert('増設申請')}
+          >
+            増設申請
+          </button>
+          <button
+            style={{
+              padding: '6px 16px',
+              background: '#fff',
+              color: '#333',
+              border: '1px solid #4a6741',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'normal',
+            }}
+            onClick={handleNewApplication}
+          >
+            新規申請
+          </button>
+
+          {/* 中央ボタン */}
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+            <button
+              style={{
+                padding: '6px 24px',
+                background: '#fff',
+                color: '#333',
+                border: '1px solid #4a6741',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'normal',
+              }}
+              onClick={() => alert('借用申請')}
+            >
+              借用申請
+            </button>
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="階"
-              value={filters.floor}
-              onChange={(value) => setFilters({...filters, floor: value})}
-              options={['', ...floorOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="部門"
-              value={filters.department}
-              onChange={(value) => setFilters({...filters, department: value})}
-              options={['', ...departmentOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="部署"
-              value={filters.section}
-              onChange={(value) => setFilters({...filters, section: value})}
-              options={['', ...sectionOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="Category"
-              value={filters.category}
-              onChange={(value) => setFilters({...filters, category: value})}
-              options={['', ...categoryOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="大分類"
-              value={filters.largeClass}
-              onChange={(value) => setFilters({...filters, largeClass: value})}
-              options={['', ...largeClassOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{ flex: '1', minWidth: '120px' }}>
-            <SearchableSelect
-              label="中分類"
-              value={filters.mediumClass}
-              onChange={(value) => setFilters({...filters, mediumClass: value})}
-              options={['', ...mediumClassOptions]}
-              placeholder="すべて"
-              isMobile={isMobile}
-            />
-          </div>
+          {/* 右側ボタン群 */}
+          <button
+            style={{
+              padding: '6px 16px',
+              background: '#fff',
+              color: '#333',
+              border: '1px solid #4a6741',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'normal',
+            }}
+            onClick={() => {
+              if (selectedItems.size === 0) {
+                alert('移動申請する資産を選択してください');
+                return;
+              }
+              setIsTransferModalOpen(true);
+            }}
+          >
+            移動申請
+          </button>
+          <button
+            style={{
+              padding: '6px 16px',
+              background: '#fff',
+              color: '#333',
+              border: '1px solid #4a6741',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'normal',
+            }}
+            onClick={() => {
+              if (selectedItems.size === 0) {
+                alert('廃棄申請する資産を選択してください');
+                return;
+              }
+              setIsDisposalModalOpen(true);
+            }}
+          >
+            廃棄申請
+          </button>
         </div>
       </div>
 
-      {/* アクションバー */}
-      <div style={{ background: '#fff', padding: '15px 20px', borderBottom: '1px solid #dee2e6', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '14px', color: '#555', marginRight: '15px' }}>
-          {selectedItems.size}件選択中
-        </span>
-        <button
-          style={{
-            padding: '8px 16px',
-            background: '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={handleNewApplication}
-        >
-          新規申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#3498db',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => alert('増設申請')}
-        >
-          増設申請
-        </button>
-        <button
-          disabled={selectedItems.size === 0}
-          style={{
-            padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#ccc' : '#e67e22',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
-          onClick={() => alert('更新申請')}
-        >
-          更新申請
-        </button>
-        <div style={{ flex: 1 }} />
-        <button
-          style={{
-            padding: '8px 16px',
-            background: '#9b59b6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-          onClick={() => router.push('/inventory')}
-        >
-          棚卸しを開始
-        </button>
+      {/* フィルターエリア */}
+      <div style={{ background: '#fff', padding: '12px 20px', borderBottom: '1px solid #dee2e6' }}>
+        <div style={{ fontSize: '13px', color: '#333', marginBottom: '10px', fontWeight: 'bold' }}>
+          資産を絞り込む
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+          {/* 管理部署 */}
+          <div style={{ minWidth: '140px', position: 'relative', zIndex: 16 }}>
+            <SearchableSelect
+              value={filters.department}
+              onChange={(val) => setFilters({ department: val })}
+              options={departmentOptions}
+              placeholder="管理部署"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* 設置部門 */}
+          <div style={{ minWidth: '140px', position: 'relative', zIndex: 15 }}>
+            <SearchableSelect
+              value={filters.section}
+              onChange={(val) => setFilters({ section: val })}
+              options={sectionOptions}
+              placeholder="設置部門"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* category */}
+          <div style={{ minWidth: '140px', position: 'relative', zIndex: 14 }}>
+            <SearchableSelect
+              value={filters.category}
+              onChange={(val) => setFilters({ category: val })}
+              options={categoryOptions}
+              placeholder="category"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* 大分類 */}
+          <div style={{ minWidth: '120px', position: 'relative', zIndex: 13 }}>
+            <SearchableSelect
+              value={filters.largeClass}
+              onChange={(val) => setFilters({ largeClass: val })}
+              options={largeClassOptions}
+              placeholder="大分類"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* 中分類 */}
+          <div style={{ minWidth: '120px', position: 'relative', zIndex: 12 }}>
+            <SearchableSelect
+              value={filters.mediumClass}
+              onChange={(val) => setFilters({ mediumClass: val })}
+              options={mediumClassOptions}
+              placeholder="中分類"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* 品目 */}
+          <div style={{ minWidth: '120px', position: 'relative', zIndex: 11 }}>
+            <SearchableSelect
+              value={filters.item}
+              onChange={(val) => setFilters({ item: val })}
+              options={itemOptions}
+              placeholder="品目"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* スペーサー */}
+          <div style={{ flex: 1 }} />
+
+          {/* 全体検索 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="text"
+              placeholder="キーワード検索"
+              value={filters.keyword}
+              onChange={(e) => setFilters({ keyword: e.target.value })}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #4a6741',
+                borderRadius: '4px',
+                fontSize: '13px',
+                width: '180px',
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* テーブル表示 */}
@@ -1193,6 +1265,28 @@ export default function AssetSearchResultPage() {
           </div>
         </div>
       )}
+
+      {/* 移動申請モーダル */}
+      <TransferApplicationModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
+        onSuccess={() => {
+          setSelectedItems(new Set());
+          router.push('/application-list');
+        }}
+      />
+
+      {/* 廃棄申請モーダル */}
+      <DisposalApplicationModal
+        isOpen={isDisposalModalOpen}
+        onClose={() => setIsDisposalModalOpen(false)}
+        assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
+        onSuccess={() => {
+          setSelectedItems(new Set());
+          router.push('/application-list');
+        }}
+      />
     </div>
   );
 }

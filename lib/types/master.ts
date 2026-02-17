@@ -51,6 +51,18 @@ export interface DepartmentMaster {
   updatedAt: string;
 }
 
+// 業者マスタの型定義
+export interface VendorMaster {
+  id: string;
+  vendorName: string;      // 業者名
+  contactPerson: string;   // 担当者
+  phone: string;           // 連絡先（TEL)
+  email: string;           // 連絡先（mail）
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
 // フィルター条件
 export interface FacilityFilter {
   facilityCode?: string;
