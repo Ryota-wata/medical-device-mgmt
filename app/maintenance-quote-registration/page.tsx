@@ -39,6 +39,32 @@ const MAINTENANCE_STEPS = [
   { step: 2, label: '完了登録' },
 ];
 
+// 登録済み見積の型
+interface RegisteredQuotation {
+  id: number;
+  phase: '保守登録用見積' | '参考見積';
+  saveFormat: '電子取引' | 'スキャナ保存' | '未指定';
+  fileName: string;
+  registeredAt: string;
+  // AI OCR取得データ
+  quotationDate: string;
+  registrationDate: string;
+  businessRegistrationNo: string;
+  vendorName: string;
+  vendorPerson: string;
+  totalAmount: number;
+}
+
+// 登録済みドキュメントの型
+interface RegisteredDocument {
+  id: number;
+  documentType: '契約書' | 'その他（免責部品一覧など）点検';
+  accountType: string;
+  accountOther?: string;
+  fileName: string;
+  registeredAt: string;
+}
+
 // 保守契約データ型
 interface MaintenanceContract {
   id: string;
@@ -261,6 +287,15 @@ function MaintenanceQuoteRegistrationContent() {
   const [selectedQuotationFile, setSelectedQuotationFile] = useState<string>('');
   const [selectedDocumentFile, setSelectedDocumentFile] = useState<string>('');
 
+  // 登録済み見積・ドキュメント
+  const [registeredQuotations, setRegisteredQuotations] = useState<RegisteredQuotation[]>([]);
+  const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
+
+  // プレビュータブ
+  const [previewTab, setPreviewTab] = useState<1 | 2>(1);
+  const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
+  const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
+
   // パネル幅の状態
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -288,9 +323,34 @@ function MaintenanceQuoteRegistrationContent() {
   }, [handleDragMove, handleDragEnd]);
 
   useEffect(() => {
-    const data = getMockContract(contractId);
-    setContract(data);
-    setFormData({ ...data });
+    // sessionStorageから契約データを取得
+    const storedData = sessionStorage.getItem('maintenanceContract');
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        const data: MaintenanceContract = {
+          ...getMockContract(contractId),
+          // sessionStorageからのデータをマッピング
+          applicationDepartment: parsed.managementDepartment || '',
+          contractGroupName: parsed.contractGroupName || '',
+          vendorName: parsed.contractorName || '',
+          vendorPerson: parsed.contractorPerson || '',
+          itemName: parsed.item || '',
+          maker: parsed.maker || '',
+          maintenanceType: parsed.maintenanceType || 'フルメンテナンス',
+        };
+        setContract(data);
+        setFormData({ ...data });
+      } catch {
+        const data = getMockContract(contractId);
+        setContract(data);
+        setFormData({ ...data });
+      }
+    } else {
+      const data = getMockContract(contractId);
+      setContract(data);
+      setFormData({ ...data });
+    }
   }, [contractId]);
 
   const activeStep = currentStep;
@@ -299,7 +359,7 @@ function MaintenanceQuoteRegistrationContent() {
   if (!contract || !formData) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-        <Header title="保守契約 見積登録" hideMenu={true} showBackButton={false} />
+        <Header title="保守契約管理" hideMenu={true} showBackButton={false} />
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
         </div>
@@ -334,9 +394,25 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       alert('保守契約の登録が完了しました。');
-      router.push('/quotation-data-box?tab=maintenance-contracts');
+      router.push('/quotation-data-box/maintenance-contracts');
       setIsSubmitting(false);
     }, 500);
+  };
+
+  // 見積削除
+  const handleQuotationDelete = (id: number) => {
+    if (confirm('この見積を削除しますか？')) {
+      setRegisteredQuotations(prev => prev.filter(q => q.id !== id));
+      setPreviewQuotationIndex(null);
+    }
+  };
+
+  // ドキュメント削除
+  const handleDocumentDelete = (id: number) => {
+    if (confirm('このドキュメントを削除しますか？')) {
+      setRegisteredDocuments(prev => prev.filter(d => d.id !== id));
+      setPreviewDocumentIndex(null);
+    }
   };
 
   // プログレスバー
@@ -409,10 +485,10 @@ function MaintenanceQuoteRegistrationContent() {
       `}</style>
 
       <Header
-        title="保守契約 見積登録"
+        title="保守契約管理"
         hideMenu={true}
         showBackButton={true}
-        backHref="/quotation-data-box?tab=maintenance-contracts"
+        backHref="/quotation-data-box/maintenance-contracts"
         backLabel="一覧に戻る"
         backButtonVariant="secondary"
         hideHomeButton={true}
@@ -448,275 +524,594 @@ function MaintenanceQuoteRegistrationContent() {
           overflow: 'auto',
           padding: '16px',
         }}>
-          {/* STEP1: 保守申請の受付 */}
+          {/* STEP1: 保守契約の登録 */}
           <Section
             step={1}
-            title="STEP1. 保守申請の受付"
+            title="STEP1. 保守契約の登録"
             accentColor="#3498db"
             enabled={isStepEnabled(1)}
             completed={1 < activeStep}
           >
-            {/* 申請部署 */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>申請部署</span>
-              <div style={inputContainerStyle}>
-                <input
-                  type="text"
-                  placeholder="部署名"
-                  value={formData.applicationDepartment}
-                  onChange={(e) => updateFormData({ applicationDepartment: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-                <input
-                  type="text"
-                  placeholder="担当者名"
-                  value={formData.applicationPerson}
-                  onChange={(e) => updateFormData({ applicationPerson: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '120px' }}
-                />
-                <input
-                  type="text"
-                  placeholder="連絡先"
-                  value={formData.applicationContact}
-                  onChange={(e) => updateFormData({ applicationContact: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-              </div>
-            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                {/* 基本情報: 申請部署 */}
+                <tr>
+                  <td style={{
+                    width: '180px',
+                    padding: '10px 12px',
+                    background: '#6b7280',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    申請部署
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#f9fafb', color: COLORS.textPrimary }}>
+                    {formData.applicationDepartment || '（未設定）'}
+                  </td>
+                </tr>
 
-            {/* 保守申請No */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>保守申請No</span>
-              <div style={inputContainerStyle}>
-                <span style={{ fontSize: '13px', color: COLORS.textSecondary }}>{contract.maintenanceNo}</span>
-                <span style={{ marginLeft: '24px', ...labelStyle, minWidth: 'auto', borderRadius: '4px' }}>保守契約グループ名</span>
-                <input
-                  type="text"
-                  placeholder="グループ名を入力"
-                  value={formData.contractGroupName}
-                  onChange={(e) => updateFormData({ contractGroupName: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '180px' }}
-                />
-                <span style={{ marginLeft: '24px', ...labelStyle, minWidth: 'auto', borderRadius: '4px' }}>契約期間</span>
-                <input
-                  type="text"
-                  placeholder="例: 2026/04/01〜2027/03/31"
-                  value={formData.contractPeriod}
-                  onChange={(e) => updateFormData({ contractPeriod: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '200px' }}
-                />
-                <span style={{
-                  padding: '6px 12px',
-                  background: COLORS.surfaceAlt,
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  color: COLORS.textPrimary,
-                }}>
-                  {formData.maintenanceType}
-                </span>
-              </div>
-            </div>
+                {/* 基本情報: 保守契約グループ名 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#6b7280',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    保守契約グループ名
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#f9fafb', color: COLORS.textPrimary }}>
+                    {formData.contractGroupName || '（未設定）'}
+                  </td>
+                </tr>
 
-            {/* 添付ファイル */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>添付ファイル</span>
-              <div style={inputContainerStyle}>
-                <label style={{
-                  padding: '6px 16px',
-                  background: COLORS.surfaceAlt,
-                  border: `1px solid ${COLORS.border}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                }}>
-                  ファイルの選択
-                  <input
-                    type="file"
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) setSelectedQuotationFile(file.name);
-                    }}
-                    disabled={!isStepEnabled(1)}
-                  />
-                </label>
-                <span style={{ fontSize: '13px', color: selectedQuotationFile ? COLORS.textPrimary : COLORS.textMuted }}>
-                  {selectedQuotationFile || 'ファイルが選択されていません'}
-                </span>
-              </div>
-            </div>
+                {/* 保守種別 */}
+                <tr>
+                  <td style={{
+                    width: '180px',
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    保守種別
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <select
+                      value={formData.maintenanceType}
+                      onChange={(e) => updateFormData({ maintenanceType: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{ ...inputStyle, width: '200px' }}
+                    >
+                      <option value="フルメンテナンス">フルメンテナンス</option>
+                      <option value="定期点検">定期点検</option>
+                      <option value="スポット対応">スポット対応</option>
+                      <option value="POG契約">POG契約</option>
+                    </select>
+                  </td>
+                </tr>
 
-            {/* 見積フェーズ */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>見積フェーズ</span>
-              <div style={inputContainerStyle}>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input
-                    type="radio"
-                    name="quotationPhase"
-                    checked={formData.quotationPhase === '保守登録用見積'}
-                    onChange={() => updateFormData({ quotationPhase: '保守登録用見積' })}
-                    disabled={!isStepEnabled(1)}
-                  />
-                  保守登録用見積
-                </label>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '16px' }}>
-                  <input
-                    type="radio"
-                    name="quotationPhase"
-                    checked={formData.quotationPhase === '参考見積'}
-                    onChange={() => updateFormData({ quotationPhase: '参考見積' })}
-                    disabled={!isStepEnabled(1)}
-                  />
-                  参考見積
-                </label>
-                <span style={{ marginLeft: '24px', fontSize: '13px', color: COLORS.textMuted }}>保存形式 |</span>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input
-                    type="radio"
-                    name="saveFormat"
-                    checked={formData.saveFormat === '電子取引'}
-                    onChange={() => updateFormData({ saveFormat: '電子取引' })}
-                    disabled={!isStepEnabled(1)}
-                  />
-                  電子取引
-                </label>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input
-                    type="radio"
-                    name="saveFormat"
-                    checked={formData.saveFormat === 'スキャナ保存'}
-                    onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })}
-                    disabled={!isStepEnabled(1)}
-                  />
-                  スキャナ保存
-                </label>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input
-                    type="radio"
-                    name="saveFormat"
-                    checked={formData.saveFormat === '未指定'}
-                    onChange={() => updateFormData({ saveFormat: '未指定' })}
-                    disabled={!isStepEnabled(1)}
-                  />
-                  未指定
-                </label>
-              </div>
-            </div>
+                {/* 見積書を登録 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'top',
+                  }}>
+                    見積書を登録
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                      <label style={{
+                        padding: '6px 16px',
+                        background: COLORS.surfaceAlt,
+                        border: `1px solid ${COLORS.border}`,
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}>
+                        ファイルの選択
+                        <input
+                          type="file"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const fileName = file.name;
+                              // AI OCR シミュレーション: 見積書から値を自動取得して登録
+                              setTimeout(() => {
+                                const ocrData = {
+                                  quotationDate: '2026-02-01',
+                                  registrationDate: '2026-02-15',
+                                  businessRegistrationNo: 'T1234567890123',
+                                  vendorName: 'フィリップス・ジャパン株式会社',
+                                  vendorPerson: '山田 太郎',
+                                  totalAmount: 1500000,
+                                };
+                                // 自動登録
+                                const newQuotation: RegisteredQuotation = {
+                                  id: Date.now(),
+                                  phase: formData?.quotationPhase || '保守登録用見積',
+                                  saveFormat: formData?.saveFormat || '未指定',
+                                  fileName: fileName,
+                                  registeredAt: new Date().toISOString(),
+                                  ...ocrData,
+                                };
+                                setRegisteredQuotations(prev => [...prev, newQuotation]);
+                                setPreviewTab(1);
+                                alert(`見積書「${fileName}」をAI OCRで読み取り、登録しました。`);
+                              }, 500);
+                            }
+                          }}
+                          disabled={!isStepEnabled(1)}
+                        />
+                      </label>
+                      <span style={{ fontSize: '13px', color: selectedQuotationFile ? COLORS.textPrimary : COLORS.textMuted }}>
+                        {selectedQuotationFile || 'ファイルが選択されていません'}
+                      </span>
+                    </div>
+                    {/* 見積フェーズ */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '10px' }}>
+                      <span style={{ color: COLORS.textMuted, minWidth: '80px' }}>見積フェーズ:</span>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="quotationPhase"
+                          checked={formData.quotationPhase === '保守登録用見積'}
+                          onChange={() => updateFormData({ quotationPhase: '保守登録用見積' })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        保守登録用見積
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="quotationPhase"
+                          checked={formData.quotationPhase === '参考見積'}
+                          onChange={() => updateFormData({ quotationPhase: '参考見積' })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        参考見積
+                      </label>
+                    </div>
+                    {/* 保存形式 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <span style={{ color: COLORS.textMuted, minWidth: '80px' }}>保存形式:</span>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="saveFormat"
+                          checked={formData.saveFormat === '電子取引'}
+                          onChange={() => updateFormData({ saveFormat: '電子取引' })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        電子取引
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="saveFormat"
+                          checked={formData.saveFormat === 'スキャナ保存'}
+                          onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        スキャナ保存
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="saveFormat"
+                          checked={formData.saveFormat === '未指定'}
+                          onChange={() => updateFormData({ saveFormat: '未指定' })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        未指定
+                      </label>
+                    </div>
+                  </td>
+                </tr>
 
-            {/* 見積日・登録日・事業者登録番号・業者名・担当者 */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>見積日</span>
-              <div style={inputContainerStyle}>
-                <input
-                  type="date"
-                  value={formData.quotationDate}
-                  onChange={(e) => updateFormData({ quotationDate: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-                <span style={{ marginLeft: '16px', ...labelStyle, minWidth: 'auto', borderRadius: '4px' }}>登録日</span>
-                <input
-                  type="date"
-                  value={formData.registrationDate}
-                  onChange={(e) => updateFormData({ registrationDate: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-                <span style={{ marginLeft: '16px', ...labelStyle, minWidth: 'auto', borderRadius: '4px' }}>事業者登録番号</span>
-                <input
-                  type="text"
-                  placeholder="T0000000000000"
-                  value={formData.businessRegistrationNo}
-                  onChange={(e) => updateFormData({ businessRegistrationNo: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-              </div>
-            </div>
+                {/* AI OCR取得項目: 見積日 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#5a9bd5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    見積日
+                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <input
+                      type="date"
+                      value={formData.quotationDate}
+                      onChange={(e) => updateFormData({ quotationDate: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{ ...inputStyle, width: '150px' }}
+                    />
+                  </td>
+                </tr>
 
-            {/* 業者名・担当者 */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>業者名</span>
-              <div style={inputContainerStyle}>
-                <input
-                  type="text"
-                  placeholder="業者名"
-                  value={formData.vendorName}
-                  onChange={(e) => updateFormData({ vendorName: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '200px' }}
-                />
-                <span style={{ marginLeft: '16px', ...labelStyle, minWidth: 'auto', borderRadius: '4px' }}>担当者</span>
-                <input
-                  type="text"
-                  placeholder="担当者名"
-                  value={formData.vendorPerson}
-                  onChange={(e) => updateFormData({ vendorPerson: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-              </div>
-            </div>
+                {/* AI OCR取得項目: 登録日 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#5a9bd5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    登録日
+                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <input
+                      type="date"
+                      value={formData.registrationDate}
+                      onChange={(e) => updateFormData({ registrationDate: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{ ...inputStyle, width: '150px' }}
+                    />
+                  </td>
+                </tr>
 
-            {/* 合計金額 */}
-            <div style={fieldContainerStyle}>
-              <span style={{ ...labelStyle, background: COLORS.accent }}>合計金額</span>
-              <div style={inputContainerStyle}>
-                <span style={{ fontSize: '13px', color: COLORS.textMuted }}>合計金額（税抜）</span>
-                <span style={{ fontSize: '13px', marginRight: '4px' }}>¥</span>
-                <input
-                  type="text"
-                  placeholder="0,000,000"
-                  value={formData.totalAmount > 0 ? formData.totalAmount.toLocaleString() : ''}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value.replace(/,/g, ''), 10);
-                    updateFormData({ totalAmount: isNaN(value) ? 0 : value });
-                  }}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
-                />
-              </div>
-            </div>
+                {/* AI OCR取得項目: 事業者登録番号 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#5a9bd5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    事業者登録番号
+                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <input
+                      type="text"
+                      placeholder="例: T1234567890123"
+                      value={formData.businessRegistrationNo}
+                      onChange={(e) => updateFormData({ businessRegistrationNo: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{ ...inputStyle, width: '200px' }}
+                    />
+                  </td>
+                </tr>
 
-            {/* 契約期限を登録 */}
-            <div style={{
-              padding: '12px 16px',
-              background: COLORS.surfaceAlt,
-              borderRadius: '4px',
-              marginBottom: '16px',
-            }}>
-              <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '8px' }}>契約期限を登録</div>
-              <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '8px' }}>
-                ・定期点検の有無：回数
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>・途中解約「合意質」の場合は明細から登録</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>・交換部品免責の有無・免責金額を登録</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>・オンコール対応の有無</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>・リモートメンテナンスの有無</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>・リモートメンテナンス IPアドレス</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>・フリーコメント</span>
-              </div>
-            </div>
+                {/* AI OCR取得項目: 業者名 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#5a9bd5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    業者名
+                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <input
+                      type="text"
+                      placeholder="業者名を入力"
+                      value={formData.vendorName}
+                      onChange={(e) => updateFormData({ vendorName: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{ ...inputStyle, width: '300px' }}
+                    />
+                  </td>
+                </tr>
+
+                {/* AI OCR取得項目: 担当者 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#5a9bd5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    担当者
+                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <input
+                      type="text"
+                      placeholder="担当者名を入力"
+                      value={formData.vendorPerson}
+                      onChange={(e) => updateFormData({ vendorPerson: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{ ...inputStyle, width: '200px' }}
+                    />
+                  </td>
+                </tr>
+
+                {/* AI OCR取得項目: 見積金額 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#5a9bd5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    見積金額
+                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="text"
+                        placeholder="0"
+                        value={formData.totalAmount ? formData.totalAmount.toLocaleString() : ''}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/,/g, '');
+                          const num = parseInt(value, 10);
+                          updateFormData({ totalAmount: isNaN(num) ? 0 : num });
+                        }}
+                        disabled={!isStepEnabled(1)}
+                        style={{ ...inputStyle, width: '150px', textAlign: 'right' }}
+                      />
+                      <span>円（税別）</span>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 契約期間 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    契約期間
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="date"
+                        value={formData.contractPeriod.split('〜')[0]?.replace(/\//g, '-') || ''}
+                        onChange={(e) => {
+                          const start = e.target.value;
+                          const end = formData.contractPeriod.split('〜')[1] || '';
+                          updateFormData({ contractPeriod: `${start}〜${end}` });
+                        }}
+                        disabled={!isStepEnabled(1)}
+                        style={{ ...inputStyle, width: '150px' }}
+                      />
+                      <span>〜</span>
+                      <input
+                        type="date"
+                        value={formData.contractPeriod.split('〜')[1]?.replace(/\//g, '-') || ''}
+                        onChange={(e) => {
+                          const start = formData.contractPeriod.split('〜')[0] || '';
+                          const end = e.target.value;
+                          updateFormData({ contractPeriod: `${start}〜${end}` });
+                        }}
+                        disabled={!isStepEnabled(1)}
+                        style={{ ...inputStyle, width: '150px' }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 定期点検の有無・回数 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'top',
+                  }}>
+                    定期点検の有無・回数
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.inspectionCountPerYear > 0}
+                          onChange={(e) => updateFormData({ inspectionCountPerYear: e.target.checked ? 1 : 0 })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        あり
+                      </label>
+                      {formData.inspectionCountPerYear > 0 && (
+                        <>
+                          <span>年</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={formData.inspectionCountPerYear}
+                            onChange={(e) => updateFormData({ inspectionCountPerYear: parseInt(e.target.value, 10) || 0 })}
+                            disabled={!isStepEnabled(1)}
+                            style={{ ...inputStyle, width: '60px', textAlign: 'right' }}
+                          />
+                          <span>回</span>
+                        </>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '11px', color: COLORS.warning }}>
+                      ※複数資産で点検回数が異なる場合は明細から登録
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 交換部品免責 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    交換部品免責
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.exchangePartsExemption}
+                          onChange={(e) => updateFormData({ exchangePartsExemption: e.target.checked })}
+                          disabled={!isStepEnabled(1)}
+                        />
+                        あり
+                      </label>
+                      {formData.exchangePartsExemption && (
+                        <>
+                          <span>免責金額:</span>
+                          <input
+                            type="text"
+                            placeholder="例: 50万円"
+                            value={formData.exemptionAmount}
+                            onChange={(e) => updateFormData({ exemptionAmount: e.target.value })}
+                            disabled={!isStepEnabled(1)}
+                            style={{ ...inputStyle, width: '120px' }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+
+                {/* オンコール対応 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    オンコール対応
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.onCallSupport}
+                        onChange={(e) => updateFormData({ onCallSupport: e.target.checked })}
+                        disabled={!isStepEnabled(1)}
+                      />
+                      あり
+                    </label>
+                  </td>
+                </tr>
+
+                {/* リモートメンテナンス */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    リモートメンテナンス
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.remoteMaintenanceAvailable}
+                        onChange={(e) => updateFormData({ remoteMaintenanceAvailable: e.target.checked })}
+                        disabled={!isStepEnabled(1)}
+                      />
+                      あり
+                    </label>
+                  </td>
+                </tr>
+
+                {/* リモートメンテナンス IPアドレス */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    リモートメンテナンス<br />IPアドレス
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <input
+                      type="text"
+                      placeholder="例: 192.168.1.100"
+                      value={formData.remoteMaintenanceIpAddress}
+                      onChange={(e) => updateFormData({ remoteMaintenanceIpAddress: e.target.value })}
+                      disabled={!isStepEnabled(1) || !formData.remoteMaintenanceAvailable}
+                      style={{
+                        ...inputStyle,
+                        width: '200px',
+                        background: formData.remoteMaintenanceAvailable ? '#fff' : COLORS.disabledBg,
+                      }}
+                    />
+                  </td>
+                </tr>
+
+                {/* フリーコメント */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#4a6fa5',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'top',
+                  }}>
+                    フリーコメント
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <textarea
+                      placeholder="備考・特記事項など"
+                      value={formData.freeComment}
+                      onChange={(e) => updateFormData({ freeComment: e.target.value })}
+                      disabled={!isStepEnabled(1)}
+                      style={{
+                        ...inputStyle,
+                        width: '100%',
+                        minHeight: '80px',
+                        resize: 'vertical',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             {/* 仮登録ボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
               <button
                 className="maintenance-btn"
                 onClick={handleStep1Submit}
@@ -745,115 +1140,153 @@ function MaintenanceQuoteRegistrationContent() {
             enabled={isStepEnabled(2)}
             completed={2 < activeStep}
           >
-            {/* 添付ファイル */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>添付ファイル</span>
-              <div style={inputContainerStyle}>
-                <label style={{
-                  padding: '6px 16px',
-                  background: COLORS.surfaceAlt,
-                  border: `1px solid ${COLORS.border}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                }}>
-                  ファイルの選択
-                  <input
-                    type="file"
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) setSelectedDocumentFile(file.name);
-                    }}
-                    disabled={!isStepEnabled(2)}
-                  />
-                </label>
-                <span style={{ fontSize: '13px', color: selectedDocumentFile ? COLORS.textPrimary : COLORS.textMuted }}>
-                  {selectedDocumentFile || 'ファイルが選択されていません'}
-                </span>
-              </div>
-            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                {/* 添付ファイル */}
+                <tr>
+                  <td style={{
+                    width: '180px',
+                    padding: '10px 12px',
+                    background: '#27ae60',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    添付ファイル
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <label style={{
+                        padding: '6px 16px',
+                        background: COLORS.surfaceAlt,
+                        border: `1px solid ${COLORS.border}`,
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                      }}>
+                        ファイルの選択
+                        <input
+                          type="file"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const fileName = file.name;
+                              // 自動登録
+                              const newDocument: RegisteredDocument = {
+                                id: Date.now(),
+                                documentType: formData?.documentType || '契約書',
+                                accountType: formData?.accountType || '',
+                                accountOther: formData?.accountOther,
+                                fileName: fileName,
+                                registeredAt: new Date().toISOString(),
+                              };
+                              setRegisteredDocuments(prev => [...prev, newDocument]);
+                              setPreviewTab(2);
+                              alert(`ドキュメント「${fileName}」を登録しました。`);
+                            }
+                          }}
+                          disabled={!isStepEnabled(2)}
+                        />
+                      </label>
+                      <span style={{ fontSize: '13px', color: selectedDocumentFile ? COLORS.textPrimary : COLORS.textMuted }}>
+                        {selectedDocumentFile || 'ファイルが選択されていません'}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
 
-            {/* ドキュメント */}
-            <div style={fieldContainerStyle}>
-              <span style={labelStyle}>ドキュメント</span>
-              <div style={inputContainerStyle}>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input
-                    type="radio"
-                    name="documentType"
-                    checked={formData.documentType === '契約書'}
-                    onChange={() => updateFormData({ documentType: '契約書' })}
-                    disabled={!isStepEnabled(2)}
-                  />
-                  契約書
-                </label>
-                <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '16px' }}>
-                  <input
-                    type="radio"
-                    name="documentType"
-                    checked={formData.documentType === 'その他（免責部品一覧など）点検'}
-                    onChange={() => updateFormData({ documentType: 'その他（免責部品一覧など）点検' })}
-                    disabled={!isStepEnabled(2)}
-                  />
-                  その他（免責部品一覧など）点検
-                </label>
-              </div>
-            </div>
+                {/* ドキュメント種別 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#27ae60',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    ドキュメント種別
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="documentType"
+                          checked={formData.documentType === '契約書'}
+                          onChange={() => updateFormData({ documentType: '契約書' })}
+                          disabled={!isStepEnabled(2)}
+                        />
+                        契約書
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="documentType"
+                          checked={formData.documentType === 'その他（免責部品一覧など）点検'}
+                          onChange={() => updateFormData({ documentType: 'その他（免責部品一覧など）点検' })}
+                          disabled={!isStepEnabled(2)}
+                        />
+                        その他（免責部品一覧など）
+                      </label>
+                    </div>
+                  </td>
+                </tr>
 
-            {/* 注意文言 */}
-            <div style={{
-              padding: '12px 16px',
-              background: '#ffe0e0',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              marginLeft: '112px',
-            }}>
-              <div style={{ fontSize: '13px', color: '#c0392b', fontWeight: 'bold' }}>
-                機器が廃棄された場合に契約内容の変更
-              </div>
-              <div style={{ fontSize: '13px', color: '#c0392b', fontWeight: 'bold' }}>
-                覚書などのドキュメント追加
-              </div>
-            </div>
+                {/* 勘定科目 */}
+                <tr>
+                  <td style={{
+                    padding: '10px 12px',
+                    background: '#27ae60',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '1px solid #d1d5db',
+                    verticalAlign: 'middle',
+                  }}>
+                    勘定科目
+                  </td>
+                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="accountType"
+                          checked={formData.accountType === '○○○○○○○'}
+                          onChange={() => updateFormData({ accountType: '○○○○○○○' })}
+                          disabled={!isStepEnabled(2)}
+                        />
+                        ○○○○○○○
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <input
+                          type="radio"
+                          name="accountType"
+                          checked={formData.accountType === 'その他'}
+                          onChange={() => updateFormData({ accountType: 'その他' })}
+                          disabled={!isStepEnabled(2)}
+                        />
+                        その他（
+                        <input
+                          type="text"
+                          placeholder=""
+                          value={formData.accountOther}
+                          onChange={(e) => updateFormData({ accountOther: e.target.value })}
+                          disabled={!isStepEnabled(2)}
+                          style={{ ...inputStyle, width: '150px' }}
+                        />
+                        ）
+                      </label>
+                    </div>
+                  </td>
+                </tr>
 
-            {/* 勘定科目 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary }}>勘定科目</span>
-              <span style={{ fontSize: '13px', color: COLORS.textMuted }}>|</span>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input
-                  type="radio"
-                  name="accountType"
-                  checked={formData.accountType === '○○○○○○○'}
-                  onChange={() => updateFormData({ accountType: '○○○○○○○' })}
-                  disabled={!isStepEnabled(2)}
-                />
-                ○○○○○○○
-              </label>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input
-                  type="radio"
-                  name="accountType"
-                  checked={formData.accountType === 'その他'}
-                  onChange={() => updateFormData({ accountType: 'その他' })}
-                  disabled={!isStepEnabled(2)}
-                />
-                その他（
-                <input
-                  type="text"
-                  placeholder=""
-                  value={formData.accountOther}
-                  onChange={(e) => updateFormData({ accountOther: e.target.value })}
-                  {...getInputProps(2)}
-                  style={{ ...getInputProps(2).style, width: '150px' }}
-                />
-                ）
-              </label>
-            </div>
+              </tbody>
+            </table>
 
             {/* 保守登録ボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
               <button
                 className="maintenance-btn"
                 onClick={handleStep2Complete}
@@ -896,56 +1329,386 @@ function MaintenanceQuoteRegistrationContent() {
           }} />
         </div>
 
-        {/* 右側: プレビューエリア */}
+        {/* 右側: プレビューエリア（タブ付き） */}
         <div style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'auto',
+          overflow: 'hidden',
           background: COLORS.surfaceAlt,
         }}>
+          {/* プレビューヘッダー */}
           <div style={{
-            padding: '16px',
+            padding: '12px 16px',
             borderBottom: `1px solid ${COLORS.borderLight}`,
-            background: COLORS.white,
+            background: previewTab === 1 ? '#5a9bd5' : '#27ae60',
+            color: COLORS.textOnColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary }}>
-              プレビュー
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>
+              {previewTab === 1 && (previewQuotationIndex !== null
+                ? `見積プレビュー - ${registeredQuotations[previewQuotationIndex]?.fileName || ''}`
+                : '登録済み見積一覧')}
+              {previewTab === 2 && (previewDocumentIndex !== null
+                ? `ドキュメントプレビュー - ${registeredDocuments[previewDocumentIndex]?.fileName || ''}`
+                : '登録済みドキュメント一覧')}
             </h3>
           </div>
-          <div style={{ flex: 1, padding: '16px' }}>
-            {selectedQuotationFile || selectedDocumentFile ? (
+
+          {/* プレビューコンテンツ */}
+          <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
+            {/* STEP1: 見積一覧 */}
+            {previewTab === 1 && previewQuotationIndex === null && (
               <div style={{
                 background: COLORS.white,
-                borderRadius: '8px',
-                padding: '24px',
-                textAlign: 'center',
                 border: `1px solid ${COLORS.borderLight}`,
-              }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
-                <div style={{ fontSize: '14px', color: COLORS.textPrimary, fontWeight: 'bold' }}>
-                  {selectedDocumentFile || selectedQuotationFile}
-                </div>
-                <div style={{ fontSize: '12px', color: COLORS.textMuted, marginTop: '8px' }}>
-                  ファイルプレビュー（モック）
-                </div>
-              </div>
-            ) : (
-              <div style={{
-                background: COLORS.white,
                 borderRadius: '8px',
-                padding: '48px 24px',
-                textAlign: 'center',
-                border: `2px dashed ${COLORS.borderLight}`,
+                padding: '16px',
               }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📋</div>
-                <div style={{ fontSize: '14px', color: COLORS.textMuted }}>
-                  ファイルを選択するとプレビューが表示されます
-                </div>
+                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#5a9bd5' }}>
+                  登録済み見積一覧
+                </h4>
+                {registeredQuotations.length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ background: '#5a9bd5', color: 'white' }}>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>フェーズ</th>
+                        <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #ccc', width: '100px' }}>金額</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registeredQuotations.map((q, idx) => (
+                        <tr key={q.id} style={{ background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{q.fileName}</td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '10px',
+                              background: q.phase === '保守登録用見積' ? '#e3f2fd' : '#fff8e1',
+                              color: q.phase === '保守登録用見積' ? '#1565c0' : '#f57c00',
+                            }}>
+                              {q.phase === '保守登録用見積' ? '登録用' : '参考'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                            {q.totalAmount.toLocaleString()}円
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <button
+                              onClick={() => setPreviewQuotationIndex(idx)}
+                              style={{
+                                padding: '4px 8px',
+                                background: '#5a9bd5',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                marginRight: '4px',
+                              }}
+                            >
+                              表示
+                            </button>
+                            <button
+                              onClick={() => handleQuotationDelete(q.id)}
+                              style={{
+                                padding: '4px 8px',
+                                background: COLORS.error,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              削除
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
+                    <div>登録済みの見積はありません</div>
+                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP1で見積を登録してください</div>
+                  </div>
+                )}
               </div>
             )}
 
+            {/* STEP1: 見積プレビュー（選択時） */}
+            {previewTab === 1 && previewQuotationIndex !== null && registeredQuotations[previewQuotationIndex] && (
+              <div style={{
+                background: COLORS.white,
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: '8px',
+                padding: '16px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <button
+                    onClick={() => setPreviewQuotationIndex(null)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#f0f0f0',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ← 一覧に戻る
+                  </button>
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '32px',
+                  background: '#f5f5f5',
+                  borderRadius: '4px',
+                  marginBottom: '16px',
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {registeredQuotations[previewQuotationIndex].fileName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                    PDFプレビュー（モック）
+                  </div>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold', width: '120px' }}>見積フェーズ</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].phase}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>保存形式</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].saveFormat}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>見積日</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].quotationDate}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>業者名</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].vendorName}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>担当者</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].vendorPerson}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>事業者登録番号</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].businessRegistrationNo}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>見積金額</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc', fontWeight: 'bold', color: COLORS.primary }}>
+                        {registeredQuotations[previewQuotationIndex].totalAmount.toLocaleString()}円（税別）
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>登録日時</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>
+                        {new Date(registeredQuotations[previewQuotationIndex].registeredAt).toLocaleString('ja-JP')}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* STEP2: ドキュメント一覧 */}
+            {previewTab === 2 && previewDocumentIndex === null && (
+              <div style={{
+                background: COLORS.white,
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: '8px',
+                padding: '16px',
+              }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#27ae60' }}>
+                  登録済みドキュメント一覧
+                </h4>
+                {registeredDocuments.length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                    <thead>
+                      <tr style={{ background: '#27ae60', color: 'white' }}>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '100px' }}>種別</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {registeredDocuments.map((d, idx) => (
+                        <tr key={d.id} style={{ background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{d.fileName}</td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '10px',
+                              background: d.documentType === '契約書' ? '#e8f5e9' : '#fff8e1',
+                              color: d.documentType === '契約書' ? '#2e7d32' : '#f57c00',
+                            }}>
+                              {d.documentType === '契約書' ? '契約書' : 'その他'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                            <button
+                              onClick={() => setPreviewDocumentIndex(idx)}
+                              style={{
+                                padding: '4px 8px',
+                                background: '#27ae60',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                marginRight: '4px',
+                              }}
+                            >
+                              表示
+                            </button>
+                            <button
+                              onClick={() => handleDocumentDelete(d.id)}
+                              style={{
+                                padding: '4px 8px',
+                                background: COLORS.error,
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              削除
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
+                    <div>登録済みのドキュメントはありません</div>
+                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP2でドキュメントを登録してください</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP2: ドキュメントプレビュー（選択時） */}
+            {previewTab === 2 && previewDocumentIndex !== null && registeredDocuments[previewDocumentIndex] && (
+              <div style={{
+                background: COLORS.white,
+                border: `1px solid ${COLORS.borderLight}`,
+                borderRadius: '8px',
+                padding: '16px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <button
+                    onClick={() => setPreviewDocumentIndex(null)}
+                    style={{
+                      padding: '6px 12px',
+                      background: '#f0f0f0',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                    }}
+                  >
+                    ← 一覧に戻る
+                  </button>
+                </div>
+                <div style={{
+                  textAlign: 'center',
+                  padding: '32px',
+                  background: '#f5f5f5',
+                  borderRadius: '4px',
+                  marginBottom: '16px',
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
+                    {registeredDocuments[previewDocumentIndex].fileName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                    PDFプレビュー（モック）
+                  </div>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#27ae60', color: 'white', fontWeight: 'bold', width: '120px' }}>種別</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredDocuments[previewDocumentIndex].documentType}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#27ae60', color: 'white', fontWeight: 'bold' }}>勘定科目</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>
+                        {registeredDocuments[previewDocumentIndex].accountType}
+                        {registeredDocuments[previewDocumentIndex].accountOther && ` (${registeredDocuments[previewDocumentIndex].accountOther})`}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: '8px', background: '#27ae60', color: 'white', fontWeight: 'bold' }}>登録日時</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>
+                        {new Date(registeredDocuments[previewDocumentIndex].registeredAt).toLocaleString('ja-JP')}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* 縦型タブバー（右端） */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#f0f0f0',
+          borderLeft: '1px solid #ddd',
+          width: '40px',
+          flexShrink: 0,
+        }}>
+          {[1, 2].map((step) => (
+            <button
+              key={step}
+              onClick={() => {
+                setPreviewTab(step as 1 | 2);
+                if (step === 1) setPreviewQuotationIndex(null);
+                if (step === 2) setPreviewDocumentIndex(null);
+              }}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                borderBottom: '1px solid #ddd',
+                background: previewTab === step
+                  ? step === 1 ? '#5a9bd5' : '#27ae60'
+                  : 'transparent',
+                color: previewTab === step ? 'white' : '#666',
+                cursor: 'pointer',
+                fontSize: '11px',
+                fontWeight: previewTab === step ? 'bold' : 'normal',
+                transition: 'all 0.2s',
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                padding: '12px 0',
+              }}
+              title={step === 1 ? '見積一覧' : 'ドキュメント一覧'}
+            >
+              {step === 1 ? '見積' : 'Doc'}
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -956,7 +1719,7 @@ export default function MaintenanceQuoteRegistrationPage() {
   return (
     <Suspense fallback={
       <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-        <Header title="保守契約 見積登録" hideMenu={true} showBackButton={false} />
+        <Header title="保守契約管理" hideMenu={true} showBackButton={false} />
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
         </div>
