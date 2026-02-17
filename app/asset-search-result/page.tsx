@@ -9,6 +9,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
+import { BorrowingApplicationModal } from '@/components/ui/BorrowingApplicationModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -30,6 +31,9 @@ export default function AssetSearchResultPage() {
 
   // 廃棄申請モーダル関連の状態
   const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
+
+  // 借用申請モーダル関連の状態
+  const [isBorrowingModalOpen, setIsBorrowingModalOpen] = useState(false);
 
   // 新規申請モーダル関連の状態
   const [isNewApplicationModalOpen, setIsNewApplicationModalOpen] = useState(false);
@@ -432,7 +436,7 @@ export default function AssetSearchResultPage() {
                 fontSize: '13px',
                 fontWeight: 'normal',
               }}
-              onClick={() => alert('借用申請')}
+              onClick={() => setIsBorrowingModalOpen(true)}
             >
               借用申請
             </button>
@@ -1285,6 +1289,15 @@ export default function AssetSearchResultPage() {
         onSuccess={() => {
           setSelectedItems(new Set());
           router.push('/application-list');
+        }}
+      />
+
+      {/* 借用申請モーダル */}
+      <BorrowingApplicationModal
+        isOpen={isBorrowingModalOpen}
+        onClose={() => setIsBorrowingModalOpen(false)}
+        onSuccess={() => {
+          setSelectedItems(new Set());
         }}
       />
     </div>

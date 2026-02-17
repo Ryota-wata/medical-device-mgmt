@@ -391,7 +391,7 @@ function RepairTaskContent() {
   if (!request || !formData) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-        <Header title="修理申請タスク" hideMenu={true} showBackButton={false} />
+        <Header title="修理申請管理" hideMenu={true} showBackButton={false} />
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
         </div>
@@ -625,7 +625,7 @@ function RepairTaskContent() {
       `}</style>
 
       <Header
-        title="修理申請タスク"
+        title="修理申請管理"
         hideMenu={true}
         showBackButton={true}
         backHref="/quotation-data-box/repair-requests"
@@ -3039,7 +3039,7 @@ export default function RepairTaskPage() {
   return (
     <Suspense fallback={
       <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f9fafb' }}>
-        <Header title="修理申請タスク" hideMenu={true} showBackButton={false} />
+        <Header title="修理申請管理" hideMenu={true} showBackButton={false} />
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: '#6b7280' }}>読み込み中...</p>
         </div>

@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AssetMaster } from '@/lib/types/master';
 import { useMasterStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
-export default function AssetMasterPage() {
+function AssetMasterContent() {
+  const searchParams = useSearchParams();
+  const isSimpleMode = searchParams.get('mode') === 'simple';
   const { assets: assetMasters } = useMasterStore();
   const { isMobile } = useResponsive();
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
@@ -153,6 +156,34 @@ export default function AssetMasterPage() {
         type: 'ASSET_SELECTED',
         assets: [assetData],
         scope: scope
+      }, window.location.origin);
+      window.close();
+    } else {
+      alert('親ウィンドウが見つかりません');
+    }
+  };
+
+  // シンプルモード用: 選択した資産をそのまま送信
+  const handleSimpleSelection = () => {
+    if (!selectedAsset) {
+      alert('資産を選択してください');
+      return;
+    }
+
+    const assetData = {
+      id: selectedAsset.id,
+      category: selectedAsset.category,
+      largeClass: selectedAsset.largeClass,
+      mediumClass: selectedAsset.mediumClass,
+      item: selectedAsset.item,
+      maker: selectedAsset.maker,
+      model: selectedAsset.model
+    };
+
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({
+        type: 'ASSET_SELECTED',
+        assets: [assetData]
       }, window.location.origin);
       window.close();
     } else {
@@ -311,109 +342,167 @@ export default function AssetMasterPage() {
         gap: '12px'
       }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => handleConfirmSelection('all')}
-            disabled={!selectedAssetId}
-            style={{
-              padding: isMobile ? '8px 12px' : '10px 16px',
-              background: !selectedAssetId ? '#bdc3c7' : '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 'bold',
-              cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (selectedAssetId) {
-                e.currentTarget.style.background = '#229954';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedAssetId) {
-                e.currentTarget.style.background = '#27ae60';
-              }
-            }}
-          >
-            全て確定
-          </button>
-          <button
-            onClick={() => handleConfirmSelection('toMaker')}
-            disabled={!selectedAssetId}
-            style={{
-              padding: isMobile ? '8px 12px' : '10px 16px',
-              background: !selectedAssetId ? '#bdc3c7' : '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 'bold',
-              cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (selectedAssetId) {
-                e.currentTarget.style.background = '#2980b9';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedAssetId) {
-                e.currentTarget.style.background = '#3498db';
-              }
-            }}
-          >
-            メーカーまで確定
-          </button>
-          <button
-            onClick={() => handleConfirmSelection('toItem')}
-            disabled={!selectedAssetId}
-            style={{
-              padding: isMobile ? '8px 12px' : '10px 16px',
-              background: !selectedAssetId ? '#bdc3c7' : '#9b59b6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 'bold',
-              cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (selectedAssetId) {
-                e.currentTarget.style.background = '#8e44ad';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedAssetId) {
-                e.currentTarget.style.background = '#9b59b6';
-              }
-            }}
-          >
-            品目まで確定
-          </button>
-          <button
-            onClick={() => window.close()}
-            style={{
-              padding: isMobile ? '8px 12px' : '10px 16px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#7f8c8d';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#95a5a6';
-            }}
-          >
-            キャンセル
-          </button>
+          {isSimpleMode ? (
+            // シンプルモード: 選択ボタンのみ
+            <>
+              <button
+                onClick={handleSimpleSelection}
+                disabled={!selectedAssetId}
+                style={{
+                  padding: isMobile ? '8px 12px' : '10px 20px',
+                  background: !selectedAssetId ? '#bdc3c7' : '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: 'bold',
+                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#229954';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#27ae60';
+                  }
+                }}
+              >
+                選択
+              </button>
+              <button
+                onClick={() => window.close()}
+                style={{
+                  padding: isMobile ? '8px 12px' : '10px 20px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#7f8c8d';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#95a5a6';
+                }}
+              >
+                キャンセル
+              </button>
+            </>
+          ) : (
+            // 通常モード: 全て確定、メーカーまで確定、品目まで確定
+            <>
+              <button
+                onClick={() => handleConfirmSelection('all')}
+                disabled={!selectedAssetId}
+                style={{
+                  padding: isMobile ? '8px 12px' : '10px 16px',
+                  background: !selectedAssetId ? '#bdc3c7' : '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: 'bold',
+                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#229954';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#27ae60';
+                  }
+                }}
+              >
+                全て確定
+              </button>
+              <button
+                onClick={() => handleConfirmSelection('toMaker')}
+                disabled={!selectedAssetId}
+                style={{
+                  padding: isMobile ? '8px 12px' : '10px 16px',
+                  background: !selectedAssetId ? '#bdc3c7' : '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: 'bold',
+                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#2980b9';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#3498db';
+                  }
+                }}
+              >
+                メーカーまで確定
+              </button>
+              <button
+                onClick={() => handleConfirmSelection('toItem')}
+                disabled={!selectedAssetId}
+                style={{
+                  padding: isMobile ? '8px 12px' : '10px 16px',
+                  background: !selectedAssetId ? '#bdc3c7' : '#9b59b6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: 'bold',
+                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#8e44ad';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedAssetId) {
+                    e.currentTarget.style.background = '#9b59b6';
+                  }
+                }}
+              >
+                品目まで確定
+              </button>
+              <button
+                onClick={() => window.close()}
+                style={{
+                  padding: isMobile ? '8px 12px' : '10px 16px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#7f8c8d';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#95a5a6';
+                }}
+              >
+                キャンセル
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -625,5 +714,13 @@ export default function AssetMasterPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AssetMasterPage() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <AssetMasterContent />
+    </Suspense>
   );
 }

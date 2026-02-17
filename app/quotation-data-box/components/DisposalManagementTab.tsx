@@ -1,719 +1,413 @@
 'use client';
 
-import React, { useState, useMemo, useRef } from 'react';
-import { useApplicationStore } from '@/lib/stores';
+import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { ApplicationStatus } from '@/lib/types';
+
+// ステータス型
+type DisposalStatus = '申請中' | '受付済' | '見積取得済' | '発注済' | '検収済';
 
 interface DisposalApplication {
-  id: number;
+  id: string;
   applicationNo: string;
   applicationDate: string;
-  applicant: string;
-  department: string;
-  section: string;
-  roomName?: string;
+  applicantName: string;
+  applicantDepartment: string;
+  // 設置情報
+  installationDivision: string;
+  installationDepartment: string;
+  installationRoom: string;
+  // 廃棄対象機器
+  itemName: string;
+  maker: string;
+  model: string;
+  qrLabel: string;
+  // 廃棄理由
+  disposalReason: string;
   comment: string;
-  attachedFiles?: string[];
-  status: ApplicationStatus;
-  // 廃棄業者情報（タスク管理用）
-  disposalVendor?: string;
-  quotationDate?: string;
-  orderDate?: string;
-  acceptanceDate?: string;
+  // ステータス
+  status: DisposalStatus;
+}
+
+// モックデータ
+const MOCK_DISPOSAL_APPLICATIONS: DisposalApplication[] = [
+  {
+    id: '1',
+    applicationNo: 'DSP-2026-001',
+    applicationDate: '2026-02-01',
+    applicantName: '山田 太郎',
+    applicantDepartment: 'ME室',
+    installationDivision: '診療技術部',
+    installationDepartment: 'ME室',
+    installationRoom: 'ME機器管理室',
+    itemName: '心電計',
+    maker: '日本光電',
+    model: 'ECG-2550',
+    qrLabel: 'QR-001234',
+    disposalReason: '耐用年数超過',
+    comment: '10年以上使用、部品供給終了',
+    status: '発注済',
+  },
+  {
+    id: '2',
+    applicationNo: 'DSP-2026-002',
+    applicationDate: '2026-02-05',
+    applicantName: '佐藤 花子',
+    applicantDepartment: '手術部',
+    installationDivision: '中央手術部門',
+    installationDepartment: '手術部',
+    installationRoom: '手術室A',
+    itemName: '電気メス',
+    maker: 'コヴィディエン',
+    model: 'Force FX',
+    qrLabel: 'QR-002345',
+    disposalReason: '故障（修理不能）',
+    comment: '修理見積が新品購入価格を超過',
+    status: '受付済',
+  },
+  {
+    id: '3',
+    applicationNo: 'DSP-2026-003',
+    applicationDate: '2026-02-10',
+    applicantName: '田中 一郎',
+    applicantDepartment: 'ICU',
+    installationDivision: '看護部',
+    installationDepartment: 'ICU',
+    installationRoom: 'ICU-1',
+    itemName: '輸液ポンプ',
+    maker: 'テルモ',
+    model: 'TE-LM700',
+    qrLabel: 'QR-003456',
+    disposalReason: '耐用年数超過',
+    comment: '新機種へ更新のため廃棄',
+    status: '申請中',
+  },
+  {
+    id: '4',
+    applicationNo: 'DSP-2026-004',
+    applicationDate: '2026-02-08',
+    applicantName: '鈴木 次郎',
+    applicantDepartment: '放射線科',
+    installationDivision: '診療部',
+    installationDepartment: '放射線科',
+    installationRoom: 'CT室',
+    itemName: 'モニター',
+    maker: 'EIZO',
+    model: 'RadiForce RX250',
+    qrLabel: 'QR-004567',
+    disposalReason: '故障（修理不能）',
+    comment: '液晶パネル不具合、交換部品なし',
+    status: '見積取得済',
+  },
+  {
+    id: '5',
+    applicationNo: 'DSP-2026-005',
+    applicationDate: '2026-02-03',
+    applicantName: '高橋 美咲',
+    applicantDepartment: '検査部',
+    installationDivision: '診療技術部',
+    installationDepartment: '検査部',
+    installationRoom: '生理検査室',
+    itemName: '超音波診断装置',
+    maker: 'GEヘルスケア',
+    model: 'LOGIQ E9',
+    qrLabel: 'QR-005678',
+    disposalReason: '耐用年数超過',
+    comment: '後継機導入に伴う廃棄',
+    status: '検収済',
+  },
+];
+
+// フィルター状態
+interface DisposalFilter {
+  status: string;
+  applicantDepartment: string;
+  installationDepartment: string;
+  maker: string;
+  itemName: string;
 }
 
 export function DisposalManagementTab() {
-  const { applications, updateApplication } = useApplicationStore();
-
-  // フィルター状態
-  const [filterStatus, setFilterStatus] = useState<string>('');
-  const [filterDepartment, setFilterDepartment] = useState<string>('');
-
-  // 業者管理モーダル
-  const [selectedApplication, setSelectedApplication] = useState<DisposalApplication | null>(null);
-  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
-  const [vendorForm, setVendorForm] = useState({
-    vendor: '',
-    quotationDate: '',
-    orderDate: '',
-    acceptanceDate: '',
+  const router = useRouter();
+  const [applications] = useState<DisposalApplication[]>(MOCK_DISPOSAL_APPLICATIONS);
+  const [filter, setFilter] = useState<DisposalFilter>({
+    status: '',
+    applicantDepartment: '',
+    installationDepartment: '',
+    maker: '',
+    itemName: '',
   });
 
-  // ドキュメント登録モーダル
-  const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
-  const [documents, setDocuments] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // 廃棄申請をフィルタリング
-  const disposalApplications = useMemo(() => {
-    return applications
-      .filter(app => app.applicationType === '廃棄申請')
-      .map(app => {
-        // freeInputから業者情報をパース
-        const freeInput = app.freeInput || '';
-        const vendorMatch = freeInput.match(/廃棄業者: (.+)/);
-        const quotationMatch = freeInput.match(/見積日: (\d{4}-\d{2}-\d{2})?/);
-        const orderMatch = freeInput.match(/発注日: (\d{4}-\d{2}-\d{2})?/);
-        const acceptanceMatch = freeInput.match(/検収日: (\d{4}-\d{2}-\d{2})?/);
-        const comment = freeInput.split('\n').filter(line => !line.match(/^(廃棄業者|見積日|発注日|検収日):/)).join('\n').trim();
+  // フィルターオプション
+  const statusOptions = ['申請中', '受付済', '見積取得済', '発注済', '検収済'];
+  const departmentOptions = [...new Set(applications.map((a) => a.applicantDepartment))];
+  const installDeptOptions = [...new Set(applications.map((a) => a.installationDepartment))];
+  const makerOptions = [...new Set(applications.map((a) => a.maker))];
+  const itemOptions = [...new Set(applications.map((a) => a.itemName))];
 
-        return {
-          id: app.id,
-          applicationNo: app.applicationNo,
-          applicationDate: app.applicationDate,
-          applicant: '手部 術太郎', // モーダルと同じ固定値
-          department: app.facility.department,
-          section: app.facility.section,
-          roomName: app.roomName,
-          comment: comment || app.applicationReason || '',
-          attachedFiles: app.attachedFiles,
-          status: app.status,
-          disposalVendor: vendorMatch?.[1] || '',
-          quotationDate: quotationMatch?.[1] || '',
-          orderDate: orderMatch?.[1] || '',
-          acceptanceDate: acceptanceMatch?.[1] || '',
-        };
-      });
-  }, [applications]);
-
-  // フィルター適用
+  // フィルタリング
   const filteredApplications = useMemo(() => {
-    return disposalApplications.filter(app => {
-      if (filterStatus && app.status !== filterStatus) return false;
-      if (filterDepartment && app.department !== filterDepartment) return false;
+    return applications.filter((app) => {
+      if (filter.status && app.status !== filter.status) return false;
+      if (filter.applicantDepartment && app.applicantDepartment !== filter.applicantDepartment) return false;
+      if (filter.installationDepartment && app.installationDepartment !== filter.installationDepartment) return false;
+      if (filter.maker && app.maker !== filter.maker) return false;
+      if (filter.itemName && app.itemName !== filter.itemName) return false;
       return true;
     });
-  }, [disposalApplications, filterStatus, filterDepartment]);
+  }, [applications, filter]);
 
-  // 部門オプション
-  const departmentOptions = useMemo(() => {
-    const departments = new Set(disposalApplications.map(app => app.department));
-    return Array.from(departments).filter(Boolean);
-  }, [disposalApplications]);
-
-  // ステータスオプション
-  const statusOptions = ['承認待ち', '承認済み', '見積依頼中', '発注済み', '検収済み', '廃棄完了'];
-
-  // 承認
-  const handleApprove = (app: DisposalApplication) => {
-    if (window.confirm(`廃棄申請「${app.applicationNo}」を承認しますか？`)) {
-      updateApplication(app.id, { status: '承認済み' });
-      alert('廃棄申請を承認しました。');
+  // 全選択/解除
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredApplications.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredApplications.map((a) => a.id)));
     }
   };
 
-  // 業者管理モーダルを開く
-  const handleOpenVendorModal = (app: DisposalApplication) => {
-    setSelectedApplication(app);
-    setVendorForm({
-      vendor: app.disposalVendor || '',
-      quotationDate: app.quotationDate || '',
-      orderDate: app.orderDate || '',
-      acceptanceDate: app.acceptanceDate || '',
-    });
-    setIsVendorModalOpen(true);
-  };
-
-  // 業者情報保存
-  const handleSaveVendor = () => {
-    if (!selectedApplication) return;
-
-    // ステータス決定
-    let newStatus: ApplicationStatus = '承認済み';
-    if (vendorForm.acceptanceDate) {
-      newStatus = '検収済み';
-    } else if (vendorForm.orderDate) {
-      newStatus = '発注済み';
-    } else if (vendorForm.quotationDate) {
-      newStatus = '見積依頼中';
+  // 個別選択
+  const handleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
     }
-
-    // freeInput更新
-    const baseComment = selectedApplication.comment || '';
-    const vendorInfo = `廃棄業者: ${vendorForm.vendor}\n見積日: ${vendorForm.quotationDate}\n発注日: ${vendorForm.orderDate}\n検収日: ${vendorForm.acceptanceDate}`;
-    const newFreeInput = baseComment ? `${baseComment}\n${vendorInfo}` : vendorInfo;
-
-    updateApplication(selectedApplication.id, {
-      status: newStatus,
-      freeInput: newFreeInput,
-    });
-
-    setIsVendorModalOpen(false);
-    setSelectedApplication(null);
-    alert('廃棄業者情報を保存しました。');
-  };
-
-  // ドキュメント登録モーダルを開く
-  const handleOpenDocumentModal = (app: DisposalApplication) => {
-    setSelectedApplication(app);
-    setDocuments([]);
-    setIsDocumentModalOpen(true);
-  };
-
-  // ファイル選択
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    const newDocs = Array.from(files).map(f => f.name);
-    setDocuments(prev => [...prev, ...newDocs]);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  // ドキュメント削除
-  const handleRemoveDocument = (index: number) => {
-    setDocuments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // 廃棄完了
-  const handleCompleteDisposal = () => {
-    if (!selectedApplication) return;
-
-    updateApplication(selectedApplication.id, { status: '廃棄完了' });
-    setIsDocumentModalOpen(false);
-    setSelectedApplication(null);
-    alert('廃棄処理を完了しました。');
-  };
-
-  // フィルタークリア
-  const handleClearFilters = () => {
-    setFilterStatus('');
-    setFilterDepartment('');
+    setSelectedIds(newSelected);
   };
 
   // ステータスバッジの色
-  const getStatusColor = (status: ApplicationStatus) => {
+  const getStatusColor = (status: DisposalStatus) => {
     switch (status) {
-      case '承認待ち': return { bg: '#fff3e0', color: '#e65100' };
-      case '承認済み': return { bg: '#e3f2fd', color: '#1565c0' };
-      case '見積依頼中': return { bg: '#fce4ec', color: '#c2185b' };
-      case '発注済み': return { bg: '#e8f5e9', color: '#2e7d32' };
-      case '検収済み': return { bg: '#e0f2f1', color: '#00695c' };
-      case '廃棄完了': return { bg: '#f3e5f5', color: '#7b1fa2' };
+      case '申請中': return { bg: '#fff3e0', color: '#e65100' };
+      case '受付済': return { bg: '#e3f2fd', color: '#1565c0' };
+      case '見積取得済': return { bg: '#e8f5e9', color: '#2e7d32' };
+      case '発注済': return { bg: '#f3e5f5', color: '#7b1fa2' };
+      case '検収済': return { bg: '#e0f7fa', color: '#00838f' };
       default: return { bg: '#f5f5f5', color: '#666' };
     }
   };
 
+  // ステータスに応じた次のアクションラベル
+  const getNextActionLabel = (status: DisposalStatus) => {
+    switch (status) {
+      case '申請中': return '受付';
+      case '受付済': return '見積登録';
+      case '見積取得済': return '発注';
+      case '発注済': return '検収';
+      case '検収済': return '完了処理';
+      default: return 'タスク';
+    }
+  };
+
+  // タスク画面へ遷移
+  const handleOpenTask = (id: string) => {
+    router.push(`/disposal-task?id=${id}`);
+  };
+
+  // フィルタークリア
+  const handleClearFilter = () => {
+    setFilter({
+      status: '',
+      applicantDepartment: '',
+      installationDepartment: '',
+      maker: '',
+      itemName: '',
+    });
+  };
+
   return (
-    <div style={{ padding: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* フィルターエリア */}
-      <div style={{
-        background: '#f8f9fa',
-        padding: '16px',
-        borderRadius: '8px',
-        marginBottom: '16px',
-        border: '1px solid #e0e0e0',
-      }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ minWidth: '150px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-              ステータス
-            </label>
+      <div style={{ background: '#f8f9fa', padding: '16px', borderBottom: '1px solid #dee2e6' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              value={filterStatus}
-              onChange={setFilterStatus}
+              label="ステータス"
+              value={filter.status}
+              onChange={(value) => setFilter({ ...filter, status: value })}
               options={statusOptions}
-              placeholder="すべて"
+              placeholder="全て"
             />
           </div>
-
-          <div style={{ minWidth: '180px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-              設置部門
-            </label>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              value={filterDepartment}
-              onChange={setFilterDepartment}
+              label="申請部署"
+              value={filter.applicantDepartment}
+              onChange={(value) => setFilter({ ...filter, applicantDepartment: value })}
               options={departmentOptions}
-              placeholder="すべて"
+              placeholder="全て"
             />
           </div>
-
+          <div style={{ minWidth: '120px' }}>
+            <SearchableSelect
+              label="設置部署"
+              value={filter.installationDepartment}
+              onChange={(value) => setFilter({ ...filter, installationDepartment: value })}
+              options={installDeptOptions}
+              placeholder="全て"
+            />
+          </div>
+          <div style={{ minWidth: '120px' }}>
+            <SearchableSelect
+              label="メーカー"
+              value={filter.maker}
+              onChange={(value) => setFilter({ ...filter, maker: value })}
+              options={makerOptions}
+              placeholder="全て"
+            />
+          </div>
+          <div style={{ minWidth: '120px' }}>
+            <SearchableSelect
+              label="品目"
+              value={filter.itemName}
+              onChange={(value) => setFilter({ ...filter, itemName: value })}
+              options={itemOptions}
+              placeholder="全て"
+            />
+          </div>
           <button
-            onClick={handleClearFilters}
+            onClick={handleClearFilter}
             style={{
               padding: '8px 16px',
-              background: '#6c757d',
+              background: '#95a5a6',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: 'pointer',
               fontSize: '13px',
+              cursor: 'pointer',
             }}
           >
             クリア
           </button>
         </div>
+        <div style={{ marginTop: '12px', fontSize: '12px', color: '#666' }}>
+          検索結果: {filteredApplications.length}件 / 全{applications.length}件
+          {selectedIds.size > 0 && ` （${selectedIds.size}件選択中）`}
+        </div>
       </div>
 
       {/* テーブルエリア */}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ background: '#f8f9fa' }}>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請No</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請日</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請者</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>設置部門</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>設置部署</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>設置室名</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>コメント</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>添付ファイル</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>廃棄業者</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>ステータス</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredApplications.length === 0 ? (
-              <tr>
-                <td colSpan={11} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                  廃棄申請データがありません
-                </td>
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1200px' }}>
+            <thead>
+              {/* グループヘッダー行 */}
+              <tr style={{ background: '#e8ecef' }}>
+                <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '40px', position: 'sticky', left: 0, background: '#e8ecef', zIndex: 2 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === filteredApplications.length && filteredApplications.length > 0}
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th colSpan={4} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600 }}>申請情報</th>
+                <th colSpan={3} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600 }}>設置情報</th>
+                <th colSpan={4} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600 }}>廃棄対象機器</th>
+                <th colSpan={2} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600 }}>廃棄理由</th>
+                <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '100px' }}>ステータス</th>
+                <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '100px' }}>操作</th>
               </tr>
-            ) : (
-              filteredApplications.map((app, index) => {
-                const statusColor = getStatusColor(app.status);
-                return (
-                  <tr key={app.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationDate}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicant}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.department}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.section}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.roomName || '-'}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd', minWidth: '200px', maxWidth: '300px' }}>
-                      <span style={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {app.comment || '-'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                      {app.attachedFiles && app.attachedFiles.length > 0 ? (
+              {/* カラムヘッダー行 */}
+              <tr style={{ background: '#f8f9fa' }}>
+                {/* 申請情報 */}
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請No</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>申請日</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請者</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請部署</th>
+                {/* 設置情報 */}
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>部門</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>部署</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>室名</th>
+                {/* 廃棄対象機器 */}
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>品目</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>メーカー</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>型式</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>QRラベル</th>
+                {/* 廃棄理由 */}
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>理由</th>
+                <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>コメント</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredApplications.length === 0 ? (
+                <tr>
+                  <td colSpan={16} style={{ padding: '40px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                    廃棄申請データがありません
+                  </td>
+                </tr>
+              ) : (
+                filteredApplications.map((app, index) => {
+                  const statusColor = getStatusColor(app.status);
+                  return (
+                    <tr key={app.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', position: 'sticky', left: 0, background: index % 2 === 0 ? 'white' : '#fafafa', zIndex: 1 }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(app.id)}
+                          onChange={() => handleSelect(app.id)}
+                        />
+                      </td>
+                      {/* 申請情報 */}
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{app.applicationDate}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.applicantName}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.applicantDepartment}</td>
+                      {/* 設置情報 */}
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.installationDivision}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.installationDepartment}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.installationRoom}</td>
+                      {/* 廃棄対象機器 */}
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.itemName}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.maker}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.model}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.qrLabel}</td>
+                      {/* 廃棄理由 */}
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd' }}>{app.disposalReason}</td>
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd', fontSize: '11px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={app.comment}>{app.comment || '-'}</td>
+                      {/* ステータス */}
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center' }}>
                         <span style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '4px 8px',
-                          background: '#e3f2fd',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          color: '#1565c0',
+                          display: 'inline-block',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          background: statusColor.bg,
+                          color: statusColor.color,
                         }}>
-                          📎 {app.attachedFiles.length}件
+                          {app.status}
                         </span>
-                      ) : (
-                        <span style={{ color: '#999' }}>-</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                      {app.disposalVendor || <span style={{ color: '#999' }}>未登録</span>}
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        background: statusColor.bg,
-                        color: statusColor.color,
-                        fontWeight: 'bold',
-                      }}>
-                        {app.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        {/* 承認待ち */}
-                        {app.status === '承認待ち' && (
-                          <button
-                            onClick={() => handleApprove(app)}
-                            style={{
-                              padding: '4px 10px',
-                              background: '#2196f3',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                            }}
-                          >
-                            承認
-                          </button>
-                        )}
-
-                        {/* 承認済み〜検収済み */}
-                        {['承認済み', '見積依頼中', '発注済み', '検収済み'].includes(app.status) && (
-                          <button
-                            onClick={() => handleOpenVendorModal(app)}
-                            style={{
-                              padding: '4px 10px',
-                              background: '#ff9800',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                            }}
-                          >
-                            業者管理
-                          </button>
-                        )}
-
-                        {/* 検収済み */}
-                        {app.status === '検収済み' && (
-                          <button
-                            onClick={() => handleOpenDocumentModal(app)}
-                            style={{
-                              padding: '4px 10px',
-                              background: '#9c27b0',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                            }}
-                          >
-                            廃棄完了
-                          </button>
-                        )}
-
-                        {/* 廃棄完了 */}
-                        {app.status === '廃棄完了' && (
-                          <span style={{ fontSize: '12px', color: '#666' }}>完了</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 件数表示 */}
-      <div style={{ marginTop: '16px', fontSize: '13px', color: '#666' }}>
-        {filteredApplications.length} 件表示 / 全 {disposalApplications.length} 件
-      </div>
-
-      {/* 業者管理モーダル */}
-      {isVendorModalOpen && selectedApplication && (
-        <div
-          onClick={() => setIsVendorModalOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '8px',
-              width: '90%',
-              maxWidth: '550px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            }}
-          >
-            <div style={{
-              background: '#ff9800',
-              padding: '16px',
-              borderRadius: '8px 8px 0 0',
-              color: 'white',
-              fontWeight: 'bold',
-            }}>
-              廃棄業者管理
-            </div>
-            <div style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px', padding: '12px', background: '#f8f9fa', borderRadius: '4px' }}>
-                <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
-                  対象: {selectedApplication.applicationNo}
-                </p>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
-                  廃棄業者名 <span style={{ color: '#e74c3c' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={vendorForm.vendor}
-                  onChange={(e) => setVendorForm(prev => ({ ...prev, vendor: e.target.value }))}
-                  placeholder="業者名を入力"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
-                    見積依頼日
-                  </label>
-                  <input
-                    type="date"
-                    value={vendorForm.quotationDate}
-                    onChange={(e) => setVendorForm(prev => ({ ...prev, quotationDate: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
-                    発注日
-                  </label>
-                  <input
-                    type="date"
-                    value={vendorForm.orderDate}
-                    onChange={(e) => setVendorForm(prev => ({ ...prev, orderDate: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
-                    検収日
-                  </label>
-                  <input
-                    type="date"
-                    value={vendorForm.acceptanceDate}
-                    onChange={(e) => setVendorForm(prev => ({ ...prev, acceptanceDate: e.target.value }))}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setIsVendorModalOpen(false)}
-                  style={{
-                    padding: '10px 24px',
-                    background: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleSaveVendor}
-                  disabled={!vendorForm.vendor}
-                  style={{
-                    padding: '10px 24px',
-                    background: vendorForm.vendor ? '#ff9800' : '#ccc',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: vendorForm.vendor ? 'pointer' : 'not-allowed',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 廃棄完了・ドキュメント登録モーダル */}
-      {isDocumentModalOpen && selectedApplication && (
-        <div
-          onClick={() => setIsDocumentModalOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '8px',
-              width: '90%',
-              maxWidth: '550px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            }}
-          >
-            <div style={{
-              background: '#9c27b0',
-              padding: '16px',
-              borderRadius: '8px 8px 0 0',
-              color: 'white',
-              fontWeight: 'bold',
-            }}>
-              廃棄完了・ドキュメント登録
-            </div>
-            <div style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px', padding: '12px', background: '#f8f9fa', borderRadius: '4px' }}>
-                <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
-                  対象: {selectedApplication.applicationNo}
-                </p>
-              </div>
-
-              {/* ドキュメント登録 */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>
-                  廃棄済ドキュメント登録
-                </label>
-                <div style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  padding: '12px',
-                }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    onChange={handleFileSelect}
-                    style={{ display: 'none' }}
-                    id="document-input"
-                  />
-                  <label
-                    htmlFor="document-input"
-                    style={{
-                      display: 'inline-block',
-                      padding: '8px 16px',
-                      background: '#f5f5f5',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ファイルを選択
-                  </label>
-                  <span style={{ marginLeft: '12px', fontSize: '12px', color: '#666' }}>
-                    廃棄証明書、マニフェスト等
-                  </span>
-
-                  {documents.length > 0 && (
-                    <div style={{ marginTop: '12px' }}>
-                      {documents.map((doc, index) => (
-                        <div
-                          key={index}
+                      </td>
+                      {/* 操作 */}
+                      <td style={{ padding: '8px 6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleOpenTask(app.id)}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '8px',
-                            background: '#f8f9fa',
+                            padding: '4px 12px',
+                            background: '#3498db',
+                            color: 'white',
+                            border: 'none',
                             borderRadius: '4px',
-                            marginBottom: '4px',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
                           }}
                         >
-                          <span style={{ fontSize: '13px' }}>{doc}</span>
-                          <button
-                            onClick={() => handleRemoveDocument(index)}
-                            style={{
-                              padding: '2px 8px',
-                              background: '#e74c3c',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '11px',
-                            }}
-                          >
-                            削除
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{
-                padding: '12px',
-                background: '#fff3e0',
-                borderRadius: '4px',
-                marginBottom: '24px',
-              }}>
-                <p style={{ fontSize: '13px', color: '#e65100', margin: 0 }}>
-                  「廃棄完了」をクリックすると、この資産は廃棄済みとして処理されます。
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => setIsDocumentModalOpen(false)}
-                  style={{
-                    padding: '10px 24px',
-                    background: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleCompleteDisposal}
-                  style={{
-                    padding: '10px 24px',
-                    background: '#9c27b0',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  廃棄完了
-                </button>
-              </div>
-            </div>
-          </div>
+                          {getNextActionLabel(app.status)}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 }

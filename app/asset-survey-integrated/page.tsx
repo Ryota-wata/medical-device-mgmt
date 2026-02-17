@@ -272,11 +272,11 @@ function AssetSurveyIntegratedContent() {
               marginBottom: '4px',
               fontWeight: '600'
             }}>
-              ラベル番号
+              QRコード
             </label>
             <input
               type="text"
-              placeholder="ラベル番号を入力"
+              placeholder="QRコードを入力"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -769,11 +769,11 @@ function AssetSurveyIntegratedContent() {
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexDirection: isMobile ? 'column' : 'row' }}>
                 <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
                   <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                    終了ラベル番号
+                    終了QRコード
                   </label>
                   <input
                     type="text"
-                    placeholder="終了ラベル番号を入力"
+                    placeholder="終了QRコードを入力"
                     readOnly
                     style={{
                       width: '100%',
@@ -786,7 +786,7 @@ function AssetSurveyIntegratedContent() {
                     }}
                   />
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                    一括登録の終了ラベル番号
+                    一括登録の終了QRコード
                   </div>
                 </div>
                 <button

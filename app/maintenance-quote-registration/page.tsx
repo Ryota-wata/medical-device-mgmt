@@ -39,6 +39,18 @@ const MAINTENANCE_STEPS = [
   { step: 2, label: '完了登録' },
 ];
 
+// 契約グループ内の資産型
+interface ContractGroupAsset {
+  id: number;
+  qrLabel: string;
+  itemName: string;
+  maker: string;
+  model: string;
+  serialNo: string;
+  installationLocation: string;
+  inspectionCountPerYear: number;
+}
+
 // 登録済み見積の型
 interface RegisteredQuotation {
   id: number;
@@ -46,13 +58,7 @@ interface RegisteredQuotation {
   saveFormat: '電子取引' | 'スキャナ保存' | '未指定';
   fileName: string;
   registeredAt: string;
-  // AI OCR取得データ
-  quotationDate: string;
-  registrationDate: string;
-  businessRegistrationNo: string;
   vendorName: string;
-  vendorPerson: string;
-  totalAmount: number;
 }
 
 // 登録済みドキュメントの型
@@ -151,6 +157,256 @@ const getMockContract = (id: string): MaintenanceContract => {
     model: 'V680',
     assetCount: 2,
   };
+};
+
+// 契約グループ内の資産モックデータ
+const getMockContractGroupAssets = (): ContractGroupAsset[] => [
+  {
+    id: 1,
+    qrLabel: 'QR-001234',
+    itemName: '人工呼吸器',
+    maker: 'フィリップス',
+    model: 'V680',
+    serialNo: 'SN-2020-12345',
+    installationLocation: 'ICU 1号室',
+    inspectionCountPerYear: 0,
+  },
+  {
+    id: 2,
+    qrLabel: 'QR-001235',
+    itemName: '人工呼吸器',
+    maker: 'フィリップス',
+    model: 'V680',
+    serialNo: 'SN-2020-12346',
+    installationLocation: 'ICU 2号室',
+    inspectionCountPerYear: 0,
+  },
+  {
+    id: 3,
+    qrLabel: 'QR-001236',
+    itemName: '人工呼吸器',
+    maker: 'フィリップス',
+    model: 'V680',
+    serialNo: 'SN-2020-12347',
+    installationLocation: 'HCU',
+    inspectionCountPerYear: 0,
+  },
+];
+
+// 契約グループ詳細モーダル
+const ContractGroupDetailModal = ({
+  isOpen,
+  onClose,
+  groupName,
+  assets,
+  onAssetsUpdate,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  groupName: string;
+  assets: ContractGroupAsset[];
+  onAssetsUpdate: (assets: ContractGroupAsset[]) => void;
+}) => {
+  const [localAssets, setLocalAssets] = useState<ContractGroupAsset[]>(assets);
+
+  useEffect(() => {
+    setLocalAssets(assets);
+  }, [assets]);
+
+  if (!isOpen) return null;
+
+  const handleAssetCountChange = (assetId: number, count: number) => {
+    setLocalAssets(prev => prev.map(a =>
+      a.id === assetId ? { ...a, inspectionCountPerYear: count } : a
+    ));
+  };
+
+  const handleSave = () => {
+    // 少なくとも1台は点検回数が設定されているか確認
+    const totalInspections = localAssets.reduce((sum, a) => sum + a.inspectionCountPerYear, 0);
+    if (totalInspections === 0) {
+      alert('少なくとも1台の資産に点検回数を設定してください');
+      return;
+    }
+    onAssetsUpdate(localAssets);
+    onClose();
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+    }}>
+      <div style={{
+        background: COLORS.white,
+        borderRadius: '8px',
+        width: '90%',
+        maxWidth: '900px',
+        maxHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+      }}>
+        {/* モーダルヘッダー */}
+        <div style={{
+          padding: '16px 20px',
+          borderBottom: `1px solid ${COLORS.borderLight}`,
+          background: COLORS.success,
+          color: COLORS.textOnColor,
+          borderRadius: '8px 8px 0 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>資産ごとの点検回数設定</h2>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.9 }}>
+              グループ名: {groupName || '（未設定）'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: COLORS.textOnColor,
+              fontSize: '20px',
+              cursor: 'pointer',
+              padding: '4px 8px',
+            }}
+            aria-label="閉じる"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* モーダルコンテンツ */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+          {/* 説明テキスト */}
+          <div style={{
+            padding: '12px 16px',
+            background: '#e8f5e9',
+            borderRadius: '4px',
+            marginBottom: '20px',
+            fontSize: '13px',
+            color: '#2e7d32',
+          }}>
+            <strong>各資産の年間点検回数を個別に設定してください。</strong><br />
+            設置場所や使用頻度に応じて、資産ごとに異なる点検回数を登録できます。
+          </div>
+
+          {/* 資産一覧テーブル */}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>QRラベル</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>品名</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>メーカー</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>型式</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>シリアルNo</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>設置場所</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'center', border: `1px solid ${COLORS.border}`, width: '140px' }}>年間点検回数</th>
+                </tr>
+              </thead>
+              <tbody>
+                {localAssets.map((asset, idx) => (
+                  <tr key={asset.id} style={{ background: idx % 2 === 0 ? COLORS.white : COLORS.surfaceAlt }}>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}`, fontWeight: 'bold', color: COLORS.primary }}>
+                      {asset.qrLabel}
+                    </td>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}` }}>{asset.itemName}</td>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}` }}>{asset.maker}</td>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}` }}>{asset.model}</td>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}`, fontSize: '12px', color: COLORS.textMuted }}>{asset.serialNo}</td>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}` }}>{asset.installationLocation}</td>
+                    <td style={{ padding: '10px 12px', border: `1px solid ${COLORS.borderLight}`, textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '12px' }}>年</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="12"
+                          value={asset.inspectionCountPerYear}
+                          onChange={(e) => handleAssetCountChange(asset.id, parseInt(e.target.value, 10) || 0)}
+                          style={{
+                            ...inputStyle,
+                            width: '50px',
+                            textAlign: 'right',
+                            padding: '4px 6px',
+                          }}
+                        />
+                        <span style={{ fontSize: '12px' }}>回</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* サマリー */}
+          <div style={{
+            marginTop: '16px',
+            padding: '12px 16px',
+            background: COLORS.successLight,
+            borderRadius: '4px',
+            fontSize: '13px',
+          }}>
+            <strong>設定サマリー:</strong> 対象資産 {localAssets.length} 台 /
+            合計点検回数 {localAssets.reduce((sum, a) => sum + a.inspectionCountPerYear, 0)} 回/年
+          </div>
+        </div>
+
+        {/* モーダルフッター */}
+        <div style={{
+          padding: '16px 20px',
+          borderTop: `1px solid ${COLORS.borderLight}`,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '12px',
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: COLORS.surfaceAlt,
+              color: COLORS.textPrimary,
+              border: `1px solid ${COLORS.border}`,
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '10px 20px',
+              background: COLORS.success,
+              color: COLORS.textOnColor,
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+            }}
+          >
+            設定を保存
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // 共通スタイル
@@ -295,6 +551,10 @@ function MaintenanceQuoteRegistrationContent() {
   const [previewTab, setPreviewTab] = useState<1 | 2>(1);
   const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
   const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
+
+  // 契約グループ詳細モーダル
+  const [isGroupDetailModalOpen, setIsGroupDetailModalOpen] = useState(false);
+  const [contractGroupAssets, setContractGroupAssets] = useState<ContractGroupAsset[]>(getMockContractGroupAssets());
 
   // パネル幅の状態
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
@@ -597,284 +857,6 @@ function MaintenanceQuoteRegistrationContent() {
                   </td>
                 </tr>
 
-                {/* 見積書を登録 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#4a6fa5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'top',
-                  }}>
-                    見積書を登録
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                      <label style={{
-                        padding: '6px 16px',
-                        background: COLORS.surfaceAlt,
-                        border: `1px solid ${COLORS.border}`,
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                      }}>
-                        ファイルの選択
-                        <input
-                          type="file"
-                          style={{ display: 'none' }}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const fileName = file.name;
-                              // AI OCR シミュレーション: 見積書から値を自動取得して登録
-                              setTimeout(() => {
-                                const ocrData = {
-                                  quotationDate: '2026-02-01',
-                                  registrationDate: '2026-02-15',
-                                  businessRegistrationNo: 'T1234567890123',
-                                  vendorName: 'フィリップス・ジャパン株式会社',
-                                  vendorPerson: '山田 太郎',
-                                  totalAmount: 1500000,
-                                };
-                                // 自動登録
-                                const newQuotation: RegisteredQuotation = {
-                                  id: Date.now(),
-                                  phase: formData?.quotationPhase || '保守登録用見積',
-                                  saveFormat: formData?.saveFormat || '未指定',
-                                  fileName: fileName,
-                                  registeredAt: new Date().toISOString(),
-                                  ...ocrData,
-                                };
-                                setRegisteredQuotations(prev => [...prev, newQuotation]);
-                                setPreviewTab(1);
-                                alert(`見積書「${fileName}」をAI OCRで読み取り、登録しました。`);
-                              }, 500);
-                            }
-                          }}
-                          disabled={!isStepEnabled(1)}
-                        />
-                      </label>
-                      <span style={{ fontSize: '13px', color: selectedQuotationFile ? COLORS.textPrimary : COLORS.textMuted }}>
-                        {selectedQuotationFile || 'ファイルが選択されていません'}
-                      </span>
-                    </div>
-                    {/* 見積フェーズ */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '10px' }}>
-                      <span style={{ color: COLORS.textMuted, minWidth: '80px' }}>見積フェーズ:</span>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <input
-                          type="radio"
-                          name="quotationPhase"
-                          checked={formData.quotationPhase === '保守登録用見積'}
-                          onChange={() => updateFormData({ quotationPhase: '保守登録用見積' })}
-                          disabled={!isStepEnabled(1)}
-                        />
-                        保守登録用見積
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <input
-                          type="radio"
-                          name="quotationPhase"
-                          checked={formData.quotationPhase === '参考見積'}
-                          onChange={() => updateFormData({ quotationPhase: '参考見積' })}
-                          disabled={!isStepEnabled(1)}
-                        />
-                        参考見積
-                      </label>
-                    </div>
-                    {/* 保存形式 */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <span style={{ color: COLORS.textMuted, minWidth: '80px' }}>保存形式:</span>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <input
-                          type="radio"
-                          name="saveFormat"
-                          checked={formData.saveFormat === '電子取引'}
-                          onChange={() => updateFormData({ saveFormat: '電子取引' })}
-                          disabled={!isStepEnabled(1)}
-                        />
-                        電子取引
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <input
-                          type="radio"
-                          name="saveFormat"
-                          checked={formData.saveFormat === 'スキャナ保存'}
-                          onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })}
-                          disabled={!isStepEnabled(1)}
-                        />
-                        スキャナ保存
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <input
-                          type="radio"
-                          name="saveFormat"
-                          checked={formData.saveFormat === '未指定'}
-                          onChange={() => updateFormData({ saveFormat: '未指定' })}
-                          disabled={!isStepEnabled(1)}
-                        />
-                        未指定
-                      </label>
-                    </div>
-                  </td>
-                </tr>
-
-                {/* AI OCR取得項目: 見積日 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#5a9bd5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'middle',
-                  }}>
-                    見積日
-                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <input
-                      type="date"
-                      value={formData.quotationDate}
-                      onChange={(e) => updateFormData({ quotationDate: e.target.value })}
-                      disabled={!isStepEnabled(1)}
-                      style={{ ...inputStyle, width: '150px' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* AI OCR取得項目: 登録日 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#5a9bd5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'middle',
-                  }}>
-                    登録日
-                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <input
-                      type="date"
-                      value={formData.registrationDate}
-                      onChange={(e) => updateFormData({ registrationDate: e.target.value })}
-                      disabled={!isStepEnabled(1)}
-                      style={{ ...inputStyle, width: '150px' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* AI OCR取得項目: 事業者登録番号 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#5a9bd5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'middle',
-                  }}>
-                    事業者登録番号
-                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <input
-                      type="text"
-                      placeholder="例: T1234567890123"
-                      value={formData.businessRegistrationNo}
-                      onChange={(e) => updateFormData({ businessRegistrationNo: e.target.value })}
-                      disabled={!isStepEnabled(1)}
-                      style={{ ...inputStyle, width: '200px' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* AI OCR取得項目: 業者名 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#5a9bd5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'middle',
-                  }}>
-                    業者名
-                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <input
-                      type="text"
-                      placeholder="業者名を入力"
-                      value={formData.vendorName}
-                      onChange={(e) => updateFormData({ vendorName: e.target.value })}
-                      disabled={!isStepEnabled(1)}
-                      style={{ ...inputStyle, width: '300px' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* AI OCR取得項目: 担当者 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#5a9bd5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'middle',
-                  }}>
-                    担当者
-                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <input
-                      type="text"
-                      placeholder="担当者名を入力"
-                      value={formData.vendorPerson}
-                      onChange={(e) => updateFormData({ vendorPerson: e.target.value })}
-                      disabled={!isStepEnabled(1)}
-                      style={{ ...inputStyle, width: '200px' }}
-                    />
-                  </td>
-                </tr>
-
-                {/* AI OCR取得項目: 見積金額 */}
-                <tr>
-                  <td style={{
-                    padding: '10px 12px',
-                    background: '#5a9bd5',
-                    color: '#fff',
-                    fontWeight: 'bold',
-                    border: '1px solid #d1d5db',
-                    verticalAlign: 'middle',
-                  }}>
-                    見積金額
-                    <span style={{ fontSize: '10px', display: 'block', fontWeight: 'normal', opacity: 0.8 }}>※AI OCR</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <input
-                        type="text"
-                        placeholder="0"
-                        value={formData.totalAmount ? formData.totalAmount.toLocaleString() : ''}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/,/g, '');
-                          const num = parseInt(value, 10);
-                          updateFormData({ totalAmount: isNaN(num) ? 0 : num });
-                        }}
-                        disabled={!isStepEnabled(1)}
-                        style={{ ...inputStyle, width: '150px', textAlign: 'right' }}
-                      />
-                      <span>円（税別）</span>
-                    </div>
-                  </td>
-                </tr>
-
                 {/* 契約期間 */}
                 <tr>
                   <td style={{
@@ -929,35 +911,167 @@ function MaintenanceQuoteRegistrationContent() {
                     定期点検の有無・回数
                   </td>
                   <td style={{ padding: '10px 12px', border: '1px solid #d1d5db', background: '#fff' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '8px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {/* 定期点検の有無 */}
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                         <input
                           type="checkbox"
-                          checked={formData.inspectionCountPerYear > 0}
-                          onChange={(e) => updateFormData({ inspectionCountPerYear: e.target.checked ? 1 : 0 })}
+                          checked={formData.inspectionCountPerYear > 0 || contractGroupAssets.some(a => a.inspectionCountPerYear > 0)}
+                          onChange={(e) => {
+                            if (!e.target.checked) {
+                              updateFormData({ inspectionCountPerYear: 0 });
+                              setContractGroupAssets(prev => prev.map(a => ({ ...a, inspectionCountPerYear: 0 })));
+                            } else {
+                              updateFormData({ inspectionCountPerYear: 1 });
+                            }
+                          }}
                           disabled={!isStepEnabled(1)}
                         />
-                        あり
+                        <span style={{ fontWeight: 'bold' }}>定期点検あり</span>
                       </label>
-                      {formData.inspectionCountPerYear > 0 && (
-                        <>
-                          <span>年</span>
-                          <input
-                            type="number"
-                            min="1"
-                            max="12"
-                            value={formData.inspectionCountPerYear}
-                            onChange={(e) => updateFormData({ inspectionCountPerYear: parseInt(e.target.value, 10) || 0 })}
-                            disabled={!isStepEnabled(1)}
-                            style={{ ...inputStyle, width: '60px', textAlign: 'right' }}
-                          />
-                          <span>回</span>
-                        </>
-                      )}
                     </div>
-                    <div style={{ fontSize: '11px', color: COLORS.warning }}>
-                      ※複数資産で点検回数が異なる場合は明細から登録
-                    </div>
+
+                    {/* 点検回数設定エリア（点検ありの場合のみ表示） */}
+                    {(formData.inspectionCountPerYear > 0 || contractGroupAssets.some(a => a.inspectionCountPerYear > 0)) && (
+                      <div style={{
+                        padding: '16px',
+                        background: '#f8f9fa',
+                        borderRadius: '6px',
+                        border: `1px solid ${COLORS.borderLight}`,
+                      }}>
+                        <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '12px' }}>
+                          <strong>対象資産:</strong> {contractGroupAssets.length} 台
+                        </div>
+
+                        {/* 設定方式の選択（ラジオボタン） */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {/* 全資産共通 */}
+                          <label style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '10px',
+                            padding: '12px',
+                            background: formData.inspectionCountPerYear > 0 ? '#e3f2fd' : COLORS.white,
+                            border: `2px solid ${formData.inspectionCountPerYear > 0 ? COLORS.primary : COLORS.borderLight}`,
+                            borderRadius: '6px',
+                            cursor: isStepEnabled(1) ? 'pointer' : 'not-allowed',
+                          }}>
+                            <input
+                              type="radio"
+                              name="inspectionSettingMode"
+                              checked={formData.inspectionCountPerYear > 0}
+                              onChange={() => {
+                                updateFormData({ inspectionCountPerYear: 1 });
+                                // 資産側の個別設定をクリア
+                                setContractGroupAssets(prev => prev.map(a => ({ ...a, inspectionCountPerYear: 0 })));
+                              }}
+                              disabled={!isStepEnabled(1)}
+                              style={{ marginTop: '2px' }}
+                            />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '6px' }}>
+                                全資産共通
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '13px' }}>年</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="12"
+                                  value={formData.inspectionCountPerYear || 1}
+                                  onChange={(e) => updateFormData({ inspectionCountPerYear: parseInt(e.target.value, 10) || 1 })}
+                                  disabled={!isStepEnabled(1) || formData.inspectionCountPerYear === 0}
+                                  style={{
+                                    ...inputStyle,
+                                    width: '60px',
+                                    textAlign: 'right',
+                                    background: formData.inspectionCountPerYear > 0 ? COLORS.white : COLORS.disabledBg,
+                                  }}
+                                />
+                                <span style={{ fontSize: '13px' }}>回</span>
+                                <span style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                                  （合計 {(formData.inspectionCountPerYear || 1) * contractGroupAssets.length} 回/年）
+                                </span>
+                              </div>
+                            </div>
+                          </label>
+
+                          {/* 資産ごとに設定 */}
+                          <label style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '10px',
+                            padding: '12px',
+                            background: contractGroupAssets.some(a => a.inspectionCountPerYear > 0) && formData.inspectionCountPerYear === 0 ? '#e8f5e9' : COLORS.white,
+                            border: `2px solid ${contractGroupAssets.some(a => a.inspectionCountPerYear > 0) && formData.inspectionCountPerYear === 0 ? COLORS.success : COLORS.borderLight}`,
+                            borderRadius: '6px',
+                            cursor: isStepEnabled(1) ? 'pointer' : 'not-allowed',
+                          }}>
+                            <input
+                              type="radio"
+                              name="inspectionSettingMode"
+                              checked={contractGroupAssets.some(a => a.inspectionCountPerYear > 0) && formData.inspectionCountPerYear === 0}
+                              onChange={() => {
+                                updateFormData({ inspectionCountPerYear: 0 });
+                                // モーダルを開く
+                                setIsGroupDetailModalOpen(true);
+                              }}
+                              disabled={!isStepEnabled(1)}
+                              style={{ marginTop: '2px' }}
+                            />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <span style={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                  資産ごとに設定
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    updateFormData({ inspectionCountPerYear: 0 });
+                                    setIsGroupDetailModalOpen(true);
+                                  }}
+                                  disabled={!isStepEnabled(1)}
+                                  style={{
+                                    padding: '4px 12px',
+                                    background: COLORS.success,
+                                    color: COLORS.textOnColor,
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: isStepEnabled(1) ? 'pointer' : 'not-allowed',
+                                    fontSize: '11px',
+                                    fontWeight: 'bold',
+                                  }}
+                                >
+                                  設定画面を開く
+                                </button>
+                              </div>
+                              <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                                資産ごとに異なる点検回数を設定できます
+                              </div>
+
+                              {/* 個別設定のサマリー */}
+                              {contractGroupAssets.some(a => a.inspectionCountPerYear > 0) && formData.inspectionCountPerYear === 0 && (
+                                <div style={{
+                                  marginTop: '8px',
+                                  padding: '8px 10px',
+                                  background: COLORS.successLight,
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  color: '#2e7d32',
+                                }}>
+                                  <strong>設定済:</strong> 合計 {contractGroupAssets.reduce((sum, a) => sum + a.inspectionCountPerYear, 0)} 回/年
+                                  <span style={{ marginLeft: '8px', fontSize: '11px', color: COLORS.textMuted }}>
+                                    （{contractGroupAssets.map(a => `${a.qrLabel}: ${a.inspectionCountPerYear}回`).join('、')}）
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
 
@@ -1109,6 +1223,333 @@ function MaintenanceQuoteRegistrationContent() {
                 </tr>
               </tbody>
             </table>
+
+            {/* 見積登録セクション */}
+            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: `2px solid ${COLORS.borderLight}` }}>
+              <h4 style={{ fontSize: '14px', fontWeight: 'bold', color: '#3498db', marginBottom: '16px' }}>
+                見積書の登録
+              </h4>
+
+              {/* ガイドメッセージ */}
+              <div style={{
+                padding: '12px 16px',
+                background: '#e3f2fd',
+                borderRadius: '4px',
+                marginBottom: '16px',
+                fontSize: '13px',
+                color: '#1565c0',
+              }}>
+                保守契約の見積をフェーズごとに登録してください。保守登録用見積は必須です。
+              </div>
+
+              {/* 登録済み見積一覧 */}
+              {registeredQuotations.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    color: COLORS.textPrimary,
+                    marginBottom: '8px',
+                  }}>
+                    登録済み見積（{registeredQuotations.length}件）
+                  </div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr style={{ background: COLORS.surfaceAlt }}>
+                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>フェーズ</th>
+                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>業者名</th>
+                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
+                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>保存形式</th>
+                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {registeredQuotations.map((q) => (
+                          <tr key={q.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
+                            <td style={{ padding: '8px' }}>
+                              <span style={{
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                background: q.phase === '保守登録用見積' ? '#e3f2fd' : '#f3e5f5',
+                                color: q.phase === '保守登録用見積' ? '#1565c0' : '#7b1fa2',
+                              }}>
+                                {q.phase === '保守登録用見積' ? '保守登録用' : '参考'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '8px', fontSize: '12px' }}>{q.vendorName || '-'}</td>
+                            <td style={{ padding: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '14px' }}>📄</span>
+                                <span>{q.fileName}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '8px', fontSize: '11px', color: COLORS.textMuted }}>{q.saveFormat}</td>
+                            <td style={{ padding: '8px', textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleQuotationDelete(q.id)}
+                                disabled={!isStepEnabled(1)}
+                                style={{
+                                  padding: '2px 8px',
+                                  background: 'transparent',
+                                  color: COLORS.error,
+                                  border: `1px solid ${COLORS.error}`,
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                }}
+                              >
+                                削除
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 見積入力フォーム（テーブル形式） */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  color: COLORS.textPrimary,
+                  marginBottom: '8px',
+                }}>
+                  見積を追加
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #3498db' }}>
+                  <tbody>
+                    {/* 添付ファイル */}
+                    <tr>
+                      <th style={{
+                        background: '#3498db',
+                        color: 'white',
+                        padding: '10px 12px',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        textAlign: 'left',
+                        width: '120px',
+                        border: '1px solid #3498db',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        添付ファイル
+                      </th>
+                      <td style={{
+                        background: 'white',
+                        padding: '10px 12px',
+                        border: '1px solid #3498db',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <label style={{
+                            padding: '6px 16px',
+                            background: '#f5f5f5',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                            cursor: isStepEnabled(1) ? 'pointer' : 'not-allowed',
+                            fontSize: '13px',
+                            whiteSpace: 'nowrap',
+                            opacity: isStepEnabled(1) ? 1 : 0.6,
+                          }}>
+                            ファイルの選択
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={!isStepEnabled(1)}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  setSelectedQuotationFile(file.name);
+                                }
+                              }}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                          <span style={{ color: selectedQuotationFile ? COLORS.success : '#666', fontSize: '13px' }}>
+                            {selectedQuotationFile || 'ファイルが選択されていません'}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 業者名 */}
+                    <tr>
+                      <th style={{
+                        background: '#3498db',
+                        color: 'white',
+                        padding: '10px 12px',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        textAlign: 'left',
+                        width: '120px',
+                        border: '1px solid #3498db',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        業者名
+                      </th>
+                      <td style={{
+                        background: 'white',
+                        padding: '10px 12px',
+                        border: '1px solid #3498db',
+                      }}>
+                        <input
+                          type="text"
+                          value={formData.vendorName}
+                          onChange={(e) => updateFormData({ vendorName: e.target.value })}
+                          placeholder="業者名を入力"
+                          disabled={!isStepEnabled(1)}
+                          style={{
+                            ...inputStyle,
+                            width: '300px',
+                          }}
+                        />
+                      </td>
+                    </tr>
+
+                    {/* 見積フェーズ */}
+                    <tr>
+                      <th style={{
+                        background: '#3498db',
+                        color: 'white',
+                        padding: '10px 12px',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        textAlign: 'left',
+                        width: '120px',
+                        border: '1px solid #3498db',
+                        whiteSpace: 'nowrap',
+                        verticalAlign: 'top',
+                      }}>
+                        見積フェーズ
+                      </th>
+                      <td style={{
+                        background: 'white',
+                        padding: '10px 12px',
+                        border: '1px solid #3498db',
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="radio"
+                              name="quotationPhase"
+                              checked={formData.quotationPhase === '保守登録用見積'}
+                              onChange={() => updateFormData({ quotationPhase: '保守登録用見積' })}
+                              disabled={!isStepEnabled(1)}
+                            />
+                            保守登録用見積
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="radio"
+                              name="quotationPhase"
+                              checked={formData.quotationPhase === '参考見積'}
+                              onChange={() => updateFormData({ quotationPhase: '参考見積' })}
+                              disabled={!isStepEnabled(1)}
+                            />
+                            参考見積
+                          </label>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* 保存形式 */}
+                    <tr>
+                      <th style={{
+                        background: '#3498db',
+                        color: 'white',
+                        padding: '10px 12px',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        textAlign: 'left',
+                        width: '120px',
+                        border: '1px solid #3498db',
+                        whiteSpace: 'nowrap',
+                        verticalAlign: 'top',
+                      }}>
+                        保存形式
+                      </th>
+                      <td style={{
+                        background: 'white',
+                        padding: '10px 12px',
+                        border: '1px solid #3498db',
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="radio"
+                              name="saveFormat"
+                              checked={formData.saveFormat === '電子取引'}
+                              onChange={() => updateFormData({ saveFormat: '電子取引' })}
+                              disabled={!isStepEnabled(1)}
+                            />
+                            電子取引
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="radio"
+                              name="saveFormat"
+                              checked={formData.saveFormat === 'スキャナ保存'}
+                              onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })}
+                              disabled={!isStepEnabled(1)}
+                            />
+                            スキャナ保存
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input
+                              type="radio"
+                              name="saveFormat"
+                              checked={formData.saveFormat === '未指定'}
+                              onChange={() => updateFormData({ saveFormat: '未指定' })}
+                              disabled={!isStepEnabled(1)}
+                            />
+                            未指定
+                          </label>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* 登録ボタン */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                  <button
+                    className="maintenance-btn"
+                    onClick={() => {
+                      if (!selectedQuotationFile) return;
+                      const newQuotation: RegisteredQuotation = {
+                        id: Date.now(),
+                        phase: formData.quotationPhase,
+                        saveFormat: formData.saveFormat,
+                        fileName: selectedQuotationFile,
+                        registeredAt: new Date().toISOString(),
+                        vendorName: formData.vendorName,
+                      };
+                      setRegisteredQuotations(prev => [...prev, newQuotation]);
+                      setSelectedQuotationFile('');
+                      updateFormData({ vendorName: '' });
+                      setPreviewTab(1);
+                    }}
+                    disabled={!isStepEnabled(1) || isSubmitting || !selectedQuotationFile}
+                    style={{
+                      padding: '8px 20px',
+                      background: selectedQuotationFile ? COLORS.success : COLORS.disabled,
+                      color: COLORS.textOnColor,
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: selectedQuotationFile ? 'pointer' : 'not-allowed',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    + 見積を登録
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* 仮登録ボタン */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
@@ -1376,7 +1817,7 @@ function MaintenanceQuoteRegistrationContent() {
                       <tr style={{ background: '#5a9bd5', color: 'white' }}>
                         <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
                         <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>フェーズ</th>
-                        <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #ccc', width: '100px' }}>金額</th>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc', width: '150px' }}>業者名</th>
                         <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
                       </tr>
                     </thead>
@@ -1395,8 +1836,8 @@ function MaintenanceQuoteRegistrationContent() {
                               {q.phase === '保守登録用見積' ? '登録用' : '参考'}
                             </span>
                           </td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                            {q.totalAmount.toLocaleString()}円
+                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>
+                            {q.vendorName || '-'}
                           </td>
                           <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
                             <button
@@ -1488,30 +1929,12 @@ function MaintenanceQuoteRegistrationContent() {
                       <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].phase}</td>
                     </tr>
                     <tr>
+                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>業者名</td>
+                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].vendorName || '-'}</td>
+                    </tr>
+                    <tr>
                       <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>保存形式</td>
                       <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].saveFormat}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>見積日</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].quotationDate}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>業者名</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].vendorName}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>担当者</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].vendorPerson}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>事業者登録番号</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].businessRegistrationNo}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>見積金額</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc', fontWeight: 'bold', color: COLORS.primary }}>
-                        {registeredQuotations[previewQuotationIndex].totalAmount.toLocaleString()}円（税別）
-                      </td>
                     </tr>
                     <tr>
                       <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>登録日時</td>
@@ -1711,6 +2134,18 @@ function MaintenanceQuoteRegistrationContent() {
           ))}
         </div>
       </div>
+
+      {/* 契約グループ詳細モーダル（資産ごとに設定モード専用） */}
+      <ContractGroupDetailModal
+        isOpen={isGroupDetailModalOpen}
+        onClose={() => setIsGroupDetailModalOpen(false)}
+        groupName={formData.contractGroupName}
+        assets={contractGroupAssets}
+        onAssetsUpdate={(updatedAssets) => {
+          setContractGroupAssets(updatedAssets);
+          // 資産ごとに設定モードなので、formData.inspectionCountPerYear は 0 のまま維持
+        }}
+      />
     </div>
   );
 }
