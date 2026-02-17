@@ -3,7 +3,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Asset } from '@/lib/types';
 
 function AssetDetailContent() {
@@ -30,15 +29,6 @@ function AssetDetailContent() {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
-
-  const handleHomeClick = () => {
-    if (isEditMode) {
-      setShowHomeConfirm(true);
-    } else {
-      router.push('/main');
-    }
-  };
 
   // モックデータ
   useEffect(() => {
@@ -205,15 +195,9 @@ function AssetDetailContent() {
 
           <button
             style={{ padding: '8px 16px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-            onClick={handleHomeClick}
+            onClick={() => router.push(backConfig.href)}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#2c3e50'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = '#34495e'; }}
-          >
-            メイン画面に戻る
-          </button>
-          <button
-            style={{ padding: '8px 16px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-            onClick={() => router.push(backConfig.href)}
           >
             {backConfig.label}
           </button>
@@ -935,16 +919,6 @@ function AssetDetailContent() {
         </div>
       </div>
 
-      <ConfirmDialog
-        isOpen={showHomeConfirm}
-        onClose={() => setShowHomeConfirm(false)}
-        onConfirm={() => router.push('/main')}
-        title="メイン画面に戻る"
-        message="編集中の内容は破棄されます。メイン画面に戻りますか？"
-        confirmLabel="メイン画面に戻る"
-        cancelLabel="編集を続ける"
-        variant="warning"
-      />
     </div>
   );
 }

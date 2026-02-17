@@ -251,17 +251,17 @@ export function DisposalManagementTab() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
             <tr style={{ background: '#f8f9fa' }}>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請No</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請日</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>申請者</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部門</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置部署</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>設置室名</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>コメント</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>添付ファイル</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>廃棄業者</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>ステータス</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>操作</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請No</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請日</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>申請者</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>設置部門</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>設置部署</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>設置室名</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>コメント</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>添付ファイル</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>廃棄業者</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>ステータス</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -272,10 +272,10 @@ export function DisposalManagementTab() {
                 </td>
               </tr>
             ) : (
-              filteredApplications.map((app) => {
+              filteredApplications.map((app, index) => {
                 const statusColor = getStatusColor(app.status);
                 return (
-                  <tr key={app.id} style={{ background: 'white' }}>
+                  <tr key={app.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
                     <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationNo}</td>
                     <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicationDate}</td>
                     <td style={{ padding: '8px', border: '1px solid #ddd' }}>{app.applicant}</td>

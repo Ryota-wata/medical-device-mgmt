@@ -63,21 +63,21 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
 
       {/* テーブル */}
       <div style={{ overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
-            <tr style={{ background: '#4a6fa5', color: 'white' }}>
-              <th style={{ padding: '8px 6px', textAlign: 'center', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>登録区分</th>
-              <th style={{ padding: '8px 6px', textAlign: 'left', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>大分類</th>
-              <th style={{ padding: '8px 6px', textAlign: 'left', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>中分類</th>
-              <th style={{ padding: '8px 6px', textAlign: 'left', fontSize: '11px', fontWeight: 'bold' }}>個体管理品目</th>
-              <th style={{ padding: '8px 6px', textAlign: 'left', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>メーカー</th>
-              <th style={{ padding: '8px 6px', textAlign: 'left', width: '120px', fontSize: '11px', fontWeight: 'bold' }}>型式</th>
-              <th style={{ padding: '8px 6px', textAlign: 'center', width: '50px', fontSize: '11px', fontWeight: 'bold' }}>単位</th>
-              <th style={{ padding: '8px 6px', textAlign: 'right', width: '90px', fontSize: '11px', fontWeight: 'bold' }}>定価単価</th>
-              <th style={{ padding: '8px 6px', textAlign: 'right', width: '90px', fontSize: '11px', fontWeight: 'bold' }}>按分単価</th>
-              <th style={{ padding: '8px 6px', textAlign: 'right', width: '90px', fontSize: '11px', fontWeight: 'bold' }}>按分金額</th>
-              <th style={{ padding: '8px 6px', textAlign: 'center', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>SEQ_ID</th>
-              <th style={{ padding: '8px 6px', textAlign: 'center', width: '80px', fontSize: '11px', fontWeight: 'bold' }}>親と紐付け</th>
+            <tr style={{ background: '#f8f9fa' }}>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '60px', fontWeight: 600, whiteSpace: 'nowrap' }}>登録区分</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>大分類</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>中分類</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>個体管理品目</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>メーカー</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '120px', fontWeight: 600, whiteSpace: 'nowrap' }}>型式</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '50px', fontWeight: 600, whiteSpace: 'nowrap' }}>単位</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'right', width: '90px', fontWeight: 600, whiteSpace: 'nowrap' }}>定価単価</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'right', width: '90px', fontWeight: 600, whiteSpace: 'nowrap' }}>按分単価</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'right', width: '90px', fontWeight: 600, whiteSpace: 'nowrap' }}>按分金額</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '60px', fontWeight: 600, whiteSpace: 'nowrap' }}>SEQ_ID</th>
+              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '80px', fontWeight: 600, whiteSpace: 'nowrap' }}>親と紐付け</th>
             </tr>
           </thead>
           <tbody>
@@ -104,41 +104,41 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
               const isIndividualItem = item.itemType?.startsWith('C');
 
               return (
-                <tr key={item.id} style={{ borderBottom: '1px solid #ddd', background: rowBg }}>
-                  <td style={{ padding: '8px 6px', textAlign: 'center', background: categoryLabelBg, color: 'white', fontWeight: 'bold', fontSize: '12px' }}>
+                <tr key={item.id} style={{ background: rowBg }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', background: categoryLabelBg, color: 'white', fontWeight: 'bold' }}>
                     {item.itemType?.charAt(0) || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                     {item.largeClass || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                     {item.middleClass || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', fontWeight: isIndividualItem ? 'bold' : 'normal', fontSize: '12px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', fontWeight: isIndividualItem ? 'bold' : 'normal' }}>
                     {item.itemName || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                     {item.manufacturer || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                     {item.model || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                     {item.unit || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {formatCurrency(item.listPriceUnit)}
                   </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {formatCurrency(item.allocPriceUnit)}
                   </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', color: '#c62828' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 'bold', color: '#c62828', fontVariantNumeric: 'tabular-nums' }}>
                     {formatCurrency(item.allocListPriceTotal)}
                   </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px', fontWeight: isIndividualItem ? 'bold' : 'normal' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: isIndividualItem ? 'bold' : 'normal' }}>
                     {item.seqId || '-'}
                   </td>
-                  <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px' }}>
+                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>
                     {item.parentSeqId || '-'}
                   </td>
                 </tr>

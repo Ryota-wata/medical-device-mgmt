@@ -59,12 +59,12 @@ function RepairDetailsContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#f8f9fa' }}>
-                    <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>明細No</th>
-                    <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>依頼No</th>
-                    <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>修理内容</th>
-                    <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'left' }}>部品名</th>
-                    <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'right' }}>金額</th>
-                    <th style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center' }}>ステータス</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>明細No</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>依頼No</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>修理内容</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>部品名</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>金額</th>
+                    <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>ステータス</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -277,21 +277,20 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = () => {
   };
 
   const thStyle: React.CSSProperties = {
-    padding: '10px 12px',
+    padding: '10px 8px',
     textAlign: 'left',
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontWeight: 600,
     whiteSpace: 'nowrap',
-    borderBottom: '2px solid #dee2e6',
+    border: '1px solid #ddd',
     background: '#f8f9fa',
     position: 'sticky',
     top: 0
   };
 
   const tdStyle: React.CSSProperties = {
-    padding: '10px 12px',
+    padding: '8px',
     whiteSpace: 'nowrap',
-    borderBottom: '1px solid #dee2e6'
+    border: '1px solid #ddd'
   };
 
   return (
@@ -409,7 +408,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = () => {
 
       {/* テーブル（横スクロール対応） */}
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: '13px', minWidth: '1600px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '1600px' }}>
           <thead>
             <tr>
               <th style={thStyle}>申請年月日</th>
@@ -438,8 +437,8 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = () => {
                 </td>
               </tr>
             ) : (
-              filteredRequests.map((req) => (
-                <tr key={req.id} style={{ background: 'white' }}>
+              filteredRequests.map((req, index) => (
+                <tr key={req.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
                   <td style={tdStyle}>{req.requestDate}</td>
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{req.requestNo}</td>
                   <td style={tdStyle}>

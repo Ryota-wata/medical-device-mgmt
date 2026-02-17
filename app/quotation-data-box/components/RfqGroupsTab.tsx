@@ -30,32 +30,32 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
       {/* テーブル */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', tableLayout: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead>
-          <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>見積依頼No.</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>見積グループ名称</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>見積依頼先</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>担当</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>mail</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>連絡先(TEL)</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>依頼日</th>
-            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>ステータス</th>
-            <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>期限</th>
-            <th style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+          <tr style={{ background: '#f8f9fa' }}>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>見積依頼No.</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>見積グループ名称</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>見積依頼先</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>担当</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>mail</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>連絡先(TEL)</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>依頼日</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>ステータス</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>期限</th>
+            <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, whiteSpace: 'nowrap' }}>操作</th>
           </tr>
         </thead>
         <tbody>
-          {filteredRfqGroups.map((group) => (
-            <tr key={group.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-              <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: 600, whiteSpace: 'nowrap' }}>{group.rfqNo}</td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{group.groupName}</td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{group.vendorName || '-'}</td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{group.personInCharge || '-'}</td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{group.email || '-'}</td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{group.tel || '-'}</td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{group.createdDate}</td>
-              <td style={{ padding: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+          {filteredRfqGroups.map((group, index) => (
+            <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+              <td style={{ padding: '8px', border: '1px solid #ddd', fontFamily: 'monospace', fontWeight: 600, whiteSpace: 'nowrap' }}>{group.rfqNo}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{group.groupName}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{group.vendorName || '-'}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{group.personInCharge || '-'}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{group.email || '-'}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{group.tel || '-'}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>{group.createdDate}</td>
+              <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>
                 <span
                   style={{
                     padding: '4px 12px',
@@ -76,7 +76,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                   {group.status}
                 </span>
               </td>
-              <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+              <td style={{ padding: '8px', border: '1px solid #ddd', whiteSpace: 'nowrap' }}>
                 <input
                   type="date"
                   value={group.deadline || ''}
@@ -92,7 +92,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                   }}
                 />
               </td>
-              <td style={{ padding: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+              <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', whiteSpace: 'nowrap' }}>
                 {group.status === '見積依頼' && (
                   <button
                     onClick={() => {/* 見積依頼処理 */}}
