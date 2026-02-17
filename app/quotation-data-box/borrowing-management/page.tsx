@@ -11,6 +11,7 @@ export default function BorrowingManagementPage() {
         title="タスク管理"
         backHref="/main"
         backLabel="メイン画面に戻る"
+        hideMenu={true}
       />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px' }}>
