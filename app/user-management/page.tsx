@@ -7,6 +7,7 @@ import { useUserStore } from '@/lib/stores/userStore';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { User, UserRole } from '@/lib/types/user';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 // ロール表示名
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -23,15 +24,6 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
   medical_office: { bg: '#27ae60', text: 'white' },
   medical_clinical: { bg: '#e67e22', text: 'white' },
 };
-
-// 施設マスタ（モック）
-const FACILITY_MASTER = [
-  { id: 'F001', name: 'サンプル病院' },
-  { id: 'F002', name: '中央医療センター' },
-  { id: 'F003', name: '東京総合病院' },
-  { id: 'F004', name: '西部クリニック' },
-  { id: 'F005', name: '北部医療センター' },
-];
 
 export default function UserManagementPage() {
   const router = useRouter();
@@ -62,6 +54,14 @@ export default function UserManagementPage() {
   // ログインユーザーの所属施設
   const currentUserHospital = currentUser?.hospital;
 
+  // 施設マスタから施設名リストを生成
+  const facilityOptions = useMemo(() => {
+    return facilities.map(f => f.facilityName);
+  }, [facilities]);
+
+  // 施設検索用の一時state
+  const [facilitySearchQuery, setFacilitySearchQuery] = useState('');
+
   // サンプルデータを初期化
   useEffect(() => {
     if (users.length === 0) {
@@ -72,7 +72,7 @@ export default function UserManagementPage() {
           email: 'yamada@example.com',
           hospital: undefined,
           role: 'consultant',
-          accessibleFacilities: ['サンプル病院', '中央医療センター', '東京総合病院'],
+          accessibleFacilities: ['東京総合病院', '横浜医療センター', '大阪クリニック'],
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z'
         },
@@ -80,7 +80,7 @@ export default function UserManagementPage() {
           id: 'U002',
           username: '鈴木花子',
           email: 'suzuki@hospital.example.com',
-          hospital: '中央医療センター',
+          hospital: '横浜医療センター',
           role: 'sales',
           accessibleFacilities: [],
           createdAt: '2024-01-15T00:00:00Z',
@@ -90,9 +90,9 @@ export default function UserManagementPage() {
           id: 'U003',
           username: '田中一郎',
           email: 'tanaka@example.com',
-          hospital: 'サンプル病院',
+          hospital: '東京総合病院',
           role: 'medical_office',
-          accessibleFacilities: ['中央医療センター'],
+          accessibleFacilities: ['横浜医療センター'],
           createdAt: '2024-02-01T00:00:00Z',
           updatedAt: '2024-02-01T00:00:00Z'
         },
@@ -110,7 +110,7 @@ export default function UserManagementPage() {
           id: 'U005',
           username: '高橋健二',
           email: 'takahashi@example.com',
-          hospital: 'サンプル病院',
+          hospital: '東京総合病院',
           role: 'medical_office',
           accessibleFacilities: [],
           createdAt: '2024-03-01T00:00:00Z',
@@ -120,9 +120,9 @@ export default function UserManagementPage() {
           id: 'U006',
           username: '渡辺真理',
           email: 'watanabe@hospital.example.com',
-          hospital: '中央医療センター',
+          hospital: '横浜医療センター',
           role: 'medical_office',
-          accessibleFacilities: ['サンプル病院'],
+          accessibleFacilities: ['東京総合病院'],
           createdAt: '2024-03-15T00:00:00Z',
           updatedAt: '2024-03-15T00:00:00Z'
         }
@@ -226,15 +226,23 @@ export default function UserManagementPage() {
     setSelectedUser(null);
   };
 
-  const toggleFacility = (facilityName: string) => {
+  const addFacility = (facilityName: string) => {
+    if (!facilityName) return;
     setFormData(prev => {
       const current = prev.accessibleFacilities || [];
       if (current.includes(facilityName)) {
-        return { ...prev, accessibleFacilities: current.filter(f => f !== facilityName) };
-      } else {
-        return { ...prev, accessibleFacilities: [...current, facilityName] };
+        return prev; // 既に追加済み
       }
+      return { ...prev, accessibleFacilities: [...current, facilityName] };
     });
+    setFacilitySearchQuery(''); // 選択後にクリア
+  };
+
+  const removeFacility = (facilityName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      accessibleFacilities: (prev.accessibleFacilities || []).filter(f => f !== facilityName)
+    }));
   };
 
   // アクセス可能施設の表示用テキスト
@@ -263,9 +271,6 @@ export default function UserManagementPage() {
     const isConsultantRole = formData.role === 'consultant';
     const isMedicalOfficeRole = formData.role === 'medical_office';
     const isMedicalClinicalRole = formData.role === 'medical_clinical';
-
-    // 事務担当者の場合、自施設以外の施設を選択肢として表示
-    const otherFacilitiesForOffice = FACILITY_MASTER.filter(f => f.name !== formData.hospital);
 
     return (
       <div
@@ -385,31 +390,22 @@ export default function UserManagementPage() {
             {!isConsultantRole && (
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
-                  所属施設
+                  所属施設 <span style={{ color: '#e74c3c' }}>*</span>
                 </label>
-                <select
+                <SearchableSelect
                   value={formData.hospital}
-                  onChange={(e) => {
+                  onChange={(value) => {
                     setFormData({
                       ...formData,
-                      hospital: e.target.value,
+                      hospital: value,
                       // 所属施設変更時、アクセス可能施設から自施設を除外
-                      accessibleFacilities: formData.accessibleFacilities.filter(f => f !== e.target.value),
+                      accessibleFacilities: formData.accessibleFacilities.filter(f => f !== value),
                     });
                   }}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                  }}
-                >
-                  <option value="">選択してください</option>
-                  {FACILITY_MASTER.map(f => (
-                    <option key={f.id} value={f.name}>{f.name}</option>
-                  ))}
-                </select>
+                  options={facilityOptions}
+                  placeholder="施設名を検索..."
+                  isMobile={isMobile}
+                />
               </div>
             )}
 
@@ -450,37 +446,60 @@ export default function UserManagementPage() {
               {isConsultantRole && (
                 <div>
                   <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-                    担当施設を選択してください（複数選択可）
+                    担当施設を検索して追加してください（複数選択可）
                   </p>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                    gap: '8px',
-                  }}>
-                    {FACILITY_MASTER.map(facility => (
-                      <label
-                        key={facility.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '10px 12px',
-                          background: formData.accessibleFacilities.includes(facility.name) ? '#e8f4fd' : 'white',
-                          border: `1px solid ${formData.accessibleFacilities.includes(facility.name) ? '#3498db' : '#ddd'}`,
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.accessibleFacilities.includes(facility.name)}
-                          onChange={() => toggleFacility(facility.name)}
-                        />
-                        {facility.name}
-                      </label>
-                    ))}
-                  </div>
+                  <SearchableSelect
+                    value={facilitySearchQuery}
+                    onChange={setFacilitySearchQuery}
+                    onSelect={(value) => addFacility(value)}
+                    options={facilityOptions.filter(f => !formData.accessibleFacilities.includes(f))}
+                    placeholder="施設名を検索して追加..."
+                    isMobile={isMobile}
+                  />
+                  {/* 選択済み施設タグ */}
+                  {formData.accessibleFacilities.length > 0 && (
+                    <div style={{
+                      marginTop: '12px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}>
+                      {formData.accessibleFacilities.map((facility, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 10px',
+                            background: '#e8f4fd',
+                            border: '1px solid #3498db',
+                            borderRadius: '16px',
+                            fontSize: '13px',
+                            color: '#2c3e50',
+                          }}
+                        >
+                          <span>{facility}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeFacility(facility)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              fontSize: '14px',
+                              color: '#e74c3c',
+                              lineHeight: 1,
+                            }}
+                            aria-label={`${facility}を削除`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <p style={{ fontSize: '12px', color: '#27ae60', marginTop: '12px', fontWeight: 600 }}>
                     選択中: {formData.accessibleFacilities.length} 施設
                   </p>
@@ -503,38 +522,61 @@ export default function UserManagementPage() {
                   {formData.hospital ? (
                     <>
                       <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
-                        他施設の閲覧権限を追加（任意）:
+                        他施設の閲覧権限を検索して追加（任意）:
                       </p>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                        gap: '8px',
-                      }}>
-                        {otherFacilitiesForOffice.map(facility => (
-                          <label
-                            key={facility.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '10px 12px',
-                              background: formData.accessibleFacilities.includes(facility.name) ? '#fff3e0' : 'white',
-                              border: `1px solid ${formData.accessibleFacilities.includes(facility.name) ? '#e67e22' : '#ddd'}`,
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '13px',
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.accessibleFacilities.includes(facility.name)}
-                              onChange={() => toggleFacility(facility.name)}
-                            />
-                            {facility.name}
-                            <span style={{ fontSize: '10px', color: '#e67e22', marginLeft: 'auto' }}>閲覧のみ</span>
-                          </label>
-                        ))}
-                      </div>
+                      <SearchableSelect
+                        value={facilitySearchQuery}
+                        onChange={setFacilitySearchQuery}
+                        onSelect={(value) => addFacility(value)}
+                        options={facilityOptions.filter(f => f !== formData.hospital && !formData.accessibleFacilities.includes(f))}
+                        placeholder="施設名を検索して追加..."
+                        isMobile={isMobile}
+                      />
+                      {/* 選択済み施設タグ */}
+                      {formData.accessibleFacilities.length > 0 && (
+                        <div style={{
+                          marginTop: '12px',
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                        }}>
+                          {formData.accessibleFacilities.map((facility, index) => (
+                            <div
+                              key={index}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 10px',
+                                background: '#fff3e0',
+                                border: '1px solid #e67e22',
+                                borderRadius: '16px',
+                                fontSize: '13px',
+                                color: '#2c3e50',
+                              }}
+                            >
+                              <span>{facility}</span>
+                              <span style={{ fontSize: '10px', color: '#e67e22' }}>閲覧のみ</span>
+                              <button
+                                type="button"
+                                onClick={() => removeFacility(facility)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: '0',
+                                  fontSize: '14px',
+                                  color: '#e74c3c',
+                                  lineHeight: 1,
+                                }}
+                                aria-label={`${facility}を削除`}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <p style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '8px' }}>
                         ※ 他施設は閲覧のみ（編集不可）
                       </p>
@@ -773,22 +815,13 @@ export default function UserManagementPage() {
             <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
               所属施設
             </label>
-            <select
+            <SearchableSelect
               value={filterHospital}
-              onChange={(e) => setFilterHospital(e.target.value)}
-              style={{
-                width: '100%',
-                padding: isMobile ? '8px' : '10px',
-                border: '1px solid #d0d0d0',
-                borderRadius: '6px',
-                fontSize: isMobile ? '13px' : '14px',
-              }}
-            >
-              <option value="">すべて</option>
-              {FACILITY_MASTER.map(f => (
-                <option key={f.id} value={f.name}>{f.name}</option>
-              ))}
-            </select>
+              onChange={setFilterHospital}
+              options={['', ...facilityOptions]}
+              placeholder="施設名で検索..."
+              isMobile={isMobile}
+            />
           </div>
         )}
         <div>
