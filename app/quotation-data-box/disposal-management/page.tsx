@@ -3,10 +3,10 @@
 import React, { useState, Suspense } from 'react';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { Header } from '@/components/layouts/Header';
-import { TransferDisposalTab } from '../components/TransferDisposalTab';
+import { DisposalManagementTab } from '../components/DisposalManagementTab';
 import { SubTabNavigation } from '../components/SubTabNavigation';
 
-function TransferDisposalContent() {
+function DisposalManagementContent() {
   const { editLists } = useEditListStore();
   const [selectedEditListId, setSelectedEditListId] = useState<string>('');
 
@@ -53,10 +53,10 @@ function TransferDisposalContent() {
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
-          <SubTabNavigation activeTab="transferDisposal" />
+          <SubTabNavigation activeTab="disposalManagement" />
 
           <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
-            <TransferDisposalTab />
+            <DisposalManagementTab />
           </div>
         </div>
       </div>
@@ -64,10 +64,10 @@ function TransferDisposalContent() {
   );
 }
 
-export default function TransferDisposalPage() {
+export default function DisposalManagementPage() {
   return (
     <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>読み込み中...</div>}>
-      <TransferDisposalContent />
+      <DisposalManagementContent />
     </Suspense>
   );
 }
