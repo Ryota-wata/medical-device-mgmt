@@ -534,31 +534,8 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
     }
   };
 
-  // 見積依頼（メール送信）
+  // 見積依頼
   const handleQuoteRequest = (contract: MaintenanceContract) => {
-    const email = contract.contractorEmail || '';
-    if (!email) {
-      alert('業者のメールアドレスが登録されていません');
-      return;
-    }
-
-    const subject = encodeURIComponent(`【見積依頼】${contract.item} 保守契約について`);
-    const body = encodeURIComponent(
-      `${contract.contractorName || '担当者'} 様\n\n` +
-      `お世話になっております。\n\n` +
-      `下記機器の保守契約につきまして、見積をお願いいたします。\n\n` +
-      `■対象機器\n` +
-      `・品目: ${contract.item}\n` +
-      `・メーカー: ${contract.maker}\n` +
-      `・管理部署: ${contract.managementDepartment}\n` +
-      `・台数: ${contract.assets.length}台\n` +
-      (contract.warrantyEndDate ? `・保証期間終了日: ${contract.warrantyEndDate}\n` : '') +
-      `\n` +
-      `お忙しいところ恐れ入りますが、ご対応のほどよろしくお願いいたします。`
-    );
-
-    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
-
     // ステータスを見積依頼済に更新
     setContracts((prev) =>
       prev.map((c) =>
@@ -568,7 +545,7 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
       )
     );
 
-    alert('メーラーを起動しました。送信後、ステータスが「見積依頼済」に更新されました。');
+    alert('見積依頼を実行しました。ステータスが「見積依頼済」に更新されました。');
   };
 
   // 見積登録
