@@ -136,6 +136,43 @@ const MOCK_LENDING_DEVICES: LendingDevice[] = [
   },
 ];
 
+// 貸出履歴レコード型
+interface LendingHistoryRecord {
+  id: string;
+  deviceId: number;
+  qrLabel: string;
+  itemName: string;
+  maker: string;
+  model: string;
+  lendingDate: string;
+  returnDate: string | null;
+  lendingDepartment: string;
+  staffName: string;
+  status: '貸出中' | '返却済';
+}
+
+// モックデータ: 貸出履歴
+const MOCK_LENDING_HISTORY: LendingHistoryRecord[] = [
+  { id: 'H001', deviceId: 1, qrLabel: 'QR-001', itemName: '人工呼吸器', maker: 'フクダ電子', model: 'FV-500', lendingDate: '2026-01-15', returnDate: null, lendingDepartment: 'ICU', staffName: '山田太郎', status: '貸出中' },
+  { id: 'H002', deviceId: 1, qrLabel: 'QR-001', itemName: '人工呼吸器', maker: 'フクダ電子', model: 'FV-500', lendingDate: '2025-12-01', returnDate: '2025-12-20', lendingDepartment: '3階東病棟', staffName: '佐藤花子', status: '返却済' },
+  { id: 'H003', deviceId: 1, qrLabel: 'QR-001', itemName: '人工呼吸器', maker: 'フクダ電子', model: 'FV-500', lendingDate: '2025-10-15', returnDate: '2025-11-10', lendingDepartment: 'ICU', staffName: '田中一郎', status: '返却済' },
+  { id: 'H004', deviceId: 2, qrLabel: 'QR-002', itemName: '輸液ポンプ', maker: 'テルモ', model: 'TE-171', lendingDate: '2026-01-20', returnDate: null, lendingDepartment: '3階東病棟', staffName: '鈴木次郎', status: '貸出中' },
+  { id: 'H005', deviceId: 2, qrLabel: 'QR-002', itemName: '輸液ポンプ', maker: 'テルモ', model: 'TE-171', lendingDate: '2025-12-10', returnDate: '2026-01-05', lendingDepartment: '2階西病棟', staffName: '高橋三郎', status: '返却済' },
+  { id: 'H006', deviceId: 3, qrLabel: 'QR-003', itemName: 'シリンジポンプ', maker: 'テルモ', model: 'TE-SS700', lendingDate: '2025-11-01', returnDate: '2025-11-20', lendingDepartment: 'ICU', staffName: '伊藤四郎', status: '返却済' },
+  { id: 'H007', deviceId: 5, qrLabel: 'QR-005', itemName: '心電計', maker: 'フクダ電子', model: 'FX-8000', lendingDate: '2026-01-10', returnDate: null, lendingDepartment: '2階西病棟', staffName: '渡辺五郎', status: '貸出中' },
+  { id: 'H008', deviceId: 5, qrLabel: 'QR-005', itemName: '心電計', maker: 'フクダ電子', model: 'FX-8000', lendingDate: '2025-12-15', returnDate: '2026-01-05', lendingDepartment: '外来', staffName: '中村六郎', status: '返却済' },
+  { id: 'H009', deviceId: 3, qrLabel: 'QR-003', itemName: 'シリンジポンプ', maker: 'テルモ', model: 'TE-SS700', lendingDate: '2026-01-25', returnDate: '2026-02-05', lendingDepartment: '手術室', staffName: '小林七郎', status: '返却済' },
+  { id: 'H010', deviceId: 4, qrLabel: 'QR-004', itemName: '除細動器', maker: '日本光電', model: 'TEC-5600', lendingDate: '2025-11-20', returnDate: '2025-12-10', lendingDepartment: '救急外来', staffName: '加藤八郎', status: '返却済' },
+];
+
+// エクスポートレポート種別
+type ExportReportType =
+  | 'device-history'      // ① 機器単体の貸出履歴
+  | 'monthly-summary'     // ② 月次貸出実績一覧
+  | 'utilization-rate'    // ③ 機器別稼働率表
+  | 'ward-summary'        // ④ 病棟別貸出台数集計
+  | 'overdue-list';       // ⑤ 遅延機器一覧
+
 // フィルター状態
 interface LendingFilter {
   category: string;
@@ -204,6 +241,24 @@ export const LendingManagementTab: React.FC = () => {
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [selectedDeviceForComment, setSelectedDeviceForComment] = useState<LendingDevice | null>(null);
   const [newComment, setNewComment] = useState<string>('');
+
+  // エクスポート関連
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportReportType, setExportReportType] = useState<ExportReportType | null>(null);
+  const [exportSelectedDevice, setExportSelectedDevice] = useState<string>('');
+  const [exportTargetMonth, setExportTargetMonth] = useState<string>(
+    new Date().toISOString().slice(0, 7) // YYYY-MM形式
+  );
+  const [exportStartDate, setExportStartDate] = useState<string>(
+    new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1).toISOString().split('T')[0]
+  );
+  const [exportEndDate, setExportEndDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+
+  // 貸出履歴データ
+  const [lendingHistory] = useState<LendingHistoryRecord[]>(MOCK_LENDING_HISTORY);
 
   // マスタからフィルターオプションを生成（assetStoreのassetsを使用）
   const buildingOptions = useMemo(() => {
@@ -507,6 +562,194 @@ export const LendingManagementTab: React.FC = () => {
     setSelectedDeviceForComment(null);
   };
 
+  // エクスポートモーダルを開く
+  const openExportModal = (reportType: ExportReportType) => {
+    setExportReportType(reportType);
+    setShowExportDropdown(false);
+    setShowExportModal(true);
+    setExportSelectedDevice('');
+  };
+
+  // CSV生成・ダウンロード
+  const downloadCsv = (filename: string, headers: string[], rows: string[][]) => {
+    const bom = '\uFEFF'; // BOM for Excel
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // ① 機器単体の貸出履歴エクスポート
+  const exportDeviceHistory = () => {
+    if (!exportSelectedDevice) return;
+
+    const deviceHistory = lendingHistory.filter(h => h.qrLabel === exportSelectedDevice);
+    const headers = ['貸出日', '返却日', '貸出先部署', '貸出期間(日)', '担当者', 'ステータス'];
+    const rows = deviceHistory.map(h => {
+      const lendingDays = h.returnDate
+        ? Math.ceil((new Date(h.returnDate).getTime() - new Date(h.lendingDate).getTime()) / (1000 * 60 * 60 * 24))
+        : '-';
+      return [h.lendingDate, h.returnDate || '-', h.lendingDepartment, String(lendingDays), h.staffName, h.status];
+    });
+
+    downloadCsv(`機器貸出履歴_${exportSelectedDevice}_${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+    setShowExportModal(false);
+  };
+
+  // ② 月次貸出実績一覧エクスポート
+  const exportMonthlySummary = () => {
+    const [year, month] = exportTargetMonth.split('-').map(Number);
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0);
+
+    const monthlyHistory = lendingHistory.filter(h => {
+      const lendingDate = new Date(h.lendingDate);
+      return lendingDate >= startOfMonth && lendingDate <= endOfMonth;
+    });
+
+    const headers = ['QRラベル', '機器名', 'メーカー', '型式', '貸出日', '返却日', '貸出先', 'ステータス'];
+    const rows = monthlyHistory.map(h => [
+      h.qrLabel, h.itemName, h.maker, h.model, h.lendingDate, h.returnDate || '-', h.lendingDepartment, h.status
+    ]);
+
+    downloadCsv(`月次貸出実績_${exportTargetMonth}.csv`, headers, rows);
+    setShowExportModal(false);
+  };
+
+  // ③ 機器別稼働率表エクスポート
+  const exportUtilizationRate = () => {
+    const start = new Date(exportStartDate);
+    const end = new Date(exportEndDate);
+    const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    // 機器ごとに集計
+    const deviceStats: Record<string, { itemName: string; maker: string; model: string; activeDays: number; lendingCount: number }> = {};
+
+    devices.forEach(d => {
+      deviceStats[d.qrLabel] = { itemName: d.itemName, maker: d.maker, model: d.model, activeDays: 0, lendingCount: 0 };
+    });
+
+    lendingHistory.forEach(h => {
+      if (!deviceStats[h.qrLabel]) return;
+
+      const lendStart = new Date(h.lendingDate);
+      const lendEnd = h.returnDate ? new Date(h.returnDate) : end;
+
+      // 期間内の稼働日数を計算
+      const effectiveStart = lendStart < start ? start : lendStart;
+      const effectiveEnd = lendEnd > end ? end : lendEnd;
+
+      if (effectiveStart <= effectiveEnd) {
+        const days = Math.ceil((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        deviceStats[h.qrLabel].activeDays += days;
+        deviceStats[h.qrLabel].lendingCount += 1;
+      }
+    });
+
+    const headers = ['QRラベル', '機器名', 'メーカー', '型式', '稼働日数', '稼働率(%)', '貸出回数'];
+    const rows = Object.entries(deviceStats).map(([qrLabel, stats]) => {
+      const utilizationRate = totalDays > 0 ? ((stats.activeDays / totalDays) * 100).toFixed(1) : '0';
+      return [qrLabel, stats.itemName, stats.maker, stats.model, String(stats.activeDays), utilizationRate, String(stats.lendingCount)];
+    });
+
+    downloadCsv(`機器別稼働率_${exportStartDate}_${exportEndDate}.csv`, headers, rows);
+    setShowExportModal(false);
+  };
+
+  // ④ 病棟別貸出台数集計エクスポート
+  const exportWardSummary = () => {
+    const start = new Date(exportStartDate);
+    const end = new Date(exportEndDate);
+
+    // 部署ごとに集計
+    const wardStats: Record<string, { lendingCount: number; returnCount: number; currentLending: number; totalDays: number }> = {};
+
+    lendingHistory.forEach(h => {
+      const lendDate = new Date(h.lendingDate);
+      if (lendDate < start || lendDate > end) return;
+
+      if (!wardStats[h.lendingDepartment]) {
+        wardStats[h.lendingDepartment] = { lendingCount: 0, returnCount: 0, currentLending: 0, totalDays: 0 };
+      }
+
+      wardStats[h.lendingDepartment].lendingCount += 1;
+
+      if (h.returnDate) {
+        wardStats[h.lendingDepartment].returnCount += 1;
+        const days = Math.ceil((new Date(h.returnDate).getTime() - lendDate.getTime()) / (1000 * 60 * 60 * 24));
+        wardStats[h.lendingDepartment].totalDays += days;
+      } else {
+        wardStats[h.lendingDepartment].currentLending += 1;
+      }
+    });
+
+    const headers = ['部署名', '貸出台数', '返却台数', '現在貸出中', '平均貸出期間(日)'];
+    const rows = Object.entries(wardStats).map(([dept, stats]) => {
+      const avgDays = stats.returnCount > 0 ? (stats.totalDays / stats.returnCount).toFixed(1) : '-';
+      return [dept, String(stats.lendingCount), String(stats.returnCount), String(stats.currentLending), avgDays];
+    });
+
+    downloadCsv(`病棟別貸出集計_${exportStartDate}_${exportEndDate}.csv`, headers, rows);
+    setShowExportModal(false);
+  };
+
+  // ⑤ 遅延機器一覧エクスポート
+  const exportOverdueList = () => {
+    const overdueDevices = devices.filter(d => d.overduedays > 0);
+
+    const headers = ['QRラベル', 'ME管理No.', '機器名', 'メーカー', '型式', '貸出日', '返却予定日', '超過日数', '貸出先'];
+    const rows = overdueDevices.map(d => [
+      d.qrLabel, d.meManagementNo, d.itemName, d.maker, d.model,
+      d.lendingDate || '-', d.expectedReturnDate || '-', String(d.overduedays), d.installedDepartment
+    ]);
+
+    downloadCsv(`遅延機器一覧_${new Date().toISOString().split('T')[0]}.csv`, headers, rows);
+    setShowExportModal(false);
+  };
+
+  // エクスポート実行
+  const handleExport = () => {
+    switch (exportReportType) {
+      case 'device-history':
+        exportDeviceHistory();
+        break;
+      case 'monthly-summary':
+        exportMonthlySummary();
+        break;
+      case 'utilization-rate':
+        exportUtilizationRate();
+        break;
+      case 'ward-summary':
+        exportWardSummary();
+        break;
+      case 'overdue-list':
+        exportOverdueList();
+        break;
+    }
+  };
+
+  // エクスポートレポートのタイトル取得
+  const getExportReportTitle = (type: ExportReportType | null) => {
+    switch (type) {
+      case 'device-history': return '機器単体の貸出履歴';
+      case 'monthly-summary': return '月次貸出実績一覧';
+      case 'utilization-rate': return '機器別稼働率表';
+      case 'ward-summary': return '病棟別貸出台数集計';
+      case 'overdue-list': return '遅延機器一覧';
+      default: return '';
+    }
+  };
+
   // フィルター変更時に依存する下位フィルターをリセット
   const handleBuildingChange = (value: string) => {
     setAssetSearchFilter(prev => ({
@@ -554,7 +797,7 @@ export const LendingManagementTab: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* ヘッダー: 追加ボタン */}
+      {/* ヘッダー: 追加ボタン・エクスポートボタン */}
       <div style={{
         background: '#f8f9fa',
         padding: '12px 16px',
@@ -566,25 +809,159 @@ export const LendingManagementTab: React.FC = () => {
         <div style={{ fontSize: '14px', color: '#333' }}>
           登録済み機器: <strong>{devices.length}件</strong>
         </div>
-        <button
-          onClick={openSearchModal}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-          }}
-        >
-          <span style={{ fontSize: '16px' }}>+</span>
-          貸出機器を追加
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {/* エクスポートドロップダウン */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span style={{ fontSize: '14px' }}>📊</span>
+              エクスポート
+              <span style={{ fontSize: '10px', marginLeft: '4px' }}>▼</span>
+            </button>
+            {showExportDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '4px',
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                minWidth: '220px',
+                zIndex: 100,
+              }}>
+                <button
+                  onClick={() => openExportModal('device-history')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: '#333',
+                    borderBottom: '1px solid #eee',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  ① 機器単体の貸出履歴
+                </button>
+                <button
+                  onClick={() => openExportModal('monthly-summary')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: '#333',
+                    borderBottom: '1px solid #eee',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  ② 月次貸出実績一覧
+                </button>
+                <button
+                  onClick={() => openExportModal('utilization-rate')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: '#333',
+                    borderBottom: '1px solid #eee',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  ③ 機器別稼働率表
+                </button>
+                <button
+                  onClick={() => openExportModal('ward-summary')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: '#333',
+                    borderBottom: '1px solid #eee',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  ④ 病棟別貸出台数集計
+                </button>
+                <button
+                  onClick={() => openExportModal('overdue-list')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '12px 16px',
+                    textAlign: 'left',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    color: '#333',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  ⑤ 遅延機器一覧
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={openSearchModal}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#27ae60',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>+</span>
+            貸出機器を追加
+          </button>
+        </div>
       </div>
 
       {/* フィルター */}
@@ -1648,6 +2025,290 @@ export const LendingManagementTab: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* エクスポートモーダル */}
+      {showExportModal && exportReportType && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '500px',
+            padding: '24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+              {getExportReportTitle(exportReportType)}
+            </h3>
+
+            {/* ① 機器単体の貸出履歴 */}
+            {exportReportType === 'device-history' && (
+              <div>
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#e3f2fd',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#1565c0',
+                }}>
+                  選択した機器の貸出履歴をCSVでエクスポートします（トレーサビリティ用）
+                </div>
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                    対象機器を選択 <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <select
+                    value={exportSelectedDevice}
+                    onChange={(e) => setExportSelectedDevice(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <option value="">機器を選択...</option>
+                    {devices.map(d => (
+                      <option key={d.qrLabel} value={d.qrLabel}>
+                        {d.qrLabel} - {d.itemName} ({d.maker} {d.model})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* ② 月次貸出実績一覧 */}
+            {exportReportType === 'monthly-summary' && (
+              <div>
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#e3f2fd',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#1565c0',
+                }}>
+                  指定月の全貸出実績をCSVでエクスポートします
+                </div>
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                    対象年月 <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <input
+                    type="month"
+                    value={exportTargetMonth}
+                    onChange={(e) => setExportTargetMonth(e.target.value)}
+                    style={{
+                      width: '200px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ③ 機器別稼働率表 */}
+            {exportReportType === 'utilization-rate' && (
+              <div>
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#e3f2fd',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#1565c0',
+                }}>
+                  指定期間における各機器の稼働率を算出してCSVでエクスポートします
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                    集計期間 <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <input
+                      type="date"
+                      value={exportStartDate}
+                      onChange={(e) => setExportStartDate(e.target.value)}
+                      style={{
+                        padding: '10px 12px',
+                        fontSize: '14px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                      }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#666' }}>〜</span>
+                    <input
+                      type="date"
+                      value={exportEndDate}
+                      onChange={(e) => setExportEndDate(e.target.value)}
+                      style={{
+                        padding: '10px 12px',
+                        fontSize: '14px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ④ 病棟別貸出台数集計 */}
+            {exportReportType === 'ward-summary' && (
+              <div>
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#e3f2fd',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#1565c0',
+                }}>
+                  指定期間における部署別の貸出台数・返却状況をCSVでエクスポートします
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>
+                    集計期間 <span style={{ color: '#e74c3c' }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <input
+                      type="date"
+                      value={exportStartDate}
+                      onChange={(e) => setExportStartDate(e.target.value)}
+                      style={{
+                        padding: '10px 12px',
+                        fontSize: '14px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                      }}
+                    />
+                    <span style={{ fontSize: '14px', color: '#666' }}>〜</span>
+                    <input
+                      type="date"
+                      value={exportEndDate}
+                      onChange={(e) => setExportEndDate(e.target.value)}
+                      style={{
+                        padding: '10px 12px',
+                        fontSize: '14px',
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ⑤ 遅延機器一覧 */}
+            {exportReportType === 'overdue-list' && (
+              <div>
+                <div style={{
+                  padding: '12px',
+                  backgroundColor: '#fff3e0',
+                  borderRadius: '6px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  color: '#e65100',
+                }}>
+                  現在返却期限を超過している機器の一覧をCSVでエクスポートします
+                </div>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '6px',
+                  textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#e74c3c', fontVariantNumeric: 'tabular-nums' }}>
+                    {devices.filter(d => d.overduedays > 0).length}
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                    件の遅延機器
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ボタン */}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+              <button
+                onClick={() => {
+                  setShowExportModal(false);
+                  setExportReportType(null);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#fff',
+                  color: '#666',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={
+                  (exportReportType === 'device-history' && !exportSelectedDevice) ||
+                  (exportReportType === 'overdue-list' && devices.filter(d => d.overduedays > 0).length === 0)
+                }
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor:
+                    (exportReportType === 'device-history' && !exportSelectedDevice) ||
+                    (exportReportType === 'overdue-list' && devices.filter(d => d.overduedays > 0).length === 0)
+                      ? '#ccc'
+                      : '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor:
+                    (exportReportType === 'device-history' && !exportSelectedDevice) ||
+                    (exportReportType === 'overdue-list' && devices.filter(d => d.overduedays > 0).length === 0)
+                      ? 'not-allowed'
+                      : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                CSVをエクスポート
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ドロップダウン外クリックで閉じる */}
+      {showExportDropdown && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+          }}
+          onClick={() => setShowExportDropdown(false)}
+        />
       )}
     </div>
   );
