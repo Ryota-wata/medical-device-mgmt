@@ -13,6 +13,8 @@ export interface User {
   hospital?: string;
   department?: string;
   section?: string;
+  /** コンサル: 担当施設 / 事務担当者: 閲覧可能な他施設 */
+  accessibleFacilities?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
