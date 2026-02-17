@@ -37,7 +37,7 @@ function InspectionResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
-  const { updateTask, deleteTask } = useInspectionStore();
+  const { updateTask, deleteTask, getTaskById, getMenuById } = useInspectionStore();
 
   const [resultData, setResultData] = useState<InspectionResultData | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -76,10 +76,37 @@ function InspectionResultContent() {
 
     // 定期点検の場合、結果に応じてタスクを処理
     if (resultData.source === 'periodic' && resultData.taskId) {
+      const task = getTaskById(resultData.taskId);
+
       switch (resultData.overallResult) {
         case '合格':
-          // 合格: タスクを削除
-          deleteTask(resultData.taskId);
+          // 合格: 点検周期に基づき次回点検予定日とステータスを更新（タスクは残る）
+          if (task) {
+            // 点検メニューから周期を取得（デフォルト1ヶ月）
+            const menu = task.periodicMenuIds.length > 0
+              ? getMenuById(task.periodicMenuIds[0])
+              : null;
+            const cycleMonths = menu?.cycleMonths || 1;
+
+            // 次回点検予定日を計算
+            const nextDate = new Date();
+            nextDate.setMonth(nextDate.getMonth() + cycleMonths);
+            const nextInspectionDate = nextDate.toISOString().split('T')[0];
+
+            // ステータスを計算
+            const diffDays = Math.ceil((nextDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+            let newStatus: '点検2ヶ月前' | '点検月' | '点検月超過' = '点検2ヶ月前';
+            if (diffDays < 0) newStatus = '点検月超過';
+            else if (diffDays <= 30) newStatus = '点検月';
+            else if (diffDays <= 60) newStatus = '点検2ヶ月前';
+
+            updateTask(resultData.taskId, {
+              lastInspectionDate: resultData.inspectionDate,
+              nextInspectionDate: nextInspectionDate,
+              status: newStatus,
+              completedCount: task.completedCount + 1,
+            });
+          }
           break;
         case '再点検':
           // 再点検: ステータスを「再点検」に更新（タスクは残る）
