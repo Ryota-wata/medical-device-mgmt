@@ -48,6 +48,7 @@ export function PurchaseApplicationModal({
 
   // 要望機器
   const [desiredEquipments, setDesiredEquipments] = useState<DesiredEquipment[]>([]);
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
 
   // 使用用途及び件数
   const [usagePurpose, setUsagePurpose] = useState('');
@@ -77,18 +78,21 @@ export function PurchaseApplicationModal({
 
       if (event.data?.type === 'ASSET_SELECTED' && event.data?.assets) {
         const receivedAssets = event.data.assets;
-        const newAssets: DesiredEquipment[] = receivedAssets.map((asset: {
-          item?: string;
-          maker?: string;
-          model?: string;
-        }) => ({
-          item: asset.item || '',
-          maker: asset.maker || '',
-          model: asset.model || '',
-          quantity: 1,
-          unit: '台',
-        }));
-        setDesiredEquipments(prev => [...prev, ...newAssets]);
+        if (receivedAssets.length > 0) {
+          const asset = receivedAssets[0];
+          const targetIndex = sessionStorage.getItem('editingEquipmentIndex');
+
+          if (targetIndex !== null) {
+            const index = parseInt(targetIndex, 10);
+            setDesiredEquipments(prev => prev.map((e, i) =>
+              i === index
+                ? { ...e, item: asset.item || '', maker: asset.maker || '', model: asset.model || '' }
+                : e
+            ));
+            sessionStorage.removeItem('editingEquipmentIndex');
+            setEditingRowIndex(null);
+          }
+        }
       }
     };
 
@@ -98,7 +102,7 @@ export function PurchaseApplicationModal({
 
   if (!isOpen) return null;
 
-  // 要望機器の手動追加
+  // 要望機器の追加
   const handleAddEquipment = () => {
     setDesiredEquipments(prev => [...prev, { item: '', maker: '', model: '', quantity: 1, unit: '台' }]);
   };
@@ -113,8 +117,11 @@ export function PurchaseApplicationModal({
     setDesiredEquipments(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
   };
 
-  // 資産マスタを別ウィンドウで開く
-  const handleOpenAssetMaster = () => {
+  // 資産マスタを別ウィンドウで開く（行指定）
+  const handleOpenAssetMaster = (index: number) => {
+    sessionStorage.setItem('editingEquipmentIndex', String(index));
+    setEditingRowIndex(index);
+
     const width = 1200;
     const height = 800;
     const left = (window.screen.width - width) / 2;
@@ -469,36 +476,20 @@ export function PurchaseApplicationModal({
           <div style={styles.section}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={styles.sectionTitle}>要望機器</div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={handleAddEquipment}
-                  style={{
-                    padding: '6px 16px',
-                    background: 'white',
-                    color: '#4a6741',
-                    border: '1px solid #4a6741',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                  }}
-                >
-                  + 手動で追加
-                </button>
-                <button
-                  onClick={handleOpenAssetMaster}
-                  style={{
-                    padding: '6px 16px',
-                    background: '#4a6741',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                  }}
-                >
-                  資産マスタから選択する
-                </button>
-              </div>
+              <button
+                onClick={handleAddEquipment}
+                style={{
+                  padding: '6px 16px',
+                  background: '#4a6741',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                }}
+              >
+                + 資産を追加
+              </button>
             </div>
 
             <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
@@ -510,14 +501,15 @@ export function PurchaseApplicationModal({
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>型式</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '70px' }}>数量</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '70px' }}>単位</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '130px' }}>選択</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
                   </tr>
                 </thead>
                 <tbody>
                   {desiredEquipments.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                        要望機器を追加してください
+                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                        「+ 資産を追加」ボタンで要望機器を追加してください
                       </td>
                     </tr>
                   ) : (
@@ -608,6 +600,23 @@ export function PurchaseApplicationModal({
                             <option value="式">式</option>
                             <option value="セット">セット</option>
                           </select>
+                        </td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleOpenAssetMaster(index)}
+                            style={{
+                              padding: '4px 8px',
+                              background: '#4a6741',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            資産マスタから選択
+                          </button>
                         </td>
                         <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
                           <button
