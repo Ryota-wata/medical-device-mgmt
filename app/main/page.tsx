@@ -6,8 +6,8 @@ import { useAuthStore, useMasterStore, useEditListStore, useApplicationStore } f
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { useRepairRequestStore } from '@/lib/stores/repairRequestStore';
 import { generateMockAssets } from '@/lib/data/generateMockAssets';
-import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -44,10 +44,13 @@ export default function MainPage() {
     return facilities.map(f => f.facilityName);
   }, [facilities]);
 
-  // メールアドレスからユーザー種別を判定
-  const userType = user ? getUserType(user.email) : 'ship';
-  const isShipUser = userType === 'ship';
-  const isHospitalUser = userType === 'hospital';
+  // 権限フック
+  const {
+    isShipUser,
+    isHospitalUser,
+    isMainButtonVisible,
+    canAccess,
+  } = usePermissions();
 
   // ユーザーの所属部署
   const userDepartment = user?.department || '未設定';
@@ -352,52 +355,54 @@ export default function MainPage() {
           </div>
 
           <div className="flex gap-2.5 flex-wrap">
-            {/* コンサルタント専用ボタン */}
+            {/* QR読取（SHIP側のみ） */}
             {isShipUser && (
-              <>
-                <button
-                  onClick={handleQRRead}
-                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-                >
-                  QR読取
-                </button>
-                <button
-                  onClick={handleEditListManagement}
-                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-                >
-                  編集リスト
-                </button>
-                <button
-                  onClick={handleQuotationManagement}
-                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-                >
-                  タスク管理
-                </button>
-                <button
-                  onClick={showMasterModal}
-                  className="px-4 py-2 bg-slate-600 text-white border-0 rounded cursor-pointer text-sm hover:bg-slate-700 transition-colors"
-                >
-                  マスタ管理
-                </button>
-              </>
+              <button
+                onClick={handleQRRead}
+                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
+              >
+                QR読取
+              </button>
             )}
 
-            {/* 病院ユーザー専用ボタン */}
-            {isHospitalUser && (
-              <>
-                <button
-                  onClick={handleQRIssueFromModal}
-                  className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-                >
-                  QRコード発行
-                </button>
-                <button
-                  onClick={() => setIsHospitalMasterModalOpen(true)}
-                  className="px-4 py-2 bg-slate-600 text-white border-0 rounded cursor-pointer text-sm hover:bg-slate-700 transition-colors"
-                >
-                  マスタ管理
-                </button>
-              </>
+            {/* 編集リスト（admin, consultant のみ） */}
+            {isMainButtonVisible('edit_list') && (
+              <button
+                onClick={handleEditListManagement}
+                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
+              >
+                編集リスト
+              </button>
+            )}
+
+            {/* タスク管理（購入管理へのアクセス権がある場合のみ） */}
+            {canAccess('quotation_data_box') && (
+              <button
+                onClick={handleQuotationManagement}
+                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
+              >
+                タスク管理
+              </button>
+            )}
+
+            {/* QRコード発行（病院側でQR発行権限がある場合） */}
+            {isHospitalUser && canAccess('qr_issue') && (
+              <button
+                onClick={handleQRIssueFromModal}
+                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
+              >
+                QRコード発行
+              </button>
+            )}
+
+            {/* マスタ管理（権限に応じてSHIP用/病院用を表示） */}
+            {isMainButtonVisible('master_management') && (
+              <button
+                onClick={isShipUser ? showMasterModal : () => setIsHospitalMasterModalOpen(true)}
+                className="px-4 py-2 bg-slate-600 text-white border-0 rounded cursor-pointer text-sm hover:bg-slate-700 transition-colors"
+              >
+                マスタ管理
+              </button>
             )}
 
             {/* ログアウトボタン（全ユーザー共通） */}
@@ -412,27 +417,47 @@ export default function MainPage() {
 
         {/* メニューセクション */}
         <div className={`bg-slate-50 ${isMobile ? 'px-2.5 py-4' : isTablet ? 'px-2.5 py-5' : 'px-5 py-8'}`}>
-          {isHospitalUser ? (
-            /* 病院ユーザー用メニュー - 横一列（デスクトップ）/ 2×2グリッド（モバイル） */
-            <div className={`max-w-[1400px] mx-auto justify-center ${
-              isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-nowrap gap-3'
-            }`}>
+          <div className={`max-w-[1400px] mx-auto justify-center ${
+            isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-wrap gap-3'
+          }`}>
+            {/* 資産リスト（全ロール） */}
+            {isMainButtonVisible('asset_list') && (
               <button
-                onClick={handleAssetListForHospital}
+                onClick={isHospitalUser ? handleAssetListForHospital : handleAssetBrowseAndApplication}
                 className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
                   isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                資産リスト（各種申請）
+                {isHospitalUser ? '資産リスト（各種申請）' : '資産閲覧・申請'}
               </button>
+            )}
+
+            {/* 保守・点検 */}
+            {isMainButtonVisible('maintenance_inspection') && (
               <button
-                onClick={handleLendingMenu}
+                onClick={handleMaintenanceInspection}
                 className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
                   isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                貸出
+                保守・点検
               </button>
+            )}
+
+            {/* 貸出管理/貸出 */}
+            {isMainButtonVisible('lending_management') && (
+              <button
+                onClick={isHospitalUser ? handleLendingMenu : handleLendingManagement}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                {isHospitalUser ? '貸出' : '貸出管理'}
+              </button>
+            )}
+
+            {/* 修理申請 */}
+            {isMainButtonVisible('repair_request') && (
               <button
                 onClick={handleRepairApplication}
                 className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
@@ -441,6 +466,10 @@ export default function MainPage() {
               >
                 修理申請
               </button>
+            )}
+
+            {/* 申請ステータス（病院側のみ） */}
+            {isHospitalUser && (
               <button
                 onClick={handleApplicationStatus}
                 className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
@@ -449,56 +478,20 @@ export default function MainPage() {
               >
                 申請ステータス
               </button>
-            </div>
-          ) : (
-            /* SHIPユーザー用メニュー */
-            <div
-              className={`flex max-w-[1400px] mx-auto justify-center ${
-                isMobile || isTablet ? 'flex-wrap' : 'flex-nowrap'
-              } ${isMobile ? 'gap-1.5' : isTablet ? 'gap-2' : 'gap-3'}`}
-            >
+            )}
+
+            {/* 現有資産調査 */}
+            {isMainButtonVisible('asset_survey') && (
               <button
-                onClick={handleAssetBrowseAndApplication}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
+                onClick={showListModal}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
                 }`}
               >
-                資産閲覧・申請
+                現有資産調査
               </button>
-              <button
-                onClick={handleMaintenanceInspection}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-                }`}
-              >
-                保守・点検
-              </button>
-              <button
-                onClick={handleLendingManagement}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-                }`}
-              >
-                貸出管理
-              </button>
-              <button
-                onClick={handleRepairApplication}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-                }`}
-              >
-                修理申請
-              </button>
-              <button
-                onClick={handleAllDataView}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap flex-none hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-2 text-xs min-h-11' : isTablet ? 'px-3 py-2.5 text-xs' : 'px-5 py-3.5 text-[15px]'
-                }`}
-              >
-                全データ閲覧（閲覧・出力）
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ダッシュボードボディ（次スコープ用） */}
@@ -639,86 +632,107 @@ export default function MainPage() {
             {/* モーダルコンテンツ */}
             <div className="p-6 overflow-y-auto">
               <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    router.push('/ship-asset-master');
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-sky-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-sky-500 hover:text-white"
-                >
-                  <span>🏥 SHIP資産マスタ</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* SHIP資産マスタ（admin, consultant閲覧可） */}
+                {canAccess('ship_asset_master') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/ship-asset-master');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-sky-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-sky-500 hover:text-white"
+                  >
+                    <span>🏥 SHIP資産マスタ</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    router.push('/ship-facility-master');
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
-                >
-                  <span>🏥 SHIP施設マスタ</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* SHIP施設マスタ（admin, consultant閲覧可） */}
+                {canAccess('ship_facility_master') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/ship-facility-master');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
+                  >
+                    <span>🏥 SHIP施設マスタ</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    router.push('/ship-department-master');
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
-                >
-                  <span>🏢 SHIP部署マスタ</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* SHIP部署マスタ（admin, consultant閲覧可） */}
+                {canAccess('ship_department_master') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/ship-department-master');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
+                  >
+                    <span>🏢 SHIP部署マスタ</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    if (isHospitalUser && user?.hospital) {
-                      router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
-                    } else {
-                      setIsHospitalSelectModalOpen(true);
-                    }
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-purple-600 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-600 hover:text-white"
-                >
-                  <span>🏢 個別施設マスタ</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* 個別施設マスタ（admin, consultant, office_admin, office_staff） */}
+                {canAccess('hospital_facility_master') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      if (isHospitalUser && user?.hospital) {
+                        router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
+                      } else {
+                        setIsHospitalSelectModalOpen(true);
+                      }
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-purple-600 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-600 hover:text-white"
+                  >
+                    <span>🏢 個別施設マスタ</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    router.push('/vendor-master');
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
-                >
-                  <span>🏭 業者マスタ</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* 業者マスタ（admin のみ） */}
+                {canAccess('ship_asset_master') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/vendor-master');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
+                  >
+                    <span>🏭 業者マスタ</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    router.push('/user-management');
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
-                >
-                  <span>👤 ユーザー管理</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* ユーザー管理（admin, office_admin） */}
+                {isMainButtonVisible('user_management') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/user-management');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
+                  >
+                    <span>👤 ユーザー管理</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
 
-                <button
-                  onClick={() => {
-                    closeMasterModal();
-                    showListModal();
-                  }}
-                  className="px-6 py-4 bg-white border-2 border-red-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-red-500 hover:text-white"
-                >
-                  <span>📋 個体管理リスト作成</span>
-                  <span className="text-xl">→</span>
-                </button>
+                {/* 個体管理リスト作成（admin, consultant のみ） */}
+                {canAccess('edit_list_create') && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      showListModal();
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-red-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-red-500 hover:text-white"
+                  >
+                    <span>📋 個体管理リスト作成</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
               </div>
 
               <p className="mt-5 text-sm text-slate-500 text-center text-pretty">
