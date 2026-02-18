@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore } from '@/lib/stores';
 import { MaintenanceContractRegistrationModal, MaintenanceContractFormData } from './MaintenanceContractRegistrationModal';
+import { ContractReviewModal, ContractReviewResult } from './ContractReviewModal';
 
 interface MaintenanceContractsTabProps {
   isMobile?: boolean;
@@ -309,6 +310,8 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
   // モーダル状態
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [selectedContractForDetail, setSelectedContractForDetail] = useState<MaintenanceContract | null>(null);
+  const [isContractReviewModalOpen, setIsContractReviewModalOpen] = useState(false);
+  const [contractForReview, setContractForReview] = useState<MaintenanceContract | null>(null);
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -555,50 +558,53 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
     router.push(`/maintenance-quote-registration?id=${contract.id}`);
   };
 
-  // 契約内容見直し登録
+  // 契約内容見直しモーダルを開く
   const handleContractReview = (contract: MaintenanceContract) => {
-    const confirmed = confirm(
-      `「${contract.contractGroupName || contract.item}」の契約内容を見直しますか？\n\n` +
-      `廃棄申請があるため、以下の対応が必要です:\n` +
-      `・対象機器の削除\n` +
-      `・契約金額の見直し\n` +
-      `・契約期間の変更`
-    );
+    setContractForReview(contract);
+    setIsContractReviewModalOpen(true);
+  };
 
-    if (!confirmed) return;
-
-    // 見直し後の契約金額を入力
-    const newAmount = prompt('見直し後の契約金額（税別）を入力してください:', contract.contractAmount.toString());
-    if (newAmount === null) return;
-
-    const amount = parseInt(newAmount, 10);
-    if (isNaN(amount) || amount < 0) {
-      alert('正しい金額を入力してください');
-      return;
-    }
-
-    // ステータスを登録済に更新（廃棄対応完了）
+  // 契約内容見直しの実行
+  const handleContractReviewSubmit = (contractId: string, result: ContractReviewResult) => {
     setContracts((prev) =>
-      prev.map((c) =>
-        c.id === contract.id
-          ? {
-              ...c,
-              status: '登録済' as ContractStatus,
-              contractAmount: amount,
-              comment: `${c.comment}（廃棄対応済）`,
-              // 契約期限を再計算
-              deadlineDays: c.contractEndDate
-                ? Math.ceil(
-                    (new Date(c.contractEndDate.replace(/\//g, '-')).getTime() - new Date().getTime()) /
-                      (1000 * 60 * 60 * 24)
-                  )
-                : null,
-            }
-          : c
-      )
+      prev.map((c) => {
+        if (c.id !== contractId) return c;
+
+        // 選択された資産を除外
+        const remainingAssets = c.assets.filter(
+          (asset) => !result.removedAssetQrLabels.includes(asset.qrLabel)
+        );
+
+        // 契約期限を再計算
+        const deadlineDays = c.contractEndDate
+          ? Math.ceil(
+              (new Date(c.contractEndDate.replace(/\//g, '-')).getTime() - new Date().getTime()) /
+                (1000 * 60 * 60 * 24)
+            )
+          : null;
+
+        // コメントに見直し理由を追記
+        const updatedComment = c.comment
+          ? `${c.comment}｜${result.reviewReason}`
+          : result.reviewReason;
+
+        return {
+          ...c,
+          status: '登録済' as ContractStatus,
+          contractAmount: result.newContractAmount,
+          comment: updatedComment,
+          deadlineDays,
+          assets: remainingAssets,
+        };
+      })
     );
 
-    alert('契約内容の見直しを完了しました。');
+    alert(
+      `契約内容の見直しを完了しました。\n\n` +
+      `除外資産: ${result.removedAssetQrLabels.length}件\n` +
+      `見直し後金額: ¥${result.newContractAmount.toLocaleString()}（税別）\n` +
+      `添付ファイル: ${result.uploadedFiles.length}件`
+    );
   };
 
   const styles: Record<string, React.CSSProperties> = {
@@ -996,6 +1002,17 @@ export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContrac
         isOpen={isRegistrationModalOpen}
         onClose={() => setIsRegistrationModalOpen(false)}
         onRegister={handleRegisterContract}
+      />
+
+      {/* 契約内容見直しモーダル */}
+      <ContractReviewModal
+        isOpen={isContractReviewModalOpen}
+        onClose={() => {
+          setIsContractReviewModalOpen(false);
+          setContractForReview(null);
+        }}
+        contract={contractForReview}
+        onSubmit={handleContractReviewSubmit}
       />
 
       {/* 契約グループ詳細モーダル */}
