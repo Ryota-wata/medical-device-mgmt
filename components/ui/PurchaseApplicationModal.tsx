@@ -67,6 +67,9 @@ export function PurchaseApplicationModal({
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
+  // 確認画面表示
+  const [isConfirmView, setIsConfirmView] = useState(false);
+
   // 部門・部署オプション
   const divisionOptions = [...new Set(departments.map(d => d.division))];
   const departmentOptions = [...new Set(departments.map(d => d.department))];
@@ -165,7 +168,7 @@ export function PurchaseApplicationModal({
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 申請内容確認
+  // 確認画面へ遷移
   const handleConfirm = () => {
     // バリデーション
     if (!installationDepartment || !installationSection) {
@@ -178,6 +181,18 @@ export function PurchaseApplicationModal({
       alert('要望機器を1つ以上入力してください');
       return;
     }
+
+    setIsConfirmView(true);
+  };
+
+  // 入力画面に戻る
+  const handleBackToEdit = () => {
+    setIsConfirmView(false);
+  };
+
+  // 申請送信
+  const handleSubmit = () => {
+    const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
 
     // 申請データを作成
     validEquipments.forEach((equipment) => {
@@ -215,6 +230,7 @@ export function PurchaseApplicationModal({
     });
 
     alert(`購入申請を送信しました\n申請件数: ${validEquipments.length}件`);
+    setIsConfirmView(false);
     onClose();
     if (onSuccess) {
       onSuccess();
@@ -402,12 +418,142 @@ export function PurchaseApplicationModal({
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
-          <span>新規購入申請</span>
+          <span>{isConfirmView ? '新規購入申請 - 内容確認' : '新規購入申請'}</span>
           <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
         </div>
 
         {/* ボディ */}
         <div style={styles.body}>
+        {isConfirmView ? (
+          /* 確認画面 */
+          <div>
+            <div style={{ background: '#e8f5e9', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            </div>
+
+            {/* 申請基本情報 */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>申請基本情報</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>管理部署</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{managementDepartment}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>申請者</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantName}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請日</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicationDate}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>優先順位</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{priority}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部門</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationDepartment || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationSection || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置室名</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationRoomName || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* 要望機器 */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>要望機器</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#f8f9fa' }}>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>数量</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>単位</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
+                    <tr key={index}>
+                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>{getHopeLabel(index)}</td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{equipment.quantity}</td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>{equipment.unit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 使用用途及び件数 */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>使用用途及び件数</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{usagePurpose || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>症例数</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{caseCount ? `${caseCount} ${caseCountUnit}` : '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* コメント */}
+            {comment && (
+              <div style={styles.section}>
+                <div style={styles.sectionTitle}>コメント（必要理由 他）</div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                  {comment}
+                </div>
+              </div>
+            )}
+
+            {/* 添付ファイル */}
+            {attachedFiles.length > 0 && (
+              <div style={styles.section}>
+                <div style={styles.sectionTitle}>添付ファイル</div>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {attachedFiles.map((file, index) => (
+                    <li key={index} style={{ padding: '4px 0' }}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* システム接続要望 */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>システム接続要望</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'connected' ? '接続中' : '接続無し'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionDestination || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          /* 入力画面 */
+          <>
           {/* 申請基本情報 */}
           <div style={styles.section}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -868,13 +1014,51 @@ export function PurchaseApplicationModal({
             </div>
           </div>
 
+          </>
+        )}
         </div>
 
         {/* フッター */}
         <div style={styles.footer}>
-          <button style={styles.confirmButton} onClick={handleConfirm}>
-            記載内容を確認する
-          </button>
+          {isConfirmView ? (
+            <>
+              <button
+                onClick={handleBackToEdit}
+                style={{
+                  padding: '12px 32px',
+                  background: 'white',
+                  color: '#4a6741',
+                  border: '1px solid #4a6741',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  marginRight: '16px',
+                }}
+              >
+                ← 修正する
+              </button>
+              <button
+                onClick={handleSubmit}
+                style={{
+                  padding: '12px 32px',
+                  background: '#4a6741',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                申請する
+              </button>
+            </>
+          ) : (
+            <button style={styles.confirmButton} onClick={handleConfirm}>
+              記載内容を確認する
+            </button>
+          )}
         </div>
       </div>
     </div>
