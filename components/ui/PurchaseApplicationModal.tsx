@@ -102,8 +102,10 @@ export function PurchaseApplicationModal({
 
   if (!isOpen) return null;
 
-  // 要望機器の追加
+  // 要望機器の追加（最大3つまで）
+  const MAX_EQUIPMENT = 3;
   const handleAddEquipment = () => {
+    if (desiredEquipments.length >= MAX_EQUIPMENT) return;
     setDesiredEquipments(prev => [...prev, { item: '', maker: '', model: '', quantity: 1, unit: '台' }]);
   };
 
@@ -125,8 +127,8 @@ export function PurchaseApplicationModal({
 
   // 希望順ラベル
   const getHopeLabel = (index: number): string => {
-    const labels = ['第一希望', '第二希望', '第三希望', '第四希望', '第五希望'];
-    return labels[index] || `第${index + 1}希望`;
+    const labels = ['第一希望', '第二希望', '第三希望'];
+    return labels[index] || '';
   };
 
   // 要望機器の更新
@@ -492,20 +494,21 @@ export function PurchaseApplicationModal({
           {/* 要望機器 */}
           <div style={styles.section}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={styles.sectionTitle}>要望機器</div>
+              <div style={styles.sectionTitle}>要望機器（最大3つ）</div>
               <button
                 onClick={handleAddEquipment}
+                disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: '#4a6741',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#4a6741',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: 'pointer',
+                  cursor: desiredEquipments.length >= MAX_EQUIPMENT ? 'not-allowed' : 'pointer',
                   fontSize: '12px',
                 }}
               >
-                + 資産を追加
+                + 資産を追加 ({desiredEquipments.length}/{MAX_EQUIPMENT})
               </button>
             </div>
 
