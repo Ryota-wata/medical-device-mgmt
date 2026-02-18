@@ -11,6 +11,7 @@ import { TransferApplicationModal } from '@/components/ui/TransferApplicationMod
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { BorrowingApplicationModal } from '@/components/ui/BorrowingApplicationModal';
 import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationModal';
+import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -38,6 +39,9 @@ export default function AssetSearchResultPage() {
 
   // 購入申請モーダル関連の状態
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+
+  // 更新申請モーダル関連の状態
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   // モックデータ（実際のデータは useAssetStore から取得）
   const [mockAssets] = useState<Asset[]>([
@@ -185,13 +189,17 @@ export default function AssetSearchResultPage() {
     setIsPurchaseModalOpen(true);
   };
 
-  // 更新申請ボタンのクリックハンドラー（未実装）
+  // 更新申請ボタンのクリックハンドラー
   const handleUpdateApplication = () => {
     if (selectedItems.size === 0) {
       alert('更新申請する資産を選択してください');
       return;
     }
-    alert('更新申請は別画面で実装予定です');
+    if (selectedItems.size > 1) {
+      alert('更新申請は1台ずつ行ってください。\n資産を1件だけ選択してください。');
+      return;
+    }
+    setIsUpdateModalOpen(true);
   };
 
   // 増設申請ボタンのクリックハンドラー（未実装）
@@ -634,6 +642,17 @@ export default function AssetSearchResultPage() {
         onClose={() => setIsBorrowingModalOpen(false)}
         onSuccess={() => {
           setSelectedItems(new Set());
+        }}
+      />
+
+      {/* 更新申請モーダル */}
+      <UpdateApplicationModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
+        onSuccess={() => {
+          setSelectedItems(new Set());
+          router.push('/quotation-data-box/purchase-management');
         }}
       />
     </div>

@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { useMasterStore, useAuthStore } from '@/lib/stores';
+import { useMasterStore, useAuthStore, useApplicationStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { useRouter } from 'next/navigation';
+import { Asset } from '@/lib/types';
 import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
 
 // 要望機器
@@ -16,21 +17,24 @@ interface DesiredEquipment {
   unit: string;
 }
 
-interface PurchaseApplicationModalProps {
+interface UpdateApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  assets: Asset[];  // 更新対象として選択された資産（1件のみ）
   onSuccess?: () => void;
 }
 
-export function PurchaseApplicationModal({
+export function UpdateApplicationModal({
   isOpen,
   onClose,
+  assets,
   onSuccess,
-}: PurchaseApplicationModalProps) {
+}: UpdateApplicationModalProps) {
   const router = useRouter();
   const { departments, facilities } = useMasterStore();
   const { user } = useAuthStore();
-  const { addApplication } = usePurchaseApplicationStore();
+  const { addApplication: addPurchaseApplication } = usePurchaseApplicationStore();
+  const { addApplication: addDisposalApplication } = useApplicationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 申請基本情報
@@ -47,7 +51,7 @@ export function PurchaseApplicationModal({
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
 
-  // 要望機器
+  // 要望機器（新規購入希望）
   const [desiredEquipments, setDesiredEquipments] = useState<DesiredEquipment[]>([]);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
 
@@ -68,12 +72,25 @@ export function PurchaseApplicationModal({
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
+  // 廃棄同意
+  const [disposalAgreed, setDisposalAgreed] = useState(false);
+
   // 確認画面表示
   const [isConfirmView, setIsConfirmView] = useState(false);
 
   // 部門・部署オプション
   const divisionOptions = [...new Set(departments.map(d => d.division))];
   const departmentOptions = [...new Set(departments.map(d => d.department))];
+
+  // 選択された資産から初期値を設定
+  useEffect(() => {
+    if (assets.length > 0 && isOpen) {
+      const primaryAsset = assets[0];
+      setInstallationDepartment(primaryAsset.department || '');
+      setInstallationSection(primaryAsset.section || '');
+      setInstallationRoomName(primaryAsset.roomName || '');
+    }
+  }, [assets, isOpen]);
 
   // 資産マスタからのメッセージを受信するハンドラー
   const handleAssetMessage = useCallback((event: MessageEvent) => {
@@ -110,7 +127,7 @@ export function PurchaseApplicationModal({
     }
   }, [isOpen, handleAssetMessage]);
 
-  if (!isOpen) return null;
+  if (!isOpen || assets.length === 0) return null;
 
   // 要望機器の追加（最大3つまで）
   const MAX_EQUIPMENT = 3;
@@ -185,7 +202,12 @@ export function PurchaseApplicationModal({
 
     const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
     if (validEquipments.length === 0) {
-      alert('要望機器を1つ以上入力してください');
+      alert('要望機器（新規購入希望）を1つ以上入力してください');
+      return;
+    }
+
+    if (!disposalAgreed) {
+      alert('更新対象機器の廃棄処理に同意してください');
       return;
     }
 
@@ -201,8 +223,8 @@ export function PurchaseApplicationModal({
   const handleSubmit = () => {
     const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
 
-    // 対象資産データを作成
-    const assets: PurchaseApplicationAsset[] = validEquipments.map(equipment => ({
+    // 1. 購入申請を作成
+    const purchaseAssets: PurchaseApplicationAsset[] = validEquipments.map(equipment => ({
       name: equipment.item,
       maker: equipment.maker,
       model: equipment.model,
@@ -210,13 +232,12 @@ export function PurchaseApplicationModal({
       unit: equipment.unit,
     }));
 
-    // 申請データを作成（CreatePurchaseApplicationInput形式）
-    const applicationInput: CreatePurchaseApplicationInput = {
-      applicationType: '新規申請',
+    const purchaseInput: CreatePurchaseApplicationInput = {
+      applicationType: '更新申請',
       applicantId: user?.id || 'user-unknown',
       applicantName: applicantName,
       applicantDepartment: managementDepartment,
-      assets: assets,
+      assets: purchaseAssets,
       facility: facilities.length > 0 ? facilities[0].facilityName : '〇〇病院',
       building: '',
       floor: '',
@@ -224,14 +245,44 @@ export function PurchaseApplicationModal({
       section: installationSection,
       roomName: installationRoomName,
       desiredDeliveryDate: `${desiredDeliveryYear}-${String(desiredDeliveryMonth).padStart(2, '0')}-01`,
-      applicationReason: `${usagePurpose}${caseCount ? ` (症例数: ${caseCount}${caseCountUnit})` : ''}${comment ? `\n${comment}` : ''}`,
+      applicationReason: `${usagePurpose}${caseCount ? ` (症例数: ${caseCount}${caseCountUnit})` : ''}${comment ? `\n${comment}` : ''}\n\n【更新対象機器】\n${assets.map(a => `- ${a.name} (${a.model})`).join('\n')}`,
       attachedFiles: attachedFiles.map(f => f.name),
     };
 
-    // 購入申請ストアに追加（購入管理画面の申請受付に反映される）
-    addApplication(applicationInput);
+    addPurchaseApplication(purchaseInput);
 
-    alert(`購入申請を送信しました\n要望機器: ${validEquipments.length}件`);
+    // 2. 廃棄申請を作成（更新対象機器ごと）
+    assets.forEach((asset) => {
+      addDisposalApplication({
+        applicationNo: `DISP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        applicationDate: applicationDate,
+        applicationType: '廃棄申請',
+        asset: {
+          name: asset.name,
+          model: asset.model,
+        },
+        vendor: asset.maker,
+        quantity: String(asset.quantity || 1),
+        unit: '台',
+        status: '承認待ち',
+        approvalProgress: {
+          current: 0,
+          total: 3,
+        },
+        facility: {
+          building: asset.building,
+          floor: asset.floor,
+          department: asset.department,
+          section: asset.section,
+        },
+        roomName: asset.roomName || '',
+        freeInput: `更新申請に伴う廃棄\n申請日: ${applicationDate}`,
+        executionYear: desiredDeliveryYear,
+        applicationReason: '更新申請に伴う廃棄処理',
+      });
+    });
+
+    alert(`更新申請を送信しました\n\n【購入申請】\n要望機器: ${validEquipments.length}件\n\n【廃棄申請】\n更新対象機器: ${assets.length}件`);
     setIsConfirmView(false);
     onClose();
     if (onSuccess) {
@@ -258,14 +309,14 @@ export function PurchaseApplicationModal({
       background: 'white',
       borderRadius: '8px',
       width: '95%',
-      maxWidth: '900px',
+      maxWidth: '950px',
       maxHeight: '90vh',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
     },
     header: {
-      background: '#4a6741',
+      background: '#e67e22',
       color: 'white',
       padding: '16px 24px',
       fontSize: '18px',
@@ -295,10 +346,10 @@ export function PurchaseApplicationModal({
     sectionTitle: {
       fontSize: '14px',
       fontWeight: 'bold',
-      color: '#4a6741',
+      color: '#e67e22',
       marginBottom: '16px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #4a6741',
+      borderBottom: '2px solid #e67e22',
     },
     note: {
       fontSize: '12px',
@@ -324,7 +375,7 @@ export function PurchaseApplicationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #4a6741',
+      border: '1px solid #e67e22',
       borderRadius: '4px',
       fontSize: '14px',
       boxSizing: 'border-box' as const,
@@ -339,7 +390,7 @@ export function PurchaseApplicationModal({
     },
     select: {
       padding: '8px 12px',
-      border: '1px solid #4a6741',
+      border: '1px solid #e67e22',
       borderRadius: '4px',
       fontSize: '14px',
       cursor: 'pointer',
@@ -360,41 +411,11 @@ export function PurchaseApplicationModal({
       width: '100%',
       minHeight: '100px',
       padding: '12px',
-      border: '1px solid #4a6741',
+      border: '1px solid #e67e22',
       borderRadius: '4px',
       fontSize: '14px',
       resize: 'vertical' as const,
       boxSizing: 'border-box' as const,
-    },
-    fileUploadSection: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      marginBottom: '8px',
-    },
-    attachButton: {
-      padding: '8px 16px',
-      background: '#4a6741',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '13px',
-      fontWeight: 'bold',
-    },
-    fileSelectButton: {
-      padding: '8px 16px',
-      background: 'white',
-      color: '#333',
-      border: '1px solid #ddd',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '13px',
-    },
-    fileHint: {
-      fontSize: '12px',
-      color: '#e74c3c',
-      marginTop: '8px',
     },
     footer: {
       padding: '16px 24px',
@@ -405,7 +426,7 @@ export function PurchaseApplicationModal({
     },
     confirmButton: {
       padding: '12px 48px',
-      background: '#4a6741',
+      background: '#e67e22',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -420,7 +441,7 @@ export function PurchaseApplicationModal({
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
-          <span>{isConfirmView ? '新規購入申請 - 内容確認' : '新規購入申請'}</span>
+          <span>{isConfirmView ? '更新購入申請 - 内容確認' : '更新購入申請'}</span>
           <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
         </div>
 
@@ -429,8 +450,8 @@ export function PurchaseApplicationModal({
         {isConfirmView ? (
           /* 確認画面 */
           <div>
-            <div style={{ background: '#e8f5e9', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
-              <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            <div style={{ background: '#fff3e0', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: '#e65100', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
             {/* 申請基本情報 */}
@@ -466,9 +487,28 @@ export function PurchaseApplicationModal({
               </table>
             </div>
 
-            {/* 要望機器 */}
+            {/* 更新対象機器（廃棄予定） */}
             <div style={styles.section}>
-              <div style={styles.sectionTitle}>要望機器</div>
+              <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>更新対象機器（廃棄予定）</div>
+              <div style={{ background: '#ffebee', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#c0392b', marginBottom: '12px' }}>
+                  {assets[0]?.name}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '13px' }}>
+                  <div><span style={{ color: '#666' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
+                  <div><span style={{ color: '#666' }}>型式:</span> {assets[0]?.model || '-'}</div>
+                  <div><span style={{ color: '#666' }}>設置場所:</span> {assets[0]?.roomName || '-'}</div>
+                  <div><span style={{ color: '#666' }}>管理番号:</span> {assets[0]?.managementNo || '-'}</div>
+                </div>
+              </div>
+              <div style={{ marginTop: '8px', padding: '8px 12px', background: '#ffebee', borderRadius: '4px', fontSize: '12px', color: '#c0392b', textAlign: 'center' }}>
+                この機器は廃棄申請されます
+              </div>
+            </div>
+
+            {/* 要望機器（新規購入希望） */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>要望機器（新規購入希望）</div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#f8f9fa' }}>
@@ -483,7 +523,7 @@ export function PurchaseApplicationModal({
                 <tbody>
                   {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>{getHopeLabel(index)}</td>
+                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>{getHopeLabel(index)}</td>
                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker || '-'}</td>
                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model || '-'}</td>
@@ -577,7 +617,7 @@ export function PurchaseApplicationModal({
               </div>
               <div></div>
               <div style={styles.formItem}>
-                <label style={styles.label}>設置部門</label>
+                <label style={styles.label}>設置部門 <span style={{ color: '#e74c3c' }}>*</span></label>
                 <SearchableSelect
                   value={installationDepartment}
                   onChange={setInstallationDepartment}
@@ -586,7 +626,7 @@ export function PurchaseApplicationModal({
                 />
               </div>
               <div style={styles.formItem}>
-                <label style={styles.label}>設置部署</label>
+                <label style={styles.label}>設置部署 <span style={{ color: '#e74c3c' }}>*</span></label>
                 <SearchableSelect
                   value={installationSection}
                   onChange={setInstallationSection}
@@ -639,16 +679,57 @@ export function PurchaseApplicationModal({
             </div>
           </div>
 
-          {/* 要望機器 */}
+          {/* 更新対象機器（廃棄予定） */}
+          <div style={styles.section}>
+            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>
+              更新対象機器（廃棄予定）
+            </div>
+            <div style={{ background: '#fff8f8', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#c0392b', marginBottom: '12px' }}>
+                {assets[0]?.name}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>管理番号</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.managementNo || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>設置場所</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.roomName || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>部門</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.department || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>部署</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.section || '-'}</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '12px', color: '#e65100' }}>
+              ※ この機器は更新に伴い廃棄申請されます。新規購入希望の機器は下記「要望機器」セクションで入力してください。
+            </div>
+          </div>
+
+          {/* 要望機器（新規購入希望） */}
           <div style={styles.section}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={styles.sectionTitle}>要望機器（最大3つ）</div>
+              <div style={styles.sectionTitle}>要望機器（新規購入希望・最大3つ）</div>
               <button
                 onClick={handleAddEquipment}
                 disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#4a6741',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#e67e22',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -685,7 +766,7 @@ export function PurchaseApplicationModal({
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>
                           {getHopeLabel(index)}
                         </td>
                         <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
@@ -815,7 +896,7 @@ export function PurchaseApplicationModal({
                             onClick={() => handleOpenAssetMaster(index)}
                             style={{
                               padding: '4px 8px',
-                              background: '#4a6741',
+                              background: '#e67e22',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -893,16 +974,38 @@ export function PurchaseApplicationModal({
               style={styles.textarea}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="申請理由やコメントを入力してください"
+              placeholder="更新理由やコメントを入力してください"
             />
           </div>
 
           {/* 添付ファイル */}
           <div style={styles.section}>
-            <div style={styles.fileUploadSection}>
-              <button style={styles.attachButton}>添付ファイル</button>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '8px',
+            }}>
+              <button style={{
+                padding: '8px 16px',
+                background: '#e67e22',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }}>添付ファイル</button>
               <button
-                style={styles.fileSelectButton}
+                style={{
+                  padding: '8px 16px',
+                  background: 'white',
+                  color: '#333',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
                 onClick={() => fileInputRef.current?.click()}
               >
                 ファイルの選択
@@ -928,7 +1031,7 @@ export function PurchaseApplicationModal({
                       alignItems: 'center',
                       gap: '6px',
                       padding: '4px 10px',
-                      background: '#e3f2fd',
+                      background: '#fff3e0',
                       borderRadius: '4px',
                       fontSize: '12px',
                     }}
@@ -944,8 +1047,8 @@ export function PurchaseApplicationModal({
                 ))}
               </div>
             )}
-            <div style={styles.fileHint}>
-              要望機種の見積書・修理不能証明など手持ちの書類を添付してください
+            <div style={{ fontSize: '12px', color: '#e74c3c', marginTop: '8px' }}>
+              見積書・修理不能証明など手持ちの書類を添付してください
             </div>
           </div>
 
@@ -1016,6 +1119,39 @@ export function PurchaseApplicationModal({
             </div>
           </div>
 
+          {/* 廃棄処理の確認 */}
+          <div style={styles.section}>
+            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>廃棄処理の確認</div>
+            <div style={{
+              padding: '16px',
+              background: '#ffebee',
+              borderRadius: '8px',
+              border: '1px solid #ef9a9a',
+            }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                cursor: 'pointer',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={disposalAgreed}
+                  onChange={(e) => setDisposalAgreed(e.target.checked)}
+                  style={{ marginTop: '4px', width: '20px', height: '20px' }}
+                />
+                <div>
+                  <div style={{ fontWeight: 'bold', color: '#c0392b', marginBottom: '8px' }}>
+                    更新対象機器の廃棄処理に同意します <span style={{ color: '#e74c3c' }}>*</span>
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
+                    上記「更新対象機器」に記載された「{assets[0]?.name}」は、本更新申請の承認後に廃棄申請として処理されます。
+                    廃棄処理が完了すると、当該資産は資産台帳から除外されます。
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
           </>
         )}
         </div>
@@ -1029,8 +1165,8 @@ export function PurchaseApplicationModal({
                 style={{
                   padding: '12px 32px',
                   background: 'white',
-                  color: '#4a6741',
-                  border: '1px solid #4a6741',
+                  color: '#e67e22',
+                  border: '1px solid #e67e22',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -1044,7 +1180,7 @@ export function PurchaseApplicationModal({
                 onClick={handleSubmit}
                 style={{
                   padding: '12px 32px',
-                  background: '#4a6741',
+                  background: '#e67e22',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
