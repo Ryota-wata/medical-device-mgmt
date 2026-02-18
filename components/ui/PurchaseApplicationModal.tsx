@@ -98,9 +98,19 @@ export function PurchaseApplicationModal({
 
   if (!isOpen) return null;
 
+  // 要望機器の手動追加
+  const handleAddEquipment = () => {
+    setDesiredEquipments(prev => [...prev, { item: '', maker: '', model: '', quantity: 1, unit: '台' }]);
+  };
+
   // 要望機器の削除
   const handleRemoveEquipment = (index: number) => {
     setDesiredEquipments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 要望機器の更新
+  const handleUpdateEquipment = (index: number, field: keyof DesiredEquipment, value: string | number) => {
+    setDesiredEquipments(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
   };
 
   // 資産マスタを別ウィンドウで開く
@@ -459,20 +469,36 @@ export function PurchaseApplicationModal({
           <div style={styles.section}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={styles.sectionTitle}>要望機器</div>
-              <button
-                onClick={handleOpenAssetMaster}
-                style={{
-                  padding: '6px 16px',
-                  background: '#4a6741',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                }}
-              >
-                資産マスタから選択する
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleAddEquipment}
+                  style={{
+                    padding: '6px 16px',
+                    background: 'white',
+                    color: '#4a6741',
+                    border: '1px solid #4a6741',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                  }}
+                >
+                  + 手動で追加
+                </button>
+                <button
+                  onClick={handleOpenAssetMaster}
+                  style={{
+                    padding: '6px 16px',
+                    background: '#4a6741',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                  }}
+                >
+                  資産マスタから選択する
+                </button>
+              </div>
             </div>
 
             <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
@@ -491,24 +517,65 @@ export function PurchaseApplicationModal({
                   {desiredEquipments.length === 0 ? (
                     <tr>
                       <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                        要望機器を資産マスタから選択してください
+                        要望機器を追加してください
                       </td>
                     </tr>
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
-                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker}</td>
-                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model}</td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={equipment.item}
+                            onChange={(e) => handleUpdateEquipment(index, 'item', e.target.value)}
+                            placeholder="品目"
+                            style={{
+                              width: '100%',
+                              padding: '4px 6px',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={equipment.maker}
+                            onChange={(e) => handleUpdateEquipment(index, 'maker', e.target.value)}
+                            placeholder="メーカー"
+                            style={{
+                              width: '100%',
+                              padding: '4px 6px',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={equipment.model}
+                            onChange={(e) => handleUpdateEquipment(index, 'model', e.target.value)}
+                            placeholder="型式"
+                            style={{
+                              width: '100%',
+                              padding: '4px 6px',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              boxSizing: 'border-box',
+                            }}
+                          />
+                        </td>
                         <td style={{ padding: '4px', border: '1px solid #ddd' }}>
                           <input
                             type="number"
                             value={equipment.quantity}
-                            onChange={(e) => {
-                              const newEquipments = [...desiredEquipments];
-                              newEquipments[index].quantity = Number(e.target.value) || 1;
-                              setDesiredEquipments(newEquipments);
-                            }}
+                            onChange={(e) => handleUpdateEquipment(index, 'quantity', Number(e.target.value) || 1)}
                             min={1}
                             style={{
                               width: '100%',
@@ -525,11 +592,7 @@ export function PurchaseApplicationModal({
                         <td style={{ padding: '4px', border: '1px solid #ddd' }}>
                           <select
                             value={equipment.unit}
-                            onChange={(e) => {
-                              const newEquipments = [...desiredEquipments];
-                              newEquipments[index].unit = e.target.value;
-                              setDesiredEquipments(newEquipments);
-                            }}
+                            onChange={(e) => handleUpdateEquipment(index, 'unit', e.target.value)}
                             style={{
                               width: '100%',
                               padding: '4px 6px',
@@ -558,7 +621,7 @@ export function PurchaseApplicationModal({
                               cursor: 'pointer',
                               fontSize: '11px',
                             }}
-                            aria-label={`${equipment.item}を削除`}
+                            aria-label={`${equipment.item || '機器'}を削除`}
                           >
                             削除
                           </button>
