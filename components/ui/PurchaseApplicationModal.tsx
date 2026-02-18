@@ -112,7 +112,7 @@ export function PurchaseApplicationModal({
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
     window.open(
-      `${basePath}/asset-master`,
+      `${basePath}/asset-master?mode=simple`,
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
