@@ -106,6 +106,33 @@ export function PurchaseApplicationModal({
     }
   }, [selectedAssets, applicationCategory]);
 
+  // 資産マスタからのメッセージを受信
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'ASSET_SELECTED') {
+        const assetMasters = event.data.assets as any[];
+        const targetEquipmentId = sessionStorage.getItem('targetEquipmentId');
+
+        if (assetMasters.length > 0 && targetEquipmentId) {
+          const assetMaster = assetMasters[0];
+          setDesiredEquipments(prev =>
+            prev.map(e =>
+              e.id === targetEquipmentId
+                ? { ...e, item: assetMaster.item, maker: assetMaster.maker, model: assetMaster.model, isFromMaster: true }
+                : e
+            )
+          );
+          sessionStorage.removeItem('targetEquipmentId');
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   if (!isOpen) return null;
 
   // 要望機器の追加
@@ -147,33 +174,6 @@ export function PurchaseApplicationModal({
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
   };
-
-  // 資産マスタからのメッセージを受信
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'ASSET_SELECTED') {
-        const assetMasters = event.data.assets as any[];
-        const targetEquipmentId = sessionStorage.getItem('targetEquipmentId');
-
-        if (assetMasters.length > 0 && targetEquipmentId) {
-          const assetMaster = assetMasters[0];
-          setDesiredEquipments(prev =>
-            prev.map(e =>
-              e.id === targetEquipmentId
-                ? { ...e, item: assetMaster.item, maker: assetMaster.maker, model: assetMaster.model, isFromMaster: true }
-                : e
-            )
-          );
-          sessionStorage.removeItem('targetEquipmentId');
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
 
   // ファイル選択
   const handleFileSelect = (files: FileList | null) => {
