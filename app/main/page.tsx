@@ -1027,6 +1027,21 @@ export default function MainPage() {
                   <span className="text-xl">🏢</span>
                   <span>個別施設マスタ</span>
                 </button>
+
+                {/* ユーザー管理（事務管理者のみ） */}
+                {isMainButtonVisible('user_management') && (
+                  <button
+                    onClick={() => {
+                      setIsHospitalMasterModalOpen(false);
+                      const hospitalName = user?.hospital || '';
+                      router.push(`/user-management?facility=${encodeURIComponent(hospitalName)}`);
+                    }}
+                    className="px-5 py-4 bg-indigo-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-600/40"
+                  >
+                    <span className="text-xl">👤</span>
+                    <span>ユーザー管理</span>
+                  </button>
+                )}
               </div>
 
               {/* 閉じるボタン */}

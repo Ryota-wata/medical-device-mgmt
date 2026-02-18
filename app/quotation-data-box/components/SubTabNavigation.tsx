@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePermissions } from '@/lib/hooks';
 
 export type SubTabType = 'remodelManagement' | 'purchaseManagement' | 'remodelQuotations' | 'purchaseQuotations' | 'borrowingManagement' | 'transferManagement' | 'disposalManagement' | 'repairRequests' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
 
@@ -18,16 +20,30 @@ export const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
   { key: 'lendingManagement', label: '貸出管理', path: '/quotation-data-box/lending-management' },
 ];
 
+// ロール別の非表示タブ
+const ROLE_HIDDEN_TABS: Record<string, SubTabType[]> = {
+  consultant: ['purchaseManagement', 'purchaseQuotations'],
+  office_admin: ['remodelManagement', 'remodelQuotations'],
+  office_staff: ['remodelManagement', 'remodelQuotations'],
+};
+
 interface SubTabNavigationProps {
   activeTab: SubTabType;
 }
 
 export function SubTabNavigation({ activeTab }: SubTabNavigationProps) {
   const router = useRouter();
+  const { role } = usePermissions();
+
+  // ロールに応じて表示するタブをフィルタリング
+  const visibleTabs = useMemo(() => {
+    const hiddenTabs = role ? ROLE_HIDDEN_TABS[role] || [] : [];
+    return SUB_TABS.filter(tab => !hiddenTabs.includes(tab.key));
+  }, [role]);
 
   return (
     <div style={{ background: 'white', borderBottom: '2px solid #dee2e6', display: 'flex', borderRadius: '4px 4px 0 0', flexWrap: 'wrap' }}>
-      {SUB_TABS.map((tab) => (
+      {visibleTabs.map((tab) => (
         <button
           key={tab.key}
           onClick={() => router.push(tab.path)}

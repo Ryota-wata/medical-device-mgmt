@@ -104,8 +104,8 @@ const PERMISSION_MATRIX: Record<FeatureId, Record<UserRole, PermissionLevel>> = 
   qr_issue: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
   qr_print: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
 
-  // 購入管理
-  quotation_data_box: { admin: 'F', consultant: 'X', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // タスク管理（quotation_data_box）
+  quotation_data_box: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
   quotation_processing: { admin: 'F', consultant: 'X', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
 
   // 修理
@@ -149,12 +149,12 @@ const PERMISSION_MATRIX: Record<FeatureId, Record<UserRole, PermissionLevel>> = 
 const MAIN_BUTTON_VISIBILITY: Record<MainButtonId, Record<UserRole, boolean>> = {
   asset_list: { admin: true, consultant: true, sales: true, office_admin: true, office_staff: true, clinical_staff: true },
   edit_list: { admin: true, consultant: true, sales: false, office_admin: false, office_staff: false, clinical_staff: false },
-  purchase_management: { admin: true, consultant: false, sales: true, office_admin: true, office_staff: true, clinical_staff: false },
+  purchase_management: { admin: true, consultant: true, sales: true, office_admin: true, office_staff: true, clinical_staff: false },
   maintenance_inspection: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  lending_management: { admin: true, consultant: false, sales: true, office_admin: true, office_staff: true, clinical_staff: true },
+  lending_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
   repair_request: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
   asset_survey: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  master_management: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: false },
+  master_management: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
   user_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
 };
 
