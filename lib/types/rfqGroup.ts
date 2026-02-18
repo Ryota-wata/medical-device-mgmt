@@ -7,7 +7,7 @@ export interface RfqGroup {
   rfqNo: string;
   groupName: string;
   createdDate: string;
-  applicationIds: number[];
+  applicationIds: string[];  // 申請ID または EditListItemのID
   status: RfqGroupStatus;
   vendorName?: string;
   personInCharge?: string;

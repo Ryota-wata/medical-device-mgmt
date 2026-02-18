@@ -147,14 +147,6 @@ export function ApplicationDetailModal({
                   </div>
                 </div>
               )}
-              {application.budgetCategory && (
-                <div>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '4px' }}>予算区分</div>
-                  <div style={{ fontSize: '14px', color: '#2c3e50' }}>
-                    {application.budgetCategory}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 

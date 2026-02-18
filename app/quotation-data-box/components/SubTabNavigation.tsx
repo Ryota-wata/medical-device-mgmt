@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 
-export type SubTabType = 'remodelManagement' | 'purchaseManagement' | 'remodelQuotations' | 'purchaseQuotations' | 'borrowingManagement' | 'transferManagement' | 'disposalManagement' | 'repairRequests' | 'repairDetails' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
+export type SubTabType = 'remodelManagement' | 'purchaseManagement' | 'remodelQuotations' | 'purchaseQuotations' | 'borrowingManagement' | 'transferManagement' | 'disposalManagement' | 'repairRequests' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
 
 export const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
   { key: 'remodelManagement', label: 'リモデル管理', path: '/quotation-data-box/remodel-management' },
@@ -13,7 +13,6 @@ export const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
   { key: 'transferManagement', label: '移動管理', path: '/quotation-data-box/transfer-management' },
   { key: 'disposalManagement', label: '廃棄管理', path: '/quotation-data-box/disposal-management' },
   { key: 'repairRequests', label: '修理管理', path: '/quotation-data-box/repair-requests' },
-  { key: 'repairDetails', label: '修理明細', path: '/quotation-data-box/repair-details' },
   { key: 'makerMaintenance', label: '保守契約管理', path: '/quotation-data-box/maintenance-contracts' },
   { key: 'inHouseInspection', label: '点検管理', path: '/quotation-data-box/inspection-requests' },
   { key: 'lendingManagement', label: '貸出管理', path: '/quotation-data-box/lending-management' },

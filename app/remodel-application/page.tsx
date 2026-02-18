@@ -39,6 +39,9 @@ function RemodelApplicationContent() {
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
+  // 編集リストモードかどうか（listIdが指定されていて編集リストが存在する場合）
+  const isEditListMode = Boolean(listId && editList);
+
   // 申請モーダル関連の状態
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [currentApplicationType, setCurrentApplicationType] = useState<ApplicationType | ''>('');
@@ -125,6 +128,61 @@ function RemodelApplicationContent() {
   // モックデータ（施設ごとにデータを生成）
   const [mockAssets, setMockAssets] = useState<Asset[]>(() => generateMockAssets(targetFacilities));
 
+  // 表示用データソース：編集リストモード時はbaseAssets + items、従来モードはmockAssets
+  const displayAssets: Asset[] = useMemo(() => {
+    if (isEditListMode && editList) {
+      // 原本資産にsourceType: 'base'を付与
+      const baseWithSource: Asset[] = (editList.baseAssets || []).map(asset => ({
+        ...asset,
+        sourceType: 'base' as const,
+      }));
+
+      // 追加された要望機器をAsset型に変換
+      const itemsAsAssets: Asset[] = (editList.items || []).map((item, index) => ({
+        qrCode: item.qrCode || '',
+        no: 90000 + index, // 追加レコード用の仮番号
+        facility: item.facility,
+        building: item.building,
+        floor: item.floor,
+        department: item.department,
+        section: item.section,
+        category: item.category || '',
+        largeClass: item.largeClass || '',
+        mediumClass: item.mediumClass || '',
+        item: item.item || '',
+        name: item.name,
+        maker: item.maker,
+        model: item.model,
+        quantity: item.quantity,
+        width: '',
+        depth: '',
+        height: '',
+        roomName: item.roomName,
+        // 申請関連フィールド
+        applicationCategory: item.applicationType,
+        applicationNo: item.applicationNo,
+        applicationReason: item.applicationReason,
+        desiredDeliveryDate: item.desiredDeliveryDate,
+        applicantName: item.applicantName,
+        applicantDepartment: item.applicantDepartment,
+        applicationDate: item.applicationDate,
+        priority: item.priority,
+        usagePurpose: item.usagePurpose,
+        caseCount: item.caseCount,
+        comment: item.comment,
+        attachedFiles: item.attachedFiles,
+        currentConnectionStatus: item.currentConnectionStatus,
+        currentConnectionDestination: item.currentConnectionDestination,
+        requestConnectionStatus: item.requestConnectionStatus,
+        requestConnectionDestination: item.requestConnectionDestination,
+        sourceType: 'added' as const,
+      }));
+
+      return [...baseWithSource, ...itemsAsAssets];
+    }
+    return mockAssets;
+  }, [isEditListMode, editList, mockAssets]);
+
   // 個別施設マスタの統計
   const facilityMasterStats = useMemo(() => {
     const facilityMasters = hospitalFacilities.filter(f => f.hospitalName === facility);
@@ -136,10 +194,10 @@ function RemodelApplicationContent() {
 
   // 資産ベースの進捗統計（原本リストの資産を基準に）
   const assetProgress = useMemo(() => {
-    const totalAssets = mockAssets.length;
+    const totalAssets = displayAssets.length;
 
     // 申請中の資産数（applicationsに該当資産がある場合）
-    const inProgressAssets = mockAssets.filter(asset => {
+    const inProgressAssets = displayAssets.filter(asset => {
       return applications.some(app =>
         app.asset.name === asset.name &&
         app.asset.model === asset.model
@@ -159,7 +217,7 @@ function RemodelApplicationContent() {
       inProgress: inProgressAssets,
       executed: executedAssets,
     };
-  }, [mockAssets, applications]);
+  }, [displayAssets, applications]);
 
   // 進捗率（申請中 + 執行済み / 全体）
   const progressRate = useMemo(() => {
@@ -184,7 +242,7 @@ function RemodelApplicationContent() {
     floorOptions,
     departmentOptions,
     sectionOptions,
-  } = useAssetFilter(mockAssets);
+  } = useAssetFilter(displayAssets);
 
   // カラム機能（ソート、フィルター、並び替え）
   const {
@@ -581,7 +639,7 @@ function RemodelApplicationContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
+    <div className="h-dvh flex flex-col overflow-hidden" style={{ background: 'white' }}>
       <Header
         title={editList ? `編集リスト: ${editList.name}` : `リモデル管理 - ${facility} ${department}`}
         resultCount={finalFilteredAssets.length}
@@ -707,6 +765,31 @@ function RemodelApplicationContent() {
         >
           原本を開く
         </button>
+
+        {/* 見積依頼グループ作成ボタン */}
+        <button
+          onClick={() => {
+            if (selectedItems.size === 0) {
+              alert('見積依頼グループに含める資産を選択してください');
+              return;
+            }
+            setIsRfqGroupModalOpen(true);
+          }}
+          disabled={selectedItems.size === 0}
+          style={{
+            padding: '8px 16px',
+            background: selectedItems.size === 0 ? '#bdc3c7' : '#3498db',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
+            fontSize: '14px',
+            fontWeight: 600,
+            transition: 'background 0.2s',
+          }}
+        >
+          見積依頼グループ作成（{selectedItems.size}件選択中）
+        </button>
         </div>
 
         {/* 合計表示 */}
@@ -814,12 +897,14 @@ function RemodelApplicationContent() {
       </div>
 
       {/* テーブル表示 */}
-      <div style={{ flex: 1, overflow: 'hidden', padding: '20px', position: 'relative' }}>
-        <div style={{ overflow: 'auto', width: '100%', height: '100%' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
+        <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+
+        {/* 資産テーブル（編集リストモード・従来モード共通） */}
         {currentView === 'list' && (
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px', tableLayout: 'fixed' }}>
-            <thead>
-              <tr style={{ background: '#f8f9fa' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 102, background: '#f8f9fa' }}>
+              <tr>
                 <th
                   style={{
                     padding: '12px 8px',
@@ -1113,7 +1198,6 @@ function RemodelApplicationContent() {
             </tbody>
           </table>
         )}
-        </div>
 
         {currentView === 'card' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
@@ -1156,6 +1240,7 @@ function RemodelApplicationContent() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* カラム設定モーダル */}
@@ -2118,10 +2203,12 @@ function RemodelApplicationContent() {
             rfqNo,
             groupName: rfqGroupName.trim(),
             createdDate,
-            applicationIds: Array.from(selectedItems),
+            applicationIds: Array.from(selectedItems).map(String),
             status: '見積依頼',
           });
 
+          // 編集リストモードの場合はeditList.baseAssetsを更新する必要があるが、
+          // Zustand storeを通じて更新するため、ここではmockAssetsを更新
           setMockAssets(prev => prev.map(asset => {
             if (selectedItems.has(asset.no)) {
               return {

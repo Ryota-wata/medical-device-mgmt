@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { EditList, CreateEditListInput } from '@/lib/types';
-import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore } from '@/lib/stores';
+import { generateMockAssets } from '@/lib/data/generateMockAssets';
 
 interface AddToEditListModalProps {
   isOpen: boolean;
@@ -26,7 +26,8 @@ export function AddToEditListModal({
   const [mode, setMode] = useState<'existing' | 'new'>(editLists.length > 0 ? 'existing' : 'new');
   const [selectedEditListId, setSelectedEditListId] = useState<string>('');
   const [newListName, setNewListName] = useState('');
-  const [newListFacility, setNewListFacility] = useState('');
+  const [selectedFacilities, setSelectedFacilities] = useState<string[]>([]);
+  const [facilitySearchQuery, setFacilitySearchQuery] = useState('');
 
   if (!isOpen) return null;
 
@@ -42,19 +43,41 @@ export function AddToEditListModal({
         alert('編集リスト名を入力してください');
         return;
       }
-      if (!newListFacility) {
-        alert('対象施設を選択してください');
+      if (selectedFacilities.length === 0) {
+        alert('対象施設を1つ以上選択してください');
         return;
       }
+      // 対象施設の原本資産を生成
+      const baseAssets = generateMockAssets(selectedFacilities);
       onCreateAndAdd({
         name: newListName.trim(),
-        facilities: [newListFacility],
+        facilities: selectedFacilities,
+        baseAssets,
       });
     }
     onClose();
   };
 
   const facilityOptions = facilities.map(f => f.facilityName);
+  const filteredFacilities = facilityOptions.filter(f =>
+    f.toLowerCase().includes(facilitySearchQuery.toLowerCase())
+  );
+
+  const handleFacilityToggle = (facilityName: string) => {
+    setSelectedFacilities(prev =>
+      prev.includes(facilityName)
+        ? prev.filter(f => f !== facilityName)
+        : [...prev, facilityName]
+    );
+  };
+
+  const handleSelectAllFacilities = () => {
+    if (selectedFacilities.length === facilityOptions.length) {
+      setSelectedFacilities([]);
+    } else {
+      setSelectedFacilities([...facilityOptions]);
+    }
+  };
 
   return (
     <div
@@ -285,13 +308,85 @@ export function AddToEditListModal({
                   }}
                 >
                   対象施設 <span style={{ color: '#e74c3c' }}>*</span>
+                  <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#7f8c8d', marginLeft: '8px' }}>
+                    （複数選択可）
+                  </span>
                 </label>
-                <SearchableSelect
-                  value={newListFacility}
-                  onChange={setNewListFacility}
-                  options={facilityOptions}
-                  placeholder="施設を選択"
+                {/* 検索フィールド */}
+                <input
+                  type="text"
+                  value={facilitySearchQuery}
+                  onChange={(e) => setFacilitySearchQuery(e.target.value)}
+                  placeholder="施設名で検索..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d0d0d0',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    marginBottom: '8px',
+                    boxSizing: 'border-box',
+                  }}
                 />
+                {/* 全選択/全解除 */}
+                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllFacilities}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#3498db',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      padding: '4px 0',
+                    }}
+                  >
+                    {selectedFacilities.length === facilityOptions.length ? '全解除' : '全選択'}
+                  </button>
+                  <span style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                    {selectedFacilities.length}件選択中
+                  </span>
+                </div>
+                {/* 施設リスト */}
+                <div
+                  style={{
+                    border: '1px solid #d0d0d0',
+                    borderRadius: '6px',
+                    maxHeight: '160px',
+                    overflow: 'auto',
+                    background: 'white',
+                  }}
+                >
+                  {filteredFacilities.length === 0 ? (
+                    <div style={{ padding: '12px', textAlign: 'center', color: '#7f8c8d', fontSize: '13px' }}>
+                      該当する施設がありません
+                    </div>
+                  ) : (
+                    filteredFacilities.map((facility) => (
+                      <label
+                        key={facility}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '10px 12px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #f0f0f0',
+                          background: selectedFacilities.includes(facility) ? '#e8f5e9' : 'transparent',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFacilities.includes(facility)}
+                          onChange={() => handleFacilityToggle(facility)}
+                          style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                        <span style={{ fontSize: '13px', color: '#2c3e50' }}>{facility}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}

@@ -27,7 +27,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
 
   // 見積依頼グループに紐づいた申請を取得
   const linkedApplications = rfqGroup
-    ? applications.filter(app => rfqGroup.applicationIds.includes(app.id))
+    ? applications.filter(app => rfqGroup.applicationIds.includes(String(app.id)))
     : [];
 
   // 金額フォーマット

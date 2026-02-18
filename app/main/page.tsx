@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, useMasterStore, useEditListStore } from '@/lib/stores';
+import { generateMockAssets } from '@/lib/data/generateMockAssets';
 import { getUserType } from '@/lib/types';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -197,9 +198,12 @@ export default function MainPage() {
       return;
     }
 
+    // 対象施設の原本資産を生成
+    const baseAssets = generateMockAssets(selectedEditListFacilities);
     addEditList({
       name: newEditListName.trim(),
       facilities: selectedEditListFacilities,
+      baseAssets,
     });
 
     showToast(`編集リスト「${newEditListName.trim()}」を作成しました`, 'success');

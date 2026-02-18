@@ -28,6 +28,12 @@ interface Bookmark {
 }
 
 const COLUMN_GROUPS = [
+  // 申請内容（編集リスト用）
+  { id: 'application', label: '申請内容' },
+  { id: 'applicationDetail', label: '申請詳細（用途・コメント）' },
+  { id: 'connection', label: 'システム接続要望' },
+  { id: 'work', label: '作業用（見積依頼）' },
+  // 資産情報
   { id: 'basic', label: '基本情報' },
   { id: 'location', label: '設置場所' },
   { id: 'classification', label: '機器分類' },

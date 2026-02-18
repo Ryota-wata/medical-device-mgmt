@@ -191,7 +191,7 @@ function RemodelApplicationListContent() {
         rfqNo,
         groupName: rfqGroupName,
         createdDate,
-        applicationIds: Array.from(selectedRows),
+        applicationIds: Array.from(selectedRows).map(String),
         status: '見積依頼'
       });
 

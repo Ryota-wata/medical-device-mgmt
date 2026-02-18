@@ -222,8 +222,16 @@ export function PurchaseApplicationModal({
       section: installationSection,
       roomName: installationRoomName,
       desiredDeliveryDate: `${desiredDeliveryYear}-${String(desiredDeliveryMonth).padStart(2, '0')}-01`,
-      applicationReason: `${usagePurpose}${caseCount ? ` (症例数: ${caseCount}${caseCountUnit})` : ''}${comment ? `\n${comment}` : ''}`,
+      applicationReason: '', // 個別フィールドに分割
       attachedFiles: attachedFiles.map(f => f.name),
+      priority: priority,
+      usagePurpose: usagePurpose,
+      caseCount: caseCount ? `${caseCount} ${caseCountUnit}` : '',
+      comment: comment,
+      currentConnectionStatus: currentConnectionStatus === 'connected' ? '接続中' : '接続無し',
+      currentConnectionDestination: currentConnectionDestination,
+      requestConnectionStatus: requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要',
+      requestConnectionDestination: requestConnectionDestination,
     };
 
     // 購入申請ストアに追加（購入管理画面の申請受付に反映される）

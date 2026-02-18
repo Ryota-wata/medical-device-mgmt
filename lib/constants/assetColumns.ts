@@ -80,8 +80,31 @@ const WORK_COLUMNS: ColumnDef[] = [
   { key: 'rfqAmount', label: '見積金額', width: '120px', defaultVisible: true, group: 'work' },
 ];
 
+// 申請関連カラム（入力項目ごと）
+const APPLICATION_COLUMNS: ColumnDef[] = [
+  // 基本申請情報
+  { key: 'applicationCategory', label: '要望区分', width: '100px', defaultVisible: true, group: 'application' },
+  { key: 'applicationNo', label: '申請No.', width: '120px', defaultVisible: true, group: 'application' },
+  { key: 'applicantName', label: '申請者', width: '100px', defaultVisible: false, group: 'application' },
+  { key: 'applicantDepartment', label: '申請部署', width: '120px', defaultVisible: false, group: 'application' },
+  { key: 'applicationDate', label: '申請日', width: '120px', defaultVisible: false, group: 'application' },
+  { key: 'priority', label: '優先順位', width: '80px', defaultVisible: false, group: 'application' },
+  { key: 'desiredDeliveryDate', label: '希望納期', width: '120px', defaultVisible: true, group: 'application' },
+  // 使用用途及び件数
+  { key: 'usagePurpose', label: '用途', width: '150px', defaultVisible: true, group: 'applicationDetail' },
+  { key: 'caseCount', label: '症例数', width: '100px', defaultVisible: false, group: 'applicationDetail' },
+  // コメント・添付ファイル
+  { key: 'comment', label: 'コメント', width: '200px', defaultVisible: true, group: 'applicationDetail' },
+  { key: 'attachedFiles', label: '添付ファイル', width: '150px', defaultVisible: false, group: 'applicationDetail' },
+  // システム接続要望
+  { key: 'currentConnectionStatus', label: '現在の接続状況', width: '120px', defaultVisible: false, group: 'connection' },
+  { key: 'currentConnectionDestination', label: '現在の接続先', width: '150px', defaultVisible: false, group: 'connection' },
+  { key: 'requestConnectionStatus', label: '接続要望', width: '100px', defaultVisible: false, group: 'connection' },
+  { key: 'requestConnectionDestination', label: '要望接続先', width: '150px', defaultVisible: false, group: 'connection' },
+];
+
 export const REMODEL_COLUMNS: ColumnDef[] = [
-  { key: 'applicationStatus', label: '要望区分', width: '150px', defaultVisible: true, group: 'status' },
+  ...APPLICATION_COLUMNS,
   ...ASSET_COLUMNS
     .filter(col => !EXCLUDED_COLUMNS.includes(col.key))
     .map(col => col.key === 'name' ? { ...col, label: '品目' } : col)

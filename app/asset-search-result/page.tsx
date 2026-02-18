@@ -238,7 +238,7 @@ export default function AssetSearchResultPage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
+    <div className="h-dvh flex flex-col overflow-hidden" style={{ background: 'white' }}>
       <Header
         title="資産リスト"
         resultCount={filteredAssets.length}
@@ -459,11 +459,12 @@ export default function AssetSearchResultPage() {
       </div>
 
       {/* テーブル表示 */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
+        <div style={{ flex: 1, overflow: 'auto' }}>
         {currentView === 'list' && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
-            <thead>
-              <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fa' }}>
+              <tr style={{ borderBottom: '2px solid #dee2e6' }}>
                 <th
                   style={{
                     padding: '12px 8px',
@@ -473,7 +474,8 @@ export default function AssetSearchResultPage() {
                     width: `${columnWidths.checkbox}px`,
                     position: 'relative',
                     whiteSpace: 'nowrap',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    background: '#f8f9fa',
                   }}
                 >
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
@@ -509,7 +511,8 @@ export default function AssetSearchResultPage() {
                       position: 'relative',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      textOverflow: 'ellipsis',
+                      background: '#f8f9fa',
                     }}
                   >
                     {col.label}
@@ -616,6 +619,7 @@ export default function AssetSearchResultPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* カラム設定モーダル */}

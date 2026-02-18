@@ -47,9 +47,22 @@ export interface PurchaseApplication {
 
   // 申請内容
   desiredDeliveryDate?: string;
-  budgetCategory?: string;
   applicationReason?: string;
   attachedFiles?: string[];
+  priority?: string; // 優先順位
+
+  // 使用用途及び件数
+  usagePurpose?: string;
+  caseCount?: string;
+
+  // コメント
+  comment?: string;
+
+  // システム接続要望
+  currentConnectionStatus?: string;
+  currentConnectionDestination?: string;
+  requestConnectionStatus?: string;
+  requestConnectionDestination?: string;
 
   // 編集リスト追加後の情報
   editListId?: string;
@@ -96,9 +109,16 @@ export interface CreatePurchaseApplicationInput {
   section: string;
   roomName: string;
   desiredDeliveryDate?: string;
-  budgetCategory?: string;
   applicationReason?: string;
   attachedFiles?: string[];
+  priority?: string;
+  usagePurpose?: string;
+  caseCount?: string;
+  comment?: string;
+  currentConnectionStatus?: string;
+  currentConnectionDestination?: string;
+  requestConnectionStatus?: string;
+  requestConnectionDestination?: string;
 }
 
 /**

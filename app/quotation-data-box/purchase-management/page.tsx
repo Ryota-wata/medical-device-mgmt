@@ -8,7 +8,7 @@ import { useApplicationStore } from '@/lib/stores/applicationStore';
 import { useMasterStore } from '@/lib/stores';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
-import { RfqGroupStatus } from '@/lib/types';
+import { RfqGroupStatus, CreateEditListInput } from '@/lib/types';
 import {
   PurchaseApplication,
   getPurchaseApplicationTypeStyle,
@@ -39,16 +39,13 @@ function PurchaseManagementContent() {
   } = useQuotationStore();
   const { applications, addApplication } = useApplicationStore();
   const { assets: assetMasterData } = useMasterStore();
-  const { editLists, addEditList } = useEditListStore();
+  const { editLists, addEditList, addItemsFromApplications } = useEditListStore();
   const {
     applications: purchaseApplications,
     addToEditList,
     rejectApplication,
     getPendingApplications,
   } = usePurchaseApplicationStore();
-
-  // 選択中の編集リスト
-  const [selectedEditListId, setSelectedEditListId] = useState<string>('');
 
   // 申請受付関連
   const [selectedApplicationIds, setSelectedApplicationIds] = useState<Set<string>>(new Set());
@@ -98,18 +95,28 @@ function PurchaseManagementContent() {
   const handleAddToExistingEditList = (editListId: string) => {
     const editList = editLists.find(l => l.id === editListId);
     if (editList) {
+      // 選択した申請を取得
+      const selectedApps = purchaseApplications.filter(app => selectedApplicationIds.has(app.id));
+      // 申請の要望機器を編集リストにアイテムとして追加
+      const addedCount = addItemsFromApplications(editListId, selectedApps);
+      // 申請のステータスを更新
       addToEditList(Array.from(selectedApplicationIds), editListId, editList.name);
       setSelectedApplicationIds(new Set());
-      alert(`${selectedApplicationIds.size}件の申請を「${editList.name}」に追加しました`);
+      alert(`${addedCount}件の機器を「${editList.name}」に追加しました`);
     }
   };
 
   // 編集リストへ追加（新規作成）
-  const handleCreateAndAddToEditList = (input: { name: string; facilities: string[] }) => {
+  const handleCreateAndAddToEditList = (input: CreateEditListInput) => {
     const newEditList = addEditList(input);
+    // 選択した申請を取得
+    const selectedApps = purchaseApplications.filter(app => selectedApplicationIds.has(app.id));
+    // 申請の要望機器を編集リストにアイテムとして追加
+    const addedCount = addItemsFromApplications(newEditList.id, selectedApps);
+    // 申請のステータスを更新
     addToEditList(Array.from(selectedApplicationIds), newEditList.id, newEditList.name);
     setSelectedApplicationIds(new Set());
-    alert(`編集リスト「${newEditList.name}」を作成し、${selectedApplicationIds.size}件の申請を追加しました`);
+    alert(`編集リスト「${newEditList.name}」を作成し、${addedCount}件の機器を追加しました`);
   };
 
   // 申請詳細表示
@@ -289,18 +296,6 @@ function PurchaseManagementContent() {
         backHref="/main"
         backLabel="メイン画面に戻る"
         hideMenu={true}
-        centerContent={
-          <div style={{
-            background: '#27ae60',
-            padding: '6px 16px',
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <span style={{ fontSize: '12px', color: 'white', fontWeight: 'bold' }}>購入管理</span>
-          </div>
-        }
       />
 
       {/* メインコンテンツ */}
@@ -414,8 +409,6 @@ function PurchaseManagementContent() {
                                   const action = e.target.value;
                                   if (action === 'detail') {
                                     handleViewApplicationDetail(app);
-                                  } else if (action === 'add') {
-                                    handleAddSingleToEditList(app.id);
                                   } else if (action === 'reject') {
                                     handleConfirmReject(app.id);
                                   }
@@ -432,7 +425,6 @@ function PurchaseManagementContent() {
                               >
                                 <option value="" disabled>処理</option>
                                 <option value="detail">詳細</option>
-                                <option value="add">編集リストへ</option>
                                 <option value="reject">却下</option>
                               </select>
                             </td>
@@ -497,28 +489,6 @@ function PurchaseManagementContent() {
               alignItems: 'center',
             }}>
               <span style={{ fontWeight: 'bold', fontSize: '14px' }}>見積依頼グループ</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px' }}>編集リスト:</span>
-                <select
-                  value={selectedEditListId}
-                  onChange={(e) => setSelectedEditListId(e.target.value)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    border: 'none',
-                    borderRadius: '3px',
-                    background: 'white',
-                    minWidth: '180px',
-                  }}
-                >
-                  <option value="">すべて表示</option>
-                  {editLists.map((list) => (
-                    <option key={list.id} value={list.id}>
-                      {list.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {/* フィルター */}
@@ -533,7 +503,11 @@ function PurchaseManagementContent() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-                <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                <select
+                  value={rfqStatusFilter}
+                  onChange={(e) => setRfqStatusFilter(e.target.value as RfqGroupStatus | '')}
+                  style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}
+                >
                   <option value="">すべて</option>
                   <option value="見積依頼">見積依頼</option>
                   <option value="見積依頼済">見積依頼済</option>
@@ -548,17 +522,17 @@ function PurchaseManagementContent() {
 
             {/* テーブルエリア */}
             <div style={{ flex: 1, overflow: 'auto' }}>
-              {editLists.length === 0 ? (
+              {rfqGroups.length === 0 ? (
                 <div style={{
                   padding: '60px 40px',
                   textAlign: 'center',
                   color: '#7f8c8d',
                 }}>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>編集リストがありません</div>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>見積依頼グループがありません</div>
                   <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
-                    申請を編集リストに追加すると、<br />
-                    見積依頼グループが作成されます。
+                    編集リストから見積依頼グループを作成すると、<br />
+                    ここに表示されます。
                   </div>
                 </div>
               ) : (

@@ -57,6 +57,25 @@ export interface Asset {
   rfqGroupName?: string; // グループ名称
   rfqVendor?: string; // 見積業者
   rfqAmount?: number | string; // 見積金額
+
+  // 申請関連フィールド（編集リスト用）
+  applicationCategory?: string; // 要望区分（申請種別）
+  applicationNo?: string; // 申請No.
+  applicationReason?: string; // 申請理由
+  desiredDeliveryDate?: string; // 希望納期
+  applicantName?: string; // 申請者
+  applicantDepartment?: string; // 申請部署
+  applicationDate?: string; // 申請日
+  priority?: string; // 優先順位
+  usagePurpose?: string; // 用途
+  caseCount?: string; // 症例数
+  comment?: string; // コメント
+  attachedFiles?: string[]; // 添付ファイル
+  currentConnectionStatus?: string; // 現在の接続状況
+  currentConnectionDestination?: string; // 現在の接続先
+  requestConnectionStatus?: string; // 接続要望
+  requestConnectionDestination?: string; // 要望接続先
+  sourceType?: 'base' | 'added'; // レコードソース（原本 or 追加）
 }
 
 /**
