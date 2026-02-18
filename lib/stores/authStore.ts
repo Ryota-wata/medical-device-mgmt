@@ -26,14 +26,14 @@ export const TEST_USERS: TestUser[] = [
   {
     email: 'consultant@ship.com',
     role: 'consultant',
-    roleLabel: 'コンサル',
+    roleLabel: 'SHRCコンサル',
     name: '山田 花子',
     accessibleFacilities: ['東京中央病院', '横浜総合病院', '千葉医療センター'],
   },
   {
     email: 'sales@ship.com',
     role: 'sales',
-    roleLabel: '営業',
+    roleLabel: 'GHS営業',
     name: '鈴木 一郎',
     accessibleFacilities: ['東京中央病院', '横浜総合病院'],
   },

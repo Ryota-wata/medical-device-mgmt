@@ -376,8 +376,8 @@ export default function UserManagementPage() {
                 }}
               >
                 <option value="admin">システム管理者</option>
-                <option value="consultant">コンサル</option>
-                <option value="sales">営業</option>
+                <option value="consultant">SHRCコンサル</option>
+                <option value="sales">GHS営業</option>
                 <option value="office_admin">事務管理者</option>
                 <option value="office_staff">事務担当者</option>
                 <option value="clinical_staff">臨床スタッフ</option>

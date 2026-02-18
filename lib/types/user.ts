@@ -35,11 +35,11 @@ export type UserRole = 'admin' | 'consultant' | 'office_admin' | 'office_staff' 
  */
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
   admin: 'システム管理者',
-  consultant: 'コンサル',
+  consultant: 'SHRCコンサル',
   office_admin: '事務管理者',
   office_staff: '事務担当者',
   clinical_staff: '臨床スタッフ',
-  sales: '営業',
+  sales: 'GHS営業',
 };
 
 /**

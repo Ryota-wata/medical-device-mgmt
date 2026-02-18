@@ -1,0 +1,8 @@
+1:"$Sreact.fragment"
+2:I[97367,["/medical-device-mgmt/_next/static/chunks/bcce71c2b5c181a2.js"],"ViewportBoundary"]
+4:I[97367,["/medical-device-mgmt/_next/static/chunks/bcce71c2b5c181a2.js"],"MetadataBoundary"]
+5:"$Sreact.suspense"
+7:I[27201,["/medical-device-mgmt/_next/static/chunks/bcce71c2b5c181a2.js"],"IconMark"]
+0:{"buildId":"TNPycT6y0Ugynp_uRPDLq","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
+3:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"}]]
+6:[["$","title","0",{"children":"HEALTHCARE 医療機器管理システム"}],["$","meta","1",{"name":"description","content":"医療機器の資産管理システム"}],["$","link","2",{"rel":"icon","href":"/medical-device-mgmt/favicon.ico?favicon.0b3bf435.ico","sizes":"256x256","type":"image/x-icon"}],["$","$L7","3",{}]]
