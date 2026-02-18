@@ -688,28 +688,7 @@ function RemodelApplicationContent() {
           API連携
         </button>
         <button
-          onClick={() => alert('要望区分機能（開発中）')}
-          style={{
-            padding: '8px 16px',
-            background: '#27ae60',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 500,
-            transition: 'background 0.2s',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; }}
-        >
-          要望区分
-        </button>
-        <button
-          onClick={() => {
-            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-            window.open(`${basePath}/ship-asset-master`, '_blank', 'width=1200,height=800');
-          }}
+          onClick={() => alert('Data Link機能（開発中）')}
           style={{
             padding: '8px 16px',
             background: '#e74c3c',
@@ -724,7 +703,7 @@ function RemodelApplicationContent() {
           onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
         >
-          マスタを開く
+          Data Link
         </button>
         <button
           onClick={() => {
@@ -745,25 +724,7 @@ function RemodelApplicationContent() {
           onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
         >
-          見積DBを開く
-        </button>
-        <button
-          onClick={() => alert('原本を開く機能（開発中）')}
-          style={{
-            padding: '8px 16px',
-            background: '#e74c3c',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 500,
-            transition: 'background 0.2s',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
-        >
-          原本を開く
+          見積DB Link
         </button>
 
         {/* 見積依頼グループ作成ボタン */}

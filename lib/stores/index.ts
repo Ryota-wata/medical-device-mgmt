@@ -16,3 +16,4 @@ export * from './editListStore';
 export * from './orderStore';
 export * from './inspectionStore';
 export * from './purchaseApplicationStore';
+export * from './repairRequestStore';
