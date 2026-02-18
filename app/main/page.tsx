@@ -480,17 +480,6 @@ export default function MainPage() {
               </button>
             )}
 
-            {/* 現有資産調査 */}
-            {isMainButtonVisible('asset_survey') && (
-              <button
-                onClick={showListModal}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
-                }`}
-              >
-                現有資産調査
-              </button>
-            )}
           </div>
         </div>
 
