@@ -112,6 +112,23 @@ export function PurchaseApplicationModal({
     setDesiredEquipments(prev => prev.filter((_, i) => i !== index));
   };
 
+  // 要望機器の順序入れ替え
+  const handleMoveEquipment = (index: number, direction: 'up' | 'down') => {
+    setDesiredEquipments(prev => {
+      const newArr = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
+      [newArr[index], newArr[targetIndex]] = [newArr[targetIndex], newArr[index]];
+      return newArr;
+    });
+  };
+
+  // 希望順ラベル
+  const getHopeLabel = (index: number): string => {
+    const labels = ['第一希望', '第二希望', '第三希望', '第四希望', '第五希望'];
+    return labels[index] || `第${index + 1}希望`;
+  };
+
   // 要望機器の更新
   const handleUpdateEquipment = (index: number, field: keyof DesiredEquipment, value: string | number) => {
     setDesiredEquipments(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
@@ -496,25 +513,66 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
                   <tr style={{ background: '#f8f9fa' }}>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '80px' }}>希望順</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>順序</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>品目</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>メーカー</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>型式</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '70px' }}>数量</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '70px' }}>単位</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '130px' }}>選択</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '60px' }}>数量</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '60px' }}>単位</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '120px' }}>選択</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
                   </tr>
                 </thead>
                 <tbody>
                   {desiredEquipments.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                      <td colSpan={9} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
                         「+ 資産を追加」ボタンで要望機器を追加してください
                       </td>
                     </tr>
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                          {getHopeLabel(index)}
+                        </td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <button
+                              onClick={() => handleMoveEquipment(index, 'up')}
+                              disabled={index === 0}
+                              style={{
+                                padding: '2px 6px',
+                                background: index === 0 ? '#ccc' : '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '2px',
+                                cursor: index === 0 ? 'not-allowed' : 'pointer',
+                                fontSize: '10px',
+                              }}
+                              aria-label="上に移動"
+                            >
+                              ▲
+                            </button>
+                            <button
+                              onClick={() => handleMoveEquipment(index, 'down')}
+                              disabled={index === desiredEquipments.length - 1}
+                              style={{
+                                padding: '2px 6px',
+                                background: index === desiredEquipments.length - 1 ? '#ccc' : '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '2px',
+                                cursor: index === desiredEquipments.length - 1 ? 'not-allowed' : 'pointer',
+                                fontSize: '10px',
+                              }}
+                              aria-label="下に移動"
+                            >
+                              ▼
+                            </button>
+                          </div>
+                        </td>
                         <td style={{ padding: '4px', border: '1px solid #ddd' }}>
                           <input
                             type="text"
