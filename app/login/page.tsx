@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/lib/stores';
+import { useAuthStore, TEST_USERS } from '@/lib/stores';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [showTestAccounts, setShowTestAccounts] = useState(false);
 
   // ページ読み込み時に保存されたログイン情報を復元
   useEffect(() => {
@@ -22,6 +23,12 @@ export default function LoginPage() {
       setRememberMe(true);
     }
   }, []);
+
+  // テストアカウントをクリックしてメール欄に入力
+  const handleTestAccountClick = (testEmail: string) => {
+    setEmail(testEmail);
+    setPassword('password'); // テスト用パスワード
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +146,60 @@ export default function LoginPage() {
           >
             パスワードをお忘れの方
           </a>
+        </div>
+
+        {/* テストアカウント一覧 */}
+        <div className="mt-8 pt-6 border-t border-slate-200">
+          <button
+            type="button"
+            onClick={() => setShowTestAccounts(!showTestAccounts)}
+            className="w-full text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-2 transition-colors"
+          >
+            <span>テストアカウント一覧</span>
+            <span className={`transition-transform ${showTestAccounts ? 'rotate-180' : ''}`}>▼</span>
+          </button>
+
+          {showTestAccounts && (
+            <div className="mt-4 space-y-2">
+              {/* SHIP側ユーザー */}
+              <div className="text-xs text-slate-400 font-semibold mb-2">SHIP側</div>
+              {TEST_USERS.filter(u => !u.email.includes('@hospital')).map((user) => (
+                <button
+                  key={user.email}
+                  type="button"
+                  onClick={() => handleTestAccountClick(user.email)}
+                  className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700">{user.roleLabel}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">{user.role}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1 font-mono">{user.email}</div>
+                </button>
+              ))}
+
+              {/* 病院側ユーザー */}
+              <div className="text-xs text-slate-400 font-semibold mt-4 mb-2">病院側</div>
+              {TEST_USERS.filter(u => u.email.includes('@hospital')).map((user) => (
+                <button
+                  key={user.email}
+                  type="button"
+                  onClick={() => handleTestAccountClick(user.email)}
+                  className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700">{user.roleLabel}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-sky-100 text-sky-700">{user.role}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1 font-mono">{user.email}</div>
+                </button>
+              ))}
+
+              <p className="text-xs text-slate-400 mt-3 text-center text-pretty">
+                クリックするとメール欄に入力されます（パスワード: password）
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

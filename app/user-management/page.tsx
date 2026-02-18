@@ -6,23 +6,17 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
-import { User, UserRole } from '@/lib/types/user';
+import { User, UserRole, USER_ROLE_LABELS, isShipRole } from '@/lib/types/user';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-
-// ロール表示名
-const ROLE_LABELS: Record<UserRole, string> = {
-  consultant: 'コンサル',
-  sales: '営業',
-  medical_office: '医療事務',
-  medical_clinical: '医療臨床',
-};
 
 // ロールバッジカラー
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
+  admin: { bg: '#e74c3c', text: 'white' },
   consultant: { bg: '#9b59b6', text: 'white' },
   sales: { bg: '#3498db', text: 'white' },
-  medical_office: { bg: '#27ae60', text: 'white' },
-  medical_clinical: { bg: '#e67e22', text: 'white' },
+  office_admin: { bg: '#27ae60', text: 'white' },
+  office_staff: { bg: '#2ecc71', text: 'white' },
+  clinical_staff: { bg: '#e67e22', text: 'white' },
 };
 
 export default function UserManagementPage() {
@@ -45,12 +39,12 @@ export default function UserManagementPage() {
     username: '',
     email: '',
     hospital: '',
-    role: 'medical_office' as UserRole,
+    role: 'office_staff' as UserRole,
     accessibleFacilities: [] as string[],
   });
 
-  // ログインユーザーがコンサルかどうか
-  const isConsultantUser = currentUser?.role === 'consultant';
+  // ログインユーザーがSHIP側（システム管理者/コンサル/営業）かどうか
+  const isShipUser = currentUser ? isShipRole(currentUser.role) : false;
   // ログインユーザーの所属施設
   const currentUserHospital = currentUser?.hospital;
 
@@ -68,63 +62,63 @@ export default function UserManagementPage() {
       const sampleUsers: User[] = [
         {
           id: 'U001',
-          username: '山田太郎',
-          email: 'yamada@example.com',
+          username: '管理者太郎',
+          email: 'admin@ship.com',
           hospital: undefined,
-          role: 'consultant',
-          accessibleFacilities: ['東京総合病院', '横浜医療センター', '大阪クリニック'],
+          role: 'admin',
+          accessibleFacilities: ['全施設'],
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z'
         },
         {
           id: 'U002',
-          username: '鈴木花子',
-          email: 'suzuki@hospital.example.com',
-          hospital: '横浜医療センター',
+          username: '山田花子',
+          email: 'consultant@ship.com',
+          hospital: undefined,
+          role: 'consultant',
+          accessibleFacilities: ['東京中央病院', '横浜総合病院', '千葉医療センター'],
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z'
+        },
+        {
+          id: 'U003',
+          username: '鈴木一郎',
+          email: 'sales@ship.com',
+          hospital: undefined,
           role: 'sales',
-          accessibleFacilities: [],
+          accessibleFacilities: ['東京中央病院', '横浜総合病院'],
           createdAt: '2024-01-15T00:00:00Z',
           updatedAt: '2024-01-15T00:00:00Z'
         },
         {
-          id: 'U003',
-          username: '田中一郎',
-          email: 'tanaka@example.com',
-          hospital: '東京総合病院',
-          role: 'medical_office',
-          accessibleFacilities: ['横浜医療センター'],
+          id: 'U004',
+          username: '佐藤美智子',
+          email: 'office-admin@hospital.com',
+          hospital: '東京中央病院',
+          role: 'office_admin',
+          accessibleFacilities: [],
           createdAt: '2024-02-01T00:00:00Z',
           updatedAt: '2024-02-01T00:00:00Z'
         },
         {
-          id: 'U004',
-          username: '佐藤美咲',
-          email: 'sato@hospital.example.com',
-          hospital: '東京総合病院',
-          role: 'medical_clinical',
+          id: 'U005',
+          username: '高橋健二',
+          email: 'office@hospital.com',
+          hospital: '東京中央病院',
+          role: 'office_staff',
           accessibleFacilities: [],
           createdAt: '2024-02-15T00:00:00Z',
           updatedAt: '2024-02-15T00:00:00Z'
         },
         {
-          id: 'U005',
-          username: '高橋健二',
-          email: 'takahashi@example.com',
-          hospital: '東京総合病院',
-          role: 'medical_office',
+          id: 'U006',
+          username: '田中花子',
+          email: 'user@hospital.com',
+          hospital: '東京中央病院',
+          role: 'clinical_staff',
           accessibleFacilities: [],
           createdAt: '2024-03-01T00:00:00Z',
           updatedAt: '2024-03-01T00:00:00Z'
-        },
-        {
-          id: 'U006',
-          username: '渡辺真理',
-          email: 'watanabe@hospital.example.com',
-          hospital: '横浜医療センター',
-          role: 'medical_office',
-          accessibleFacilities: ['東京総合病院'],
-          createdAt: '2024-03-15T00:00:00Z',
-          updatedAt: '2024-03-15T00:00:00Z'
         }
       ];
       setUsers(sampleUsers);
@@ -136,7 +130,7 @@ export default function UserManagementPage() {
     let result = users;
 
     // 病院ユーザーの場合、同一施設のユーザーのみ表示
-    if (!isConsultantUser && currentUserHospital) {
+    if (!isShipUser && currentUserHospital) {
       result = result.filter(user => user.hospital === currentUserHospital);
     }
 
@@ -148,7 +142,7 @@ export default function UserManagementPage() {
       const matchRole = !filterRole || user.role === filterRole;
       return matchUsername && matchEmail && matchHospital && matchRole;
     });
-  }, [users, isConsultantUser, currentUserHospital, filterUsername, filterEmail, filterHospital, filterRole]);
+  }, [users, isShipUser, currentUserHospital, filterUsername, filterEmail, filterHospital, filterRole]);
 
   // 施設オプション（ユニーク）
   const hospitalOptions = useMemo(() => {
@@ -181,8 +175,8 @@ export default function UserManagementPage() {
     setFormData({
       username: '',
       email: '',
-      hospital: isConsultantUser ? '' : (currentUserHospital || ''),
-      role: 'medical_office',
+      hospital: isShipUser ? '' : (currentUserHospital || ''),
+      role: 'office_staff',
       accessibleFacilities: [],
     });
     setShowNewModal(true);
@@ -198,7 +192,7 @@ export default function UserManagementPage() {
       id: `U${String(users.length + 1).padStart(3, '0')}`,
       username: formData.username,
       email: formData.email,
-      hospital: formData.role === 'consultant' ? undefined : formData.hospital,
+      hospital: isShipRole(formData.role) ? undefined : formData.hospital,
       role: formData.role,
       accessibleFacilities: formData.accessibleFacilities,
       createdAt: new Date().toISOString(),
@@ -218,7 +212,7 @@ export default function UserManagementPage() {
     updateUser(selectedUser.id, {
       username: formData.username,
       email: formData.email,
-      hospital: formData.role === 'consultant' ? undefined : formData.hospital,
+      hospital: isShipRole(formData.role) ? undefined : formData.hospital,
       role: formData.role,
       accessibleFacilities: formData.accessibleFacilities,
     });
@@ -247,18 +241,20 @@ export default function UserManagementPage() {
 
   // アクセス可能施設の表示用テキスト
   const getAccessibleFacilitiesText = (user: User): string => {
-    if (user.role === 'consultant') {
-      // コンサル: 担当施設
+    // SHIP側（admin/consultant/sales）: 担当施設
+    if (isShipRole(user.role)) {
       const facilities = user.accessibleFacilities || [];
       return facilities.length > 0 ? facilities.join(', ') : '未設定';
-    } else if (user.role === 'medical_office') {
-      // 事務担当者: 自施設 + 閲覧可能施設
+    }
+    // 事務管理者/事務担当者: 自施設 + 閲覧可能施設
+    if (user.role === 'office_admin' || user.role === 'office_staff') {
       const ownFacility = user.hospital ? [user.hospital] : [];
       const otherFacilities = user.accessibleFacilities || [];
       const all = [...ownFacility, ...otherFacilities.filter(f => f !== user.hospital)];
       return all.length > 0 ? all.join(', ') : '-';
-    } else if (user.role === 'medical_clinical') {
-      // 臨床担当者: 自施設のみ
+    }
+    // 臨床スタッフ: 自施設のみ
+    if (user.role === 'clinical_staff') {
       return user.hospital || '-';
     }
     return '-';
@@ -268,9 +264,9 @@ export default function UserManagementPage() {
     const isOpen = isEdit ? showEditModal : showNewModal;
     if (!isOpen) return null;
 
-    const isConsultantRole = formData.role === 'consultant';
-    const isMedicalOfficeRole = formData.role === 'medical_office';
-    const isMedicalClinicalRole = formData.role === 'medical_clinical';
+    const isShipRoleSelected = isShipRole(formData.role);
+    const isOfficeRole = formData.role === 'office_admin' || formData.role === 'office_staff';
+    const isClinicalRole = formData.role === 'clinical_staff';
 
     return (
       <div
@@ -367,8 +363,8 @@ export default function UserManagementPage() {
                     role: newRole,
                     // ロール変更時にアクセス可能施設をリセット
                     accessibleFacilities: [],
-                    // コンサルの場合は所属施設をクリア
-                    hospital: newRole === 'consultant' ? '' : formData.hospital,
+                    // SHIP側ロールの場合は所属施設をクリア
+                    hospital: isShipRole(newRole) ? '' : formData.hospital,
                   });
                 }}
                 style={{
@@ -379,15 +375,17 @@ export default function UserManagementPage() {
                   fontSize: '14px',
                 }}
               >
+                <option value="admin">システム管理者</option>
                 <option value="consultant">コンサル</option>
                 <option value="sales">営業</option>
-                <option value="medical_office">医療事務</option>
-                <option value="medical_clinical">医療臨床</option>
+                <option value="office_admin">事務管理者</option>
+                <option value="office_staff">事務担当者</option>
+                <option value="clinical_staff">臨床スタッフ</option>
               </select>
             </div>
 
-            {/* 所属施設（コンサル以外） */}
-            {!isConsultantRole && (
+            {/* 所属施設（病院側ロールのみ） */}
+            {!isShipRoleSelected && (
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
                   所属施設 <span style={{ color: '#e74c3c' }}>*</span>
@@ -437,13 +435,13 @@ export default function UserManagementPage() {
                   textAlign: 'center',
                   lineHeight: '20px',
                 }}>
-                  {formData.role === 'consultant' ? 'C' : formData.role === 'medical_office' ? 'O' : formData.role === 'medical_clinical' ? 'L' : 'S'}
+                  {formData.role === 'admin' ? 'A' : formData.role === 'consultant' ? 'C' : formData.role === 'sales' ? 'S' : formData.role === 'office_admin' ? 'M' : formData.role === 'office_staff' ? 'O' : 'L'}
                 </span>
-                施設アクセス設定（{ROLE_LABELS[formData.role]}）
+                施設アクセス設定（{USER_ROLE_LABELS[formData.role]}）
               </h3>
 
-              {/* コンサル: 担当施設 */}
-              {isConsultantRole && (
+              {/* SHIP側ロール: 担当施設 */}
+              {isShipRoleSelected && (
                 <div>
                   <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
                     担当施設を検索して追加してください（複数選択可）
@@ -506,8 +504,8 @@ export default function UserManagementPage() {
                 </div>
               )}
 
-              {/* 事務担当者: 閲覧可能な他施設 */}
-              {isMedicalOfficeRole && (
+              {/* 事務管理者/事務担当者: 閲覧可能な他施設 */}
+              {isOfficeRole && (
                 <div>
                   <div style={{
                     padding: '10px 12px',
@@ -589,8 +587,8 @@ export default function UserManagementPage() {
                 </div>
               )}
 
-              {/* 臨床担当者: 自施設のみ */}
-              {isMedicalClinicalRole && (
+              {/* 臨床スタッフ: 自施設のみ */}
+              {isClinicalRole && (
                 <div>
                   <div style={{
                     padding: '10px 12px',
@@ -602,23 +600,8 @@ export default function UserManagementPage() {
                     <strong>所属施設（{formData.hospital || '未設定'}）</strong>の資産のみアクセス可能です
                   </div>
                   <p style={{ fontSize: '11px', color: '#7f8c8d', marginTop: '8px' }}>
-                    ※ 臨床担当者は自施設のみのアクセスに制限されています
+                    ※ 臨床スタッフは自施設のみのアクセスに制限されています
                   </p>
-                </div>
-              )}
-
-              {/* 営業 */}
-              {formData.role === 'sales' && (
-                <div>
-                  <div style={{
-                    padding: '10px 12px',
-                    background: '#e3f2fd',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    color: '#1565c0',
-                  }}>
-                    営業ロールの施設アクセス権限は別途設定が必要です
-                  </div>
                 </div>
               )}
             </div>
@@ -713,7 +696,7 @@ export default function UserManagementPage() {
             {filteredUsers.length}件
           </div>
           {/* 病院ユーザーの場合、所属施設を表示 */}
-          {!isConsultantUser && currentUserHospital && (
+          {!isShipUser && currentUserHospital && (
             <div style={{
               background: '#27ae60',
               color: 'white',
@@ -768,7 +751,7 @@ export default function UserManagementPage() {
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
         borderBottom: '2px solid #e0e0e0',
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : isConsultantUser ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: isMobile ? '1fr' : isShipUser ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: isMobile ? '12px' : '16px'
       }}>
         <div>
@@ -810,7 +793,7 @@ export default function UserManagementPage() {
           />
         </div>
         {/* 施設フィルター: コンサルユーザーのみ表示 */}
-        {isConsultantUser && (
+        {isShipUser && (
           <div>
             <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
               所属施設
@@ -875,7 +858,7 @@ export default function UserManagementPage() {
                         background: roleColor.bg,
                         color: roleColor.text,
                       }}>
-                        {ROLE_LABELS[user.role]}
+                        {USER_ROLE_LABELS[user.role]}
                       </span>
                     </div>
                     <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
@@ -957,7 +940,7 @@ export default function UserManagementPage() {
                             background: roleColor.bg,
                             color: roleColor.text,
                           }}>
-                            {ROLE_LABELS[user.role]}
+                            {USER_ROLE_LABELS[user.role]}
                           </span>
                         </td>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '12px' : '13px', color: '#666', maxWidth: '200px' }}>

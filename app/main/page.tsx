@@ -45,9 +45,9 @@ export default function MainPage() {
   }, [facilities]);
 
   // メールアドレスからユーザー種別を判定
-  const userType = user ? getUserType(user.email) : 'consultant';
-  const isConsultant = userType === 'consultant';
-  const isHospital = userType === 'hospital';
+  const userType = user ? getUserType(user.email) : 'ship';
+  const isShipUser = userType === 'ship';
+  const isHospitalUser = userType === 'hospital';
 
   // ユーザーの所属部署
   const userDepartment = user?.department || '未設定';
@@ -353,7 +353,7 @@ export default function MainPage() {
 
           <div className="flex gap-2.5 flex-wrap">
             {/* コンサルタント専用ボタン */}
-            {isConsultant && (
+            {isShipUser && (
               <>
                 <button
                   onClick={handleQRRead}
@@ -383,7 +383,7 @@ export default function MainPage() {
             )}
 
             {/* 病院ユーザー専用ボタン */}
-            {isHospital && (
+            {isHospitalUser && (
               <>
                 <button
                   onClick={handleQRIssueFromModal}
@@ -412,7 +412,7 @@ export default function MainPage() {
 
         {/* メニューセクション */}
         <div className={`bg-slate-50 ${isMobile ? 'px-2.5 py-4' : isTablet ? 'px-2.5 py-5' : 'px-5 py-8'}`}>
-          {isHospital ? (
+          {isHospitalUser ? (
             /* 病院ユーザー用メニュー - 横一列（デスクトップ）/ 2×2グリッド（モバイル） */
             <div className={`max-w-[1400px] mx-auto justify-center ${
               isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-nowrap gap-3'
@@ -675,7 +675,7 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     closeMasterModal();
-                    if (isHospital && user?.hospital) {
+                    if (isHospitalUser && user?.hospital) {
                       router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
                     } else {
                       setIsHospitalSelectModalOpen(true);
