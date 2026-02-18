@@ -63,8 +63,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-slate-100">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-5 p-12">
+    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-slate-100 overflow-y-auto py-8">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-5 p-12 my-auto">
         {/* ロゴ */}
         <div className="size-20 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-8 bg-emerald-500">
           SHIP
