@@ -1,38 +1,28 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { useMasterStore, useAuthStore, useApplicationStore } from '@/lib/stores';
+import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { Asset } from '@/lib/types';
 import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
 
-// 要望機器
-interface DesiredEquipment {
-  item: string;
-  maker: string;
-  model: string;
-  quantity: number;
-  unit: string;
-}
-
-interface UpdateApplicationModalProps {
+interface AdditionApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  assets: Asset[];  // 更新対象として選択された資産（1件のみ）
+  assets: Asset[];  // 増設参考として選択された資産（1件のみ）
   onSuccess?: () => void;
 }
 
-export function UpdateApplicationModal({
+export function AdditionApplicationModal({
   isOpen,
   onClose,
   assets,
   onSuccess,
-}: UpdateApplicationModalProps) {
+}: AdditionApplicationModalProps) {
   const { departments, facilities } = useMasterStore();
   const { user } = useAuthStore();
   const { addApplication: addPurchaseApplication } = usePurchaseApplicationStore();
-  const { addApplication: addDisposalApplication } = useApplicationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 申請基本情報
@@ -49,9 +39,8 @@ export function UpdateApplicationModal({
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
 
-  // 要望機器（新規購入希望）
-  const [desiredEquipments, setDesiredEquipments] = useState<DesiredEquipment[]>([]);
-  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  // 増設数量
+  const [additionQuantity, setAdditionQuantity] = useState(1);
 
   // 使用用途及び件数
   const [usagePurpose, setUsagePurpose] = useState('');
@@ -70,9 +59,6 @@ export function UpdateApplicationModal({
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
-  // 廃棄同意
-  const [disposalAgreed, setDisposalAgreed] = useState(false);
-
   // 確認画面表示
   const [isConfirmView, setIsConfirmView] = useState(false);
 
@@ -90,94 +76,7 @@ export function UpdateApplicationModal({
     }
   }, [assets, isOpen]);
 
-  // 資産マスタからのメッセージを受信するハンドラー
-  const handleAssetMessage = useCallback((event: MessageEvent) => {
-    // 同一オリジンからのメッセージのみ処理
-    if (event.origin !== window.location.origin) return;
-
-    if (event.data?.type === 'ASSET_SELECTED' && event.data?.assets) {
-      const receivedAssets = event.data.assets;
-      if (receivedAssets.length > 0) {
-        const asset = receivedAssets[0];
-        const targetIndex = sessionStorage.getItem('editingEquipmentIndex');
-
-        if (targetIndex !== null) {
-          const index = parseInt(targetIndex, 10);
-          setDesiredEquipments(prev => prev.map((e, i) =>
-            i === index
-              ? { ...e, item: asset.item || '', maker: asset.maker || '', model: asset.model || '' }
-              : e
-          ));
-          sessionStorage.removeItem('editingEquipmentIndex');
-          setEditingRowIndex(null);
-        }
-      }
-    }
-  }, []);
-
-  // isOpenがtrueの時のみイベントリスナーを登録
-  useEffect(() => {
-    if (isOpen) {
-      window.addEventListener('message', handleAssetMessage);
-      return () => {
-        window.removeEventListener('message', handleAssetMessage);
-      };
-    }
-  }, [isOpen, handleAssetMessage]);
-
   if (!isOpen || assets.length === 0) return null;
-
-  // 要望機器の追加（最大3つまで）
-  const MAX_EQUIPMENT = 3;
-  const handleAddEquipment = () => {
-    if (desiredEquipments.length >= MAX_EQUIPMENT) return;
-    setDesiredEquipments(prev => [...prev, { item: '', maker: '', model: '', quantity: 1, unit: '台' }]);
-  };
-
-  // 要望機器の削除
-  const handleRemoveEquipment = (index: number) => {
-    setDesiredEquipments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // 要望機器の順序入れ替え
-  const handleMoveEquipment = (index: number, direction: 'up' | 'down') => {
-    setDesiredEquipments(prev => {
-      const newArr = [...prev];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= newArr.length) return prev;
-      [newArr[index], newArr[targetIndex]] = [newArr[targetIndex], newArr[index]];
-      return newArr;
-    });
-  };
-
-  // 希望順ラベル
-  const getHopeLabel = (index: number): string => {
-    const labels = ['第一希望', '第二希望', '第三希望'];
-    return labels[index] || '';
-  };
-
-  // 要望機器の更新
-  const handleUpdateEquipment = (index: number, field: keyof DesiredEquipment, value: string | number) => {
-    setDesiredEquipments(prev => prev.map((e, i) => i === index ? { ...e, [field]: value } : e));
-  };
-
-  // 資産マスタを別ウィンドウで開く（行指定）
-  const handleOpenAssetMaster = (index: number) => {
-    sessionStorage.setItem('editingEquipmentIndex', String(index));
-    setEditingRowIndex(index);
-
-    const width = 1200;
-    const height = 800;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
-    window.open(
-      `${basePath}/asset-master?mode=simple`,
-      'AssetMasterWindow',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-  };
 
   // ファイル選択
   const handleFileSelect = (files: FileList | null) => {
@@ -198,14 +97,8 @@ export function UpdateApplicationModal({
       return;
     }
 
-    const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
-    if (validEquipments.length === 0) {
-      alert('要望機器（新規購入希望）を1つ以上入力してください');
-      return;
-    }
-
-    if (!disposalAgreed) {
-      alert('更新対象機器の廃棄処理に同意してください');
+    if (additionQuantity < 1) {
+      alert('増設数量は1以上を入力してください');
       return;
     }
 
@@ -219,19 +112,19 @@ export function UpdateApplicationModal({
 
   // 申請送信
   const handleSubmit = () => {
-    const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
+    const primaryAsset = assets[0];
 
-    // 1. 購入申請を作成
-    const purchaseAssets: PurchaseApplicationAsset[] = validEquipments.map(equipment => ({
-      name: equipment.item,
-      maker: equipment.maker,
-      model: equipment.model,
-      quantity: equipment.quantity,
-      unit: equipment.unit,
-    }));
+    // 購入申請を作成（参考機器の情報を使用）
+    const purchaseAssets: PurchaseApplicationAsset[] = [{
+      name: primaryAsset.item || primaryAsset.name || '',
+      maker: primaryAsset.maker || '',
+      model: primaryAsset.model || '',
+      quantity: additionQuantity,
+      unit: '台',
+    }];
 
     const purchaseInput: CreatePurchaseApplicationInput = {
-      applicationType: '更新申請',
+      applicationType: '増設申請',
       applicantId: user?.id || 'user-unknown',
       applicantName: applicantName,
       applicantDepartment: managementDepartment,
@@ -243,48 +136,22 @@ export function UpdateApplicationModal({
       section: installationSection,
       roomName: installationRoomName,
       desiredDeliveryDate: `${desiredDeliveryYear}-${String(desiredDeliveryMonth).padStart(2, '0')}-01`,
-      applicationReason: `${usagePurpose}${caseCount ? ` (症例数: ${caseCount}${caseCountUnit})` : ''}${comment ? `\n${comment}` : ''}\n\n【更新対象機器】\n${assets.map(a => `- ${a.name} (${a.model})`).join('\n')}`,
+      applicationReason: `${usagePurpose}${caseCount ? ` (症例数: ${caseCount}${caseCountUnit})` : ''}${comment ? `\n${comment}` : ''}\n\n【増設参考機器】\n- ${primaryAsset.name} (${primaryAsset.model})`,
       attachedFiles: attachedFiles.map(f => f.name),
     };
 
     addPurchaseApplication(purchaseInput);
 
-    // 2. 廃棄申請を作成（更新対象機器ごと）
-    assets.forEach((asset) => {
-      addDisposalApplication({
-        applicationNo: `DISP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        applicationDate: applicationDate,
-        applicationType: '廃棄申請',
-        asset: {
-          name: asset.name,
-          model: asset.model,
-        },
-        vendor: asset.maker,
-        quantity: String(asset.quantity || 1),
-        unit: '台',
-        status: '承認待ち',
-        approvalProgress: {
-          current: 0,
-          total: 3,
-        },
-        facility: {
-          building: asset.building,
-          floor: asset.floor,
-          department: asset.department,
-          section: asset.section,
-        },
-        roomName: asset.roomName || '',
-        freeInput: `更新申請に伴う廃棄\n申請日: ${applicationDate}`,
-        executionYear: desiredDeliveryYear,
-        applicationReason: '更新申請に伴う廃棄処理',
-      });
-    });
-
-    alert(`更新申請を送信しました\n\n【購入申請】\n要望機器: ${validEquipments.length}件\n\n【廃棄申請】\n更新対象機器: ${assets.length}件`);
+    alert(`増設申請を送信しました\n\n品目: ${primaryAsset.item || primaryAsset.name}\n数量: ${additionQuantity}台`);
     setIsConfirmView(false);
     onClose();
     onSuccess?.();
   };
+
+  // テーマカラー（増設申請用：青系）
+  const themeColor = '#2980b9';
+  const themeLightBg = '#e3f2fd';
+  const themeBorder = '#90caf9';
 
   const styles: Record<string, React.CSSProperties> = {
     overlay: {
@@ -303,14 +170,14 @@ export function UpdateApplicationModal({
       background: 'white',
       borderRadius: '8px',
       width: '95%',
-      maxWidth: '950px',
+      maxWidth: '900px',
       maxHeight: '90vh',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
     },
     header: {
-      background: '#e67e22',
+      background: themeColor,
       color: 'white',
       padding: '16px 24px',
       fontSize: '18px',
@@ -340,10 +207,10 @@ export function UpdateApplicationModal({
     sectionTitle: {
       fontSize: '14px',
       fontWeight: 'bold',
-      color: '#e67e22',
+      color: themeColor,
       marginBottom: '16px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #e67e22',
+      borderBottom: `2px solid ${themeColor}`,
     },
     note: {
       fontSize: '12px',
@@ -369,7 +236,7 @@ export function UpdateApplicationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #e67e22',
+      border: `1px solid ${themeColor}`,
       borderRadius: '4px',
       fontSize: '14px',
       boxSizing: 'border-box' as const,
@@ -384,7 +251,7 @@ export function UpdateApplicationModal({
     },
     select: {
       padding: '8px 12px',
-      border: '1px solid #e67e22',
+      border: `1px solid ${themeColor}`,
       borderRadius: '4px',
       fontSize: '14px',
       cursor: 'pointer',
@@ -405,7 +272,7 @@ export function UpdateApplicationModal({
       width: '100%',
       minHeight: '100px',
       padding: '12px',
-      border: '1px solid #e67e22',
+      border: `1px solid ${themeColor}`,
       borderRadius: '4px',
       fontSize: '14px',
       resize: 'vertical' as const,
@@ -420,7 +287,7 @@ export function UpdateApplicationModal({
     },
     confirmButton: {
       padding: '12px 48px',
-      background: '#e67e22',
+      background: themeColor,
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -435,7 +302,7 @@ export function UpdateApplicationModal({
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
-          <span>{isConfirmView ? '更新購入申請 - 内容確認' : '更新購入申請'}</span>
+          <span>{isConfirmView ? '増設購入申請 - 内容確認' : '増設購入申請'}</span>
           <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
         </div>
 
@@ -444,8 +311,8 @@ export function UpdateApplicationModal({
         {isConfirmView ? (
           /* 確認画面 */
           <div>
-            <div style={{ background: '#fff3e0', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
-              <span style={{ color: '#e65100', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            <div style={{ background: themeLightBg, padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: themeColor, fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
             {/* 申請基本情報 */}
@@ -481,11 +348,11 @@ export function UpdateApplicationModal({
               </table>
             </div>
 
-            {/* 更新対象機器（廃棄予定） */}
+            {/* 増設対象機器 */}
             <div style={styles.section}>
-              <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>更新対象機器（廃棄予定）</div>
-              <div style={{ background: '#ffebee', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#c0392b', marginBottom: '12px' }}>
+              <div style={styles.sectionTitle}>増設対象機器</div>
+              <div style={{ background: themeLightBg, border: `1px solid ${themeBorder}`, borderRadius: '8px', padding: '16px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: themeColor, marginBottom: '12px' }}>
                   {assets[0]?.name}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '13px' }}>
@@ -495,38 +362,10 @@ export function UpdateApplicationModal({
                   <div><span style={{ color: '#666' }}>管理番号:</span> {assets[0]?.managementNo || '-'}</div>
                 </div>
               </div>
-              <div style={{ marginTop: '8px', padding: '8px 12px', background: '#ffebee', borderRadius: '4px', fontSize: '12px', color: '#c0392b', textAlign: 'center' }}>
-                この機器は廃棄申請されます
+              <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#fff3e0', borderRadius: '4px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#e65100' }}>増設数量:</span>
+                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#e65100', fontVariantNumeric: 'tabular-nums' }}>{additionQuantity} 台</span>
               </div>
-            </div>
-
-            {/* 要望機器（新規購入希望） */}
-            <div style={styles.section}>
-              <div style={styles.sectionTitle}>要望機器（新規購入希望）</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>数量</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>単位</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
-                    <tr key={index}>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>{getHopeLabel(index)}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker || '-'}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model || '-'}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{equipment.quantity}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>{equipment.unit}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
 
             {/* 使用用途及び件数 */}
@@ -673,13 +512,13 @@ export function UpdateApplicationModal({
             </div>
           </div>
 
-          {/* 更新対象機器（廃棄予定） */}
+          {/* 増設対象機器 */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>
-              更新対象機器（廃棄予定）
+            <div style={styles.sectionTitle}>
+              増設対象機器
             </div>
-            <div style={{ background: '#fff8f8', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#c0392b', marginBottom: '12px' }}>
+            <div style={{ background: themeLightBg, border: `1px solid ${themeBorder}`, borderRadius: '8px', padding: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: themeColor, marginBottom: '12px' }}>
                 {assets[0]?.name}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
@@ -709,221 +548,30 @@ export function UpdateApplicationModal({
                 </div>
               </div>
             </div>
-            <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '12px', color: '#e65100' }}>
-              ※ この機器は更新に伴い廃棄申請されます。新規購入希望の機器は下記「要望機器」セクションで入力してください。
-            </div>
-          </div>
-
-          {/* 要望機器（新規購入希望） */}
-          <div style={styles.section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={styles.sectionTitle}>要望機器（新規購入希望・最大3つ）</div>
-              <button
-                onClick={handleAddEquipment}
-                disabled={desiredEquipments.length >= MAX_EQUIPMENT}
+            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#fff3e0', borderRadius: '8px', border: '1px solid #ffcc80' }}>
+              <label style={{ fontSize: '14px', fontWeight: 'bold', color: '#e65100' }}>
+                増設数量 <span style={{ color: '#e74c3c' }}>*</span>
+              </label>
+              <input
+                type="number"
+                value={additionQuantity}
+                onChange={(e) => setAdditionQuantity(Math.max(1, Number(e.target.value) || 1))}
+                min={1}
                 style={{
-                  padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#e67e22',
-                  color: 'white',
-                  border: 'none',
+                  width: '80px',
+                  padding: '8px 12px',
+                  border: '2px solid #e65100',
                   borderRadius: '4px',
-                  cursor: desiredEquipments.length >= MAX_EQUIPMENT ? 'not-allowed' : 'pointer',
-                  fontSize: '12px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  fontVariantNumeric: 'tabular-nums',
                 }}
-              >
-                + 資産を追加 ({desiredEquipments.length}/{MAX_EQUIPMENT})
-              </button>
-            </div>
-
-            <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '80px' }}>希望順</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>順序</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>品目</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>メーカー</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>型式</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '60px' }}>数量</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '60px' }}>単位</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '120px' }}>選択</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {desiredEquipments.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
-                        「+ 資産を追加」ボタンで要望機器を追加してください
-                      </td>
-                    </tr>
-                  ) : (
-                    desiredEquipments.map((equipment, index) => (
-                      <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>
-                          {getHopeLabel(index)}
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <button
-                              onClick={() => handleMoveEquipment(index, 'up')}
-                              disabled={index === 0}
-                              style={{
-                                padding: '2px 6px',
-                                background: index === 0 ? '#ccc' : '#6c757d',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '2px',
-                                cursor: index === 0 ? 'not-allowed' : 'pointer',
-                                fontSize: '10px',
-                              }}
-                              aria-label="上に移動"
-                            >
-                              ▲
-                            </button>
-                            <button
-                              onClick={() => handleMoveEquipment(index, 'down')}
-                              disabled={index === desiredEquipments.length - 1}
-                              style={{
-                                padding: '2px 6px',
-                                background: index === desiredEquipments.length - 1 ? '#ccc' : '#6c757d',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '2px',
-                                cursor: index === desiredEquipments.length - 1 ? 'not-allowed' : 'pointer',
-                                fontSize: '10px',
-                              }}
-                              aria-label="下に移動"
-                            >
-                              ▼
-                            </button>
-                          </div>
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <input
-                            type="text"
-                            value={equipment.item}
-                            onChange={(e) => handleUpdateEquipment(index, 'item', e.target.value)}
-                            placeholder="品目"
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              boxSizing: 'border-box',
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <input
-                            type="text"
-                            value={equipment.maker}
-                            onChange={(e) => handleUpdateEquipment(index, 'maker', e.target.value)}
-                            placeholder="メーカー"
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              boxSizing: 'border-box',
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <input
-                            type="text"
-                            value={equipment.model}
-                            onChange={(e) => handleUpdateEquipment(index, 'model', e.target.value)}
-                            placeholder="型式"
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              boxSizing: 'border-box',
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <input
-                            type="number"
-                            value={equipment.quantity}
-                            onChange={(e) => handleUpdateEquipment(index, 'quantity', Number(e.target.value) || 1)}
-                            min={1}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              textAlign: 'center',
-                              boxSizing: 'border-box',
-                              fontVariantNumeric: 'tabular-nums',
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <select
-                            value={equipment.unit}
-                            onChange={(e) => handleUpdateEquipment(index, 'unit', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              textAlign: 'center',
-                              boxSizing: 'border-box',
-                            }}
-                          >
-                            <option value="台">台</option>
-                            <option value="個">個</option>
-                            <option value="式">式</option>
-                            <option value="セット">セット</option>
-                          </select>
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
-                          <button
-                            onClick={() => handleOpenAssetMaster(index)}
-                            style={{
-                              padding: '4px 8px',
-                              background: '#e67e22',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '11px',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            資産マスタから選択
-                          </button>
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
-                          <button
-                            onClick={() => handleRemoveEquipment(index)}
-                            style={{
-                              padding: '4px 8px',
-                              background: '#e74c3c',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '11px',
-                            }}
-                            aria-label={`${equipment.item || '機器'}を削除`}
-                          >
-                            削除
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              />
+              <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#e65100' }}>台</span>
+              <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                ※ 上記機器と同等品を何台増設するかを入力してください
+              </span>
             </div>
           </div>
 
@@ -968,7 +616,7 @@ export function UpdateApplicationModal({
               style={styles.textarea}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="更新理由やコメントを入力してください"
+              placeholder="増設理由やコメントを入力してください"
             />
           </div>
 
@@ -982,7 +630,7 @@ export function UpdateApplicationModal({
             }}>
               <button style={{
                 padding: '8px 16px',
-                background: '#e67e22',
+                background: themeColor,
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1025,7 +673,7 @@ export function UpdateApplicationModal({
                       alignItems: 'center',
                       gap: '6px',
                       padding: '4px 10px',
-                      background: '#fff3e0',
+                      background: themeLightBg,
                       borderRadius: '4px',
                       fontSize: '12px',
                     }}
@@ -1041,8 +689,8 @@ export function UpdateApplicationModal({
                 ))}
               </div>
             )}
-            <div style={{ fontSize: '12px', color: '#e74c3c', marginTop: '8px' }}>
-              見積書・修理不能証明など手持ちの書類を添付してください
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+              見積書・参考資料などを添付してください
             </div>
           </div>
 
@@ -1112,40 +760,6 @@ export function UpdateApplicationModal({
               </div>
             </div>
           </div>
-
-          {/* 廃棄処理の確認 */}
-          <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>廃棄処理の確認</div>
-            <div style={{
-              padding: '16px',
-              background: '#ffebee',
-              borderRadius: '8px',
-              border: '1px solid #ef9a9a',
-            }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '12px',
-                cursor: 'pointer',
-              }}>
-                <input
-                  type="checkbox"
-                  checked={disposalAgreed}
-                  onChange={(e) => setDisposalAgreed(e.target.checked)}
-                  style={{ marginTop: '4px', width: '20px', height: '20px' }}
-                />
-                <div>
-                  <div style={{ fontWeight: 'bold', color: '#c0392b', marginBottom: '8px' }}>
-                    更新対象機器の廃棄処理に同意します <span style={{ color: '#e74c3c' }}>*</span>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
-                    上記「更新対象機器」に記載された「{assets[0]?.name}」は、本更新申請の承認後に廃棄申請として処理されます。
-                    廃棄処理が完了すると、当該資産は資産台帳から除外されます。
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
           </>
         )}
         </div>
@@ -1159,8 +773,8 @@ export function UpdateApplicationModal({
                 style={{
                   padding: '12px 32px',
                   background: 'white',
-                  color: '#e67e22',
-                  border: '1px solid #e67e22',
+                  color: themeColor,
+                  border: `1px solid ${themeColor}`,
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -1174,7 +788,7 @@ export function UpdateApplicationModal({
                 onClick={handleSubmit}
                 style={{
                   padding: '12px 32px',
-                  background: '#e67e22',
+                  background: themeColor,
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

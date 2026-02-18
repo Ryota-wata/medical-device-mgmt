@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
-import { useRouter } from 'next/navigation';
 import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
 
 // 要望機器
@@ -27,7 +26,6 @@ export function PurchaseApplicationModal({
   onClose,
   onSuccess,
 }: PurchaseApplicationModalProps) {
-  const router = useRouter();
   const { departments, facilities } = useMasterStore();
   const { user } = useAuthStore();
   const { addApplication } = usePurchaseApplicationStore();
@@ -234,11 +232,7 @@ export function PurchaseApplicationModal({
     alert(`購入申請を送信しました\n要望機器: ${validEquipments.length}件`);
     setIsConfirmView(false);
     onClose();
-    if (onSuccess) {
-      onSuccess();
-    } else {
-      router.push('/quotation-data-box/purchase-management');
-    }
+    onSuccess?.();
   };
 
   const styles: Record<string, React.CSSProperties> = {

@@ -12,6 +12,7 @@ import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationMod
 import { BorrowingApplicationModal } from '@/components/ui/BorrowingApplicationModal';
 import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationModal';
 import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
+import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -42,6 +43,9 @@ export default function AssetSearchResultPage() {
 
   // 更新申請モーダル関連の状態
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+
+  // 増設申請モーダル関連の状態
+  const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
 
   // モックデータ（実際のデータは useAssetStore から取得）
   const [mockAssets] = useState<Asset[]>([
@@ -202,10 +206,36 @@ export default function AssetSearchResultPage() {
     setIsUpdateModalOpen(true);
   };
 
-  // 増設申請ボタンのクリックハンドラー（未実装）
+  // 増設申請ボタンのクリックハンドラー
   const handleExpandApplication = () => {
-    alert('増設申請は別画面で実装予定です');
+    if (selectedItems.size === 0) {
+      alert('増設申請する資産を選択してください');
+      return;
+    }
+    if (selectedItems.size > 1) {
+      alert('増設申請は1台ずつ行ってください。\n資産を1件だけ選択してください。');
+      return;
+    }
+    setIsAdditionModalOpen(true);
   };
+
+  // ボタンの状態判定
+  const isSingleSelected = selectedItems.size === 1;
+  const isAnySelected = selectedItems.size > 0;
+
+  // ボタンスタイル
+  const getButtonStyle = (isEnabled: boolean): React.CSSProperties => ({
+    padding: '6px 16px',
+    background: isEnabled ? '#fff' : 'rgba(255,255,255,0.5)',
+    color: isEnabled ? '#333' : 'rgba(0,0,0,0.4)',
+    border: isEnabled ? '2px solid #fff' : '1px solid rgba(255,255,255,0.5)',
+    borderRadius: '4px',
+    cursor: isEnabled ? 'pointer' : 'default',
+    fontSize: '13px',
+    fontWeight: isEnabled ? 600 : 'normal',
+    opacity: isEnabled ? 1 : 0.6,
+    transition: 'all 0.2s',
+  });
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
@@ -219,57 +249,37 @@ export default function AssetSearchResultPage() {
         showBackButton={true}
         backHref="/main"
         backLabel="メイン画面に戻る"
+        hideMenu={true}
       />
 
       {/* 申請エリア */}
       <div style={{ background: '#4a6741', padding: '12px 20px' }}>
-        <div style={{ color: '#fff', fontSize: '13px', marginBottom: '10px' }}>
-          購入申請：対象となる資産を選択し申請を行ってください
-        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* 左側ボタン群 */}
+          {/* 左側ボタン群（購入系） */}
           <button
-            style={{
-              padding: '6px 16px',
-              background: '#fff',
-              color: '#333',
-              border: '1px solid #4a6741',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 'normal',
-            }}
+            style={getButtonStyle(isSingleSelected)}
             onClick={handleUpdateApplication}
+            title={isSingleSelected ? '' : '資産を1件選択してください'}
           >
             更新申請
           </button>
           <button
-            style={{
-              padding: '6px 16px',
-              background: '#fff',
-              color: '#333',
-              border: '1px solid #4a6741',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 'normal',
-            }}
+            style={getButtonStyle(isSingleSelected)}
             onClick={handleExpandApplication}
+            title={isSingleSelected ? '' : '資産を1件選択してください'}
           >
             増設申請
           </button>
           <button
-            style={{
-              padding: '6px 16px',
-              background: '#fff',
-              color: '#333',
-              border: '1px solid #4a6741',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 'normal',
+            style={getButtonStyle(!isAnySelected)}
+            onClick={() => {
+              if (isAnySelected) {
+                alert('新規申請は資産を選択せずに行ってください');
+                return;
+              }
+              handleNewApplication();
             }}
-            onClick={handleNewApplication}
+            title={!isAnySelected ? '' : '資産の選択を解除してください'}
           >
             新規申請
           </button>
@@ -277,17 +287,15 @@ export default function AssetSearchResultPage() {
           {/* 中央ボタン */}
           <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
             <button
-              style={{
-                padding: '6px 24px',
-                background: '#fff',
-                color: '#333',
-                border: '1px solid #4a6741',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'normal',
+              style={getButtonStyle(!isAnySelected)}
+              onClick={() => {
+                if (isAnySelected) {
+                  alert('借用申請は資産を選択せずに行ってください');
+                  return;
+                }
+                setIsBorrowingModalOpen(true);
               }}
-              onClick={() => setIsBorrowingModalOpen(true)}
+              title={!isAnySelected ? '' : '資産の選択を解除してください'}
             >
               借用申請
             </button>
@@ -295,16 +303,7 @@ export default function AssetSearchResultPage() {
 
           {/* 右側ボタン群 */}
           <button
-            style={{
-              padding: '6px 16px',
-              background: '#fff',
-              color: '#333',
-              border: '1px solid #4a6741',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 'normal',
-            }}
+            style={getButtonStyle(isAnySelected)}
             onClick={() => {
               if (selectedItems.size === 0) {
                 alert('移動申請する資産を選択してください');
@@ -312,20 +311,12 @@ export default function AssetSearchResultPage() {
               }
               setIsTransferModalOpen(true);
             }}
+            title={isAnySelected ? '' : '資産を選択してください'}
           >
             移動申請
           </button>
           <button
-            style={{
-              padding: '6px 16px',
-              background: '#fff',
-              color: '#333',
-              border: '1px solid #4a6741',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 'normal',
-            }}
+            style={getButtonStyle(isAnySelected)}
             onClick={() => {
               if (selectedItems.size === 0) {
                 alert('廃棄申請する資産を選択してください');
@@ -333,9 +324,43 @@ export default function AssetSearchResultPage() {
               }
               setIsDisposalModalOpen(true);
             }}
+            title={isAnySelected ? '' : '資産を選択してください'}
           >
             廃棄申請
           </button>
+        </div>
+        {/* 選択状態表示 */}
+        <div style={{
+          marginTop: '8px',
+          fontSize: '12px',
+          color: 'rgba(255,255,255,0.9)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px'
+        }}>
+          <span style={{
+            background: 'rgba(255,255,255,0.2)',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontWeight: 500
+          }}>
+            選択中: {selectedItems.size}件
+          </span>
+          {selectedItems.size === 0 && (
+            <span style={{ color: '#90EE90' }}>
+              ✓ 新規・借用申請が可能です
+            </span>
+          )}
+          {selectedItems.size === 1 && (
+            <span style={{ color: '#90EE90' }}>
+              ✓ 更新・増設・移動・廃棄申請が可能です
+            </span>
+          )}
+          {selectedItems.size > 1 && (
+            <span style={{ color: '#90EE90' }}>
+              ✓ 移動・廃棄申請が可能です
+            </span>
+          )}
         </div>
       </div>
 
@@ -610,7 +635,6 @@ export default function AssetSearchResultPage() {
         onClose={() => setIsPurchaseModalOpen(false)}
         onSuccess={() => {
           setSelectedItems(new Set());
-          router.push('/application-list');
         }}
       />
 
@@ -652,7 +676,16 @@ export default function AssetSearchResultPage() {
         assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
         onSuccess={() => {
           setSelectedItems(new Set());
-          router.push('/quotation-data-box/purchase-management');
+        }}
+      />
+
+      {/* 増設申請モーダル */}
+      <AdditionApplicationModal
+        isOpen={isAdditionModalOpen}
+        onClose={() => setIsAdditionModalOpen(false)}
+        assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
+        onSuccess={() => {
+          setSelectedItems(new Set());
         }}
       />
     </div>
