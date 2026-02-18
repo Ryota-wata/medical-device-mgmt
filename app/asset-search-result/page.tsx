@@ -38,7 +38,6 @@ export default function AssetSearchResultPage() {
 
   // 購入申請モーダル関連の状態
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-  const [purchaseApplicationType, setPurchaseApplicationType] = useState<'new' | 'update' | 'expand'>('new');
 
   // モックデータ（実際のデータは useAssetStore から取得）
   const [mockAssets] = useState<Asset[]>([
@@ -183,24 +182,21 @@ export default function AssetSearchResultPage() {
 
   // 新規申請ボタンのクリックハンドラー
   const handleNewApplication = () => {
-    setPurchaseApplicationType('new');
     setIsPurchaseModalOpen(true);
   };
 
-  // 更新申請ボタンのクリックハンドラー
+  // 更新申請ボタンのクリックハンドラー（未実装）
   const handleUpdateApplication = () => {
     if (selectedItems.size === 0) {
       alert('更新申請する資産を選択してください');
       return;
     }
-    setPurchaseApplicationType('update');
-    setIsPurchaseModalOpen(true);
+    alert('更新申請は別画面で実装予定です');
   };
 
-  // 増設申請ボタンのクリックハンドラー
+  // 増設申請ボタンのクリックハンドラー（未実装）
   const handleExpandApplication = () => {
-    setPurchaseApplicationType('expand');
-    setIsPurchaseModalOpen(true);
+    alert('増設申請は別画面で実装予定です');
   };
 
   return (
@@ -608,7 +604,6 @@ export default function AssetSearchResultPage() {
           setSelectedItems(new Set());
           router.push('/application-list');
         }}
-        selectedAssets={purchaseApplicationType === 'update' ? filteredAssets.filter(asset => selectedItems.has(asset.no)) : []}
       />
 
       {/* 移動申請モーダル */}

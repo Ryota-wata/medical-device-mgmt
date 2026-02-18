@@ -6,9 +6,6 @@ import { useMasterStore, useAuthStore, useApplicationStore } from '@/lib/stores'
 import { useRouter } from 'next/navigation';
 import { Asset, Application } from '@/lib/types';
 
-// 申請区分
-type ApplicationCategory = '新規申請' | '更新申請' | '増設申請';
-
 // 要望機器
 interface DesiredEquipment {
   id: string;
@@ -20,28 +17,16 @@ interface DesiredEquipment {
   isFromMaster: boolean;
 }
 
-// 更新対象機器
-interface UpdateTargetAsset {
-  qrCode: string;
-  item: string;
-  maker: string;
-  model: string;
-  purchaseDate: string;
-}
-
 interface PurchaseApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  // 更新申請用：選択された資産
-  selectedAssets?: Asset[];
 }
 
 export function PurchaseApplicationModal({
   isOpen,
   onClose,
   onSuccess,
-  selectedAssets = [],
 }: PurchaseApplicationModalProps) {
   const router = useRouter();
   const { departments, facilities } = useMasterStore();
@@ -59,7 +44,6 @@ export function PurchaseApplicationModal({
   const [installationDepartment, setInstallationDepartment] = useState('');
   const [installationSection, setInstallationSection] = useState('');
   const [installationRoomName, setInstallationRoomName] = useState('');
-  const [applicationCategory, setApplicationCategory] = useState<ApplicationCategory>('新規申請');
   const [priority, setPriority] = useState('1');
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
@@ -86,25 +70,9 @@ export function PurchaseApplicationModal({
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
-  // 更新対象機器（更新申請用）
-  const [updateTargetAssets, setUpdateTargetAssets] = useState<UpdateTargetAsset[]>([]);
-
   // 部門・部署オプション
   const divisionOptions = [...new Set(departments.map(d => d.division))];
   const departmentOptions = [...new Set(departments.map(d => d.department))];
-
-  // 更新申請の場合、選択された資産を更新対象に設定
-  useEffect(() => {
-    if (selectedAssets.length > 0 && applicationCategory === '更新申請') {
-      setUpdateTargetAssets(selectedAssets.map(asset => ({
-        qrCode: asset.qrCode,
-        item: asset.item,
-        maker: asset.maker,
-        model: asset.model,
-        purchaseDate: asset.contractDate || '',
-      })));
-    }
-  }, [selectedAssets, applicationCategory]);
 
   // 資産マスタからのメッセージを受信
   useEffect(() => {
@@ -186,11 +154,6 @@ export function PurchaseApplicationModal({
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 更新対象機器の廃棄申請
-  const handleDisposalApplication = (qrCode: string) => {
-    alert(`${qrCode} の廃棄申請画面に遷移します（未実装）`);
-  };
-
   // 申請内容確認
   const handleConfirm = () => {
     // バリデーション
@@ -210,7 +173,7 @@ export function PurchaseApplicationModal({
       const applicationData: Omit<Application, 'id'> = {
         applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         applicationDate: applicationDate,
-        applicationType: applicationCategory,
+        applicationType: '新規申請',
         asset: {
           name: equipment.item,
           model: equipment.model,
@@ -442,11 +405,6 @@ export function PurchaseApplicationModal({
       color: '#e74c3c',
       marginTop: '8px',
     },
-    targetAssetTable: {
-      width: '100%',
-      borderCollapse: 'collapse' as const,
-      fontSize: '13px',
-    },
     footer: {
       padding: '16px 24px',
       borderTop: '1px solid #dee2e6',
@@ -471,7 +429,7 @@ export function PurchaseApplicationModal({
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
-          <span>購入申請 モーダル</span>
+          <span>新規購入申請</span>
           <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
         </div>
 
@@ -523,22 +481,6 @@ export function PurchaseApplicationModal({
                   onChange={(e) => setInstallationRoomName(e.target.value)}
                   placeholder="手術室B"
                 />
-              </div>
-              <div></div>
-              <div style={{ ...styles.formItem, gridColumn: '1 / 3' }}>
-                <label style={styles.label}>申請区分</label>
-                <div style={styles.radioGroup}>
-                  {(['新規申請', '更新申請', '増設申請'] as ApplicationCategory[]).map((cat) => (
-                    <label key={cat} style={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        checked={applicationCategory === cat}
-                        onChange={() => setApplicationCategory(cat)}
-                      />
-                      {cat}
-                    </label>
-                  ))}
-                </div>
               </div>
               <div style={styles.formItem}>
                 <label style={styles.label}>優先順位</label>
@@ -843,59 +785,6 @@ export function PurchaseApplicationModal({
             </div>
           </div>
 
-          {/* 更新対象機器（更新申請の場合のみ） */}
-          {applicationCategory === '更新申請' && (
-            <div style={styles.section}>
-              <div style={styles.sectionTitle}>更新対象機器</div>
-              {updateTargetAssets.length === 0 ? (
-                <div style={{ padding: '16px', textAlign: 'center', color: '#666', background: '#f8f9fa', borderRadius: '6px' }}>
-                  更新対象機器がありません
-                </div>
-              ) : (
-                <table style={styles.targetAssetTable}>
-                  <thead>
-                    <tr style={{ background: '#f8f9fa' }}>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left' }}>更新対象:</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left' }}>QRコード</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left' }}>購入年月日</th>
-                      <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center' }}></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {updateTargetAssets.map((asset, index) => (
-                      <tr key={index}>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd' }}></td>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd' }}>{asset.qrCode}</td>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd' }}>{asset.item}</td>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd' }}>{asset.maker}</td>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd' }}>{asset.model}</td>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd' }}>{asset.purchaseDate}</td>
-                        <td style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center' }}>
-                          <button
-                            onClick={() => handleDisposalApplication(asset.qrCode)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#e74c3c',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                            }}
-                          >
-                            廃棄申請
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
         </div>
 
         {/* フッター */}
