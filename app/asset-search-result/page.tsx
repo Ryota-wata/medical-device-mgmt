@@ -144,6 +144,7 @@ export default function AssetSearchResultPage() {
     filters,
     setFilters,
     filteredAssets,
+    facilityOptions,
     categoryOptions,
     largeClassOptions,
     mediumClassOptions,
@@ -370,6 +371,17 @@ export default function AssetSearchResultPage() {
           資産を絞り込む
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+          {/* 施設 */}
+          <div style={{ minWidth: '160px', position: 'relative', zIndex: 17 }}>
+            <SearchableSelect
+              value={filters.facility}
+              onChange={(val) => setFilters({ facility: val })}
+              options={facilityOptions}
+              placeholder="施設"
+              isMobile={isMobile}
+            />
+          </div>
+
           {/* 管理部署 */}
           <div style={{ minWidth: '140px', position: 'relative', zIndex: 16 }}>
             <SearchableSelect

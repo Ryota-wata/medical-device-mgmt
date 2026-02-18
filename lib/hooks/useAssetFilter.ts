@@ -3,6 +3,7 @@ import { Asset } from '@/lib/types';
 import { useMasterStore } from '@/lib/stores';
 
 interface AssetFilters {
+  facility: string;
   building: string;
   floor: string;
   department: string;
@@ -31,6 +32,7 @@ export function useAssetFilter(initialAssets: Asset[]) {
 
   // フィルター状態
   const [filters, setFiltersState] = useState<AssetFilters>({
+    facility: '',
     building: '',
     floor: '',
     department: '',
@@ -44,6 +46,12 @@ export function useAssetFilter(initialAssets: Asset[]) {
 
   // フィルタリングされた資産
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>(initialAssets);
+
+  // 施設オプション（施設マスタから取得）
+  const facilityOptions = useMemo(() => {
+    const uniqueFacilities = Array.from(new Set(facilities.map(f => f.facilityName)));
+    return uniqueFacilities.filter(Boolean) as string[];
+  }, [facilities]);
 
   // 部署オプション（部署マスタから取得）
   const departmentOptions = useMemo(() => {
@@ -226,6 +234,9 @@ export function useAssetFilter(initialAssets: Asset[]) {
   useEffect(() => {
     let filtered = initialAssets;
 
+    if (filters.facility) {
+      filtered = filtered.filter(asset => asset.facility === filters.facility);
+    }
     if (filters.building) {
       filtered = filtered.filter(asset => asset.building === filters.building);
     }
@@ -268,6 +279,7 @@ export function useAssetFilter(initialAssets: Asset[]) {
     filters,
     setFilters,
     filteredAssets,
+    facilityOptions,
     categoryOptions,
     largeClassOptions,
     mediumClassOptions,
