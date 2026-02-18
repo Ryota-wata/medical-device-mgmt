@@ -8,13 +8,11 @@ import { Asset, Application } from '@/lib/types';
 
 // 要望機器
 interface DesiredEquipment {
-  id: string;
   item: string;
   maker: string;
   model: string;
   quantity: number;
   unit: string;
-  isFromMaster: boolean;
 }
 
 interface PurchaseApplicationModalProps {
@@ -48,10 +46,8 @@ export function PurchaseApplicationModal({
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
 
-  // 要望機器（最大3つ）
-  const [desiredEquipments, setDesiredEquipments] = useState<DesiredEquipment[]>([
-    { id: '1', item: '', maker: '', model: '', quantity: 1, unit: '台', isFromMaster: false },
-  ]);
+  // 要望機器
+  const [desiredEquipments, setDesiredEquipments] = useState<DesiredEquipment[]>([]);
 
   // 使用用途及び件数
   const [usagePurpose, setUsagePurpose] = useState('');
@@ -79,21 +75,20 @@ export function PurchaseApplicationModal({
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
 
-      if (event.data.type === 'ASSET_SELECTED') {
-        const assetMasters = event.data.assets as any[];
-        const targetEquipmentId = sessionStorage.getItem('targetEquipmentId');
-
-        if (assetMasters.length > 0 && targetEquipmentId) {
-          const assetMaster = assetMasters[0];
-          setDesiredEquipments(prev =>
-            prev.map(e =>
-              e.id === targetEquipmentId
-                ? { ...e, item: assetMaster.item, maker: assetMaster.maker, model: assetMaster.model, isFromMaster: true }
-                : e
-            )
-          );
-          sessionStorage.removeItem('targetEquipmentId');
-        }
+      if (event.data?.type === 'ASSET_SELECTED' && event.data?.assets) {
+        const receivedAssets = event.data.assets;
+        const newAssets: DesiredEquipment[] = receivedAssets.map((asset: {
+          item?: string;
+          maker?: string;
+          model?: string;
+        }) => ({
+          item: asset.item || '',
+          maker: asset.maker || '',
+          model: asset.model || '',
+          quantity: 1,
+          unit: '台',
+        }));
+        setDesiredEquipments(prev => [...prev, ...newAssets]);
       }
     };
 
@@ -103,38 +98,18 @@ export function PurchaseApplicationModal({
 
   if (!isOpen) return null;
 
-  // 要望機器の追加
-  const handleAddDesiredEquipment = () => {
-    if (desiredEquipments.length >= 3) return;
-    setDesiredEquipments([
-      ...desiredEquipments,
-      { id: String(Date.now()), item: '', maker: '', model: '', quantity: 1, unit: '台', isFromMaster: false },
-    ]);
-  };
-
   // 要望機器の削除
-  const handleRemoveDesiredEquipment = (id: string) => {
-    if (desiredEquipments.length <= 1) return;
-    setDesiredEquipments(desiredEquipments.filter(e => e.id !== id));
-  };
-
-  // 要望機器の更新
-  const handleUpdateDesiredEquipment = (id: string, field: keyof DesiredEquipment, value: string | number | boolean) => {
-    setDesiredEquipments(desiredEquipments.map(e =>
-      e.id === id ? { ...e, [field]: value } : e
-    ));
+  const handleRemoveEquipment = (index: number) => {
+    setDesiredEquipments(prev => prev.filter((_, i) => i !== index));
   };
 
   // 資産マスタを別ウィンドウで開く
-  const handleOpenAssetMaster = (equipmentId: string) => {
+  const handleOpenAssetMaster = () => {
     const width = 1200;
     const height = 800;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
-    // equipmentIdをsessionStorageに保存
-    sessionStorage.setItem('targetEquipmentId', equipmentId);
 
     window.open(
       `${basePath}/asset-master`,
@@ -327,44 +302,6 @@ export function PurchaseApplicationModal({
       cursor: 'pointer',
       fontSize: '14px',
     },
-    equipmentRow: {
-      display: 'flex',
-      alignItems: 'flex-end',
-      gap: '8px',
-      marginBottom: '12px',
-      padding: '12px',
-      background: '#f8f9fa',
-      borderRadius: '6px',
-      border: '1px solid #e0e0e0',
-    },
-    equipmentInput: {
-      flex: 1,
-      minWidth: '80px',
-    },
-    equipmentInputSmall: {
-      width: '60px',
-    },
-    masterButton: {
-      padding: '8px 12px',
-      background: '#4a6741',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      whiteSpace: 'nowrap' as const,
-    },
-    deleteButton: {
-      padding: '8px 12px',
-      background: '#e74c3c',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: 'bold',
-    },
     textarea: {
       width: '100%',
       minHeight: '100px',
@@ -520,105 +457,118 @@ export function PurchaseApplicationModal({
 
           {/* 要望機器 */}
           <div style={styles.section}>
-            <div style={styles.sectionTitle}>要望機器</div>
-            <div style={{ fontSize: '13px', color: '#666', marginBottom: '16px' }}>
-              フリー入力も可能ですが、資産マスタに登録があればカタログ・添付文書を閲覧の上、選択ができます
-            </div>
-
-            {desiredEquipments.map((equipment, index) => (
-              <div key={equipment.id}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4a6741', marginBottom: '8px' }}>
-                  第{['一', '二', '三'][index]}希望
-                </div>
-                <div style={styles.equipmentRow}>
-                  <div style={styles.equipmentInput}>
-                    <label style={{ fontSize: '12px', color: '#666' }}>品目</label>
-                    <input
-                      style={{
-                        ...styles.input,
-                        width: '100%',
-                        background: equipment.isFromMaster ? '#e8f5e9' : 'white',
-                      }}
-                      value={equipment.item}
-                      onChange={(e) => handleUpdateDesiredEquipment(equipment.id, 'item', e.target.value)}
-                      placeholder="品目"
-                    />
-                  </div>
-                  <div style={styles.equipmentInput}>
-                    <label style={{ fontSize: '12px', color: '#666' }}>メーカー</label>
-                    <input
-                      style={styles.input}
-                      value={equipment.maker}
-                      onChange={(e) => handleUpdateDesiredEquipment(equipment.id, 'maker', e.target.value)}
-                      placeholder="メーカー"
-                    />
-                  </div>
-                  <div style={styles.equipmentInput}>
-                    <label style={{ fontSize: '12px', color: '#666' }}>型式</label>
-                    <input
-                      style={styles.input}
-                      value={equipment.model}
-                      onChange={(e) => handleUpdateDesiredEquipment(equipment.id, 'model', e.target.value)}
-                      placeholder="型式"
-                    />
-                  </div>
-                  <div style={styles.equipmentInputSmall}>
-                    <label style={{ fontSize: '12px', color: '#666' }}>数</label>
-                    <input
-                      type="number"
-                      style={{ ...styles.input, width: '100%' }}
-                      value={equipment.quantity}
-                      onChange={(e) => handleUpdateDesiredEquipment(equipment.id, 'quantity', Number(e.target.value))}
-                      min={1}
-                    />
-                  </div>
-                  <div style={styles.equipmentInputSmall}>
-                    <label style={{ fontSize: '12px', color: '#666' }}>単</label>
-                    <select
-                      style={{ ...styles.select, width: '100%' }}
-                      value={equipment.unit}
-                      onChange={(e) => handleUpdateDesiredEquipment(equipment.id, 'unit', e.target.value)}
-                    >
-                      <option value="台">台</option>
-                      <option value="個">個</option>
-                      <option value="式">式</option>
-                      <option value="セット">セット</option>
-                    </select>
-                  </div>
-                  {desiredEquipments.length > 1 && (
-                    <button
-                      style={styles.deleteButton}
-                      onClick={() => handleRemoveDesiredEquipment(equipment.id)}
-                    >
-                      ×
-                    </button>
-                  )}
-                  <button
-                    style={styles.masterButton}
-                    onClick={() => handleOpenAssetMaster(equipment.id)}
-                  >
-                    資産マスタから選択する
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {desiredEquipments.length < 3 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={styles.sectionTitle}>要望機器</div>
               <button
-                onClick={handleAddDesiredEquipment}
+                onClick={handleOpenAssetMaster}
                 style={{
-                  padding: '8px 16px',
-                  background: 'white',
-                  color: '#4a6741',
-                  border: '1px dashed #4a6741',
+                  padding: '6px 16px',
+                  background: '#4a6741',
+                  color: 'white',
+                  border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  fontSize: '13px',
+                  fontSize: '12px',
                 }}
               >
-                + 希望を追加
+                資産マスタから選択する
               </button>
-            )}
+            </div>
+
+            <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead>
+                  <tr style={{ background: '#f8f9fa' }}>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>品目</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>メーカー</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>型式</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '70px' }}>数量</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '70px' }}>単位</th>
+                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {desiredEquipments.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                        要望機器を資産マスタから選択してください
+                      </td>
+                    </tr>
+                  ) : (
+                    desiredEquipments.map((equipment, index) => (
+                      <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker}</td>
+                        <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model}</td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                          <input
+                            type="number"
+                            value={equipment.quantity}
+                            onChange={(e) => {
+                              const newEquipments = [...desiredEquipments];
+                              newEquipments[index].quantity = Number(e.target.value) || 1;
+                              setDesiredEquipments(newEquipments);
+                            }}
+                            min={1}
+                            style={{
+                              width: '100%',
+                              padding: '4px 6px',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              textAlign: 'center',
+                              boxSizing: 'border-box',
+                              fontVariantNumeric: 'tabular-nums',
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                          <select
+                            value={equipment.unit}
+                            onChange={(e) => {
+                              const newEquipments = [...desiredEquipments];
+                              newEquipments[index].unit = e.target.value;
+                              setDesiredEquipments(newEquipments);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '4px 6px',
+                              border: '1px solid #ddd',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              textAlign: 'center',
+                              boxSizing: 'border-box',
+                            }}
+                          >
+                            <option value="台">台</option>
+                            <option value="個">個</option>
+                            <option value="式">式</option>
+                            <option value="セット">セット</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleRemoveEquipment(index)}
+                            style={{
+                              padding: '4px 8px',
+                              background: '#e74c3c',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                            }}
+                            aria-label={`${equipment.item}を削除`}
+                          >
+                            削除
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* 使用用途及び件数 */}
