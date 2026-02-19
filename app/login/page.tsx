@@ -27,7 +27,7 @@ export default function LoginPage() {
   // テストアカウントをクリックしてメール欄に入力
   const handleTestAccountClick = (testEmail: string) => {
     setEmail(testEmail);
-    setPassword('test'); // テスト用パスワード
+    setPassword('あ'); // テスト用パスワード
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,7 +196,7 @@ export default function LoginPage() {
               ))}
 
               <p className="text-xs text-slate-400 mt-3 text-center text-pretty">
-                クリックするとメール欄に入力されます（パスワード: test）
+                クリックするとメール欄に入力されます（パスワード: あ）
               </p>
             </div>
           )}
