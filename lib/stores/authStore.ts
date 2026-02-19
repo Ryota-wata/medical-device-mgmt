@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { User, UserRole, LoginCredentials } from '../types';
 
 /**
@@ -75,70 +76,81 @@ interface AuthStore {
   setUser: (user: User | null) => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-
-  login: async (credentials: LoginCredentials) => {
-    set({ isLoading: true });
-    try {
-      // TODO: 実際のAPIコールに置き換える
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // メールアドレスに基づいてテストユーザーを検索
-      const testUser = TEST_USERS.find(u => u.email === credentials.username);
-
-      let mockUser: User;
-
-      if (testUser) {
-        // 登録済みテストユーザー
-        mockUser = {
-          id: `user-${testUser.role}-001`,
-          username: testUser.name,
-          email: testUser.email,
-          role: testUser.role,
-          hospital: testUser.hospital,
-          department: testUser.department,
-          section: testUser.section,
-          accessibleFacilities: testUser.accessibleFacilities,
-        };
-      } else {
-        // 未登録メールアドレスの場合はデフォルトで臨床スタッフとして扱う
-        const isHospitalUser = credentials.username.includes('@hospital');
-        mockUser = {
-          id: 'user-unknown-001',
-          username: credentials.username.split('@')[0],
-          email: credentials.username,
-          role: isHospitalUser ? 'clinical_staff' : 'consultant',
-          hospital: isHospitalUser ? '東京中央病院' : undefined,
-          department: isHospitalUser ? '未設定' : undefined,
-          section: isHospitalUser ? '未設定' : undefined,
-        };
-      }
-
-      set({
-        user: mockUser,
-        isAuthenticated: true,
-        isLoading: false
-      });
-    } catch (error) {
-      set({ isLoading: false });
-      throw error;
-    }
-  },
-
-  logout: () => {
-    set({
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
       user: null,
-      isAuthenticated: false
-    });
-  },
+      isAuthenticated: false,
+      isLoading: false,
 
-  setUser: (user: User | null) => {
-    set({
-      user,
-      isAuthenticated: user !== null
-    });
-  }
-}));
+      login: async (credentials: LoginCredentials) => {
+        set({ isLoading: true });
+        try {
+          // TODO: 実際のAPIコールに置き換える
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // メールアドレスに基づいてテストユーザーを検索
+          const testUser = TEST_USERS.find(u => u.email === credentials.username);
+
+          let mockUser: User;
+
+          if (testUser) {
+            // 登録済みテストユーザー
+            mockUser = {
+              id: `user-${testUser.role}-001`,
+              username: testUser.name,
+              email: testUser.email,
+              role: testUser.role,
+              hospital: testUser.hospital,
+              department: testUser.department,
+              section: testUser.section,
+              accessibleFacilities: testUser.accessibleFacilities,
+            };
+          } else {
+            // 未登録メールアドレスの場合はデフォルトで臨床スタッフとして扱う
+            const isHospitalUser = credentials.username.includes('@hospital');
+            mockUser = {
+              id: 'user-unknown-001',
+              username: credentials.username.split('@')[0],
+              email: credentials.username,
+              role: isHospitalUser ? 'clinical_staff' : 'consultant',
+              hospital: isHospitalUser ? '東京中央病院' : undefined,
+              department: isHospitalUser ? '未設定' : undefined,
+              section: isHospitalUser ? '未設定' : undefined,
+            };
+          }
+
+          set({
+            user: mockUser,
+            isAuthenticated: true,
+            isLoading: false
+          });
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      logout: () => {
+        set({
+          user: null,
+          isAuthenticated: false
+        });
+      },
+
+      setUser: (user: User | null) => {
+        set({
+          user,
+          isAuthenticated: user !== null
+        });
+      }
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);
