@@ -103,8 +103,8 @@ function RemodelApplicationContent() {
     // 個体管理の設置場所更新
     individuals.forEach(ind => {
       const matchingFacility = facilityMasters.find(f =>
-        f.currentFloor === ind.location.floor &&
-        f.currentDepartment === ind.location.department
+        f.oldFloor === ind.location.floor &&
+        f.oldDepartment === ind.location.department
       );
       if (matchingFacility && matchingFacility.newFloor) {
         updateIndividual(ind.id, {
@@ -1332,15 +1332,15 @@ function RemodelApplicationContent() {
                         const firstAsset = selectedAssetsList[0];
                         const newLocation = getNewLocationByCurrentLocation({
                           hospitalId: facility,
-                          building: firstAsset.building,
                           floor: firstAsset.floor,
                           department: firstAsset.department,
-                          section: firstAsset.roomName || firstAsset.section,
+                          section: firstAsset.section,
+                          roomName: firstAsset.roomName || '',
                         });
                         if (newLocation && newLocation.floor) {
                           setApplicationFloor(newLocation.floor);
                           setApplicationDepartment(newLocation.department);
-                          setApplicationRoomName(newLocation.section);
+                          setApplicationRoomName(newLocation.roomName);
                           alert('個別施設マスタから新居情報を取得しました');
                         } else {
                           alert('個別施設マスタに該当するマッピング情報がありません。\n個別施設マスタで現状→新居のマッピングを登録してください。');

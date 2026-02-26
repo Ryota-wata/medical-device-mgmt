@@ -3,6 +3,7 @@
  *
  * リモデル（病院移転新築）時に使用する施設マッピング情報
  * - 現状の設置場所と新居の設置場所を管理
+ * - SHIP部署マスタ（DepartmentMaster）と連携し、SHIP体系の対応付けを行う
  * - リモデル完了後、新居の設置場所が現状の設置場所となる
  */
 
@@ -14,17 +15,23 @@ export interface HospitalFacilityMaster {
   hospitalId: string;           // 病院ID
   hospitalName: string;         // 病院名（表示用）
 
-  // 現状の設置場所
-  currentBuilding: string;      // 現状の棟
-  currentFloor: string;         // 現状の階
-  currentDepartment: string;    // 現状の部門・部署
-  currentSection: string;       // 現状の部署
+  // 旧（現状の設置場所 + SHIPマッピング）
+  oldShipDivision: string;      // SHIP部門
+  oldShipDepartment: string;    // SHIP部署
+  oldShipRoomCategory: string;  // SHIP諸室区分
+  oldFloor: string;             // フロア
+  oldDepartment: string;        // 部門
+  oldSection: string;           // 部署
+  oldRoomName: string;          // 室名称
 
-  // 新居の設置場所
-  newBuilding: string;          // 新居の棟
-  newFloor: string;             // 新居の階
-  newDepartment: string;        // 新居の部門・部署
-  newSection: string;           // 新居の部署
+  // 新（新居の設置場所 + SHIPマッピング）
+  newShipDivision: string;      // SHIP部門
+  newShipDepartment: string;    // SHIP部署
+  newShipRoomCategory: string;  // SHIP諸室区分
+  newFloor: string;             // フロア
+  newDepartment: string;        // 部門
+  newSection: string;           // 部署
+  newRoomName: string;          // 室名称
 
   // 管理情報
   status: HospitalFacilityStatus;
@@ -66,16 +73,22 @@ export type RemodelProjectStatus =
  */
 export interface FacilityMapping {
   currentLocation: {
-    building: string;
+    shipDivision: string;
+    shipDepartment: string;
+    shipRoomCategory: string;
     floor: string;
     department: string;
     section: string;
+    roomName: string;
   };
   newLocation: {
-    building: string;
+    shipDivision: string;
+    shipDepartment: string;
+    shipRoomCategory: string;
     floor: string;
     department: string;
     section: string;
+    roomName: string;
   };
 }
 
@@ -84,8 +97,8 @@ export interface FacilityMapping {
  */
 export interface HospitalFacilityFilter {
   hospitalId?: string;
-  currentFloor?: string;
-  currentDepartment?: string;
+  oldFloor?: string;
+  oldDepartment?: string;
   newFloor?: string;
   newDepartment?: string;
   status?: HospitalFacilityStatus;
@@ -96,10 +109,10 @@ export interface HospitalFacilityFilter {
  */
 export interface CurrentLocationKey {
   hospitalId: string;
-  building: string;
   floor: string;
   department: string;
   section: string;
+  roomName: string;
 }
 
 /**

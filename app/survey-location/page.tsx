@@ -24,13 +24,12 @@ function SurveyLocationContent() {
 
   const [surveyDate, setSurveyDate] = useState('');
   const [category, setCategory] = useState('');
-  const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
   const [department, setDepartment] = useState('');
   const [section, setSection] = useState('');
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
 
-  const isFormDirty = category !== '' || building !== '' || floor !== '' || department !== '' || section !== '';
+  const isFormDirty = category !== '' || floor !== '' || department !== '' || section !== '';
 
   const handleHomeClick = () => {
     if (isFormDirty) {
@@ -46,24 +45,19 @@ function SurveyLocationContent() {
     return uniqueCategories.filter(Boolean);
   }, [assetMasters]);
 
-  // 個別施設マスタ（HospitalFacilityMaster）から現状の設置場所オプションを生成
-  const buildingOptions = useMemo(() => {
-    const uniqueBuildings = Array.from(new Set(facilityMasterData.map(f => f.currentBuilding).filter((b): b is string => !!b)));
-    return uniqueBuildings;
-  }, [facilityMasterData]);
-
+  // 個別施設マスタ（HospitalFacilityMaster）から旧（現状）の設置場所オプションを生成
   const floorOptions = useMemo(() => {
-    const uniqueFloors = Array.from(new Set(facilityMasterData.map(f => f.currentFloor).filter((f): f is string => !!f)));
+    const uniqueFloors = Array.from(new Set(facilityMasterData.map(f => f.oldFloor).filter((f): f is string => !!f)));
     return uniqueFloors;
   }, [facilityMasterData]);
 
   const departmentOptions = useMemo(() => {
-    const uniqueDepartments = Array.from(new Set(facilityMasterData.map(f => f.currentDepartment).filter((d): d is string => !!d)));
+    const uniqueDepartments = Array.from(new Set(facilityMasterData.map(f => f.oldDepartment).filter((d): d is string => !!d)));
     return uniqueDepartments;
   }, [facilityMasterData]);
 
   const sectionOptions = useMemo(() => {
-    const uniqueSections = Array.from(new Set(facilityMasterData.map(f => f.currentSection).filter((s): s is string => !!s)));
+    const uniqueSections = Array.from(new Set(facilityMasterData.map(f => f.oldRoomName).filter((s): s is string => !!s)));
     return uniqueSections;
   }, [facilityMasterData]);
 
@@ -83,7 +77,7 @@ function SurveyLocationContent() {
 
   const handleNext = () => {
     // Validate that all fields are selected
-    if (!category || !building || !floor || !department || !section) {
+    if (!category || !floor || !department || !section) {
       alert('すべての項目を選択してください');
       return;
     }
@@ -91,7 +85,6 @@ function SurveyLocationContent() {
     // Navigate to asset input screen with location data
     const queryParams = new URLSearchParams({
       category,
-      building,
       floor,
       department,
       section,
@@ -194,22 +187,10 @@ function SurveyLocationContent() {
             />
           </div>
 
-          {/* Building (棟) */}
+          {/* Floor (フロア) */}
           <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
             <SearchableSelect
-              label="棟"
-              value={building}
-              onChange={setBuilding}
-              options={['', ...buildingOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-          </div>
-
-          {/* Floor (階) */}
-          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <SearchableSelect
-              label="階"
+              label="フロア"
               value={floor}
               onChange={setFloor}
               options={['', ...floorOptions]}
@@ -230,10 +211,10 @@ function SurveyLocationContent() {
             />
           </div>
 
-          {/* Section (部署) */}
+          {/* Section (室名称) */}
           <div style={{ marginBottom: 0 }}>
             <SearchableSelect
-              label="部署"
+              label="室名称"
               value={section}
               onChange={setSection}
               options={['', ...sectionOptions]}
