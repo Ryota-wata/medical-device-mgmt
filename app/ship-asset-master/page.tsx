@@ -1,11 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { AssetMaster } from '@/lib/types/master';
 import { AssetFormModal } from '@/components/modals/AssetFormModal';
+import { exportAssetsToExcel, parseAssetsFromExcel, assignAssetIds, downloadAssetTemplate } from '@/lib/utils/excel-asset-master';
+import { ExcelImportPreviewModal } from '@/components/ui/ExcelImportPreviewModal';
 
 function ShipAssetMasterContent() {
   const router = useRouter();
@@ -22,6 +24,9 @@ function ShipAssetMasterContent() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetMaster | null>(null);
+  const [importPreview, setImportPreview] = useState<{ assets: AssetMaster[]; errors: string[] } | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // サンプルデータを初期化
   useEffect(() => {
@@ -181,6 +186,45 @@ function ShipAssetMasterContent() {
     }
   };
 
+  const handleExport = () => {
+    exportAssetsToExcel(filteredAssets);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await parseAssetsFromExcel(file);
+      setImportPreview(result);
+      setShowImportModal(true);
+    } catch {
+      alert('ファイルの読み込みに失敗しました');
+    }
+    // input をリセット（同じファイルを再選択できるように）
+    e.target.value = '';
+  };
+
+  const handleImportAdd = () => {
+    if (!importPreview) return;
+    const withIds = assignAssetIds(importPreview.assets, assets);
+    setAssets([...assets, ...withIds]);
+    setShowImportModal(false);
+    setImportPreview(null);
+  };
+
+  const handleImportReplace = () => {
+    if (!importPreview) return;
+    const withIds = assignAssetIds(importPreview.assets, []);
+    setAssets(withIds);
+    setShowImportModal(false);
+    setImportPreview(null);
+  };
+
+  const handleImportCancel = () => {
+    setShowImportModal(false);
+    setImportPreview(null);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
       {/* 選択モードバナー */}
@@ -256,7 +300,46 @@ function ShipAssetMasterContent() {
             {filteredAssets.length}件
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleExport}
+            style={{
+              padding: isMobile ? '8px 16px' : '10px 20px',
+              background: '#2980b9',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            エクスポート
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              padding: isMobile ? '8px 16px' : '10px 20px',
+              background: '#8e44ad',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            インポート
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+          />
           <button
             onClick={() => setShowNewModal(true)}
             style={{
@@ -602,6 +685,17 @@ function ShipAssetMasterContent() {
         }}
         onSubmit={handleEditSubmit}
         isMobile={isMobile}
+      />
+
+      {/* インポートプレビューモーダル */}
+      <ExcelImportPreviewModal
+        isOpen={showImportModal && !!importPreview}
+        importableCount={importPreview?.assets.length ?? 0}
+        errors={importPreview?.errors ?? []}
+        onCancel={handleImportCancel}
+        onAdd={handleImportAdd}
+        onReplace={handleImportReplace}
+        onDownloadTemplate={downloadAssetTemplate}
       />
     </div>
   );
