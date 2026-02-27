@@ -12,21 +12,29 @@ function VendorMasterContent() {
   const { isMobile, isTablet } = useResponsive();
   const { vendors, addVendor, updateVendor, deleteVendor } = useMasterStore();
 
+  const [filterFacilityName, setFilterFacilityName] = useState('');
   const [filterVendorName, setFilterVendorName] = useState('');
-  const [filterContactPerson, setFilterContactPerson] = useState('');
-  const [filterPhone, setFilterPhone] = useState('');
-  const [filterEmail, setFilterEmail] = useState('');
+  const [filterKeyword, setFilterKeyword] = useState('');
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorMaster | null>(null);
 
   // フィルタリング処理
   const filteredVendors = vendors.filter((vendor) => {
+    const matchFacilityName = !filterFacilityName || vendor.facilityName.toLowerCase().includes(filterFacilityName.toLowerCase());
     const matchVendorName = !filterVendorName || vendor.vendorName.toLowerCase().includes(filterVendorName.toLowerCase());
-    const matchContactPerson = !filterContactPerson || vendor.contactPerson.toLowerCase().includes(filterContactPerson.toLowerCase());
-    const matchPhone = !filterPhone || vendor.phone.toLowerCase().includes(filterPhone.toLowerCase());
-    const matchEmail = !filterEmail || vendor.email.toLowerCase().includes(filterEmail.toLowerCase());
-    return matchVendorName && matchContactPerson && matchPhone && matchEmail;
+    if (!matchFacilityName || !matchVendorName) return false;
+    if (!filterKeyword) return true;
+    const kw = filterKeyword.toLowerCase();
+    return (
+      vendor.invoiceNumber.toLowerCase().includes(kw) ||
+      vendor.address.toLowerCase().includes(kw) ||
+      vendor.position.toLowerCase().includes(kw) ||
+      vendor.role.toLowerCase().includes(kw) ||
+      vendor.contactPerson.toLowerCase().includes(kw) ||
+      vendor.phone.toLowerCase().includes(kw) ||
+      vendor.email.toLowerCase().includes(kw)
+    );
   });
 
   const handleBack = () => {
@@ -47,10 +55,16 @@ function VendorMasterContent() {
   const handleNewSubmit = (data: Partial<VendorMaster>) => {
     const newVendor: VendorMaster = {
       id: `VND${String(vendors.length + 1).padStart(3, '0')}`,
+      facilityName: data.facilityName || '',
+      invoiceNumber: data.invoiceNumber || '',
       vendorName: data.vendorName || '',
+      address: data.address || '',
+      position: data.position || '',
+      role: data.role || '',
       contactPerson: data.contactPerson || '',
       phone: data.phone || '',
       email: data.email || '',
+      isPrimaryContact: data.isPrimaryContact || false,
       status: 'active',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -63,6 +77,22 @@ function VendorMasterContent() {
       updateVendor(selectedVendor.id, data);
     }
   };
+
+  const thStyle = (align: 'left' | 'center' = 'left'): React.CSSProperties => ({
+    padding: isTablet ? '12px' : '14px',
+    textAlign: align,
+    fontSize: isTablet ? '13px' : '14px',
+    fontWeight: 600,
+    color: '#2c3e50',
+    whiteSpace: 'nowrap',
+  });
+
+  const tdStyle = (): React.CSSProperties => ({
+    padding: isTablet ? '12px' : '14px',
+    fontSize: isTablet ? '13px' : '14px',
+    color: '#2c3e50',
+    whiteSpace: 'nowrap',
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
@@ -147,9 +177,28 @@ function VendorMasterContent() {
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
         borderBottom: '2px solid #e0e0e0',
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(180px, 1fr))',
         gap: isMobile ? '12px' : '16px'
       }}>
+        <div>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+            施設名
+          </label>
+          <input
+            type="text"
+            value={filterFacilityName}
+            onChange={(e) => setFilterFacilityName(e.target.value)}
+            placeholder="施設名で検索"
+            style={{
+              width: '100%',
+              padding: isMobile ? '8px' : '10px',
+              border: '1px solid #d0d0d0',
+              borderRadius: '6px',
+              fontSize: isMobile ? '13px' : '14px',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
             業者名
@@ -164,61 +213,27 @@ function VendorMasterContent() {
               padding: isMobile ? '8px' : '10px',
               border: '1px solid #d0d0d0',
               borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
+              fontSize: isMobile ? '13px' : '14px',
+              boxSizing: 'border-box'
             }}
           />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            担当者
+            キーワード検索
           </label>
           <input
             type="text"
-            value={filterContactPerson}
-            onChange={(e) => setFilterContactPerson(e.target.value)}
-            placeholder="担当者で検索"
+            value={filterKeyword}
+            onChange={(e) => setFilterKeyword(e.target.value)}
+            placeholder="登録番号・住所・氏名・連絡先など"
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
               border: '1px solid #d0d0d0',
               borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            連絡先（TEL）
-          </label>
-          <input
-            type="text"
-            value={filterPhone}
-            onChange={(e) => setFilterPhone(e.target.value)}
-            placeholder="電話番号で検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            連絡先（mail）
-          </label>
-          <input
-            type="text"
-            value={filterEmail}
-            onChange={(e) => setFilterEmail(e.target.value)}
-            placeholder="メールで検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
+              fontSize: isMobile ? '13px' : '14px',
+              boxSizing: 'border-box'
             }}
           />
         </div>
@@ -240,11 +255,19 @@ function VendorMasterContent() {
                   <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50', marginBottom: '4px' }}>
                     {vendor.vendorName}
                   </div>
+                  <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                    {vendor.invoiceNumber}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#7f8c8d' }}>担当者:</span> {vendor.contactPerson}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>TEL:</span> {vendor.phone}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>mail:</span> {vendor.email}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>担当施設:</span> {vendor.facilityName}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>住所:</span> {vendor.address}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>役職:</span> {vendor.position}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>役割:</span> {vendor.role}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>氏名:</span> {vendor.contactPerson}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>連絡先:</span> {vendor.phone}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>メール:</span> {vendor.email}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>担当フラグ:</span> {vendor.isPrimaryContact ? '○' : 'ー'}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
@@ -290,11 +313,17 @@ function VendorMasterContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>業者名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>担当者</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>連絡先（TEL）</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>連絡先（mail）</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={thStyle()}>担当施設名</th>
+                    <th style={thStyle()}>インボイス登録番号</th>
+                    <th style={thStyle()}>業者名</th>
+                    <th style={thStyle()}>住所</th>
+                    <th style={thStyle()}>役職</th>
+                    <th style={thStyle()}>役割</th>
+                    <th style={thStyle()}>氏名</th>
+                    <th style={thStyle()}>連絡先</th>
+                    <th style={thStyle()}>メール</th>
+                    <th style={thStyle('center')}>担当フラグ</th>
+                    <th style={thStyle('center')}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -306,10 +335,16 @@ function VendorMasterContent() {
                         background: index % 2 === 0 ? 'white' : '#fafafa',
                       }}
                     >
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{vendor.vendorName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{vendor.contactPerson}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{vendor.phone}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{vendor.email}</td>
+                      <td style={tdStyle()}>{vendor.facilityName}</td>
+                      <td style={{ ...tdStyle(), fontVariantNumeric: 'tabular-nums' }}>{vendor.invoiceNumber}</td>
+                      <td style={tdStyle()}>{vendor.vendorName}</td>
+                      <td style={tdStyle()}>{vendor.address}</td>
+                      <td style={tdStyle()}>{vendor.position}</td>
+                      <td style={tdStyle()}>{vendor.role}</td>
+                      <td style={tdStyle()}>{vendor.contactPerson}</td>
+                      <td style={{ ...tdStyle(), fontVariantNumeric: 'tabular-nums' }}>{vendor.phone}</td>
+                      <td style={tdStyle()}>{vendor.email}</td>
+                      <td style={{ ...tdStyle(), textAlign: 'center' }}>{vendor.isPrimaryContact ? '○' : 'ー'}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button

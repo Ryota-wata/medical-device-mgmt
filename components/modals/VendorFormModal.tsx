@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { VendorMaster } from '@/lib/types/master';
+import { useMasterStore } from '@/lib/stores/masterStore';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 interface VendorFormModalProps {
   isOpen: boolean;
@@ -20,27 +22,48 @@ export function VendorFormModal({
   onSubmit,
   isMobile
 }: VendorFormModalProps) {
+  const { facilities } = useMasterStore();
+  const facilityOptions = facilities.map((f) => f.facilityName);
+
   const [formData, setFormData] = useState<Partial<VendorMaster>>({
+    facilityName: '',
+    invoiceNumber: '',
     vendorName: '',
+    address: '',
+    position: '',
+    role: '',
     contactPerson: '',
     phone: '',
     email: '',
+    isPrimaryContact: false,
   });
 
   useEffect(() => {
     if (mode === 'edit' && vendor) {
       setFormData({
+        facilityName: vendor.facilityName,
+        invoiceNumber: vendor.invoiceNumber,
         vendorName: vendor.vendorName,
+        address: vendor.address,
+        position: vendor.position,
+        role: vendor.role,
         contactPerson: vendor.contactPerson,
         phone: vendor.phone,
         email: vendor.email,
+        isPrimaryContact: vendor.isPrimaryContact,
       });
     } else {
       setFormData({
+        facilityName: '',
+        invoiceNumber: '',
         vendorName: '',
+        address: '',
+        position: '',
+        role: '',
         contactPerson: '',
         phone: '',
         email: '',
+        isPrimaryContact: false,
       });
     }
   }, [mode, vendor, isOpen]);
@@ -52,6 +75,23 @@ export function VendorFormModal({
   };
 
   if (!isOpen) return null;
+
+  const labelStyle = {
+    display: 'block' as const,
+    fontSize: '13px',
+    fontWeight: 600,
+    marginBottom: '6px',
+    color: '#2c3e50',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid #d0d0d0',
+    borderRadius: '6px',
+    fontSize: '14px',
+    boxSizing: 'border-box' as const,
+  };
 
   return (
     <div
@@ -76,7 +116,7 @@ export function VendorFormModal({
           background: 'white',
           borderRadius: '12px',
           width: '100%',
-          maxWidth: '500px',
+          maxWidth: '600px',
           maxHeight: '90vh',
           overflow: 'auto',
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
@@ -98,14 +138,38 @@ export function VendorFormModal({
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ padding: isMobile ? '16px' : '24px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* 担当施設名 */}
             <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-                color: '#2c3e50'
-              }}>
+              <label style={labelStyle}>
+                担当施設名 <span style={{ color: '#e74c3c' }}>*</span>
+              </label>
+              <SearchableSelect
+                value={formData.facilityName || ''}
+                onChange={(value) => setFormData({ ...formData, facilityName: value })}
+                options={facilityOptions}
+                placeholder="施設名を選択"
+                isMobile={isMobile}
+              />
+            </div>
+
+            {/* インボイス登録番号 */}
+            <div>
+              <label style={labelStyle}>
+                インボイス登録番号 <span style={{ color: '#e74c3c' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.invoiceNumber || ''}
+                onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                required
+                placeholder="例: T1234567890123"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* 業者名 */}
+            <div>
+              <label style={labelStyle}>
                 業者名 <span style={{ color: '#e74c3c' }}>*</span>
               </label>
               <input
@@ -114,26 +178,56 @@ export function VendorFormModal({
                 onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
                 required
                 placeholder="例: オリンパスメディカルシステムズ株式会社"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d0d0d0',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                style={inputStyle}
               />
             </div>
 
+            {/* 住所 */}
             <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-                color: '#2c3e50'
-              }}>
-                担当者 <span style={{ color: '#e74c3c' }}>*</span>
+              <label style={labelStyle}>
+                住所
+              </label>
+              <input
+                type="text"
+                value={formData.address || ''}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                placeholder="例: 東京都新宿区西新宿2-3-1"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* 役職・役割 */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={labelStyle}>
+                  役職
+                </label>
+                <input
+                  type="text"
+                  value={formData.position || ''}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  placeholder="例: 部長"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                  役割
+                </label>
+                <input
+                  type="text"
+                  value={formData.role || ''}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  placeholder="例: 営業"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {/* 氏名 */}
+            <div>
+              <label style={labelStyle}>
+                氏名 <span style={{ color: '#e74c3c' }}>*</span>
               </label>
               <input
                 type="text"
@@ -141,69 +235,53 @@ export function VendorFormModal({
                 onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                 required
                 placeholder="例: 山田 太郎"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d0d0d0',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
+                style={inputStyle}
               />
             </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-                color: '#2c3e50'
-              }}>
-                連絡先（TEL） <span style={{ color: '#e74c3c' }}>*</span>
-              </label>
-              <input
-                type="tel"
-                value={formData.phone || ''}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
-                placeholder="例: 03-1234-5678"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d0d0d0',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
+            {/* 連絡先・メール */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={labelStyle}>
+                  連絡先 <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone || ''}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  required
+                  placeholder="例: 090-1234-5678"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                  メール <span style={{ color: '#e74c3c' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.email || ''}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  placeholder="例: yamada@example.co.jp"
+                  style={inputStyle}
+                />
+              </div>
             </div>
 
+            {/* 担当フラグ */}
             <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '6px',
-                color: '#2c3e50'
-              }}>
-                連絡先（mail） <span style={{ color: '#e74c3c' }}>*</span>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.isPrimaryContact || false}
+                  onChange={(e) => setFormData({ ...formData, isPrimaryContact: e.target.checked })}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
+                  担当フラグ（該当病院のメイン担当者）
+                </span>
               </label>
-              <input
-                type="email"
-                value={formData.email || ''}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                placeholder="例: yamada@example.co.jp"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #d0d0d0',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
             </div>
           </div>
 

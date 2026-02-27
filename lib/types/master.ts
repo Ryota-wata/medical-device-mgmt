@@ -54,10 +54,16 @@ export interface DepartmentMaster {
 // 業者マスタの型定義
 export interface VendorMaster {
   id: string;
+  facilityName: string;    // 担当施設名
+  invoiceNumber: string;   // インボイス登録番号
   vendorName: string;      // 業者名
-  contactPerson: string;   // 担当者
-  phone: string;           // 連絡先（TEL)
-  email: string;           // 連絡先（mail）
+  address: string;         // 住所
+  position: string;        // 役職
+  role: string;            // 役割
+  contactPerson: string;   // 氏名
+  phone: string;           // 連絡先
+  email: string;           // メール
+  isPrimaryContact: boolean; // 担当フラグ
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
