@@ -468,6 +468,18 @@ export default function MainPage() {
               </button>
             )}
 
+            {/* 棚卸し */}
+            {isMainButtonVisible('inventory') && (
+              <button
+                onClick={() => router.push('/inventory')}
+                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
+                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                }`}
+              >
+                棚卸し
+              </button>
+            )}
+
             {/* 申請ステータス（病院側のみ） */}
             {isHospitalUser && (
               <button

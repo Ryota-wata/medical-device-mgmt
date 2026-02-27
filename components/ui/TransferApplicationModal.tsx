@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Asset } from '@/lib/types';
 import { useMasterStore, useApplicationStore } from '@/lib/stores';
 import { SearchableSelect } from './SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { ApplicationCompleteModal } from './ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
 interface TransferApplicationModalProps {
   isOpen: boolean;
@@ -19,9 +22,15 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
   assets,
   onSuccess,
 }) => {
+  const router = useRouter();
   const { facilities } = useMasterStore();
   const { addApplication } = useApplicationStore();
   const { isMobile } = useResponsive();
+
+  // 完了モーダル・閉じる確認モーダル
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [completedAppNo, setCompletedAppNo] = useState('');
 
   // 移動先の状態
   const [destDepartment, setDestDepartment] = useState('');
@@ -85,10 +94,12 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
       return;
     }
 
+    const appNo = `TRAN-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
     // 各資産に対して申請を作成
     assets.forEach((asset) => {
       addApplication({
-        applicationNo: `TRAN-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        applicationNo: appNo,
         applicationDate: applicationDate,
         applicationType: '移動申請',
         asset: {
@@ -121,25 +132,16 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
       });
     });
 
-    alert(`移動申請を送信しました\n申請件数: ${assets.length}件`);
-
-    // フォームリセット
-    setDestDepartment('');
-    setDestSection('');
-    setDestRoomName('');
-    setComment('');
-
-    onClose();
-    onSuccess?.();
+    setCompletedAppNo(appNo);
+    setShowCompleteModal(true);
   };
 
-  // モーダルを閉じる際のリセット
-  const handleClose = () => {
+  // フォームリセット
+  const resetForm = () => {
     setDestDepartment('');
     setDestSection('');
     setDestRoomName('');
     setComment('');
-    onClose();
   };
 
   if (!isOpen || assets.length === 0) return null;
@@ -149,7 +151,6 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
 
   return (
     <div
-      onClick={handleClose}
       style={{
         position: 'fixed',
         top: 0,
@@ -185,12 +186,30 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
             fontSize: '18px',
             fontWeight: 'bold',
             color: '#333',
-            textAlign: 'center',
             borderTopLeftRadius: '12px',
             borderTopRightRadius: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          移動申請 モーダル
+          <span>移動申請 モーダル</span>
+          <button
+            onClick={() => setShowCloseConfirm(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#333',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: '0',
+              width: '30px',
+              height: '30px',
+            }}
+            aria-label="閉じる"
+          >
+            ×
+          </button>
         </div>
 
         {/* モーダルボディ */}
@@ -410,6 +429,36 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
           </div>
         </div>
       </div>
+
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="移動申請"
+        applicationNo={completedAppNo}
+        guidanceText=""
+        returnDestination="資産一覧"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          onClose();
+          router.push('/asset-search-result');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
+        isOpen={showCloseConfirm}
+        returnDestination="資産一覧"
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+      />
     </div>
   );
 };

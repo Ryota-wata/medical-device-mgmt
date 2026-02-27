@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore, useAuthStore, useApplicationStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { Asset } from '@/lib/types';
 import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
+import { ApplicationCompleteModal } from './ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
 // 要望機器
 interface DesiredEquipment {
@@ -29,11 +32,17 @@ export function UpdateApplicationModal({
   assets,
   onSuccess,
 }: UpdateApplicationModalProps) {
+  const router = useRouter();
   const { departments, facilities } = useMasterStore();
   const { user } = useAuthStore();
   const { addApplication: addPurchaseApplication } = usePurchaseApplicationStore();
   const { addApplication: addDisposalApplication } = useApplicationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 完了モーダル・閉じる確認モーダル
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [completedAppNo, setCompletedAppNo] = useState('');
 
   // 申請基本情報
   const [managementDepartment] = useState(user?.department || '手術部');
@@ -70,8 +79,10 @@ export function UpdateApplicationModal({
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
-  // 廃棄同意
-  const [disposalAgreed, setDisposalAgreed] = useState(false);
+  // 更新対象機器の処理方法
+  const [assetHandling, setAssetHandling] = useState<'disposal' | 'transfer' | 'continue' | ''>('');
+  const [transferDestination, setTransferDestination] = useState('');
+  const [continuePurpose, setContinuePurpose] = useState('');
 
   // 確認画面表示
   const [isConfirmView, setIsConfirmView] = useState(false);
@@ -198,14 +209,8 @@ export function UpdateApplicationModal({
       return;
     }
 
-    const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
-    if (validEquipments.length === 0) {
-      alert('要望機器（新規購入希望）を1つ以上入力してください');
-      return;
-    }
-
-    if (!disposalAgreed) {
-      alert('更新対象機器の廃棄処理に同意してください');
+    if (!assetHandling) {
+      alert('更新対象機器の確認で処理方法を選択してください');
       return;
     }
 
@@ -247,43 +252,67 @@ export function UpdateApplicationModal({
       attachedFiles: attachedFiles.map(f => f.name),
     };
 
-    addPurchaseApplication(purchaseInput);
+    const result = addPurchaseApplication(purchaseInput);
 
-    // 2. 廃棄申請を作成（更新対象機器ごと）
-    assets.forEach((asset) => {
-      addDisposalApplication({
-        applicationNo: `DISP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        applicationDate: applicationDate,
-        applicationType: '廃棄申請',
-        asset: {
-          name: asset.name,
-          model: asset.model,
-        },
-        vendor: asset.maker,
-        quantity: String(asset.quantity || 1),
-        unit: '台',
-        status: '承認待ち',
-        approvalProgress: {
-          current: 0,
-          total: 3,
-        },
-        facility: {
-          building: asset.building,
-          floor: asset.floor,
-          department: asset.department,
-          section: asset.section,
-        },
-        roomName: asset.roomName || '',
-        freeInput: `更新申請に伴う廃棄\n申請日: ${applicationDate}`,
-        executionYear: desiredDeliveryYear,
-        applicationReason: '更新申請に伴う廃棄処理',
+    // 2. 選択された処理方法に応じた申請を作成
+    if (assetHandling === 'disposal') {
+      assets.forEach((asset) => {
+        addDisposalApplication({
+          applicationNo: `DISP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          applicationDate: applicationDate,
+          applicationType: '廃棄申請',
+          asset: {
+            name: asset.name,
+            model: asset.model,
+          },
+          vendor: asset.maker,
+          quantity: String(asset.quantity || 1),
+          unit: '台',
+          status: '承認待ち',
+          approvalProgress: {
+            current: 0,
+            total: 3,
+          },
+          facility: {
+            building: asset.building,
+            floor: asset.floor,
+            department: asset.department,
+            section: asset.section,
+          },
+          roomName: asset.roomName || '',
+          freeInput: `更新申請に伴う廃棄\n申請日: ${applicationDate}`,
+          executionYear: desiredDeliveryYear,
+          applicationReason: '更新申請に伴う廃棄処理',
+        });
       });
-    });
+    }
 
-    alert(`更新申請を送信しました\n\n【購入申請】\n要望機器: ${validEquipments.length}件\n\n【廃棄申請】\n更新対象機器: ${assets.length}件`);
+    setCompletedAppNo(result.applicationNo);
+    setShowCompleteModal(true);
+  };
+
+  // フォームリセット
+  const resetForm = () => {
+    setInstallationDepartment('');
+    setInstallationSection('');
+    setInstallationRoomName('');
+    setPriority('1');
+    setDesiredDeliveryYear(String(new Date().getFullYear() + 1));
+    setDesiredDeliveryMonth('3');
+    setDesiredEquipments([]);
+    setUsagePurpose('');
+    setCaseCount('');
+    setCaseCountUnit('件／月');
+    setComment('');
+    setAttachedFiles([]);
+    setCurrentConnectionStatus('disconnected');
+    setCurrentConnectionDestination('');
+    setRequestConnectionStatus('not-required');
+    setRequestConnectionDestination('');
+    setAssetHandling('');
+    setTransferDestination('');
+    setContinuePurpose('');
     setIsConfirmView(false);
-    onClose();
-    onSuccess?.();
   };
 
   const styles: Record<string, React.CSSProperties> = {
@@ -431,12 +460,12 @@ export function UpdateApplicationModal({
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
           <span>{isConfirmView ? '更新購入申請 - 内容確認' : '更新購入申請'}</span>
-          <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
+          <button style={styles.closeButton} onClick={() => setShowCloseConfirm(true)} aria-label="閉じる">×</button>
         </div>
 
         {/* ボディ */}
@@ -481,22 +510,15 @@ export function UpdateApplicationModal({
               </table>
             </div>
 
-            {/* 更新対象機器（廃棄予定） */}
+            {/* 更新対象機器 */}
             <div style={styles.section}>
-              <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>更新対象機器（廃棄予定）</div>
+              <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>更新対象機器</div>
               <div style={{ background: '#ffebee', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#c0392b', marginBottom: '12px' }}>
-                  {assets[0]?.name}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '13px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '13px' }}>
+                  <div><span style={{ color: '#666' }}>QRコード:</span> {assets[0]?.qrCode || '-'}</div>
                   <div><span style={{ color: '#666' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
                   <div><span style={{ color: '#666' }}>型式:</span> {assets[0]?.model || '-'}</div>
-                  <div><span style={{ color: '#666' }}>設置場所:</span> {assets[0]?.roomName || '-'}</div>
-                  <div><span style={{ color: '#666' }}>管理番号:</span> {assets[0]?.managementNo || '-'}</div>
                 </div>
-              </div>
-              <div style={{ marginTop: '8px', padding: '8px 12px', background: '#ffebee', borderRadius: '4px', fontSize: '12px', color: '#c0392b', textAlign: 'center' }}>
-                この機器は廃棄申請されます
               </div>
             </div>
 
@@ -592,10 +614,7 @@ export function UpdateApplicationModal({
           <>
           {/* 申請基本情報 */}
           <div style={styles.section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={styles.sectionTitle}>申請基本情報</div>
-              <div style={styles.note}>申請情報に変更があれば記入ください</div>
-            </div>
+            <div style={styles.sectionTitle}>申請基本情報</div>
             <div style={styles.formGrid}>
               <div style={styles.formItem}>
                 <label style={styles.label}>管理部署</label>
@@ -673,16 +692,17 @@ export function UpdateApplicationModal({
             </div>
           </div>
 
-          {/* 更新対象機器（廃棄予定） */}
+          {/* 更新対象機器 */}
           <div style={styles.section}>
             <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>
-              更新対象機器（廃棄予定）
+              更新対象機器
             </div>
             <div style={{ background: '#fff8f8', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#c0392b', marginBottom: '12px' }}>
-                {assets[0]?.name}
-              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>QRコード</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.qrCode || '-'}</div>
+                </div>
                 <div>
                   <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
                   <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
@@ -691,26 +711,7 @@ export function UpdateApplicationModal({
                   <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
                   <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
                 </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>管理番号</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.managementNo || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>設置場所</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.roomName || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>部門</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.department || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>部署</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.section || '-'}</div>
-                </div>
               </div>
-            </div>
-            <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '12px', color: '#e65100' }}>
-              ※ この機器は更新に伴い廃棄申請されます。新規購入希望の機器は下記「要望機器」セクションで入力してください。
             </div>
           </div>
 
@@ -1113,37 +1114,114 @@ export function UpdateApplicationModal({
             </div>
           </div>
 
-          {/* 廃棄処理の確認 */}
+          {/* 更新対象機器の確認 */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>廃棄処理の確認</div>
+            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>
+              更新対象機器の確認 <span style={{ color: '#e74c3c', fontSize: '12px' }}>*</span>
+            </div>
             <div style={{
               padding: '16px',
-              background: '#ffebee',
+              background: '#fff8f8',
               borderRadius: '8px',
               border: '1px solid #ef9a9a',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
             }}>
+              {/* 廃棄処理（廃棄申請） */}
               <label style={{
                 display: 'flex',
-                alignItems: 'flex-start',
+                alignItems: 'center',
                 gap: '12px',
                 cursor: 'pointer',
               }}>
                 <input
-                  type="checkbox"
-                  checked={disposalAgreed}
-                  onChange={(e) => setDisposalAgreed(e.target.checked)}
-                  style={{ marginTop: '4px', width: '20px', height: '20px' }}
+                  type="radio"
+                  name="assetHandling"
+                  checked={assetHandling === 'disposal'}
+                  onChange={() => setAssetHandling('disposal')}
+                  style={{ width: '18px', height: '18px', minWidth: '18px' }}
                 />
-                <div>
-                  <div style={{ fontWeight: 'bold', color: '#c0392b', marginBottom: '8px' }}>
-                    更新対象機器の廃棄処理に同意します <span style={{ color: '#e74c3c' }}>*</span>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
-                    上記「更新対象機器」に記載された「{assets[0]?.name}」は、本更新申請の承認後に廃棄申請として処理されます。
-                    廃棄処理が完了すると、当該資産は資産台帳から除外されます。
-                  </div>
-                </div>
+                <span style={{ fontWeight: 'bold', fontSize: '14px' }}>廃棄処理（廃棄申請）</span>
               </label>
+
+              {/* 他部署への移動 */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
+                }}>
+                  <input
+                    type="radio"
+                    name="assetHandling"
+                    checked={assetHandling === 'transfer'}
+                    onChange={() => setAssetHandling('transfer')}
+                    style={{ width: '18px', height: '18px', minWidth: '18px' }}
+                  />
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>他部署への移動</span>
+                  <span style={{ fontSize: '13px', color: '#666' }}>【</span>
+                  <input
+                    type="text"
+                    value={transferDestination}
+                    onChange={(e) => setTransferDestination(e.target.value)}
+                    disabled={assetHandling !== 'transfer'}
+                    placeholder="移動先を記載してください"
+                    style={{
+                      flex: 1,
+                      padding: '6px 12px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      background: assetHandling === 'transfer' ? '#fff' : '#f0f0f0',
+                      color: assetHandling === 'transfer' ? '#333' : '#999',
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', color: '#666' }}>】</span>
+                </label>
+              </div>
+
+              {/* 継続して使用 */}
+              <div>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
+                }}>
+                  <input
+                    type="radio"
+                    name="assetHandling"
+                    checked={assetHandling === 'continue'}
+                    onChange={() => setAssetHandling('continue')}
+                    style={{ width: '18px', height: '18px', minWidth: '18px' }}
+                  />
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>継続して使用</span>
+                  <span style={{ fontSize: '13px', color: '#666' }}>【</span>
+                  <input
+                    type="text"
+                    value={continuePurpose}
+                    onChange={(e) => setContinuePurpose(e.target.value)}
+                    disabled={assetHandling !== 'continue'}
+                    placeholder="使用目的：予備機として使用したい"
+                    style={{
+                      flex: 1,
+                      padding: '6px 12px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '13px',
+                      background: assetHandling === 'continue' ? '#fff' : '#f0f0f0',
+                      color: assetHandling === 'continue' ? '#333' : '#999',
+                    }}
+                  />
+                  <span style={{ fontSize: '13px', color: '#666' }}>】</span>
+                </label>
+              </div>
+            </div>
+            <div style={{ marginTop: '8px', padding: '12px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', color: '#666', lineHeight: '1.6' }}>
+              廃棄・移動にチェックした上記「更新対象機器」に記載された「{assets[0]?.name}」は、本更新申請の承認後に申請処理されます。
+              事務処理が完了すると、当該資産は資産台帳から除外・移動されます。
             </div>
           </div>
           </>
@@ -1193,6 +1271,36 @@ export function UpdateApplicationModal({
           )}
         </div>
       </div>
+
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="更新申請"
+        applicationNo={completedAppNo}
+        guidanceText=""
+        returnDestination="資産一覧"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          onClose();
+          router.push('/asset-search-result');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
+        isOpen={showCloseConfirm}
+        returnDestination="資産一覧"
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+      />
     </div>
   );
 }

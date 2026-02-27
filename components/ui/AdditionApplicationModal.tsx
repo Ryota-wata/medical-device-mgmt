@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { Asset } from '@/lib/types';
 import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
+import { ApplicationCompleteModal } from './ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
 interface AdditionApplicationModalProps {
   isOpen: boolean;
@@ -20,10 +23,16 @@ export function AdditionApplicationModal({
   assets,
   onSuccess,
 }: AdditionApplicationModalProps) {
+  const router = useRouter();
   const { departments, facilities } = useMasterStore();
   const { user } = useAuthStore();
   const { addApplication: addPurchaseApplication } = usePurchaseApplicationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 完了モーダル・閉じる確認モーダル
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [completedAppNo, setCompletedAppNo] = useState('');
 
   // 申請基本情報
   const [managementDepartment] = useState(user?.department || '手術部');
@@ -140,12 +149,31 @@ export function AdditionApplicationModal({
       attachedFiles: attachedFiles.map(f => f.name),
     };
 
-    addPurchaseApplication(purchaseInput);
+    const result = addPurchaseApplication(purchaseInput);
 
-    alert(`増設申請を送信しました\n\n品目: ${primaryAsset.item || primaryAsset.name}\n数量: ${additionQuantity}台`);
+    setCompletedAppNo(result.applicationNo);
+    setShowCompleteModal(true);
+  };
+
+  // フォームリセット
+  const resetForm = () => {
+    setInstallationDepartment('');
+    setInstallationSection('');
+    setInstallationRoomName('');
+    setPriority('1');
+    setDesiredDeliveryYear(String(new Date().getFullYear() + 1));
+    setDesiredDeliveryMonth('3');
+    setAdditionQuantity(1);
+    setUsagePurpose('');
+    setCaseCount('');
+    setCaseCountUnit('件／月');
+    setComment('');
+    setAttachedFiles([]);
+    setCurrentConnectionStatus('disconnected');
+    setCurrentConnectionDestination('');
+    setRequestConnectionStatus('not-required');
+    setRequestConnectionDestination('');
     setIsConfirmView(false);
-    onClose();
-    onSuccess?.();
   };
 
   // テーマカラー（増設申請用：青系）
@@ -298,12 +326,12 @@ export function AdditionApplicationModal({
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
           <span>{isConfirmView ? '増設購入申請 - 内容確認' : '増設購入申請'}</span>
-          <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
+          <button style={styles.closeButton} onClick={() => setShowCloseConfirm(true)} aria-label="閉じる">×</button>
         </div>
 
         {/* ボディ */}
@@ -431,10 +459,7 @@ export function AdditionApplicationModal({
           <>
           {/* 申請基本情報 */}
           <div style={styles.section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={styles.sectionTitle}>申請基本情報</div>
-              <div style={styles.note}>申請情報に変更があれば記入ください</div>
-            </div>
+            <div style={styles.sectionTitle}>申請基本情報</div>
             <div style={styles.formGrid}>
               <div style={styles.formItem}>
                 <label style={styles.label}>管理部署</label>
@@ -807,6 +832,36 @@ export function AdditionApplicationModal({
           )}
         </div>
       </div>
+
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="増設申請"
+        applicationNo={completedAppNo}
+        guidanceText=""
+        returnDestination="資産一覧"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          onClose();
+          router.push('/asset-search-result');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
+        isOpen={showCloseConfirm}
+        returnDestination="資産一覧"
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+      />
     </div>
   );
 }

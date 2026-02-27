@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from './SearchableSelect';
 import { useMasterStore } from '@/lib/stores';
+import { ApplicationCompleteModal } from './ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
 interface BorrowingApplicationModalProps {
   isOpen: boolean;
@@ -189,9 +192,15 @@ export function BorrowingApplicationModal({
   onClose,
   onSuccess,
 }: BorrowingApplicationModalProps) {
+  const router = useRouter();
   const { departments } = useMasterStore();
   const divisionOptions = [...new Set(departments.map((d) => d.division))];
   const departmentOptions = [...new Set(departments.map((d) => d.department))];
+
+  // 完了モーダル・閉じる確認モーダル
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [completedAppNo, setCompletedAppNo] = useState('');
 
   // 履歴選択モーダルの表示状態
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -329,9 +338,48 @@ export function BorrowingApplicationModal({
   };
 
   const handleSubmit = () => {
-    alert('記載内容を確認します');
-    onSuccess?.();
-    onClose();
+    const appNo = `BOR-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    setCompletedAppNo(appNo);
+    setShowCompleteModal(true);
+  };
+
+  // フォームリセット
+  const resetForm = () => {
+    setCompanyName('');
+    setContactPerson('');
+    setContactInfo('');
+    setEmail('');
+    setApplicationDate(new Date().toISOString().split('T')[0]);
+    setManagementDepartment('');
+    setApplicantName('');
+    setInstallationDivision('');
+    setInstallationDepartment('');
+    setInstallationRoom('');
+    setPurposes({
+      demo: false,
+      clinicalTrial: false,
+      emergency: false,
+      accident: false,
+      training: false,
+      research: false,
+      deliveryDelay: false,
+      other: false,
+    });
+    setDesiredDeliveryYear(currentYear);
+    setDesiredDeliveryMonth(new Date().getMonth() + 1);
+    setReturnYear(currentYear);
+    setReturnMonth(new Date().getMonth() + 2 > 12 ? 1 : new Date().getMonth() + 2);
+    setCasesPerMonth('');
+    setSelectedAssets([]);
+    setCostBurdens({
+      installation: '',
+      removal: '',
+      maintenance: '',
+      consumables: '',
+      other: '',
+    });
+    setComment('');
+    setAttachedFiles([]);
   };
 
   const handleOpenAssetMaster = () => {
@@ -383,7 +431,6 @@ export function BorrowingApplicationModal({
   return (
     <>
       <div
-        onClick={onClose}
         style={{
           position: 'fixed',
           top: 0,
@@ -426,7 +473,7 @@ export function BorrowingApplicationModal({
               借用申請 モーダル
             </span>
             <button
-              onClick={onClose}
+              onClick={() => setShowCloseConfirm(true)}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -1550,6 +1597,36 @@ export function BorrowingApplicationModal({
           </div>
         </div>
       )}
+
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="借用申請"
+        applicationNo={completedAppNo}
+        guidanceText=""
+        returnDestination="資産一覧"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          onClose();
+          router.push('/asset-search-result');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
+        isOpen={showCloseConfirm}
+        returnDestination="資産一覧"
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+      />
     </>
   );
 }

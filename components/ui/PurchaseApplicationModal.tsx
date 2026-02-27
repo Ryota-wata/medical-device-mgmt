@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
+import { ApplicationCompleteModal } from './ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
 // 要望機器
 interface DesiredEquipment {
@@ -26,10 +29,16 @@ export function PurchaseApplicationModal({
   onClose,
   onSuccess,
 }: PurchaseApplicationModalProps) {
-  const { departments, facilities } = useMasterStore();
+  const router = useRouter();
+  const { departments, facilities, assets: assetMasters } = useMasterStore();
   const { user } = useAuthStore();
   const { addApplication } = usePurchaseApplicationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 完了モーダル・閉じる確認モーダル
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [completedAppNo, setCompletedAppNo] = useState('');
 
   // 申請基本情報
   const [managementDepartment] = useState(user?.department || '手術部');
@@ -44,6 +53,8 @@ export function PurchaseApplicationModal({
   const [priority, setPriority] = useState('1');
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
+  const [basicItem, setBasicItem] = useState('');
+  const [basicQuantity, setBasicQuantity] = useState('1');
 
   // 要望機器
   const [desiredEquipments, setDesiredEquipments] = useState<DesiredEquipment[]>([]);
@@ -72,6 +83,9 @@ export function PurchaseApplicationModal({
   // 部門・部署オプション
   const divisionOptions = [...new Set(departments.map(d => d.division))];
   const departmentOptions = [...new Set(departments.map(d => d.department))];
+
+  // 品目オプション（SHIP資産マスタから取得）
+  const itemOptions = [...new Set(assetMasters.map(a => a.item).filter(Boolean))];
 
   // 資産マスタからのメッセージを受信するハンドラー
   const handleAssetMessage = useCallback((event: MessageEvent) => {
@@ -181,12 +195,6 @@ export function PurchaseApplicationModal({
       return;
     }
 
-    const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
-    if (validEquipments.length === 0) {
-      alert('要望機器を1つ以上入力してください');
-      return;
-    }
-
     setIsConfirmView(true);
   };
 
@@ -235,12 +243,33 @@ export function PurchaseApplicationModal({
     };
 
     // 購入申請ストアに追加（購入管理画面の申請受付に反映される）
-    addApplication(applicationInput);
+    const result = addApplication(applicationInput);
 
-    alert(`購入申請を送信しました\n要望機器: ${validEquipments.length}件`);
+    setCompletedAppNo(result.applicationNo);
+    setShowCompleteModal(true);
+  };
+
+  // フォームリセット
+  const resetForm = () => {
+    setInstallationDepartment('');
+    setInstallationSection('');
+    setInstallationRoomName('');
+    setPriority('1');
+    setDesiredDeliveryYear(String(new Date().getFullYear() + 1));
+    setDesiredDeliveryMonth('3');
+    setBasicItem('');
+    setBasicQuantity('1');
+    setDesiredEquipments([]);
+    setUsagePurpose('');
+    setCaseCount('');
+    setCaseCountUnit('件／月');
+    setComment('');
+    setAttachedFiles([]);
+    setCurrentConnectionStatus('disconnected');
+    setCurrentConnectionDestination('');
+    setRequestConnectionStatus('not-required');
+    setRequestConnectionDestination('');
     setIsConfirmView(false);
-    onClose();
-    onSuccess?.();
   };
 
   const styles: Record<string, React.CSSProperties> = {
@@ -418,12 +447,12 @@ export function PurchaseApplicationModal({
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* ヘッダー */}
         <div style={styles.header}>
           <span>{isConfirmView ? '新規購入申請 - 内容確認' : '新規購入申請'}</span>
-          <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">×</button>
+          <button style={styles.closeButton} onClick={() => setShowCloseConfirm(true)} aria-label="閉じる">×</button>
         </div>
 
         {/* ボディ */}
@@ -464,6 +493,12 @@ export function PurchaseApplicationModal({
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
                   </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{basicItem || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>台数</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{basicQuantity}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -478,8 +513,6 @@ export function PurchaseApplicationModal({
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>数量</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '60px' }}>単位</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -489,8 +522,6 @@ export function PurchaseApplicationModal({
                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker || '-'}</td>
                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model || '-'}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{equipment.quantity}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center' }}>{equipment.unit}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -505,7 +536,7 @@ export function PurchaseApplicationModal({
                   <tr>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{usagePurpose || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>症例数</th>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>件数</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{caseCount ? `${caseCount} ${caseCountUnit}` : '-'}</td>
                   </tr>
                 </tbody>
@@ -560,13 +591,10 @@ export function PurchaseApplicationModal({
           <>
           {/* 申請基本情報 */}
           <div style={styles.section}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={styles.sectionTitle}>申請基本情報</div>
-              <div style={styles.note}>申請情報に変更があれば記入ください</div>
-            </div>
+            <div style={styles.sectionTitle}>申請基本情報</div>
             <div style={styles.formGrid}>
               <div style={styles.formItem}>
-                <label style={styles.label}>管理部署</label>
+                <label style={styles.label}>所属部署</label>
                 <input style={styles.inputDisabled} value={managementDepartment} disabled />
               </div>
               <div style={styles.formItem}>
@@ -638,6 +666,27 @@ export function PurchaseApplicationModal({
                   <span>月</span>
                 </div>
               </div>
+              <div style={{ ...styles.formItem, gridColumn: 'span 2' }}>
+                <label style={styles.label}>品目</label>
+                <SearchableSelect
+                  value={basicItem}
+                  onChange={setBasicItem}
+                  options={itemOptions}
+                  placeholder="品目を選択または入力"
+                />
+              </div>
+              <div style={styles.formItem}>
+                <label style={styles.label}>台数</label>
+                <input
+                  type="number"
+                  style={styles.input}
+                  value={basicQuantity}
+                  onChange={(e) => setBasicQuantity(e.target.value)}
+                  min={1}
+                  placeholder="1"
+                />
+              </div>
+              <div></div>
             </div>
           </div>
 
@@ -658,7 +707,7 @@ export function PurchaseApplicationModal({
                   fontSize: '12px',
                 }}
               >
-                + 資産を追加 ({desiredEquipments.length}/{MAX_EQUIPMENT})
+                + 要望機器を追加 ({desiredEquipments.length}/{MAX_EQUIPMENT})
               </button>
             </div>
 
@@ -671,8 +720,6 @@ export function PurchaseApplicationModal({
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>品目</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>メーカー</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>型式</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '60px' }}>数量</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '60px' }}>単位</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '120px' }}>選択</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
                   </tr>
@@ -680,7 +727,7 @@ export function PurchaseApplicationModal({
                 <tbody>
                   {desiredEquipments.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
                         「+ 資産を追加」ボタンで要望機器を追加してください
                       </td>
                     </tr>
@@ -774,44 +821,6 @@ export function PurchaseApplicationModal({
                             }}
                           />
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <input
-                            type="number"
-                            value={equipment.quantity}
-                            onChange={(e) => handleUpdateEquipment(index, 'quantity', Number(e.target.value) || 1)}
-                            min={1}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              textAlign: 'center',
-                              boxSizing: 'border-box',
-                              fontVariantNumeric: 'tabular-nums',
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
-                          <select
-                            value={equipment.unit}
-                            onChange={(e) => handleUpdateEquipment(index, 'unit', e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '4px 6px',
-                              border: '1px solid #ddd',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              textAlign: 'center',
-                              boxSizing: 'border-box',
-                            }}
-                          >
-                            <option value="台">台</option>
-                            <option value="個">個</option>
-                            <option value="式">式</option>
-                            <option value="セット">セット</option>
-                          </select>
-                        </td>
                         <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
                           <button
                             onClick={() => handleOpenAssetMaster(index)}
@@ -859,7 +868,6 @@ export function PurchaseApplicationModal({
             <div style={styles.sectionTitle}>使用用途及び件数</div>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
               <div style={{ flex: 1 }}>
-                <label style={styles.label}>用途</label>
                 <input
                   style={{ ...styles.input, width: '100%' }}
                   value={usagePurpose}
@@ -868,7 +876,7 @@ export function PurchaseApplicationModal({
                 />
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={styles.label}>症例数</label>
+                <label style={styles.label}>件数</label>
                 <input
                   type="number"
                   style={{ ...styles.input, width: '80px' }}
@@ -1065,6 +1073,36 @@ export function PurchaseApplicationModal({
           )}
         </div>
       </div>
+
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="購入申請"
+        applicationNo={completedAppNo}
+        guidanceText=""
+        returnDestination="資産一覧"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          onClose();
+          router.push('/asset-search-result');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
+        isOpen={showCloseConfirm}
+        returnDestination="資産一覧"
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+      />
     </div>
   );
 }

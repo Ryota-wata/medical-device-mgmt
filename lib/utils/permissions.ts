@@ -75,6 +75,7 @@ export type MainButtonId =
   | 'lending_management'
   | 'repair_request'
   | 'asset_survey'
+  | 'inventory'
   | 'master_management'
   | 'user_management';
 
@@ -154,6 +155,7 @@ const MAIN_BUTTON_VISIBILITY: Record<MainButtonId, Record<UserRole, boolean>> = 
   lending_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
   repair_request: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
   asset_survey: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
+  inventory: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
   master_management: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
   user_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
 };

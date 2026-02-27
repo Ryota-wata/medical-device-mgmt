@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Asset } from '@/lib/types';
 import { useApplicationStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { ApplicationCompleteModal } from './ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
 interface AttachedFile {
   name: string;
@@ -25,9 +28,15 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
   assets,
   onSuccess,
 }) => {
+  const router = useRouter();
   const { addApplication } = useApplicationStore();
   const { isMobile } = useResponsive();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 完了モーダル・閉じる確認モーダル
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [completedAppNo, setCompletedAppNo] = useState('');
 
   // コメント
   const [comment, setComment] = useState('');
@@ -75,10 +84,12 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
 
   // 申請送信
   const handleSubmit = () => {
+    const appNo = `DISP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
     // 各資産に対して申請を作成
     assets.forEach((asset) => {
       addApplication({
-        applicationNo: `DISP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        applicationNo: appNo,
         applicationDate: applicationDate,
         applicationType: '廃棄申請',
         asset: {
@@ -106,21 +117,14 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
       });
     });
 
-    alert(`廃棄申請を送信しました\n申請件数: ${assets.length}件${attachedFiles.length > 0 ? `\n添付ファイル: ${attachedFiles.length}件` : ''}`);
-
-    // フォームリセット
-    setComment('');
-    setAttachedFiles([]);
-
-    onClose();
-    onSuccess?.();
+    setCompletedAppNo(appNo);
+    setShowCompleteModal(true);
   };
 
-  // モーダルを閉じる際のリセット
-  const handleClose = () => {
+  // フォームリセット
+  const resetForm = () => {
     setComment('');
     setAttachedFiles([]);
-    onClose();
   };
 
   if (!isOpen || assets.length === 0) return null;
@@ -130,7 +134,6 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
 
   return (
     <div
-      onClick={handleClose}
       style={{
         position: 'fixed',
         top: 0,
@@ -166,12 +169,30 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             fontSize: '18px',
             fontWeight: 'bold',
             color: '#333',
-            textAlign: 'center',
             borderTopLeftRadius: '12px',
             borderTopRightRadius: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          廃棄申請 モーダル
+          <span>廃棄申請 モーダル</span>
+          <button
+            onClick={() => setShowCloseConfirm(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#333',
+              fontSize: '24px',
+              cursor: 'pointer',
+              padding: '0',
+              width: '30px',
+              height: '30px',
+            }}
+            aria-label="閉じる"
+          >
+            ×
+          </button>
         </div>
 
         {/* モーダルボディ */}
@@ -425,6 +446,36 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
           </div>
         </div>
       </div>
+
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="廃棄申請"
+        applicationNo={completedAppNo}
+        guidanceText=""
+        returnDestination="資産一覧"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          onClose();
+          router.push('/asset-search-result');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
+        isOpen={showCloseConfirm}
+        returnDestination="資産一覧"
+        onCancel={() => setShowCloseConfirm(false)}
+        onConfirm={() => {
+          setShowCloseConfirm(false);
+          onClose();
+        }}
+      />
     </div>
   );
 };
