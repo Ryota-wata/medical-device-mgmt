@@ -7,9 +7,12 @@ import { useApplicationStore, useMasterStore } from '@/lib/stores';
 import { Asset, Application } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
+import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
+import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
+import { exportInventoryToExcel } from '@/lib/utils/excel-inventory';
 
 // 棚卸し確認ステータス
-type InventoryStatus = 'unchecked' | 'stock_ok' | 'location_changed' | 'disposed';
+type InventoryStatus = 'unchecked' | 'stock_ok' | 'location_changed' | 'disposed' | 'action_required';
 
 interface InventoryItem {
   asset: Asset;
@@ -101,14 +104,13 @@ const generateInitialData = (): InventoryItem[] => [
 export default function InventoryPage() {
   const router = useRouter();
   const { addApplication } = useApplicationStore();
-  const { facilities, assets: assetMasters } = useMasterStore();
+  const { facilities, assets: assetMasters, departments } = useMasterStore();
   const { isMobile } = useResponsive();
 
-  // フィルター状態（7つのフィルター）
+  // フィルター状態（6つのフィルター）
   const [filterStatus, setFilterStatus] = useState<'all' | 'unchecked' | 'checked' | 'action_required'>('all');
-  const [filterBuilding, setFilterBuilding] = useState('');
-  const [filterFloor, setFilterFloor] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterDivision, setFilterDivision] = useState('');
   const [filterSection, setFilterSection] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterLargeClass, setFilterLargeClass] = useState('');
@@ -140,6 +142,12 @@ export default function InventoryPage() {
 
   // 一括確定確認モーダル
   const [bulkConfirmModal, setBulkConfirmModal] = useState(false);
+
+  // 廃棄申請モーダル（一括用）
+  const [bulkDisposalModal, setBulkDisposalModal] = useState(false);
+
+  // 移動申請モーダル（一括用）
+  const [bulkTransferModal, setBulkTransferModal] = useState(false);
 
   // チェックボックス選択状態
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -180,8 +188,6 @@ export default function InventoryPage() {
     roomName: ''
   });
 
-  // 廃棄理由用の一時データ
-  const [tempDisposalReason, setTempDisposalReason] = useState('');
 
   // フィルタリングされた棚卸しアイテム
   // 「すべて」と「未確認」では未確認のみ表示（確定したカードは非表示）
@@ -192,13 +198,16 @@ export default function InventoryPage() {
       // 「すべて」は未確認のものだけを表示（確定したものは消える）
       if (filterStatus === 'all' && item.status !== 'unchecked') return false;
       if (filterStatus === 'unchecked' && item.status !== 'unchecked') return false;
-      if (filterStatus === 'checked' && item.status === 'unchecked') return false;
-      if (filterStatus === 'action_required' && !['location_changed', 'disposed'].includes(item.status)) return false;
+      if (filterStatus === 'checked' && (item.status === 'unchecked' || item.status === 'action_required')) return false;
+      if (filterStatus === 'action_required' && !['location_changed', 'disposed', 'action_required'].includes(item.status)) return false;
 
-      // 場所フィルター（7つ）
-      if (filterBuilding && item.asset.building !== filterBuilding) return false;
-      if (filterFloor && item.asset.floor !== filterFloor) return false;
+      // フィルター（6つ）
       if (filterDepartment && item.asset.department !== filterDepartment) return false;
+      if (filterDivision) {
+        // 部門名は部署マスタのdivisionでフィルター（asset.departmentに対応するdivisionを検索）
+        const matchingDept = departments.find(d => d.department === item.asset.section);
+        if (!matchingDept || matchingDept.division !== filterDivision) return false;
+      }
       if (filterSection && item.asset.section !== filterSection) return false;
       if (filterCategory && item.asset.category !== filterCategory) return false;
       if (filterLargeClass && item.asset.largeClass !== filterLargeClass) return false;
@@ -206,17 +215,18 @@ export default function InventoryPage() {
 
       return true;
     });
-  }, [inventoryItems, filterStatus, filterBuilding, filterFloor, filterDepartment, filterSection, filterCategory, filterLargeClass, filterMediumClass]);
+  }, [inventoryItems, filterStatus, filterDepartment, filterDivision, filterSection, filterCategory, filterLargeClass, filterMediumClass, departments]);
 
   // 進捗計算
   const progress = useMemo(() => {
     const total = inventoryItems.length;
     const checked = inventoryItems.filter(item => item.status !== 'unchecked').length;
-    const actionRequired = inventoryItems.filter(item => ['location_changed', 'disposed'].includes(item.status)).length;
+    const actionRequired = inventoryItems.filter(item => ['location_changed', 'disposed', 'action_required'].includes(item.status)).length;
     return { total, checked, actionRequired, percentage: total > 0 ? Math.round((checked / total) * 100) : 0 };
   }, [inventoryItems]);
 
-  // 7つのフィルターオプション（マスターデータから取得）
+  // フィルターオプション（マスターデータから取得）
+  // 棟・階はフィルターから除外したが、場所変更モーダルで使用するため残す
   const buildingOptions = useMemo(() => {
     const fromFacilities = facilities.map(f => f.building);
     const fromItems = inventoryItems.map(item => item.asset.building);
@@ -234,6 +244,10 @@ export default function InventoryPage() {
     const fromItems = inventoryItems.map(item => item.asset.department);
     return [...new Set([...fromFacilities, ...fromItems])].filter(Boolean) as string[];
   }, [facilities, inventoryItems]);
+
+  const divisionOptions = useMemo(() => {
+    return [...new Set(departments.map(d => d.division))].filter(Boolean) as string[];
+  }, [departments]);
 
   const sectionOptions = useMemo(() => {
     const fromFacilities = facilities.map(f => f.section);
@@ -274,7 +288,6 @@ export default function InventoryPage() {
       setLocationChangeModal({ isOpen: true, itemIndex: index });
     } else if (status === 'disposed') {
       // 廃棄モーダルを開く
-      setTempDisposalReason('');
       setDisposalModal({ isOpen: true, itemIndex: index });
     } else if (status === 'stock_ok') {
       // 在庫あり確認モーダルを開く
@@ -315,20 +328,6 @@ export default function InventoryPage() {
     setLocationChangeModal({ isOpen: false, itemIndex: null });
   };
 
-  // 廃棄確定
-  const handleDisposalConfirm = () => {
-    if (disposalModal.itemIndex === null) return;
-
-    const newItems = [...inventoryItems];
-    newItems[disposalModal.itemIndex] = {
-      ...newItems[disposalModal.itemIndex],
-      status: 'disposed',
-      disposalReason: tempDisposalReason,
-      confirmedAt: new Date().toISOString()
-    };
-    setInventoryItems(newItems);
-    setDisposalModal({ isOpen: false, itemIndex: null });
-  };
 
   // 棚卸しリセット
   const handleReset = () => {
@@ -382,6 +381,31 @@ export default function InventoryPage() {
     setSelectedItems(new Set());
     setBulkConfirmModal(false);
   };
+
+  // 一括要対応（保留）実行
+  const handleBulkActionRequired = () => {
+    const newItems = [...inventoryItems];
+    selectedItems.forEach(qrCode => {
+      const index = newItems.findIndex(item => item.asset.qrCode === qrCode);
+      if (index !== -1 && newItems[index].status === 'unchecked') {
+        newItems[index] = {
+          ...newItems[index],
+          status: 'action_required',
+          confirmedAt: new Date().toISOString()
+        };
+      }
+    });
+    setInventoryItems(newItems);
+    setSelectedItems(new Set());
+  };
+
+  // 一括申請で選択中の資産一覧
+  const selectedAssets = useMemo(() => {
+    return inventoryItems
+      .filter(item => selectedItems.has(item.asset.qrCode))
+      .map(item => item.asset);
+  }, [inventoryItems, selectedItems]);
+
 
   // 棚卸し完了処理
   const handleComplete = () => {
@@ -455,17 +479,18 @@ export default function InventoryPage() {
     localStorage.removeItem(INVENTORY_STORAGE_KEY);
 
     setCompleteModal(false);
-    alert(`棚卸しを完了しました。\n移動申請: ${locationChangedItems.length}件\n廃棄申請: ${disposedItems.length}件\n\n申請一覧画面に移動します。`);
-    router.push('/application-list');
+    alert(`棚卸しを完了しました。\n移動申請: ${locationChangedItems.length}件\n廃棄申請: ${disposedItems.length}件\n\nメイン画面に移動します。`);
+    router.push('/main');
   };
 
   // ステータスバッジの取得
   const getStatusBadge = (status: InventoryStatus) => {
     const styles: Record<InventoryStatus, { bg: string; color: string; text: string }> = {
       unchecked: { bg: '#e0e0e0', color: '#666', text: '未確認' },
-      stock_ok: { bg: '#d4edda', color: '#155724', text: '在庫あり' },
-      location_changed: { bg: '#fff3cd', color: '#856404', text: '場所変更' },
-      disposed: { bg: '#f8d7da', color: '#721c24', text: '廃棄' }
+      stock_ok: { bg: '#d4edda', color: '#155724', text: '確認済' },
+      location_changed: { bg: '#fff3cd', color: '#856404', text: '移動' },
+      disposed: { bg: '#f8d7da', color: '#721c24', text: '廃棄' },
+      action_required: { bg: '#fce4ec', color: '#c62828', text: '要対応' }
     };
     const style = styles[status];
     return (
@@ -502,8 +527,9 @@ export default function InventoryPage() {
         title="棚卸し"
         resultCount={filteredItems.length}
         showBackButton={true}
-        backHref="/asset-search-result"
-        backLabel="資産一覧に戻る"
+        backHref="/main"
+        backLabel="一時保存して戻る"
+        hideMenu={true}
       />
 
       {/* 進捗バー */}
@@ -512,14 +538,30 @@ export default function InventoryPage() {
           <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>
             棚卸し進捗: {progress.checked} / {progress.total} 件 ({progress.percentage}%)
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '14px', color: '#e67e22' }}>
               要対応: {progress.actionRequired}件
             </span>
             <button
+              onClick={() => setCompleteModal(true)}
+              disabled={progress.percentage < 100}
+              style={{
+                padding: '8px 20px',
+                background: progress.percentage < 100 ? '#ccc' : '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: progress.percentage < 100 ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              棚卸し完了
+            </button>
+            <button
               onClick={() => setResetModal(true)}
               style={{
-                padding: '6px 12px',
+                padding: '8px 12px',
                 background: '#e74c3c',
                 color: 'white',
                 border: 'none',
@@ -551,89 +593,71 @@ export default function InventoryPage() {
 
       {/* フィルターバー */}
       <div style={{ background: 'white', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '12px' }}>
-          {/* ステータスフィルター */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {[
-              { value: 'all', label: '未確認' },
-              { value: 'checked', label: '確認済' },
-              { value: 'action_required', label: '要対応' }
-            ].map(option => (
-              <button
-                key={option.value}
-                onClick={() => setFilterStatus(option.value as typeof filterStatus)}
-                style={{
-                  padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: filterStatus === option.value ? 'bold' : 'normal',
-                  background: filterStatus === option.value ? '#3498db' : '#e0e0e0',
-                  color: filterStatus === option.value ? 'white' : '#666'
-                }}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+        {/* ステータスフィルター */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+          {[
+            { value: 'all', label: '未確認' },
+            { value: 'checked', label: '確認済' },
+            { value: 'action_required', label: '要対応' }
+          ].map(option => (
+            <label key={option.value} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+              <input
+                type="radio"
+                name="filterStatus"
+                checked={filterStatus === option.value}
+                onChange={() => setFilterStatus(option.value as typeof filterStatus)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              {option.label}
+            </label>
+          ))}
         </div>
 
-        {/* 7つのフィルター */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ minWidth: '100px' }}>
+        {/* 6つのフィルター */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              label=""
-              value={filterBuilding}
-              onChange={setFilterBuilding}
-              options={['', ...buildingOptions]}
-              placeholder="棟"
-              isMobile={isMobile}
-            />
-          </div>
-          <div style={{ minWidth: '80px' }}>
-            <SearchableSelect
-              label=""
-              value={filterFloor}
-              onChange={setFilterFloor}
-              options={['', ...floorOptions]}
-              placeholder="階"
-              isMobile={isMobile}
-            />
-          </div>
-          <div style={{ minWidth: '100px' }}>
-            <SearchableSelect
-              label=""
+              label="管理部署"
               value={filterDepartment}
               onChange={setFilterDepartment}
               options={['', ...departmentOptions]}
-              placeholder="部門"
+              placeholder="管理部署"
               isMobile={isMobile}
             />
           </div>
-          <div style={{ minWidth: '100px' }}>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              label=""
+              label="部門名"
+              value={filterDivision}
+              onChange={setFilterDivision}
+              options={['', ...divisionOptions]}
+              placeholder="部門名"
+              isMobile={isMobile}
+            />
+          </div>
+          <div style={{ minWidth: '120px' }}>
+            <SearchableSelect
+              label="部署名"
               value={filterSection}
               onChange={setFilterSection}
               options={['', ...sectionOptions]}
-              placeholder="部署"
+              placeholder="部署名"
               isMobile={isMobile}
             />
           </div>
-          <div style={{ minWidth: '110px' }}>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              label=""
+              label="category"
               value={filterCategory}
               onChange={setFilterCategory}
               options={['', ...categoryOptions]}
-              placeholder="カテゴリ"
+              placeholder="category"
               isMobile={isMobile}
             />
           </div>
-          <div style={{ minWidth: '110px' }}>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              label=""
+              label="大分類"
               value={filterLargeClass}
               onChange={setFilterLargeClass}
               options={['', ...largeClassOptions]}
@@ -641,9 +665,9 @@ export default function InventoryPage() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ minWidth: '110px' }}>
+          <div style={{ minWidth: '120px' }}>
             <SearchableSelect
-              label=""
+              label="中分類"
               value={filterMediumClass}
               onChange={setFilterMediumClass}
               options={['', ...mediumClassOptions]}
@@ -662,7 +686,7 @@ export default function InventoryPage() {
           borderBottom: '1px solid #bee5eb',
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
+          gap: '12px',
           flexWrap: 'wrap'
         }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
@@ -672,7 +696,7 @@ export default function InventoryPage() {
               onChange={handleSelectAll}
               style={{ width: '18px', height: '18px', cursor: 'pointer' }}
             />
-            <span style={{ fontSize: '14px', color: '#2c3e50' }}>
+            <span style={{ fontSize: '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>
               全選択 ({selectedItems.size}/{filteredItems.filter(item => item.status === 'unchecked').length})
             </span>
           </label>
@@ -680,17 +704,78 @@ export default function InventoryPage() {
             disabled={selectedItems.size === 0}
             onClick={handleBulkStockOkClick}
             style={{
-              padding: '8px 20px',
+              padding: '8px 16px',
               background: selectedItems.size === 0 ? '#ccc' : '#27ae60',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
+              fontSize: '13px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
             }}
           >
-            選択した{selectedItems.size}件を在庫ありで確定
+            確認済
+          </button>
+          <button
+            disabled={selectedItems.size === 0}
+            onClick={() => {
+              if (selectedItems.size === 0) return;
+              setBulkDisposalModal(true);
+            }}
+            style={{
+              padding: '8px 16px',
+              background: selectedItems.size === 0 ? '#ccc' : '#e74c3c',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            廃棄（除却）申請へ
+          </button>
+          <button
+            disabled={selectedItems.size === 0}
+            onClick={() => {
+              if (selectedItems.size === 0) return;
+              setBulkTransferModal(true);
+            }}
+            style={{
+              padding: '8px 16px',
+              background: selectedItems.size === 0 ? '#ccc' : '#f39c12',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            移動申請へ
+          </button>
+          <button
+            disabled={selectedItems.size === 0}
+            onClick={() => {
+              if (selectedItems.size === 0) return;
+              handleBulkActionRequired();
+            }}
+            style={{
+              padding: '8px 16px',
+              background: selectedItems.size === 0 ? '#ccc' : '#7f8c8d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            要対応（保留）
           </button>
         </div>
       )}
@@ -726,10 +811,8 @@ export default function InventoryPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    position: 'relative',
-                    cursor: 'pointer'
+                    position: 'relative'
                   }}
-                  onClick={() => handleViewKarte(item.asset)}
                 >
                   {/* チェックボックス（未確認のものだけ） */}
                   {item.status === 'unchecked' && (
@@ -768,7 +851,8 @@ export default function InventoryPage() {
                     {getStatusBadge(item.status)}
                   </div>
                   {/* 詳細表示ボタン */}
-                  <div
+                  <button
+                    onClick={() => handleViewKarte(item.asset)}
                     style={{
                       position: 'absolute',
                       bottom: '10px',
@@ -778,153 +862,50 @@ export default function InventoryPage() {
                       padding: '6px 12px',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      fontWeight: 'bold'
+                      fontWeight: 'bold',
+                      border: 'none',
+                      cursor: 'pointer'
                     }}
                   >
                     詳細を見る
-                  </div>
+                  </button>
                 </div>
 
                 {/* カード本体 */}
                 <div style={{ padding: '16px' }}>
-                  {/* ヘッダー情報 */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#7f8c8d', marginBottom: '4px' }}>
-                      {item.asset.assetNo} / {item.asset.managementNo}
-                    </div>
-                    <h3
-                      style={{
-                        fontSize: '15px',
-                        fontWeight: 'bold',
-                        color: '#2c3e50',
-                        margin: 0,
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => handleViewKarte(item.asset)}
-                    >
-                      {item.asset.name}
-                    </h3>
+                  {/* ヘッダー情報：QRコード + 日付 */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#7f8c8d' }}>{item.asset.qrCode}</span>
+                    <span style={{ fontSize: '11px', color: '#7f8c8d' }}>
+                      {item.confirmedAt ? new Date(item.confirmedAt).toLocaleDateString('ja-JP') : new Date().toLocaleDateString('ja-JP')}
+                    </span>
                   </div>
+                  {/* 資産名 */}
+                  <h3
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      color: '#2c3e50',
+                      margin: '0 0 8px 0'
+                    }}
+                  >
+                    {item.asset.name}
+                  </h3>
 
                   {/* 資産情報 */}
                   <div style={{
                     fontSize: '12px',
                     color: '#5a6c7d',
-                    lineHeight: '1.6',
+                    lineHeight: '1.8',
                     marginBottom: '12px'
                   }}>
-                    <div>場所: {item.asset.building} {item.asset.floor} {item.asset.roomName}</div>
-                    <div>部門: {item.asset.department}</div>
-                    <div>メーカー: {item.asset.maker}</div>
-                    <div>型式: {item.asset.model}</div>
+                    <div>管理部署：{item.asset.department}</div>
+                    <div>設置場所：{item.asset.building}　{item.asset.section}　{item.asset.roomName || ''}</div>
+                    <div>メーカー：{item.asset.maker}</div>
+                    <div>型式　　：{item.asset.model}</div>
+                    <div>シリアルNo.：{item.asset.serialNumber || '---'}</div>
+                    <div>固定資産番号：{item.asset.assetNo || '---'}</div>
                   </div>
-
-                  {/* 場所変更の場合の新場所表示 */}
-                  {item.status === 'location_changed' && (
-                    <div style={{
-                      background: '#fff3cd',
-                      borderRadius: '6px',
-                      padding: '8px 10px',
-                      marginBottom: '12px',
-                      fontSize: '12px'
-                    }}>
-                      <div style={{ fontWeight: 'bold', color: '#856404', marginBottom: '2px' }}>
-                        変更後:
-                      </div>
-                      <div style={{ color: '#856404' }}>
-                        {item.newBuilding} {item.newFloor} {item.newRoomName}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 廃棄の場合の理由表示 */}
-                  {item.status === 'disposed' && item.disposalReason && (
-                    <div style={{
-                      background: '#f8d7da',
-                      borderRadius: '6px',
-                      padding: '8px 10px',
-                      marginBottom: '12px',
-                      fontSize: '12px'
-                    }}>
-                      <div style={{ fontWeight: 'bold', color: '#721c24', marginBottom: '2px' }}>
-                        廃棄理由:
-                      </div>
-                      <div style={{ color: '#721c24' }}>
-                        {item.disposalReason}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* アクションボタン */}
-                  {item.status === 'unchecked' ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <button
-                        onClick={() => handleStatusChange(originalIndex, 'stock_ok')}
-                        style={{
-                          padding: '10px 12px',
-                          background: '#27ae60',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        在庫あり（現状維持）
-                      </button>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleStatusChange(originalIndex, 'location_changed')}
-                          style={{
-                            flex: 1,
-                            padding: '10px 12px',
-                            background: '#f39c12',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          場所変更
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(originalIndex, 'disposed')}
-                          style={{
-                            flex: 1,
-                            padding: '10px 12px',
-                            background: '#e74c3c',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          廃棄
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{
-                      padding: '10px',
-                      background: item.status === 'stock_ok' ? '#d4edda' :
-                                 item.status === 'location_changed' ? '#fff3cd' : '#f8d7da',
-                      borderRadius: '6px',
-                      textAlign: 'center',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      color: item.status === 'stock_ok' ? '#155724' :
-                             item.status === 'location_changed' ? '#856404' : '#721c24'
-                    }}>
-                      {item.status === 'stock_ok' && '✓ 在庫あり（現状維持）で確定済み'}
-                      {item.status === 'location_changed' && '✓ 場所変更で確定済み'}
-                      {item.status === 'disposed' && '✓ 廃棄で確定済み'}
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -932,58 +913,6 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      {/* フッターアクションバー */}
-      <div style={{
-        background: 'white',
-        padding: '16px 20px',
-        borderTop: '1px solid #dee2e6',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '16px'
-      }}>
-        <button
-          onClick={() => router.push('/asset-search-result')}
-          style={{
-            padding: '12px 24px',
-            background: '#95a5a6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          資産一覧に戻る
-        </button>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={() => {
-              if (progress.checked < progress.total) {
-                const uncheckedCount = progress.total - progress.checked;
-                if (!confirm(`未確認の資産が ${uncheckedCount} 件あります。\n棚卸しを完了してよろしいですか？`)) {
-                  return;
-                }
-              }
-              setCompleteModal(true);
-            }}
-            disabled={progress.checked === 0}
-            style={{
-              padding: '12px 32px',
-              background: progress.checked === 0 ? '#ccc' : '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: progress.checked === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-          >
-            棚卸しを完了する
-          </button>
-        </div>
-      </div>
 
       {/* 場所変更モーダル */}
       {locationChangeModal.isOpen && (
@@ -1120,109 +1049,69 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* 廃棄モーダル */}
-      {disposalModal.isOpen && (
-        <div
-          onClick={() => setDisposalModal({ isOpen: false, itemIndex: null })}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '500px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-            }}
-          >
-            <div style={{
-              background: '#e74c3c',
-              color: 'white',
-              padding: '16px 24px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              borderTopLeftRadius: '12px',
-              borderTopRightRadius: '12px'
-            }}>
-              廃棄確認
-            </div>
-            <div style={{ padding: '24px' }}>
-              <p style={{ marginBottom: '20px', color: '#666' }}>
-                この資産を廃棄として記録します。廃棄理由を入力してください。
-              </p>
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#2c3e50', marginBottom: '8px' }}>
-                  廃棄理由
-                </label>
-                <textarea
-                  value={tempDisposalReason}
-                  onChange={(e) => setTempDisposalReason(e.target.value)}
-                  placeholder="廃棄理由を入力してください（例：故障、老朽化、紛失など）"
-                  rows={4}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #d0d0d0',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-            </div>
-            <div style={{
-              padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}>
-              <button
-                onClick={() => setDisposalModal({ isOpen: false, itemIndex: null })}
-                style={{
-                  padding: '10px 20px',
-                  background: '#95a5a6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleDisposalConfirm}
-                style={{
-                  padding: '10px 20px',
-                  background: '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold'
-                }}
-              >
-                廃棄として記録
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 廃棄申請モーダル（単体用） */}
+      <DisposalApplicationModal
+        isOpen={disposalModal.isOpen && disposalModal.itemIndex !== null}
+        assets={disposalModal.itemIndex !== null && inventoryItems[disposalModal.itemIndex] ? [inventoryItems[disposalModal.itemIndex].asset] : []}
+        onClose={() => setDisposalModal({ isOpen: false, itemIndex: null })}
+        onSuccess={() => {
+          if (disposalModal.itemIndex === null) return;
+          const newItems = [...inventoryItems];
+          newItems[disposalModal.itemIndex] = {
+            ...newItems[disposalModal.itemIndex],
+            status: 'disposed',
+            confirmedAt: new Date().toISOString()
+          };
+          setInventoryItems(newItems);
+          setDisposalModal({ isOpen: false, itemIndex: null });
+        }}
+      />
+
+      {/* 廃棄申請モーダル（一括用） */}
+      <DisposalApplicationModal
+        isOpen={bulkDisposalModal}
+        assets={selectedAssets}
+        onClose={() => setBulkDisposalModal(false)}
+        onSuccess={() => {
+          const newItems = [...inventoryItems];
+          selectedItems.forEach(qrCode => {
+            const index = newItems.findIndex(item => item.asset.qrCode === qrCode);
+            if (index !== -1 && newItems[index].status === 'unchecked') {
+              newItems[index] = {
+                ...newItems[index],
+                status: 'disposed',
+                confirmedAt: new Date().toISOString()
+              };
+            }
+          });
+          setInventoryItems(newItems);
+          setSelectedItems(new Set());
+          setBulkDisposalModal(false);
+        }}
+      />
+
+      {/* 移動申請モーダル（一括用） */}
+      <TransferApplicationModal
+        isOpen={bulkTransferModal}
+        assets={selectedAssets}
+        onClose={() => setBulkTransferModal(false)}
+        onSuccess={() => {
+          const newItems = [...inventoryItems];
+          selectedItems.forEach(qrCode => {
+            const index = newItems.findIndex(item => item.asset.qrCode === qrCode);
+            if (index !== -1 && newItems[index].status === 'unchecked') {
+              newItems[index] = {
+                ...newItems[index],
+                status: 'location_changed',
+                confirmedAt: new Date().toISOString()
+              };
+            }
+          });
+          setInventoryItems(newItems);
+          setSelectedItems(new Set());
+          setBulkTransferModal(false);
+        }}
+      />
 
       {/* 完了確認モーダル */}
       {completeModal && (
@@ -1280,6 +1169,23 @@ export default function InventoryPage() {
               <p style={{ color: '#666', fontSize: '13px' }}>
                 ※ 場所変更・廃棄とした資産については、自動的に申請が作成されます。
               </p>
+              <button
+                onClick={() => exportInventoryToExcel(inventoryItems)}
+                style={{
+                  marginTop: '16px',
+                  padding: '10px 20px',
+                  background: 'white',
+                  color: '#2c3e50',
+                  border: '1px solid #2c3e50',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  width: '100%'
+                }}
+              >
+                棚卸し結果をExcel出力
+              </button>
             </div>
             <div style={{
               padding: '16px 24px',
