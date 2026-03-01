@@ -214,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <div
                   onClick={() => {
-                    router.push('/application-list');
+                    router.push('/main');
                     setIsMenuOpen(false);
                   }}
                   className="flex items-center gap-2 px-4 py-3 cursor-pointer transition-colors"

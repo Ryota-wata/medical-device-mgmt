@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts';
 import { Asset } from '@/lib/types';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useAssetStore } from '@/lib/stores';
 
 function AssetDetailContent() {
   const router = useRouter();
@@ -27,10 +28,26 @@ function AssetDetailContent() {
     }
   })();
 
+  const { assets: storeAssets } = useAssetStore();
+
+  // ストアから該当資産を検索
+  const foundAsset = storeAssets.find(a => {
+    if (qrCode && a.qrCode === qrCode) return true;
+    if (assetNo && a.no === parseInt(assetNo)) return true;
+    return false;
+  });
+
   const [asset, setAsset] = useState<Asset | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+
+  // ストアデータをローカルステートにセット
+  useEffect(() => {
+    if (foundAsset) {
+      setAsset({ ...foundAsset });
+    }
+  }, [foundAsset?.no]);
 
   const handleHomeClick = () => {
     if (isEditMode) {
@@ -39,60 +56,6 @@ function AssetDetailContent() {
       router.push('/main');
     }
   };
-
-  // モックデータ
-  useEffect(() => {
-    const mockAsset: Asset = {
-      qrCode: qrCode || 'QR-2025-0001',
-      no: assetNo ? parseInt(assetNo) : 1,
-      facility: '〇〇〇〇〇〇病院',
-      building: '本館',
-      floor: '2F',
-      department: '手術部門',
-      section: '手術',
-      category: '医療機器',
-      largeClass: '手術関連機器',
-      mediumClass: '電気メス 双極',
-      item: '手術台',
-      name: '電気手術用電源装置2システム',
-      maker: '医療',
-      model: 'EW11 超音波吸引器',
-      quantity: 1,
-      width: 520,
-      depth: 480,
-      height: 1400,
-      assetNo: '10605379-000',
-      managementNo: '1338',
-      roomClass1: '手術室',
-      roomClass2: 'OP室',
-      roomName: '手術室A',
-      installationLocation: '手術室A-中央',
-      assetInfo: '資産台帳登録済',
-      quantityUnit: '1台',
-      serialNumber: 'SN-2024-001',
-      contractName: '医療機器購入契約2024-01',
-      contractNo: 'C-2024-0001',
-      quotationNo: 'Q-2024-0001',
-      contractDate: '2024-01-10',
-      deliveryDate: '2024-01-20',
-      inspectionDate: '2024-01-25',
-      lease: 'なし',
-      rental: 'なし',
-      leaseStartDate: '',
-      leaseEndDate: '',
-      acquisitionCost: 15000000,
-      legalServiceLife: '6年',
-      recommendedServiceLife: '8年',
-      endOfService: '2032-12-31',
-      endOfSupport: '2035-12-31',
-      photos: [
-        'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%2390caf9" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23fff" font-size="24"%3E写真1%3C/text%3E%3C/svg%3E',
-        'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%2366bb6a" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23fff" font-size="24"%3E写真2%3C/text%3E%3C/svg%3E',
-        'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ff7043" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23fff" font-size="24"%3E写真3%3C/text%3E%3C/svg%3E'
-      ]
-    };
-    setAsset(mockAsset);
-  }, [qrCode, assetNo]);
 
   // 写真アップロードハンドラー
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,15 +165,6 @@ function AssetDetailContent() {
               )}
             </>
           )}
-
-          <button
-            style={{ padding: '8px 16px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
-            onClick={handleHomeClick}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#2c3e50'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#34495e'; }}
-          >
-            メイン画面に戻る
-          </button>
 
           <button
             style={{ padding: '8px 16px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
@@ -382,508 +336,77 @@ function AssetDetailContent() {
             )}
           </div>
 
-          {/* 基本情報 */}
-          <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: '8px', padding: '20px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '15px', color: '#2c3e50', borderBottom: '2px solid #27ae60', paddingBottom: '8px' }}>
-              基本情報
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '12px', fontSize: '14px' }}>
-              {/* 識別情報 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>QRコードNo.:</div>
-              <div style={{ color: '#2c3e50' }}>{asset.qrCode}</div>
+          {/* 資産情報（8グループ構成） */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>固定資産番号:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.assetNo || ''}
-                  onChange={(e) => handleFieldChange('assetNo', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.assetNo || '-'}</div>
-              )}
+            {/* 基本情報 */}
+            <DetailSection title="基本情報" color="#495057" bg="#f8f9fa">
+              <DetailField label="施設名" value={asset.facility} field="facility" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>管理機器番号:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.managementNo || ''}
-                  onChange={(e) => handleFieldChange('managementNo', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.managementNo || '-'}</div>
-              )}
+            {/* 共通マスタ */}
+            <DetailSection title="共通マスタ" color="#2e7d32" bg="#e8f5e9">
+              <DetailField label="部門名" value={asset.shipDivision} field="shipDivision" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="部署名" value={asset.shipDepartment} field="shipDepartment" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="諸室区分①" value={asset.roomClass1} field="roomClass1" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="諸室区分②" value={asset.roomClass2} field="roomClass2" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              {/* 施設・設置情報 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>施設名:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.facility}
-                  onChange={(e) => handleFieldChange('facility', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.facility}</div>
-              )}
+            {/* 設置情報 */}
+            <DetailSection title="設置情報" color="#1565c0" bg="#e3f2fd">
+              <DetailField label="部門ID" value={asset.divisionId} field="divisionId" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="部署ID" value={asset.departmentId} field="departmentId" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="諸室ID" value={asset.roomId} field="roomId" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="棟" value={asset.building} field="building" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="階" value={asset.floor} field="floor" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="部門" value={asset.department} field="department" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="部署" value={asset.section} field="section" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="室名" value={asset.roomName} field="roomName" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="設置場所" value={asset.installationLocation} field="installationLocation" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>棟:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.building}
-                  onChange={(e) => handleFieldChange('building', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.building}</div>
-              )}
+            {/* 識別情報 */}
+            <DetailSection title="識別情報" color="#e65100" bg="#fff3e0">
+              <DetailField label="QRコード" value={asset.qrCode} field="qrCode" isEditMode={false} onChange={handleFieldChange} />
+              <DetailField label="台帳番号" value={asset.assetNo} field="assetNo" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="管理部署" value={asset.managementDept} field="managementDept" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="管理機器番号" value={asset.managementNo} field="managementNo" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="備品番号" value={asset.equipmentNo} field="equipmentNo" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="シリアルNo." value={asset.serialNumber} field="serialNumber" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>階:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.floor}
-                  onChange={(e) => handleFieldChange('floor', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.floor}</div>
-              )}
+            {/* 資産分類 */}
+            <DetailSection title="資産分類" color="#7b1fa2" bg="#f3e5f5">
+              <DetailField label="資産マスタID" value={asset.assetMasterId} field="assetMasterId" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="Category" value={asset.category} field="category" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="大分類" value={asset.largeClass} field="largeClass" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="中分類" value={asset.mediumClass} field="mediumClass" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="明細区分" value={asset.detailCategory} field="detailCategory" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="個体管理品目" value={asset.item} field="item" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>部門:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.department}
-                  onChange={(e) => handleFieldChange('department', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.department}</div>
-              )}
+            {/* 機器仕様 */}
+            <DetailSection title="機器仕様" color="#00838f" bg="#e0f7fa">
+              <DetailField label="個体管理名称" value={asset.name} field="name" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="メーカー名" value={asset.maker} field="maker" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="型式" value={asset.model} field="model" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="W" value={asset.width} field="width" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="D" value={asset.depth} field="depth" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="H" value={asset.height} field="height" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>部署:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.section}
-                  onChange={(e) => handleFieldChange('section', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.section}</div>
-              )}
+            {/* 取得情報 */}
+            <DetailSection title="取得情報" color="#c62828" bg="#fce4ec">
+              <DetailField label="購入年月日" value={asset.purchaseDate} field="purchaseDate" isEditMode={isEditMode} onChange={handleFieldChange} type="date" />
+              <DetailField label="リース" value={asset.lease} field="lease" isEditMode={isEditMode} onChange={handleFieldChange} />
+              <DetailField label="貸出品" value={asset.rental} field="rental" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>諸室区分①:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.roomClass1 || ''}
-                  onChange={(e) => handleFieldChange('roomClass1', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.roomClass1 || '-'}</div>
-              )}
+            {/* その他 */}
+            <DetailSection title="その他" color="#616161" bg="#f5f5f5">
+              <DetailField label="備考" value={asset.remarks} field="remarks" isEditMode={isEditMode} onChange={handleFieldChange} />
+            </DetailSection>
 
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>諸室区分②:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.roomClass2 || ''}
-                  onChange={(e) => handleFieldChange('roomClass2', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.roomClass2 || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>諸室名称:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.roomName || ''}
-                  onChange={(e) => handleFieldChange('roomName', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.roomName || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>設置場所:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.installationLocation || ''}
-                  onChange={(e) => handleFieldChange('installationLocation', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.installationLocation || '-'}</div>
-              )}
-
-              {/* 資産分類 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>Category:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.category}
-                  onChange={(e) => handleFieldChange('category', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.category}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>大分類:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.largeClass}
-                  onChange={(e) => handleFieldChange('largeClass', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.largeClass}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>中分類:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.mediumClass}
-                  onChange={(e) => handleFieldChange('mediumClass', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.mediumClass}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>品目:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.item}
-                  onChange={(e) => handleFieldChange('item', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.item}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>個体管理名称:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.name}</div>
-              )}
-
-              {/* 機器情報 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>メーカー:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.maker}
-                  onChange={(e) => handleFieldChange('maker', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.maker}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>型式:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.model}
-                  onChange={(e) => handleFieldChange('model', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.model}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>数量／単位:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.quantityUnit || ''}
-                  onChange={(e) => handleFieldChange('quantityUnit', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.quantityUnit || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>数量:</div>
-              {isEditMode ? (
-                <input
-                  type="number"
-                  value={asset.quantity}
-                  onChange={(e) => handleFieldChange('quantity', parseInt(e.target.value) || 0)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.quantity}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>シリアル番号:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.serialNumber || ''}
-                  onChange={(e) => handleFieldChange('serialNumber', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.serialNumber || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>幅(W):</div>
-              {isEditMode ? (
-                <input
-                  type="number"
-                  value={asset.width}
-                  onChange={(e) => handleFieldChange('width', parseInt(e.target.value) || 0)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.width}mm</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>奥行(D):</div>
-              {isEditMode ? (
-                <input
-                  type="number"
-                  value={asset.depth}
-                  onChange={(e) => handleFieldChange('depth', parseInt(e.target.value) || 0)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.depth}mm</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>高さ(H):</div>
-              {isEditMode ? (
-                <input
-                  type="number"
-                  value={asset.height}
-                  onChange={(e) => handleFieldChange('height', parseInt(e.target.value) || 0)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.height}mm</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>資産情報:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.assetInfo || ''}
-                  onChange={(e) => handleFieldChange('assetInfo', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.assetInfo || '-'}</div>
-              )}
-
-              {/* 契約情報 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>契約･見積名称:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.contractName || ''}
-                  onChange={(e) => handleFieldChange('contractName', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.contractName || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>契約番号:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.contractNo || ''}
-                  onChange={(e) => handleFieldChange('contractNo', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.contractNo || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>見積番号:</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.quotationNo || ''}
-                  onChange={(e) => handleFieldChange('quotationNo', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.quotationNo || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>契約･発注日:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.contractDate || ''}
-                  onChange={(e) => handleFieldChange('contractDate', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.contractDate || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>納品日:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.deliveryDate || ''}
-                  onChange={(e) => handleFieldChange('deliveryDate', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.deliveryDate || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>検収日:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.inspectionDate || ''}
-                  onChange={(e) => handleFieldChange('inspectionDate', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.inspectionDate || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>取得価格:</div>
-              {isEditMode ? (
-                <input
-                  type="number"
-                  value={asset.acquisitionCost || ''}
-                  onChange={(e) => handleFieldChange('acquisitionCost', parseInt(e.target.value) || 0)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>
-                  {asset.acquisitionCost ? `¥${asset.acquisitionCost.toLocaleString()}` : '-'}
-                </div>
-              )}
-
-              {/* リース情報 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>リース:</div>
-              {isEditMode ? (
-                <select
-                  value={asset.lease || 'なし'}
-                  onChange={(e) => handleFieldChange('lease', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                >
-                  <option value="なし">なし</option>
-                  <option value="あり">あり</option>
-                </select>
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.lease || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>借用:</div>
-              {isEditMode ? (
-                <select
-                  value={asset.rental || 'なし'}
-                  onChange={(e) => handleFieldChange('rental', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                >
-                  <option value="なし">なし</option>
-                  <option value="あり">あり</option>
-                </select>
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.rental || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>リース開始日:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.leaseStartDate || ''}
-                  onChange={(e) => handleFieldChange('leaseStartDate', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.leaseStartDate || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>リース終了日:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.leaseEndDate || ''}
-                  onChange={(e) => handleFieldChange('leaseEndDate', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.leaseEndDate || '-'}</div>
-              )}
-
-              {/* 耐用年数・保守情報 */}
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>耐用年数(法定):</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.legalServiceLife || ''}
-                  onChange={(e) => handleFieldChange('legalServiceLife', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.legalServiceLife || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>使用年数(推奨):</div>
-              {isEditMode ? (
-                <input
-                  type="text"
-                  value={asset.recommendedServiceLife || ''}
-                  onChange={(e) => handleFieldChange('recommendedServiceLife', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.recommendedServiceLife || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>End of service:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.endOfService || ''}
-                  onChange={(e) => handleFieldChange('endOfService', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.endOfService || '-'}</div>
-              )}
-
-              <div style={{ color: '#5a6c7d', fontWeight: 'bold' }}>End of support:</div>
-              {isEditMode ? (
-                <input
-                  type="date"
-                  value={asset.endOfSupport || ''}
-                  onChange={(e) => handleFieldChange('endOfSupport', e.target.value)}
-                  style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
-                />
-              ) : (
-                <div style={{ color: '#2c3e50' }}>{asset.endOfSupport || '-'}</div>
-              )}
-            </div>
           </div>
         </div>
 
@@ -952,6 +475,54 @@ function AssetDetailContent() {
   );
 }
 
+
+// セクションヘッダー付きグループ
+function DetailSection({ title, color, bg, children }: { title: string; color: string; bg: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
+      <div style={{ background: bg, padding: '8px 16px', borderBottom: '1px solid #dee2e6' }}>
+        <span style={{ fontSize: '14px', fontWeight: 'bold', color }}>{title}</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0', fontSize: '14px' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// 1フィールド行（ラベル + 値/入力）
+function DetailField({ label, value, field, isEditMode, onChange, type = 'text' }: {
+  label: string;
+  value: any;
+  field: string;
+  isEditMode: boolean;
+  onChange: (field: keyof Asset, value: any) => void;
+  type?: 'text' | 'number' | 'date';
+}) {
+  const displayValue = value ?? '-';
+  const inputStyle = { padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', width: '100%', boxSizing: 'border-box' as const };
+
+  return (
+    <>
+      <div style={{ color: '#5a6c7d', fontWeight: 'bold', padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: '13px' }}>{label}</div>
+      <div style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0' }}>
+        {isEditMode ? (
+          <input
+            type={type}
+            value={value ?? ''}
+            onChange={(e) => {
+              const val = type === 'number' ? (parseInt(e.target.value) || 0) : e.target.value;
+              onChange(field as keyof Asset, val);
+            }}
+            style={inputStyle}
+          />
+        ) : (
+          <div style={{ color: '#2c3e50', fontSize: '13px' }}>{typeof displayValue === 'number' ? String(displayValue) : displayValue}</div>
+        )}
+      </div>
+    </>
+  );
+}
 
 export default function AssetDetailPage() {
   return (

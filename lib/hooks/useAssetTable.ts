@@ -99,6 +99,10 @@ export function useAssetTable(columns: ColumnDef[]) {
       }
       return amount;
     }
+    if (key === 'photos') {
+      const photos = asset.photos;
+      return (photos && photos.length > 0) ? `${photos.length}枚` : '-';
+    }
     return (asset as any)[key] ?? '-';
   };
 

@@ -414,6 +414,23 @@ const initialFacilities: FacilityMaster[] = [
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z',
   },
+  {
+    id: 'FAC021',
+    facilityCode: 'FAC021',
+    facilityName: 'サンプル病院',
+    prefecture: '東京都',
+    foundingBody: '公立',
+    city: '千代田区',
+    address: '丸の内1-1-1',
+    postalCode: '100-0005',
+    phoneNumber: '03-9999-0000',
+    establishedDate: '2010-04-01',
+    facilityType: '総合病院',
+    bedCount: 600,
+    status: 'active',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z',
+  },
 ];
 
 // 資産マスタデータ（顧客Excel「資産マスタ」シートから2047件を外部ファイルで読込）

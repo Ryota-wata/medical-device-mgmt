@@ -5,17 +5,24 @@ const HEADERS = [
   'ID',
   '病院ID',
   '病院名',
-  '旧_フロア',
-  '旧_部門',
-  '旧_部署',
-  '旧_室名称',
   '旧_SHIP部門',
   '旧_SHIP部署',
-  '旧_SHIP諸室区分',
+  '旧_SHIP諸室区分①',
+  '諸室区分②',
+  '部門ID',
+  '部署ID',
+  '諸室ID',
+  '新_棟',
   '新_フロア',
   '新_部門',
   '新_部署',
   '新_室名称',
+  '新_室数',
+  '旧_棟',
+  '旧_フロア',
+  '旧_部門',
+  '旧_部署',
+  '旧_室名称',
   '新_SHIP部門',
   '新_SHIP部署',
   '新_SHIP諸室区分',
@@ -33,17 +40,24 @@ function facilityToRow(f: HospitalFacilityMaster): (string | number)[] {
     f.id,
     f.hospitalId,
     f.hospitalName,
-    f.oldFloor,
-    f.oldDepartment,
-    f.oldSection,
-    f.oldRoomName,
     f.oldShipDivision,
     f.oldShipDepartment,
     f.oldShipRoomCategory,
+    f.shipRoomCategory2,
+    f.divisionId,
+    f.departmentId,
+    f.roomId,
+    f.newBuilding,
     f.newFloor,
     f.newDepartment,
     f.newSection,
     f.newRoomName,
+    f.newRoomCount,
+    f.oldBuilding,
+    f.oldFloor,
+    f.oldDepartment,
+    f.oldSection,
+    f.oldRoomName,
     f.newShipDivision,
     f.newShipDepartment,
     f.newShipRoomCategory,
@@ -61,17 +75,24 @@ export function exportFacilitiesToExcel(
     { wch: 12 },  // ID
     { wch: 20 },  // 病院ID
     { wch: 20 },  // 病院名
-    { wch: 10 },  // 旧_フロア
-    { wch: 14 },  // 旧_部門
-    { wch: 14 },  // 旧_部署
-    { wch: 16 },  // 旧_室名称
     { wch: 14 },  // 旧_SHIP部門
     { wch: 14 },  // 旧_SHIP部署
-    { wch: 16 },  // 旧_SHIP諸室区分
+    { wch: 16 },  // 旧_SHIP諸室区分①
+    { wch: 16 },  // 諸室区分②
+    { wch: 10 },  // 部門ID
+    { wch: 10 },  // 部署ID
+    { wch: 10 },  // 諸室ID
+    { wch: 10 },  // 新_棟
     { wch: 10 },  // 新_フロア
     { wch: 14 },  // 新_部門
     { wch: 14 },  // 新_部署
     { wch: 16 },  // 新_室名称
+    { wch: 8 },   // 新_室数
+    { wch: 10 },  // 旧_棟
+    { wch: 10 },  // 旧_フロア
+    { wch: 14 },  // 旧_部門
+    { wch: 14 },  // 旧_部署
+    { wch: 16 },  // 旧_室名称
     { wch: 14 },  // 新_SHIP部門
     { wch: 14 },  // 新_SHIP部署
     { wch: 16 },  // 新_SHIP諸室区分
@@ -146,17 +167,24 @@ export function parseFacilitiesFromExcel(file: File): Promise<ParseResult> {
             id: '',
             hospitalId: getValue('病院ID'),
             hospitalName: getValue('病院名'),
-            oldFloor: getValue('旧_フロア'),
-            oldDepartment: getValue('旧_部門'),
-            oldSection: getValue('旧_部署'),
-            oldRoomName: getValue('旧_室名称'),
             oldShipDivision: getValue('旧_SHIP部門'),
             oldShipDepartment: getValue('旧_SHIP部署'),
-            oldShipRoomCategory: getValue('旧_SHIP諸室区分'),
+            oldShipRoomCategory: getValue('旧_SHIP諸室区分①'),
+            shipRoomCategory2: getValue('諸室区分②'),
+            divisionId: getValue('部門ID'),
+            departmentId: getValue('部署ID'),
+            roomId: getValue('諸室ID'),
+            newBuilding: getValue('新_棟'),
             newFloor,
             newDepartment,
             newSection,
             newRoomName,
+            newRoomCount: getValue('新_室数'),
+            oldBuilding: getValue('旧_棟'),
+            oldFloor: getValue('旧_フロア'),
+            oldDepartment: getValue('旧_部門'),
+            oldSection: getValue('旧_部署'),
+            oldRoomName: getValue('旧_室名称'),
             newShipDivision,
             newShipDepartment,
             newShipRoomCategory,
@@ -203,13 +231,20 @@ export function downloadFacilityTemplate(): void {
     { wch: 12 },
     { wch: 20 },
     { wch: 20 },
+    { wch: 14 },
+    { wch: 14 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
+    { wch: 10 },
     { wch: 10 },
     { wch: 14 },
     { wch: 14 },
     { wch: 16 },
-    { wch: 14 },
-    { wch: 14 },
-    { wch: 16 },
+    { wch: 8 },
+    { wch: 10 },
     { wch: 10 },
     { wch: 14 },
     { wch: 14 },

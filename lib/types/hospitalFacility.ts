@@ -15,23 +15,36 @@ export interface HospitalFacilityMaster {
   hospitalId: string;           // 病院ID
   hospitalName: string;         // 病院名（表示用）
 
-  // 旧（現状の設置場所 + SHIPマッピング）
-  oldShipDivision: string;      // SHIP部門
-  oldShipDepartment: string;    // SHIP部署
-  oldShipRoomCategory: string;  // SHIP諸室区分
-  oldFloor: string;             // フロア
-  oldDepartment: string;        // 部門
-  oldSection: string;           // 部署
-  oldRoomName: string;          // 室名称
+  // 共通部署マスタ連携
+  oldShipDivision: string;      // 共通部門名 (Col2)
+  oldShipDepartment: string;    // 共通部署名 (Col3)
+  oldShipRoomCategory: string;  // 諸室区分① (Col4)
+  shipRoomCategory2: string;    // 諸室区分② (Col5)
 
-  // 新（新居の設置場所 + SHIPマッピング）
-  newShipDivision: string;      // SHIP部門
-  newShipDepartment: string;    // SHIP部署
-  newShipRoomCategory: string;  // SHIP諸室区分
-  newFloor: string;             // フロア
-  newDepartment: string;        // 部門
-  newSection: string;           // 部署
-  newRoomName: string;          // 室名称
+  // 必要な病院用
+  divisionId: string;           // 部門ID (Col6)
+  departmentId: string;         // 部署ID (Col7)
+  roomId: string;               // 諸室ID (Col8)
+
+  // 新病院
+  newBuilding: string;          // 棟 (Col9)
+  newFloor: string;             // 階 (Col10)
+  newDepartment: string;        // 部門名 (Col11)
+  newSection: string;           // 部署名 (Col12)
+  newRoomName: string;          // 室名 (Col13)
+  newRoomCount: string;         // 室数 (Col14)
+
+  // 現病院
+  oldBuilding: string;          // 棟 (Col15)
+  oldFloor: string;             // 階 (Col16)
+  oldDepartment: string;        // 部門名 (Col17)
+  oldSection: string;           // 部署名 (Col18)
+  oldRoomName: string;          // 室名 (Col19)
+
+  // SHIPマッピング（新側にも共通部署マスタ連携を保持）
+  newShipDivision: string;      // 共通部門名（新）
+  newShipDepartment: string;    // 共通部署名（新）
+  newShipRoomCategory: string;  // 諸室区分①（新）
 
   // 管理情報
   status: HospitalFacilityStatus;

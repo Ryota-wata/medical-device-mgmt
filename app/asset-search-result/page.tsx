@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts';
 import { useAssetStore, useMasterStore, useApplicationStore } from '@/lib/stores';
@@ -18,7 +18,30 @@ import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
 import { ASSET_COLUMNS, type ColumnDef } from '@/lib/constants/assetColumns';
 
-const ALL_COLUMNS = ASSET_COLUMNS;
+// 原本リスト用の8グループのみ（契約・リース詳細・財務・耐用年数は編集リスト専用）
+const ORIGINAL_LIST_GROUPS = ['basic', 'commonMaster', 'location', 'identity', 'classification', 'specification', 'acquisition', 'other'];
+const ALL_COLUMNS = ASSET_COLUMNS.filter(col => ORIGINAL_LIST_GROUPS.includes(col.group || ''));
+
+// グループ表示用の定義（ラベルと背景色）
+const GROUP_STYLES: Record<string, { label: string; bg: string; color: string }> = {
+  basic: { label: '基本情報', bg: '#f8f9fa', color: '#495057' },
+  commonMaster: { label: '共通マスタ', bg: '#e8f5e9', color: '#2e7d32' },
+  location: { label: '設置情報', bg: '#e3f2fd', color: '#1565c0' },
+  identity: { label: '識別情報', bg: '#fff3e0', color: '#e65100' },
+  classification: { label: '資産分類', bg: '#f3e5f5', color: '#7b1fa2' },
+  specification: { label: '機器仕様', bg: '#e0f7fa', color: '#00838f' },
+  acquisition: { label: '取得情報', bg: '#fce4ec', color: '#c62828' },
+  other: { label: 'その他', bg: '#f5f5f5', color: '#616161' },
+  contract: { label: '契約情報', bg: '#ede7f6', color: '#4527a0' },
+  leaseDetail: { label: 'リース詳細', bg: '#e8eaf6', color: '#283593' },
+  financial: { label: '財務情報', bg: '#fff8e1', color: '#f57f17' },
+  lifespan: { label: '耐用年数', bg: '#efebe9', color: '#4e342e' },
+  // 編集リスト用（REMODEL_COLUMNS等で使われるグループ）
+  application: { label: '申請内容', bg: '#e8f5e9', color: '#2e7d32' },
+  applicationDetail: { label: '申請詳細', bg: '#e8f5e9', color: '#2e7d32' },
+  connection: { label: '接続要望', bg: '#e8f5e9', color: '#2e7d32' },
+  work: { label: '作業用', bg: '#fff3e0', color: '#e65100' },
+};
 
 export default function AssetSearchResultPage() {
   const router = useRouter();
@@ -47,97 +70,8 @@ export default function AssetSearchResultPage() {
   // 増設申請モーダル関連の状態
   const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
 
-  // モックデータ（実際のデータは useAssetStore から取得）
-  const [mockAssets] = useState<Asset[]>([
-    {
-      qrCode: 'QR-2025-0001',
-      no: 1,
-      facility: '〇〇〇〇〇〇病院',
-      building: '本館',
-      floor: '2F',
-      department: '手術部門',
-      section: '手術',
-      category: '医療機器',
-      largeClass: '手術関連機器',
-      mediumClass: '電気メス 双極',
-      item: '手術台',
-      name: '電気手術用電源装置2システム',
-      maker: '医療',
-      model: 'EW11 超音波吸引器',
-      quantity: 1,
-      width: 520,
-      depth: 480,
-      height: 1400,
-      assetNo: '10605379-000',
-      managementNo: '1338',
-      roomClass1: '手術室',
-      roomClass2: 'OP室',
-      roomName: '手術室A',
-      installationLocation: '手術室A-中央',
-      assetInfo: '資産台帳登録済',
-      quantityUnit: '1台',
-      serialNumber: 'SN-2024-001',
-      contractName: '医療機器購入契約2024-01',
-      contractNo: 'C-2024-0001',
-      quotationNo: 'Q-2024-0001',
-      contractDate: '2024-01-10',
-      deliveryDate: '2024-01-20',
-      inspectionDate: '2024-01-25',
-      lease: 'なし',
-      rental: 'なし',
-      leaseStartDate: '',
-      leaseEndDate: '',
-      acquisitionCost: 15000000,
-      legalServiceLife: '6年',
-      recommendedServiceLife: '8年',
-      endOfService: '2032-12-31',
-      endOfSupport: '2035-12-31',
-    },
-    ...Array.from({length: 19}, (_, i) => ({
-      qrCode: `QR-2025-${String(i + 2).padStart(4, '0')}`,
-      no: i + 2,
-      facility: '〇〇〇〇〇〇病院',
-      building: '本館',
-      floor: '2F',
-      department: '手術部門',
-      section: '手術',
-      category: '医療機器',
-      largeClass: '手術関連機器',
-      mediumClass: 'CT関連',
-      item: `品目${i + 2}`,
-      name: `サンプル製品${i + 2}`,
-      maker: '医療機器',
-      model: `MODEL-${i + 2}`,
-      quantity: 1,
-      width: 500 + i * 10,
-      depth: 600 + i * 10,
-      height: 700 + i * 10,
-      assetNo: `10605379-${String(i + 1).padStart(3, '0')}`,
-      managementNo: `${1338 + i + 1}`,
-      roomClass1: '手術室',
-      roomClass2: 'OP室',
-      roomName: `手術室${String.fromCharCode(66 + i)}`,
-      installationLocation: `手術室${String.fromCharCode(66 + i)}-中央`,
-      assetInfo: '資産台帳登録済',
-      quantityUnit: '1台',
-      serialNumber: `SN-2024-${String(i + 2).padStart(3, '0')}`,
-      contractName: `医療機器購入契約2024-${String(i + 2).padStart(2, '0')}`,
-      contractNo: `C-2024-${String(i + 2).padStart(4, '0')}`,
-      quotationNo: `Q-2024-${String(i + 2).padStart(4, '0')}`,
-      contractDate: '2024-01-10',
-      deliveryDate: '2024-01-20',
-      inspectionDate: '2024-01-25',
-      lease: i % 3 === 0 ? 'あり' : 'なし',
-      rental: i % 5 === 0 ? 'あり' : 'なし',
-      leaseStartDate: i % 3 === 0 ? '2024-01-01' : '',
-      leaseEndDate: i % 3 === 0 ? '2029-12-31' : '',
-      acquisitionCost: 1000000 * (i + 2),
-      legalServiceLife: '6年',
-      recommendedServiceLife: '8年',
-      endOfService: '2032-12-31',
-      endOfSupport: '2035-12-31',
-    }))
-  ]);
+  // 原本資産データ（useAssetStore から取得）
+  const storeAssets = assets;
 
   // useAssetFilterフックを使用
   const {
@@ -153,7 +87,7 @@ export default function AssetSearchResultPage() {
     departmentOptions,
     sectionOptions,
     itemOptions,
-  } = useAssetFilter(mockAssets);
+  } = useAssetFilter(storeAssets);
 
   // useAssetTableフックを使用
   const {
@@ -474,20 +408,19 @@ export default function AssetSearchResultPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
         <div style={{ flex: 1, overflow: 'auto' }}>
         {currentView === 'list' && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
+          <table style={{ borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fa' }}>
-              <tr style={{ borderBottom: '2px solid #dee2e6' }}>
+              {/* グループヘッダー行 */}
+              <tr style={{ borderBottom: '1px solid #dee2e6' }}>
                 <th
+                  rowSpan={2}
                   style={{
-                    padding: '12px 8px',
-                    textAlign: 'left',
-                    fontWeight: 'bold',
-                    color: '#2c3e50',
+                    padding: '8px',
+                    textAlign: 'center',
                     width: `${columnWidths.checkbox}px`,
-                    position: 'relative',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
                     background: '#f8f9fa',
+                    position: 'relative',
+                    verticalAlign: 'middle',
                   }}
                 >
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
@@ -511,11 +444,49 @@ export default function AssetSearchResultPage() {
                     }}
                   />
                 </th>
-                {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
+                {(() => {
+                  const visibleCols = ALL_COLUMNS.filter((col) => visibleColumns[col.key]);
+                  const groupSpans: { group: string; count: number }[] = [];
+                  visibleCols.forEach((col) => {
+                    const g = col.group || 'other';
+                    if (groupSpans.length > 0 && groupSpans[groupSpans.length - 1].group === g) {
+                      groupSpans[groupSpans.length - 1].count++;
+                    } else {
+                      groupSpans.push({ group: g, count: 1 });
+                    }
+                  });
+                  return groupSpans.map((span, idx) => {
+                    const style = GROUP_STYLES[span.group] || { label: span.group, bg: '#f8f9fa', color: '#495057' };
+                    return (
+                      <th
+                        key={`${span.group}-${idx}`}
+                        colSpan={span.count}
+                        style={{
+                          padding: '6px 8px',
+                          textAlign: 'center',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          color: style.color,
+                          background: style.bg,
+                          borderLeft: idx > 0 ? '2px solid #dee2e6' : undefined,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {style.label}
+                      </th>
+                    );
+                  });
+                })()}
+              </tr>
+              {/* カラム名行 */}
+              <tr style={{ borderBottom: '2px solid #dee2e6' }}>
+                {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => {
+                  const groupStyle = GROUP_STYLES[col.group || 'other'] || { bg: '#f8f9fa' };
+                  return (
                   <th
                     key={col.key}
                     style={{
-                      padding: '12px 8px',
+                      padding: '8px 8px',
                       textAlign: 'left',
                       fontWeight: 'bold',
                       color: '#2c3e50',
@@ -524,7 +495,8 @@ export default function AssetSearchResultPage() {
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      background: '#f8f9fa',
+                      background: groupStyle.bg,
+                      fontSize: '12px',
                     }}
                   >
                     {col.label}
@@ -548,7 +520,8 @@ export default function AssetSearchResultPage() {
                       }}
                     />
                   </th>
-                ))}
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -661,7 +634,7 @@ export default function AssetSearchResultPage() {
         assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
         onSuccess={() => {
           setSelectedItems(new Set());
-          router.push('/application-list');
+          setSelectedItems(new Set());
         }}
       />
 
@@ -672,7 +645,6 @@ export default function AssetSearchResultPage() {
         assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
         onSuccess={() => {
           setSelectedItems(new Set());
-          router.push('/application-list');
         }}
       />
 

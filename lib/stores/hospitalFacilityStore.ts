@@ -188,6 +188,7 @@ export const useHospitalFacilityStore = create<HospitalFacilityState>()(
                 oldShipDivision: f.newShipDivision,
                 oldShipDepartment: f.newShipDepartment,
                 oldShipRoomCategory: f.newShipRoomCategory,
+                oldBuilding: f.newBuilding,
                 oldFloor: f.newFloor,
                 oldDepartment: f.newDepartment,
                 oldSection: f.newSection,
@@ -195,10 +196,12 @@ export const useHospitalFacilityStore = create<HospitalFacilityState>()(
                 newShipDivision: '',
                 newShipDepartment: '',
                 newShipRoomCategory: '',
+                newBuilding: '',
                 newFloor: '',
                 newDepartment: '',
                 newSection: '',
                 newRoomName: '',
+                newRoomCount: '',
                 status: 'completed' as HospitalFacilityStatus,
                 updatedAt: new Date().toISOString(),
               }
@@ -239,10 +242,14 @@ export const useHospitalFacilityStore = create<HospitalFacilityState>()(
       name: 'hospital-facility-storage',
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<HospitalFacilityState>;
-        // 既存データが空、存在しない、またはoldFloorが無いデータがある場合は初期データを使用
+        // 既存データが空、存在しない、または新フィールド(shipRoomCategory2)が無いデータがある場合は初期データを使用
         const hasValidData = persisted.facilities &&
           persisted.facilities.length > 0 &&
-          persisted.facilities.every(f => f.oldFloor !== undefined && f.oldRoomName !== undefined);
+          persisted.facilities.every(f =>
+            f.oldFloor !== undefined &&
+            f.oldRoomName !== undefined &&
+            f.shipRoomCategory2 !== undefined
+          );
         return {
           ...currentState,
           ...persisted,

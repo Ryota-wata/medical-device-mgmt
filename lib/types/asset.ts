@@ -26,16 +26,38 @@ export interface Asset {
   height: number | string;
   photos?: string[];
 
+  // 共通マスタ（SHIP部署マスタ連携）
+  shipDivision?: string; // SHIP部門名
+  shipDepartment?: string; // SHIP部署名
+  roomClass1?: string; // 諸室区分①
+  roomClass2?: string; // 諸室区分②
+
+  // 設置情報ID
+  divisionId?: string; // 部門ID
+  departmentId?: string; // 部署ID
+  roomId?: string; // 諸室ID
+
+  // 識別情報
+  ledgerNo?: string; // 台帳番号
+  managementDept?: string; // 管理部署
+  equipmentNo?: string; // 備品番号（現有品調査）
+  serialNumber?: string; // シリアル番号
+
+  // 資産分類
+  assetMasterId?: string; // 資産マスタID
+  detailCategory?: string; // 明細区分
+
   // 追加フィールド（個体管理対応）
   assetNo?: string; // 固定資産番号
   managementNo?: string; // 管理機器番号
-  roomClass1?: string; // 諸室区分①
-  roomClass2?: string; // 諸室区分②
   roomName?: string; // 諸室名称
   installationLocation?: string; // 設置場所
   assetInfo?: string; // 資産情報
   quantityUnit?: string; // 数量／単位
-  serialNumber?: string; // シリアル番号
+
+  // 調査情報（現有品調査由来）
+  purchaseDate?: string; // 購入年月日
+  remarks?: string; // 備考
   contractName?: string; // 契約･見積名称
   contractNo?: string; // 契約番号（契約単位）
   quotationNo?: string; // 見積番号

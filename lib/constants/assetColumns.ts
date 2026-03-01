@@ -11,40 +11,58 @@ export interface ColumnDef {
 export const ASSET_COLUMNS: ColumnDef[] = [
   // 基本情報
   { key: 'facility', label: '施設名', width: '200px', defaultVisible: true, group: 'basic' },
-  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true, group: 'basic' },
-  { key: 'assetNo', label: '固定資産番号', width: '150px', defaultVisible: false, group: 'basic' },
-  { key: 'managementNo', label: '管理機器番号', width: '150px', defaultVisible: false, group: 'basic' },
 
-  // 設置場所
+  // 共通マスタ（SHIP部署マスタ連携）
+  { key: 'shipDivision', label: '部門名', width: '120px', defaultVisible: true, group: 'commonMaster' },
+  { key: 'shipDepartment', label: '部署名', width: '120px', defaultVisible: true, group: 'commonMaster' },
+  { key: 'roomClass1', label: '諸室区分①', width: '140px', defaultVisible: true, group: 'commonMaster' },
+  { key: 'roomClass2', label: '諸室区分②', width: '140px', defaultVisible: true, group: 'commonMaster' },
+
+  // 設置情報
+  { key: 'divisionId', label: '部門ID', width: '80px', defaultVisible: false, group: 'location' },
+  { key: 'departmentId', label: '部署ID', width: '80px', defaultVisible: false, group: 'location' },
+  { key: 'roomId', label: '諸室ID', width: '80px', defaultVisible: false, group: 'location' },
   { key: 'building', label: '棟', width: '100px', defaultVisible: true, group: 'location' },
   { key: 'floor', label: '階', width: '80px', defaultVisible: true, group: 'location' },
   { key: 'department', label: '部門', width: '120px', defaultVisible: true, group: 'location' },
-  { key: 'section', label: '部署名', width: '120px', defaultVisible: false, group: 'location' },
-  { key: 'roomClass1', label: '諸室区分①', width: '120px', defaultVisible: false, group: 'location' },
-  { key: 'roomClass2', label: '諸室区分②', width: '120px', defaultVisible: false, group: 'location' },
-  { key: 'roomName', label: '諸室名称', width: '150px', defaultVisible: false, group: 'location' },
+  { key: 'section', label: '部署', width: '120px', defaultVisible: true, group: 'location' },
+  { key: 'roomName', label: '室名', width: '150px', defaultVisible: true, group: 'location' },
   { key: 'installationLocation', label: '設置場所', width: '150px', defaultVisible: false, group: 'location' },
 
-  // 機器分類
+  // 識別情報
+  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true, group: 'identity' },
+  { key: 'assetNo', label: '台帳番号', width: '150px', defaultVisible: true, group: 'identity' },
+  { key: 'managementDept', label: '管理部署', width: '120px', defaultVisible: false, group: 'identity' },
+  { key: 'managementNo', label: '管理機器番号', width: '150px', defaultVisible: false, group: 'identity' },
+  { key: 'equipmentNo', label: '備品番号', width: '120px', defaultVisible: false, group: 'identity' },
+  { key: 'serialNumber', label: 'シリアルNo.', width: '150px', defaultVisible: false, group: 'identity' },
+
+  // 資産分類
+  { key: 'assetMasterId', label: '資産マスタID', width: '120px', defaultVisible: false, group: 'classification' },
   { key: 'category', label: 'Category', width: '120px', defaultVisible: false, group: 'classification' },
-  { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: false, group: 'classification' },
-  { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: false, group: 'classification' },
-  { key: 'item', label: '品目', width: '150px', defaultVisible: false, group: 'classification' },
+  { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: true, group: 'classification' },
+  { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: true, group: 'classification' },
+  { key: 'detailCategory', label: '明細区分', width: '100px', defaultVisible: false, group: 'classification' },
+  { key: 'item', label: '個体管理品目', width: '180px', defaultVisible: true, group: 'classification' },
 
   // 機器仕様
-  { key: 'name', label: '個体管理名称', width: '200px', defaultVisible: true, group: 'specification' },
+  { key: 'name', label: '個体管理名称', width: '200px', defaultVisible: false, group: 'specification' },
   { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: true, group: 'specification' },
   { key: 'model', label: '型式', width: '150px', defaultVisible: true, group: 'specification' },
-  { key: 'quantityUnit', label: '数量／単位', width: '120px', defaultVisible: false, group: 'specification' },
-  { key: 'quantity', label: '数量', width: '80px', defaultVisible: false, group: 'specification' },
-  { key: 'serialNumber', label: 'シリアル番号', width: '150px', defaultVisible: false, group: 'specification' },
+  { key: 'width', label: 'W', width: '80px', defaultVisible: false, group: 'specification' },
+  { key: 'depth', label: 'D', width: '80px', defaultVisible: false, group: 'specification' },
+  { key: 'height', label: 'H', width: '80px', defaultVisible: false, group: 'specification' },
 
-  // サイズ
-  { key: 'width', label: 'W', width: '80px', defaultVisible: false, group: 'size' },
-  { key: 'depth', label: 'D', width: '80px', defaultVisible: false, group: 'size' },
-  { key: 'height', label: 'H', width: '80px', defaultVisible: false, group: 'size' },
+  // 取得情報（現有品調査由来）
+  { key: 'purchaseDate', label: '購入年月日', width: '120px', defaultVisible: false, group: 'acquisition' },
+  { key: 'lease', label: 'リース', width: '80px', defaultVisible: false, group: 'acquisition' },
+  { key: 'rental', label: '貸出品', width: '80px', defaultVisible: false, group: 'acquisition' },
 
-  // 契約情報
+  // その他
+  { key: 'remarks', label: '備考', width: '200px', defaultVisible: false, group: 'other' },
+  { key: 'photos', label: '写真', width: '80px', defaultVisible: false, group: 'other' },
+
+  // 契約情報（編集画面用）
   { key: 'contractName', label: '契約･見積名称', width: '180px', defaultVisible: false, group: 'contract' },
   { key: 'contractNo', label: '契約番号（契約単位）', width: '180px', defaultVisible: false, group: 'contract' },
   { key: 'quotationNo', label: '見積番号', width: '120px', defaultVisible: false, group: 'contract' },
@@ -52,17 +70,15 @@ export const ASSET_COLUMNS: ColumnDef[] = [
   { key: 'deliveryDate', label: '納品日', width: '120px', defaultVisible: false, group: 'contract' },
   { key: 'inspectionDate', label: '検収日', width: '120px', defaultVisible: false, group: 'contract' },
 
-  // リース情報
-  { key: 'lease', label: 'リース', width: '80px', defaultVisible: false, group: 'lease' },
-  { key: 'rental', label: '借用', width: '80px', defaultVisible: false, group: 'lease' },
-  { key: 'leaseStartDate', label: 'リース開始日', width: '120px', defaultVisible: false, group: 'lease' },
-  { key: 'leaseEndDate', label: 'リース終了日', width: '120px', defaultVisible: false, group: 'lease' },
+  // リース詳細（編集画面用）
+  { key: 'leaseStartDate', label: 'リース開始日', width: '120px', defaultVisible: false, group: 'leaseDetail' },
+  { key: 'leaseEndDate', label: 'リース終了日', width: '120px', defaultVisible: false, group: 'leaseDetail' },
 
-  // 財務情報
+  // 財務情報（編集画面用）
   { key: 'acquisitionCost', label: '取得価格', width: '120px', defaultVisible: false, group: 'financial' },
   { key: 'assetInfo', label: '資産情報', width: '200px', defaultVisible: false, group: 'financial' },
 
-  // 耐用年数
+  // 耐用年数（編集画面用）
   { key: 'legalServiceLife', label: '耐用年数（法定）', width: '140px', defaultVisible: false, group: 'lifespan' },
   { key: 'recommendedServiceLife', label: '使用年数（メーカー推奨）', width: '180px', defaultVisible: false, group: 'lifespan' },
   { key: 'endOfService', label: 'End of service：販売終了', width: '180px', defaultVisible: false, group: 'lifespan' },
