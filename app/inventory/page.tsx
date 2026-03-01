@@ -24,6 +24,7 @@ interface InventoryItem {
   newRoomName?: string;
   disposalReason?: string;
   confirmedAt?: string;
+  actionRequiredComment?: string;
 }
 
 // localStorageキー
@@ -148,6 +149,10 @@ export default function InventoryPage() {
 
   // 移動申請モーダル（一括用）
   const [bulkTransferModal, setBulkTransferModal] = useState(false);
+
+  // 要対応（保留）コメント入力モーダル
+  const [actionRequiredModal, setActionRequiredModal] = useState(false);
+  const [actionRequiredComment, setActionRequiredComment] = useState('');
 
   // チェックボックス選択状態
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -391,12 +396,15 @@ export default function InventoryPage() {
         newItems[index] = {
           ...newItems[index],
           status: 'action_required',
-          confirmedAt: new Date().toISOString()
+          confirmedAt: new Date().toISOString(),
+          actionRequiredComment: actionRequiredComment,
         };
       }
     });
     setInventoryItems(newItems);
     setSelectedItems(new Set());
+    setActionRequiredModal(false);
+    setActionRequiredComment('');
   };
 
   // 一括申請で選択中の資産一覧
@@ -761,7 +769,7 @@ export default function InventoryPage() {
             disabled={selectedItems.size === 0}
             onClick={() => {
               if (selectedItems.size === 0) return;
-              handleBulkActionRequired();
+              setActionRequiredModal(true);
             }}
             style={{
               padding: '8px 16px',
@@ -906,6 +914,21 @@ export default function InventoryPage() {
                     <div>シリアルNo.：{item.asset.serialNumber || '---'}</div>
                     <div>固定資産番号：{item.asset.assetNo || '---'}</div>
                   </div>
+
+                  {item.status === 'action_required' && item.actionRequiredComment && (
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      background: '#fce4ec',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      color: '#c62828',
+                      borderLeft: '3px solid #c62828',
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>保留理由:</div>
+                      {item.actionRequiredComment}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -1065,6 +1088,8 @@ export default function InventoryPage() {
           setInventoryItems(newItems);
           setDisposalModal({ isOpen: false, itemIndex: null });
         }}
+        returnDestination="棚卸し画面"
+        returnHref="/inventory"
       />
 
       {/* 廃棄申請モーダル（一括用） */}
@@ -1088,6 +1113,8 @@ export default function InventoryPage() {
           setSelectedItems(new Set());
           setBulkDisposalModal(false);
         }}
+        returnDestination="棚卸し画面"
+        returnHref="/inventory"
       />
 
       {/* 移動申請モーダル（一括用） */}
@@ -1095,6 +1122,8 @@ export default function InventoryPage() {
         isOpen={bulkTransferModal}
         assets={selectedAssets}
         onClose={() => setBulkTransferModal(false)}
+        returnDestination="棚卸し画面"
+        returnHref="/inventory"
         onSuccess={() => {
           const newItems = [...inventoryItems];
           selectedItems.forEach(qrCode => {
@@ -1501,6 +1530,115 @@ export default function InventoryPage() {
                 }}
               >
                 {selectedItems.size}件を確定する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 要対応（保留）コメント入力モーダル */}
+      {actionRequiredModal && (
+        <div
+          onClick={() => {
+            setActionRequiredModal(false);
+            setActionRequiredComment('');
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+            }}
+          >
+            <div style={{
+              background: '#7f8c8d',
+              color: 'white',
+              padding: '16px 24px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              borderTopLeftRadius: '12px',
+              borderTopRightRadius: '12px'
+            }}>
+              要対応（保留）理由
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ marginBottom: '16px', color: '#2c3e50' }}>
+                選択した {selectedItems.size} 件を「要対応（保留）」にします。
+              </p>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#2c3e50', marginBottom: '8px' }}>
+                  保留理由（任意）
+                </label>
+                <textarea
+                  value={actionRequiredComment}
+                  onChange={(e) => setActionRequiredComment(e.target.value)}
+                  placeholder="保留理由を入力してください"
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d0d0d0',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button
+                onClick={() => {
+                  setActionRequiredModal(false);
+                  setActionRequiredComment('');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleBulkActionRequired}
+                style={{
+                  padding: '10px 20px',
+                  background: '#7f8c8d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }}
+              >
+                登録する
               </button>
             </div>
           </div>

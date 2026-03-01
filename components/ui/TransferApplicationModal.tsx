@@ -14,6 +14,8 @@ interface TransferApplicationModalProps {
   onClose: () => void;
   assets: Asset[];  // 複数選択対応
   onSuccess?: () => void;
+  returnDestination?: string;
+  returnHref?: string;
 }
 
 export const TransferApplicationModal: React.FC<TransferApplicationModalProps> = ({
@@ -21,6 +23,8 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
   onClose,
   assets,
   onSuccess,
+  returnDestination = '資産一覧',
+  returnHref = '/asset-search-result',
 }) => {
   const router = useRouter();
   const { facilities } = useMasterStore();
@@ -436,12 +440,12 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
         applicationName="移動申請"
         applicationNo={completedAppNo}
         guidanceText=""
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onGoToMain={() => {
           resetForm();
           setShowCompleteModal(false);
           onClose();
-          router.push('/asset-search-result');
+          router.push(returnHref);
         }}
         onContinue={() => {
           resetForm();
@@ -452,7 +456,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
       {/* 閉じる確認モーダル */}
       <ApplicationCloseConfirmModal
         isOpen={showCloseConfirm}
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onCancel={() => setShowCloseConfirm(false)}
         onConfirm={() => {
           setShowCloseConfirm(false);

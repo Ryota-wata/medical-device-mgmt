@@ -20,6 +20,8 @@ interface DisposalApplicationModalProps {
   onClose: () => void;
   assets: Asset[];  // 複数選択対応
   onSuccess?: () => void;
+  returnDestination?: string;
+  returnHref?: string;
 }
 
 export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> = ({
@@ -27,6 +29,8 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
   onClose,
   assets,
   onSuccess,
+  returnDestination = '資産一覧',
+  returnHref = '/asset-search-result',
 }) => {
   const router = useRouter();
   const { addApplication } = useApplicationStore();
@@ -453,12 +457,12 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
         applicationName="廃棄申請"
         applicationNo={completedAppNo}
         guidanceText=""
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onGoToMain={() => {
           resetForm();
           setShowCompleteModal(false);
           onClose();
-          router.push('/asset-search-result');
+          router.push(returnHref);
         }}
         onContinue={() => {
           resetForm();
@@ -469,7 +473,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
       {/* 閉じる確認モーダル */}
       <ApplicationCloseConfirmModal
         isOpen={showCloseConfirm}
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onCancel={() => setShowCloseConfirm(false)}
         onConfirm={() => {
           setShowCloseConfirm(false);
