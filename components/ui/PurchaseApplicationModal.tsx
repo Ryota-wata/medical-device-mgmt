@@ -30,7 +30,7 @@ export function PurchaseApplicationModal({
   onSuccess,
 }: PurchaseApplicationModalProps) {
   const router = useRouter();
-  const { departments, facilities, assets: assetMasters } = useMasterStore();
+  const { departments, facilities } = useMasterStore();
   const { user } = useAuthStore();
   const { addApplication } = usePurchaseApplicationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,8 +72,6 @@ export function PurchaseApplicationModal({
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   // システム接続要望
-  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
-  const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
@@ -84,8 +82,6 @@ export function PurchaseApplicationModal({
   const divisionOptions = [...new Set(departments.map(d => d.division))];
   const departmentOptions = [...new Set(departments.map(d => d.department))];
 
-  // 品目オプション（SHIP資産マスタから取得）
-  const itemOptions = [...new Set(assetMasters.map(a => a.item).filter(Boolean))];
 
   // 資産マスタからのメッセージを受信するハンドラー
   const handleAssetMessage = useCallback((event: MessageEvent) => {
@@ -236,8 +232,6 @@ export function PurchaseApplicationModal({
       usagePurpose: usagePurpose,
       caseCount: caseCount ? `${caseCount} ${caseCountUnit}` : '',
       comment: comment,
-      currentConnectionStatus: currentConnectionStatus === 'connected' ? '接続中' : '接続無し',
-      currentConnectionDestination: currentConnectionDestination,
       requestConnectionStatus: requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要',
       requestConnectionDestination: requestConnectionDestination,
     };
@@ -265,8 +259,6 @@ export function PurchaseApplicationModal({
     setCaseCountUnit('件／月');
     setComment('');
     setAttachedFiles([]);
-    setCurrentConnectionStatus('disconnected');
-    setCurrentConnectionDestination('');
     setRequestConnectionStatus('not-required');
     setRequestConnectionDestination('');
     setIsConfirmView(false);
@@ -571,15 +563,9 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'connected' ? '接続中' : '接続無し'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionDestination || '-'}</td>
-                  </tr>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続要望</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
                   </tr>
                 </tbody>
@@ -668,11 +654,12 @@ export function PurchaseApplicationModal({
               </div>
               <div style={{ ...styles.formItem, gridColumn: 'span 2' }}>
                 <label style={styles.label}>品目</label>
-                <SearchableSelect
+                <input
+                  type="text"
+                  style={styles.input}
                   value={basicItem}
-                  onChange={setBasicItem}
-                  options={itemOptions}
-                  placeholder="品目を選択または入力"
+                  onChange={(e) => setBasicItem(e.target.value)}
+                  placeholder="品目を入力してください"
                 />
               </div>
               <div style={styles.formItem}>
@@ -964,37 +951,7 @@ export function PurchaseApplicationModal({
             <div style={styles.sectionTitle}>システム接続要望</div>
             <div style={{ display: 'grid', gap: '16px' }}>
               <div>
-                <label style={styles.label}>現在の接続状況</label>
-                <div style={{ ...styles.radioGroup, marginTop: '8px' }}>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      checked={currentConnectionStatus === 'connected'}
-                      onChange={() => setCurrentConnectionStatus('connected')}
-                    />
-                    接続あり
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      checked={currentConnectionStatus === 'disconnected'}
-                      onChange={() => setCurrentConnectionStatus('disconnected')}
-                    />
-                    接続なし
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label style={styles.label}>現在の接続先</label>
-                <input
-                  style={{ ...styles.input, width: '100%', marginTop: '6px' }}
-                  value={currentConnectionDestination}
-                  onChange={(e) => setCurrentConnectionDestination(e.target.value)}
-                  placeholder="接続先を入力してください"
-                />
-              </div>
-              <div>
-                <label style={styles.label}>要望機器の接続要望</label>
+                <label style={styles.label}>接続要望</label>
                 <div style={{ ...styles.radioGroup, marginTop: '8px' }}>
                   <label style={styles.radioLabel}>
                     <input
@@ -1002,7 +959,7 @@ export function PurchaseApplicationModal({
                       checked={requestConnectionStatus === 'required'}
                       onChange={() => setRequestConnectionStatus('required')}
                     />
-                    接続要望
+                    接続要望あり
                   </label>
                   <label style={styles.radioLabel}>
                     <input
@@ -1015,7 +972,7 @@ export function PurchaseApplicationModal({
                 </div>
               </div>
               <div>
-                <label style={styles.label}>要望機器の接続先</label>
+                <label style={styles.label}>接続先</label>
                 <input
                   style={{ ...styles.input, width: '100%', marginTop: '6px' }}
                   value={requestConnectionDestination}
