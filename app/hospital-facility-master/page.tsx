@@ -39,7 +39,7 @@ function HospitalFacilityMasterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
-  const { facilities: masterFacilities, departments } = useMasterStore();
+  const { facilities: masterFacilities, departments, roomCategories } = useMasterStore();
   const {
     facilities,
     setFacilities,
@@ -114,11 +114,10 @@ function HospitalFacilityMasterContent() {
     return Array.from(new Set(departments.filter(d => d.division === editForm.oldShipDivision).map(d => d.department))).filter(Boolean);
   }, [departments, editForm.oldShipDivision]);
 
-  // 旧 SHIP諸室区分（部門+部署で絞り込み）
+  // 旧 SHIP諸室区分（roomCategoriesから全候補を取得、部門/部署フィルタ不要）
   const oldRoomCatOptions = useMemo(() => {
-    if (!editForm.oldShipDivision || !editForm.oldShipDepartment) return [];
-    return Array.from(new Set(departments.filter(d => d.division === editForm.oldShipDivision && d.department === editForm.oldShipDepartment).map(d => d.roomCategory1))).filter(Boolean);
-  }, [departments, editForm.oldShipDivision, editForm.oldShipDepartment]);
+    return Array.from(new Set(roomCategories.map(r => r.roomCategory1))).filter(Boolean);
+  }, [roomCategories]);
 
   // 新 SHIP部署
   const newDeptOptions = useMemo(() => {
@@ -126,11 +125,10 @@ function HospitalFacilityMasterContent() {
     return Array.from(new Set(departments.filter(d => d.division === editForm.newShipDivision).map(d => d.department))).filter(Boolean);
   }, [departments, editForm.newShipDivision]);
 
-  // 新 SHIP諸室区分
+  // 新 SHIP諸室区分（roomCategoriesから全候補を取得、部門/部署フィルタ不要）
   const newRoomCatOptions = useMemo(() => {
-    if (!editForm.newShipDivision || !editForm.newShipDepartment) return [];
-    return Array.from(new Set(departments.filter(d => d.division === editForm.newShipDivision && d.department === editForm.newShipDepartment).map(d => d.roomCategory1))).filter(Boolean);
-  }, [departments, editForm.newShipDivision, editForm.newShipDepartment]);
+    return Array.from(new Set(roomCategories.map(r => r.roomCategory1))).filter(Boolean);
+  }, [roomCategories]);
 
   // ── 操作ハンドラ ──
   const handleBack = () => router.push('/main');
@@ -233,16 +231,14 @@ function HospitalFacilityMasterContent() {
     setImportPreview(null);
   };
 
-  // SHIP連動: 親変更時に子をクリア
+  // SHIP連動: 親変更時に子をクリア（諸室区分は独立なのでクリアしない）
   const updateField = (key: keyof InlineFormData, value: string) => {
     setEditForm(prev => {
       const next = { ...prev, [key]: value };
-      // 旧 部門→部署・諸室クリア
-      if (key === 'oldShipDivision') { next.oldShipDepartment = ''; next.oldShipRoomCategory = ''; }
-      if (key === 'oldShipDepartment') { next.oldShipRoomCategory = ''; }
-      // 新 部門→部署・諸室クリア
-      if (key === 'newShipDivision') { next.newShipDepartment = ''; next.newShipRoomCategory = ''; }
-      if (key === 'newShipDepartment') { next.newShipRoomCategory = ''; }
+      // 旧 部門→部署クリア
+      if (key === 'oldShipDivision') { next.oldShipDepartment = ''; }
+      // 新 部門→部署クリア
+      if (key === 'newShipDivision') { next.newShipDepartment = ''; }
       return next;
     });
   };
@@ -417,7 +413,7 @@ function HospitalFacilityMasterContent() {
         {/* 旧 SHIP */}
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipDivision', divisionOptions, '部門')}</td>
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipDepartment', oldDeptOptions, '部署', !editForm.oldShipDivision)}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #e0e0e0' }}>{renderShipSelect('oldShipRoomCategory', oldRoomCatOptions, '諸室', !editForm.oldShipDepartment)}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #e0e0e0' }}>{renderShipSelect('oldShipRoomCategory', oldRoomCatOptions, '諸室')}</td>
         {/* 新 個別 */}
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newFloor', '4F', '#d7bde2')}</td>
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newDepartment', '手術部門', '#d7bde2')}</td>
@@ -426,7 +422,7 @@ function HospitalFacilityMasterContent() {
         {/* 新 SHIP */}
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('newShipDivision', divisionOptions, '部門')}</td>
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('newShipDepartment', newDeptOptions, '部署', !editForm.newShipDivision)}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #e0e0e0' }}>{renderShipSelect('newShipRoomCategory', newRoomCatOptions, '諸室', !editForm.newShipDepartment)}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #e0e0e0' }}>{renderShipSelect('newShipRoomCategory', newRoomCatOptions, '諸室')}</td>
         {/* 操作 */}
         <td style={{ ...tdBase(isTablet), background: editBg, textAlign: 'center' }}>{renderSaveCancelButtons(isTablet)}</td>
       </tr>
@@ -490,7 +486,7 @@ function HospitalFacilityMasterContent() {
         </div>
         <div style={{ marginBottom: '16px' }}>
           <div style={selectLabelStyle}>SHIP諸室区分</div>
-          <SearchableSelect value={editForm.oldShipRoomCategory} onChange={(v) => updateField('oldShipRoomCategory', v)} options={['', ...oldRoomCatOptions]} placeholder={editForm.oldShipDepartment ? '選択' : '-'} isMobile disabled={!editForm.oldShipDepartment} />
+          <SearchableSelect value={editForm.oldShipRoomCategory} onChange={(v) => updateField('oldShipRoomCategory', v)} options={['', ...oldRoomCatOptions]} placeholder="選択" isMobile />
         </div>
 
         {/* 新 個別 */}
@@ -512,7 +508,7 @@ function HospitalFacilityMasterContent() {
         </div>
         <div style={{ marginBottom: '16px' }}>
           <div style={selectLabelStyle}>SHIP諸室区分</div>
-          <SearchableSelect value={editForm.newShipRoomCategory} onChange={(v) => updateField('newShipRoomCategory', v)} options={['', ...newRoomCatOptions]} placeholder={editForm.newShipDepartment ? '選択' : '-'} isMobile disabled={!editForm.newShipDepartment} />
+          <SearchableSelect value={editForm.newShipRoomCategory} onChange={(v) => updateField('newShipRoomCategory', v)} options={['', ...newRoomCatOptions]} placeholder="選択" isMobile />
         </div>
 
         {/* 保存/取消 */}

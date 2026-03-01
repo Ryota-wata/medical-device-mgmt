@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useRef, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { AssetMaster } from '@/lib/types/master';
@@ -28,94 +28,6 @@ function ShipAssetMasterContent() {
   const [showImportModal, setShowImportModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // サンプルデータを初期化
-  useEffect(() => {
-    if (assets.length === 0) {
-      const sampleAssets: AssetMaster[] = [
-        {
-          id: 'A001',
-          category: '医療機器',
-          largeClass: '手術関連機器',
-          mediumClass: '電気メス',
-          item: '電気手術用電源装置',
-          maker: 'オリンパス',
-          model: 'ESG-400',
-          specification: '双極対応, 出力400W',
-          unitPrice: 2500000,
-          depreciationYears: 8,
-          maintenanceCycle: 12,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'A002',
-          category: '医療機器',
-          largeClass: '画像診断機器',
-          mediumClass: '超音波診断装置',
-          item: '超音波診断装置',
-          maker: 'GE Healthcare',
-          model: 'LOGIQ E10',
-          specification: '4D対応, カラードプラ',
-          unitPrice: 15000000,
-          depreciationYears: 6,
-          maintenanceCycle: 6,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'A003',
-          category: '医療機器',
-          largeClass: '生体情報モニタ',
-          mediumClass: 'ベッドサイドモニタ',
-          item: 'ベッドサイドモニタ',
-          maker: '日本光電',
-          model: 'BSM-6000',
-          specification: '心電図, SpO2, 血圧対応',
-          unitPrice: 800000,
-          depreciationYears: 6,
-          maintenanceCycle: 12,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'A004',
-          category: '事務機器',
-          largeClass: 'PC・タブレット',
-          mediumClass: 'ノートPC',
-          item: 'ノートパソコン',
-          maker: 'Dell',
-          model: 'Latitude 7420',
-          specification: 'Core i7, メモリ16GB, SSD512GB',
-          unitPrice: 180000,
-          depreciationYears: 4,
-          maintenanceCycle: 24,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'A005',
-          category: '什器・備品',
-          largeClass: '家具',
-          mediumClass: 'デスク',
-          item: '事務用デスク',
-          maker: 'オカムラ',
-          model: 'Swift-W1600',
-          specification: 'W1600×D700×H720',
-          unitPrice: 85000,
-          depreciationYears: 5,
-          maintenanceCycle: 0,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        }
-      ];
-      setAssets(sampleAssets);
-    }
-  }, [assets.length, setAssets]);
 
   // フィルタリング処理
   const filteredAssets = assets.filter((asset) => {
@@ -163,12 +75,24 @@ function ShipAssetMasterContent() {
   const handleNewSubmit = (data: Partial<AssetMaster>) => {
     const newAsset: AssetMaster = {
       id: `A${String(assets.length + 1).padStart(3, '0')}`,
+      classificationCode: data.classificationCode || '',
+      classificationName: data.classificationName || '',
+      jmdnSubCategory: data.jmdnSubCategory || '',
+      generalName: data.generalName || '',
+      jmdnCode: data.jmdnCode || '',
+      tradeName: data.tradeName || '',
+      manufacturer: data.manufacturer || '',
+      packageInsert: data.packageInsert || '',
+      assetMasterId: data.assetMasterId || '',
       category: data.category || '',
       largeClass: data.largeClass || '',
       mediumClass: data.mediumClass || '',
       item: data.item || '',
       maker: data.maker || '',
       model: data.model || '',
+      packageInsertDocument: data.packageInsertDocument || '',
+      catalogDocument: data.catalogDocument || '',
+      otherDocument: data.otherDocument || '',
       specification: '',
       unitPrice: 0,
       depreciationYears: 0,
@@ -497,10 +421,16 @@ function ShipAssetMasterContent() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                  <div><span style={{ color: '#7f8c8d' }}>類別コード:</span> {asset.classificationCode}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>類別名称:</span> {asset.classificationName}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>一般的名称:</span> {asset.generalName}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>JMDNコード:</span> {asset.jmdnCode}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>販売名:</span> {asset.tradeName}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>製造販売業者等:</span> {asset.manufacturer}</div>
+                  <div><span style={{ color: '#7f8c8d' }}>資産マスタID:</span> {asset.assetMasterId}</div>
                   <div><span style={{ color: '#7f8c8d' }}>中分類:</span> {asset.mediumClass}</div>
                   <div><span style={{ color: '#7f8c8d' }}>メーカー:</span> {asset.maker}</div>
                   <div><span style={{ color: '#7f8c8d' }}>型式:</span> {asset.model}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>単価:</span> ¥{asset.unitPrice.toLocaleString()}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
@@ -546,13 +476,24 @@ function ShipAssetMasterContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                   <tr>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>類別コード</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>類別名称</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>JMDN中分類名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>一般的名称</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>JMDNコード</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>販売名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>製造販売業者等</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>添付文書</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>資産マスタID</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>Category</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>大分類</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>中分類</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>品目</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メーカー</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>型式</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'right', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>単価</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>添付文書Document</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>カタログDocument</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>その他Document</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
@@ -578,13 +519,24 @@ function ShipAssetMasterContent() {
                         }
                       }}
                     >
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.classificationCode}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.classificationName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.jmdnSubCategory}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.generalName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.jmdnCode}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.tradeName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.manufacturer}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.packageInsert}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.assetMasterId}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.category}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.largeClass}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.mediumClass}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.item}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.maker}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.model}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', textAlign: 'right', whiteSpace: 'nowrap' }}>¥{asset.unitPrice.toLocaleString()}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.packageInsertDocument}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.catalogDocument}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.otherDocument}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {isSelectMode ? (
                           <button

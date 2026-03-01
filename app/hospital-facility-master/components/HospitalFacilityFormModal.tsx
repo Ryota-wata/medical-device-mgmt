@@ -22,7 +22,7 @@ export function HospitalFacilityFormModal({
   onSubmit,
   isMobile,
 }: HospitalFacilityFormModalProps) {
-  const { departments } = useMasterStore();
+  const { departments, roomCategories } = useMasterStore();
 
   const [formData, setFormData] = useState({
     oldShipDivision: '',
@@ -92,15 +92,10 @@ export function HospitalFacilityFormModal({
     )).filter(Boolean);
   }, [departments, formData.oldShipDivision]);
 
-  // 旧: SHIP諸室区分（SHIP部門+SHIP部署で絞り込み）
+  // 旧: SHIP諸室区分（roomCategoriesから全候補を取得、部門/部署フィルタ不要）
   const oldRoomCatOptions = useMemo(() => {
-    if (!formData.oldShipDivision || !formData.oldShipDepartment) return [];
-    return Array.from(new Set(
-      departments
-        .filter(d => d.division === formData.oldShipDivision && d.department === formData.oldShipDepartment)
-        .map(d => d.roomCategory1)
-    )).filter(Boolean);
-  }, [departments, formData.oldShipDivision, formData.oldShipDepartment]);
+    return Array.from(new Set(roomCategories.map(r => r.roomCategory1))).filter(Boolean);
+  }, [roomCategories]);
 
   // 新: SHIP部署（SHIP部門で絞り込み）
   const newDeptOptions = useMemo(() => {
@@ -110,23 +105,17 @@ export function HospitalFacilityFormModal({
     )).filter(Boolean);
   }, [departments, formData.newShipDivision]);
 
-  // 新: SHIP諸室区分（SHIP部門+SHIP部署で絞り込み）
+  // 新: SHIP諸室区分（roomCategoriesから全候補を取得、部門/部署フィルタ不要）
   const newRoomCatOptions = useMemo(() => {
-    if (!formData.newShipDivision || !formData.newShipDepartment) return [];
-    return Array.from(new Set(
-      departments
-        .filter(d => d.division === formData.newShipDivision && d.department === formData.newShipDepartment)
-        .map(d => d.roomCategory1)
-    )).filter(Boolean);
-  }, [departments, formData.newShipDivision, formData.newShipDepartment]);
+    return Array.from(new Set(roomCategories.map(r => r.roomCategory1))).filter(Boolean);
+  }, [roomCategories]);
 
-  // 旧: 親変更時に子をクリア
+  // 旧: 親変更時に子をクリア（諸室区分は独立なのでクリアしない）
   const handleOldDivisionChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
       oldShipDivision: value,
       oldShipDepartment: '',
-      oldShipRoomCategory: '',
     }));
   };
 
@@ -134,17 +123,15 @@ export function HospitalFacilityFormModal({
     setFormData(prev => ({
       ...prev,
       oldShipDepartment: value,
-      oldShipRoomCategory: '',
     }));
   };
 
-  // 新: 親変更時に子をクリア
+  // 新: 親変更時に子をクリア（諸室区分は独立なのでクリアしない）
   const handleNewDivisionChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
       newShipDivision: value,
       newShipDepartment: '',
-      newShipRoomCategory: '',
     }));
   };
 
@@ -152,7 +139,6 @@ export function HospitalFacilityFormModal({
     setFormData(prev => ({
       ...prev,
       newShipDepartment: value,
-      newShipRoomCategory: '',
     }));
   };
 
@@ -279,9 +265,8 @@ export function HospitalFacilityFormModal({
                   value={formData.oldShipRoomCategory}
                   onChange={(v) => setFormData(prev => ({ ...prev, oldShipRoomCategory: v }))}
                   options={['', ...oldRoomCatOptions]}
-                  placeholder={formData.oldShipDepartment ? '選択してください' : 'SHIP部署を先に選択'}
+                  placeholder="選択してください"
                   isMobile={isMobile}
-                  disabled={!formData.oldShipDepartment}
                 />
               </div>
             </div>
@@ -375,9 +360,8 @@ export function HospitalFacilityFormModal({
                   value={formData.newShipRoomCategory}
                   onChange={(v) => setFormData(prev => ({ ...prev, newShipRoomCategory: v }))}
                   options={['', ...newRoomCatOptions]}
-                  placeholder={formData.newShipDepartment ? '選択してください' : 'SHIP部署を先に選択'}
+                  placeholder="選択してください"
                   isMobile={isMobile}
-                  disabled={!formData.newShipDepartment}
                 />
               </div>
             </div>

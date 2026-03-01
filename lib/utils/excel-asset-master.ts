@@ -3,12 +3,24 @@ import { AssetMaster } from '@/lib/types/master';
 
 const HEADERS = [
   'ID',
+  '類別コード',
+  '類別名称',
+  'JMDN中分類名',
+  '一般的名称',
+  'JMDNコード',
+  '販売名',
+  '製造販売業者等',
+  '添付文書',
+  '資産マスタID',
   'Category',
   '大分類',
   '中分類',
   '品目',
   'メーカー',
   '型式',
+  '添付文書Document',
+  'カタログDocument',
+  'その他Document',
   '仕様',
   '単価',
   '耐用年数',
@@ -26,12 +38,24 @@ interface ParseResult {
 function assetToRow(asset: AssetMaster): (string | number)[] {
   return [
     asset.id,
+    asset.classificationCode,
+    asset.classificationName,
+    asset.jmdnSubCategory,
+    asset.generalName,
+    asset.jmdnCode,
+    asset.tradeName,
+    asset.manufacturer,
+    asset.packageInsert,
+    asset.assetMasterId,
     asset.category,
     asset.largeClass,
     asset.mediumClass,
     asset.item,
     asset.maker,
     asset.model,
+    asset.packageInsertDocument,
+    asset.catalogDocument,
+    asset.otherDocument,
     asset.specification,
     asset.unitPrice,
     asset.depreciationYears,
@@ -47,12 +71,24 @@ export function exportAssetsToExcel(assets: AssetMaster[], fileName?: string): v
   // 列幅を設定
   ws['!cols'] = [
     { wch: 12 }, // ID
+    { wch: 10 }, // 類別コード
+    { wch: 30 }, // 類別名称
+    { wch: 16 }, // JMDN中分類名
+    { wch: 24 }, // 一般的名称
+    { wch: 12 }, // JMDNコード
+    { wch: 30 }, // 販売名
+    { wch: 20 }, // 製造販売業者等
+    { wch: 24 }, // 添付文書
+    { wch: 14 }, // 資産マスタID
     { wch: 12 }, // Category
     { wch: 16 }, // 大分類
     { wch: 16 }, // 中分類
     { wch: 24 }, // 品目
     { wch: 16 }, // メーカー
     { wch: 16 }, // 型式
+    { wch: 20 }, // 添付文書Document
+    { wch: 20 }, // カタログDocument
+    { wch: 20 }, // その他Document
     { wch: 30 }, // 仕様
     { wch: 14 }, // 単価
     { wch: 10 }, // 耐用年数
@@ -120,12 +156,24 @@ export function parseAssetsFromExcel(file: File): Promise<ParseResult> {
           const now = new Date().toISOString();
           assets.push({
             id: '', // IDは後で自動採番
+            classificationCode: getValue('類別コード'),
+            classificationName: getValue('類別名称'),
+            jmdnSubCategory: getValue('JMDN中分類名'),
+            generalName: getValue('一般的名称'),
+            jmdnCode: getValue('JMDNコード'),
+            tradeName: getValue('販売名'),
+            manufacturer: getValue('製造販売業者等'),
+            packageInsert: getValue('添付文書'),
+            assetMasterId: getValue('資産マスタID'),
             category: getValue('Category'),
             largeClass: getValue('大分類'),
             mediumClass: getValue('中分類'),
             item: getValue('品目'),
             maker: getValue('メーカー'),
             model: getValue('型式'),
+            packageInsertDocument: getValue('添付文書Document'),
+            catalogDocument: getValue('カタログDocument'),
+            otherDocument: getValue('その他Document'),
             specification: getValue('仕様'),
             unitPrice: isNaN(unitPrice) ? 0 : unitPrice,
             depreciationYears: isNaN(depreciationYears) ? 0 : depreciationYears,
