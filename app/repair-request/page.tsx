@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAuthStore } from '@/lib/stores/authStore';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ApplicationCompleteModal } from '@/components/ui/ApplicationCompleteModal';
+import { ApplicationCloseConfirmModal } from '@/components/ui/ApplicationCloseConfirmModal';
 
 interface DeviceInfo {
   qrCode: string;
@@ -46,14 +47,17 @@ function RepairRequestContent() {
   const [manualRoomName, setManualRoomName] = useState('');
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
 
-  // 症状・代替機
+  // 症状・代替機・フリーコメント
   const [symptoms, setSymptoms] = useState('');
   const [alternativeDevice, setAlternativeDevice] = useState<'needed' | 'not_needed' | 'requested'>('not_needed');
+  const [freeComment, setFreeComment] = useState('');
 
   // UI状態
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  const [isConfirmView, setIsConfirmView] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completedRequestNo, setCompletedRequestNo] = useState('');
 
   // ダミーの機器データ（QRコード読み取り時に使用）
   const mockDeviceData: Record<string, DeviceInfo> = {
@@ -108,9 +112,13 @@ function RepairRequestContent() {
   };
 
   // フォームの入力状態チェック
-  const isFormDirty = qrCode !== '' || symptoms !== '' || manualItemName !== '' || capturedPhoto !== null;
+  const isFormDirty = qrCode !== '' || symptoms !== '' || manualItemName !== '' || capturedPhoto !== null || freeComment !== '';
 
   const handleHomeClick = () => {
+    if (isConfirmView) {
+      setIsConfirmView(false);
+      return;
+    }
     if (isFormDirty) {
       setShowHomeConfirm(true);
     } else {
@@ -118,8 +126,8 @@ function RepairRequestContent() {
     }
   };
 
-  // 申請送信
-  const handleSubmit = async () => {
+  // 確認画面へ遷移
+  const handleConfirm = () => {
     if (!symptoms.trim()) {
       alert('症状を入力してください');
       return;
@@ -130,6 +138,17 @@ function RepairRequestContent() {
       return;
     }
 
+    if (!applicantDepartment.trim() || !applicantName.trim()) {
+      alert('申請部署と申請者を入力してください');
+      return;
+    }
+
+    setIsConfirmView(true);
+    window.scrollTo(0, 0);
+  };
+
+  // 申請送信
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     // 送信データ作成
@@ -151,6 +170,7 @@ function RepairRequestContent() {
       },
       symptoms,
       alternativeDevice,
+      freeComment,
       status: '依頼受付'
     };
 
@@ -160,115 +180,35 @@ function RepairRequestContent() {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     setIsSubmitting(false);
-    setSubmitSuccess(true);
+    setCompletedRequestNo(requestNo);
+    setShowCompleteModal(true);
   };
 
-  // 送信成功後の表示
-  if (submitSuccess) {
-    return (
-      <div style={{
-        minHeight: '100dvh',
-        backgroundColor: '#f5f5f5',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: isMobile ? '32px 24px' : '48px',
-          textAlign: 'center',
-          maxWidth: '500px',
-          width: '100%',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            backgroundColor: '#d4edda',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 24px',
-            fontSize: '40px'
-          }}>
-            ✓
-          </div>
-          <h2 style={{
-            fontSize: isMobile ? '20px' : '24px',
-            fontWeight: 'bold',
-            color: '#2c3e50',
-            marginBottom: '16px'
-          }}>
-            修理依頼を送信しました
-          </h2>
-          <p style={{
-            fontSize: '14px',
-            color: '#5a6c7d',
-            marginBottom: '8px'
-          }}>
-            依頼番号: <strong>{requestNo}</strong>
-          </p>
-          <p style={{
-            fontSize: '13px',
-            color: '#7a8a9a',
-            marginBottom: '32px'
-          }}>
-            担当者より折り返しご連絡いたします。<br />
-            修理ステータス画面で進捗を確認できます。
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button
-              onClick={() => router.push('/main')}
-              style={{
-                padding: '14px 24px',
-                backgroundColor: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              メイン画面に戻る
-            </button>
-            <button
-              onClick={() => {
-                setSubmitSuccess(false);
-                setQrCode('');
-                setDeviceInfo(null);
-                setSymptoms('');
-                setAlternativeDevice('not_needed');
-                setManualItemName('');
-                setManualMaker('');
-                setManualModel('');
-                setManualSerialNo('');
-                setManualDepartment('');
-                setManualRoomName('');
-                setCapturedPhoto(null);
-              }}
-              style={{
-                padding: '14px 24px',
-                backgroundColor: 'white',
-                color: '#34495e',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '15px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              続けて依頼する
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // フォームリセット
+  const resetForm = () => {
+    setQrCode('');
+    setDeviceInfo(null);
+    setSymptoms('');
+    setAlternativeDevice('not_needed');
+    setFreeComment('');
+    setManualItemName('');
+    setManualMaker('');
+    setManualModel('');
+    setManualSerialNo('');
+    setManualDepartment('');
+    setManualRoomName('');
+    setCapturedPhoto(null);
+    setIsConfirmView(false);
+  };
+
+  // 確認画面で表示する機器情報のヘルパー
+  const getDeviceName = () => isRegisteredAsset ? (deviceInfo?.itemName || '-') : (manualItemName || '-');
+  const getDeviceMaker = () => isRegisteredAsset ? (deviceInfo?.maker || '-') : (manualMaker || '-');
+  const getDeviceModel = () => isRegisteredAsset ? (deviceInfo?.model || '-') : (manualModel || '-');
+  const getDeviceSerial = () => isRegisteredAsset ? (deviceInfo?.serialNo || '-') : (manualSerialNo || '-');
+  const getDeviceDepartment = () => isRegisteredAsset ? (deviceInfo?.department || '-') : (manualDepartment || '-');
+  const getDeviceRoom = () => isRegisteredAsset ? (deviceInfo?.roomName || '-') : (manualRoomName || '-');
+  const alternativeLabel = alternativeDevice === 'needed' ? '必要' : alternativeDevice === 'requested' ? '依頼済' : '不要';
 
   return (
     <div style={{
@@ -305,14 +245,14 @@ function RepairRequestContent() {
               fontSize: '14px'
             }}
           >
-            ← 戻る
+            {isConfirmView ? '← 修正する' : '← 戻る'}
           </button>
           <h1 style={{
             fontSize: isMobile ? '16px' : '18px',
             fontWeight: 'bold',
             margin: 0
           }}>
-            修理依頼
+            {isConfirmView ? '修理依頼 - 内容確認' : '修理依頼'}
           </h1>
           <div style={{ width: '80px' }} />
         </div>
@@ -327,6 +267,196 @@ function RepairRequestContent() {
         margin: '0 auto',
         boxSizing: 'border-box'
       }}>
+        {isConfirmView ? (
+          /* ========== 確認画面 ========== */
+          <>
+            <div style={{
+              background: '#e8f5e9',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '20px',
+              textAlign: 'center'
+            }}>
+              <span style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '14px' }}>
+                以下の内容で送信します。内容をご確認ください。
+              </span>
+            </div>
+
+            {/* 依頼情報 */}
+            <section style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px',
+              marginBottom: '16px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+            }}>
+              <h2 style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '16px',
+                borderBottom: '1px solid #ddd',
+                paddingBottom: '8px'
+              }}>
+                依頼情報
+              </h2>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px' }}>修理依頼No.</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{requestNo}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '80px' : '120px' }}>依頼日</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestDate} {requestTime}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請部署</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantDepartment}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請者</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantName}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            {/* 機器情報 */}
+            <section style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px',
+              marginBottom: '16px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+            }}>
+              <h2 style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '16px',
+                borderBottom: '1px solid #ddd',
+                paddingBottom: '8px'
+              }}>
+                機器情報
+                <span style={{
+                  marginLeft: '12px',
+                  fontSize: '12px',
+                  color: isRegisteredAsset ? '#3498db' : '#e67e22',
+                  fontWeight: 'normal'
+                }}>
+                  ({isRegisteredAsset ? '登録済み資産' : '未登録資産'})
+                </span>
+              </h2>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  {isRegisteredAsset && (
+                    <tr>
+                      <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px' }}>QRラベル</th>
+                      <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{qrCode}</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px' }}>品目</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceName()}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '80px' : '120px' }}>メーカー</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceMaker()}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceModel()}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>シリアルNo.</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceSerial()}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceDepartment()}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>室名</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceRoom()}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+
+            {/* 症状・代替機 */}
+            <section style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px',
+              marginBottom: '16px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+            }}>
+              <h2 style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '16px',
+                borderBottom: '1px solid #ddd',
+                paddingBottom: '8px'
+              }}>
+                症状・代替機
+              </h2>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px', verticalAlign: 'top' }}>症状</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>{symptoms}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>代替機</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{alternativeLabel}</td>
+                  </tr>
+                  {freeComment && (
+                    <tr>
+                      <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', verticalAlign: 'top' }}>フリーコメント</th>
+                      <td style={{ padding: '8px 12px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>{freeComment}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </section>
+
+            {/* 確認画面のボタン */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '16px',
+              marginBottom: '32px'
+            }}>
+              <button
+                onClick={() => setIsConfirmView(false)}
+                style={{
+                  padding: '14px 32px',
+                  backgroundColor: 'white',
+                  color: '#4a6741',
+                  border: '2px solid #4a6741',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  minHeight: '48px'
+                }}
+              >
+                ← 修正する
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                style={{
+                  padding: '14px 32px',
+                  backgroundColor: isSubmitting ? '#95a5a6' : '#4a6741',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '15px',
+                  fontWeight: 'bold',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  minHeight: '48px'
+                }}
+              >
+                {isSubmitting ? '送信中...' : '修理依頼を送信する'}
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ========== 入力画面 ========== */
+          <>
         {/* ① 依頼情報（自動生成） */}
         <section style={{
           backgroundColor: 'white',
@@ -924,37 +1054,102 @@ function RepairRequestContent() {
           </div>
         </section>
 
-        {/* 送信ボタン */}
+        {/* ⑤ フリーコメント */}
+        <section style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: isMobile ? '16px' : '20px',
+          marginBottom: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+        }}>
+          <h2 style={{
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: '#7a8a9a',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{
+              backgroundColor: '#3498db',
+              color: 'white',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px'
+            }}>5</span>
+            フリーコメント
+          </h2>
+          <textarea
+            value={freeComment}
+            onChange={(e) => setFreeComment(e.target.value)}
+            placeholder="その他連絡事項があれば入力してください"
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '14px',
+              resize: 'vertical',
+              boxSizing: 'border-box'
+            }}
+          />
+        </section>
+
+        {/* 確認画面へボタン */}
         <button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
+          onClick={handleConfirm}
           style={{
             width: '100%',
             padding: '16px',
-            backgroundColor: isSubmitting ? '#95a5a6' : '#27ae60',
+            backgroundColor: '#4a6741',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
             fontSize: '16px',
             fontWeight: 'bold',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            cursor: 'pointer',
             marginBottom: '32px'
           }}
         >
-          {isSubmitting ? '送信中...' : '修理依頼を送信'}
+          記載内容を確認する
         </button>
+          </>
+        )}
       </main>
 
-      {/* 確認ダイアログ */}
-      <ConfirmDialog
+      {/* 完了モーダル */}
+      <ApplicationCompleteModal
+        isOpen={showCompleteModal}
+        applicationName="修理依頼"
+        applicationNo={completedRequestNo}
+        guidanceText="担当者より折り返しご連絡いたします。&#10;修理ステータス画面で進捗を確認できます。"
+        returnDestination="メイン画面"
+        onGoToMain={() => {
+          resetForm();
+          setShowCompleteModal(false);
+          router.push('/main');
+        }}
+        onContinue={() => {
+          resetForm();
+          setShowCompleteModal(false);
+        }}
+      />
+
+      {/* 閉じる確認モーダル */}
+      <ApplicationCloseConfirmModal
         isOpen={showHomeConfirm}
-        onClose={() => setShowHomeConfirm(false)}
-        onConfirm={() => router.push('/main')}
-        title="メイン画面に戻る"
-        message="入力内容が破棄されます。メイン画面に戻りますか？"
-        confirmLabel="メイン画面に戻る"
-        cancelLabel="入力を続ける"
-        variant="warning"
+        returnDestination="メイン画面"
+        onCancel={() => setShowHomeConfirm(false)}
+        onConfirm={() => {
+          setShowHomeConfirm(false);
+          router.push('/main');
+        }}
       />
     </div>
   );
