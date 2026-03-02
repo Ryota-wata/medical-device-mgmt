@@ -1,14 +1,8 @@
 import React from 'react';
-import { RfqGroup } from '@/lib/types';
-import { ReceivedQuotationGroup, ReceivedQuotationItem, QuotationFilter } from '@/lib/types/quotation';
+import { ReceivedQuotationItem } from '@/lib/types/quotation';
 
 interface QuotationsTabProps {
-  quotationGroups: ReceivedQuotationGroup[];
-  quotationItems: ReceivedQuotationItem[];
-  rfqGroups: RfqGroup[];
-  quotationFilter: QuotationFilter;
-  onFilterChange: (filter: QuotationFilter) => void;
-  onUpdateItem?: (itemId: number, updates: Partial<ReceivedQuotationItem>) => void;
+  items: ReceivedQuotationItem[];
 }
 
 // 金額フォーマット
@@ -18,49 +12,10 @@ const formatCurrency = (value?: number) => {
 };
 
 export const QuotationsTab: React.FC<QuotationsTabProps> = ({
-  quotationGroups,
-  quotationItems,
-  rfqGroups,
-  quotationFilter,
-  onFilterChange,
+  items,
 }) => {
-  // フィルタリングされた明細
-  const filteredItems = quotationItems.filter(item => {
-    const group = quotationGroups.find(g => g.id === item.quotationGroupId);
-    if (!group) return false;
-    if (quotationFilter.rfqGroupId && group.rfqGroupId?.toString() !== quotationFilter.rfqGroupId) {
-      return false;
-    }
-    return true;
-  });
-
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
-      {/* アクションバー */}
-      <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <label style={{ fontSize: '14px', color: '#555' }}>見積依頼グループ:</label>
-          <select
-            value={quotationFilter.rfqGroupId}
-            onChange={(e) => onFilterChange({ ...quotationFilter, rfqGroupId: e.target.value })}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          >
-            <option value="">すべて</option>
-            {rfqGroups.map(g => (
-              <option key={g.id} value={g.id}>{g.rfqNo} - {g.groupName}</option>
-            ))}
-          </select>
-        </div>
-        <div style={{ marginLeft: 'auto', fontSize: '12px', color: '#666' }}>
-          登録済み: {filteredItems.length}件
-        </div>
-      </div>
-
       {/* テーブル */}
       <div style={{ overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -81,7 +36,7 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map((item) => {
+            {items.map((item) => {
               // Categoryの背景色
               const getCategoryBgColor = (itemType?: string) => {
                 if (!itemType) return 'white';
@@ -148,9 +103,10 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({
         </table>
       </div>
 
-      {quotationItems.length === 0 && (
+      {items.length === 0 && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
-          受領見積明細がありません
+          <p className="text-pretty">該当する見積明細がありません</p>
+          <p style={{ fontSize: '12px', marginTop: '8px' }} className="text-pretty">絞り込み条件を変更してください</p>
         </div>
       )}
     </div>

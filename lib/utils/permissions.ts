@@ -37,6 +37,8 @@ export type FeatureId =
   // 購入管理
   | 'quotation_data_box'
   | 'quotation_processing'
+  // 見積管理
+  | 'quotation_management'
   // 修理
   | 'repair_request'
   | 'repair_task'
@@ -77,6 +79,7 @@ export type MainButtonId =
   | 'asset_survey'
   | 'inventory'
   | 'master_management'
+  | 'quotation_management'
   | 'user_management';
 
 /**
@@ -108,6 +111,9 @@ const PERMISSION_MATRIX: Record<FeatureId, Record<UserRole, PermissionLevel>> = 
   // タスク管理（quotation_data_box）
   quotation_data_box: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
   quotation_processing: { admin: 'F', consultant: 'X', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+
+  // 見積管理
+  quotation_management: { admin: 'F', consultant: 'R', sales: 'R', office_admin: 'R', office_staff: 'R', clinical_staff: 'X' },
 
   // 修理
   repair_request: { admin: 'F', consultant: 'X', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'C' },
@@ -158,6 +164,7 @@ const MAIN_BUTTON_VISIBILITY: Record<MainButtonId, Record<UserRole, boolean>> = 
   inventory: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
   master_management: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
   user_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
+  quotation_management: { admin: true, consultant: true, sales: true, office_admin: true, office_staff: true, clinical_staff: false },
 };
 
 /**
