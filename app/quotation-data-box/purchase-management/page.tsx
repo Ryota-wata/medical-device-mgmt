@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
@@ -55,8 +55,24 @@ function PurchaseManagementContent() {
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [applicationToReject, setApplicationToReject] = useState<string | null>(null);
 
-  // 見積依頼グループタブ用のステータスフィルター
-  const [rfqStatusFilter, setRfqStatusFilter] = useState<RfqGroupStatus | ''>('');
+  // 見積依頼グループ: ステップタブ
+  type StepKey = 'all' | 'rfq-quotation' | 'order' | 'delivery' | 'inspection' | 'asset';
+  const STEP_TABS: { key: StepKey; label: string; statuses: RfqGroupStatus[] }[] = [
+    { key: 'all', label: 'すべて', statuses: [] },
+    { key: 'rfq-quotation', label: '①依頼・見積登録', statuses: ['見積依頼', '見積依頼済', '見積登録済'] },
+    { key: 'order', label: '③発注登録', statuses: ['見積登録済'] },
+    { key: 'delivery', label: '④納期登録', statuses: ['発注登録済'] },
+    { key: 'inspection', label: '⑤検収登録', statuses: ['発注登録済', '検収登録済'] },
+    { key: 'asset', label: '⑥資産登録', statuses: ['検収登録済', '資産仮登録済', '資産登録済'] },
+  ];
+  const [activeStep, setActiveStep] = useState<StepKey>('all');
+
+  // ステップタブでフィルタされた見積依頼グループ
+  const filteredRfqGroups = useMemo(() => {
+    const tab = STEP_TABS.find(t => t.key === activeStep);
+    if (!tab || tab.statuses.length === 0) return rfqGroups;
+    return rfqGroups.filter(g => tab.statuses.includes(g.status));
+  }, [rfqGroups, activeStep]);
 
   // 見積書登録モーダル
   const [showQuotationModal, setShowQuotationModal] = useState(false);
@@ -146,7 +162,12 @@ function PurchaseManagementContent() {
     setShowAddToEditListModal(true);
   };
 
-  // 見積書登録開始
+  // 見積依頼/見積登録 → STEP画面へ遷移
+  const handleNavigateToRfqProcess = (rfqGroupId: number) => {
+    router.push(`/quotation-data-box/rfq-process?rfqGroupId=${rfqGroupId}`);
+  };
+
+  // 見積書登録開始（既存モーダル: リモデル用に残す）
   const handleStartQuotationRegistration = (rfqGroupId?: number) => {
     setQuotationFormData({
       rfqGroupId: rfqGroupId?.toString() || '',
@@ -344,22 +365,31 @@ function PurchaseManagementContent() {
                 {/* テーブル */}
                 <div style={{ maxHeight: '300px', overflow: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead style={{ background: '#f8f9fa', position: 'sticky', top: 0 }}>
-                      <tr>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '40px' }}>
+                    <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                      {/* グループヘッダー行 */}
+                      <tr style={{ background: '#343a40', color: 'white' }}>
+                        <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #495057', width: '36px', verticalAlign: 'middle' }}>
                           <input
                             type="checkbox"
                             checked={pendingApplications.length > 0 && selectedApplicationIds.size === pendingApplications.length}
                             onChange={(e) => handleSelectAllApplications(e.target.checked)}
                           />
                         </th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>申請No.</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>種別</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>申請者</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>部署</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>申請日</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>対象資産</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '100px' }}>操作</th>
+                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請項目</th>
+                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
+                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
+                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}>品目情報</th>
+                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}>コメント</th>
+                      </tr>
+                      {/* サブカラムヘッダー行 */}
+                      <tr style={{ background: '#495057', color: 'white' }}>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No.</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請日</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>所属部署</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>氏名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>連絡先</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -369,64 +399,44 @@ function PurchaseManagementContent() {
                           <tr
                             key={app.id}
                             style={{
-                              borderBottom: '1px solid #f0f0f0',
+                              borderBottom: '1px solid #dee2e6',
                               background: selectedApplicationIds.has(app.id) ? '#e3f2fd' : 'transparent',
+                              cursor: 'pointer',
                             }}
+                            onClick={() => handleViewApplicationDetail(app)}
                           >
-                            <td style={{ padding: '10px 8px' }}>
+                            <td style={{ padding: '8px 6px', borderBottom: '1px solid #dee2e6' }} onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 checked={selectedApplicationIds.has(app.id)}
                                 onChange={() => handleSelectApplication(app.id)}
                               />
                             </td>
-                            <td
-                              style={{ padding: '10px 8px', color: '#3498db', cursor: 'pointer', fontWeight: 'bold' }}
-                              onClick={() => handleViewApplicationDetail(app)}
-                            >
-                              {app.applicationNo}
-                            </td>
-                            <td style={{ padding: '10px 8px' }}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#3498db', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                               <span style={{
                                 ...typeStyle,
                                 padding: '2px 8px',
                                 borderRadius: '4px',
                                 fontSize: '11px',
                                 fontWeight: 'bold',
+                                marginLeft: '8px',
+                                display: 'inline-block',
                               }}>
                                 {app.applicationType}
                               </span>
                             </td>
-                            <td style={{ padding: '10px 8px', color: '#2c3e50' }}>{app.applicantName}</td>
-                            <td style={{ padding: '10px 8px', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                            <td style={{ padding: '10px 8px', color: '#5a6c7d' }}>{app.applicationDate}</td>
-                            <td style={{ padding: '10px 8px', color: '#2c3e50', fontSize: '12px' }}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.applicantName}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>-</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.department}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50', fontSize: '12px' }}>
                               {app.assets.map(a => a.name).join(', ')}
                             </td>
-                            <td style={{ padding: '10px 8px', textAlign: 'center' }}>
-                              <select
-                                onChange={(e) => {
-                                  const action = e.target.value;
-                                  if (action === 'detail') {
-                                    handleViewApplicationDetail(app);
-                                  } else if (action === 'reject') {
-                                    handleConfirmReject(app.id);
-                                  }
-                                  e.target.value = '';
-                                }}
-                                style={{
-                                  padding: '4px 8px',
-                                  fontSize: '12px',
-                                  border: '1px solid #ddd',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                }}
-                                defaultValue=""
-                              >
-                                <option value="" disabled>処理</option>
-                                <option value="detail">詳細</option>
-                                <option value="reject">却下</option>
-                              </select>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>
+                              {app.comment || '-'}
                             </td>
                           </tr>
                         );
@@ -491,33 +501,48 @@ function PurchaseManagementContent() {
               <span style={{ fontWeight: 'bold', fontSize: '14px' }}>見積依頼グループ</span>
             </div>
 
-            {/* フィルター */}
+            {/* ステップタブ */}
             <div style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid #ddd',
+              borderBottom: '2px solid #dee2e6',
               display: 'flex',
-              gap: '16px',
-              alignItems: 'center',
-              flexWrap: 'wrap',
               background: '#fafafa',
+              overflowX: 'auto',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-                <select
-                  value={rfqStatusFilter}
-                  onChange={(e) => setRfqStatusFilter(e.target.value as RfqGroupStatus | '')}
-                  style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}
-                >
-                  <option value="">すべて</option>
-                  <option value="見積依頼">見積依頼</option>
-                  <option value="見積依頼済">見積依頼済</option>
-                  <option value="見積登録済">見積登録済</option>
-                  <option value="発注登録済">発注登録済</option>
-                  <option value="検収登録済">検収登録済</option>
-                  <option value="資産仮登録済">資産仮登録済</option>
-                  <option value="資産登録済">資産登録済</option>
-                </select>
-              </div>
+              {STEP_TABS.map((tab) => {
+                const isActive = activeStep === tab.key;
+                const count = tab.statuses.length === 0
+                  ? rfqGroups.length
+                  : rfqGroups.filter(g => tab.statuses.includes(g.status)).length;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveStep(tab.key)}
+                    style={{
+                      padding: '10px 16px',
+                      background: isActive ? '#3498db' : 'transparent',
+                      border: 'none',
+                      borderBottom: isActive ? '2px solid #3498db' : '2px solid transparent',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: isActive ? 'bold' : 'normal',
+                      color: isActive ? 'white' : '#555',
+                      whiteSpace: 'nowrap',
+                      marginBottom: '-2px',
+                    }}
+                  >
+                    {tab.label}
+                    <span style={{
+                      marginLeft: '6px',
+                      background: isActive ? 'rgba(255,255,255,0.3)' : '#e0e0e0',
+                      padding: '1px 6px',
+                      borderRadius: '8px',
+                      fontSize: '11px',
+                    }} className="tabular-nums">
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* テーブルエリア */}
@@ -537,10 +562,9 @@ function PurchaseManagementContent() {
                 </div>
               ) : (
                 <RfqGroupsTab
-                  rfqGroups={rfqGroups}
-                  rfqStatusFilter={rfqStatusFilter}
-                  onFilterChange={setRfqStatusFilter}
-                  onRegisterQuotation={handleStartQuotationRegistration}
+                  rfqGroups={filteredRfqGroups}
+                  onSendRfq={handleNavigateToRfqProcess}
+                  onRegisterQuotation={handleNavigateToRfqProcess}
                   onRegisterOrder={handleStartOrderRegistration}
                   onRegisterInspection={handleStartInspectionRegistration}
                   onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}

@@ -1,35 +1,17 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
-import { useQuotationStore } from '@/lib/stores/quotationStore';
-import { useApplicationStore } from '@/lib/stores/applicationStore';
-import { useMasterStore } from '@/lib/stores';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { RfqGroupStatus } from '@/lib/types';
-import {
-  OCRResult,
-  QuotationFormData,
-  ConfirmedStateMap
-} from '@/lib/types/quotation';
 import { Header } from '@/components/layouts/Header';
-import { TIMEOUTS, MESSAGES } from '@/lib/constants/quotation';
-import { MOCK_OCR_RESULT } from '@/lib/mocks/quotationMockData';
 import { RfqGroupsTab } from '../components/RfqGroupsTab';
-import { QuotationRegistrationModal } from '../components/QuotationRegistrationModal';
 import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function RemodelManagementContent() {
   const router = useRouter();
   const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
-  const {
-    addQuotationGroup,
-    addQuotationItems,
-    generateReceivedQuotationNo
-  } = useQuotationStore();
-  const { applications, addApplication } = useApplicationStore();
-  const { assets: assetMasterData } = useMasterStore();
   const { editLists } = useEditListStore();
 
   // 選択中の編集リスト
@@ -37,130 +19,14 @@ function RemodelManagementContent() {
 
   // 見積依頼グループタブ用のステータスフィルター
   const [rfqStatusFilter, setRfqStatusFilter] = useState<RfqGroupStatus | ''>('');
+  const filteredRfqGroups = useMemo(() => {
+    if (!rfqStatusFilter) return rfqGroups;
+    return rfqGroups.filter(g => g.status === rfqStatusFilter);
+  }, [rfqGroups, rfqStatusFilter]);
 
-  // 見積書登録モーダル
-  const [showQuotationModal, setShowQuotationModal] = useState(false);
-  const [modalStep, setModalStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  const [quotationFormData, setQuotationFormData] = useState<QuotationFormData>({
-    rfqGroupId: '',
-    pdfFile: null
-  });
-  const [ocrProcessing, setOcrProcessing] = useState(false);
-  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
-
-  // 見積書登録開始
-  const handleStartQuotationRegistration = (rfqGroupId?: number) => {
-    setQuotationFormData({
-      rfqGroupId: rfqGroupId?.toString() || '',
-      pdfFile: null
-    });
-    setModalStep(1);
-    setOcrResult(null);
-    setShowQuotationModal(true);
-  };
-
-  // テストデータでOCR結果を生成して明細確認画面へ遷移
-  const handleGenerateTestOCR = () => {
-    setOcrProcessing(true);
-    setTimeout(() => {
-      setOcrResult(MOCK_OCR_RESULT);
-      setOcrProcessing(false);
-      setShowQuotationModal(false);
-      router.push('/quotation-data-box/ocr-confirm');
-    }, TIMEOUTS.OCR_SIMULATION);
-  };
-
-  // PDFアップロード & OCR処理
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setQuotationFormData(prev => ({ ...prev, pdfFile: file }));
-    handleGenerateTestOCR();
-  };
-
-  // 見積書登録確定
-  const handleSubmitQuotation = (confirmedState: ConfirmedStateMap, submittedOcrResult: OCRResult) => {
-    if (!submittedOcrResult) return;
-
-    const rfqGroup = quotationFormData.rfqGroupId
-      ? rfqGroups.find(g => g.id.toString() === quotationFormData.rfqGroupId)
-      : undefined;
-
-    const groupId = addQuotationGroup({
-      receivedQuotationNo: generateReceivedQuotationNo(),
-      rfqGroupId: rfqGroup?.id,
-      rfqNo: rfqGroup?.rfqNo,
-      vendorName: submittedOcrResult.vendorName,
-      quotationDate: submittedOcrResult.quotationDate,
-      validityPeriod: submittedOcrResult.validityPeriod,
-      deliveryPeriod: submittedOcrResult.deliveryPeriod,
-      phase: submittedOcrResult.phase,
-      totalAmount: submittedOcrResult.totalAmount,
-      pdfUrl: quotationFormData.pdfFile ? URL.createObjectURL(quotationFormData.pdfFile) : undefined
-    });
-
-    const quotationNo = generateReceivedQuotationNo();
-    const itemsToAdd: Parameters<typeof addQuotationItems>[0] = [];
-
-    submittedOcrResult.items.forEach((ocrItem, ocrItemIndex) => {
-      const key = `${ocrItemIndex}`;
-      const confirmedInfo = confirmedState[key];
-      const assetInfo = confirmedInfo?.assetInfo;
-      const aiJudgment = ocrItem.aiJudgments[0];
-
-      const matchedAsset = assetInfo
-        ? assetMasterData.find(a =>
-            a.item === assetInfo.assetName &&
-            a.model === assetInfo.model &&
-            a.maker === assetInfo.manufacturer
-          )
-        : undefined;
-
-      itemsToAdd.push({
-        quotationGroupId: groupId,
-        receivedQuotationNo: quotationNo,
-        rowNo: ocrItem.rowNo,
-        originalItemName: ocrItem.itemName,
-        originalManufacturer: ocrItem.manufacturer,
-        originalModel: ocrItem.model,
-        originalQuantity: ocrItem.quantity,
-        itemType: ocrItem.itemType,
-        category: assetInfo?.category || aiJudgment?.category || '',
-        largeClass: assetInfo?.majorCategory || aiJudgment?.majorCategory || '',
-        middleClass: assetInfo?.middleCategory || aiJudgment?.middleCategory || '',
-        itemName: assetInfo?.assetName || aiJudgment?.assetName || ocrItem.itemName,
-        manufacturer: assetInfo?.manufacturer || aiJudgment?.manufacturer || ocrItem.manufacturer,
-        model: assetInfo?.model || aiJudgment?.model || ocrItem.model,
-        aiQuantity: ocrItem.quantity,
-        rfqNo: rfqGroup?.rfqNo,
-        unit: ocrItem.unit,
-        listPriceUnit: ocrItem.listPriceUnit,
-        listPriceTotal: ocrItem.listPriceTotal,
-        purchasePriceUnit: ocrItem.purchasePriceUnit,
-        purchasePriceTotal: ocrItem.purchasePriceTotal,
-        remarks: ocrItem.remarks,
-        allocListPriceUnit: ocrItem.listPriceUnit,
-        allocListPriceTotal: ocrItem.listPriceTotal,
-        allocPriceUnit: ocrItem.purchasePriceUnit,
-        allocDiscount: ocrItem.discount,
-        allocTaxRate: ocrItem.taxRate,
-        allocTaxTotal: ocrItem.totalWithTax,
-        assetMasterId: matchedAsset?.id,
-        linkedApplicationIds: []
-      });
-    });
-
-    addQuotationItems(itemsToAdd);
-
-    if (rfqGroup) {
-      updateRfqGroup(rfqGroup.id, { status: '見積登録済' });
-    }
-
-    alert(MESSAGES.QUOTATION_REGISTERED(quotationNo, itemsToAdd.length));
-    setShowQuotationModal(false);
-    setModalStep(1);
-    setOcrResult(null);
-    router.push('/quotation-data-box/quotations');
+  // 見積依頼/見積登録 → STEP画面へ遷移
+  const handleNavigateToRfqProcess = (rfqGroupId: number) => {
+    router.push(`/quotation-data-box/rfq-process?rfqGroupId=${rfqGroupId}`);
   };
 
   // 発注登録開始（画面遷移）
@@ -290,10 +156,9 @@ function RemodelManagementContent() {
           {/* テーブルエリア */}
           <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
             <RfqGroupsTab
-              rfqGroups={rfqGroups}
-              rfqStatusFilter={rfqStatusFilter}
-              onFilterChange={setRfqStatusFilter}
-              onRegisterQuotation={handleStartQuotationRegistration}
+              rfqGroups={filteredRfqGroups}
+              onSendRfq={handleNavigateToRfqProcess}
+              onRegisterQuotation={handleNavigateToRfqProcess}
               onRegisterOrder={handleStartOrderRegistration}
               onRegisterInspection={handleStartInspectionRegistration}
               onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
@@ -360,24 +225,6 @@ function RemodelManagementContent() {
         </div>
       )}
 
-      {/* 見積書登録モーダル */}
-      <QuotationRegistrationModal
-        show={showQuotationModal}
-        step={modalStep}
-        rfqGroups={rfqGroups}
-        assetMasterData={assetMasterData}
-        applications={applications}
-        formData={quotationFormData}
-        ocrProcessing={ocrProcessing}
-        ocrResult={ocrResult}
-        onFormDataChange={setQuotationFormData}
-        onPdfUpload={handlePdfUpload}
-        onGenerateTestOCR={handleGenerateTestOCR}
-        onStepChange={setModalStep}
-        onCreateApplication={() => {}}
-        onSubmit={handleSubmitQuotation}
-        onClose={() => setShowQuotationModal(false)}
-      />
     </div>
   );
 }

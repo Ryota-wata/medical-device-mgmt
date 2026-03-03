@@ -181,8 +181,7 @@ export default function RegistrationConfirmPage() {
       addQuotationItems(itemsToAdd);
 
       alert(`登録が完了しました（見積番号: ${quotationNo}）`);
-      // 見積明細タブを表示するためにクエリパラメータを追加
-      router.push('/quotation-data-box/quotations');
+      router.push('/quotation-data-box/purchase-management');
     }
   };
 
