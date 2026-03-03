@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
-import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
+import { PurchaseApplication, CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
 import { ApplicationCompleteModal } from './ApplicationCompleteModal';
 import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
@@ -21,13 +21,17 @@ interface DesiredEquipment {
 interface PurchaseApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (application: PurchaseApplication) => void;
+  returnDestination?: string;
+  returnHref?: string;
 }
 
 export function PurchaseApplicationModal({
   isOpen,
   onClose,
   onSuccess,
+  returnDestination = '資産一覧',
+  returnHref = '/asset-search-result',
 }: PurchaseApplicationModalProps) {
   const router = useRouter();
   const { departments, facilities } = useMasterStore();
@@ -39,6 +43,7 @@ export function PurchaseApplicationModal({
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [completedAppNo, setCompletedAppNo] = useState('');
+  const [createdApplication, setCreatedApplication] = useState<PurchaseApplication | null>(null);
 
   // 申請基本情報
   const [managementDepartment] = useState(user?.department || '手術部');
@@ -204,13 +209,25 @@ export function PurchaseApplicationModal({
     const validEquipments = desiredEquipments.filter(e => e.item.trim() !== '');
 
     // 対象資産データを作成
-    const assets: PurchaseApplicationAsset[] = validEquipments.map(equipment => ({
-      name: equipment.item,
-      maker: equipment.maker,
-      model: equipment.model,
-      quantity: equipment.quantity,
-      unit: equipment.unit,
-    }));
+    // 要望機器が登録されている場合はそれを使用、未登録の場合は基本品目情報から1件作成
+    let assets: PurchaseApplicationAsset[];
+    if (validEquipments.length > 0) {
+      assets = validEquipments.map(equipment => ({
+        name: equipment.item,
+        maker: equipment.maker,
+        model: equipment.model,
+        quantity: equipment.quantity,
+        unit: equipment.unit,
+      }));
+    } else {
+      assets = [{
+        name: basicItem.trim() || '（品目未指定）',
+        maker: '',
+        model: '',
+        quantity: Number(basicQuantity) || 1,
+        unit: '台',
+      }];
+    }
 
     // 申請データを作成（CreatePurchaseApplicationInput形式）
     const applicationInput: CreatePurchaseApplicationInput = {
@@ -240,6 +257,7 @@ export function PurchaseApplicationModal({
     const result = addApplication(applicationInput);
 
     setCompletedAppNo(result.applicationNo);
+    setCreatedApplication(result);
     setShowCompleteModal(true);
   };
 
@@ -1037,15 +1055,23 @@ export function PurchaseApplicationModal({
         applicationName="購入申請"
         applicationNo={completedAppNo}
         guidanceText=""
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onGoToMain={() => {
+          if (createdApplication && onSuccess) {
+            onSuccess(createdApplication);
+          }
           resetForm();
+          setCreatedApplication(null);
           setShowCompleteModal(false);
           onClose();
-          router.push('/asset-search-result');
+          router.push(returnHref);
         }}
         onContinue={() => {
+          if (createdApplication && onSuccess) {
+            onSuccess(createdApplication);
+          }
           resetForm();
+          setCreatedApplication(null);
           setShowCompleteModal(false);
         }}
       />
@@ -1053,7 +1079,7 @@ export function PurchaseApplicationModal({
       {/* 閉じる確認モーダル */}
       <ApplicationCloseConfirmModal
         isOpen={showCloseConfirm}
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onCancel={() => setShowCloseConfirm(false)}
         onConfirm={() => {
           setShowCloseConfirm(false);

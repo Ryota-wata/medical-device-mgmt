@@ -10,6 +10,7 @@ interface EditListState {
   deleteEditList: (id: string) => void;
   getEditListById: (id: string) => EditList | undefined;
   addItemsFromApplications: (editListId: string, applications: PurchaseApplication[]) => number;
+  updateRfqInfo: (editListId: string, selectedNos: Set<number>, rfqNo: string, rfqGroupName: string) => void;
   getItemsByEditListId: (editListId: string) => EditListItem[];
   getTotalItemCount: (editListId: string) => number;
 }
@@ -146,6 +147,37 @@ export const useEditListStore = create<EditListState>((set, get) => ({
     });
 
     return addedCount;
+  },
+
+  updateRfqInfo: (editListId: string, selectedNos: Set<number>, rfqNo: string, rfqGroupName: string) => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+
+        // baseAssets の更新（asset.no で照合）
+        const updatedBaseAssets = list.baseAssets.map((asset) => {
+          if (selectedNos.has(asset.no)) {
+            return { ...asset, rfqNo, rfqGroupName };
+          }
+          return asset;
+        });
+
+        // items の更新（90000 + index で照合）
+        const updatedItems = list.items.map((item, index) => {
+          if (selectedNos.has(90000 + index)) {
+            return { ...item, rfqNo, rfqGroupId: rfqNo, status: 'rfq_assigned' as const };
+          }
+          return item;
+        });
+
+        return {
+          ...list,
+          baseAssets: updatedBaseAssets,
+          items: updatedItems,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
   },
 
   getItemsByEditListId: (editListId: string) => {

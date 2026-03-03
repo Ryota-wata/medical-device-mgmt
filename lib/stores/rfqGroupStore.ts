@@ -3,7 +3,7 @@ import { RfqGroup } from '@/lib/types';
 
 interface RfqGroupState {
   rfqGroups: RfqGroup[];
-  addRfqGroup: (rfqGroup: Omit<RfqGroup, 'id'>) => void;
+  addRfqGroup: (rfqGroup: Omit<RfqGroup, 'id'>) => RfqGroup;
   updateRfqGroup: (id: number, updates: Partial<RfqGroup>) => void;
   deleteRfqGroup: (id: number) => void;
   getRfqGroupById: (id: number) => RfqGroup | undefined;
@@ -138,6 +138,8 @@ export const useRfqGroupStore = create<RfqGroupState>((set, get) => ({
     set((state) => ({
       rfqGroups: [...state.rfqGroups, newRfqGroup],
     }));
+
+    return newRfqGroup;
   },
 
   updateRfqGroup: (id, updates) => {

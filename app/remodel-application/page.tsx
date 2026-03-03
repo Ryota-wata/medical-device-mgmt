@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset, Application, ApplicationType } from '@/lib/types';
-import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore } from '@/lib/stores';
+import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore, useQuotationStore } from '@/lib/stores';
+import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -11,8 +12,14 @@ import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
 import { useColumnFeatures } from '@/lib/hooks/useColumnFeatures';
 import { Header } from '@/components/layouts/Header';
-import { REMODEL_COLUMNS, type ColumnDef } from '@/lib/constants/assetColumns';
+import { REMODEL_COLUMNS, REMODEL_COLUMN_GROUPS, type ColumnDef } from '@/lib/constants/assetColumns';
 import { RfqGroupModal } from '@/components/remodel/RfqGroupModal';
+import { DataLinkModal } from '@/components/remodel/DataLinkModal';
+import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationModal';
+import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
+import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
+import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
+import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { generateMockAssets, BUILDING_LIST } from '@/lib/data/generateMockAssets';
 
 const ALL_COLUMNS = REMODEL_COLUMNS;
@@ -23,8 +30,11 @@ function RemodelApplicationContent() {
   const { addApplication, applications } = useApplicationStore();
   const { getNewLocationByCurrentLocation, facilities: hospitalFacilities, swapToNewLocation } = useHospitalFacilityStore();
   const { individuals, updateIndividual } = useIndividualStore();
-  const { getEditListById } = useEditListStore();
+  const { getEditListById, addItemsFromApplications, updateRfqInfo } = useEditListStore();
   const { addRfqGroup, generateRfqNo } = useRfqGroupStore();
+  const { assets: assetMasters, vendors } = useMasterStore();
+  const { quotationGroups, quotationItems } = useQuotationStore();
+  const { applications: purchaseApplications } = usePurchaseApplicationStore();
   const { isMobile } = useResponsive();
 
   // URLパラメータから編集リストIDを取得
@@ -54,6 +64,16 @@ function RemodelApplicationContent() {
   // 見積依頼グループ作成モーダル関連の状態
   const [isRfqGroupModalOpen, setIsRfqGroupModalOpen] = useState(false);
   const [rfqGroupName, setRfqGroupName] = useState('');
+
+  // Data Linkモーダル関連の状態
+  const [isDataLinkModalOpen, setIsDataLinkModalOpen] = useState(false);
+
+  // 各種申請モーダル状態（資産一覧と同等のリッチモーダル）
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [additionModalOpen, setAdditionModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [disposalModalOpen, setDisposalModalOpen] = useState(false);
 
   // セル編集関連の状態
   const [editingCell, setEditingCell] = useState<{ rowNo: number; colKey: string } | null>(null);
@@ -175,6 +195,7 @@ function RemodelApplicationContent() {
         currentConnectionDestination: item.currentConnectionDestination,
         requestConnectionStatus: item.requestConnectionStatus,
         requestConnectionDestination: item.requestConnectionDestination,
+        rfqNo: item.rfqNo || '',
         sourceType: 'added' as const,
       }));
 
@@ -196,12 +217,16 @@ function RemodelApplicationContent() {
   const assetProgress = useMemo(() => {
     const totalAssets = displayAssets.length;
 
-    // 申請中の資産数（applicationsに該当資産がある場合）
+    // 申請中の資産数（applicationStore + purchaseApplicationStore 両方を参照）
     const inProgressAssets = displayAssets.filter(asset => {
-      return applications.some(app =>
+      const hasApplication = applications.some(app =>
         app.asset.name === asset.name &&
         app.asset.model === asset.model
       );
+      const hasPurchaseApplication = purchaseApplications.some(app =>
+        app.assets.some(a => a.name === asset.name && a.model === asset.model)
+      );
+      return hasApplication || hasPurchaseApplication;
     }).length;
 
     // 未申請の資産数
@@ -217,7 +242,7 @@ function RemodelApplicationContent() {
       inProgress: inProgressAssets,
       executed: executedAssets,
     };
-  }, [displayAssets, applications]);
+  }, [displayAssets, applications, purchaseApplications]);
 
   // 進捗率（申請中 + 執行済み / 全体）
   const progressRate = useMemo(() => {
@@ -278,6 +303,29 @@ function RemodelApplicationContent() {
     getCellValue,
   } = useAssetTable(ALL_COLUMNS);
 
+  // テーブルグループヘッダーのスパン計算
+  const groupHeaderSpans = useMemo(() => {
+    const visibleCols = orderedColumns.filter(col => visibleColumns[col.key]);
+    const spans: { groupId: string; label: string; color: string; colSpan: number }[] = [];
+    let currentGroupId = '';
+    for (const col of visibleCols) {
+      const gid = col.group || '';
+      if (gid === currentGroupId && spans.length > 0) {
+        spans[spans.length - 1].colSpan++;
+      } else {
+        const groupDef = REMODEL_COLUMN_GROUPS.find(g => g.id === gid);
+        spans.push({
+          groupId: gid,
+          label: groupDef?.label || gid,
+          color: groupDef?.color || '#6c757d',
+          colSpan: 1,
+        });
+        currentGroupId = gid;
+      }
+    }
+    return spans;
+  }, [orderedColumns, visibleColumns]);
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(new Set(finalFilteredAssets.map(a => a.no)));
@@ -300,20 +348,35 @@ function RemodelApplicationContent() {
     router.push(`/asset-detail?qrCode=${asset.qrCode}&readonly=true&from=remodel`);
   };
 
-  // 資産の申請ステータスを取得
-  const getAssetApplications = (asset: Asset) => {
-    // この資産に関連する申請を取得（名前とモデルで照合）
-    return applications.filter(app =>
-      app.asset.name === asset.name &&
-      app.asset.model === asset.model
-    );
+  // 資産の申請ステータスを取得（applicationStore + purchaseApplicationStore 両方を参照）
+  const getAssetApplicationTypes = (asset: Asset): string[] => {
+    const types: string[] = [];
+
+    // applicationStore（移動・廃棄申請）
+    applications.forEach(app => {
+      if (app.asset.name === asset.name && app.asset.model === asset.model) {
+        types.push(app.applicationType);
+      }
+    });
+
+    // purchaseApplicationStore（新規・更新・増設申請）
+    purchaseApplications.forEach(app => {
+      const hasMatchingAsset = app.assets.some(a =>
+        a.name === asset.name && a.model === asset.model
+      );
+      if (hasMatchingAsset) {
+        types.push(app.applicationType);
+      }
+    });
+
+    return Array.from(new Set(types));
   };
 
   // 申請ステータスバッジを描画
   const renderApplicationStatus = (asset: Asset) => {
-    const assetApplications = getAssetApplications(asset);
+    const uniqueTypes = getAssetApplicationTypes(asset);
 
-    if (assetApplications.length === 0) {
+    if (uniqueTypes.length === 0) {
       return <span style={{ color: '#95a5a6', fontSize: '12px' }}>-</span>;
     }
 
@@ -326,9 +389,6 @@ function RemodelApplicationContent() {
       '廃棄申請': '#e74c3c',
       '保留': '#95a5a6',
     };
-
-    // ユニークな申請タイプを取得
-    const uniqueTypes = Array.from(new Set(assetApplications.map(app => app.applicationType)));
 
     return (
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -400,10 +460,62 @@ function RemodelApplicationContent() {
     setEditingValue('');
   };
 
+  // Data Link 紐づけ実行ハンドラー
+  const handleDataLinkExecute = (updates: Map<number, Partial<Asset>>) => {
+    if (updates.size === 0) return;
+    setMockAssets(prev => prev.map(asset => {
+      const patch = updates.get(asset.no);
+      if (patch) {
+        return { ...asset, ...patch };
+      }
+      return asset;
+    }));
+  };
+
+  // Data Link モーダルに渡す選択中レコード
+  const dataLinkSelectedAssets = useMemo(() => {
+    return finalFilteredAssets.filter(a => selectedItems.has(a.no));
+  }, [finalFilteredAssets, selectedItems]);
+
+  // 原本資産（Data Link用）
+  const baseAssetsForDataLink = useMemo(() => {
+    if (isEditListMode && editList) {
+      return editList.baseAssets || [];
+    }
+    return mockAssets;
+  }, [isEditListMode, editList, mockAssets]);
+
   // 編集可能なカラム
   const editableColumns = ALL_COLUMNS.filter(col =>
     !['applicationStatus'].includes(col.key)
   );
+
+  // 選択された行をAsset[]として取得（リッチモーダル用）
+  const selectedAssetsForModal = useMemo(() => {
+    return finalFilteredAssets.filter(a => selectedItems.has(a.no));
+  }, [finalFilteredAssets, selectedItems]);
+
+  // リッチモーダル申請ボタンハンドラ
+  const handleRichApplicationClick = (type: 'purchase' | 'update' | 'addition' | 'transfer' | 'disposal') => {
+    if (type === 'purchase') {
+      setPurchaseModalOpen(true);
+      return;
+    }
+    if (selectedItems.size === 0) {
+      alert('申請する資産を選択してください');
+      return;
+    }
+    if ((type === 'update' || type === 'addition') && selectedItems.size !== 1) {
+      alert(`${type === 'update' ? '更新' : '増設'}申請は1件のみ選択してください`);
+      return;
+    }
+    switch (type) {
+      case 'update': setUpdateModalOpen(true); break;
+      case 'addition': setAdditionModalOpen(true); break;
+      case 'transfer': setTransferModalOpen(true); break;
+      case 'disposal': setDisposalModalOpen(true); break;
+    }
+  };
 
   // 申請アクションハンドラー
   const handleApplicationAction = (actionType: string) => {
@@ -688,7 +800,13 @@ function RemodelApplicationContent() {
           API連携
         </button>
         <button
-          onClick={() => alert('Data Link機能（開発中）')}
+          onClick={() => {
+            if (selectedItems.size === 0) {
+              alert('紐づけるレコードを選択してください');
+              return;
+            }
+            setIsDataLinkModalOpen(true);
+          }}
           style={{
             padding: '8px 16px',
             background: '#e74c3c',
@@ -751,10 +869,66 @@ function RemodelApplicationContent() {
         >
           見積依頼グループ作成（{selectedItems.size}件選択中）
         </button>
+
+        {/* 申請ボタン群 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #dee2e6' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: '#555' }}>申請:</span>
+          {([
+            { type: 'purchase' as const, label: '新規購入', color: '#4a6741', needsSelection: false },
+            { type: 'update' as const, label: '更新', color: '#e67e22', needsSelection: true },
+            { type: 'addition' as const, label: '増設', color: '#2980b9', needsSelection: true },
+            { type: 'transfer' as const, label: '移動', color: '#546e7a', needsSelection: true },
+            { type: 'disposal' as const, label: '廃棄', color: '#c62828', needsSelection: true },
+          ]).map(({ type, label, color, needsSelection }) => {
+            const disabled = needsSelection && selectedItems.size === 0;
+            return (
+              <button
+                key={type}
+                onClick={() => handleRichApplicationClick(type)}
+                disabled={disabled}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  backgroundColor: disabled ? '#e0e0e0' : color,
+                  color: disabled ? '#999' : 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
         </div>
 
-        {/* 合計表示 */}
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+        {/* 右側: タスク管理リンク + 合計表示 */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            onClick={() => router.push('/quotation-data-box/remodel-management')}
+            style={{
+              padding: '8px 16px',
+              background: 'transparent',
+              color: '#3498db',
+              border: '1px solid #3498db',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#3498db'; e.currentTarget.style.color = 'white'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#3498db'; }}
+          >
+            タスク管理 &rarr;
+          </button>
           <div style={{
             padding: '8px 16px',
             background: '#f8f9fa',
@@ -863,55 +1037,62 @@ function RemodelApplicationContent() {
 
         {/* 資産テーブル（編集リストモード・従来モード共通） */}
         {currentView === 'list' && (
-          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px', tableLayout: 'fixed' }}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 102, background: '#f8f9fa' }}>
+          <table style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 102 }}>
+              {/* グループヘッダー行 */}
               <tr>
                 <th
+                  rowSpan={2}
                   style={{
-                    padding: '12px 8px',
-                    textAlign: 'left',
-                    fontWeight: 'bold',
-                    color: '#2c3e50',
+                    padding: '4px',
+                    textAlign: 'center',
                     width: `${columnWidths.checkbox}px`,
                     minWidth: `${columnWidths.checkbox}px`,
                     position: 'sticky',
                     left: 0,
-                    zIndex: 101,
-                    background: '#f8f9fa',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
+                    zIndex: 103,
+                    background: '#343a40',
                     boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
-                    borderRight: '1px solid #dee2e6',
+                    borderRight: '1px solid #495057',
                     borderBottom: '2px solid #dee2e6',
                   }}
                 >
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
-                    <div
-                      onMouseDown={(e) => handleResizeStart(e, 'checkbox')}
-                      style={{
-                        position: 'absolute',
-                        right: -8,
-                        top: -12,
-                        bottom: -12,
-                        width: '4px',
-                        cursor: 'col-resize',
-                        background: resizingColumn === 'checkbox' ? '#3498db' : 'transparent',
-                        transition: 'background 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!resizingColumn) e.currentTarget.style.background = '#ddd';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!resizingColumn) e.currentTarget.style.background = 'transparent';
-                      }}
-                    />
-                  </div>
+                  <input
+                    type="checkbox"
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    style={{ accentColor: '#fff' }}
+                  />
                 </th>
+                {groupHeaderSpans.map((span, i) => (
+                  <th
+                    key={`${span.groupId}-${i}`}
+                    colSpan={span.colSpan}
+                    style={{
+                      padding: '6px 10px',
+                      textAlign: 'center',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: 'white',
+                      background: span.color,
+                      borderRight: '1px solid rgba(255,255,255,0.3)',
+                      borderBottom: '1px solid rgba(255,255,255,0.2)',
+                      whiteSpace: 'nowrap',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {span.label}
+                  </th>
+                ))}
+              </tr>
+              {/* カラムヘッダー行 */}
+              <tr>
+                {/* checkbox列はrowSpan=2で上行に含まれるため省略 */}
                 {orderedColumns.filter((col) => visibleColumns[col.key]).map((col) => {
                   const isSorted = sortConfig?.key === col.key;
                   const hasFilter = columnFilters[col.key]?.length > 0;
                   const uniqueValues = getColumnUniqueValues(col.key);
+                  const groupDef = REMODEL_COLUMN_GROUPS.find(g => g.id === col.group);
+                  const groupColor = groupDef?.color || '#6c757d';
 
                   return (
                     <th
@@ -933,6 +1114,7 @@ function RemodelApplicationContent() {
                         zIndex: openFilterColumn === col.key ? 100 : 1,
                         borderRight: '1px solid #dee2e6',
                         borderBottom: '2px solid #dee2e6',
+                        borderTop: `2px solid ${groupColor}`,
                         cursor: 'grab',
                       }}
                     >
@@ -950,7 +1132,7 @@ function RemodelApplicationContent() {
                             onClick={() => handleSort(col.key)}
                             style={{ cursor: 'pointer', fontSize: '10px', color: isSorted ? '#3498db' : '#aaa' }}
                           >
-                            {isSorted ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                            {isSorted ? (sortConfig.direction === 'asc' ? '\u25B2' : '\u25BC') : '\u21C5'}
                           </span>
                           <span
                             onClick={(e) => {
@@ -964,7 +1146,7 @@ function RemodelApplicationContent() {
                               padding: '2px',
                             }}
                           >
-                            ▼
+                            {'\u25BC'}
                           </span>
                         </div>
 
@@ -2166,26 +2348,106 @@ function RemodelApplicationContent() {
             createdDate,
             applicationIds: Array.from(selectedItems).map(String),
             status: '見積依頼',
+            editListId: isEditListMode ? listId : undefined,
           });
 
-          // 編集リストモードの場合はeditList.baseAssetsを更新する必要があるが、
-          // Zustand storeを通じて更新するため、ここではmockAssetsを更新
-          setMockAssets(prev => prev.map(asset => {
-            if (selectedItems.has(asset.no)) {
-              return {
-                ...asset,
-                rfqNo: rfqNo,
-                rfqGroupName: rfqGroupName.trim(),
-              };
-            }
-            return asset;
-          }));
+          if (isEditListMode && listId) {
+            // 編集リストモード: editListStore経由でbaseAssets/itemsのrfqNoを更新
+            updateRfqInfo(listId, selectedItems, rfqNo, rfqGroupName.trim());
+          } else {
+            // 通常モード: ローカルstateを更新
+            setMockAssets(prev => prev.map(asset => {
+              if (selectedItems.has(asset.no)) {
+                return {
+                  ...asset,
+                  rfqNo: rfqNo,
+                  rfqGroupName: rfqGroupName.trim(),
+                };
+              }
+              return asset;
+            }));
+          }
 
           alert(`見積依頼グループ「${rfqGroupName.trim()}」を作成しました\n\n見積依頼No.: ${rfqNo}\n選択レコード: ${selectedItems.size}件`);
           setIsRfqGroupModalOpen(false);
           setRfqGroupName('');
           setSelectedItems(new Set());
         }}
+      />
+
+      {/* Data Linkモーダル */}
+      <DataLinkModal
+        isOpen={isDataLinkModalOpen}
+        onClose={() => setIsDataLinkModalOpen(false)}
+        selectedAssets={dataLinkSelectedAssets}
+        baseAssets={baseAssetsForDataLink}
+        assetMasters={assetMasters}
+        vendors={vendors}
+        quotationGroups={quotationGroups}
+        quotationItems={quotationItems}
+        onExecute={handleDataLinkExecute}
+      />
+
+      {/* 各種申請モーダル（資産一覧と同等） */}
+      <PurchaseApplicationModal
+        isOpen={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
+        onSuccess={(application) => {
+          setPurchaseModalOpen(false);
+          setSelectedItems(new Set());
+          if (isEditListMode && listId) {
+            addItemsFromApplications(listId, [application]);
+          }
+        }}
+        returnDestination="編集リスト"
+        returnHref={`/remodel-application?listId=${listId}`}
+      />
+      <UpdateApplicationModal
+        isOpen={updateModalOpen}
+        onClose={() => setUpdateModalOpen(false)}
+        assets={selectedAssetsForModal}
+        onSuccess={() => {
+          setUpdateModalOpen(false);
+          setSelectedItems(new Set());
+        }}
+        returnDestination="編集リスト"
+        returnHref={`/remodel-application?listId=${listId}`}
+      />
+      <AdditionApplicationModal
+        isOpen={additionModalOpen}
+        onClose={() => setAdditionModalOpen(false)}
+        assets={selectedAssetsForModal}
+        onSuccess={(application) => {
+          setAdditionModalOpen(false);
+          setSelectedItems(new Set());
+          if (isEditListMode && listId) {
+            addItemsFromApplications(listId, [application]);
+          }
+        }}
+        returnDestination="編集リスト"
+        returnHref={`/remodel-application?listId=${listId}`}
+      />
+      <TransferApplicationModal
+        isOpen={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        assets={selectedAssetsForModal}
+        onSuccess={() => {
+          setTransferModalOpen(false);
+          setSelectedItems(new Set());
+        }}
+        returnDestination="編集リスト"
+        returnHref={`/remodel-application?listId=${listId}`}
+      />
+      <DisposalApplicationModal
+        isOpen={disposalModalOpen}
+        onClose={() => setDisposalModalOpen(false)}
+        assets={selectedAssetsForModal}
+        onSuccess={() => {
+          setDisposalModalOpen(false);
+          setSelectedItems(new Set());
+        }}
+        returnDestination="編集リスト"
+        returnHref={`/remodel-application?listId=${listId}`}
       />
     </div>
   );

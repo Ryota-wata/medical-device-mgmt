@@ -66,6 +66,7 @@ export interface EditListItem {
   // 処理状態
   status: 'pending' | 'rfq_assigned' | 'completed';
   rfqGroupId?: string;
+  rfqNo?: string;
 
   addedAt: string;
 }

@@ -6,7 +6,7 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { Asset } from '@/lib/types';
-import { CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
+import { PurchaseApplication, CreatePurchaseApplicationInput, PurchaseApplicationAsset } from '@/lib/types/purchaseApplication';
 import { ApplicationCompleteModal } from './ApplicationCompleteModal';
 import { ApplicationCloseConfirmModal } from './ApplicationCloseConfirmModal';
 
@@ -14,7 +14,9 @@ interface AdditionApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   assets: Asset[];  // 増設参考として選択された資産（1件のみ）
-  onSuccess?: () => void;
+  onSuccess?: (application: PurchaseApplication) => void;
+  returnDestination?: string;
+  returnHref?: string;
 }
 
 export function AdditionApplicationModal({
@@ -22,6 +24,8 @@ export function AdditionApplicationModal({
   onClose,
   assets,
   onSuccess,
+  returnDestination = '資産一覧',
+  returnHref = '/asset-search-result',
 }: AdditionApplicationModalProps) {
   const router = useRouter();
   const { departments, facilities } = useMasterStore();
@@ -33,6 +37,7 @@ export function AdditionApplicationModal({
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [completedAppNo, setCompletedAppNo] = useState('');
+  const [createdApplication, setCreatedApplication] = useState<PurchaseApplication | null>(null);
 
   // 申請基本情報
   const [managementDepartment] = useState(user?.department || '手術部');
@@ -152,6 +157,7 @@ export function AdditionApplicationModal({
     const result = addPurchaseApplication(purchaseInput);
 
     setCompletedAppNo(result.applicationNo);
+    setCreatedApplication(result);
     setShowCompleteModal(true);
   };
 
@@ -839,15 +845,23 @@ export function AdditionApplicationModal({
         applicationName="増設申請"
         applicationNo={completedAppNo}
         guidanceText=""
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onGoToMain={() => {
+          if (createdApplication && onSuccess) {
+            onSuccess(createdApplication);
+          }
           resetForm();
+          setCreatedApplication(null);
           setShowCompleteModal(false);
           onClose();
-          router.push('/asset-search-result');
+          router.push(returnHref);
         }}
         onContinue={() => {
+          if (createdApplication && onSuccess) {
+            onSuccess(createdApplication);
+          }
           resetForm();
+          setCreatedApplication(null);
           setShowCompleteModal(false);
         }}
       />
@@ -855,7 +869,7 @@ export function AdditionApplicationModal({
       {/* 閉じる確認モーダル */}
       <ApplicationCloseConfirmModal
         isOpen={showCloseConfirm}
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onCancel={() => setShowCloseConfirm(false)}
         onConfirm={() => {
           setShowCloseConfirm(false);
