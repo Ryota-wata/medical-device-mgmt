@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { Header } from '@/components/layouts/Header';
-import { TransferManagementTab } from '../components/TransferManagementTab';
+import { TransferDisposalManagementTab } from '../components/TransferDisposalManagementTab';
 import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function TransferManagementContent() {
@@ -18,10 +18,10 @@ function TransferManagementContent() {
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
-          <SubTabNavigation activeTab="transferManagement" />
+          <SubTabNavigation activeTab="transferDisposalManagement" />
 
           <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
-            <TransferManagementTab />
+            <TransferDisposalManagementTab />
           </div>
         </div>
       </div>
