@@ -1,22 +1,21 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-import { useMasterStore } from '@/lib/stores';
+import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 function SurveyLocationContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const facilityName = searchParams.get('facility') || '';
+  const facilityName = useAuthStore().selectedFacility || '';
   const { isMobile, isTablet } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
   const { facilities: hospitalFacilities } = useHospitalFacilityStore();
 
-  // 選択された施設の個別施設マスタデータをフィルター
+  // 選択された施設の個別部署マスタデータをフィルター
   const facilityMasterData = useMemo(() => {
     if (!facilityName) return [];
     return hospitalFacilities.filter(f => f.hospitalName === facilityName);
@@ -84,8 +83,7 @@ function SurveyLocationContent() {
   };
 
   const handleBack = () => {
-    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
-    router.push(`/offline-prep${params}`);
+    router.push('/offline-prep');
   };
 
   const handleNext = () => {
@@ -103,9 +101,6 @@ function SurveyLocationContent() {
       room,
       surveyDate
     });
-    if (facilityName) {
-      queryParams.set('facility', facilityName);
-    }
     router.push(`/asset-survey-integrated?${queryParams.toString()}`);
   };
 
@@ -414,8 +409,6 @@ function SurveyLocationContent() {
 
 export default function SurveyLocationPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SurveyLocationContent />
-    </Suspense>
+    <SurveyLocationContent />
   );
 }

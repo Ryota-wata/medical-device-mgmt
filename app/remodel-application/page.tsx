@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset, Application, ApplicationType } from '@/lib/types';
-import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore, useQuotationStore } from '@/lib/stores';
+import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore, useQuotationStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
@@ -41,8 +41,9 @@ function RemodelApplicationContent() {
   const listId = searchParams.get('listId') || '';
   const editList = listId ? getEditListById(listId) : null;
 
-  // 編集リストがない場合は従来の施設・部署パラメータを使用
-  const facility = editList ? editList.facilities.join(', ') : (searchParams.get('facility') || '');
+  // 編集リストがない場合はauthStoreの選択施設を使用
+  const { selectedFacility: authFacility } = useAuthStore();
+  const facility = editList ? editList.facilities.join(', ') : (authFacility || '');
   const department = searchParams.get('department') || '';
 
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -113,7 +114,7 @@ function RemodelApplicationContent() {
   const handleCloseProject = () => {
     const facilityMasters = hospitalFacilities.filter(f => f.hospitalName === facility);
 
-    // 個別施設マスタの新居→現状への切り替え
+    // 個別部署マスタの新居→現状への切り替え
     facilityMasters.forEach(f => {
       if (f.status !== 'completed' && f.newFloor) {
         swapToNewLocation(f.id);
@@ -138,7 +139,7 @@ function RemodelApplicationContent() {
       }
     });
 
-    alert('リモデル管理をクローズしました。\n\n・個別施設マスタの新居が現状に反映されました\n・資産の設置場所が更新されました');
+    alert('リモデル管理をクローズしました。\n\n・個別部署マスタの新居が現状に反映されました\n・資産の設置場所が更新されました');
     setShowCloseConfirmModal(false);
   };
 
@@ -204,7 +205,7 @@ function RemodelApplicationContent() {
     return mockAssets;
   }, [isEditListMode, editList, mockAssets]);
 
-  // 個別施設マスタの統計
+  // 個別部署マスタの統計
   const facilityMasterStats = useMemo(() => {
     const facilityMasters = hospitalFacilities.filter(f => f.hospitalName === facility);
     return {
@@ -1523,9 +1524,9 @@ function RemodelApplicationContent() {
                           setApplicationFloor(newLocation.floor);
                           setApplicationDepartment(newLocation.department);
                           setApplicationRoomName(newLocation.roomName);
-                          alert('個別施設マスタから新居情報を取得しました');
+                          alert('個別部署マスタから新居情報を取得しました');
                         } else {
-                          alert('個別施設マスタに該当するマッピング情報がありません。\n個別施設マスタで現状→新居のマッピングを登録してください。');
+                          alert('個別部署マスタに該当するマッピング情報がありません。\n個別部署マスタで現状→新居のマッピングを登録してください。');
                         }
                       }}
                       style={{
@@ -1543,7 +1544,7 @@ function RemodelApplicationContent() {
                       }}
                     >
                       <span>🏢</span>
-                      <span>個別施設マスタから自動入力</span>
+                      <span>個別部署マスタから自動入力</span>
                     </button>
                   </div>
 
@@ -2262,7 +2263,7 @@ function RemodelApplicationContent() {
                   以下の処理が実行されます:
                 </p>
                 <ul style={{ margin: 0, paddingLeft: '20px', color: '#856404', fontSize: '14px' }}>
-                  <li>個別施設マスタの「新居」情報が「現状」に反映されます</li>
+                  <li>個別部署マスタの「新居」情報が「現状」に反映されます</li>
                   <li>資産の設置場所が新しい場所に更新されます</li>
                   <li>この操作は取り消すことができません</li>
                 </ul>
@@ -2278,7 +2279,7 @@ function RemodelApplicationContent() {
                   対象施設: <strong>{facility}</strong>
                 </p>
                 <p style={{ margin: '8px 0 0 0', color: '#2e7d32', fontSize: '14px' }}>
-                  個別施設マスタ: <strong>{facilityMasterStats.total}件</strong>
+                  個別部署マスタ: <strong>{facilityMasterStats.total}件</strong>
                 </p>
               </div>
             </div>

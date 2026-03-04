@@ -1,10 +1,11 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useRef, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState, useMemo, useRef } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { HospitalFacilityMaster } from '@/lib/types/hospitalFacility';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ExcelImportPreviewModal } from '@/components/ui/ExcelImportPreviewModal';
@@ -45,7 +46,6 @@ const emptyForm: InlineFormData = {
 
 function HospitalFacilityMasterContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { isMobile, isTablet } = useResponsive();
   const { facilities: masterFacilities, departments, roomCategories } = useMasterStore();
   const {
@@ -57,9 +57,9 @@ function HospitalFacilityMasterContent() {
     generateFacilityId,
   } = useHospitalFacilityStore();
 
-  // URLパラメータから施設名を取得
-  const facilityParam = searchParams.get('facility');
-  const [selectedFacilityName, setSelectedFacilityName] = useState<string>(facilityParam || '');
+  // authStoreから選択中施設を取得
+  const selectedFacilityFromAuth = useAuthStore().selectedFacility;
+  const [selectedFacilityName, setSelectedFacilityName] = useState<string>(selectedFacilityFromAuth || '');
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = masterFacilities.map(f => f.facilityName);
@@ -582,7 +582,7 @@ function HospitalFacilityMasterContent() {
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ background: 'linear-gradient(135deg, #8e44ad, #9b59b6)', padding: isMobile ? '6px 10px' : '8px 12px', borderRadius: '6px', fontSize: isMobile ? '12px' : '14px', fontWeight: 700, letterSpacing: '1px' }}>施設</div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>個別施設マスタ</h1>
+            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>個別部署マスタ</h1>
           </div>
           {selectedFacilityName && (
             <div style={{ background: '#34495e', color: '#ffffff', padding: isMobile ? '4px 12px' : '6px 16px', borderRadius: '20px', fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}>
@@ -658,7 +658,7 @@ function HospitalFacilityMasterContent() {
       </header>
 
       {/* Facility Selection */}
-      {!facilityParam && (
+      {!selectedFacilityFromAuth && (
         <div style={{ background: 'white', padding: isMobile ? '12px 16px' : '16px 24px', borderBottom: '2px solid #e0e0e0' }}>
           <SearchableSelect
             label="施設を選択"
@@ -773,9 +773,5 @@ function HospitalFacilityMasterContent() {
 }
 
 export default function HospitalFacilityMasterPage() {
-  return (
-    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>読み込み中...</div>}>
-      <HospitalFacilityMasterContent />
-    </Suspense>
-  );
+  return <HospitalFacilityMasterContent />;
 }

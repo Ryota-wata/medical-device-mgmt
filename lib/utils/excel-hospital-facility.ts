@@ -99,8 +99,8 @@ export function exportFacilitiesToExcel(
   ];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '個別施設マスタ');
-  XLSX.writeFile(wb, fileName || '個別施設マスタ.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, '個別部署マスタ');
+  XLSX.writeFile(wb, fileName || '個別部署マスタ.xlsx');
 }
 
 export function parseFacilitiesFromExcel(file: File): Promise<ParseResult> {
@@ -255,6 +255,6 @@ export function downloadFacilityTemplate(): void {
   ];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '個別施設マスタ');
-  XLSX.writeFile(wb, '個別施設マスタ_テンプレート.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, '個別部署マスタ');
+  XLSX.writeFile(wb, '個別部署マスタ_テンプレート.xlsx');
 }

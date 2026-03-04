@@ -1,16 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { VendorMaster } from '@/lib/types/master';
 import { VendorFormModal } from '@/components/modals/VendorFormModal';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 function VendorMasterContent() {
   const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
-  const { vendors, addVendor, updateVendor, deleteVendor } = useMasterStore();
+  const { vendors, facilities, addVendor, updateVendor, deleteVendor } = useMasterStore();
+
+  // 施設マスタから施設名オプションを生成
+  const facilityOptions = useMemo(() => {
+    return facilities.map(f => f.facilityName);
+  }, [facilities]);
 
   const [filterFacilityName, setFilterFacilityName] = useState('');
   const [filterVendorName, setFilterVendorName] = useState('');
@@ -184,19 +190,12 @@ function VendorMasterContent() {
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
             施設名
           </label>
-          <input
-            type="text"
+          <SearchableSelect
             value={filterFacilityName}
-            onChange={(e) => setFilterFacilityName(e.target.value)}
+            onChange={setFilterFacilityName}
+            options={['', ...facilityOptions]}
             placeholder="施設名で検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              boxSizing: 'border-box'
-            }}
+            isMobile={isMobile}
           />
         </div>
         <div>

@@ -6,6 +6,7 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { FacilityMaster } from '@/lib/types/master';
 import { FacilityFormModal } from '@/components/modals/FacilityFormModal';
+import { exportFacilitiesToExcel } from '@/lib/utils/excel-facility-master';
 
 export default function ShipFacilityMasterPage() {
   const router = useRouter();
@@ -194,6 +195,22 @@ export default function ShipFacilityMasterPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => exportFacilitiesToExcel(filteredFacilities)}
+            style={{
+              padding: isMobile ? '8px 16px' : '10px 20px',
+              background: '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            エクスポート
+          </button>
           <button
             onClick={() => setShowNewModal(true)}
             style={{

@@ -26,6 +26,9 @@ export default function UserManagementPage() {
   const { user: currentUser } = useAuthStore();
   const { facilities } = useMasterStore();
 
+  // タブ状態: 'hospital' = 病院側, 'vendor' = SHIP・業者側
+  const [activeTab, setActiveTab] = useState<'hospital' | 'vendor'>('hospital');
+
   const [filterUsername, setFilterUsername] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
   const [filterHospital, setFilterHospital] = useState('');
@@ -134,6 +137,15 @@ export default function UserManagementPage() {
       result = result.filter(user => user.hospital === currentUserHospital);
     }
 
+    // タブによるフィルタリング（SHIP側ユーザーのみタブ表示）
+    if (isShipUser) {
+      if (activeTab === 'hospital') {
+        result = result.filter(user => !isShipRole(user.role));
+      } else {
+        result = result.filter(user => isShipRole(user.role));
+      }
+    }
+
     // 検索フィルター適用
     return result.filter((user) => {
       const matchUsername = !filterUsername || user.username.toLowerCase().includes(filterUsername.toLowerCase());
@@ -142,7 +154,7 @@ export default function UserManagementPage() {
       const matchRole = !filterRole || user.role === filterRole;
       return matchUsername && matchEmail && matchHospital && matchRole;
     });
-  }, [users, isShipUser, currentUserHospital, filterUsername, filterEmail, filterHospital, filterRole]);
+  }, [users, isShipUser, currentUserHospital, activeTab, filterUsername, filterEmail, filterHospital, filterRole]);
 
   // 施設オプション（ユニーク）
   const hospitalOptions = useMemo(() => {
@@ -745,6 +757,50 @@ export default function UserManagementPage() {
         </div>
       </header>
 
+      {/* タブ切替（SHIP側ユーザーのみ） */}
+      {isShipUser && (
+        <div style={{
+          display: 'flex',
+          borderBottom: '2px solid #e0e0e0',
+          background: 'white',
+        }}>
+          <button
+            onClick={() => setActiveTab('hospital')}
+            style={{
+              flex: 1,
+              padding: isMobile ? '10px' : '12px 20px',
+              border: 'none',
+              borderBottom: activeTab === 'hospital' ? '3px solid #27ae60' : '3px solid transparent',
+              background: activeTab === 'hospital' ? '#f0fdf4' : 'white',
+              color: activeTab === 'hospital' ? '#15803d' : '#7f8c8d',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            病院側ユーザー
+          </button>
+          <button
+            onClick={() => setActiveTab('vendor')}
+            style={{
+              flex: 1,
+              padding: isMobile ? '10px' : '12px 20px',
+              border: 'none',
+              borderBottom: activeTab === 'vendor' ? '3px solid #3498db' : '3px solid transparent',
+              background: activeTab === 'vendor' ? '#eff6ff' : 'white',
+              color: activeTab === 'vendor' ? '#1d4ed8' : '#7f8c8d',
+              fontSize: isMobile ? '13px' : '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            SHIP・業者側ユーザー
+          </button>
+        </div>
+      )}
+
       {/* Filter Header */}
       <div style={{
         background: 'white',
@@ -913,14 +969,24 @@ export default function UserManagementPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ユーザー名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>所属施設</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>アクセス可能施設</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
-                  </tr>
+                  {activeTab === 'hospital' || !isShipUser ? (
+                    <tr>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ユーザー名</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>所属施設</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>アクセス可能施設</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ユーザー名</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>担当施設</th>
+                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                    </tr>
+                  )}
                 </thead>
                 <tbody>
                   {filteredUsers.map((user, index) => {
@@ -929,7 +995,9 @@ export default function UserManagementPage() {
                       <tr key={user.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', fontWeight: 500 }}>{user.username}</td>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.email}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.hospital || '-'}</td>
+                        {(activeTab === 'hospital' || !isShipUser) && (
+                          <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.hospital || '-'}</td>
+                        )}
                         <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center' }}>
                           <span style={{
                             display: 'inline-block',

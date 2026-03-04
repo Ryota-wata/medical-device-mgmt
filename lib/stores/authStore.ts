@@ -71,9 +71,11 @@ interface AuthStore {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  selectedFacility: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
+  setSelectedFacility: (facility: string) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -82,6 +84,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      selectedFacility: null,
 
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true });
@@ -134,7 +137,8 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         set({
           user: null,
-          isAuthenticated: false
+          isAuthenticated: false,
+          selectedFacility: null,
         });
       },
 
@@ -143,6 +147,10 @@ export const useAuthStore = create<AuthStore>()(
           user,
           isAuthenticated: user !== null
         });
+      },
+
+      setSelectedFacility: (facility: string) => {
+        set({ selectedFacility: facility });
       }
     }),
     {
@@ -150,6 +158,7 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        selectedFacility: state.selectedFacility,
       }),
     }
   )

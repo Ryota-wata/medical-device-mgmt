@@ -14,7 +14,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function MainPage() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, selectedFacility } = useAuthStore();
   const { facilities } = useMasterStore();
   const { editLists, addEditList, deleteEditList } = useEditListStore();
   const { isMobile, isTablet } = useResponsive();
@@ -22,13 +22,9 @@ export default function MainPage() {
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
-  const [isHospitalSelectModalOpen, setIsHospitalSelectModalOpen] = useState(false);
   const [isHospitalMasterModalOpen, setIsHospitalMasterModalOpen] = useState(false);
   const [isLendingMenuModalOpen, setIsLendingMenuModalOpen] = useState(false);
   const [isApplicationStatusModalOpen, setIsApplicationStatusModalOpen] = useState(false);
-  const [selectedFacility, setSelectedFacility] = useState('');
-  const [selectedFacilityForMaster, setSelectedFacilityForMaster] = useState('');
-  const [buttonsEnabled, setButtonsEnabled] = useState(false);
 
   // 編集リスト関連のstate
   const [editListMode, setEditListMode] = useState<'select' | 'create'>('select');
@@ -246,34 +242,26 @@ export default function MainPage() {
 
   const closeListModal = () => {
     setIsListModalOpen(false);
-    setSelectedFacility('');
-    setButtonsEnabled(false);
-  };
-
-  const handleFacilityChange = (facilityName: string) => {
-    setSelectedFacility(facilityName);
-    setButtonsEnabled(!!facilityName);
   };
 
   const handleMenuSelect = (menuName: string) => {
-    const facilityParam = selectedFacility ? `?facility=${encodeURIComponent(selectedFacility)}` : '';
     closeListModal();
 
     switch (menuName) {
       case 'QRコード発行':
-        router.push(`/qr-issue${facilityParam}`);
+        router.push('/qr-issue');
         break;
       case '現有品調査':
-        router.push(`/offline-prep${facilityParam}`);
+        router.push('/offline-prep');
         break;
       case '現有品調査内容修正':
-        router.push(`/registration-edit${facilityParam}`);
+        router.push('/registration-edit');
         break;
       case '資産台帳取込':
-        router.push(`/asset-import${facilityParam}`);
+        router.push('/asset-import');
         break;
       case 'データ突合':
-        router.push(`/data-matching${facilityParam}`);
+        router.push('/data-matching');
         break;
     }
   };
@@ -354,7 +342,22 @@ export default function MainPage() {
             </div>
           </div>
 
-          <div className="flex gap-2.5 flex-wrap">
+          <div className="flex gap-2.5 flex-wrap items-center">
+            {/* 選択中施設バッジ（複数施設アクセス可能なユーザーのみ） */}
+            {selectedFacility && user?.accessibleFacilities && (
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-sm font-semibold">
+                  {selectedFacility}
+                </span>
+                <button
+                  onClick={() => router.push('/facility-select')}
+                  className="px-3 py-1.5 bg-slate-500 text-white border-0 rounded text-xs cursor-pointer hover:bg-slate-600 transition-colors"
+                >
+                  施設切替
+                </button>
+              </div>
+            )}
+
             {/* QR読取（SHIP側のみ） */}
             {isShipUser && (
               <button
@@ -537,76 +540,39 @@ export default function MainPage() {
 
             {/* モーダルボディ */}
             <div className="p-6">
-              {/* 施設選択 */}
-              <div className="mb-8">
-                <SearchableSelect
-                  label="施設を選択"
-                  value={selectedFacility}
-                  onChange={handleFacilityChange}
-                  options={['', ...facilityOptions]}
-                  placeholder="施設を選択してください"
-                  isMobile={isMobile}
-                />
-              </div>
-
               {/* メニューボタン */}
               <div className="grid grid-cols-1 gap-4">
                 <button
                   onClick={() => handleMenuSelect('QRコード発行')}
-                  disabled={!buttonsEnabled}
-                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
-                    buttonsEnabled
-                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
-                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
-                  }`}
+                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
                 >
                   QRコード発行
                 </button>
 
                 <button
                   onClick={() => handleMenuSelect('現有品調査')}
-                  disabled={!buttonsEnabled}
-                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
-                    buttonsEnabled
-                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
-                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
-                  }`}
+                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
                 >
                   現有品調査
                 </button>
 
                 <button
                   onClick={() => handleMenuSelect('現有品調査内容修正')}
-                  disabled={!buttonsEnabled}
-                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
-                    buttonsEnabled
-                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
-                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
-                  }`}
+                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
                 >
                   現有品調査内容修正
                 </button>
 
                 <button
                   onClick={() => handleMenuSelect('資産台帳取込')}
-                  disabled={!buttonsEnabled}
-                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
-                    buttonsEnabled
-                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
-                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
-                  }`}
+                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
                 >
                   資産台帳取込
                 </button>
 
                 <button
                   onClick={() => handleMenuSelect('データ突合')}
-                  disabled={!buttonsEnabled}
-                  className={`px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden ${
-                    buttonsEnabled
-                      ? 'bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white'
-                      : 'bg-slate-100 text-slate-400 border-2 border-slate-300 cursor-not-allowed opacity-60'
-                  }`}
+                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
                 >
                   データ突合
                 </button>
@@ -685,20 +651,16 @@ export default function MainPage() {
                   </button>
                 )}
 
-                {/* 個別施設マスタ（admin, consultant, office_admin, office_staff） */}
+                {/* 個別部署マスタ（admin, consultant, office_admin, office_staff） */}
                 {canAccess('hospital_facility_master') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
-                      if (isHospitalUser && user?.hospital) {
-                        router.push(`/hospital-facility-master?facility=${encodeURIComponent(user.hospital)}`);
-                      } else {
-                        setIsHospitalSelectModalOpen(true);
-                      }
+                      router.push('/hospital-facility-master');
                     }}
                     className="px-6 py-4 bg-white border-2 border-purple-600 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-600 hover:text-white"
                   >
-                    <span>🏢 個別施設マスタ</span>
+                    <span>🏢 個別部署マスタ</span>
                     <span className="text-xl">→</span>
                   </button>
                 )}
@@ -937,82 +899,6 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* 病院選択モーダル（個別施設マスタ用） */}
-      {isHospitalSelectModalOpen && (
-        <div
-          onClick={() => {
-            setIsHospitalSelectModalOpen(false);
-            setSelectedFacilityForMaster('');
-          }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-[90%] max-w-[500px] max-h-[90vh] shadow-xl overflow-visible flex flex-col"
-          >
-            {/* モーダルヘッダー */}
-            <div className="bg-purple-600 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl">
-              <span className="text-balance">個別施設マスタ - 施設選択</span>
-              <button
-                onClick={() => {
-                  setIsHospitalSelectModalOpen(false);
-                  setSelectedFacilityForMaster('');
-                }}
-                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
-                aria-label="閉じる"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* モーダルボディ */}
-            <div className="p-6 overflow-visible">
-              {/* 施設選択 */}
-              <div className="mb-6 relative z-[3]">
-                <SearchableSelect
-                  label="施設を選択"
-                  value={selectedFacilityForMaster}
-                  onChange={(facilityName) => setSelectedFacilityForMaster(facilityName)}
-                  options={['', ...facilityOptions]}
-                  placeholder="施設を選択してください"
-                  isMobile={isMobile}
-                />
-              </div>
-
-              {/* 決定ボタン */}
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => {
-                    setIsHospitalSelectModalOpen(false);
-                    setSelectedFacilityForMaster('');
-                  }}
-                  className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded-md cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={() => {
-                    if (selectedFacilityForMaster) {
-                      router.push(`/hospital-facility-master?facility=${encodeURIComponent(selectedFacilityForMaster)}`);
-                      setIsHospitalSelectModalOpen(false);
-                      setSelectedFacilityForMaster('');
-                    }
-                  }}
-                  disabled={!selectedFacilityForMaster}
-                  className={`px-5 py-2.5 border-0 rounded-md text-sm font-semibold transition-colors ${
-                    selectedFacilityForMaster
-                      ? 'bg-purple-600 text-white cursor-pointer hover:bg-purple-700'
-                      : 'bg-slate-300 text-slate-400 cursor-not-allowed'
-                  }`}
-                >
-                  決定
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 病院ユーザー用マスタ管理モーダル */}
       {isHospitalMasterModalOpen && (
         <div
@@ -1041,13 +927,12 @@ export default function MainPage() {
                 <button
                   onClick={() => {
                     setIsHospitalMasterModalOpen(false);
-                    const hospitalName = user?.hospital || '東京中央病院';
-                    router.push(`/hospital-facility-master?facility=${encodeURIComponent(hospitalName)}`);
+                    router.push('/hospital-facility-master');
                   }}
                   className="px-5 py-4 bg-purple-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/40"
                 >
                   <span className="text-xl">🏢</span>
-                  <span>個別施設マスタ</span>
+                  <span>個別部署マスタ</span>
                 </button>
 
                 {/* ユーザー管理（事務管理者のみ） */}
@@ -1055,8 +940,7 @@ export default function MainPage() {
                   <button
                     onClick={() => {
                       setIsHospitalMasterModalOpen(false);
-                      const hospitalName = user?.hospital || '';
-                      router.push(`/user-management?facility=${encodeURIComponent(hospitalName)}`);
+                      router.push('/user-management');
                     }}
                     className="px-5 py-4 bg-indigo-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-600/40"
                   >

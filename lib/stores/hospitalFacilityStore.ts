@@ -13,7 +13,7 @@ import { initialHospitalFacilities } from '@/lib/data/initialHospitalFacilities'
 interface HospitalFacilityState {
   // 病院リスト
   hospitals: HospitalInfo[];
-  // 個別施設マスタ
+  // 個別部署マスタ
   facilities: HospitalFacilityMaster[];
 
   // 病院操作

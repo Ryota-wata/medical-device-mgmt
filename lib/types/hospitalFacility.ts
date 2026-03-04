@@ -1,5 +1,5 @@
 /**
- * 病院別個別施設マスタの型定義
+ * 病院別個別部署マスタの型定義
  *
  * リモデル（病院移転新築）時に使用する施設マッピング情報
  * - 現状の設置場所と新居の設置場所を管理
@@ -8,7 +8,7 @@
  */
 
 /**
- * 個別施設マスタレコード
+ * 個別部署マスタレコード
  */
 export interface HospitalFacilityMaster {
   id: string;
@@ -53,7 +53,7 @@ export interface HospitalFacilityMaster {
 }
 
 /**
- * 個別施設マスタのステータス
+ * 個別部署マスタのステータス
  */
 export type HospitalFacilityStatus =
   | 'draft'       // 下書き（マッピング未完了）
@@ -61,7 +61,7 @@ export type HospitalFacilityStatus =
   | 'completed';  // リモデル完了（新居が現状になった）
 
 /**
- * 病院情報（個別施設マスタの親）
+ * 病院情報（個別部署マスタの親）
  */
 export interface HospitalInfo {
   id: string;
@@ -106,7 +106,7 @@ export interface FacilityMapping {
 }
 
 /**
- * 個別施設マスタのフィルター
+ * 個別部署マスタのフィルター
  */
 export interface HospitalFacilityFilter {
   hospitalId?: string;

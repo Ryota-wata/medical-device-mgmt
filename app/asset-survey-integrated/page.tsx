@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
+import { useAuthStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 function AssetSurveyIntegratedContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const facilityName = searchParams.get('facility') || '';
+
+  const facilityName = useAuthStore().selectedFacility || '';
   const { isMobile, isTablet } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
   const [bulkMode, setBulkMode] = useState(false);
@@ -212,13 +213,11 @@ function AssetSurveyIntegratedContent() {
   }, [assetMasters]);
 
   const handleBack = () => {
-    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
-    router.push(`/survey-location${params}`);
+    router.push('/survey-location');
   };
 
   const handleShowHistory = () => {
-    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
-    router.push(`/history${params}`);
+    router.push('/history');
   };
 
   const handleQRScan = () => {
@@ -1291,9 +1290,5 @@ function AssetSurveyIntegratedContent() {
 }
 
 export default function AssetSurveyIntegratedPage() {
-  return (
-    <Suspense fallback={<div>読み込み中...</div>}>
-      <AssetSurveyIntegratedContent />
-    </Suspense>
-  );
+  return <AssetSurveyIntegratedContent />;
 }

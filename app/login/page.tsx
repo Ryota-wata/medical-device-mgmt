@@ -51,7 +51,7 @@ export default function LoginPage() {
         localStorage.removeItem('rememberMe');
       }
 
-      router.push('/main');
+      router.push('/facility-select');
     } catch (err) {
       setError('ログインに失敗しました');
     }

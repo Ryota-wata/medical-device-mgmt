@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useAuthStore } from '@/lib/stores';
 
 interface HistoryCardData {
   id: number;
@@ -16,8 +17,7 @@ interface HistoryCardData {
 
 function HistoryContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const facilityName = searchParams.get('facility') || '';
+  const facilityName = useAuthStore().selectedFacility || '';
   const { isMobile, isTablet } = useResponsive();
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
   const [editingCards, setEditingCards] = useState<Set<number>>(new Set());
@@ -93,8 +93,7 @@ function HistoryContent() {
   };
 
   const handleBack = () => {
-    const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
-    router.push(`/survey-location${params}`);
+    router.push('/survey-location');
   };
 
   const handleEdit = () => {
@@ -506,9 +505,5 @@ function HistoryContent() {
 }
 
 export default function HistoryPage() {
-  return (
-    <Suspense fallback={<div>読み込み中...</div>}>
-      <HistoryContent />
-    </Suspense>
-  );
+  return <HistoryContent />;
 }
