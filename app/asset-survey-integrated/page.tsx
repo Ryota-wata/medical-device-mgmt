@@ -14,8 +14,6 @@ function AssetSurveyIntegratedContent() {
   const { isMobile, isTablet } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
   const [bulkMode, setBulkMode] = useState(false);
-  const [leaseToggle, setLeaseToggle] = useState(false);
-  const [rentalToggle, setRentalToggle] = useState(false);
   const [qrScanned, setQrScanned] = useState(false);
   const [photoTaken, setPhotoTaken] = useState(false);
   const [largeClass, setLargeClass] = useState('');
@@ -30,7 +28,7 @@ function AssetSurveyIntegratedContent() {
   const [purchaseDay, setPurchaseDay] = useState('');
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
 
-  const isFormDirty = qrScanned || photoTaken || largeClass !== '' || mediumClass !== '' || item !== '' || maker !== '' || model !== '' || purchaseYear !== '' || leaseToggle || rentalToggle;
+  const isFormDirty = qrScanned || photoTaken || largeClass !== '' || mediumClass !== '' || item !== '' || maker !== '' || model !== '' || purchaseYear !== '';
 
   const handleHomeClick = () => {
     if (isFormDirty) {
@@ -451,11 +449,7 @@ function AssetSurveyIntegratedContent() {
             </div>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr',
-            gap: '16px'
-          }}>
+          <div>
             <div>
               <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
                 購入年月日
@@ -478,74 +472,6 @@ function AssetSurveyIntegratedContent() {
               >
                 <span>{formatDisplayDate()}</span>
                 <span style={{ color: '#999', fontSize: '18px' }}>▼</span>
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                その他
-              </label>
-              <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', color: '#2c3e50' }}>リース</span>
-                  <div
-                    onClick={() => setLeaseToggle(!leaseToggle)}
-                    style={{
-                      width: '48px',
-                      height: '24px',
-                      backgroundColor: leaseToggle ? '#4caf50' : '#ccc',
-                      borderRadius: '12px',
-                      position: 'relative',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.3s'
-                    }}
-                  >
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      backgroundColor: 'white',
-                      borderRadius: '50%',
-                      position: 'absolute',
-                      top: '2px',
-                      left: leaseToggle ? '26px' : '2px',
-                      transition: 'left 0.3s',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }} />
-                  </div>
-                  <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
-                    {leaseToggle ? 'オン' : 'オフ'}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', color: '#2c3e50' }}>貸出品</span>
-                  <div
-                    onClick={() => setRentalToggle(!rentalToggle)}
-                    style={{
-                      width: '48px',
-                      height: '24px',
-                      backgroundColor: rentalToggle ? '#4caf50' : '#ccc',
-                      borderRadius: '12px',
-                      position: 'relative',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.3s'
-                    }}
-                  >
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      backgroundColor: 'white',
-                      borderRadius: '50%',
-                      position: 'absolute',
-                      top: '2px',
-                      left: rentalToggle ? '26px' : '2px',
-                      transition: 'left 0.3s',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }} />
-                  </div>
-                  <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
-                    {rentalToggle ? 'オン' : 'オフ'}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
