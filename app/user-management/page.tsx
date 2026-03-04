@@ -26,12 +26,8 @@ export default function UserManagementPage() {
   const { user: currentUser } = useAuthStore();
   const { facilities } = useMasterStore();
 
-  // タブ状態: 'hospital' = 病院側, 'vendor' = SHIP・業者側
-  const [activeTab, setActiveTab] = useState<'hospital' | 'vendor'>('hospital');
-
   const [filterUsername, setFilterUsername] = useState('');
-  const [filterEmail, setFilterEmail] = useState('');
-  const [filterHospital, setFilterHospital] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -42,19 +38,27 @@ export default function UserManagementPage() {
     username: '',
     email: '',
     hospital: '',
+    department: '',
+    position: '',
+    contactPerson: '',
+    phone: '',
     role: 'office_staff' as UserRole,
     accessibleFacilities: [] as string[],
   });
 
-  // ログインユーザーがSHIP側（システム管理者/コンサル/営業）かどうか
+  // ログインユーザーがSHIP側かどうか
   const isShipUser = currentUser ? isShipRole(currentUser.role) : false;
-  // ログインユーザーの所属施設
   const currentUserHospital = currentUser?.hospital;
 
-  // 施設マスタから施設名リストを生成
+  // 施設マスタから施設名リスト
   const facilityOptions = useMemo(() => {
     return facilities.map(f => f.facilityName);
   }, [facilities]);
+
+  // 部署の選択肢（ユニーク値）
+  const departmentOptions = useMemo(() => {
+    return Array.from(new Set(users.map(u => u.department).filter(Boolean))) as string[];
+  }, [users]);
 
   // 施設検索用の一時state
   const [facilitySearchQuery, setFacilitySearchQuery] = useState('');
@@ -69,6 +73,10 @@ export default function UserManagementPage() {
           email: 'admin@ship.com',
           hospital: undefined,
           role: 'admin',
+          department: '情報システム部',
+          position: '部長',
+          contactPerson: '管理者太郎',
+          phone: '03-0000-0001',
           accessibleFacilities: ['全施設'],
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z'
@@ -79,6 +87,10 @@ export default function UserManagementPage() {
           email: 'consultant@ship.com',
           hospital: undefined,
           role: 'consultant',
+          department: 'コンサル部',
+          position: '主任',
+          contactPerson: '山田花子',
+          phone: '03-0000-0002',
           accessibleFacilities: ['東京中央病院', '横浜総合病院', '千葉医療センター'],
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z'
@@ -89,6 +101,10 @@ export default function UserManagementPage() {
           email: 'sales@ship.com',
           hospital: undefined,
           role: 'sales',
+          department: '営業部',
+          position: '担当',
+          contactPerson: '鈴木一郎',
+          phone: '03-0000-0003',
           accessibleFacilities: ['東京中央病院', '横浜総合病院'],
           createdAt: '2024-01-15T00:00:00Z',
           updatedAt: '2024-01-15T00:00:00Z'
@@ -99,6 +115,10 @@ export default function UserManagementPage() {
           email: 'office-admin@hospital.com',
           hospital: '東京中央病院',
           role: 'office_admin',
+          department: '医事課',
+          position: '課長',
+          contactPerson: '佐藤美智子',
+          phone: '03-1234-5678',
           accessibleFacilities: [],
           createdAt: '2024-02-01T00:00:00Z',
           updatedAt: '2024-02-01T00:00:00Z'
@@ -109,6 +129,10 @@ export default function UserManagementPage() {
           email: 'office@hospital.com',
           hospital: '東京中央病院',
           role: 'office_staff',
+          department: '医事課',
+          position: '主任',
+          contactPerson: '高橋健二',
+          phone: '03-1234-5679',
           accessibleFacilities: [],
           createdAt: '2024-02-15T00:00:00Z',
           updatedAt: '2024-02-15T00:00:00Z'
@@ -119,6 +143,10 @@ export default function UserManagementPage() {
           email: 'user@hospital.com',
           hospital: '東京中央病院',
           role: 'clinical_staff',
+          department: 'ME室',
+          position: '臨床工学技士',
+          contactPerson: '田中花子',
+          phone: '03-1234-5680',
           accessibleFacilities: [],
           createdAt: '2024-03-01T00:00:00Z',
           updatedAt: '2024-03-01T00:00:00Z'
@@ -137,29 +165,14 @@ export default function UserManagementPage() {
       result = result.filter(user => user.hospital === currentUserHospital);
     }
 
-    // タブによるフィルタリング（SHIP側ユーザーのみタブ表示）
-    if (isShipUser) {
-      if (activeTab === 'hospital') {
-        result = result.filter(user => !isShipRole(user.role));
-      } else {
-        result = result.filter(user => isShipRole(user.role));
-      }
-    }
-
     // 検索フィルター適用
     return result.filter((user) => {
       const matchUsername = !filterUsername || user.username.toLowerCase().includes(filterUsername.toLowerCase());
-      const matchEmail = !filterEmail || user.email.toLowerCase().includes(filterEmail.toLowerCase());
-      const matchHospital = !filterHospital || (user.hospital?.toLowerCase().includes(filterHospital.toLowerCase()) ?? false);
+      const matchDepartment = !filterDepartment || (user.department?.includes(filterDepartment) ?? false);
       const matchRole = !filterRole || user.role === filterRole;
-      return matchUsername && matchEmail && matchHospital && matchRole;
+      return matchUsername && matchDepartment && matchRole;
     });
-  }, [users, isShipUser, currentUserHospital, activeTab, filterUsername, filterEmail, filterHospital, filterRole]);
-
-  // 施設オプション（ユニーク）
-  const hospitalOptions = useMemo(() => {
-    return Array.from(new Set(users.map(u => u.hospital).filter(Boolean))) as string[];
-  }, [users]);
+  }, [users, isShipUser, currentUserHospital, filterUsername, filterDepartment, filterRole]);
 
   const handleBack = () => {
     router.push('/main');
@@ -171,6 +184,10 @@ export default function UserManagementPage() {
       username: user.username,
       email: user.email,
       hospital: user.hospital || '',
+      department: user.department || '',
+      position: user.position || '',
+      contactPerson: user.contactPerson || '',
+      phone: user.phone || '',
       role: user.role,
       accessibleFacilities: user.accessibleFacilities || [],
     });
@@ -188,6 +205,10 @@ export default function UserManagementPage() {
       username: '',
       email: '',
       hospital: isShipUser ? '' : (currentUserHospital || ''),
+      department: '',
+      position: '',
+      contactPerson: '',
+      phone: '',
       role: 'office_staff',
       accessibleFacilities: [],
     });
@@ -205,6 +226,10 @@ export default function UserManagementPage() {
       username: formData.username,
       email: formData.email,
       hospital: isShipRole(formData.role) ? undefined : formData.hospital,
+      department: formData.department,
+      position: formData.position,
+      contactPerson: formData.contactPerson,
+      phone: formData.phone,
       role: formData.role,
       accessibleFacilities: formData.accessibleFacilities,
       createdAt: new Date().toISOString(),
@@ -225,6 +250,10 @@ export default function UserManagementPage() {
       username: formData.username,
       email: formData.email,
       hospital: isShipRole(formData.role) ? undefined : formData.hospital,
+      department: formData.department,
+      position: formData.position,
+      contactPerson: formData.contactPerson,
+      phone: formData.phone,
       role: formData.role,
       accessibleFacilities: formData.accessibleFacilities,
     });
@@ -236,12 +265,10 @@ export default function UserManagementPage() {
     if (!facilityName) return;
     setFormData(prev => {
       const current = prev.accessibleFacilities || [];
-      if (current.includes(facilityName)) {
-        return prev; // 既に追加済み
-      }
+      if (current.includes(facilityName)) return prev;
       return { ...prev, accessibleFacilities: [...current, facilityName] };
     });
-    setFacilitySearchQuery(''); // 選択後にクリア
+    setFacilitySearchQuery('');
   };
 
   const removeFacility = (facilityName: string) => {
@@ -253,19 +280,16 @@ export default function UserManagementPage() {
 
   // アクセス可能施設の表示用テキスト
   const getAccessibleFacilitiesText = (user: User): string => {
-    // SHIP側（admin/consultant/sales）: 担当施設
     if (isShipRole(user.role)) {
-      const facilities = user.accessibleFacilities || [];
-      return facilities.length > 0 ? facilities.join(', ') : '未設定';
+      const f = user.accessibleFacilities || [];
+      return f.length > 0 ? f.join(', ') : '未設定';
     }
-    // 事務管理者/事務担当者: 自施設 + 閲覧可能施設
     if (user.role === 'office_admin' || user.role === 'office_staff') {
       const ownFacility = user.hospital ? [user.hospital] : [];
       const otherFacilities = user.accessibleFacilities || [];
       const all = [...ownFacility, ...otherFacilities.filter(f => f !== user.hospital)];
       return all.length > 0 ? all.join(', ') : '-';
     }
-    // 臨床スタッフ: 自施設のみ
     if (user.role === 'clinical_staff') {
       return user.hospital || '-';
     }
@@ -323,7 +347,7 @@ export default function UserManagementPage() {
           </div>
 
           <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* 基本情報 */}
+            {/* ユーザー名 */}
             <div>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
                 ユーザー名 <span style={{ color: '#e74c3c' }}>*</span>
@@ -343,6 +367,7 @@ export default function UserManagementPage() {
               />
             </div>
 
+            {/* メールアドレス */}
             <div>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
                 メールアドレス <span style={{ color: '#e74c3c' }}>*</span>
@@ -358,10 +383,12 @@ export default function UserManagementPage() {
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
+                  maxWidth: '280px',
                 }}
               />
             </div>
 
+            {/* ロール */}
             <div>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
                 ロール
@@ -373,14 +400,13 @@ export default function UserManagementPage() {
                   setFormData({
                     ...formData,
                     role: newRole,
-                    // ロール変更時にアクセス可能施設をリセット
                     accessibleFacilities: [],
-                    // SHIP側ロールの場合は所属施設をクリア
                     hospital: isShipRole(newRole) ? '' : formData.hospital,
                   });
                 }}
                 style={{
                   width: '100%',
+                  maxWidth: '220px',
                   padding: '10px',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
@@ -408,7 +434,6 @@ export default function UserManagementPage() {
                     setFormData({
                       ...formData,
                       hospital: value,
-                      // 所属施設変更時、アクセス可能施設から自施設を除外
                       accessibleFacilities: formData.accessibleFacilities.filter(f => f !== value),
                     });
                   }}
@@ -418,6 +443,93 @@ export default function UserManagementPage() {
                 />
               </div>
             )}
+
+            {/* 所属部署 */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+                所属部署
+              </label>
+              <input
+                type="text"
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                placeholder="例: 医事課"
+                style={{
+                  width: '100%',
+                  maxWidth: '200px',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* 役職 */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+                役職
+              </label>
+              <input
+                type="text"
+                value={formData.position}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                placeholder="例: 課長"
+                style={{
+                  width: '100%',
+                  maxWidth: '160px',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* 担当者 */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+                担当者
+              </label>
+              <input
+                type="text"
+                value={formData.contactPerson}
+                onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                style={{
+                  width: '100%',
+                  maxWidth: '200px',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* 連絡先 */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+                連絡先
+              </label>
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="例: 03-1234-5678"
+                style={{
+                  width: '100%',
+                  maxWidth: '180px',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
 
             {/* 施設アクセス設定セクション */}
             <div style={{
@@ -466,7 +578,6 @@ export default function UserManagementPage() {
                     placeholder="施設名を検索して追加..."
                     isMobile={isMobile}
                   />
-                  {/* 選択済み施設タグ */}
                   {formData.accessibleFacilities.length > 0 && (
                     <div style={{
                       marginTop: '12px',
@@ -542,7 +653,6 @@ export default function UserManagementPage() {
                         placeholder="施設名を検索して追加..."
                         isMobile={isMobile}
                       />
-                      {/* 選択済み施設タグ */}
                       {formData.accessibleFacilities.length > 0 && (
                         <div style={{
                           marginTop: '12px',
@@ -707,7 +817,6 @@ export default function UserManagementPage() {
           }}>
             {filteredUsers.length}件
           </div>
-          {/* 病院ユーザーの場合、所属施設を表示 */}
           {!isShipUser && currentUserHospital && (
             <div style={{
               background: '#27ae60',
@@ -757,58 +866,14 @@ export default function UserManagementPage() {
         </div>
       </header>
 
-      {/* タブ切替（SHIP側ユーザーのみ） */}
-      {isShipUser && (
-        <div style={{
-          display: 'flex',
-          borderBottom: '2px solid #e0e0e0',
-          background: 'white',
-        }}>
-          <button
-            onClick={() => setActiveTab('hospital')}
-            style={{
-              flex: 1,
-              padding: isMobile ? '10px' : '12px 20px',
-              border: 'none',
-              borderBottom: activeTab === 'hospital' ? '3px solid #27ae60' : '3px solid transparent',
-              background: activeTab === 'hospital' ? '#f0fdf4' : 'white',
-              color: activeTab === 'hospital' ? '#15803d' : '#7f8c8d',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-          >
-            病院側ユーザー
-          </button>
-          <button
-            onClick={() => setActiveTab('vendor')}
-            style={{
-              flex: 1,
-              padding: isMobile ? '10px' : '12px 20px',
-              border: 'none',
-              borderBottom: activeTab === 'vendor' ? '3px solid #3498db' : '3px solid transparent',
-              background: activeTab === 'vendor' ? '#eff6ff' : 'white',
-              color: activeTab === 'vendor' ? '#1d4ed8' : '#7f8c8d',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-          >
-            SHIP・業者側ユーザー
-          </button>
-        </div>
-      )}
-
       {/* Filter Header */}
       <div style={{
         background: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
         borderBottom: '2px solid #e0e0e0',
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : isShipUser ? 'repeat(auto-fit, minmax(180px, 1fr))' : 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: isMobile ? '12px' : '16px'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(160px, 1fr))',
+        gap: isMobile ? '12px' : '16px',
       }}>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
@@ -831,38 +896,16 @@ export default function UserManagementPage() {
         </div>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-            メールアドレス
+            部署
           </label>
-          <input
-            type="text"
-            value={filterEmail}
-            onChange={(e) => setFilterEmail(e.target.value)}
-            placeholder="メールで検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              boxSizing: 'border-box',
-            }}
+          <SearchableSelect
+            value={filterDepartment}
+            onChange={setFilterDepartment}
+            options={['', ...departmentOptions]}
+            placeholder="部署で検索..."
+            isMobile={isMobile}
           />
         </div>
-        {/* 施設フィルター: コンサルユーザーのみ表示 */}
-        {isShipUser && (
-          <div>
-            <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
-              所属施設
-            </label>
-            <SearchableSelect
-              value={filterHospital}
-              onChange={setFilterHospital}
-              options={['', ...facilityOptions]}
-              placeholder="施設名で検索..."
-              isMobile={isMobile}
-            />
-          </div>
-        )}
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
             ロール
@@ -879,10 +922,12 @@ export default function UserManagementPage() {
             }}
           >
             <option value="">すべて</option>
-            <option value="consultant">コンサル</option>
-            <option value="sales">営業</option>
-            <option value="medical_office">医療事務</option>
-            <option value="medical_clinical">医療臨床</option>
+            <option value="admin">システム管理者</option>
+            <option value="consultant">SHRCコンサル</option>
+            <option value="sales">GHS営業</option>
+            <option value="office_admin">事務管理者</option>
+            <option value="office_staff">事務担当者</option>
+            <option value="clinical_staff">臨床スタッフ</option>
           </select>
         </div>
       </div>
@@ -904,7 +949,7 @@ export default function UserManagementPage() {
                   <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50' }}>
-                        {user.username}
+                        {user.contactPerson || user.username}
                       </div>
                       <span style={{
                         padding: '4px 10px',
@@ -921,8 +966,10 @@ export default function UserManagementPage() {
                       {user.email}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                    <div><span style={{ color: '#7f8c8d' }}>所属施設:</span> {user.hospital || '-'}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                    <div><span style={{ color: '#7f8c8d' }}>所属部署:</span> {user.department || '-'}</div>
+                    <div><span style={{ color: '#7f8c8d' }}>役職:</span> {user.position || '-'}</div>
+                    <div><span style={{ color: '#7f8c8d' }}>連絡先:</span> {user.phone || '-'}</div>
                     <div><span style={{ color: '#7f8c8d' }}>アクセス可能:</span> {getAccessibleFacilitiesText(user)}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -967,37 +1014,29 @@ export default function UserManagementPage() {
           // テーブル表示 (PC/タブレット)
           <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  {activeTab === 'hospital' || !isShipUser ? (
-                    <tr>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ユーザー名</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>所属施設</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>アクセス可能施設</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ユーザー名</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>担当施設</th>
-                      <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
-                    </tr>
-                  )}
+                  <tr>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>所属部署</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>役職</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>担当者</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>連絡先</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>アクセス可能施設</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user, index) => {
                     const roleColor = ROLE_COLORS[user.role];
                     return (
                       <tr key={user.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', fontWeight: 500 }}>{user.username}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', fontWeight: 500 }}>{user.department || '-'}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.position || '-'}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.contactPerson || user.username}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', fontVariantNumeric: 'tabular-nums' }}>{user.phone || '-'}</td>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.email}</td>
-                        {(activeTab === 'hospital' || !isShipUser) && (
-                          <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.hospital || '-'}</td>
-                        )}
                         <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center' }}>
                           <span style={{
                             display: 'inline-block',
