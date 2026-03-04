@@ -28,21 +28,22 @@ interface Bookmark {
 }
 
 const COLUMN_GROUPS = [
-  // 申請内容（編集リスト用）
-  { id: 'application', label: '申請内容' },
-  { id: 'applicationDetail', label: '申請詳細（用途・コメント）' },
-  { id: 'connection', label: 'システム接続要望' },
-  { id: 'work', label: '作業用（見積依頼）' },
-  // 資産情報
+  // 編集リスト（リモデル申請）用グループ
+  { id: 'commonMaster', label: '共通部署マスタ' },
+  { id: 'newLocation', label: '(新)設置情報' },
+  { id: 'contract', label: '契約情報' },
+  { id: 'purchaseApplication', label: '購入申請情報' },
+  { id: 'estimate', label: '見積・積算' },
+  { id: 'disposalApplication', label: '廃棄申請情報' },
+  { id: 'transferApplication', label: '移動申請情報' },
+  // 資産情報（原本・検索結果画面用）
   { id: 'basic', label: '基本情報' },
-  { id: 'commonMaster', label: '共通マスタ' },
   { id: 'location', label: '設置情報' },
   { id: 'identity', label: '識別情報' },
   { id: 'classification', label: '資産分類' },
   { id: 'specification', label: '機器仕様' },
   { id: 'acquisition', label: '取得情報' },
   { id: 'other', label: 'その他' },
-  { id: 'contract', label: '契約情報' },
   { id: 'leaseDetail', label: 'リース詳細' },
   { id: 'financial', label: '財務情報' },
   { id: 'lifespan', label: '耐用年数' },

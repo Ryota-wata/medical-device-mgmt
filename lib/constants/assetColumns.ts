@@ -85,46 +85,97 @@ export const ASSET_COLUMNS: ColumnDef[] = [
   { key: 'endOfSupport', label: 'End of support：メンテ終了', width: '180px', defaultVisible: false, group: 'lifespan' },
 ];
 
-// リモデル申請画面用のカラム定義（不要なカラムを除外）
-const EXCLUDED_COLUMNS = ['managementNo', 'roomName', 'installationLocation', 'quantityUnit', 'item'];
-
-// 作業用カラム（見積依頼関連）
-const WORK_COLUMNS: ColumnDef[] = [
-  { key: 'rfqNo', label: '見積依頼No.', width: '130px', defaultVisible: true, group: 'work' },
-  { key: 'rfqGroupName', label: 'グループ名称', width: '150px', defaultVisible: true, group: 'work' },
-  { key: 'rfqVendor', label: '見積業者', width: '150px', defaultVisible: true, group: 'work' },
-  { key: 'rfqAmount', label: '見積金額', width: '120px', defaultVisible: true, group: 'work' },
-];
-
-// 申請関連カラム（入力項目ごと）
-const APPLICATION_COLUMNS: ColumnDef[] = [
-  // 基本申請情報
-  { key: 'applicationCategory', label: '要望区分', width: '100px', defaultVisible: true, group: 'application' },
-  { key: 'applicationNo', label: '申請No.', width: '120px', defaultVisible: true, group: 'application' },
-  { key: 'applicantName', label: '申請者', width: '100px', defaultVisible: false, group: 'application' },
-  { key: 'applicantDepartment', label: '申請部署', width: '120px', defaultVisible: false, group: 'application' },
-  { key: 'applicationDate', label: '申請日', width: '120px', defaultVisible: false, group: 'application' },
-  { key: 'priority', label: '優先順位', width: '80px', defaultVisible: false, group: 'application' },
-  { key: 'desiredDeliveryDate', label: '希望納期', width: '120px', defaultVisible: true, group: 'application' },
-  // 使用用途及び件数
-  { key: 'usagePurpose', label: '用途', width: '150px', defaultVisible: true, group: 'applicationDetail' },
-  { key: 'caseCount', label: '症例数', width: '100px', defaultVisible: false, group: 'applicationDetail' },
-  // コメント・添付ファイル
-  { key: 'comment', label: 'コメント', width: '200px', defaultVisible: true, group: 'applicationDetail' },
-  { key: 'attachedFiles', label: '添付ファイル', width: '150px', defaultVisible: false, group: 'applicationDetail' },
-  // システム接続要望
-  { key: 'currentConnectionStatus', label: '現在の接続状況', width: '120px', defaultVisible: false, group: 'connection' },
-  { key: 'currentConnectionDestination', label: '現在の接続先', width: '150px', defaultVisible: false, group: 'connection' },
-  { key: 'requestConnectionStatus', label: '接続要望', width: '100px', defaultVisible: false, group: 'connection' },
-  { key: 'requestConnectionDestination', label: '要望接続先', width: '150px', defaultVisible: false, group: 'connection' },
-];
+// ============================
+// 編集リスト（リモデル申請）用カラム定義
+// ============================
 
 export const REMODEL_COLUMNS: ColumnDef[] = [
-  ...APPLICATION_COLUMNS,
-  ...ASSET_COLUMNS
-    .filter(col => !EXCLUDED_COLUMNS.includes(col.key))
-    .map(col => col.key === 'name' ? { ...col, label: '品目' } : col)
-    .flatMap(col => col.key === 'model' ? [col, ...WORK_COLUMNS] : [col])
+  // 処理方針
+  { key: 'applicationStatus', label: '申請種別', width: '100px', defaultVisible: true, group: 'applicationOverview' },
+
+  // 共通部署マスタ
+  { key: 'shipDivision', label: '部門名', width: '120px', defaultVisible: true, group: 'commonMaster' },
+  { key: 'shipDepartment', label: '部署名', width: '120px', defaultVisible: true, group: 'commonMaster' },
+
+  // (新)設置情報
+  { key: 'newBuilding', label: '棟', width: '100px', defaultVisible: true, group: 'newLocation' },
+  { key: 'newFloor', label: '階', width: '80px', defaultVisible: true, group: 'newLocation' },
+  { key: 'newDepartment', label: '部門', width: '120px', defaultVisible: true, group: 'newLocation' },
+  { key: 'newSection', label: '部署', width: '120px', defaultVisible: true, group: 'newLocation' },
+  { key: 'newRoomName', label: '室名', width: '150px', defaultVisible: true, group: 'newLocation' },
+
+  // 契約情報（資産識別・分類）
+  { key: 'managementDept', label: '管理部署', width: '120px', defaultVisible: true, group: 'contract' },
+  { key: 'qrCode', label: 'QRコード', width: '150px', defaultVisible: true, group: 'contract' },
+  { key: 'assetNo', label: '台帳番号', width: '150px', defaultVisible: true, group: 'contract' },
+  { key: 'assetMasterId', label: '資産マスタID', width: '120px', defaultVisible: true, group: 'contract' },
+  { key: 'category', label: 'Category', width: '120px', defaultVisible: true, group: 'contract' },
+  { key: 'largeClass', label: '大分類', width: '150px', defaultVisible: true, group: 'contract' },
+  { key: 'mediumClass', label: '中分類', width: '150px', defaultVisible: true, group: 'contract' },
+  { key: 'detailCategory', label: '明細区分', width: '100px', defaultVisible: true, group: 'contract' },
+  { key: 'parentItem', label: '明細親機', width: '150px', defaultVisible: true, group: 'contract' },
+  { key: 'item', label: '個体管理品目', width: '180px', defaultVisible: true, group: 'contract' },
+  { key: 'maker', label: 'メーカー名', width: '150px', defaultVisible: true, group: 'contract' },
+  { key: 'model', label: '型式', width: '150px', defaultVisible: true, group: 'contract' },
+
+  // 購入申請情報
+  { key: 'serialNumber', label: 'シリアルNo.', width: '150px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'applicationCategory', label: '申請種別', width: '100px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'applicationDate', label: '申請日', width: '120px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'applicationNo', label: '申請No.', width: '120px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'desiredDeliveryDate', label: '希望納期', width: '120px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'priority', label: '優先順位', width: '80px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'applicationItem', label: '申請品目', width: '150px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'quantity', label: '数量', width: '80px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'quantityUnit', label: '単位', width: '80px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'requestItem1', label: '要望①品目', width: '150px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'requestMaker1', label: '要望①メーカー', width: '150px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'requestModel1', label: '要望①型式', width: '150px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'requestItem2', label: '要望②品目', width: '150px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'requestMaker2', label: '要望②メーカー', width: '150px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'requestModel2', label: '要望②型式', width: '150px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'requestItem3', label: '要望③品目', width: '150px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'requestMaker3', label: '要望③メーカー', width: '150px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'requestModel3', label: '要望③型式', width: '150px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'usagePurpose', label: '使用症例・用途', width: '150px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'caseCount', label: '件数', width: '80px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'caseCountUnit', label: '単位', width: '80px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'comment', label: 'コメント', width: '200px', defaultVisible: true, group: 'purchaseApplication' },
+  { key: 'currentConnectionStatus', label: 'ネットワーク接続', width: '120px', defaultVisible: false, group: 'purchaseApplication' },
+  { key: 'requestConnectionStatus', label: 'ネットワーク接続要望', width: '120px', defaultVisible: false, group: 'purchaseApplication' },
+
+  // 見積・積算
+  { key: 'rfqNo', label: '見積依頼No.', width: '130px', defaultVisible: true, group: 'estimate' },
+  { key: 'rfqGroupName', label: '見積依頼グループ', width: '150px', defaultVisible: true, group: 'estimate' },
+  { key: 'estimatedAmount', label: '積算金額（税別）', width: '130px', defaultVisible: true, group: 'estimate' },
+  { key: 'estimatedBasis', label: '積算根拠', width: '150px', defaultVisible: true, group: 'estimate' },
+  { key: 'annualUpdateRequest', label: '年度更新要望', width: '120px', defaultVisible: true, group: 'estimate' },
+
+  // 廃棄申請情報
+  { key: 'disposalApplicationDate', label: '申請日', width: '120px', defaultVisible: false, group: 'disposalApplication' },
+  { key: 'disposalApplicationNo', label: '申請No.', width: '120px', defaultVisible: false, group: 'disposalApplication' },
+  { key: 'disposalComment', label: 'コメント（廃棄）', width: '200px', defaultVisible: false, group: 'disposalApplication' },
+
+  // 移動申請情報
+  { key: 'transferApplicationDate', label: '申請日', width: '120px', defaultVisible: false, group: 'transferApplication' },
+  { key: 'transferApplicationNo', label: '申請No.', width: '120px', defaultVisible: false, group: 'transferApplication' },
+  { key: 'transferDivision', label: '部門名（移動先）', width: '120px', defaultVisible: false, group: 'transferApplication' },
+  { key: 'transferDepartment', label: '部署名（移動先）', width: '120px', defaultVisible: false, group: 'transferApplication' },
+  { key: 'transferRoomName', label: '室名（移動先）', width: '150px', defaultVisible: false, group: 'transferApplication' },
+  { key: 'transferParentItem', label: '明細親機', width: '150px', defaultVisible: false, group: 'transferApplication' },
+  { key: 'transferComment', label: 'コメント（移動）', width: '200px', defaultVisible: false, group: 'transferApplication' },
+];
+
+// 編集リスト用グループラベル・色定義
+export const REMODEL_COLUMN_GROUPS: { id: string; label: string; color: string }[] = [
+  { id: 'applicationOverview', label: '処理方針', color: '#343a40' },
+  { id: 'commonMaster', label: '共通部署マスタ', color: '#6c757d' },
+  { id: 'newLocation', label: '(新)設置情報', color: '#0d6efd' },
+  { id: 'contract', label: '契約情報', color: '#198754' },
+  { id: 'purchaseApplication', label: '購入申請情報', color: '#e67e22' },
+  { id: 'estimate', label: '見積・積算', color: '#8e44ad' },
+  { id: 'disposalApplication', label: '廃棄申請情報', color: '#dc3545' },
+  { id: 'transferApplication', label: '移動申請情報', color: '#0dcaf0' },
 ];
 
 // ユーティリティ関数: カラムのラベルを上書き

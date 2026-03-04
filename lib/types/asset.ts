@@ -80,23 +80,64 @@ export interface Asset {
   rfqVendor?: string; // 見積業者
   rfqAmount?: number | string; // 見積金額
 
-  // 申請関連フィールド（編集リスト用）
-  applicationCategory?: string; // 要望区分（申請種別）
+  // 資産分類（追加）
+  parentItem?: string; // 明細親機
+
+  // 購入申請情報
+  applicationCategory?: string; // 申請種別（要望区分）
   applicationNo?: string; // 申請No.
+  applicationDate?: string; // 申請日
   applicationReason?: string; // 申請理由
   desiredDeliveryDate?: string; // 希望納期
   applicantName?: string; // 申請者
   applicantDepartment?: string; // 申請部署
-  applicationDate?: string; // 申請日
   priority?: string; // 優先順位
-  usagePurpose?: string; // 用途
-  caseCount?: string; // 症例数
+  applicationItem?: string; // 申請品目
+  requestItem1?: string; // 要望①品目
+  requestMaker1?: string; // 要望①メーカー
+  requestModel1?: string; // 要望①型式
+  requestItem2?: string; // 要望②品目
+  requestMaker2?: string; // 要望②メーカー
+  requestModel2?: string; // 要望②型式
+  requestItem3?: string; // 要望③品目
+  requestMaker3?: string; // 要望③メーカー
+  requestModel3?: string; // 要望③型式
+  usagePurpose?: string; // 使用症例・用途
+  caseCount?: string; // 件数
+  caseCountUnit?: string; // 単位（件数）
   comment?: string; // コメント
   attachedFiles?: string[]; // 添付ファイル
-  currentConnectionStatus?: string; // 現在の接続状況
+  currentConnectionStatus?: string; // ネットワーク接続
   currentConnectionDestination?: string; // 現在の接続先
-  requestConnectionStatus?: string; // 接続要望
+  requestConnectionStatus?: string; // ネットワーク接続要望
   requestConnectionDestination?: string; // 要望接続先
+
+  // 見積・積算
+  estimatedAmount?: number | string; // 積算金額（税別）
+  estimatedBasis?: string; // 積算根拠
+  annualUpdateRequest?: string; // 年度更新要望
+
+  // 廃棄申請情報
+  disposalApplicationDate?: string; // 廃棄申請日
+  disposalApplicationNo?: string; // 廃棄申請No.
+  disposalComment?: string; // コメント（廃棄）
+
+  // 移動申請情報
+  transferApplicationDate?: string; // 移動申請日
+  transferApplicationNo?: string; // 移動申請No.
+  transferDivision?: string; // 部門名（移動先）
+  transferDepartment?: string; // 部署名（移動先）
+  transferRoomName?: string; // 室名（移動先）
+  transferParentItem?: string; // 明細親機（移動先）
+  transferComment?: string; // コメント（移動）
+
+  // (新)設置情報（リモデル用）
+  newBuilding?: string; // 新棟
+  newFloor?: string; // 新階
+  newDepartment?: string; // 新部門
+  newSection?: string; // 新部署
+  newRoomName?: string; // 新室名
+
   sourceType?: 'base' | 'added'; // レコードソース（原本 or 追加）
 }
 

@@ -24,6 +24,8 @@ interface UpdateApplicationModalProps {
   onClose: () => void;
   assets: Asset[];  // 更新対象として選択された資産（1件のみ）
   onSuccess?: () => void;
+  returnDestination?: string;
+  returnHref?: string;
 }
 
 export function UpdateApplicationModal({
@@ -31,6 +33,8 @@ export function UpdateApplicationModal({
   onClose,
   assets,
   onSuccess,
+  returnDestination = '資産一覧',
+  returnHref = '/asset-search-result',
 }: UpdateApplicationModalProps) {
   const router = useRouter();
   const { departments, facilities } = useMasterStore();
@@ -1278,12 +1282,12 @@ export function UpdateApplicationModal({
         applicationName="更新申請"
         applicationNo={completedAppNo}
         guidanceText=""
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onGoToMain={() => {
           resetForm();
           setShowCompleteModal(false);
           onClose();
-          router.push('/asset-search-result');
+          router.push(returnHref);
         }}
         onContinue={() => {
           resetForm();
@@ -1294,7 +1298,7 @@ export function UpdateApplicationModal({
       {/* 閉じる確認モーダル */}
       <ApplicationCloseConfirmModal
         isOpen={showCloseConfirm}
-        returnDestination="資産一覧"
+        returnDestination={returnDestination}
         onCancel={() => setShowCloseConfirm(false)}
         onConfirm={() => {
           setShowCloseConfirm(false);

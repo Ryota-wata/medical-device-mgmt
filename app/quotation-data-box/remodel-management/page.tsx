@@ -65,34 +65,61 @@ function RemodelManagementContent() {
         backLabel="メイン画面に戻る"
         hideMenu={true}
         centerContent={
-          <div style={{
-            background: '#c0392b',
-            padding: '6px 16px',
-            borderRadius: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <span style={{ fontSize: '12px', color: 'white', fontWeight: 'bold' }}>編集リスト:</span>
-            <select
-              value={selectedEditListId}
-              onChange={(e) => setSelectedEditListId(e.target.value)}
-              style={{
-                padding: '4px 8px',
-                fontSize: '12px',
-                border: 'none',
-                borderRadius: '3px',
-                background: 'white',
-                minWidth: '180px',
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              background: '#c0392b',
+              padding: '6px 16px',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}>
+              <span style={{ fontSize: '12px', color: 'white', fontWeight: 'bold' }}>編集リスト:</span>
+              <select
+                value={selectedEditListId}
+                onChange={(e) => setSelectedEditListId(e.target.value)}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  border: 'none',
+                  borderRadius: '3px',
+                  background: 'white',
+                  minWidth: '180px',
+                }}
+              >
+                <option value="">選択してください</option>
+                {editLists.map((list) => (
+                  <option key={list.id} value={list.id}>
+                    {list.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={() => {
+                if (selectedEditListId) {
+                  router.push(`/remodel-application?listId=${selectedEditListId}`);
+                } else {
+                  router.push('/remodel-application');
+                }
               }}
+              style={{
+                padding: '6px 14px',
+                background: 'transparent',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.6)',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'white'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'; }}
             >
-              <option value="">選択してください</option>
-              {editLists.map((list) => (
-                <option key={list.id} value={list.id}>
-                  {list.name}
-                </option>
-              ))}
-            </select>
+              編集リスト &rarr;
+            </button>
           </div>
         }
       />

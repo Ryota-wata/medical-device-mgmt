@@ -304,6 +304,93 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             )}
           </div>
 
+          {/* 対象資産情報 */}
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '16px',
+              borderBottom: '1px solid #ddd',
+              paddingBottom: '8px'
+            }}>
+              対象資産情報
+            </h3>
+
+            {assets.length === 1 ? (
+              /* 単数選択：グリッド表示 */
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr auto 1fr auto 1fr',
+                gap: '12px 16px',
+                alignItems: 'center'
+              }}>
+                <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.qrCode || '-'}
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#666' }}>品目名</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.name || '-'}
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#666' }}>メーカー名</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.maker || '-'}
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#666' }}>型式</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.model || '-'}
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#666' }}>数量</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.quantity ?? '-'}
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#666' }}>シリアルNo.</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.serialNumber || '-'}
+                </div>
+
+                <div style={{ fontSize: '13px', color: '#666' }}>納入年月日</div>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                  {primaryAsset.deliveryDate || '-'}
+                </div>
+              </div>
+            ) : (
+              /* 複数選択：テーブル表示 */
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ background: '#f0f0f0' }}>
+                      {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
+                        <th key={label} style={{ padding: '8px 10px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap' }}>
+                          {label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assets.map((asset, idx) => (
+                      <tr key={idx} style={{ background: idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.qrCode || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.name || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.maker || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.model || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd', textAlign: 'right' }}>{asset.quantity ?? '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.serialNumber || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.deliveryDate || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {/* コメント */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{

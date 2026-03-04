@@ -42,3 +42,7 @@ next-env.d.ts
 
 # customer import data
 /data/import/
+
+# customer feedback (Excel + extracted output)
+/feedback/input/
+/feedback/output/

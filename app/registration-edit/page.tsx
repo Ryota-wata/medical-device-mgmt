@@ -26,7 +26,8 @@ interface RegistrationData {
   assetNo: string;
   equipmentNo: string;
   serialNo: string;
-  quantity: number;
+  detailType: '本体' | '明細' | '付属品' | '';
+  parentId: number | null;
   purchaseDate: string;
   lease: string;
   rental: string;
@@ -58,6 +59,9 @@ export default function RegistrationEditPage() {
   const [modalPosition, setModalPosition] = useState({ x: 100, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // 紐付けモード状態
+  const [linkingParentId, setLinkingParentId] = useState<number | null>(null);
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -110,7 +114,8 @@ export default function RegistrationEditPage() {
       assetNo: '10605379-000',
       equipmentNo: '1338',
       serialNo: 'SN-001234',
-      quantity: 1,
+      detailType: '本体',
+      parentId: null,
       purchaseDate: '2022-04-15',
       lease: 'なし',
       rental: 'なし',
@@ -145,7 +150,8 @@ export default function RegistrationEditPage() {
       assetNo: '',
       equipmentNo: '',
       serialNo: '',
-      quantity: 1,
+      detailType: '本体',
+      parentId: null,
       purchaseDate: '',
       lease: 'あり',
       rental: 'なし',
@@ -178,7 +184,8 @@ export default function RegistrationEditPage() {
       assetNo: '10605421-000',
       equipmentNo: '2156',
       serialNo: 'SN-003456',
-      quantity: 1,
+      detailType: '本体',
+      parentId: null,
       purchaseDate: '2023-01-20',
       lease: 'なし',
       rental: 'なし',
@@ -212,7 +219,8 @@ export default function RegistrationEditPage() {
       assetNo: '10606523-000',
       equipmentNo: '3421',
       serialNo: 'SN-004567',
-      quantity: 2,
+      detailType: '明細',
+      parentId: null,
       purchaseDate: '2024-06-10',
       lease: 'なし',
       rental: 'なし',
@@ -245,7 +253,8 @@ export default function RegistrationEditPage() {
       assetNo: '10607834-000',
       equipmentNo: '4892',
       serialNo: 'SN-005678',
-      quantity: 1,
+      detailType: '本体',
+      parentId: null,
       purchaseDate: '2021-09-15',
       lease: 'あり',
       rental: 'なし',
@@ -281,7 +290,8 @@ export default function RegistrationEditPage() {
       assetNo: '',
       equipmentNo: '',
       serialNo: '',
-      quantity: 1,
+      detailType: '付属品',
+      parentId: null,
       purchaseDate: '',
       lease: 'なし',
       rental: 'なし',
@@ -315,7 +325,8 @@ export default function RegistrationEditPage() {
       assetNo: '10608123-000',
       equipmentNo: '5123',
       serialNo: 'SN-007890',
-      quantity: 3,
+      detailType: '',
+      parentId: null,
       purchaseDate: '2023-03-20',
       lease: 'なし',
       rental: 'なし',
@@ -437,6 +448,61 @@ export default function RegistrationEditPage() {
     return filtered;
   }, [data, filters, sortKey, sortDirection]);
 
+  // 親子グルーピング表示用データ
+  const groupedData = useMemo(() => {
+    const result: RegistrationData[] = [];
+    const childrenMap = new Map<number, RegistrationData[]>();
+    const parentIds = new Set<number>();
+
+    // 子レコードを親IDごとにグルーピング
+    for (const row of filteredData) {
+      if (row.parentId !== null) {
+        const children = childrenMap.get(row.parentId) || [];
+        children.push(row);
+        childrenMap.set(row.parentId, children);
+      }
+    }
+
+    // 本体レコードのIDを集める
+    for (const row of filteredData) {
+      if (row.detailType === '本体') {
+        parentIds.add(row.id);
+      }
+    }
+
+    // filteredData順にループし、本体の直後に子を挿入
+    const insertedChildren = new Set<number>();
+    for (const row of filteredData) {
+      if (row.parentId !== null && insertedChildren.has(row.id)) {
+        continue; // 既に親の下に挿入済み
+      }
+      if (row.parentId !== null) {
+        // 子レコードだが親がfilteredDataにない場合はそのまま配置
+        if (!parentIds.has(row.parentId)) {
+          result.push(row);
+        }
+        continue;
+      }
+      result.push(row);
+      // 本体の場合、子を直後に挿入
+      if (row.detailType === '本体') {
+        const children = childrenMap.get(row.id) || [];
+        for (const child of children) {
+          result.push(child);
+          insertedChildren.add(child.id);
+        }
+      }
+    }
+
+    return result;
+  }, [filteredData]);
+
+  // 紐付けモードの親レコード情報
+  const linkingParent = useMemo(() => {
+    if (linkingParentId === null) return null;
+    return data.find(r => r.id === linkingParentId) || null;
+  }, [linkingParentId, data]);
+
   // フィルタークリア
   const handleClearFilters = () => {
     setFilters({
@@ -481,16 +547,70 @@ export default function RegistrationEditPage() {
     router.push('/main');
   };
 
+  // 本体に設定して紐付けモードに入る
+  const handleSetParent = (id: number) => {
+    setData(prev => prev.map(row =>
+      row.id === id ? { ...row, detailType: '本体' as const } : row
+    ));
+    setLinkingParentId(id);
+    setSelectedRows(new Set());
+    setSelectedAll(false);
+  };
+
+  // 選択行を明細として紐付け
+  const handleLinkAsDetail = () => {
+    if (linkingParentId === null || selectedRows.size === 0) return;
+    setData(prev => prev.map(row =>
+      selectedRows.has(row.id)
+        ? { ...row, detailType: '明細' as const, parentId: linkingParentId }
+        : row
+    ));
+    setSelectedRows(new Set());
+    setSelectedAll(false);
+  };
+
+  // 選択行を付属品として紐付け
+  const handleLinkAsAccessory = () => {
+    if (linkingParentId === null || selectedRows.size === 0) return;
+    setData(prev => prev.map(row =>
+      selectedRows.has(row.id)
+        ? { ...row, detailType: '付属品' as const, parentId: linkingParentId }
+        : row
+    ));
+    setSelectedRows(new Set());
+    setSelectedAll(false);
+  };
+
+  // 個別の紐付け解除（1行ずつ）
+  const handleUnlinkSingle = (id: number) => {
+    setData(prev => prev.map(row =>
+      row.id === id ? { ...row, detailType: '' as const, parentId: null } : row
+    ));
+  };
+
+  // 紐付けモード解除
+  const handleExitLinking = () => {
+    setLinkingParentId(null);
+    setSelectedRows(new Set());
+    setSelectedAll(false);
+  };
+
   const toggleSelectAll = (checked: boolean) => {
     setSelectedAll(checked);
     if (checked) {
-      setSelectedRows(new Set(filteredData.map(row => row.id)));
+      // 紐付けモード中は紐付け先の親を除外
+      const selectableRows = groupedData.filter(row =>
+        linkingParentId === null || row.id !== linkingParentId
+      );
+      setSelectedRows(new Set(selectableRows.map(row => row.id)));
     } else {
       setSelectedRows(new Set());
     }
   };
 
   const toggleRowSelection = (id: number) => {
+    // 紐付けモード中は紐付け先の親を選択不可
+    if (linkingParentId !== null && id === linkingParentId) return;
     const newSelected = new Set(selectedRows);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -498,7 +618,10 @@ export default function RegistrationEditPage() {
       newSelected.add(id);
     }
     setSelectedRows(newSelected);
-    setSelectedAll(newSelected.size === filteredData.length);
+    const selectableCount = groupedData.filter(row =>
+      linkingParentId === null || row.id !== linkingParentId
+    ).length;
+    setSelectedAll(newSelected.size === selectableCount);
   };
 
   const handleEdit = (id: number) => {
@@ -738,8 +861,9 @@ export default function RegistrationEditPage() {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
+      height: '100dvh',
+      backgroundColor: '#f5f5f5',
+      overflow: 'hidden'
     }}>
       {/* Header */}
       <header style={{
@@ -896,47 +1020,200 @@ export default function RegistrationEditPage() {
         </div>
       </div>
 
+      {/* Linking Bar */}
+      {linkingParent && (
+        <div style={{
+          backgroundColor: '#e8f5e9',
+          borderBottom: '2px solid #66bb6a',
+          padding: '0'
+        }}>
+          {/* ヘッダー行 */}
+          <div style={{
+            padding: '10px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: '#c8e6c9'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                padding: '2px 10px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: '600'
+              }}>紐付け登録モード</span>
+              <span style={{ fontWeight: '600', color: '#1b5e20', fontSize: '14px' }}>
+                本体: {linkingParent.item}
+                <span style={{ color: '#555', fontWeight: '400', marginLeft: '8px' }}>({linkingParent.sealNo})</span>
+              </span>
+            </div>
+            <button
+              onClick={handleExitLinking}
+              style={{
+                padding: '6px 16px',
+                backgroundColor: '#ffffff',
+                color: '#555',
+                border: '1px solid #bdbdbd',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px'
+              }}
+            >
+              モードを終了
+            </button>
+          </div>
+          {/* 操作ガイド行 */}
+          <div style={{
+            padding: '10px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            {selectedRows.size === 0 ? (
+              <span style={{ color: '#2e7d32', fontSize: '13px' }}>
+                子にしたいレコードのチェックボックスを選択してください
+              </span>
+            ) : (
+              <>
+                <span style={{ color: '#1b5e20', fontSize: '13px', fontWeight: '600' }}>
+                  {selectedRows.size}件選択中 — 種別を選んで紐付け:
+                </span>
+                <button
+                  onClick={handleLinkAsDetail}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: '#e65100',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
+                  明細として紐付ける
+                </button>
+                <button
+                  onClick={handleLinkAsAccessory}
+                  style={{
+                    padding: '8px 20px',
+                    backgroundColor: '#7b1fa2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
+                  付属品として紐付ける
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Table */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
+      <div style={{ flex: 1, minHeight: 0, padding: '24px' }}>
         <div style={{
           backgroundColor: '#ffffff',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          overflow: 'auto'
+          overflow: 'auto',
+          height: '100%'
         }}>
           <table style={{
             width: '100%',
-            borderCollapse: 'collapse',
+            borderCollapse: 'separate',
+            borderSpacing: 0,
             fontSize: '13px'
           }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th onClick={() => handleSort('sealNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>QRコード{getSortIcon('sealNo')}</th>
-                <th onClick={() => handleSort('floor')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>階{getSortIcon('floor')}</th>
-                <th onClick={() => handleSort('department')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>部門{getSortIcon('department')}</th>
-                <th onClick={() => handleSort('section')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>部署{getSortIcon('section')}</th>
-                <th onClick={() => handleSort('roomName')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>室名{getSortIcon('roomName')}</th>
-                <th onClick={() => handleSort('category')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>Category{getSortIcon('category')}</th>
-                <th onClick={() => handleSort('largeClass')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>大分類{getSortIcon('largeClass')}</th>
-                <th onClick={() => handleSort('mediumClass')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>中分類{getSortIcon('mediumClass')}</th>
-                <th onClick={() => handleSort('item')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>個体管理品目{getSortIcon('item')}</th>
-                <th onClick={() => handleSort('manufacturer')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>メーカー{getSortIcon('manufacturer')}</th>
-                <th onClick={() => handleSort('model')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>型式{getSortIcon('model')}</th>
-                <th onClick={() => handleSort('quantity')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>数量{getSortIcon('quantity')}</th>
-                <th onClick={() => handleSort('width')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>W{getSortIcon('width')}</th>
-                <th onClick={() => handleSort('depth')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>D{getSortIcon('depth')}</th>
-                <th onClick={() => handleSort('height')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>H{getSortIcon('height')}</th>
-                <th onClick={() => handleSort('assetNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>資産番号{getSortIcon('assetNo')}</th>
-                <th onClick={() => handleSort('equipmentNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>ME番号{getSortIcon('equipmentNo')}</th>
-                <th onClick={() => handleSort('serialNo')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>シリアルNo{getSortIcon('serialNo')}</th>
-                <th onClick={() => handleSort('purchaseDate')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>購入年月日{getSortIcon('purchaseDate')}</th>
-                <th onClick={() => handleSort('remarks')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>備考{getSortIcon('remarks')}</th>
-                <th onClick={() => handleSort('lease')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>リース・借用{getSortIcon('lease')}</th>
-                <th onClick={() => handleSort('surveyDate')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>調査日付{getSortIcon('surveyDate')}</th>
-                <th onClick={() => handleSort('surveyor')} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>担当者{getSortIcon('surveyor')}</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>写真</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>操作</th>
-                <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', whiteSpace: 'nowrap' }}>
+              <tr>
+                {/* --- 通常カラム（sticky top のみ） --- */}
+                {([
+                  { key: 'sealNo' as const, label: 'QRコード' },
+                  { key: 'floor' as const, label: '階' },
+                  { key: 'department' as const, label: '部門' },
+                  { key: 'section' as const, label: '部署' },
+                  { key: 'roomName' as const, label: '室名' },
+                  { key: 'category' as const, label: 'Category' },
+                  { key: 'largeClass' as const, label: '大分類' },
+                  { key: 'mediumClass' as const, label: '中分類' },
+                  { key: 'detailType' as const, label: '明細区分' },
+                  { key: 'item' as const, label: '個体管理品目' },
+                  { key: 'manufacturer' as const, label: 'メーカー' },
+                  { key: 'model' as const, label: '型式' },
+                  { key: 'width' as const, label: 'W' },
+                  { key: 'depth' as const, label: 'D' },
+                  { key: 'height' as const, label: 'H' },
+                  { key: 'assetNo' as const, label: '資産番号' },
+                  { key: 'equipmentNo' as const, label: 'ME番号' },
+                  { key: 'serialNo' as const, label: 'シリアルNo' },
+                  { key: 'purchaseDate' as const, label: '購入年月日' },
+                  { key: 'remarks' as const, label: '備考' },
+                  { key: 'lease' as const, label: 'リース・借用' },
+                  { key: 'surveyDate' as const, label: '調査日付' },
+                  { key: 'surveyor' as const, label: '担当者' },
+                ]).map(col => (
+                  <th
+                    key={col.key}
+                    onClick={() => handleSort(col.key)}
+                    style={{
+                      padding: '12px 8px',
+                      borderBottom: '2px solid #e0e0e0',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 2,
+                      backgroundColor: '#f5f5f5'
+                    }}
+                  >
+                    {col.label}{getSortIcon(col.key)}
+                  </th>
+                ))}
+                {/* 写真（ソートなし、sticky top のみ） */}
+                <th style={{
+                  padding: '12px 8px',
+                  borderBottom: '2px solid #e0e0e0',
+                  whiteSpace: 'nowrap',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 2,
+                  backgroundColor: '#f5f5f5'
+                }}>写真</th>
+                {/* --- 操作（sticky top + right） --- */}
+                <th style={{
+                  padding: '12px 8px',
+                  borderBottom: '2px solid #e0e0e0',
+                  whiteSpace: 'nowrap',
+                  position: 'sticky',
+                  top: 0,
+                  right: 48,
+                  zIndex: 3,
+                  backgroundColor: '#f5f5f5',
+                  boxShadow: '-2px 0 4px rgba(0,0,0,0.06)'
+                }}>操作</th>
+                {/* --- チェックボックス（sticky top + right） --- */}
+                <th style={{
+                  padding: '12px 8px',
+                  borderBottom: '2px solid #e0e0e0',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                  position: 'sticky',
+                  top: 0,
+                  right: 0,
+                  zIndex: 3,
+                  backgroundColor: '#f5f5f5',
+                  width: 48,
+                  minWidth: 48
+                }}>
                   <input
                     type="checkbox"
                     checked={selectedAll}
@@ -946,10 +1223,18 @@ export default function RegistrationEditPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((row) => (
-                <tr key={row.id}>
+              {groupedData.map((row) => {
+                const isChild = row.parentId !== null;
+                const isLinkingTarget = linkingParentId !== null && row.id === linkingParentId;
+                const parentRow = isChild ? data.find(r => r.id === row.parentId) : null;
+                const rowBgColor = isLinkingTarget ? '#e8f5e9' : isChild ? '#fafafa' : 'white';
+                return (
+                <tr key={row.id} style={{ backgroundColor: rowBgColor }}>
                   {/* ① QRコード */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.sealNo}</td>
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {isChild && <span style={{ color: '#9e9e9e', marginRight: '4px' }}>└</span>}
+                    {row.sealNo}
+                  </td>
                   {/* ② 階 */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.floor}</td>
                   {/* ③ 部門 */}
@@ -981,6 +1266,63 @@ export default function RegistrationEditPage() {
                         style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
                       />
                     ) : row.mediumClass}
+                  </td>
+                  {/* 明細区分 */}
+                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                    {editingRow === row.id && editingData ? (
+                      <select
+                        value={editingData.detailType}
+                        onChange={(e) => setEditingData({ ...editingData, detailType: e.target.value as RegistrationData['detailType'] })}
+                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }}
+                      >
+                        <option value="">未設定</option>
+                        <option value="本体">本体</option>
+                        <option value="明細">明細</option>
+                        <option value="付属品">付属品</option>
+                      </select>
+                    ) : (
+                      row.detailType ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            backgroundColor: row.detailType === '本体' ? '#e3f2fd' : row.detailType === '明細' ? '#fff3e0' : '#f3e5f5',
+                            color: row.detailType === '本体' ? '#1565c0' : row.detailType === '明細' ? '#e65100' : '#7b1fa2'
+                          }}>
+                            {row.detailType}
+                          </span>
+                          {/* 子行: インライン解除ボタン */}
+                          {isChild && (
+                            <button
+                              onClick={() => handleUnlinkSingle(row.id)}
+                              aria-label={`${row.item}の紐付けを解除`}
+                              style={{
+                                width: '18px',
+                                height: '18px',
+                                padding: 0,
+                                border: '1px solid #bdbdbd',
+                                borderRadius: '4px',
+                                backgroundColor: '#fafafa',
+                                color: '#888',
+                                fontSize: '11px',
+                                lineHeight: '16px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#bbb', fontSize: '11px' }}>ー</span>
+                      )
+                    )}
                   </td>
                   {/* ⑥ 個体管理品目 */}
                   <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
@@ -1014,17 +1356,6 @@ export default function RegistrationEditPage() {
                         style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
                       />
                     ) : row.model}
-                  </td>
-                  {/* ⑨ 数量 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="number"
-                        value={editingData.quantity}
-                        onChange={(e) => setEditingData({ ...editingData, quantity: parseInt(e.target.value) || 0 })}
-                        style={{ width: '60px', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
-                      />
-                    ) : row.quantity}
                   </td>
                   {/* ⑩ W */}
                   <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
@@ -1147,7 +1478,16 @@ export default function RegistrationEditPage() {
                       {row.photoCount}枚
                     </button>
                   </td>
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td style={{
+                    padding: '8px',
+                    borderBottom: '1px solid #e0e0e0',
+                    whiteSpace: 'nowrap',
+                    position: 'sticky',
+                    right: 48,
+                    zIndex: 1,
+                    backgroundColor: rowBgColor,
+                    boxShadow: '-2px 0 4px rgba(0,0,0,0.06)'
+                  }}>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                       {editingRow === row.id ? (
                         <>
@@ -1223,20 +1563,64 @@ export default function RegistrationEditPage() {
                           >
                             確定
                           </button>
+                          {/* 紐付け操作ボタン */}
+                          {!isChild && (
+                            <button
+                              onClick={() => handleSetParent(row.id)}
+                              style={{
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                backgroundColor: row.detailType === '本体' ? '#1565c0' : 'transparent',
+                                color: row.detailType === '本体' ? 'white' : '#1565c0',
+                                border: row.detailType === '本体' ? 'none' : '1px solid #90caf9',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {row.detailType === '本体' ? '明細を追加' : '本体に設定'}
+                            </button>
+                          )}
+                          {/* 子行: 親レコードへの参照 */}
+                          {isChild && parentRow && (
+                            <span style={{
+                              fontSize: '11px',
+                              color: '#1565c0',
+                              whiteSpace: 'nowrap',
+                              backgroundColor: '#e3f2fd',
+                              padding: '2px 6px',
+                              borderRadius: '4px'
+                            }}>
+                              親: {parentRow.sealNo}
+                            </span>
+                          )}
                         </>
                       )}
                     </div>
                   </td>
                   {/* チェックボックス */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                  <td style={{
+                    padding: '8px',
+                    borderBottom: '1px solid #e0e0e0',
+                    textAlign: 'center',
+                    position: 'sticky',
+                    right: 0,
+                    zIndex: 1,
+                    backgroundColor: rowBgColor,
+                    width: 48,
+                    minWidth: 48
+                  }}>
                     <input
                       type="checkbox"
                       checked={selectedRows.has(row.id)}
                       onChange={() => toggleRowSelection(row.id)}
+                      disabled={isLinkingTarget}
                     />
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1248,7 +1632,8 @@ export default function RegistrationEditPage() {
         borderTop: '1px solid #e0e0e0',
         padding: '16px 24px',
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        gap: '16px'
       }}>
         <button
           onClick={handleBulkConfirm}

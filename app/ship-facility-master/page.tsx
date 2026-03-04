@@ -25,6 +25,23 @@ export default function ShipFacilityMasterPage() {
     if (facilities.length === 0) {
       const sampleFacilities: FacilityMaster[] = [
         {
+          id: 'FAC021',
+          facilityCode: 'FAC021',
+          facilityName: 'サンプル病院',
+          prefecture: '東京都',
+          foundingBody: '公立',
+          city: '千代田区',
+          address: '丸の内1-1-1',
+          postalCode: '100-0005',
+          phoneNumber: '03-9999-0000',
+          establishedDate: '2010-04-01',
+          facilityType: '総合病院',
+          bedCount: 600,
+          status: 'active',
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z'
+        },
+        {
           id: 'F001',
           facilityCode: 'F001',
           facilityName: '〇〇〇〇〇〇病院',
