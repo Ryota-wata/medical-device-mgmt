@@ -24,12 +24,12 @@ function SurveyLocationContent() {
 
   const [surveyDate, setSurveyDate] = useState('');
   const [category, setCategory] = useState('');
-  const [floor, setFloor] = useState('');
   const [department, setDepartment] = useState('');
   const [section, setSection] = useState('');
+  const [room, setRoom] = useState('');
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
 
-  const isFormDirty = category !== '' || floor !== '' || department !== '' || section !== '';
+  const isFormDirty = category !== '' || department !== '' || section !== '' || room !== '';
 
   const handleHomeClick = () => {
     if (isFormDirty) {
@@ -45,21 +45,20 @@ function SurveyLocationContent() {
     return uniqueCategories.filter(Boolean);
   }, [assetMasters]);
 
-  // 個別施設マスタ（HospitalFacilityMaster）から旧（現状）の設置場所オプションを生成
-  const floorOptions = useMemo(() => {
-    const uniqueFloors = Array.from(new Set(facilityMasterData.map(f => f.oldFloor).filter((f): f is string => !!f)));
-    return uniqueFloors;
-  }, [facilityMasterData]);
-
+  // SHIP部署マスタから部門オプションを生成
   const departmentOptions = useMemo(() => {
-    const uniqueDepartments = Array.from(new Set(facilityMasterData.map(f => f.oldDepartment).filter((d): d is string => !!d)));
-    return uniqueDepartments;
+    const uniqueDivisions = Array.from(new Set(facilityMasterData.map(f => f.oldShipDivision).filter((d): d is string => !!d)));
+    return uniqueDivisions;
   }, [facilityMasterData]);
 
+  // SHIP部署マスタから部署オプションを生成（選択された部門で絞り込み）
   const sectionOptions = useMemo(() => {
-    const uniqueSections = Array.from(new Set(facilityMasterData.map(f => f.oldRoomName).filter((s): s is string => !!s)));
-    return uniqueSections;
-  }, [facilityMasterData]);
+    const filtered = department
+      ? facilityMasterData.filter(f => f.oldShipDivision === department)
+      : facilityMasterData;
+    const uniqueDepartments = Array.from(new Set(filtered.map(f => f.oldShipDepartment).filter((d): d is string => !!d)));
+    return uniqueDepartments;
+  }, [facilityMasterData, department]);
 
   useEffect(() => {
     // Set current date in Japanese format
@@ -70,6 +69,20 @@ function SurveyLocationContent() {
     setSurveyDate(`${year}年${month}月${day}日`);
   }, []);
 
+  // 部門変更時に部署をクリア
+  const handleDepartmentChange = (value: string) => {
+    setDepartment(value);
+    // 選択済みの部署が新しい部門に属さない場合はクリア
+    if (value) {
+      const validSections = facilityMasterData
+        .filter(f => f.oldShipDivision === value)
+        .map(f => f.oldShipDepartment);
+      if (!validSections.includes(section)) {
+        setSection('');
+      }
+    }
+  };
+
   const handleBack = () => {
     const params = facilityName ? `?facility=${encodeURIComponent(facilityName)}` : '';
     router.push(`/offline-prep${params}`);
@@ -77,17 +90,17 @@ function SurveyLocationContent() {
 
   const handleNext = () => {
     // Validate that all fields are selected
-    if (!category || !floor || !department || !section) {
-      alert('すべての項目を選択してください');
+    if (!category || !department || !section) {
+      alert('Category・部門・部署を選択してください');
       return;
     }
 
     // Navigate to asset input screen with location data
     const queryParams = new URLSearchParams({
       category,
-      floor,
       department,
       section,
+      room,
       surveyDate
     });
     if (facilityName) {
@@ -187,39 +200,60 @@ function SurveyLocationContent() {
             />
           </div>
 
-          {/* Floor (フロア) */}
-          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <SearchableSelect
-              label="フロア"
-              value={floor}
-              onChange={setFloor}
-              options={['', ...floorOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-          </div>
-
-          {/* Department (部門) */}
+          {/* Department (部門) - SHIP部署マスタ */}
           <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
             <SearchableSelect
               label="部門"
               value={department}
-              onChange={setDepartment}
+              onChange={handleDepartmentChange}
               options={['', ...departmentOptions]}
               placeholder="選択してください"
               isMobile={isMobile}
             />
           </div>
 
-          {/* Section (室名称) */}
-          <div style={{ marginBottom: 0 }}>
+          {/* Section (部署) - SHIP部署マスタ */}
+          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
             <SearchableSelect
-              label="室名称"
+              label="部署"
               value={section}
               onChange={setSection}
               options={['', ...sectionOptions]}
               placeholder="選択してください"
               isMobile={isMobile}
+            />
+          </div>
+
+          {/* Room (諸室) - フリー入力 */}
+          <div style={{ marginBottom: 0 }}>
+            <label style={{
+              display: 'block',
+              fontSize: isMobile ? '14px' : '15px',
+              fontWeight: 600,
+              color: '#333333',
+              marginBottom: '10px'
+            }}>
+              諸室
+            </label>
+            <input
+              type="text"
+              value={room}
+              onChange={(e) => setRoom(e.target.value)}
+              placeholder="諸室名を入力"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                padding: isMobile ? '12px 14px' : '14px 18px',
+                fontSize: isMobile ? '15px' : '16px',
+                color: '#333333',
+                backgroundColor: '#ffffff',
+                outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#2c3e50'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#e0e0e0'; }}
             />
           </div>
         </div>
