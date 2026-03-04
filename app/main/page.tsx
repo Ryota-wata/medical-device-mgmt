@@ -8,14 +8,13 @@ import { useRepairRequestStore } from '@/lib/stores/repairRequestStore';
 import { generateMockAssets } from '@/lib/data/generateMockAssets';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { usePermissions } from '@/lib/hooks/usePermissions';
-import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 export default function MainPage() {
   const router = useRouter();
   const { user, logout, selectedFacility } = useAuthStore();
-  const { facilities } = useMasterStore();
+  useMasterStore();
   const { editLists, addEditList, deleteEditList } = useEditListStore();
   const { isMobile, isTablet } = useResponsive();
   const { showToast } = useToast();
@@ -29,16 +28,10 @@ export default function MainPage() {
   // 編集リスト関連のstate
   const [editListMode, setEditListMode] = useState<'select' | 'create'>('select');
   const [newEditListName, setNewEditListName] = useState('');
-  const [selectedEditListFacilities, setSelectedEditListFacilities] = useState<string[]>([]);
 
   // 削除確認ダイアログ用のstate
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetList, setDeleteTargetList] = useState<{ id: string; name: string } | null>(null);
-
-  // 施設マスタから施設名オプションを生成
-  const facilityOptions = useMemo(() => {
-    return facilities.map(f => f.facilityName);
-  }, [facilities]);
 
   // 権限フック
   const {
@@ -181,17 +174,6 @@ export default function MainPage() {
     setIsEditListModalOpen(false);
     setEditListMode('select');
     setNewEditListName('');
-    setSelectedEditListFacilities([]);
-  };
-
-  const handleFacilityToggle = (facilityName: string) => {
-    setSelectedEditListFacilities(prev => {
-      if (prev.includes(facilityName)) {
-        return prev.filter(f => f !== facilityName);
-      } else {
-        return [...prev, facilityName];
-      }
-    });
   };
 
   const handleCreateEditList = () => {
@@ -199,16 +181,16 @@ export default function MainPage() {
       showToast('編集リスト名を入力してください', 'warning');
       return;
     }
-    if (selectedEditListFacilities.length === 0) {
-      showToast('施設を1つ以上選択してください', 'warning');
+    if (!selectedFacility) {
+      showToast('施設が選択されていません', 'warning');
       return;
     }
 
-    // 対象施設の原本資産を生成
-    const baseAssets = generateMockAssets(selectedEditListFacilities);
+    // ログイン時に選択した施設の原本資産を生成
+    const baseAssets = generateMockAssets([selectedFacility]);
     addEditList({
       name: newEditListName.trim(),
-      facilities: selectedEditListFacilities,
+      facilities: [selectedFacility],
       baseAssets,
     });
 
@@ -820,57 +802,17 @@ export default function MainPage() {
                     />
                   </div>
 
-                  {/* 施設選択 */}
-                  <div className="relative z-10">
-                    <label className="block mb-2 font-semibold text-slate-700">
-                      取り込む原本データ（施設）を選択
-                    </label>
-                    <p className="text-xs text-slate-500 mb-3 text-pretty">
-                      複数選択可能です（選択後もプルダウンから追加できます）
-                    </p>
-
-                    {/* 選択済み施設タグ */}
-                    {selectedEditListFacilities.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {selectedEditListFacilities.map((facility) => (
-                          <span
-                            key={facility}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-500 rounded-full text-sm text-slate-700"
-                          >
-                            {facility}
-                            <button
-                              type="button"
-                              onClick={() => handleFacilityToggle(facility)}
-                              className="bg-transparent border-0 cursor-pointer p-0 text-base text-red-500 leading-none"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
+                  {/* 対象施設（ログイン時に選択済み） */}
+                  {selectedFacility && (
+                    <div className="mb-5">
+                      <label className="block mb-2 font-semibold text-slate-700">
+                        対象施設
+                      </label>
+                      <div className="px-4 py-3 bg-emerald-50 border border-emerald-300 rounded-lg text-sm text-slate-700">
+                        {selectedFacility}
                       </div>
-                    )}
-
-                    {/* 施設プルダウン */}
-                    <SearchableSelect
-                      label=""
-                      value=""
-                      onChange={() => {}}
-                      onSelect={(value) => {
-                        if (value && !selectedEditListFacilities.includes(value)) {
-                          setSelectedEditListFacilities(prev => [...prev, value]);
-                        }
-                      }}
-                      options={['', ...facilityOptions.filter(f => !selectedEditListFacilities.includes(f))]}
-                      placeholder="施設を検索して選択..."
-                      isMobile={isMobile}
-                    />
-
-                    {selectedEditListFacilities.length > 0 && (
-                      <p className="text-sm text-emerald-500 mt-2">
-                        {selectedEditListFacilities.length}件選択中
-                      </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
                   {/* 作成ボタン */}
                   <div className="mt-6 flex gap-3 justify-end">
@@ -882,9 +824,9 @@ export default function MainPage() {
                     </button>
                     <button
                       onClick={handleCreateEditList}
-                      disabled={!newEditListName.trim() || selectedEditListFacilities.length === 0}
+                      disabled={!newEditListName.trim()}
                       className={`px-5 py-2.5 border-0 rounded text-sm font-semibold transition-colors ${
-                        newEditListName.trim() && selectedEditListFacilities.length > 0
+                        newEditListName.trim()
                           ? 'bg-emerald-500 text-white cursor-pointer hover:bg-emerald-600'
                           : 'bg-slate-300 text-slate-400 cursor-not-allowed'
                       }`}
