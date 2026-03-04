@@ -33,6 +33,9 @@ export interface DataMatchingFilters {
   section: string;
   majorCategory: string;
   middleCategory: string;
+  item: string;
+  manufacturer: string;
+  model: string;
   matchingStatus: string;  // '全て' | MatchingStatus
   keyword: string;
 }

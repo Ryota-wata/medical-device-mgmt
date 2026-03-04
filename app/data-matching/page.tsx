@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useDataMatchingFilters } from '@/lib/hooks/useDataMatchingFilters';
@@ -40,18 +40,11 @@ interface MergedListItem {
   memo?: string;
 }
 
-// 一致検索タイプ
-type MatchFilterType = 'none' | 'category' | 'assetNo' | 'item' | 'manufacturer';
+// 一致検索フィルタータイプ
+type MatchFilterType = 'none' | 'category' | 'assetNo' | 'majorCategory' | 'item' | 'manufacturer';
 
-// 突合状況オプション
-const MATCHING_STATUS_OPTIONS: MatchingStatus[] = [
-  '完全一致',
-  '部分一致',
-  '数量不一致',
-  '再確認',
-  '未確認',
-  '未登録'
-];
+// ドラッグ分割の最小サイズ（%）
+const MIN_PANEL_PERCENT = 20;
 
 export default function DataMatchingPage() {
   const router = useRouter();
@@ -65,7 +58,6 @@ export default function DataMatchingPage() {
 
   // 統合リスト（突合結果を蓄積していく）
   const [mergedList, setMergedList] = useState<MergedListItem[]>(() => {
-    // 初期状態: 現有品調査リストをそのまま統合リストとして使用
     return surveyDataSample.map(item => ({
       id: item.id,
       qrCode: item.qrCode,
@@ -82,12 +74,12 @@ export default function DataMatchingPage() {
       quantity: item.quantity,
       acquisitionDate: item.acquisitionDate,
       sourceListNames: ['現有品調査リスト'],
-      matchingStatus: undefined,  // 初期状態は未突合
+      matchingStatus: undefined,
       memo: undefined,
     }));
   });
 
-  // 整形済みリスト（asset-matchingで作成されたリスト）
+  // 整形済みリスト
   const [availableLists, setAvailableLists] = useState<CleanedList[]>([
     {
       id: 'list-1',
@@ -113,18 +105,13 @@ export default function DataMatchingPage() {
   // 現在突合中のリストのデータ
   const [currentLedgerData, setCurrentLedgerData] = useState<LedgerData[]>([]);
 
-  // 突合作業用: 統合リストから未突合のものを抽出
+  // 突合作業用: 統合リストから作業対象
   const [workingMergedData, setWorkingMergedData] = useState<MergedListItem[]>([]);
 
   // UI状態
-  const [ledgerWindowRef, setLedgerWindowRef] = useState<Window | null>(null);
   const [selectedMergedIds, setSelectedMergedIds] = useState<Set<string>>(new Set());
+  const [selectedLedgerIds, setSelectedLedgerIds] = useState<Set<string>>(new Set());
   const [matchFilter, setMatchFilter] = useState<MatchFilterType>('none');
-
-  // 突合実行モーダル
-  const [showMatchModal, setShowMatchModal] = useState(false);
-  const [matchingStatusSelection, setMatchingStatusSelection] = useState<MatchingStatus>('完全一致');
-  const [pendingLedgerIds, setPendingLedgerIds] = useState<string[]>([]);
 
   // 原本リストモーダル
   const [showResultModal, setShowResultModal] = useState(false);
@@ -132,8 +119,10 @@ export default function DataMatchingPage() {
   // タブ切り替え: 'pending' = 対応中, 'completed' = 対応済み
   const [activeTab, setActiveTab] = useState<'pending' | 'completed'>('pending');
 
-  // 対応済みタブ用: 突合状況フィルター
-  const [completedStatusFilter, setCompletedStatusFilter] = useState<string>('');
+  // ドラッグ分割パネル
+  const [splitPercent, setSplitPercent] = useState(50);
+  const isDragging = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // フィルターフック（統合リストに対して適用）
   const {
@@ -142,124 +131,162 @@ export default function DataMatchingPage() {
     filteredData: filteredMergedData,
     departmentOptions,
     sectionOptions,
-    categoryOptions,
+    majorCategoryOptions,
+    middleCategoryOptions,
+    itemOptions,
+    manufacturerOptions,
+    modelOptions,
     resetFilters
   } = useDataMatchingFilters({
     data: workingMergedData.map(item => ({
       ...item,
-      matchingStatus: undefined  // フィルター用にはundefinedに
+      matchingStatus: undefined
     })) as SurveyData[]
   });
 
   // フィルター適用後の作業データ
   const displayMergedData = React.useMemo(() => {
     return workingMergedData.filter(item => {
-      const matchesFilter = filteredMergedData.some(f => f.id === item.id);
-      return matchesFilter;
+      return filteredMergedData.some(f => f.id === item.id);
     });
   }, [workingMergedData, filteredMergedData]);
 
-  // フィルターをLocalStorageに保存
-  useEffect(() => {
-    localStorage.setItem('dataMatchingFilters', JSON.stringify(filters));
+  // 台帳側のフィルタリング（共通フィルターを適用）
+  const filteredLedgerData = React.useMemo(() => {
+    let filtered = currentLedgerData;
 
-    if (ledgerWindowRef && !ledgerWindowRef.closed) {
-      ledgerWindowRef.postMessage({ type: 'FILTER_UPDATE', filters }, '*');
+    if (filters.department) {
+      filtered = filtered.filter(d => d.department === filters.department);
     }
-  }, [filters, ledgerWindowRef]);
-
-  // 一致検索フィルターをLocalStorageに保存
-  useEffect(() => {
-    localStorage.setItem('dataMatchingMatchFilter', matchFilter);
-
-    if (ledgerWindowRef && !ledgerWindowRef.closed) {
-      ledgerWindowRef.postMessage({ type: 'MATCH_FILTER_UPDATE', matchFilter }, '*');
+    if (filters.section) {
+      filtered = filtered.filter(d => d.section === filters.section);
     }
-  }, [matchFilter, ledgerWindowRef]);
+    if (filters.category) {
+      filtered = filtered.filter(d => d.category === filters.category);
+    }
+    if (filters.majorCategory) {
+      filtered = filtered.filter(d => d.majorCategory === filters.majorCategory);
+    }
+    if (filters.middleCategory) {
+      filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
+    }
+    if (filters.item) {
+      filtered = filtered.filter(d => d.item === filters.item);
+    }
+    if (filters.manufacturer) {
+      filtered = filtered.filter(d => d.manufacturer === filters.manufacturer);
+    }
+    if (filters.model) {
+      filtered = filtered.filter(d => d.model === filters.model);
+    }
+    if (filters.keyword) {
+      const keyword = filters.keyword.toLowerCase();
+      filtered = filtered.filter(d =>
+        d.assetNo?.toLowerCase().includes(keyword) ||
+        d.item?.toLowerCase().includes(keyword) ||
+        d.manufacturer?.toLowerCase().includes(keyword) ||
+        d.model?.toLowerCase().includes(keyword) ||
+        d.roomName?.toLowerCase().includes(keyword)
+      );
+    }
 
-  // 他のウィンドウからのメッセージを受信
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'FILTER_UPDATE' && event.source !== window) {
-        setFilters(event.data.filters);
+    // 台帳は未突合のみ表示
+    filtered = filtered.filter(d => !d.matchingStatus);
+
+    return filtered;
+  }, [currentLedgerData, filters]);
+
+  // 現在選択中のリスト
+  const currentList = availableLists.find(l => l.id === selectedListId);
+
+  // タブに基づいてフィルタリング
+  const tabFilteredData = React.useMemo(() => {
+    const currentListName = currentList?.name || '';
+
+    return displayMergedData.filter(item => {
+      const isMatchedWithCurrentLedger = item.sourceListNames.includes(currentListName) ||
+        item.sourceListNames.includes(`${currentListName}(未登録)`);
+
+      if (activeTab === 'pending') {
+        // 対応中: 現在の台帳と突合されていないもの
+        return !isMatchedWithCurrentLedger;
+      } else {
+        // 対応済み: 現在の台帳と突合済み（再確認含む）
+        return isMatchedWithCurrentLedger;
       }
-      if (event.data.type === 'LEDGER_SELECTION') {
-        (window as any).ledgerSelectedIds = event.data.selectedIds;
+    });
+  }, [displayMergedData, activeTab, currentList?.name]);
+
+  // 一致検索フィルターを適用（上パネル）
+  const matchFilteredData = React.useMemo(() => {
+    if (matchFilter === 'none') {
+      return tabFilteredData;
+    }
+
+    const ledgerValues = new Set<string>();
+    filteredLedgerData.forEach(l => {
+      switch (matchFilter) {
+        case 'category': ledgerValues.add(l.category); break;
+        case 'assetNo': if (l.assetNo) ledgerValues.add(l.assetNo); break;
+        case 'majorCategory': ledgerValues.add(l.majorCategory); break;
+        case 'item': ledgerValues.add(l.item); break;
+        case 'manufacturer': if (l.manufacturer) ledgerValues.add(l.manufacturer); break;
       }
-      if (event.data.type === 'MATCH_FILTER_UPDATE' && event.source !== window) {
-        setMatchFilter(event.data.matchFilter);
+    });
+
+    return tabFilteredData.filter(item => {
+      switch (matchFilter) {
+        case 'category': return ledgerValues.has(item.category);
+        case 'assetNo': return item.assetNo ? ledgerValues.has(item.assetNo) : false;
+        case 'majorCategory': return ledgerValues.has(item.majorCategory);
+        case 'item': return ledgerValues.has(item.item);
+        case 'manufacturer': return item.manufacturer ? ledgerValues.has(item.manufacturer) : false;
+        default: return true;
       }
-      // 台帳側からの「未確認」確定通知（台帳にあって統合リストにない）
-      if (event.data.type === 'LEDGER_UNCONFIRMED') {
-        handleLedgerUnconfirmed(event.data.ledgerItems);
+    });
+  }, [tabFilteredData, matchFilter, filteredLedgerData]);
+
+  // 一致検索フィルターを適用（下パネル）
+  const ledgerMatchFilteredData = React.useMemo(() => {
+    if (matchFilter === 'none') {
+      return filteredLedgerData;
+    }
+
+    const mergedValues = new Set<string>();
+    tabFilteredData.forEach(m => {
+      switch (matchFilter) {
+        case 'category': mergedValues.add(m.category); break;
+        case 'assetNo': if (m.assetNo) mergedValues.add(m.assetNo); break;
+        case 'majorCategory': mergedValues.add(m.majorCategory); break;
+        case 'item': mergedValues.add(m.item); break;
+        case 'manufacturer': if (m.manufacturer) mergedValues.add(m.manufacturer); break;
       }
-    };
+    });
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [selectedListId]);
-
-  // 台帳側で「未確認」になったレコードを統合リストに追加
-  const handleLedgerUnconfirmed = (ledgerItems: any[]) => {
-    const currentList = availableLists.find(l => l.id === selectedListId);
-    const currentListName = currentList?.name || '台帳';
-
-    const newItems: MergedListItem[] = ledgerItems.map(item => ({
-      id: `merged-ledger-${item.id}-${Date.now()}`,
-      assetNo: item.assetNo,
-      meNo: item.meNo,
-      department: item.department,
-      section: item.section,
-      roomName: item.roomName,
-      category: item.category,
-      majorCategory: item.majorCategory,
-      middleCategory: item.middleCategory,
-      item: item.item,
-      manufacturer: item.manufacturer,
-      model: item.model,
-      serialNo: item.serialNo,
-      quantity: item.quantity,
-      acquisitionDate: item.acquisitionDate,
-      sourceListNames: [currentListName],
-      matchingStatus: '未確認' as MatchingStatus,
-      memo: '台帳のみ存在（現場に未確認）',
-    }));
-
-    // 統合リストに追加
-    setMergedList(prev => [...prev, ...newItems]);
-
-    // workingMergedDataにも追加（UIに即時反映させるため）
-    setWorkingMergedData(prev => [...prev, ...newItems]);
-
-    // 台帳データを更新
-    setCurrentLedgerData(prev => prev.map(l => {
-      const matched = ledgerItems.find(li => li.id === l.id);
-      if (matched) {
-        return { ...l, matchingStatus: '未確認' as MatchingStatus };
+    return filteredLedgerData.filter(item => {
+      switch (matchFilter) {
+        case 'category': return mergedValues.has(item.category);
+        case 'assetNo': return item.assetNo ? mergedValues.has(item.assetNo) : false;
+        case 'majorCategory': return mergedValues.has(item.majorCategory);
+        case 'item': return mergedValues.has(item.item);
+        case 'manufacturer': return item.manufacturer ? mergedValues.has(item.manufacturer) : false;
+        default: return true;
       }
-      return l;
-    }));
-  };
+    });
+  }, [filteredLedgerData, matchFilter, tabFilteredData]);
 
   const handleBack = () => {
     if (mode === 'matching') {
       if (confirm('突合作業を中断してリスト選択に戻りますか？\n作業中の突合結果は保持されます。')) {
-        closeLedgerWindow();
         setMode('select');
         setSelectedListId(null);
         setSelectedMergedIds(new Set());
+        setSelectedLedgerIds(new Set());
         setMatchFilter('none');
       }
     } else {
       router.push('/main');
     }
-  };
-
-  const closeLedgerWindow = () => {
-    if (ledgerWindowRef && !ledgerWindowRef.closed) {
-      ledgerWindowRef.close();
-    }
-    setLedgerWindowRef(null);
   };
 
   // リスト選択して突合開始
@@ -274,11 +301,9 @@ export default function DataMatchingPage() {
 
     setMode('matching');
 
-    // リストの種類に応じてデータをセット
     if (list.type === 'fixed-asset') {
       setCurrentLedgerData(ledgerDataSample.map(d => ({ ...d, matchingStatus: undefined })));
     } else if (list.type === 'me-ledger') {
-      // ME管理台帳データをLedgerData形式に変換
       setCurrentLedgerData(meLedgerDataSample.map(d => ({
         id: d.id,
         assetNo: d.assetNo || d.meNo,
@@ -297,43 +322,11 @@ export default function DataMatchingPage() {
       })));
     }
 
-    // 作業用データ: 統合リストの全件を作業対象にする
-    // （既に突合済みのものも表示するが、未突合のものだけ選択可能にする）
     setWorkingMergedData([...mergedList]);
   };
 
-  const openLedgerWindow = () => {
-    const width = 1400;
-    const height = 800;
-    const left = window.screen.width / 2 - width / 2;
-    const top = window.screen.height / 2 - height / 2;
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
-    const currentList = availableLists.find(l => l.id === selectedListId);
-    const ledgerPath = currentList?.type === 'me-ledger'
-      ? `${basePath}/data-matching/me-ledger`
-      : `${basePath}/data-matching/ledger`;
-
-    const newWindow = window.open(
-      ledgerPath,
-      'ledgerWindow',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-
-    if (newWindow) {
-      setLedgerWindowRef(newWindow);
-
-      const checkWindowClosed = setInterval(() => {
-        if (newWindow.closed) {
-          setLedgerWindowRef(null);
-          clearInterval(checkWindowClosed);
-        }
-      }, 1000);
-    }
-  };
-
-  // チェックボックスの選択処理
-  const handleSelectRow = (id: string) => {
+  // 統合リスト側チェックボックス
+  const handleSelectMergedRow = (id: string) => {
     const newSelected = new Set(selectedMergedIds);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -343,8 +336,7 @@ export default function DataMatchingPage() {
     setSelectedMergedIds(newSelected);
   };
 
-  // 一括選択処理
-  const handleSelectAll = () => {
+  const handleSelectAllMerged = () => {
     if (selectedMergedIds.size === matchFilteredData.length) {
       setSelectedMergedIds(new Set());
     } else {
@@ -352,32 +344,40 @@ export default function DataMatchingPage() {
     }
   };
 
-  // 突合実行ボタンクリック時
-  const handleMatchClick = () => {
+  // 台帳側チェックボックス
+  const handleSelectLedgerRow = (id: string) => {
+    const newSelected = new Set(selectedLedgerIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedLedgerIds(newSelected);
+  };
+
+  const handleSelectAllLedger = () => {
+    if (selectedLedgerIds.size === ledgerMatchFilteredData.length) {
+      setSelectedLedgerIds(new Set());
+    } else {
+      setSelectedLedgerIds(new Set(ledgerMatchFilteredData.map(d => d.id)));
+    }
+  };
+
+  // 突合状況を直接登録（アクションボタンから呼び出し）
+  const executeMatchWithStatus = (status: MatchingStatus) => {
     if (selectedMergedIds.size === 0) {
       alert('統合リスト側から突合する項目を選択してください');
       return;
     }
 
-    const ledgerSelectedIds = (window as any).ledgerSelectedIds as string[] | undefined;
-    if (!ledgerSelectedIds || ledgerSelectedIds.length === 0) {
+    if (selectedLedgerIds.size === 0) {
       alert('台帳から突合する項目を選択してください');
       return;
     }
 
-    setPendingLedgerIds(ledgerSelectedIds);
-    setMatchingStatusSelection('完全一致');
-    setShowMatchModal(true);
-  };
-
-  // 突合を確定
-  const executeMatch = () => {
-    const now = new Date().toISOString();
-    const currentList = availableLists.find(l => l.id === selectedListId);
     const currentListName = currentList?.name || '';
+    const pendingLedgerIds = Array.from(selectedLedgerIds);
 
-    // 選択された統合リストアイテム
-    const selectedMergedItems = workingMergedData.filter(m => selectedMergedIds.has(m.id));
     const selectedLedgers = currentLedgerData.filter(l => pendingLedgerIds.includes(l.id));
 
     // 統合リストを更新
@@ -388,13 +388,12 @@ export default function DataMatchingPage() {
           ...item,
           assetNo: item.assetNo || ledger?.assetNo,
           sourceListNames: [...item.sourceListNames, currentListName],
-          matchingStatus: matchingStatusSelection,
+          matchingStatus: status,
         };
       }
       return item;
     });
 
-    // 作業データも更新
     const updatedWorkingData = workingMergedData.map(item => {
       if (selectedMergedIds.has(item.id)) {
         const ledger = selectedLedgers[0];
@@ -402,18 +401,18 @@ export default function DataMatchingPage() {
           ...item,
           assetNo: item.assetNo || ledger?.assetNo,
           sourceListNames: [...item.sourceListNames, currentListName],
-          matchingStatus: matchingStatusSelection,
+          matchingStatus: status,
         };
       }
       return item;
     });
 
-    // 台帳データも更新
+    const now = new Date().toISOString();
     const updatedLedgerData = currentLedgerData.map(item => {
       if (pendingLedgerIds.includes(item.id)) {
         return {
           ...item,
-          matchingStatus: matchingStatusSelection,
+          matchingStatus: status,
           matchedAt: now,
           matchedBy: '現在のユーザー'
         };
@@ -425,18 +424,9 @@ export default function DataMatchingPage() {
     setWorkingMergedData(updatedWorkingData);
     setCurrentLedgerData(updatedLedgerData);
     setSelectedMergedIds(new Set());
-    setShowMatchModal(false);
+    setSelectedLedgerIds(new Set());
 
-    // 台帳側にも通知
-    if (ledgerWindowRef && !ledgerWindowRef.closed) {
-      ledgerWindowRef.postMessage({
-        type: 'MATCH_COMPLETE',
-        ledgerIds: pendingLedgerIds,
-        matchingStatus: matchingStatusSelection
-      }, '*');
-    }
-
-    alert(`${selectedMergedIds.size}件の突合が完了しました（${matchingStatusSelection}）`);
+    alert(`${selectedMergedIds.size}件の突合が完了しました（${status}）`);
   };
 
   // 未登録として登録（統合リストにあるが台帳にない）
@@ -446,7 +436,6 @@ export default function DataMatchingPage() {
       return;
     }
 
-    const currentList = availableLists.find(l => l.id === selectedListId);
     const confirmMark = confirm(
       `選択した${selectedMergedIds.size}件を「未登録」（${currentList?.name}に存在しない）として登録しますか？`
     );
@@ -454,7 +443,6 @@ export default function DataMatchingPage() {
 
     const currentListName = currentList?.name || '';
 
-    // 統合リストを更新
     const updatedMergedList = mergedList.map(item => {
       if (selectedMergedIds.has(item.id)) {
         return {
@@ -467,7 +455,6 @@ export default function DataMatchingPage() {
       return item;
     });
 
-    // 作業データも更新
     const updatedWorkingData = workingMergedData.map(item => {
       if (selectedMergedIds.has(item.id)) {
         return {
@@ -487,74 +474,61 @@ export default function DataMatchingPage() {
     alert(`${selectedMergedIds.size}件を「未登録」として登録しました`);
   };
 
-  // 現在選択中のリスト（useMemoより先に定義）
-  const currentList = availableLists.find(l => l.id === selectedListId);
-
-  // タブに基づいてフィルタリング
-  const tabFilteredData = React.useMemo(() => {
-    const currentListName = currentList?.name || '';
-
-    return displayMergedData.filter(item => {
-      const isMatchedWithCurrentLedger = item.sourceListNames.includes(currentListName) ||
-        item.sourceListNames.includes(`${currentListName}(未登録)`);
-      const isRecheck = item.matchingStatus === '再確認';
-
-      if (activeTab === 'pending') {
-        // 対応中: 現在の台帳と突合されていない、または再確認
-        return !isMatchedWithCurrentLedger || isRecheck;
-      } else {
-        // 対応済み: 現在の台帳と突合済みで、再確認ではない
-        const isCompleted = isMatchedWithCurrentLedger && !isRecheck;
-        if (!isCompleted) return false;
-
-        // 突合状況フィルターを適用
-        if (completedStatusFilter && item.matchingStatus !== completedStatusFilter) {
-          return false;
-        }
-        return true;
-      }
-    });
-  }, [displayMergedData, activeTab, currentList?.name, completedStatusFilter]);
-
-  // 一致検索フィルターを適用
-  const matchFilteredData = React.useMemo(() => {
-    if (matchFilter === 'none') {
-      return tabFilteredData;
+  // 未確認として確定（台帳にあるが統合リストにない）
+  const handleMarkAsUnconfirmed = () => {
+    if (selectedLedgerIds.size === 0) {
+      alert('「未確認」として確定するレコードを選択してください');
+      return;
     }
 
-    const ledgerValues = new Set<string>();
-    currentLedgerData.filter(l => !l.matchingStatus).forEach(ledger => {
-      switch (matchFilter) {
-        case 'category':
-          if (ledger.category) ledgerValues.add(ledger.category);
-          break;
-        case 'assetNo':
-          if (ledger.assetNo) ledgerValues.add(ledger.assetNo);
-          break;
-        case 'item':
-          if (ledger.item) ledgerValues.add(ledger.item);
-          break;
-        case 'manufacturer':
-          if (ledger.manufacturer) ledgerValues.add(ledger.manufacturer);
-          break;
-      }
-    });
+    const confirmMark = confirm(
+      `選択した${selectedLedgerIds.size}件を「未確認」（現場に存在しない）として確定しますか？\n確定後、統合リストに追加されます。`
+    );
+    if (!confirmMark) return;
 
-    return tabFilteredData.filter(item => {
-      switch (matchFilter) {
-        case 'category':
-          return item.category && ledgerValues.has(item.category);
-        case 'assetNo':
-          return item.assetNo && ledgerValues.has(item.assetNo);
-        case 'item':
-          return item.item && ledgerValues.has(item.item);
-        case 'manufacturer':
-          return item.manufacturer && ledgerValues.has(item.manufacturer);
-        default:
-          return true;
+    const now = new Date().toISOString();
+    const currentListName = currentList?.name || '台帳';
+    const selectedItems = currentLedgerData.filter(d => selectedLedgerIds.has(d.id));
+
+    // 統合リストに追加
+    const newItems: MergedListItem[] = selectedItems.map(item => ({
+      id: `merged-ledger-${item.id}-${Date.now()}`,
+      assetNo: item.assetNo,
+      department: item.department,
+      section: item.section,
+      roomName: item.roomName,
+      category: item.category,
+      majorCategory: item.majorCategory,
+      middleCategory: item.middleCategory,
+      item: item.item,
+      manufacturer: item.manufacturer,
+      model: item.model,
+      quantity: item.quantity,
+      acquisitionDate: item.acquisitionDate,
+      sourceListNames: [currentListName],
+      matchingStatus: '未確認' as MatchingStatus,
+      memo: '台帳のみ存在（現場に未確認）',
+    }));
+
+    setMergedList(prev => [...prev, ...newItems]);
+    setWorkingMergedData(prev => [...prev, ...newItems]);
+
+    // 台帳データを更新
+    setCurrentLedgerData(prev => prev.map(l => {
+      if (selectedLedgerIds.has(l.id)) {
+        return {
+          ...l,
+          matchingStatus: '未確認' as MatchingStatus,
+          matchedAt: now,
+          matchedBy: '現在のユーザー'
+        };
       }
-    });
-  }, [tabFilteredData, matchFilter, currentLedgerData]);
+      return l;
+    }));
+
+    setSelectedLedgerIds(new Set());
+    alert(`${selectedLedgerIds.size}件を「未確認」として確定しました。統合リストに追加されます。`);
+  };
 
   const handleMatchFilterClick = (type: MatchFilterType) => {
     if (matchFilter === type) {
@@ -564,21 +538,15 @@ export default function DataMatchingPage() {
     }
   };
 
-  // タブ切り替え時に選択と一致検索をクリア
+  // タブ切り替え時に選択をクリア
   const handleTabChange = (tab: 'pending' | 'completed') => {
     setActiveTab(tab);
     setSelectedMergedIds(new Set());
-    if (tab === 'completed') {
-      setMatchFilter('none');
-    } else {
-      // 対応中タブに切り替え時は突合状況フィルターをリセット
-      setCompletedStatusFilter('');
-    }
+    setMatchFilter('none');
   };
 
   // 現在のリストとの突合を完了
   const completeCurrentMatching = () => {
-    const currentList = availableLists.find(l => l.id === selectedListId);
     if (!currentList) return;
 
     const unmatchedMergedCount = workingMergedData.filter(m =>
@@ -597,16 +565,13 @@ export default function DataMatchingPage() {
       if (!confirmComplete) return;
     }
 
-    // 統合リスト名の履歴を更新
     setMergedListNames(prev => [...prev, currentList.name]);
-
-    // このリストを選択肢から削除
     setAvailableLists(prev => prev.filter(l => l.id !== selectedListId));
 
-    closeLedgerWindow();
     setMode('select');
     setSelectedListId(null);
     setSelectedMergedIds(new Set());
+    setSelectedLedgerIds(new Set());
     setMatchFilter('none');
 
     alert(`「${currentList.name}」との突合が完了しました。\n統合リストが更新されました。`);
@@ -625,37 +590,53 @@ export default function DataMatchingPage() {
     }
   };
 
-  // 統計情報
-  const stats = {
-    mergedTotal: mergedList.length,
-    currentLedgerTotal: currentLedgerData.length,
-    currentLedgerUnmatched: currentLedgerData.filter(d => !d.matchingStatus).length,
-    currentLedgerMatched: currentLedgerData.filter(d => d.matchingStatus).length,
-  };
-
   // タブ別件数計算
-  // 対応中: 現在の台帳とまだ突合されていないもの + 再確認
   const pendingItems = workingMergedData.filter(item => {
     const isMatchedWithCurrentLedger = item.sourceListNames.includes(currentList?.name || '') ||
       item.sourceListNames.includes(`${currentList?.name}(未登録)`);
-    const isRecheck = item.matchingStatus === '再確認';
-    // 現在の台帳と突合されていない、または再確認のものが対応中
-    return !isMatchedWithCurrentLedger || isRecheck;
+    return !isMatchedWithCurrentLedger;
   });
 
-  // 対応済み: 現在の台帳と突合済み（再確認以外）
   const completedItems = workingMergedData.filter(item => {
     const isMatchedWithCurrentLedger = item.sourceListNames.includes(currentList?.name || '') ||
       item.sourceListNames.includes(`${currentList?.name}(未登録)`);
-    const isRecheck = item.matchingStatus === '再確認';
-    // 現在の台帳と突合済みで、再確認ではないものが対応済み
-    return isMatchedWithCurrentLedger && !isRecheck;
+    return isMatchedWithCurrentLedger;
   });
+
+  // 台帳統計
+  const ledgerUnmatchedCount = currentLedgerData.filter(d => !d.matchingStatus).length;
+  const ledgerMatchedCount = currentLedgerData.filter(d => !!d.matchingStatus).length;
 
   // 進捗計算
   const totalItems = workingMergedData.length;
   const completedCount = completedItems.length;
   const progressPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : 0;
+
+  // ドラッグハンドル
+  const handleMouseDown = useCallback(() => {
+    isDragging.current = true;
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const percent = ((e.clientY - rect.top) / rect.height) * 100;
+      const clamped = Math.min(Math.max(percent, MIN_PANEL_PERCENT), 100 - MIN_PANEL_PERCENT);
+      setSplitPercent(clamped);
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, []);
 
   if (isMobile) {
     return (
@@ -746,7 +727,6 @@ export default function DataMatchingPage() {
                 現在の統合リスト
               </h2>
 
-              {/* 統合履歴 */}
               <div style={{
                 padding: '16px',
                 backgroundColor: '#f8f9fa',
@@ -936,154 +916,30 @@ export default function DataMatchingPage() {
     );
   }
 
-  // === 突合作業モード ===
-  function renderResultModal() {
-    return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}>
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          width: '95%',
-          maxWidth: '1400px',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-        }}>
-          <div style={{
-            padding: '20px',
-            borderBottom: '1px solid #e0e0e0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>
-                統合リスト
-              </h3>
-              <div style={{ fontSize: '13px', color: '#5a6c7d', marginTop: '4px' }}>
-                統合元: {mergedListNames.join(' + ')} = {mergedList.length}件
-              </div>
-            </div>
-            <button
-              onClick={() => setShowResultModal(false)}
-              style={{
-                fontSize: '24px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                color: '#999'
-              }}
-              aria-label="閉じる"
-            >
-              ×
-            </button>
-          </div>
+  // === 突合作業モード（上下分割） ===
 
-          <div style={{ padding: '20px', flex: 1, overflow: 'auto' }}>
-            <div style={{ overflow: 'auto', maxHeight: '500px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5', position: 'sticky', top: 0 }}>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>QRコード</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部署</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>数量</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mergedList.map((row) => (
-                    <tr key={row.id}>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0' }}>
-                        {row.matchingStatus ? (
-                          <span style={{
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            backgroundColor: getStatusColor(row.matchingStatus) + '20',
-                            color: getStatusColor(row.matchingStatus),
-                            fontWeight: '600'
-                          }}>
-                            {row.matchingStatus}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.qrCode || '-'}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style={{
-            padding: '20px',
-            borderTop: '1px solid #e0e0e0',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '12px'
-          }}>
-            <button
-              onClick={() => setShowResultModal(false)}
-              style={{
-                padding: '10px 24px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              閉じる
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // セルスタイルの共通定義
+  const thStyle: React.CSSProperties = { padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '12px', textAlign: 'left' };
+  const tdStyle: React.CSSProperties = { padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '12px' };
 
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh',
+      height: '100dvh',
       backgroundColor: '#f5f5f5'
     }}>
       {/* Header */}
       <header style={{
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px'
+        padding: '12px 24px',
+        flexShrink: 0
       }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          maxWidth: '1600px',
-          margin: '0 auto'
+          alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
@@ -1102,7 +958,7 @@ export default function DataMatchingPage() {
             >
               <span>←</span> リスト選択に戻る
             </button>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
               データ統合
             </h1>
             <span style={{
@@ -1116,7 +972,26 @@ export default function DataMatchingPage() {
               突合中: {mergedListNames.length === 1 ? '現有品調査リスト' : '統合リスト'} × {currentList?.name}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {/* 進捗 */}
+            <span style={{ fontSize: '13px', color: '#5a6c7d', fontVariantNumeric: 'tabular-nums' }}>
+              {completedCount}/{totalItems}件 ({progressPercent}%)
+            </span>
+            <div style={{
+              width: '120px',
+              height: '8px',
+              backgroundColor: '#e0e0e0',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: `${progressPercent}%`,
+                height: '100%',
+                backgroundColor: progressPercent === 100 ? '#4caf50' : '#1976d2',
+                borderRadius: '4px',
+                transition: 'width 0.3s ease'
+              }} />
+            </div>
             <button
               onClick={completeCurrentMatching}
               style={{
@@ -1132,566 +1007,564 @@ export default function DataMatchingPage() {
             >
               このリストとの突合を完了
             </button>
-            <button
-              onClick={openLedgerWindow}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#1976d2',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <span>🗗</span> {currentList?.name}を別窓で開く
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Progress Bar */}
+      {/* 共通フィルター */}
       <div style={{
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px'
+        padding: '8px 24px',
+        flexShrink: 0
       }}>
         <div style={{
-          maxWidth: '1600px',
-          margin: '0 auto'
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}>
-          {/* プログレスバー */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px'
-            }}>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#2c3e50' }}>
-                突合進捗
-              </span>
-              <span style={{ fontSize: '14px', color: '#5a6c7d', fontVariantNumeric: 'tabular-nums' }}>
-                {completedCount}/{totalItems}件 ({progressPercent}%)
-              </span>
-            </div>
-            <div style={{
-              width: '100%',
-              height: '12px',
-              backgroundColor: '#e0e0e0',
-              borderRadius: '6px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                width: `${progressPercent}%`,
-                height: '100%',
-                backgroundColor: progressPercent === 100 ? '#4caf50' : '#1976d2',
-                borderRadius: '6px',
-                transition: 'width 0.3s ease'
-              }} />
-            </div>
-          </div>
-
-          {/* タブ */}
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            borderBottom: '2px solid #e0e0e0',
-            marginBottom: '-2px'
-          }}>
-            <button
-              onClick={() => handleTabChange('pending')}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderBottom: activeTab === 'pending' ? '2px solid #1976d2' : '2px solid transparent',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: activeTab === 'pending' ? '600' : '400',
-                color: activeTab === 'pending' ? '#1976d2' : '#5a6c7d',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              対応中
-              <span style={{
-                padding: '2px 8px',
-                backgroundColor: activeTab === 'pending' ? '#e3f2fd' : '#f5f5f5',
-                color: activeTab === 'pending' ? '#1976d2' : '#666',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: '600',
-                fontVariantNumeric: 'tabular-nums'
-              }}>
-                {pendingItems.length}
-              </span>
-            </button>
-            <button
-              onClick={() => handleTabChange('completed')}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                borderBottom: activeTab === 'completed' ? '2px solid #4caf50' : '2px solid transparent',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: activeTab === 'completed' ? '600' : '400',
-                color: activeTab === 'completed' ? '#4caf50' : '#5a6c7d',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              対応済み
-              <span style={{
-                padding: '2px 8px',
-                backgroundColor: activeTab === 'completed' ? '#e8f5e9' : '#f5f5f5',
-                color: activeTab === 'completed' ? '#4caf50' : '#666',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: '600',
-                fontVariantNumeric: 'tabular-nums'
-              }}>
-                {completedItems.length}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 使用方法パネル（対応中タブのみ表示） */}
-      {activeTab === 'pending' && (
-        <div style={{
-          backgroundColor: '#e3f2fd',
-          borderBottom: '1px solid #90caf9',
-          padding: '12px 24px'
-        }}>
-          <div style={{
-            maxWidth: '1600px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
-            flexWrap: 'wrap',
-            fontSize: '14px',
-            color: '#1976d2'
-          }}>
-            <span style={{ fontWeight: '600' }}>手順:</span>
-            <span>①「{currentList?.name}を別窓で開く」</span>
-            <span>→</span>
-            <span>②{mergedListNames.length === 1 ? '現有品調査リスト' : '統合リスト'}の項目をチェック</span>
-            <span>→</span>
-            <span>③別窓で{currentList?.name}の項目をチェック</span>
-            <span>→</span>
-            <span style={{ fontWeight: '600', color: '#27ae60' }}>④「台帳と突合実行」</span>
-          </div>
-        </div>
-      )}
-
-      {/* 一致検索パネル（対応中タブのみ表示） */}
-      {activeTab === 'pending' && (
-        <div style={{
-          backgroundColor: '#fff8e1',
-          borderBottom: '1px solid #ffe082',
-          padding: '12px 24px'
-        }}>
-          <div style={{
-            maxWidth: '1600px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            flexWrap: 'wrap'
-          }}>
-            <span style={{ fontSize: '14px', color: '#f57c00', fontWeight: '600' }}>
-              一致検索（{currentList?.name}との照合）:
-            </span>
-            {['category', 'assetNo', 'item', 'manufacturer'].map((type) => (
-              <button
-                key={type}
-                onClick={() => handleMatchFilterClick(type as MatchFilterType)}
-                style={{
-                  padding: '6px 16px',
-                  backgroundColor: matchFilter === type ? '#f57c00' : '#ffffff',
-                  color: matchFilter === type ? '#ffffff' : '#f57c00',
-                  border: '1px solid #f57c00',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {type === 'category' ? 'カテゴリ' : type === 'assetNo' ? '資産番号' : type === 'item' ? '品目' : 'メーカー'}一致
-              </button>
+          <select
+            value={filters.department}
+            onChange={(e) => setFilters({ ...filters, department: e.target.value, section: '' })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">共通部門</option>
+            {departmentOptions.map(dept => (
+              <option key={dept} value={dept}>{dept}</option>
             ))}
-            {matchFilter !== 'none' && (
-              <button
-                onClick={() => setMatchFilter('none')}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#f5f5f5',
-                  color: '#666',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  marginLeft: '8px'
-                }}
-              >
-                一致検索解除
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+          </select>
 
-      {/* Filter Panel */}
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px'
-      }}>
-        <div style={{
-          maxWidth: '1600px',
-          margin: '0 auto'
-        }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '12px'
-          }}>
-            {/* 対応済みタブ時のみ: 突合状況フィルター */}
-            {activeTab === 'completed' && (
-              <select
-                value={completedStatusFilter}
-                onChange={(e) => setCompletedStatusFilter(e.target.value)}
-                style={{
-                  padding: '8px',
-                  border: '1px solid #4caf50',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  backgroundColor: completedStatusFilter ? '#e8f5e9' : 'white'
-                }}
-              >
-                <option value="">突合状況: 全て</option>
-                <option value="完全一致">完全一致</option>
-                <option value="部分一致">部分一致</option>
-                <option value="数量不一致">数量不一致</option>
-                <option value="未確認">未確認</option>
-                <option value="未登録">未登録</option>
-              </select>
-            )}
+          <select
+            value={filters.section}
+            onChange={(e) => setFilters({ ...filters, section: e.target.value })}
+            disabled={!filters.department}
+            style={{
+              padding: '6px 8px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              fontSize: '13px',
+              backgroundColor: filters.department ? 'white' : '#f5f5f5'
+            }}
+          >
+            <option value="">共通部署</option>
+            {sectionOptions.map(section => (
+              <option key={section} value={section}>{section}</option>
+            ))}
+          </select>
 
-            <select
-              value={filters.department}
-              onChange={(e) => setFilters({ ...filters, department: e.target.value, section: '' })}
-              style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="">部門: 全て</option>
-              {departmentOptions.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-            </select>
+          <select
+            value={filters.majorCategory}
+            onChange={(e) => setFilters({ ...filters, majorCategory: e.target.value })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">大分類</option>
+            {majorCategoryOptions.map(major => (
+              <option key={major} value={major}>{major}</option>
+            ))}
+          </select>
 
-            <select
-              value={filters.section}
-              onChange={(e) => setFilters({ ...filters, section: e.target.value })}
-              disabled={!filters.department}
-              style={{
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: filters.department ? 'white' : '#f5f5f5'
-              }}
-            >
-              <option value="">部署: 全て</option>
-              {sectionOptions.map(section => (
-                <option key={section} value={section}>{section}</option>
-              ))}
-            </select>
+          <select
+            value={filters.middleCategory}
+            onChange={(e) => setFilters({ ...filters, middleCategory: e.target.value })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">中分類</option>
+            {middleCategoryOptions.map(middle => (
+              <option key={middle} value={middle}>{middle}</option>
+            ))}
+          </select>
 
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="">カテゴリ: 全て</option>
-              {categoryOptions.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+          <select
+            value={filters.item}
+            onChange={(e) => setFilters({ ...filters, item: e.target.value })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">個体管理品目</option>
+            {itemOptions.map(it => (
+              <option key={it} value={it}>{it}</option>
+            ))}
+          </select>
 
-            <input
-              type="text"
-              placeholder="キーワード検索..."
-              value={filters.keyword}
-              onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
-              style={{ padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '14px' }}
-            />
+          <select
+            value={filters.manufacturer}
+            onChange={(e) => setFilters({ ...filters, manufacturer: e.target.value })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">メーカー</option>
+            {manufacturerOptions.map(mfr => (
+              <option key={mfr} value={mfr}>{mfr}</option>
+            ))}
+          </select>
 
-            <button
-              onClick={() => {
-                resetFilters();
-                setCompletedStatusFilter('');
-              }}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#f5f5f5',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              フィルター解除
-            </button>
-          </div>
+          <select
+            value={filters.model}
+            onChange={(e) => setFilters({ ...filters, model: e.target.value })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">型式</option>
+            {modelOptions.map(mdl => (
+              <option key={mdl} value={mdl}>{mdl}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => {
+              resetFilters();
+              setMatchFilter('none');
+            }}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#f5f5f5',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px'
+            }}
+          >
+            フィルター解除
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+      {/* 上下分割パネル */}
+      <div ref={containerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* 上パネル: 統合リスト */}
+        <div style={{ height: `${splitPercent}%`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* 上パネル ヘッダー */}
           <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            marginBottom: '16px',
-            padding: '16px'
+            padding: '8px 16px',
+            backgroundColor: '#e3f2fd',
+            borderBottom: '1px solid #90caf9',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexShrink: 0
           }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '12px',
-              gap: '12px'
-            }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1976d2' }}>
                 {mergedListNames.length === 1 ? '現有品調査リスト' : '統合リスト'}
-                <span style={{
-                  marginLeft: '12px',
-                  padding: '4px 12px',
-                  backgroundColor: activeTab === 'pending' ? '#e3f2fd' : '#e8f5e9',
-                  color: activeTab === 'pending' ? '#1976d2' : '#4caf50',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
-                  {activeTab === 'pending' ? '対応中' : '対応済み'}
-                </span>
-              </h2>
-              {activeTab === 'pending' ? (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
-                    選択: {selectedMergedIds.size}件
-                  </span>
+              </span>
+
+              {/* タブ */}
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button
+                  onClick={() => handleTabChange('pending')}
+                  style={{
+                    padding: '4px 12px',
+                    backgroundColor: activeTab === 'pending' ? '#1976d2' : 'transparent',
+                    color: activeTab === 'pending' ? 'white' : '#1976d2',
+                    border: activeTab === 'pending' ? 'none' : '1px solid #1976d2',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}
+                >
+                  対応中 {pendingItems.length}
+                </button>
+                <button
+                  onClick={() => handleTabChange('completed')}
+                  style={{
+                    padding: '4px 12px',
+                    backgroundColor: activeTab === 'completed' ? '#4caf50' : 'transparent',
+                    color: activeTab === 'completed' ? 'white' : '#4caf50',
+                    border: activeTab === 'completed' ? 'none' : '1px solid #4caf50',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}
+                >
+                  対応済み {completedItems.length}
+                </button>
+              </div>
+
+              {/* 一致検索ボタン */}
+              <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#5a6c7d', marginRight: '4px' }}>一致検索:</span>
+                {([
+                  { value: 'category' as MatchFilterType, label: 'カテゴリ' },
+                  { value: 'assetNo' as MatchFilterType, label: '資産番号' },
+                  { value: 'majorCategory' as MatchFilterType, label: '大分類' },
+                  { value: 'item' as MatchFilterType, label: '品目' },
+                  { value: 'manufacturer' as MatchFilterType, label: 'メーカー' },
+                ]).map(({ value, label }) => (
                   <button
-                    onClick={handleSelectAll}
+                    key={value}
+                    onClick={() => handleMatchFilterClick(value)}
                     style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#f0f0f0',
+                      padding: '4px 10px',
+                      backgroundColor: matchFilter === value ? '#1976d2' : '#ffffff',
+                      color: matchFilter === value ? '#ffffff' : '#1976d2',
+                      border: '1px solid #1976d2',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+                {matchFilter !== 'none' && (
+                  <button
+                    onClick={() => setMatchFilter('none')}
+                    style={{
+                      padding: '4px 8px',
+                      backgroundColor: '#f5f5f5',
+                      color: '#666',
                       border: '1px solid #ccc',
                       borderRadius: '4px',
                       cursor: 'pointer',
-                      fontSize: '13px'
+                      fontSize: '11px'
                     }}
                   >
-                    {selectedMergedIds.size === matchFilteredData.length && matchFilteredData.length > 0 ? '全解除' : '全選択'}
+                    解除
                   </button>
-                  <button
-                    onClick={handleMarkAsUnregistered}
-                    disabled={selectedMergedIds.size === 0}
-                    style={{
-                      padding: '6px 16px',
-                      backgroundColor: selectedMergedIds.size > 0 ? '#9c27b0' : '#cccccc',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: selectedMergedIds.size > 0 ? 'pointer' : 'not-allowed',
-                      fontSize: '13px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    未登録として登録
-                  </button>
-                  <button
-                    onClick={handleMatchClick}
-                    disabled={selectedMergedIds.size === 0}
-                    style={{
-                      padding: '6px 16px',
-                      backgroundColor: selectedMergedIds.size > 0 ? '#27ae60' : '#cccccc',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: selectedMergedIds.size > 0 ? 'pointer' : 'not-allowed',
-                      fontSize: '13px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    台帳と突合実行
-                  </button>
-                </div>
-              ) : (
-                <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
-                  突合済み: {completedItems.length}件
-                </div>
-              )}
+                )}
+              </div>
             </div>
+            {activeTab === 'pending' && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
+                  選択: {selectedMergedIds.size}件
+                </span>
+                <button
+                  onClick={handleSelectAllMerged}
+                  style={{
+                    padding: '4px 10px',
+                    backgroundColor: '#f0f0f0',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                >
+                  {selectedMergedIds.size === matchFilteredData.length && matchFilteredData.length > 0 ? '全解除' : '全選択'}
+                </button>
 
-            <div style={{ overflow: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
+                {/* 突合状況アクションボタン */}
+                <div style={{ display: 'flex', gap: '2px', alignItems: 'center', borderLeft: '1px solid #ccc', paddingLeft: '8px' }}>
+                  <span style={{ fontSize: '11px', color: '#5a6c7d', marginRight: '4px' }}>突合状況:</span>
+                  {([
+                    { status: '完全一致' as MatchingStatus, label: '完全一致', color: '#4caf50', needsBoth: true },
+                    { status: '数量不一致' as MatchingStatus, label: '数量不一致', color: '#ff9800', needsBoth: true },
+                    { status: '部分一致' as MatchingStatus, label: '部分一致', color: '#8bc34a', needsBoth: true },
+                    { status: '未確認' as MatchingStatus, label: '未確認(現場無)', color: '#f44336', needsBoth: false },
+                    { status: '未登録' as MatchingStatus, label: '未登録(台帳無)', color: '#9c27b0', needsBoth: false },
+                    { status: '再確認' as MatchingStatus, label: '再確認', color: '#2196f3', needsBoth: true },
+                  ]).map(({ status, label, color, needsBoth }) => {
+                    const isEnabled = needsBoth
+                      ? selectedMergedIds.size > 0 && selectedLedgerIds.size > 0
+                      : status === '未登録'
+                        ? selectedMergedIds.size > 0 && selectedLedgerIds.size === 0
+                        : status === '未確認'
+                          ? selectedLedgerIds.size > 0 && selectedMergedIds.size === 0
+                          : false;
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          if (status === '未登録') {
+                            handleMarkAsUnregistered();
+                          } else if (status === '未確認') {
+                            handleMarkAsUnconfirmed();
+                          } else {
+                            executeMatchWithStatus(status);
+                          }
+                        }}
+                        disabled={!isEnabled}
+                        style={{
+                          padding: '4px 10px',
+                          backgroundColor: isEnabled ? '#ffffff' : '#f5f5f5',
+                          color: isEnabled ? color : '#bbb',
+                          border: `1px solid ${isEnabled ? color : '#ddd'}`,
+                          borderRadius: '4px',
+                          cursor: isEnabled ? 'pointer' : 'not-allowed',
+                          fontSize: '11px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 上パネル テーブル */}
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f5f5f5', position: 'sticky', top: 0, zIndex: 1 }}>
+                  {activeTab === 'pending' && (
+                    <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedMergedIds.size === matchFilteredData.length && matchFilteredData.length > 0}
+                        onChange={handleSelectAllMerged}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </th>
+                  )}
+                  <th style={thStyle}>突合状況</th>
+                  <th style={thStyle}>QRコード</th>
+                  <th style={thStyle}>資産番号</th>
+                  <th style={thStyle}>ME番号</th>
+                  <th style={thStyle}>共通部門</th>
+                  <th style={thStyle}>共通部署</th>
+                  <th style={thStyle}>室名</th>
+                  <th style={thStyle}>品目</th>
+                  <th style={thStyle}>メーカー</th>
+                  <th style={thStyle}>型式</th>
+                  <th style={thStyle}>数量</th>
+                  <th style={thStyle}>購入年月日</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matchFilteredData.map((row) => (
+                  <tr key={row.id} style={{ backgroundColor: selectedMergedIds.has(row.id) && activeTab === 'pending' ? '#e3f2fd' : 'transparent' }}>
                     {activeTab === 'pending' && (
-                      <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', width: '50px' }}>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <input
                           type="checkbox"
-                          checked={selectedMergedIds.size === matchFilteredData.length && matchFilteredData.length > 0}
-                          onChange={handleSelectAll}
-                          style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                          checked={selectedMergedIds.has(row.id)}
+                          onChange={() => handleSelectMergedRow(row.id)}
+                          style={{ cursor: 'pointer' }}
                         />
-                      </th>
+                      </td>
                     )}
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>QRコード</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部署</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>型式</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>数量</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matchFilteredData.map((row) => (
-                    <tr key={row.id} style={{ backgroundColor: selectedMergedIds.has(row.id) && activeTab === 'pending' ? '#e3f2fd' : 'transparent' }}>
-                      {activeTab === 'pending' && (
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
-                          <input
-                            type="checkbox"
-                            checked={selectedMergedIds.has(row.id)}
-                            onChange={() => handleSelectRow(row.id)}
-                            style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                          />
-                        </td>
+                    <td style={tdStyle}>
+                      {row.matchingStatus ? (
+                        <span style={{
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          backgroundColor: getStatusColor(row.matchingStatus) + '20',
+                          color: getStatusColor(row.matchingStatus),
+                          fontWeight: '600'
+                        }}>
+                          {row.matchingStatus}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
                       )}
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0' }}>
-                        {row.matchingStatus ? (
-                          <span style={{
-                            padding: '4px 8px',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            backgroundColor: getStatusColor(row.matchingStatus) + '20',
-                            color: getStatusColor(row.matchingStatus),
-                            fontWeight: '600'
-                          }}>
-                            {row.matchingStatus}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#999', fontSize: '12px' }}>ー</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.qrCode || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity}</td>
-                    </tr>
-                  ))}
-                  {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length === 0 && (
-                    <tr>
-                      <td colSpan={9} style={{ padding: '48px', textAlign: 'center' }}>
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '16px'
-                        }}>
-                          <div style={{
-                            width: '64px',
-                            height: '64px',
-                            backgroundColor: '#e8f5e9',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '32px'
-                          }}>
-                            ✓
-                          </div>
-                          <div style={{ fontSize: '18px', fontWeight: '600', color: '#2e7d32' }}>
-                            すべての突合が完了しました
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#5a6c7d', marginBottom: '8px' }}>
-                            「{currentList?.name}」との突合作業が完了しました。<br />
-                            「対応済み」タブで突合結果を確認できます。
-                          </div>
-                          <button
-                            onClick={completeCurrentMatching}
-                            style={{
-                              padding: '12px 32px',
-                              backgroundColor: '#4caf50',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              fontSize: '14px',
-                              fontWeight: '600'
-                            }}
-                          >
-                            このリストとの突合を完了して次へ
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length > 0 && (
-                    <tr>
-                      <td colSpan={9} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
-                        フィルター条件に該当するデータがありません
-                      </td>
-                    </tr>
-                  )}
-                  {matchFilteredData.length === 0 && activeTab === 'completed' && (
-                    <tr>
-                      <td colSpan={9} style={{ padding: '48px', textAlign: 'center' }}>
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '12px'
-                        }}>
-                          <div style={{ fontSize: '48px', color: '#e0e0e0' }}>📋</div>
-                          <div style={{ fontSize: '16px', color: '#5a6c7d' }}>
-                            まだ対応済みの項目はありません
-                          </div>
-                          <div style={{ fontSize: '14px', color: '#999' }}>
-                            「対応中」タブで突合作業を行うと、ここに表示されます
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    </td>
+                    <td style={tdStyle}>{row.qrCode || '-'}</td>
+                    <td style={tdStyle}>{row.assetNo || '-'}</td>
+                    <td style={tdStyle}>{row.meNo || '-'}</td>
+                    <td style={tdStyle}>{row.department}</td>
+                    <td style={tdStyle}>{row.section}</td>
+                    <td style={tdStyle}>{row.roomName || '-'}</td>
+                    <td style={tdStyle}>{row.item}</td>
+                    <td style={tdStyle}>{row.manufacturer || '-'}</td>
+                    <td style={tdStyle}>{row.model || '-'}</td>
+                    <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity}</td>
+                    <td style={tdStyle}>{row.acquisitionDate || '-'}</td>
+                  </tr>
+                ))}
+                {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length === 0 && (
+                  <tr>
+                    <td colSpan={13} style={{ padding: '24px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#2e7d32' }}>
+                        すべての突合が完了しました
+                      </div>
+                      <button
+                        onClick={completeCurrentMatching}
+                        style={{
+                          marginTop: '8px',
+                          padding: '8px 24px',
+                          backgroundColor: '#4caf50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        このリストとの突合を完了して次へ
+                      </button>
+                    </td>
+                  </tr>
+                )}
+                {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length > 0 && (
+                  <tr>
+                    <td colSpan={13} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                      フィルター条件に該当するデータがありません
+                    </td>
+                  </tr>
+                )}
+                {matchFilteredData.length === 0 && activeTab === 'completed' && (
+                  <tr>
+                    <td colSpan={13} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                      まだ対応済みの項目はありません
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ドラッグハンドル */}
+        <div
+          onMouseDown={handleMouseDown}
+          style={{
+            height: '6px',
+            backgroundColor: '#e0e0e0',
+            cursor: 'row-resize',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderTop: '1px solid #ccc',
+            borderBottom: '1px solid #ccc'
+          }}
+        >
+          <div style={{
+            width: '40px',
+            height: '4px',
+            backgroundColor: '#bdbdbd',
+            borderRadius: '2px'
+          }} />
+        </div>
+
+        {/* 下パネル: 台帳リスト */}
+        <div style={{ height: `${100 - splitPercent}%`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* 下パネル ヘッダー */}
+          <div style={{
+            padding: '8px 16px',
+            backgroundColor: '#fff3e0',
+            borderBottom: '1px solid #ffe0b2',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexShrink: 0
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#e65100' }}>
+                {currentList?.name}
+              </span>
+              <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
+                対応中 {ledgerUnmatchedCount}件 / 突合済 {ledgerMatchedCount}件 / 全{currentLedgerData.length}件
+              </span>
+              {ledgerUnmatchedCount === 0 && (
+                <span style={{
+                  padding: '2px 8px',
+                  backgroundColor: '#e8f5e9',
+                  borderRadius: '4px',
+                  color: '#2e7d32',
+                  fontWeight: '600',
+                  fontSize: '11px'
+                }}>
+                  突合完了
+                </span>
+              )}
             </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
+                選択: {selectedLedgerIds.size}件
+              </span>
+              <button
+                onClick={handleSelectAllLedger}
+                style={{
+                  padding: '4px 10px',
+                  backgroundColor: '#f0f0f0',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                {selectedLedgerIds.size === ledgerMatchFilteredData.length && ledgerMatchFilteredData.length > 0 ? '全解除' : '全選択'}
+              </button>
+            </div>
+          </div>
+
+          {/* 下パネル テーブル */}
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#fff8e1', position: 'sticky', top: 0, zIndex: 1 }}>
+                  <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedLedgerIds.size === ledgerMatchFilteredData.length && ledgerMatchFilteredData.length > 0}
+                      onChange={handleSelectAllLedger}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </th>
+                  <th style={thStyle}>突合状況</th>
+                  <th style={thStyle}>資産番号</th>
+                  {currentList?.type === 'me-ledger' && <th style={thStyle}>ME番号</th>}
+                  <th style={thStyle}>共通部門</th>
+                  <th style={thStyle}>共通部署</th>
+                  <th style={thStyle}>室名</th>
+                  <th style={thStyle}>品目</th>
+                  <th style={thStyle}>メーカー</th>
+                  <th style={thStyle}>型式</th>
+                  <th style={thStyle}>数量</th>
+                  <th style={thStyle}>取得年月日</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledgerMatchFilteredData.map((row) => (
+                  <tr key={row.id} style={{ backgroundColor: selectedLedgerIds.has(row.id) ? '#fff3e0' : 'transparent' }}>
+                    <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedLedgerIds.has(row.id)}
+                        onChange={() => handleSelectLedgerRow(row.id)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </td>
+                    <td style={tdStyle}>
+                      {row.matchingStatus ? (
+                        <span style={{
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          backgroundColor: getStatusColor(row.matchingStatus) + '20',
+                          color: getStatusColor(row.matchingStatus),
+                          fontWeight: '600'
+                        }}>
+                          {row.matchingStatus}
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
+                      )}
+                    </td>
+                    <td style={tdStyle}>{row.assetNo}</td>
+                    {currentList?.type === 'me-ledger' && <td style={tdStyle}>{row.assetNo || '-'}</td>}
+                    <td style={tdStyle}>{row.department}</td>
+                    <td style={tdStyle}>{row.section}</td>
+                    <td style={tdStyle}>{row.roomName || '-'}</td>
+                    <td style={tdStyle}>{row.item}</td>
+                    <td style={tdStyle}>{row.manufacturer || '-'}</td>
+                    <td style={tdStyle}>{row.model || '-'}</td>
+                    <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity}</td>
+                    <td style={tdStyle}>{row.acquisitionDate || '-'}</td>
+                  </tr>
+                ))}
+                {ledgerMatchFilteredData.length === 0 && (
+                  <tr>
+                    <td colSpan={currentList?.type === 'me-ledger' ? 13 : 12} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                      {ledgerUnmatchedCount === 0 ? '全ての台帳レコードの突合が完了しました' : 'フィルター条件に該当するデータがありません'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      {/* 突合実行モーダル */}
-      {showMatchModal && (
+      {/* 統合リストモーダル */}
+      {showResultModal && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1707,8 +1580,11 @@ export default function DataMatchingPage() {
           <div style={{
             backgroundColor: '#ffffff',
             borderRadius: '8px',
-            width: '90%',
-            maxWidth: '600px',
+            width: '95%',
+            maxWidth: '1400px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
             boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
           }}>
             <div style={{
@@ -1718,11 +1594,16 @@ export default function DataMatchingPage() {
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>
-                突合実行
-              </h3>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#2c3e50' }}>
+                  統合リスト
+                </h3>
+                <div style={{ fontSize: '13px', color: '#5a6c7d', marginTop: '4px' }}>
+                  統合元: {mergedListNames.join(' + ')} = {mergedList.length}件
+                </div>
+              </div>
               <button
-                onClick={() => setShowMatchModal(false)}
+                onClick={() => setShowResultModal(false)}
                 style={{
                   fontSize: '24px',
                   border: 'none',
@@ -1736,35 +1617,56 @@ export default function DataMatchingPage() {
               </button>
             </div>
 
-            <div style={{ padding: '20px' }}>
-              <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-                <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
-                  {mergedListNames.length === 1 ? '現有品調査リスト' : '統合リスト'}: {selectedMergedIds.size}件 と {currentList?.name}: {pendingLedgerIds.length}件 を突合します
-                </div>
+            <div style={{ padding: '20px', flex: 1, overflow: 'auto' }}>
+              <div style={{ overflow: 'auto', maxHeight: '500px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f5f5f5', position: 'sticky', top: 0 }}>
+                      <th style={thStyle}>突合状況</th>
+                      <th style={thStyle}>QRコード</th>
+                      <th style={thStyle}>資産番号</th>
+                      <th style={thStyle}>共通部門</th>
+                      <th style={thStyle}>共通部署</th>
+                      <th style={thStyle}>室名</th>
+                      <th style={thStyle}>品目</th>
+                      <th style={thStyle}>メーカー</th>
+                      <th style={thStyle}>数量</th>
+                      <th style={thStyle}>購入年月日</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mergedList.map((row) => (
+                      <tr key={row.id}>
+                        <td style={tdStyle}>
+                          {row.matchingStatus ? (
+                            <span style={{
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              backgroundColor: getStatusColor(row.matchingStatus) + '20',
+                              color: getStatusColor(row.matchingStatus),
+                              fontWeight: '600'
+                            }}>
+                              {row.matchingStatus}
+                            </span>
+                          ) : (
+                            <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
+                          )}
+                        </td>
+                        <td style={tdStyle}>{row.qrCode || '-'}</td>
+                        <td style={tdStyle}>{row.assetNo || '-'}</td>
+                        <td style={tdStyle}>{row.department}</td>
+                        <td style={tdStyle}>{row.section}</td>
+                        <td style={tdStyle}>{row.roomName || '-'}</td>
+                        <td style={tdStyle}>{row.item}</td>
+                        <td style={tdStyle}>{row.manufacturer || '-'}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity}</td>
+                        <td style={tdStyle}>{row.acquisitionDate || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#2c3e50' }}>
-                  突合状況 <span style={{ color: '#d32f2f' }}>*</span>
-                </label>
-                <select
-                  value={matchingStatusSelection}
-                  onChange={(e) => setMatchingStatusSelection(e.target.value as MatchingStatus)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  {MATCHING_STATUS_OPTIONS.filter(s => s !== '未確認' && s !== '未登録').map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
             </div>
 
             <div style={{
@@ -1775,7 +1677,7 @@ export default function DataMatchingPage() {
               gap: '12px'
             }}>
               <button
-                onClick={() => setShowMatchModal(false)}
+                onClick={() => setShowResultModal(false)}
                 style={{
                   padding: '10px 24px',
                   backgroundColor: '#ffffff',
@@ -1785,30 +1687,12 @@ export default function DataMatchingPage() {
                   fontSize: '14px'
                 }}
               >
-                キャンセル
-              </button>
-              <button
-                onClick={executeMatch}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}
-              >
-                突合を確定
+                閉じる
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* 統合リストモーダル */}
-      {showResultModal && renderResultModal()}
     </div>
   );
 }

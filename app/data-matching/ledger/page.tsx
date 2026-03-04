@@ -28,6 +28,9 @@ export default function LedgerWindowPage() {
     section: '',
     majorCategory: '',
     middleCategory: '',
+    item: '',
+    manufacturer: '',
+    model: '',
     matchingStatus: '全て',
     keyword: ''
   });
@@ -207,6 +210,9 @@ export default function LedgerWindowPage() {
       section: '',
       majorCategory: '',
       middleCategory: '',
+      item: '',
+      manufacturer: '',
+      model: '',
       matchingStatus: '全て',
       keyword: ''
     });

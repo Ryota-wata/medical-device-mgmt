@@ -19,6 +19,9 @@ interface UseDataMatchingFiltersReturn {
   categoryOptions: string[];
   majorCategoryOptions: string[];
   middleCategoryOptions: string[];
+  itemOptions: string[];
+  manufacturerOptions: string[];
+  modelOptions: string[];
   resetFilters: () => void;
 }
 
@@ -37,6 +40,9 @@ export function useDataMatchingFilters({
     section: '',
     majorCategory: '',
     middleCategory: '',
+    item: '',
+    manufacturer: '',
+    model: '',
     matchingStatus: '全て',
     keyword: ''
   });
@@ -69,6 +75,24 @@ export function useDataMatchingFilters({
     return uniqueMiddleCategories.filter(Boolean);
   }, [data]);
 
+  // 品目オプション（データから一意の値を抽出）
+  const itemOptions = useMemo(() => {
+    const uniqueItems = Array.from(new Set(data.map(d => d.item)));
+    return uniqueItems.filter(Boolean);
+  }, [data]);
+
+  // メーカーオプション（データから一意の値を抽出）
+  const manufacturerOptions = useMemo(() => {
+    const uniqueManufacturers = Array.from(new Set(data.map(d => d.manufacturer).filter((v): v is string => !!v)));
+    return uniqueManufacturers;
+  }, [data]);
+
+  // 型式オプション（データから一意の値を抽出）
+  const modelOptions = useMemo(() => {
+    const uniqueModels = Array.from(new Set(data.map(d => d.model).filter((v): v is string => !!v)));
+    return uniqueModels;
+  }, [data]);
+
   // フィルタリングされたデータ
   const filteredData = useMemo(() => {
     let filtered = data;
@@ -96,6 +120,21 @@ export function useDataMatchingFilters({
     // 中分類フィルター
     if (filters.middleCategory) {
       filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
+    }
+
+    // 品目フィルター
+    if (filters.item) {
+      filtered = filtered.filter(d => d.item === filters.item);
+    }
+
+    // メーカーフィルター
+    if (filters.manufacturer) {
+      filtered = filtered.filter(d => d.manufacturer === filters.manufacturer);
+    }
+
+    // 型式フィルター
+    if (filters.model) {
+      filtered = filtered.filter(d => d.model === filters.model);
     }
 
     // 突合状況フィルター
@@ -127,6 +166,9 @@ export function useDataMatchingFilters({
       section: '',
       majorCategory: '',
       middleCategory: '',
+      item: '',
+      manufacturer: '',
+      model: '',
       matchingStatus: '全て',
       keyword: ''
     });
@@ -141,6 +183,9 @@ export function useDataMatchingFilters({
     categoryOptions,
     majorCategoryOptions,
     middleCategoryOptions,
+    itemOptions,
+    manufacturerOptions,
+    modelOptions,
     resetFilters
   };
 }
