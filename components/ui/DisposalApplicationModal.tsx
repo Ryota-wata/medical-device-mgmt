@@ -221,7 +221,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               alignItems: 'center'
             }}>
               {/* 1行目 */}
-              <div style={{ fontSize: '13px', color: '#666' }}>管理部署</div>
+              <div style={{ fontSize: '13px', color: '#666' }}>所属部署</div>
               <div style={{
                 padding: '8px 12px',
                 border: '1px solid #4a6741',

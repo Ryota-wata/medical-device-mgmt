@@ -70,7 +70,7 @@ export function AdditionApplicationModal({
   // システム接続要望
   const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
   const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
-  const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
+  const [requestConnectionStatus, setRequestConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
   // 確認画面表示
@@ -382,6 +382,25 @@ export function AdditionApplicationModal({
               </table>
             </div>
 
+            {/* 申請品目 */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>申請品目</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.item || assets[0]?.name || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>メーカー</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.maker || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                    <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.model || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
             {/* 増設対象機器 */}
             <div style={styles.section}>
               <div style={styles.sectionTitle}>増設対象機器</div>
@@ -452,7 +471,7 @@ export function AdditionApplicationModal({
                   </tr>
                   <tr>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要'}</td>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
                   </tr>
@@ -539,6 +558,30 @@ export function AdditionApplicationModal({
                   </select>
                   <span>月</span>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 申請品目 */}
+          <div style={styles.section}>
+            <div style={styles.sectionTitle}>申請品目</div>
+            <div style={{ background: themeLightBg, border: `1px solid ${themeBorder}`, borderRadius: '8px', padding: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>品目名</div>
+                  <div style={{ fontWeight: 600 }}>{assets[0]?.item || assets[0]?.name || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
+                  <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
+                </div>
+              </div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: themeColor }}>
+                ※ 増設対象資産から自動設定されています
               </div>
             </div>
           </div>
@@ -765,10 +808,18 @@ export function AdditionApplicationModal({
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
-                      checked={requestConnectionStatus === 'required'}
-                      onChange={() => setRequestConnectionStatus('required')}
+                      checked={requestConnectionStatus === 'wired'}
+                      onChange={() => setRequestConnectionStatus('wired')}
                     />
-                    接続要望
+                    有線接続
+                  </label>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      checked={requestConnectionStatus === 'wireless'}
+                      onChange={() => setRequestConnectionStatus('wireless')}
+                    />
+                    無線接続
                   </label>
                   <label style={styles.radioLabel}>
                     <input

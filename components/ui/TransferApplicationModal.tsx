@@ -36,6 +36,9 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [completedAppNo, setCompletedAppNo] = useState('');
 
+  // 接続本体QRコード
+  const [parentQrCode, setParentQrCode] = useState('');
+
   // 移動先の状態
   const [destDepartment, setDestDepartment] = useState('');
   const [destSection, setDestSection] = useState('');
@@ -142,6 +145,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
 
   // フォームリセット
   const resetForm = () => {
+    setParentQrCode('');
     setDestDepartment('');
     setDestSection('');
     setDestRoomName('');
@@ -238,7 +242,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               alignItems: 'center'
             }}>
               {/* 1行目 */}
-              <div style={{ fontSize: '13px', color: '#666' }}>管理部署</div>
+              <div style={{ fontSize: '13px', color: '#666' }}>所属部署</div>
               <div style={{
                 padding: '8px 12px',
                 border: '1px solid #4a6741',
@@ -408,18 +412,54 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
             )}
           </div>
 
-          {/* 移動先 */}
+          {/* 接続本体（移動先の本体QRコード） */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
               color: '#333',
-              marginBottom: '16px',
+              marginBottom: '8px',
               borderBottom: '1px solid #ddd',
               paddingBottom: '8px'
             }}>
               移動先
             </h3>
+
+            <div style={{
+              padding: '10px 14px',
+              background: '#fff8e1',
+              border: '1px solid #ffe082',
+              borderRadius: '4px',
+              fontSize: '12px',
+              color: '#6d4c00',
+              marginBottom: '16px',
+            }}>
+              接続本体が変更となる資産は移動先の本体QRコードを登録してください
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
+              gap: '12px 16px',
+              alignItems: 'center',
+              marginBottom: '16px',
+            }}>
+              <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
+              <input
+                type="text"
+                value={parentQrCode}
+                onChange={(e) => setParentQrCode(e.target.value)}
+                placeholder="接続本体のQRコードを入力"
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #4a6741',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  maxWidth: '280px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
 
             <div style={{
               display: 'grid',

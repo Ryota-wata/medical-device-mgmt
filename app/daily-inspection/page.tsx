@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, Suspense, useMemo, useEffect } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { Asset } from '@/lib/types/asset';
-import { useInspectionStore } from '@/lib/stores';
+import { useInspectionStore, useAuthStore } from '@/lib/stores';
 
 // モック: 原本資産データ（実際はIndexedDBまたはAPIから取得）
 const MOCK_ORIGINAL_ASSETS: Asset[] = [
@@ -71,6 +71,7 @@ function DailyInspectionContent() {
   const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
   const { menus } = useInspectionStore();
+  const { user } = useAuthStore();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ステップ管理
@@ -82,7 +83,7 @@ function DailyInspectionContent() {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   // 点検実施状態
-  const [inspectorName, setInspectorName] = useState('');
+  const [inspectorName, setInspectorName] = useState(user?.username || '');
   const [usageTiming, setUsageTiming] = useState<'使用前' | '使用中' | '使用後'>('使用前');
   const [selectedMenuId, setSelectedMenuId] = useState('');
   const [itemResults, setItemResults] = useState<InspectionItemResult[]>(DEFAULT_ITEMS);
@@ -120,10 +121,14 @@ function DailyInspectionContent() {
     }
   }, [selectedMenu]);
 
-  // タイミング変更時にメニューリセット
+  // タイミング変更時にメニュー自動選択（事前登録済みの最初のメニューを適用）
   useEffect(() => {
-    setSelectedMenuId('');
-  }, [usageTiming]);
+    if (filteredMenus.length > 0) {
+      setSelectedMenuId(filteredMenus[0].id);
+    } else {
+      setSelectedMenuId('');
+    }
+  }, [filteredMenus]);
 
   // カメラ起動
   const handleStartCamera = async () => {
@@ -395,13 +400,16 @@ function DailyInspectionContent() {
               {/* 機器情報 */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <div style={styles.infoItem}>
-                  <span style={styles.infoValue}>{selectedAsset?.largeClass}</span>
+                  <span style={styles.infoLabel}>品目</span>
+                  <span style={styles.infoValue}>{selectedAsset?.item}</span>
                 </div>
                 <div style={styles.infoItem}>
-                  <span style={styles.infoValue}>{selectedAsset?.mediumClass}</span>
+                  <span style={styles.infoLabel}>メーカー</span>
+                  <span style={styles.infoValue}>{selectedAsset?.maker}</span>
                 </div>
                 <div style={styles.infoItem}>
-                  <span style={styles.infoValue}>{selectedAsset?.item}/{selectedAsset?.maker}/{selectedAsset?.model}</span>
+                  <span style={styles.infoLabel}>型式</span>
+                  <span style={styles.infoValue}>{selectedAsset?.model}</span>
                 </div>
               </div>
 
@@ -425,24 +433,19 @@ function DailyInspectionContent() {
                 </div>
               </div>
 
-              {/* 点検メニュー選択 */}
+              {/* 点検メニュー */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={styles.infoLabel}>点検メニュー</span>
-                <select
-                  value={selectedMenuId}
-                  onChange={(e) => setSelectedMenuId(e.target.value)}
-                  style={styles.select}
-                >
-                  <option value="">選択してください</option>
-                  {filteredMenus.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
+                <div style={styles.infoItem}>
+                  <span style={styles.infoValue}>
+                    {filteredMenus.length > 0 ? filteredMenus[0].name : '（未登録）'}
+                  </span>
+                </div>
               </div>
 
               {filteredMenus.length === 0 && (
                 <div style={styles.warning}>
-                  この品目の「{usageTiming}」点検メニューが登録されていません
+                  この品目の「{usageTiming}」点検メニューが登録されていません。点検管理画面でメニューを登録してください。
                 </div>
               )}
             </div>
@@ -529,22 +532,14 @@ function DailyInspectionContent() {
                   onClick={() => handleComplete('合格')}
                   style={styles.passButton}
                 >
-                  合格（異常なし）
+                  合格（使用可）
                 </button>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => handleComplete('再点検')}
-                    style={{ ...styles.reinspectButton, flex: 1 }}
-                  >
-                    再点検
-                  </button>
-                  <button
-                    onClick={() => handleComplete('修理申請')}
-                    style={{ ...styles.repairButton, flex: 1 }}
-                  >
-                    修理申請
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleComplete('修理申請')}
+                  style={styles.repairButton}
+                >
+                  異常あり（使用停止へ）
+                </button>
               </div>
             </div>
           </div>
@@ -762,25 +757,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     minHeight: '50px',
   },
-  reinspectButton: {
-    padding: '12px 16px',
-    backgroundColor: '#f39c12',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    minHeight: '44px',
-  },
   repairButton: {
-    padding: '12px 16px',
+    width: '100%',
+    padding: '14px 24px',
     backgroundColor: '#e74c3c',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '14px',
-    minHeight: '44px',
+    fontSize: '16px',
+    fontWeight: 600,
+    minHeight: '50px',
   },
 };
 

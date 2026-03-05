@@ -77,7 +77,7 @@ export function PurchaseApplicationModal({
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   // システム接続要望
-  const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
+  const [requestConnectionStatus, setRequestConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
   // 確認画面表示
@@ -249,7 +249,7 @@ export function PurchaseApplicationModal({
       usagePurpose: usagePurpose,
       caseCount: caseCount ? `${caseCount} ${caseCountUnit}` : '',
       comment: comment,
-      requestConnectionStatus: requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要',
+      requestConnectionStatus: requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要',
       requestConnectionDestination: requestConnectionDestination,
     };
 
@@ -503,10 +503,19 @@ export function PurchaseApplicationModal({
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* 申請品目 */}
+            <div style={styles.section}>
+              <div style={styles.sectionTitle}>申請品目</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{basicItem || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>台数</th>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>台数</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{basicQuantity}</td>
                   </tr>
                 </tbody>
@@ -582,7 +591,7 @@ export function PurchaseApplicationModal({
                 <tbody>
                   <tr>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続要望</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'required' ? '接続要望あり' : '接続不要'}</td>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
                   </tr>
@@ -670,14 +679,21 @@ export function PurchaseApplicationModal({
                   <span>月</span>
                 </div>
               </div>
-              <div style={{ ...styles.formItem, gridColumn: 'span 2' }}>
-                <label style={styles.label}>品目</label>
+            </div>
+          </div>
+
+          {/* 申請品目 */}
+          <div style={styles.section}>
+            <div style={styles.sectionTitle}>申請品目</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '16px', alignItems: 'end' }}>
+              <div style={styles.formItem}>
+                <label style={styles.label}>品目名</label>
                 <input
                   type="text"
                   style={styles.input}
                   value={basicItem}
                   onChange={(e) => setBasicItem(e.target.value)}
-                  placeholder="品目を入力してください"
+                  placeholder="申請する品目名を入力してください"
                 />
               </div>
               <div style={styles.formItem}>
@@ -691,7 +707,6 @@ export function PurchaseApplicationModal({
                   placeholder="1"
                 />
               </div>
-              <div></div>
             </div>
           </div>
 
@@ -974,10 +989,18 @@ export function PurchaseApplicationModal({
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
-                      checked={requestConnectionStatus === 'required'}
-                      onChange={() => setRequestConnectionStatus('required')}
+                      checked={requestConnectionStatus === 'wired'}
+                      onChange={() => setRequestConnectionStatus('wired')}
                     />
-                    接続要望あり
+                    有線接続
+                  </label>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      checked={requestConnectionStatus === 'wireless'}
+                      onChange={() => setRequestConnectionStatus('wireless')}
+                    />
+                    無線接続
                   </label>
                   <label style={styles.radioLabel}>
                     <input
