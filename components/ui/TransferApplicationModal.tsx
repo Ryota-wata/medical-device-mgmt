@@ -36,6 +36,9 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [completedAppNo, setCompletedAppNo] = useState('');
 
+  // 確認画面表示
+  const [isConfirmView, setIsConfirmView] = useState(false);
+
   // 接続本体QRコード
   const [parentQrCode, setParentQrCode] = useState('');
 
@@ -94,13 +97,22 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
     }
   };
 
-  // 申請送信
-  const handleSubmit = () => {
+  // 確認画面へ遷移
+  const handleConfirm = () => {
     if (!destDepartment || !destSection || !destRoomName) {
       alert('移動先の設置部門、設置部署、設置室名を入力してください');
       return;
     }
+    setIsConfirmView(true);
+  };
 
+  // 入力画面に戻る
+  const handleBackToEdit = () => {
+    setIsConfirmView(false);
+  };
+
+  // 申請送信
+  const handleSubmit = () => {
     const appNo = `TRAN-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
     // 各資産に対して申請を作成
@@ -150,12 +162,20 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
     setDestSection('');
     setDestRoomName('');
     setComment('');
+    setIsConfirmView(false);
   };
 
   if (!isOpen || assets.length === 0) return null;
 
   // 最初の資産の情報を基本情報として表示（複数選択時）
   const primaryAsset = assets[0];
+
+  // テーマカラー
+  const themeColor = '#4a6741';
+
+  // 確認画面用テーブルスタイル
+  const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' };
+  const tdStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #ddd' };
 
   return (
     <div
@@ -176,12 +196,11 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '12px',
+          borderRadius: '8px',
           width: '90%',
           maxWidth: '900px',
           maxHeight: '90vh',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          overflow: 'auto',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -189,25 +208,23 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
         {/* モーダルヘッダー */}
         <div
           style={{
-            background: '#e0e0e0',
+            background: themeColor,
             padding: '16px 24px',
             fontSize: '18px',
             fontWeight: 'bold',
-            color: '#333',
-            borderTopLeftRadius: '12px',
-            borderTopRightRadius: '12px',
+            color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <span>移動申請 モーダル</span>
+          <span>{isConfirmView ? '移動申請 - 内容確認' : '移動申請'}</span>
           <button
             onClick={() => setShowCloseConfirm(true)}
             style={{
               background: 'none',
               border: 'none',
-              color: '#333',
+              color: 'white',
               fontSize: '24px',
               cursor: 'pointer',
               padding: '0',
@@ -222,14 +239,128 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
 
         {/* モーダルボディ */}
         <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+        {isConfirmView ? (
+          /* ===== 確認画面 ===== */
+          <div>
+            <div style={{ background: '#e8f5e9', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: themeColor, fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            </div>
+
+            {/* 申請基本情報 */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                申請基本情報
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={thStyle}>所属部署</th>
+                    <td style={tdStyle}>{primaryAsset.department || '-'}</td>
+                    <th style={thStyle}>申請者</th>
+                    <td style={tdStyle}>{applicantName}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>申請日</th>
+                    <td style={tdStyle}>{applicationDate}</td>
+                    <th style={thStyle}>設置部門</th>
+                    <td style={tdStyle}>{primaryAsset.department || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>設置部署</th>
+                    <td style={tdStyle}>{primaryAsset.section || '-'}</td>
+                    <th style={thStyle}>設置室名</th>
+                    <td style={tdStyle}>{primaryAsset.roomName || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+              {assets.length > 1 && (
+                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '13px', color: '#e65100' }}>
+                  ※ {assets.length}件の資産が選択されています
+                </div>
+              )}
+            </div>
+
+            {/* 対象資産情報 */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                対象資産情報
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#f8f9fa' }}>
+                    {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
+                      <th key={label} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                        {label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset, idx) => (
+                    <tr key={idx}>
+                      <td style={tdStyle}>{asset.qrCode || '-'}</td>
+                      <td style={tdStyle}>{asset.name || '-'}</td>
+                      <td style={tdStyle}>{asset.maker || '-'}</td>
+                      <td style={tdStyle}>{asset.model || '-'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{asset.quantity ?? '-'}</td>
+                      <td style={tdStyle}>{asset.serialNumber || '-'}</td>
+                      <td style={tdStyle}>{asset.deliveryDate || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 移動先 */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                移動先
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  {parentQrCode && (
+                    <tr>
+                      <th style={thStyle}>接続本体QRコード</th>
+                      <td colSpan={3} style={tdStyle}>{parentQrCode}</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <th style={thStyle}>設置部門</th>
+                    <td style={tdStyle}>{destDepartment}</td>
+                    <th style={thStyle}>設置部署</th>
+                    <td style={tdStyle}>{destSection}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>設置室名</th>
+                    <td colSpan={3} style={tdStyle}>{destRoomName}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* コメント */}
+            {comment && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                  コメント（移動理由他）
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                  {comment}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ===== 入力画面 ===== */
+          <>
           {/* 申請基本情報 */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
+              color: themeColor,
               marginBottom: '16px',
-              borderBottom: '1px solid #ddd',
+              borderBottom: `2px solid ${themeColor}`,
               paddingBottom: '8px'
             }}>
               申請基本情報
@@ -245,7 +376,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>所属部署</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -256,7 +387,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>申請者</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -267,7 +398,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>申請日</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -279,7 +410,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置部門</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -290,7 +421,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置部署</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -301,7 +432,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置室名</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -330,9 +461,9 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
+              color: themeColor,
               marginBottom: '16px',
-              borderBottom: '1px solid #ddd',
+              borderBottom: `2px solid ${themeColor}`,
               paddingBottom: '8px'
             }}>
               対象資産情報
@@ -412,14 +543,14 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
             )}
           </div>
 
-          {/* 接続本体（移動先の本体QRコード） */}
+          {/* 移動先 */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
+              color: themeColor,
               marginBottom: '8px',
-              borderBottom: '1px solid #ddd',
+              borderBottom: `2px solid ${themeColor}`,
               paddingBottom: '8px'
             }}>
               移動先
@@ -452,7 +583,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 placeholder="接続本体のQRコードを入力"
                 style={{
                   padding: '8px 12px',
-                  border: '1px solid #4a6741',
+                  border: `1px solid ${themeColor}`,
                   borderRadius: '4px',
                   fontSize: '13px',
                   maxWidth: '280px',
@@ -467,7 +598,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               gap: '12px 16px',
               alignItems: 'center'
             }}>
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部門</div>
+              <div style={{ fontSize: '13px', color: '#666' }}>設置部門 <span style={{ color: '#e74c3c' }}>*</span></div>
               <div style={{ position: 'relative', zIndex: 12 }}>
                 <SearchableSelect
                   value={destDepartment}
@@ -478,7 +609,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 />
               </div>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部署</div>
+              <div style={{ fontSize: '13px', color: '#666' }}>設置部署 <span style={{ color: '#e74c3c' }}>*</span></div>
               <div style={{ position: 'relative', zIndex: 11 }}>
                 <SearchableSelect
                   value={destSection}
@@ -489,7 +620,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 />
               </div>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>設置室名</div>
+              <div style={{ fontSize: '13px', color: '#666' }}>設置室名 <span style={{ color: '#e74c3c' }}>*</span></div>
               <input
                 type="text"
                 value={destRoomName}
@@ -497,7 +628,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 placeholder="入力してください"
                 style={{
                   padding: '8px 12px',
-                  border: '1px solid #4a6741',
+                  border: `1px solid ${themeColor}`,
                   borderRadius: '4px',
                   fontSize: '13px',
                   width: '100%',
@@ -512,8 +643,10 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '12px'
+              color: themeColor,
+              marginBottom: '12px',
+              borderBottom: `2px solid ${themeColor}`,
+              paddingBottom: '8px'
             }}>
               コメント（移動理由他）
             </h3>
@@ -525,7 +658,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 boxSizing: 'border-box',
@@ -533,31 +666,69 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               }}
             />
           </div>
+          </>
+        )}
+        </div>
 
-          {/* 申請ボタン */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {/* フッター */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid #dee2e6',
+          display: 'flex',
+          justifyContent: 'center',
+          background: '#f8f9fa',
+        }}>
+          {isConfirmView ? (
+            <>
+              <button
+                onClick={handleBackToEdit}
+                style={{
+                  padding: '12px 32px',
+                  background: 'white',
+                  color: themeColor,
+                  border: `1px solid ${themeColor}`,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  marginRight: '16px',
+                }}
+              >
+                ← 修正する
+              </button>
+              <button
+                onClick={handleSubmit}
+                style={{
+                  padding: '12px 32px',
+                  background: themeColor,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                申請する
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleSubmit}
+              onClick={handleConfirm}
               style={{
                 padding: '12px 48px',
-                background: '#4a6741',
+                background: themeColor,
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: 'bold',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#3d5636';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#4a6741';
-              }}
             >
-              上記内容で申請する
+              記載内容を確認する
             </button>
-          </div>
+          )}
         </div>
       </div>
 

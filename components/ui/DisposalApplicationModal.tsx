@@ -42,6 +42,9 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [completedAppNo, setCompletedAppNo] = useState('');
 
+  // 確認画面表示
+  const [isConfirmView, setIsConfirmView] = useState(false);
+
   // コメント
   const [comment, setComment] = useState('');
 
@@ -84,6 +87,16 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // 確認画面へ遷移
+  const handleConfirm = () => {
+    setIsConfirmView(true);
+  };
+
+  // 入力画面に戻る
+  const handleBackToEdit = () => {
+    setIsConfirmView(false);
   };
 
   // 申請送信
@@ -129,12 +142,20 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
   const resetForm = () => {
     setComment('');
     setAttachedFiles([]);
+    setIsConfirmView(false);
   };
 
   if (!isOpen || assets.length === 0) return null;
 
   // 最初の資産の情報を基本情報として表示（複数選択時）
   const primaryAsset = assets[0];
+
+  // テーマカラー（廃棄申請：赤系）
+  const themeColor = '#c0392b';
+
+  // 確認画面用テーブルスタイル
+  const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' };
+  const tdStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #ddd' };
 
   return (
     <div
@@ -155,12 +176,11 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '12px',
+          borderRadius: '8px',
           width: '90%',
           maxWidth: '900px',
           maxHeight: '90vh',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          overflow: 'auto',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -168,25 +188,23 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
         {/* モーダルヘッダー */}
         <div
           style={{
-            background: '#e0e0e0',
+            background: themeColor,
             padding: '16px 24px',
             fontSize: '18px',
             fontWeight: 'bold',
-            color: '#333',
-            borderTopLeftRadius: '12px',
-            borderTopRightRadius: '12px',
+            color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <span>廃棄申請 モーダル</span>
+          <span>{isConfirmView ? '廃棄申請 - 内容確認' : '廃棄申請'}</span>
           <button
             onClick={() => setShowCloseConfirm(true)}
             style={{
               background: 'none',
               border: 'none',
-              color: '#333',
+              color: 'white',
               fontSize: '24px',
               cursor: 'pointer',
               padding: '0',
@@ -201,14 +219,117 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
 
         {/* モーダルボディ */}
         <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+        {isConfirmView ? (
+          /* ===== 確認画面 ===== */
+          <div>
+            <div style={{ background: '#ffebee', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: themeColor, fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            </div>
+
+            {/* 申請基本情報 */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                申請基本情報
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={thStyle}>所属部署</th>
+                    <td style={tdStyle}>{primaryAsset.department || '-'}</td>
+                    <th style={thStyle}>申請者</th>
+                    <td style={tdStyle}>{applicantName}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>申請日</th>
+                    <td style={tdStyle}>{applicationDate}</td>
+                    <th style={thStyle}>設置部門</th>
+                    <td style={tdStyle}>{primaryAsset.department || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>設置部署</th>
+                    <td style={tdStyle}>{primaryAsset.section || '-'}</td>
+                    <th style={thStyle}>設置室名</th>
+                    <td style={tdStyle}>{primaryAsset.roomName || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+              {assets.length > 1 && (
+                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '13px', color: '#e65100' }}>
+                  ※ {assets.length}件の資産が選択されています
+                </div>
+              )}
+            </div>
+
+            {/* 対象資産情報 */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                対象資産情報
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#f8f9fa' }}>
+                    {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
+                      <th key={label} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                        {label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset, idx) => (
+                    <tr key={idx}>
+                      <td style={tdStyle}>{asset.qrCode || '-'}</td>
+                      <td style={tdStyle}>{asset.name || '-'}</td>
+                      <td style={tdStyle}>{asset.maker || '-'}</td>
+                      <td style={tdStyle}>{asset.model || '-'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{asset.quantity ?? '-'}</td>
+                      <td style={tdStyle}>{asset.serialNumber || '-'}</td>
+                      <td style={tdStyle}>{asset.deliveryDate || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* コメント */}
+            {comment && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                  コメント（廃棄理由他）
+                </div>
+                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                  {comment}
+                </div>
+              </div>
+            )}
+
+            {/* 添付ファイル */}
+            {attachedFiles.length > 0 && (
+              <div style={{ marginBottom: '24px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                  添付ファイル
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  {attachedFiles.map((file, index) => (
+                    <li key={index} style={{ padding: '4px 0', fontSize: '13px' }}>
+                      {file.name} ({formatFileSize(file.size)})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ===== 入力画面 ===== */
+          <>
           {/* 申請基本情報 */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
+              color: themeColor,
               marginBottom: '16px',
-              borderBottom: '1px solid #ddd',
+              borderBottom: `2px solid ${themeColor}`,
               paddingBottom: '8px'
             }}>
               申請基本情報
@@ -224,7 +345,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>所属部署</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -235,7 +356,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>申請者</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -246,7 +367,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>申請日</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -258,7 +379,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置部門</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -269,7 +390,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置部署</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -280,7 +401,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置室名</div>
               <div style={{
                 padding: '8px 12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#f9f9f9'
@@ -309,9 +430,9 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
+              color: themeColor,
               marginBottom: '16px',
-              borderBottom: '1px solid #ddd',
+              borderBottom: `2px solid ${themeColor}`,
               paddingBottom: '8px'
             }}>
               対象資産情報
@@ -396,8 +517,10 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             <h3 style={{
               fontSize: '14px',
               fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '12px'
+              color: themeColor,
+              marginBottom: '12px',
+              borderBottom: `2px solid ${themeColor}`,
+              paddingBottom: '8px'
             }}>
               コメント（廃棄理由他）
             </h3>
@@ -409,7 +532,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '1px solid #4a6741',
+                border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
                 boxSizing: 'border-box',
@@ -425,13 +548,13 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               alignItems: 'center',
               gap: '12px',
               padding: '12px',
-              border: '1px solid #4a6741',
+              border: `1px solid ${themeColor}`,
               borderRadius: '4px',
               marginBottom: '8px',
             }}>
               <div style={{
                 padding: '8px 16px',
-                background: '#4a6741',
+                background: themeColor,
                 color: 'white',
                 borderRadius: '4px',
                 fontSize: '13px',
@@ -483,7 +606,6 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>📄</span>
                       <span>{file.name}</span>
                       <span style={{ color: '#666' }}>({formatFileSize(file.size)})</span>
                     </div>
@@ -510,31 +632,69 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               見積書・修理不能証明など手持ちの書類を添付してください
             </p>
           </div>
+          </>
+        )}
+        </div>
 
-          {/* 申請ボタン */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {/* フッター */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid #dee2e6',
+          display: 'flex',
+          justifyContent: 'center',
+          background: '#f8f9fa',
+        }}>
+          {isConfirmView ? (
+            <>
+              <button
+                onClick={handleBackToEdit}
+                style={{
+                  padding: '12px 32px',
+                  background: 'white',
+                  color: themeColor,
+                  border: `1px solid ${themeColor}`,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  marginRight: '16px',
+                }}
+              >
+                ← 修正する
+              </button>
+              <button
+                onClick={handleSubmit}
+                style={{
+                  padding: '12px 32px',
+                  background: themeColor,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                申請する
+              </button>
+            </>
+          ) : (
             <button
-              onClick={handleSubmit}
+              onClick={handleConfirm}
               style={{
                 padding: '12px 48px',
-                background: '#4a6741',
+                background: themeColor,
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: 'bold',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#3d5636';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#4a6741';
-              }}
             >
-              上記内容で申請する
+              記載内容を確認する
             </button>
-          </div>
+          )}
         </div>
       </div>
 
