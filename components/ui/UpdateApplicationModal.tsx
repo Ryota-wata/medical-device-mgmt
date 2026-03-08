@@ -78,7 +78,7 @@ export function UpdateApplicationModal({
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   // システム接続要望
-  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
+  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
@@ -309,7 +309,7 @@ export function UpdateApplicationModal({
     setCaseCountUnit('件／月');
     setComment('');
     setAttachedFiles([]);
-    setCurrentConnectionStatus('disconnected');
+    setCurrentConnectionStatus('not-required');
     setCurrentConnectionDestination('');
     setRequestConnectionStatus('not-required');
     setRequestConnectionDestination('');
@@ -618,7 +618,7 @@ export function UpdateApplicationModal({
                 <tbody>
                   <tr>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'connected' ? '接続中' : '接続無し'}</td>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'wired' ? '有線接続' : currentConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionDestination || '-'}</td>
                   </tr>
@@ -1104,18 +1104,26 @@ export function UpdateApplicationModal({
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
-                      checked={currentConnectionStatus === 'connected'}
-                      onChange={() => setCurrentConnectionStatus('connected')}
+                      checked={currentConnectionStatus === 'wired'}
+                      onChange={() => setCurrentConnectionStatus('wired')}
                     />
-                    接続あり
+                    有線接続
                   </label>
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
-                      checked={currentConnectionStatus === 'disconnected'}
-                      onChange={() => setCurrentConnectionStatus('disconnected')}
+                      checked={currentConnectionStatus === 'wireless'}
+                      onChange={() => setCurrentConnectionStatus('wireless')}
                     />
-                    接続なし
+                    無線接続
+                  </label>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      checked={currentConnectionStatus === 'not-required'}
+                      onChange={() => setCurrentConnectionStatus('not-required')}
+                    />
+                    接続不要
                   </label>
                 </div>
               </div>

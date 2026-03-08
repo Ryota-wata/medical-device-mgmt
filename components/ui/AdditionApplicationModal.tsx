@@ -68,7 +68,7 @@ export function AdditionApplicationModal({
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   // システム接続要望
-  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
+  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
@@ -175,7 +175,7 @@ export function AdditionApplicationModal({
     setCaseCountUnit('件／月');
     setComment('');
     setAttachedFiles([]);
-    setCurrentConnectionStatus('disconnected');
+    setCurrentConnectionStatus('not-required');
     setCurrentConnectionDestination('');
     setRequestConnectionStatus('not-required');
     setRequestConnectionDestination('');
@@ -378,6 +378,12 @@ export function AdditionApplicationModal({
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
                   </tr>
+                  <tr>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.item || assets[0]?.name || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>台数</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{additionQuantity} 台</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -414,10 +420,6 @@ export function AdditionApplicationModal({
                   <div><span style={{ color: '#666' }}>設置場所:</span> {assets[0]?.roomName || '-'}</div>
                   <div><span style={{ color: '#666' }}>管理番号:</span> {assets[0]?.managementNo || '-'}</div>
                 </div>
-              </div>
-              <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: '#fff3e0', borderRadius: '4px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#e65100' }}>増設数量:</span>
-                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#e65100', fontVariantNumeric: 'tabular-nums' }}>{additionQuantity} 台</span>
               </div>
             </div>
 
@@ -465,7 +467,7 @@ export function AdditionApplicationModal({
                 <tbody>
                   <tr>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'connected' ? '接続中' : '接続無し'}</td>
+                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'wired' ? '有線接続' : currentConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
                     <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionDestination || '-'}</td>
                   </tr>
@@ -559,6 +561,20 @@ export function AdditionApplicationModal({
                   <span>月</span>
                 </div>
               </div>
+              <div style={styles.formItem}>
+                <label style={styles.label}>品目</label>
+                <input style={styles.inputDisabled} value={assets[0]?.item || assets[0]?.name || '-'} disabled />
+              </div>
+              <div style={styles.formItem}>
+                <label style={styles.label}>台数 <span style={{ color: '#e74c3c' }}>*</span></label>
+                <input
+                  type="number"
+                  value={additionQuantity}
+                  onChange={(e) => setAdditionQuantity(Math.max(1, Number(e.target.value) || 1))}
+                  min={1}
+                  style={{ ...styles.input, width: '80px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
+                />
+              </div>
             </div>
           </div>
 
@@ -621,31 +637,6 @@ export function AdditionApplicationModal({
                   <div style={{ fontWeight: 500 }}>{assets[0]?.section || '-'}</div>
                 </div>
               </div>
-            </div>
-            <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#fff3e0', borderRadius: '8px', border: '1px solid #ffcc80' }}>
-              <label style={{ fontSize: '14px', fontWeight: 'bold', color: '#e65100' }}>
-                増設数量 <span style={{ color: '#e74c3c' }}>*</span>
-              </label>
-              <input
-                type="number"
-                value={additionQuantity}
-                onChange={(e) => setAdditionQuantity(Math.max(1, Number(e.target.value) || 1))}
-                min={1}
-                style={{
-                  width: '80px',
-                  padding: '8px 12px',
-                  border: '2px solid #e65100',
-                  borderRadius: '4px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              />
-              <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#e65100' }}>台</span>
-              <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
-                ※ 上記機器と同等品を何台増設するかを入力してください
-              </span>
             </div>
           </div>
 
@@ -778,18 +769,26 @@ export function AdditionApplicationModal({
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
-                      checked={currentConnectionStatus === 'connected'}
-                      onChange={() => setCurrentConnectionStatus('connected')}
+                      checked={currentConnectionStatus === 'wired'}
+                      onChange={() => setCurrentConnectionStatus('wired')}
                     />
-                    接続あり
+                    有線接続
                   </label>
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
-                      checked={currentConnectionStatus === 'disconnected'}
-                      onChange={() => setCurrentConnectionStatus('disconnected')}
+                      checked={currentConnectionStatus === 'wireless'}
+                      onChange={() => setCurrentConnectionStatus('wireless')}
                     />
-                    接続なし
+                    無線接続
+                  </label>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      checked={currentConnectionStatus === 'not-required'}
+                      onChange={() => setCurrentConnectionStatus('not-required')}
+                    />
+                    接続不要
                   </label>
                 </div>
               </div>
