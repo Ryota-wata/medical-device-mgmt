@@ -2,10 +2,17 @@
  * 資産の親子関係（階層構造）を処理するユーティリティ
  */
 
-import { MatchingData } from '@/lib/types/asset-matching';
 import { AssetMaster } from '@/lib/types/master';
 
 type EditableField = 'majorCategory' | 'middleCategory' | 'item' | 'manufacturer' | 'model';
+
+interface HierarchyFields {
+  majorCategory: string;
+  middleCategory: string;
+  item: string;
+  manufacturer: string;
+  model: string;
+}
 
 /**
  * フィールド値の変更時に親フィールドを自動更新
@@ -15,17 +22,17 @@ type EditableField = 'majorCategory' | 'middleCategory' | 'item' | 'manufacturer
  *
  * @param field - 変更するフィールド名
  * @param value - 新しい値
- * @param currentData - 現在の編集データ
+ * @param currentData - 現在の編集データ（HierarchyFields を満たすオブジェクト）
  * @param assetMasters - 資産マスタデータ
  * @returns 更新すべきフィールドと値のオブジェクト
  */
 export function updateFieldWithParents(
   field: EditableField,
   value: string,
-  currentData: MatchingData,
+  currentData: HierarchyFields,
   assetMasters: AssetMaster[]
-): Partial<MatchingData> {
-  let updates: Partial<MatchingData> = { [field]: value };
+): Partial<HierarchyFields> {
+  let updates: Partial<HierarchyFields> = { [field]: value };
 
   // 空の値の場合は、そのフィールドのみ更新
   if (!value) {

@@ -21,6 +21,7 @@ interface UseAssetMatchingFiltersReturn {
   categoryOptions: string[];
   majorCategoryOptions: string[];
   middleCategoryOptions: string[];
+  itemOptions: string[];
   resetFilters: () => void;
 }
 
@@ -40,7 +41,8 @@ export function useAssetMatchingFilters({
     section: '',
     category: '',
     majorCategory: '',
-    middleCategory: ''
+    middleCategory: '',
+    item: ''
   });
 
   // 部門オプション（施設マスタから取得）
@@ -71,6 +73,12 @@ export function useAssetMatchingFilters({
     return uniqueMiddleCategories.filter(Boolean);
   }, [assetMasters]);
 
+  // 品目オプション（資産マスタから一意の値を抽出）
+  const itemOptions = useMemo(() => {
+    const uniqueItems = Array.from(new Set(assetMasters.map(a => a.item)));
+    return uniqueItems.filter(Boolean);
+  }, [assetMasters]);
+
   // フィルタリングされたデータ
   const filteredData = useMemo(() => {
     let filtered = data;
@@ -82,13 +90,16 @@ export function useAssetMatchingFilters({
       filtered = filtered.filter(d => d.section === filters.section);
     }
     if (filters.category) {
-      filtered = filtered.filter(d => d.category === filters.category);
+      filtered = filtered.filter(d => d.linked.category === filters.category);
     }
     if (filters.majorCategory) {
-      filtered = filtered.filter(d => d.majorCategory === filters.majorCategory);
+      filtered = filtered.filter(d => d.linked.majorCategory === filters.majorCategory);
     }
     if (filters.middleCategory) {
-      filtered = filtered.filter(d => d.middleCategory === filters.middleCategory);
+      filtered = filtered.filter(d => d.linked.middleCategory === filters.middleCategory);
+    }
+    if (filters.item) {
+      filtered = filtered.filter(d => d.linked.item === filters.item);
     }
 
     return filtered;
@@ -101,7 +112,8 @@ export function useAssetMatchingFilters({
       section: '',
       category: '',
       majorCategory: '',
-      middleCategory: ''
+      middleCategory: '',
+      item: ''
     });
   };
 
@@ -114,6 +126,7 @@ export function useAssetMatchingFilters({
     categoryOptions,
     majorCategoryOptions,
     middleCategoryOptions,
+    itemOptions,
     resetFilters
   };
 }

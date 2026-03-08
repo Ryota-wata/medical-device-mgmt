@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { MatchingData } from '@/lib/types/asset-matching';
+import { MatchingData, LinkedMasterData, emptyLinkedMasterData } from '@/lib/types/asset-matching';
 import { assetMatchingSampleData } from '@/lib/data/asset-matching-sample';
 import { useAssetMatchingFilters } from '@/lib/hooks/useAssetMatchingFilters';
 import { updateFieldWithParents } from '@/lib/utils/asset-hierarchy';
+import { exportAssetMatchingToExcel } from '@/lib/utils/excel-asset-matching';
 
 export default function AssetMatchingPage() {
   const router = useRouter();
@@ -17,10 +18,9 @@ export default function AssetMatchingPage() {
   const [selectedAll, setSelectedAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRow, setEditingRow] = useState<number | null>(null);
-  const [editingData, setEditingData] = useState<MatchingData | null>(null);
+  const [editingLinked, setEditingLinked] = useState<LinkedMasterData | null>(null);
   const [data, setData] = useState(assetMatchingSampleData);
 
-  // カスタムフックでフィルター機能を提供
   const {
     filters,
     setFilters,
@@ -30,9 +30,9 @@ export default function AssetMatchingPage() {
     categoryOptions,
     majorCategoryOptions,
     middleCategoryOptions,
+    itemOptions,
     resetFilters
   } = useAssetMatchingFilters({ data, assetMasters });
-
 
   const handleBack = () => {
     router.back();
@@ -60,77 +60,66 @@ export default function AssetMatchingPage() {
   const toggleEditMode = (id: number) => {
     if (editingRow === id) {
       setEditingRow(null);
-      setEditingData(null);
+      setEditingLinked(null);
     } else {
       const row = data.find(r => r.id === id);
       if (row) {
         setEditingRow(id);
-        setEditingData({ ...row });
+        setEditingLinked({ ...row.linked });
       }
     }
   };
 
   // 編集時のフィールド変更ハンドラ（親子関係の自動選択）
   const handleEditFieldChange = (field: 'majorCategory' | 'middleCategory' | 'item' | 'manufacturer' | 'model', value: string) => {
-    if (!editingData) return;
-
-    // updateFieldWithParentsユーティリティを使用して親フィールドを自動更新
-    const updates = updateFieldWithParents(field, value, editingData, assetMasters);
-    setEditingData({ ...editingData, ...updates });
+    if (!editingLinked) return;
+    const updates = updateFieldWithParents(field, value, editingLinked, assetMasters);
+    setEditingLinked({ ...editingLinked, ...updates });
   };
 
+  // AI判定を採用 → linked にコピー
   const handleApplyAIRecommendation = (rowId: number) => {
     const row = data.find(r => r.id === rowId);
     if (!row) return;
 
-    if (editingRow === rowId && editingData) {
-      // 編集中の場合は編集データに反映または解除
-      if (editingData.aiApplied) {
-        // 解除: 空にする
-        setEditingData({
-          ...editingData,
-          majorCategory: '',
-          middleCategory: '',
-          item: '',
-          manufacturer: editingData.manufacturer, // メーカーと型式は元のまま
-          model: editingData.model,
-          aiApplied: false
-        });
+    if (editingRow === rowId && editingLinked) {
+      if (row.aiApplied) {
+        // 解除
+        setEditingLinked({ ...emptyLinkedMasterData });
+        setData(data.map(r => r.id === rowId ? { ...r, aiApplied: false } : r));
       } else {
-        // 適用
-        setEditingData({
-          ...editingData,
-          majorCategory: editingData.aiRecommendation.major,
-          middleCategory: editingData.aiRecommendation.middle,
-          item: editingData.aiRecommendation.item,
-          manufacturer: editingData.aiRecommendation.manufacturer,
-          model: editingData.aiRecommendation.model,
-          aiApplied: true
-        });
+        // 採用 → editingLinked に反映
+        const newLinked: LinkedMasterData = {
+          category: row.aiRecommendation.category,
+          majorCategory: row.aiRecommendation.major,
+          middleCategory: row.aiRecommendation.middle,
+          item: row.aiRecommendation.item,
+          manufacturer: row.aiRecommendation.manufacturer,
+          model: row.aiRecommendation.model,
+        };
+        setEditingLinked(newLinked);
+        setData(data.map(r => r.id === rowId ? { ...r, aiApplied: true } : r));
       }
     } else {
-      // 編集中でない場合は直接dataを更新
-      setData(data.map(r =>
-        r.id === rowId ? (
-          r.aiApplied ? {
-            // 解除: 空にする
-            ...r,
-            majorCategory: '',
-            middleCategory: '',
-            item: '',
-            aiApplied: false
-          } : {
-            // 適用
-            ...r,
+      // 編集中でない場合は直接 data を更新
+      setData(data.map(r => {
+        if (r.id !== rowId) return r;
+        if (r.aiApplied) {
+          return { ...r, linked: { ...emptyLinkedMasterData }, aiApplied: false };
+        }
+        return {
+          ...r,
+          linked: {
+            category: r.aiRecommendation.category,
             majorCategory: r.aiRecommendation.major,
             middleCategory: r.aiRecommendation.middle,
             item: r.aiRecommendation.item,
             manufacturer: r.aiRecommendation.manufacturer,
             model: r.aiRecommendation.model,
-            aiApplied: true
-          }
-        ) : r
-      ));
+          },
+          aiApplied: true
+        };
+      }));
     }
   };
 
@@ -139,9 +128,7 @@ export default function AssetMatchingPage() {
     const height = 900;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
-    // GitHub Pages対応: basePathを付与
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
     window.open(
       `${basePath}/ship-asset-master`,
       'AssetMasterWindow',
@@ -150,19 +137,15 @@ export default function AssetMatchingPage() {
   };
 
   const saveEdit = () => {
-    if (!editingData) return;
-
+    if (!editingLinked || editingRow === null) return;
     setData(data.map(row =>
-      row.id === editingData.id ? editingData : row
+      row.id === editingRow ? { ...row, linked: { ...editingLinked } } : row
     ));
     setEditingRow(null);
-    setEditingData(null);
+    setEditingLinked(null);
   };
 
   const confirmRow = (id: number) => {
-    const row = data.find(r => r.id === id);
-    if (!row) return;
-
     if (confirm(`No.${id} のレコードを確定しますか？\n確定後、このレコードは画面から削除されます。`)) {
       setData(data.filter(r => r.id !== id));
       setSelectedRows(prev => {
@@ -178,7 +161,6 @@ export default function AssetMatchingPage() {
       alert('確定する項目を選択してください');
       return;
     }
-
     if (confirm(`選択した${selectedRows.size}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
       setData(data.filter(row => !selectedRows.has(row.id)));
       setSelectedRows(new Set());
@@ -227,6 +209,35 @@ export default function AssetMatchingPage() {
       </div>
     );
   }
+
+  const thBase: React.CSSProperties = {
+    padding: '8px 6px',
+    borderBottom: '2px solid #e0e0e0',
+    whiteSpace: 'nowrap',
+    fontSize: '11px'
+  };
+
+  const tdBase: React.CSSProperties = {
+    padding: '8px',
+    borderBottom: '1px solid #e0e0e0',
+    whiteSpace: 'nowrap'
+  };
+
+  const linkedBg = '#e8f5e9';
+  const aiBg = '#fff8e1';
+
+  // 固定列の累積left位置（px）: チェックボックス(36) + No.(40) + 台帳データ6列
+  const stickyLeft = {
+    checkbox: 0,
+    no: 36,
+    department: 76,
+    section: 166,
+    itemName: 276,
+    maker: 426,
+    model: 556,
+    qty: 676,
+  };
+  const stickyBorder = '2px solid #bdbdbd';
 
   return (
     <div style={{
@@ -286,7 +297,7 @@ export default function AssetMatchingPage() {
           }}>
             <div style={{ flex: '0 0 130px' }}>
               <SearchableSelect
-                label="部門"
+                label="共通部門"
                 value={filters.department}
                 onChange={(value) => setFilters({...filters, department: value, section: ''})}
                 options={departmentOptions}
@@ -297,7 +308,7 @@ export default function AssetMatchingPage() {
             </div>
             <div style={{ flex: '0 0 140px' }}>
               <SearchableSelect
-                label="部署"
+                label="共通部署"
                 value={filters.section}
                 onChange={(value) => setFilters({...filters, section: value})}
                 options={sectionOptions}
@@ -340,6 +351,17 @@ export default function AssetMatchingPage() {
                 dropdownMinWidth="300px"
               />
             </div>
+            <div style={{ flex: '0 0 150px' }}>
+              <SearchableSelect
+                label="品目"
+                value={filters.item}
+                onChange={(value) => setFilters({...filters, item: value})}
+                options={itemOptions}
+                placeholder="全て"
+                isMobile={isMobile}
+                dropdownMinWidth="400px"
+              />
+            </div>
             <button
               onClick={resetFilters}
               style={{
@@ -356,6 +378,23 @@ export default function AssetMatchingPage() {
               }}
             >
               リセット
+            </button>
+            <button
+              onClick={() => exportAssetMatchingToExcel(filteredData)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                height: '38px'
+              }}
+            >
+              Excel出力
             </button>
           </div>
         </div>
@@ -399,7 +438,7 @@ export default function AssetMatchingPage() {
                 gap: '8px'
               }}
             >
-              <span>📋</span> 資産マスタを別ウィンドウで開く
+              資産マスタを別ウィンドウで開く
             </button>
           </div>
 
@@ -415,176 +454,89 @@ export default function AssetMatchingPage() {
               fontSize: '12px'
             }}>
               <thead>
+                {/* 1段目: グループヘッダー */}
                 <tr style={{ backgroundColor: '#f5f5f5' }}>
-                  <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: '#f5f5f5', zIndex: 3 }}>
+                  <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: stickyLeft.checkbox, backgroundColor: '#f5f5f5', zIndex: 4 }}>
                     <input
                       type="checkbox"
                       checked={selectedAll}
                       onChange={(e) => toggleSelectAll(e.target.checked)}
                     />
                   </th>
-                  <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>No.</th>
-                  <th colSpan={13} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600' }}>固定資産台帳データ</th>
-                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI推薦</th>
-                  <th colSpan={2} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 3 }}>操作</th>
+                  <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', position: 'sticky', left: stickyLeft.no, backgroundColor: '#f5f5f5', zIndex: 4 }}>No.</th>
+                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600', position: 'sticky', left: stickyLeft.department, zIndex: 4 }}>台帳データ</th>
+                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.section, zIndex: 4 }}></th>
+                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.itemName, zIndex: 4 }}></th>
+                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.maker, zIndex: 4 }}></th>
+                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.model, zIndex: 4 }}></th>
+                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.qty, zIndex: 4, borderRight: stickyBorder }}></th>
+                  <th colSpan={7} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI判定（推薦）</th>
+                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e8f5e9', fontWeight: '600' }}>SHIP資産マスタ紐づけ</th>
+                  <th colSpan={2} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 4 }}>操作</th>
                 </tr>
+                {/* 2段目: 個別カラムヘッダー */}
                 <tr style={{ backgroundColor: '#f5f5f5' }}>
-                  {/* 固定資産台帳 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>固定資産番号</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>管理機器番号</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>部門名</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>部署名（設置部署）</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>諸室名称</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>category</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '150px' }}>品目</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>数量／単位</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>検収日</th>
-                  {/* AI推薦 */}
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', textAlign: 'center' }}>選択</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '120px' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px', minWidth: '150px' }}>品目</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>メーカー</th>
-                  <th style={{ padding: '8px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '11px' }}>型式</th>
+                  {/* 台帳データ（sticky） */}
+                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.department, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '90px' }}>共通部門</th>
+                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.section, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '110px' }}>共通部署</th>
+                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.itemName, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '150px' }}>品目名(原)</th>
+                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.maker, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '130px' }}>メーカー名(原)</th>
+                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.model, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '120px' }}>型式(原)</th>
+                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.qty, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '50px', borderRight: stickyBorder }}>数量</th>
+                  {/* AI判定（推薦） */}
+                  <th style={{ ...thBase, textAlign: 'center' }}>採用</th>
+                  <th style={thBase}>category</th>
+                  <th style={{ ...thBase, minWidth: '120px' }}>大分類</th>
+                  <th style={{ ...thBase, minWidth: '120px' }}>中分類</th>
+                  <th style={{ ...thBase, minWidth: '150px' }}>品目</th>
+                  <th style={thBase}>メーカー名</th>
+                  <th style={thBase}>型式</th>
+                  {/* SHIP資産マスタ紐づけ */}
+                  <th style={thBase}>category</th>
+                  <th style={{ ...thBase, minWidth: '120px' }}>大分類</th>
+                  <th style={{ ...thBase, minWidth: '120px' }}>中分類</th>
+                  <th style={{ ...thBase, minWidth: '150px' }}>品目</th>
+                  <th style={thBase}>メーカー名</th>
+                  <th style={thBase}>型式</th>
                   {/* 操作 */}
-                  <th style={{ padding: '8px 4px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 60, backgroundColor: '#f5f5f5', zIndex: 2, minWidth: '60px', textAlign: 'center' }}>編集</th>
-                  <th style={{ padding: '8px 4px', borderBottom: '2px solid #e0e0e0', fontSize: '11px', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 2, minWidth: '60px', textAlign: 'center' }}>確定</th>
+                  <th style={{ ...thBase, position: 'sticky', right: 60, backgroundColor: '#f5f5f5', zIndex: 2, minWidth: '60px', textAlign: 'center' }}>編集</th>
+                  <th style={{ ...thBase, position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 2, minWidth: '60px', textAlign: 'center' }}>確定</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map((row, index) => {
                   const isEditing = editingRow === row.id;
-                  const displayRow = isEditing && editingData ? editingData : row;
+                  const displayLinked = isEditing && editingLinked ? editingLinked : row.linked;
 
                   return (
                     <React.Fragment key={row.id}>
                       <tr style={{ backgroundColor: 'white' }}>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: 0, backgroundColor: 'white', zIndex: 1 }}>
+                        {/* チェックボックス（sticky） */}
+                        <td style={{ ...tdBase, textAlign: 'center', position: 'sticky', left: stickyLeft.checkbox, backgroundColor: 'white', zIndex: 2 }}>
                           <input
                             type="checkbox"
                             checked={selectedRows.has(row.id)}
                             onChange={() => toggleRowSelection(row.id)}
                           />
                         </td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{index + 1}</td>
-                        {/* 固定資産台帳データ */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.fixedAssetNo}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.managementDeviceNo}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.department}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.section}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.roomName}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.category}</td>
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.no, backgroundColor: 'white', zIndex: 2 }}>{index + 1}</td>
 
-                        {/* 編集可能フィールド: 大分類 */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
-                          {isEditing && editingData ? (
-                            <div style={{ width: '100%' }}>
-                              <SearchableSelect
-                                label=""
-                                value={editingData.majorCategory}
-                                onChange={(value) => handleEditFieldChange('majorCategory', value)}
-                                options={majorCategoryOptions}
-                                placeholder="選択してください"
-                                isMobile={isMobile}
-                                dropdownMinWidth="300px"
-                              />
-                            </div>
-                          ) : (
-                            displayRow.majorCategory
-                          )}
-                        </td>
+                        {/* 台帳データ（読み取り専用・sticky） */}
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.department, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.department}</td>
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.section, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.section}</td>
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.itemName, backgroundColor: '#f0f7ff', zIndex: 2, minWidth: '150px' }}>{row.originalItemName}</td>
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.maker, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.manufacturer}</td>
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.model, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.model}</td>
+                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.qty, backgroundColor: '#f0f7ff', zIndex: 2, borderRight: stickyBorder }}>{row.quantityUnit}</td>
 
-                        {/* 編集可能フィールド: 中分類 */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '120px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
-                          {isEditing && editingData ? (
-                            <div style={{ width: '100%' }}>
-                              <SearchableSelect
-                                label=""
-                                value={editingData.middleCategory}
-                                onChange={(value) => handleEditFieldChange('middleCategory', value)}
-                                options={middleCategoryOptions}
-                                placeholder="選択してください"
-                                isMobile={isMobile}
-                                dropdownMinWidth="300px"
-                              />
-                            </div>
-                          ) : (
-                            displayRow.middleCategory
-                          )}
-                        </td>
-
-                        {/* 編集可能フィールド: 品目 */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', minWidth: '150px', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
-                          {isEditing && editingData ? (
-                            <div style={{ width: '100%' }}>
-                              <SearchableSelect
-                                label=""
-                                value={editingData.item}
-                                onChange={(value) => handleEditFieldChange('item', value)}
-                                options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)}
-                                placeholder="選択してください"
-                                isMobile={isMobile}
-                                dropdownMinWidth="400px"
-                              />
-                            </div>
-                          ) : (
-                            displayRow.item
-                          )}
-                        </td>
-
-                        {/* 編集可能フィールド: メーカー */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
-                          {isEditing && editingData ? (
-                            <div style={{ width: '100%' }}>
-                              <SearchableSelect
-                                label=""
-                                value={editingData.manufacturer}
-                                onChange={(value) => handleEditFieldChange('manufacturer', value)}
-                                options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)}
-                                placeholder="選択してください"
-                                isMobile={isMobile}
-                                dropdownMinWidth="300px"
-                              />
-                            </div>
-                          ) : (
-                            displayRow.manufacturer
-                          )}
-                        </td>
-
-                        {/* 編集可能フィールド: 型式 */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: isEditing ? '#fffde7' : 'white' }}>
-                          {isEditing && editingData ? (
-                            <div style={{ width: '100%' }}>
-                              <SearchableSelect
-                                label=""
-                                value={editingData.model}
-                                onChange={(value) => handleEditFieldChange('model', value)}
-                                options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)}
-                                placeholder="選択してください"
-                                isMobile={isMobile}
-                                dropdownMinWidth="300px"
-                              />
-                            </div>
-                          ) : (
-                            displayRow.model
-                          )}
-                        </td>
-
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.quantityUnit}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{displayRow.inspectionDate}</td>
-
-                        {/* AI推薦 */}
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', textAlign: 'center' }}>
+                        {/* AI判定（推薦）（読み取り専用 + 採用ボタン） */}
+                        <td style={{ ...tdBase, backgroundColor: aiBg, textAlign: 'center' }}>
                           <button
                             onClick={() => handleApplyAIRecommendation(row.id)}
                             style={{
                               padding: '4px 8px',
                               fontSize: '11px',
-                              backgroundColor: displayRow.aiApplied ? '#f44336' : '#ff9800',
+                              backgroundColor: row.aiApplied ? '#f44336' : '#ff9800',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -592,17 +544,110 @@ export default function AssetMatchingPage() {
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            {displayRow.aiApplied ? '解除' : '適用'}
+                            {row.aiApplied ? '解除' : '採用'}
                           </button>
                         </td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.major}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '120px' }}>{displayRow.aiRecommendation.middle}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1', minWidth: '150px' }}>{displayRow.aiRecommendation.item}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{displayRow.aiRecommendation.manufacturer}</td>
-                        <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', backgroundColor: '#fff8e1' }}>{displayRow.aiRecommendation.model}</td>
+                        <td style={{ ...tdBase, backgroundColor: aiBg }}>{row.aiRecommendation.category}</td>
+                        <td style={{ ...tdBase, backgroundColor: aiBg, minWidth: '120px' }}>{row.aiRecommendation.major}</td>
+                        <td style={{ ...tdBase, backgroundColor: aiBg, minWidth: '120px' }}>{row.aiRecommendation.middle}</td>
+                        <td style={{ ...tdBase, backgroundColor: aiBg, minWidth: '150px' }}>{row.aiRecommendation.item}</td>
+                        <td style={{ ...tdBase, backgroundColor: aiBg }}>{row.aiRecommendation.manufacturer}</td>
+                        <td style={{ ...tdBase, backgroundColor: aiBg }}>{row.aiRecommendation.model}</td>
+
+                        {/* SHIP資産マスタ紐づけ（編集対象） */}
+                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg }}>
+                          {isEditing && editingLinked ? (
+                            <SearchableSelect
+                              label=""
+                              value={editingLinked.category}
+                              onChange={(value) => setEditingLinked({ ...editingLinked, category: value })}
+                              options={categoryOptions}
+                              placeholder="選択"
+                              isMobile={isMobile}
+                              dropdownMinWidth="200px"
+                            />
+                          ) : (
+                            displayLinked.category
+                          )}
+                        </td>
+                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg, minWidth: '120px' }}>
+                          {isEditing && editingLinked ? (
+                            <SearchableSelect
+                              label=""
+                              value={editingLinked.majorCategory}
+                              onChange={(value) => handleEditFieldChange('majorCategory', value)}
+                              options={majorCategoryOptions}
+                              placeholder="選択"
+                              isMobile={isMobile}
+                              dropdownMinWidth="300px"
+                            />
+                          ) : (
+                            displayLinked.majorCategory
+                          )}
+                        </td>
+                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg, minWidth: '120px' }}>
+                          {isEditing && editingLinked ? (
+                            <SearchableSelect
+                              label=""
+                              value={editingLinked.middleCategory}
+                              onChange={(value) => handleEditFieldChange('middleCategory', value)}
+                              options={middleCategoryOptions}
+                              placeholder="選択"
+                              isMobile={isMobile}
+                              dropdownMinWidth="300px"
+                            />
+                          ) : (
+                            displayLinked.middleCategory
+                          )}
+                        </td>
+                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg, minWidth: '150px' }}>
+                          {isEditing && editingLinked ? (
+                            <SearchableSelect
+                              label=""
+                              value={editingLinked.item}
+                              onChange={(value) => handleEditFieldChange('item', value)}
+                              options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)}
+                              placeholder="選択"
+                              isMobile={isMobile}
+                              dropdownMinWidth="400px"
+                            />
+                          ) : (
+                            displayLinked.item
+                          )}
+                        </td>
+                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg }}>
+                          {isEditing && editingLinked ? (
+                            <SearchableSelect
+                              label=""
+                              value={editingLinked.manufacturer}
+                              onChange={(value) => handleEditFieldChange('manufacturer', value)}
+                              options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)}
+                              placeholder="選択"
+                              isMobile={isMobile}
+                              dropdownMinWidth="300px"
+                            />
+                          ) : (
+                            displayLinked.manufacturer
+                          )}
+                        </td>
+                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg }}>
+                          {isEditing && editingLinked ? (
+                            <SearchableSelect
+                              label=""
+                              value={editingLinked.model}
+                              onChange={(value) => handleEditFieldChange('model', value)}
+                              options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)}
+                              placeholder="選択"
+                              isMobile={isMobile}
+                              dropdownMinWidth="300px"
+                            />
+                          ) : (
+                            displayLinked.model
+                          )}
+                        </td>
 
                         {/* 操作 */}
-                        <td style={{ padding: '8px 4px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 60, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
+                        <td style={{ ...tdBase, position: 'sticky', right: 60, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
                           {isEditing ? (
                             <button
                               onClick={() => toggleEditMode(row.id)}
@@ -635,7 +680,7 @@ export default function AssetMatchingPage() {
                             </button>
                           )}
                         </td>
-                        <td style={{ padding: '8px 4px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
+                        <td style={{ ...tdBase, position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
                           {isEditing ? (
                             <button
                               onClick={saveEdit}
@@ -743,7 +788,7 @@ export default function AssetMatchingPage() {
               gap: '8px'
             }}
           >
-            <span>←</span> 戻る
+            ← 戻る
           </button>
           <button
             onClick={completeMatching}

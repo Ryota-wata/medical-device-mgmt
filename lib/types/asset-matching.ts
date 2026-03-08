@@ -3,12 +3,32 @@
  */
 
 export interface AIRecommendation {
+  category: string;
   major: string;
   middle: string;
   item: string;
   manufacturer: string;
   model: string;
 }
+
+/** SHIP資産マスタ紐づけデータ */
+export interface LinkedMasterData {
+  category: string;
+  majorCategory: string;
+  middleCategory: string;
+  item: string;
+  manufacturer: string;
+  model: string;
+}
+
+export const emptyLinkedMasterData: LinkedMasterData = {
+  category: '',
+  majorCategory: '',
+  middleCategory: '',
+  item: '',
+  manufacturer: '',
+  model: '',
+};
 
 export interface MatchingData {
   id: number;
@@ -21,10 +41,12 @@ export interface MatchingData {
   majorCategory: string;
   middleCategory: string;
   item: string;
+  originalItemName: string;
   manufacturer: string;
   model: string;
   quantityUnit: string;
   inspectionDate: string;
+  linked: LinkedMasterData;
   aiRecommendation: AIRecommendation;
   aiApplied: boolean;
   status: 'pending' | 'completed';
@@ -36,4 +58,5 @@ export interface AssetMatchingFilters {
   category: string;
   majorCategory: string;
   middleCategory: string;
+  item: string;
 }

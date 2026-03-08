@@ -180,7 +180,7 @@ export default function AssetImportPage() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
       }}>
         <h1 style={{ fontSize: isMobile ? '18px' : isTablet ? '22px' : '26px', fontWeight: 700, margin: 0 }}>
-          固定資産管理台帳取込
+          台帳取込
         </h1>
       </header>
 
