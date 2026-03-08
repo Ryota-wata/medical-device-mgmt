@@ -34,8 +34,30 @@ export default function AssetMatchingPage() {
     resetFilters
   } = useAssetMatchingFilters({ data, assetMasters });
 
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
   const handleBack = () => {
-    router.back();
+    // 作業中データがあれば一時保存確認を表示
+    const hasLinkedData = data.some(r =>
+      r.linked.category || r.linked.majorCategory || r.linked.middleCategory ||
+      r.linked.item || r.linked.manufacturer || r.linked.model
+    );
+    if (hasLinkedData || data.length < assetMatchingSampleData.length) {
+      setShowLeaveConfirm(true);
+    } else {
+      router.push('/main');
+    }
+  };
+
+  const handleLeaveWithSave = () => {
+    alert('作業内容を一時保存しました。次回アクセス時に続きから作業できます。');
+    setShowLeaveConfirm(false);
+    router.push('/main');
+  };
+
+  const handleLeaveWithoutSave = () => {
+    setShowLeaveConfirm(false);
+    router.push('/main');
   };
 
   const toggleSelectAll = (checked: boolean) => {
@@ -807,6 +829,83 @@ export default function AssetMatchingPage() {
           </button>
         </div>
       </footer>
+
+      {/* 一時保存確認モーダル */}
+      {showLeaveConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '90%',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: '18px', color: '#2c3e50' }}>
+              作業内容の一時保存
+            </h3>
+            <p style={{ margin: '0 0 24px', fontSize: '14px', color: '#5a6c7d', lineHeight: '1.6' }}>
+              突き合わせ作業の途中です。作業内容を一時保存してメイン画面に戻りますか？
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#5a6c7d'
+                }}
+              >
+                作業を続ける
+              </button>
+              <button
+                onClick={handleLeaveWithoutSave}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e57373',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#d32f2f'
+                }}
+              >
+                保存せず戻る
+              </button>
+              <button
+                onClick={handleLeaveWithSave}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                一時保存して戻る
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
