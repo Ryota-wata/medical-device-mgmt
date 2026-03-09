@@ -812,17 +812,6 @@ function RemodelApplicationContent() {
 
   // インライン新規申請を確定
   const handleInlineNewConfirm = () => {
-    // 必須チェック
-    const missingFields: string[] = [];
-    if (!inlineNewData.newDepartment) missingFields.push('部門');
-    if (!inlineNewData.newSection) missingFields.push('部署');
-    if (!inlineNewData.newRoomName) missingFields.push('室名');
-    if (!inlineNewData.applicationItem) missingFields.push('申請品目');
-    if (missingFields.length > 0) {
-      alert(`以下の必須項目が未入力です:\n${missingFields.join('、')}\n\n該当セル（オレンジ色）をクリックして入力してください。`);
-      return;
-    }
-
     const now = new Date().toISOString();
     const appId = `pa-inline-${Date.now()}`;
 
@@ -1513,8 +1502,6 @@ function RemodelApplicationContent() {
 
               {/* インライン新規行 */}
               {isInlineNewMode && (() => {
-                // 必須カラム定義
-                const requiredCols = ['newDepartment', 'newSection', 'newRoomName', 'applicationItem'];
                 // 自動設定カラム（編集不可）
                 const autoFilledCols = ['applicationCategory', 'applicationDate', 'applicationNo'];
                 // ドロップダウンで編集するカラムとそのオプション
@@ -1579,34 +1566,21 @@ function RemodelApplicationContent() {
                       const isNewLocationCol = col.group === 'newLocation';
                       const isInlineEditing = inlineEditingCol === col.key;
                       const cellValue = inlineNewData[col.key] || '';
-                      const isRequired = requiredCols.includes(col.key);
                       const isAutoFilled = autoFilledCols.includes(col.key);
                       const isDropdown = col.key in dropdownCols;
 
                       // 編集可能: (新)設置情報 or 購入申請情報（自動設定以外）
                       const isEditable = (isNewLocationCol || (isPurchaseCol && !isAutoFilled));
 
-                      // 背景色: 必須&未入力→オレンジ、編集中→黄色、編集可能→薄緑、その他→ベース緑
-                      const getCellBg = () => {
-                        if (isInlineEditing) return '#fff3cd';
-                        if (isRequired && !cellValue) return '#fff3e0';
-                        if (isEditable) return '#f1f8e9';
-                        return '#e8f5e9';
-                      };
-
-                      // ボーダー: 必須&未入力→オレンジ破線
-                      const isRequiredEmpty = isRequired && !cellValue && !isInlineEditing;
-                      const dashedBorder = '1px dashed #ff9800';
-
                       return (
                         <td
                           key={col.key}
                           style={{
                             padding: isInlineEditing ? '4px' : '8px 8px',
-                            background: getCellBg(),
-                            borderTop: isRequiredEmpty ? dashedBorder : 'none',
-                            borderLeft: isRequiredEmpty ? dashedBorder : 'none',
-                            borderRight: isRequiredEmpty ? dashedBorder : '1px solid #dee2e6',
+                            background: isInlineEditing ? '#fff3cd' : isEditable ? '#f1f8e9' : '#e8f5e9',
+                            borderTop: 'none',
+                            borderLeft: 'none',
+                            borderRight: '1px solid #dee2e6',
                             borderBottom: '2px solid #4caf50',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -1686,7 +1660,7 @@ function RemodelApplicationContent() {
                                 flex: 1,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                color: cellValue ? '#2c3e50' : '#e65100',
+                                color: cellValue ? '#2c3e50' : '#a5d6a7',
                                 fontStyle: cellValue ? 'normal' : 'italic',
                                 fontSize: '13px',
                               }}>
@@ -1715,11 +1689,11 @@ function RemodelApplicationContent() {
                           /* 通常表示 */
                           ) : (
                             <span style={{
-                              color: cellValue ? '#2c3e50' : (isRequired ? '#e65100' : (isEditable ? '#a5d6a7' : '#bbb')),
+                              color: cellValue ? '#2c3e50' : (isEditable ? '#a5d6a7' : '#bbb'),
                               fontStyle: isEditable && !cellValue ? 'italic' : 'normal',
                               fontSize: '13px',
                             }}>
-                              {cellValue || (isEditable ? (isRequired ? '必須' : '入力') : '-')}
+                              {cellValue || (isEditable ? '入力' : '-')}
                             </span>
                           )}
                         </td>
