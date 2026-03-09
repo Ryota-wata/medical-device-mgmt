@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset, Application, ApplicationType } from '@/lib/types';
+import { PurchaseApplication } from '@/lib/types/purchaseApplication';
 import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore, useQuotationStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -109,6 +110,13 @@ function RemodelApplicationContent() {
 
   // クローズ確認モーダル
   const [showCloseConfirmModal, setShowCloseConfirmModal] = useState(false);
+
+  // インライン新規申請モード
+  const [isInlineNewMode, setIsInlineNewMode] = useState(false);
+  const [inlineNewData, setInlineNewData] = useState<Record<string, string>>({});
+  const [inlineEditingCol, setInlineEditingCol] = useState<string | null>(null);
+  const [inlineEditingValue, setInlineEditingValue] = useState('');
+  const inlineNewRowRef = useRef<HTMLTableRowElement>(null);
 
   // クローズ処理
   const handleCloseProject = () => {
@@ -499,7 +507,7 @@ function RemodelApplicationContent() {
   // リッチモーダル申請ボタンハンドラ
   const handleRichApplicationClick = (type: 'purchase' | 'update' | 'addition' | 'transfer' | 'disposal') => {
     if (type === 'purchase') {
-      setPurchaseModalOpen(true);
+      handleStartInlineNew();
       return;
     }
     if (selectedItems.size === 0) {
@@ -750,6 +758,169 @@ function RemodelApplicationContent() {
     // 選択された資産をクリア
     setSelectedAssets([]);
   };
+
+  // --- インライン新規申請関連 ---
+  const getInitialInlineData = (): Record<string, string> => ({
+    // (新)設置情報
+    newBuilding: '',
+    newFloor: '',
+    newDepartment: '',
+    newSection: '',
+    newRoomName: '',
+    // 購入申請情報
+    applicationCategory: '新規申請',
+    applicationDate: new Date().toISOString().split('T')[0],
+    applicationNo: `AP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    desiredDeliveryDate: '',
+    priority: '',
+    applicationItem: '',
+    quantity: '1',
+    quantityUnit: '台',
+    requestItem1: '',
+    requestMaker1: '',
+    requestModel1: '',
+    requestItem2: '',
+    requestMaker2: '',
+    requestModel2: '',
+    requestItem3: '',
+    requestMaker3: '',
+    requestModel3: '',
+    usagePurpose: '',
+    caseCount: '',
+    caseCountUnit: '',
+    comment: '',
+    serialNumber: '',
+    currentConnectionStatus: '',
+    requestConnectionStatus: '',
+  });
+
+  // インライン新規申請を開始
+  const handleStartInlineNew = () => {
+    if (isInlineNewMode) {
+      // 既にインラインモード中 → 該当行にスクロール
+      inlineNewRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setIsInlineNewMode(true);
+    setSelectedAssets([]);
+    setInlineNewData(getInitialInlineData());
+    setInlineEditingCol(null);
+    setTimeout(() => {
+      inlineNewRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
+  // インライン新規申請を確定
+  const handleInlineNewConfirm = () => {
+    // 必須チェック
+    const missingFields: string[] = [];
+    if (!inlineNewData.newDepartment) missingFields.push('部門');
+    if (!inlineNewData.newSection) missingFields.push('部署');
+    if (!inlineNewData.newRoomName) missingFields.push('室名');
+    if (!inlineNewData.applicationItem) missingFields.push('申請品目');
+    if (missingFields.length > 0) {
+      alert(`以下の必須項目が未入力です:\n${missingFields.join('、')}\n\n該当セル（オレンジ色）をクリックして入力してください。`);
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const appId = `pa-inline-${Date.now()}`;
+
+    // PurchaseApplication オブジェクトを構築
+    const newApplication: PurchaseApplication = {
+      id: appId,
+      applicationNo: inlineNewData.applicationNo,
+      applicationType: '新規申請',
+      applicantId: 'inline-user',
+      applicantName: '',
+      applicantDepartment: inlineNewData.newDepartment,
+      applicationDate: inlineNewData.applicationDate,
+      status: '編集中',
+      assets: [{
+        name: inlineNewData.applicationItem,
+        maker: inlineNewData.requestMaker1 || '',
+        model: inlineNewData.requestModel1 || '',
+        category: inlineNewData.category || '',
+        largeClass: inlineNewData.largeClass || '',
+        mediumClass: inlineNewData.mediumClass || '',
+        item: inlineNewData.applicationItem,
+        quantity: parseInt(inlineNewData.quantity) || 1,
+        unit: inlineNewData.quantityUnit || '台',
+      }],
+      facility: facility,
+      building: inlineNewData.newBuilding,
+      floor: inlineNewData.newFloor,
+      department: inlineNewData.newDepartment,
+      section: inlineNewData.newSection,
+      roomName: inlineNewData.newRoomName,
+      desiredDeliveryDate: inlineNewData.desiredDeliveryDate,
+      priority: inlineNewData.priority,
+      usagePurpose: inlineNewData.usagePurpose,
+      caseCount: inlineNewData.caseCount,
+      comment: inlineNewData.comment,
+      currentConnectionStatus: inlineNewData.currentConnectionStatus,
+      requestConnectionStatus: inlineNewData.requestConnectionStatus,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    if (isEditListMode && listId) {
+      addItemsFromApplications(listId, [newApplication]);
+    }
+
+    alert(`新規購入申請を追加しました\n品目: ${inlineNewData.applicationItem}`);
+    setIsInlineNewMode(false);
+    setInlineNewData({});
+    setInlineEditingCol(null);
+    setSelectedAssets([]);
+  };
+
+  // インライン新規申請をキャンセル
+  const handleInlineNewCancel = () => {
+    setIsInlineNewMode(false);
+    setInlineNewData({});
+    setInlineEditingCol(null);
+    setSelectedAssets([]);
+  };
+
+  // インラインセル編集開始
+  const handleInlineCellClick = (colKey: string) => {
+    setInlineEditingCol(colKey);
+    setInlineEditingValue(inlineNewData[colKey] || '');
+  };
+
+  // インラインセル編集確定
+  const handleInlineCellSave = () => {
+    if (inlineEditingCol) {
+      setInlineNewData(prev => ({ ...prev, [inlineEditingCol]: inlineEditingValue }));
+      setInlineEditingCol(null);
+      setInlineEditingValue('');
+    }
+  };
+
+  // インラインセル編集キャンセル
+  const handleInlineCellCancel = () => {
+    setInlineEditingCol(null);
+    setInlineEditingValue('');
+  };
+
+  // 資産マスタ選択時にインライン行データを同期
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (isInlineNewMode && selectedAssets.length > 0) {
+      const lastAsset = selectedAssets[selectedAssets.length - 1];
+      setInlineNewData(prev => ({
+        ...prev,
+        applicationItem: lastAsset.asset.item || lastAsset.asset.name || '',
+        category: lastAsset.asset.category || '',
+        largeClass: lastAsset.asset.largeClass || '',
+        mediumClass: lastAsset.asset.mediumClass || '',
+        requestItem1: lastAsset.asset.item || lastAsset.asset.name || '',
+        requestMaker1: lastAsset.asset.maker || '',
+        requestModel1: lastAsset.asset.model || '',
+      }));
+    }
+  }, [isInlineNewMode, selectedAssets.length]);
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: 'white' }}>
@@ -1339,6 +1510,225 @@ function RemodelApplicationContent() {
                   })}
                 </tr>
               ))}
+
+              {/* インライン新規行 */}
+              {isInlineNewMode && (() => {
+                // 必須カラム定義
+                const requiredCols = ['newDepartment', 'newSection', 'newRoomName', 'applicationItem'];
+                // 自動設定カラム（編集不可）
+                const autoFilledCols = ['applicationCategory', 'applicationDate', 'applicationNo'];
+                // ドロップダウンで編集するカラムとそのオプション
+                const dropdownCols: Record<string, string[]> = {
+                  newBuilding: buildingOptions,
+                  newFloor: floorOptions,
+                  newDepartment: departmentOptions,
+                  newSection: sectionOptions,
+                };
+
+                return (
+                  <tr ref={inlineNewRowRef} style={{ background: '#e8f5e9' }}>
+                    {/* ★ アクションセル */}
+                    <td style={{
+                      padding: '6px 4px',
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 100,
+                      background: '#e8f5e9',
+                      boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
+                      borderRight: '1px solid #dee2e6',
+                      borderBottom: '2px solid #4caf50',
+                      textAlign: 'center',
+                      verticalAlign: 'middle',
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#4caf50', fontSize: '12px', fontWeight: 'bold' }}>新規</span>
+                        <div style={{ display: 'flex', gap: '2px' }}>
+                          <button
+                            onClick={handleInlineNewConfirm}
+                            title="申請を確定する"
+                            style={{
+                              width: '24px', height: '24px',
+                              background: '#4caf50', color: 'white',
+                              border: 'none', borderRadius: '4px',
+                              cursor: 'pointer', fontSize: '14px', fontWeight: 'bold',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              padding: 0,
+                            }}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={handleInlineNewCancel}
+                            title="キャンセル"
+                            style={{
+                              width: '24px', height: '24px',
+                              background: '#e74c3c', color: 'white',
+                              border: 'none', borderRadius: '4px',
+                              cursor: 'pointer', fontSize: '14px', fontWeight: 'bold',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              padding: 0,
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                    {orderedColumns.filter(col => visibleColumns[col.key]).map(col => {
+                      const isPurchaseCol = col.group === 'purchaseApplication';
+                      const isNewLocationCol = col.group === 'newLocation';
+                      const isInlineEditing = inlineEditingCol === col.key;
+                      const cellValue = inlineNewData[col.key] || '';
+                      const isRequired = requiredCols.includes(col.key);
+                      const isAutoFilled = autoFilledCols.includes(col.key);
+                      const isDropdown = col.key in dropdownCols;
+
+                      // 編集可能: (新)設置情報 or 購入申請情報（自動設定以外）
+                      const isEditable = (isNewLocationCol || (isPurchaseCol && !isAutoFilled));
+
+                      // 背景色: 必須&未入力→オレンジ、編集中→黄色、編集可能→薄緑、その他→ベース緑
+                      const getCellBg = () => {
+                        if (isInlineEditing) return '#fff3cd';
+                        if (isRequired && !cellValue) return '#fff3e0';
+                        if (isEditable) return '#f1f8e9';
+                        return '#e8f5e9';
+                      };
+
+                      // ボーダー: 必須&未入力→オレンジ破線
+                      const getCellBorder = () => {
+                        if (isRequired && !cellValue && !isInlineEditing) return '1px dashed #ff9800';
+                        return undefined;
+                      };
+
+                      return (
+                        <td
+                          key={col.key}
+                          style={{
+                            padding: isInlineEditing ? '4px' : '8px 8px',
+                            background: getCellBg(),
+                            border: getCellBorder(),
+                            borderRight: getCellBorder() || '1px solid #dee2e6',
+                            borderBottom: '2px solid #4caf50',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            cursor: isEditable ? 'pointer' : 'default',
+                            transition: 'background 0.15s',
+                          }}
+                          onClick={() => isEditable && handleInlineCellClick(col.key)}
+                        >
+                          {/* 申請種別バッジ */}
+                          {col.key === 'applicationStatus' ? (
+                            <span style={{
+                              padding: '2px 8px',
+                              background: '#27ae60',
+                              color: 'white',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 'bold',
+                            }}>新規申請</span>
+
+                          /* ドロップダウン編集（設置情報の選択カラム） */
+                          ) : isInlineEditing && isDropdown ? (
+                            <select
+                              value={inlineEditingValue}
+                              onChange={(e) => {
+                                setInlineNewData(prev => ({ ...prev, [col.key]: e.target.value }));
+                                setInlineEditingCol(null);
+                                setInlineEditingValue('');
+                              }}
+                              onBlur={handleInlineCellSave}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') handleInlineCellCancel();
+                              }}
+                              autoFocus
+                              style={{
+                                width: '100%',
+                                padding: '6px 4px',
+                                border: '2px solid #4caf50',
+                                borderRadius: '4px',
+                                fontSize: '13px',
+                                boxSizing: 'border-box',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <option value="">選択してください</option>
+                              {dropdownCols[col.key].map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+
+                          /* テキスト入力編集 */
+                          ) : isInlineEditing ? (
+                            <input
+                              type="text"
+                              value={inlineEditingValue}
+                              onChange={(e) => setInlineEditingValue(e.target.value)}
+                              onBlur={handleInlineCellSave}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleInlineCellSave();
+                                if (e.key === 'Escape') handleInlineCellCancel();
+                              }}
+                              autoFocus
+                              style={{
+                                width: '100%',
+                                padding: '6px 8px',
+                                border: '2px solid #4caf50',
+                                borderRadius: '4px',
+                                fontSize: '13px',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+
+                          /* 申請品目セル（資産マスタ選択ボタン付き） */
+                          ) : col.key === 'applicationItem' ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{
+                                flex: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                color: cellValue ? '#2c3e50' : '#e65100',
+                                fontStyle: cellValue ? 'normal' : 'italic',
+                                fontSize: '13px',
+                              }}>
+                                {cellValue || '入力 or 選択'}
+                              </span>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleOpenAssetMaster(); }}
+                                title="資産マスタから選択"
+                                style={{
+                                  padding: '2px 6px',
+                                  background: '#27ae60',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '3px',
+                                  cursor: 'pointer',
+                                  fontSize: '10px',
+                                  fontWeight: 'bold',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                選択
+                              </button>
+                            </div>
+
+                          /* 通常表示 */
+                          ) : (
+                            <span style={{
+                              color: cellValue ? '#2c3e50' : (isRequired ? '#e65100' : (isEditable ? '#a5d6a7' : '#bbb')),
+                              fontStyle: isEditable && !cellValue ? 'italic' : 'normal',
+                              fontSize: '13px',
+                            }}>
+                              {cellValue || (isEditable ? (isRequired ? '必須' : '入力') : '-')}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })()}
             </tbody>
           </table>
         )}
