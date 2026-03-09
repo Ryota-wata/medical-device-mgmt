@@ -1595,10 +1595,8 @@ function RemodelApplicationContent() {
                       };
 
                       // ボーダー: 必須&未入力→オレンジ破線
-                      const getCellBorder = () => {
-                        if (isRequired && !cellValue && !isInlineEditing) return '1px dashed #ff9800';
-                        return undefined;
-                      };
+                      const isRequiredEmpty = isRequired && !cellValue && !isInlineEditing;
+                      const dashedBorder = '1px dashed #ff9800';
 
                       return (
                         <td
@@ -1606,8 +1604,9 @@ function RemodelApplicationContent() {
                           style={{
                             padding: isInlineEditing ? '4px' : '8px 8px',
                             background: getCellBg(),
-                            border: getCellBorder(),
-                            borderRight: getCellBorder() || '1px solid #dee2e6',
+                            borderTop: isRequiredEmpty ? dashedBorder : 'none',
+                            borderLeft: isRequiredEmpty ? dashedBorder : 'none',
+                            borderRight: isRequiredEmpty ? dashedBorder : '1px solid #dee2e6',
                             borderBottom: '2px solid #4caf50',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
