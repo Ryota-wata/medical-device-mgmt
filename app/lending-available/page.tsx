@@ -5,174 +5,76 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
-// 機器カテゴリと機器の型
-interface DeviceCategory {
+// 貸出種別と対象機種の型
+interface LendingCategory {
   id: string;
   name: string;
-  devices: Device[];
+  devices: LendingDevice[];
 }
 
-interface Device {
+interface LendingDevice {
   id: string;
-  name: string;
-  availability: DepartmentAvailability[];
-}
-
-interface DepartmentAvailability {
-  department: string;
+  item: string;
+  maker: string;
+  model: string;
   availableCount: number;
 }
 
 // モックデータ
-const MOCK_CATEGORIES: DeviceCategory[] = [
+const MOCK_CATEGORIES: LendingCategory[] = [
   {
-    id: 'pump',
-    name: 'ポンプ関連',
+    id: 'infusion-pump',
+    name: '輸液ポンプ（病棟貸出機）',
     devices: [
-      {
-        id: 'infusion-pump',
-        name: '輸液ポンプ',
-        availability: [
-          { department: 'ME室', availableCount: 5 },
-          { department: '3階東病棟', availableCount: 2 },
-          { department: '4階西病棟', availableCount: 1 },
-        ],
-      },
-      {
-        id: 'syringe-pump',
-        name: 'シリンジポンプ',
-        availability: [
-          { department: 'ME室', availableCount: 8 },
-          { department: 'ICU', availableCount: 3 },
-          { department: '手術室', availableCount: 2 },
-        ],
-      },
-      {
-        id: 'pca-pump',
-        name: 'PCAポンプ',
-        availability: [
-          { department: 'ME室', availableCount: 3 },
-          { department: '緩和ケア病棟', availableCount: 1 },
-        ],
-      },
+      { id: 'fp-n17a', item: '輸液ポンプ', maker: 'ニプロ', model: 'FP-N17a-NS', availableCount: 5 },
+      { id: 'te-161s', item: '輸液ポンプ', maker: 'テルモ', model: 'TE-161S', availableCount: 3 },
+      { id: 'pca-pump', item: 'PCAポンプ', maker: 'テルモ', model: 'TE-PCA2', availableCount: 4 },
     ],
   },
   {
     id: 'inhaler',
     name: '吸入器関連',
     devices: [
-      {
-        id: 'nebulizer',
-        name: 'ネブライザ',
-        availability: [
-          { department: 'ME室', availableCount: 10 },
-          { department: '小児科病棟', availableCount: 4 },
-          { department: '呼吸器内科', availableCount: 3 },
-        ],
-      },
-      {
-        id: 'oxygen-concentrator',
-        name: '酸素濃縮器',
-        availability: [
-          { department: 'ME室', availableCount: 2 },
-          { department: '呼吸器内科', availableCount: 1 },
-        ],
-      },
+      { id: 'nebulizer-1', item: 'ネブライザ', maker: 'オムロン', model: 'NE-C803', availableCount: 10 },
+      { id: 'oxygen', item: '酸素濃縮器', maker: 'フクダ電子', model: 'OC-3', availableCount: 2 },
     ],
   },
   {
     id: 'monitor',
     name: 'モニター関連',
     devices: [
-      {
-        id: 'bedside-monitor',
-        name: 'ベッドサイドモニター',
-        availability: [
-          { department: 'ME室', availableCount: 4 },
-          { department: 'ICU', availableCount: 2 },
-        ],
-      },
-      {
-        id: 'ecg',
-        name: '心電計',
-        availability: [
-          { department: 'ME室', availableCount: 6 },
-          { department: '外来', availableCount: 2 },
-          { department: '健診センター', availableCount: 1 },
-        ],
-      },
-      {
-        id: 'spo2-monitor',
-        name: 'パルスオキシメーター',
-        availability: [
-          { department: 'ME室', availableCount: 15 },
-          { department: '各病棟', availableCount: 20 },
-        ],
-      },
+      { id: 'bedside', item: 'ベッドサイドモニター', maker: '日本光電', model: 'BSM-6701', availableCount: 4 },
+      { id: 'ecg', item: '心電計', maker: 'フクダ電子', model: 'FX-8322', availableCount: 6 },
+      { id: 'spo2', item: 'パルスオキシメーター', maker: 'コニカミノルタ', model: 'PULSOX-Neo', availableCount: 15 },
     ],
   },
   {
     id: 'life-support',
     name: '生命維持装置',
     devices: [
-      {
-        id: 'ventilator',
-        name: '人工呼吸器',
-        availability: [
-          { department: 'ME室', availableCount: 2 },
-          { department: 'ICU', availableCount: 1 },
-        ],
-      },
-      {
-        id: 'defibrillator',
-        name: '除細動器',
-        availability: [
-          { department: 'ME室', availableCount: 3 },
-          { department: '救急外来', availableCount: 2 },
-        ],
-      },
+      { id: 'ventilator', item: '人工呼吸器', maker: 'フィリップス', model: 'V60', availableCount: 2 },
+      { id: 'defibrillator', item: '除細動器', maker: '日本光電', model: 'TEC-5631', availableCount: 3 },
     ],
   },
 ];
 
 export default function LendingAvailablePage() {
   const router = useRouter();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
 
-  // 選択状態
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('');
 
   // 選択されたカテゴリ
   const selectedCategory = useMemo(() => {
     return MOCK_CATEGORIES.find(c => c.id === selectedCategoryId);
   }, [selectedCategoryId]);
 
-  // 選択された機器
-  const selectedDevice = useMemo(() => {
-    return selectedCategory?.devices.find(d => d.id === selectedDeviceId);
-  }, [selectedCategory, selectedDeviceId]);
-
-  // 全部署リスト（重複排除）
-  const allDepartments = useMemo(() => {
-    const depts = new Set<string>();
-    MOCK_CATEGORIES.forEach(cat => {
-      cat.devices.forEach(device => {
-        device.availability.forEach(av => {
-          depts.add(av.department);
-        });
-      });
-    });
-    return Array.from(depts).sort();
-  }, []);
-
-  // フィルタされた在庫情報
-  const filteredAvailability = useMemo(() => {
-    if (!selectedDevice) return [];
-    if (!selectedDepartment) return selectedDevice.availability;
-    return selectedDevice.availability.filter(av => av.department === selectedDepartment);
-  }, [selectedDevice, selectedDepartment]);
+  // カテゴリの貸出可能合計
+  const categoryTotal = useMemo(() => {
+    if (!selectedCategory) return 0;
+    return selectedCategory.devices.reduce((sum, d) => sum + d.availableCount, 0);
+  }, [selectedCategory]);
 
   // カテゴリ変更時
   const handleCategoryChange = (categoryId: string) => {
@@ -180,9 +82,7 @@ export default function LendingAvailablePage() {
     setSelectedDeviceId('');
   };
 
-  // レスポンシブスタイル
   const containerPadding = isMobile ? '12px' : '24px';
-  const cardGap = isMobile ? '12px' : '24px';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
@@ -198,281 +98,195 @@ export default function LendingAvailablePage() {
         flex: 1,
         padding: containerPadding,
         overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        maxWidth: '640px',
+        width: '100%',
+        margin: '0 auto',
+        boxSizing: 'border-box',
       }}>
+        {/* 貸出種別名 */}
         <div style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: cardGap,
-          maxWidth: '1200px',
-          margin: '0 auto',
+          background: 'white',
+          borderRadius: '8px',
+          border: '1px solid #ddd',
+          overflow: 'hidden',
         }}>
-          {/* 左側: 機器選択エリア */}
           <div style={{
-            flex: isMobile ? 'none' : 1,
+            padding: '12px 16px',
+            background: '#f8f9fa',
+            borderBottom: '1px solid #ddd',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
+            alignItems: 'center',
+            gap: '8px',
           }}>
-            {/* 中分類選択 */}
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                padding: '12px 16px',
-                background: '#f8f9fa',
-                borderBottom: '1px solid #ddd',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>中分類</span>
-                <span style={{ color: '#999', fontSize: '12px' }}>▽</span>
-              </div>
-              <div style={{ padding: '8px' }}>
-                {MOCK_CATEGORIES.map(category => (
+            <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>貸出種別名</span>
+            <span style={{ color: '#999', fontSize: '12px' }}>▼</span>
+          </div>
+          <div style={{ padding: '8px' }}>
+            {MOCK_CATEGORIES.map(category => (
+              <button
+                key={category.id}
+                onClick={() => handleCategoryChange(category.id)}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  padding: isMobile ? '10px 12px' : '12px 16px',
+                  background: selectedCategoryId === category.id ? '#fffde7' : 'white',
+                  border: selectedCategoryId === category.id ? '2px solid #fdd835' : '1px solid #e0e0e0',
+                  borderRadius: '6px',
+                  marginBottom: '8px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontSize: isMobile ? '13px' : '14px',
+                  fontWeight: selectedCategoryId === category.id ? 'bold' : 'normal',
+                  color: '#333',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 貸出可能対象機種 */}
+        <div style={{
+          background: 'white',
+          borderRadius: '8px',
+          border: '1px solid #ddd',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: '12px 16px',
+            background: '#f8f9fa',
+            borderBottom: '1px solid #ddd',
+          }}>
+            <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>貸出可能対象機種</span>
+          </div>
+          <div style={{ padding: '8px', minHeight: '120px' }}>
+            {selectedCategory ? (
+              selectedCategory.devices.map(device => {
+                const isSelected = selectedDeviceId === device.id;
+                return (
                   <button
-                    key={category.id}
-                    onClick={() => handleCategoryChange(category.id)}
+                    key={device.id}
+                    onClick={() => setSelectedDeviceId(device.id)}
                     style={{
-                      display: 'block',
+                      display: 'flex',
+                      alignItems: 'center',
                       width: '100%',
-                      padding: isMobile ? '10px 12px' : '12px 16px',
-                      background: selectedCategoryId === category.id ? '#e3f2fd' : 'white',
-                      border: selectedCategoryId === category.id ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                      padding: '0',
+                      background: 'none',
+                      border: 'none',
                       borderRadius: '6px',
                       marginBottom: '8px',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      fontSize: isMobile ? '13px' : '14px',
-                      fontWeight: selectedCategoryId === category.id ? 'bold' : 'normal',
-                      color: selectedCategoryId === category.id ? '#1976d2' : '#333',
                       transition: 'all 0.15s',
+                      overflow: 'hidden',
                     }}
                   >
-                    {category.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 借用機器選択 */}
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                padding: '12px 16px',
-                background: '#f8f9fa',
-                borderBottom: '1px solid #ddd',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>借用機器選択</span>
-                <span style={{ color: '#999', fontSize: '12px' }}>▽</span>
-              </div>
-              <div style={{ padding: '8px', minHeight: '120px' }}>
-                {selectedCategory ? (
-                  selectedCategory.devices.map(device => (
-                    <button
-                      key={device.id}
-                      onClick={() => setSelectedDeviceId(device.id)}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: isMobile ? '10px 12px' : '12px 16px',
-                        background: selectedDeviceId === device.id ? '#e8f5e9' : 'white',
-                        border: selectedDeviceId === device.id ? '2px solid #388e3c' : '1px solid #e0e0e0',
-                        borderRadius: '6px',
-                        marginBottom: '8px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        fontSize: isMobile ? '13px' : '14px',
-                        fontWeight: selectedDeviceId === device.id ? 'bold' : 'normal',
-                        color: selectedDeviceId === device.id ? '#388e3c' : '#333',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {device.name}
-                    </button>
-                  ))
-                ) : (
-                  <div style={{
-                    padding: '24px',
-                    textAlign: 'center',
-                    color: '#999',
-                    fontSize: isMobile ? '12px' : '13px',
-                  }}>
-                    中分類を選択してください
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* 右側: 在庫情報エリア */}
-          <div style={{
-            flex: isMobile ? 'none' : 1,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-          }}>
-            {/* 在庫部署フィルター */}
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                padding: '12px 16px',
-                background: '#f8f9fa',
-                borderBottom: '1px solid #ddd',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>在庫部署</span>
-                <span style={{ color: '#999', fontSize: '12px' }}>▽</span>
-              </div>
-              <div style={{ padding: '12px 16px' }}>
-                <select
-                  value={selectedDepartment}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: isMobile ? '10px 12px' : '12px 16px',
-                    fontSize: isMobile ? '13px' : '14px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">すべての部署</option>
-                  {allDepartments.map(dept => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* 数量表示 */}
-            <div style={{
-              background: 'white',
-              borderRadius: '8px',
-              border: '1px solid #ddd',
-              overflow: 'hidden',
-              flex: 1,
-            }}>
-              <div style={{
-                padding: '12px 16px',
-                background: '#f8f9fa',
-                borderBottom: '1px solid #ddd',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>数量</span>
-                {selectedDevice && (
-                  <span style={{
-                    fontSize: '12px',
-                    color: '#666',
-                    background: '#e0e0e0',
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                  }}>
-                    {selectedDevice.name}
-                  </span>
-                )}
-              </div>
-              <div style={{ padding: '8px', minHeight: '200px' }}>
-                {selectedDevice ? (
-                  filteredAvailability.length > 0 ? (
-                    filteredAvailability.map((av, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: isMobile ? '12px' : '16px',
-                          background: index % 2 === 0 ? 'white' : '#fafafa',
-                          border: '1px solid #e0e0e0',
-                          borderRadius: '6px',
-                          marginBottom: '8px',
-                        }}
-                      >
-                        <span style={{
-                          fontSize: isMobile ? '13px' : '14px',
-                          color: '#333',
-                        }}>
-                          {av.department}
-                        </span>
-                        <span style={{
-                          fontSize: isMobile ? '16px' : '18px',
-                          fontWeight: 'bold',
-                          color: av.availableCount > 0 ? '#1976d2' : '#999',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}>
-                          {av.availableCount}<span style={{ fontSize: '12px', fontWeight: 'normal', marginLeft: '4px' }}>台</span>
-                        </span>
-                      </div>
-                    ))
-                  ) : (
+                    {/* 機種情報 */}
                     <div style={{
-                      padding: '24px',
-                      textAlign: 'center',
-                      color: '#999',
-                      fontSize: isMobile ? '12px' : '13px',
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: isMobile ? '12px' : '16px',
+                      padding: isMobile ? '10px 12px' : '12px 16px',
+                      background: isSelected ? '#fffde7' : 'white',
+                      border: isSelected ? '2px solid #fdd835' : '1px solid #e0e0e0',
+                      borderRadius: '6px 0 0 6px',
+                      borderRight: 'none',
+                      minWidth: 0,
                     }}>
-                      選択した部署に在庫がありません
+                      <span style={{
+                        fontSize: isMobile ? '13px' : '14px',
+                        fontWeight: isSelected ? 'bold' : 'normal',
+                        color: '#333',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {device.item}
+                      </span>
+                      <span style={{
+                        fontSize: isMobile ? '12px' : '13px',
+                        color: '#666',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {device.maker}
+                      </span>
+                      <span style={{
+                        fontSize: isMobile ? '12px' : '13px',
+                        color: '#666',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {device.model}
+                      </span>
                     </div>
-                  )
-                ) : (
-                  <div style={{
-                    padding: '24px',
-                    textAlign: 'center',
-                    color: '#999',
-                    fontSize: isMobile ? '12px' : '13px',
-                  }}>
-                    機器を選択すると在庫数が表示されます
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 合計表示 */}
-            {selectedDevice && filteredAvailability.length > 0 && (
+                    {/* 数量バッジ */}
+                    <div style={{
+                      padding: isMobile ? '10px 12px' : '12px 16px',
+                      background: isSelected ? '#fdd835' : '#e0e0e0',
+                      borderRadius: '0 6px 6px 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                      whiteSpace: 'nowrap',
+                      fontVariantNumeric: 'tabular-nums',
+                      alignSelf: 'stretch',
+                    }}>
+                      <span style={{
+                        fontSize: isMobile ? '16px' : '18px',
+                        fontWeight: 'bold',
+                        color: '#333',
+                      }}>
+                        {device.availableCount}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#555' }}>台</span>
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
               <div style={{
-                background: '#1976d2',
-                borderRadius: '8px',
-                padding: isMobile ? '16px' : '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                color: 'white',
+                padding: '24px',
+                textAlign: 'center',
+                color: '#999',
+                fontSize: isMobile ? '12px' : '13px',
               }}>
-                <span style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 'bold' }}>
-                  貸出可能合計
-                </span>
-                <span style={{
-                  fontSize: isMobile ? '24px' : '28px',
-                  fontWeight: 'bold',
-                  fontVariantNumeric: 'tabular-nums',
-                }}>
-                  {filteredAvailability.reduce((sum, av) => sum + av.availableCount, 0)}
-                  <span style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '4px' }}>台</span>
-                </span>
+                貸出種別名を選択してください
               </div>
             )}
           </div>
         </div>
+
+        {/* 貸出可能合計 */}
+        {selectedCategory && (
+          <div style={{
+            background: '#1976d2',
+            borderRadius: '8px',
+            padding: isMobile ? '16px' : '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            color: 'white',
+          }}>
+            <span style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 'bold' }}>
+              貸出可能合計
+            </span>
+            <span style={{
+              fontSize: isMobile ? '24px' : '28px',
+              fontWeight: 'bold',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {categoryTotal}
+              <span style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '4px' }}>台</span>
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
