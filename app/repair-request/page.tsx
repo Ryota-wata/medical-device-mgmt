@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -23,10 +23,20 @@ function RepairRequestContent() {
   const { isMobile } = useResponsive();
   const { user } = useAuthStore();
 
-  // 自動生成項目
-  const [requestNo] = useState(() => `REP-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`);
-  const [requestDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [requestTime] = useState(() => new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }));
+  // 自動生成項目（hydration mismatch回避のためマウント後に生成）
+  const [requestNo, setRequestNo] = useState('');
+  const [requestDate, setRequestDate] = useState('');
+  const [requestTime, setRequestTime] = useState('');
+
+  const isInitializedRef = useRef(false);
+  React.useEffect(() => {
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
+    const now = new Date();
+    setRequestNo(`REP-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`);
+    setRequestDate(now.toISOString().split('T')[0]);
+    setRequestTime(now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }));
+  }, []);
 
   // 申請者情報
   const [applicantDepartment, setApplicantDepartment] = useState(user?.hospital || '');
@@ -45,7 +55,7 @@ function RepairRequestContent() {
   const [manualSerialNo, setManualSerialNo] = useState('');
   const [manualDepartment, setManualDepartment] = useState('');
   const [manualRoomName, setManualRoomName] = useState('');
-  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
 
   // 症状・代替機・フリーコメント
   const [symptoms, setSymptoms] = useState('');
@@ -105,14 +115,31 @@ function RepairRequestContent() {
     }
   };
 
-  // 写真撮影（モバイル用）
-  const handlePhotoCapture = () => {
-    // 実際のアプリではカメラAPIを使用
-    setCapturedPhoto('/images/captured-placeholder.png');
+  // 写真添付用
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          setCapturedPhotos(prev => [...prev, ev.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    // 同じファイルを再選択可能にする
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
+
+  const handlePhotoRemove = (index: number) => {
+    setCapturedPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   // フォームの入力状態チェック
-  const isFormDirty = qrCode !== '' || symptoms !== '' || manualItemName !== '' || capturedPhoto !== null || freeComment !== '';
+  const isFormDirty = qrCode !== '' || symptoms !== '' || manualItemName !== '' || capturedPhotos.length > 0 || freeComment !== '';
 
   const handleHomeClick = () => {
     if (isConfirmView) {
@@ -166,8 +193,9 @@ function RepairRequestContent() {
         serialNo: manualSerialNo,
         department: manualDepartment,
         roomName: manualRoomName,
-        photoUrl: capturedPhoto
+        photos: capturedPhotos
       },
+      photos: capturedPhotos,
       symptoms,
       alternativeDevice,
       freeComment,
@@ -197,7 +225,7 @@ function RepairRequestContent() {
     setManualSerialNo('');
     setManualDepartment('');
     setManualRoomName('');
-    setCapturedPhoto(null);
+    setCapturedPhotos([]);
     setIsConfirmView(false);
   };
 
@@ -372,6 +400,24 @@ function RepairRequestContent() {
                   </tr>
                 </tbody>
               </table>
+              {capturedPhotos.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ fontSize: '12px', color: '#7a8a9a', marginBottom: '8px' }}>添付写真（{capturedPhotos.length}枚）</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {capturedPhotos.map((photo, i) => (
+                      <div key={i} style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        border: '1px solid #ddd',
+                      }}>
+                        <img src={photo} alt={`写真${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* 症状・代替機 */}
@@ -884,66 +930,86 @@ function RepairRequestContent() {
                 </div>
               </div>
 
-              {/* 写真撮影（モバイル用） */}
-              {isMobile && (
-                <div style={{ marginTop: '16px' }}>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '8px' }}>
-                    機器写真
-                  </label>
-                  {capturedPhoto ? (
-                    <div style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '200px',
-                      backgroundColor: '#e0e0e0',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <span style={{ fontSize: '48px' }}>📷</span>
-                      <button
-                        onClick={() => setCapturedPhoto(null)}
-                        style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '8px',
-                          padding: '4px 8px',
-                          backgroundColor: '#e74c3c',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        削除
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handlePhotoCapture}
-                      style={{
-                        width: '100%',
-                        padding: '24px',
-                        backgroundColor: '#f8f9fa',
-                        border: '2px dashed #ddd',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <span style={{ fontSize: '32px' }}>📷</span>
-                      <span style={{ fontSize: '14px', color: '#7a8a9a' }}>タップして写真を撮影</span>
-                    </button>
-                  )}
-                </div>
-              )}
             </>
           )}
+
+          {/* 機器写真（登録済み・未登録共通） */}
+          <div style={{ marginTop: '16px' }}>
+            <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '8px' }}>
+              機器写真
+            </label>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoAdd}
+              style={{ display: 'none' }}
+            />
+            {capturedPhotos.length > 0 && (
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                flexWrap: 'wrap',
+                marginBottom: '12px',
+              }}>
+                {capturedPhotos.map((photo, i) => (
+                  <div key={i} style={{
+                    position: 'relative',
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: '1px solid #ddd',
+                  }}>
+                    <img src={photo} alt={`写真${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      onClick={() => handlePhotoRemove(i)}
+                      aria-label={`写真${i + 1}を削除`}
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        width: '24px',
+                        height: '24px',
+                        padding: 0,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        lineHeight: '24px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => photoInputRef.current?.click()}
+              style={{
+                width: '100%',
+                padding: '16px',
+                backgroundColor: '#f8f9fa',
+                border: '2px dashed #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '20px' }}>📷</span>
+              <span style={{ fontSize: '14px', color: '#7a8a9a' }}>
+                {isMobile ? '写真を撮影・選択して添付' : '写真を選択して添付'}
+              </span>
+            </button>
+          </div>
         </section>
 
         {/* ③ 症状 */}
