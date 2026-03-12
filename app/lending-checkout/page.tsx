@@ -6,6 +6,12 @@ import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useToast } from '@/components/ui/Toast';
 
+// 4段階ステータス
+type DeviceStatus = 'available' | 'lending' | 'in_use' | 'used';
+
+// 処理種別
+type ProcessedAction = 'lend' | 'return' | 'start_use' | 'end_use';
+
 // 担当者マスタモック
 const MOCK_USERS: { [id: string]: { name: string; department: string } } = {
   '12345': { name: '山田太郎', department: '3階東病棟' },
@@ -20,7 +26,7 @@ interface DeviceInfo {
   manufacturer: string;
   model: string;
   meNo: string;
-  status: 'available' | 'lending'; // 在庫中 or 貸出中
+  status: DeviceStatus;
   lendingInfo?: {
     department: string;
     lendingDate: string;
@@ -28,6 +34,7 @@ interface DeviceInfo {
   };
 }
 
+// 機器モックデータ（4ステータスを網羅）
 const MOCK_DEVICES: { [qrCode: string]: DeviceInfo } = {
   'QR001': {
     name: '輸液ポンプ',
@@ -44,8 +51,8 @@ const MOCK_DEVICES: { [qrCode: string]: DeviceInfo } = {
     status: 'lending',
     lendingInfo: {
       department: 'ICU',
-      lendingDate: '2026/2/1',
-      returnDueDate: '2026/2/15',
+      lendingDate: '2026/2/28',
+      returnDueDate: '2026/3/6',
     },
   },
   'QR003': {
@@ -53,8 +60,33 @@ const MOCK_DEVICES: { [qrCode: string]: DeviceInfo } = {
     manufacturer: 'フクダ電子',
     model: 'DS-8500',
     meNo: 'ME-0003',
-    status: 'available',
+    status: 'in_use',
+    lendingInfo: {
+      department: '手術室',
+      lendingDate: '2026/3/1',
+      returnDueDate: '2026/3/14',
+    },
   },
+  'QR004': {
+    name: 'パルスオキシメーター',
+    manufacturer: 'コニカミノルタ',
+    model: 'PULSOX-Neo',
+    meNo: 'ME-0004',
+    status: 'used',
+    lendingInfo: {
+      department: '3階東病棟',
+      lendingDate: '2026/2/1',
+      returnDueDate: '2026/2/15',
+    },
+  },
+};
+
+// ステータスラベル
+const STATUS_LABELS: Record<DeviceStatus, string> = {
+  available: '貸出可',
+  lending: '貸出中',
+  in_use: '使用中',
+  used: '使用済',
 };
 
 export default function LendingCheckoutPage() {
@@ -74,7 +106,7 @@ export default function LendingCheckoutPage() {
 
   // 処理完了状態
   const [isProcessed, setIsProcessed] = useState(false);
-  const [processedAction, setProcessedAction] = useState<'lending' | 'return' | null>(null);
+  const [processedAction, setProcessedAction] = useState<ProcessedAction | null>(null);
 
   // ドラムロール用の一時状態
   const [tempYear, setTempYear] = useState('');
@@ -93,13 +125,10 @@ export default function LendingCheckoutPage() {
     return MOCK_USERS[userId] || null;
   }, [userId]);
 
-  // 機器情報（QRから自動取得）
+  // 機器情報（QRから取得）
   const deviceInfo = useMemo(() => {
     return MOCK_DEVICES[qrLabel] || null;
   }, [qrLabel]);
-
-  // 今日の日付
-  const today = new Date();
 
   // 年の選択肢（今年〜来年）
   const yearOptions = useMemo(() => {
@@ -231,8 +260,7 @@ export default function LendingCheckoutPage() {
   const handleQRScan = () => {
     showToast('QR読取機能を起動中...', 'info');
     setTimeout(() => {
-      // モックとして交互に違う状態の機器を読み取る
-      const codes = ['QR001', 'QR002', 'QR003'];
+      const codes = ['QR001', 'QR002', 'QR003', 'QR004'];
       const randomCode = codes[Math.floor(Math.random() * codes.length)];
       setQrLabel(randomCode);
       setIsProcessed(false);
@@ -250,28 +278,48 @@ export default function LendingCheckoutPage() {
     }, 500);
   };
 
-  // 貸出処理
+  // 貸出処理（事務）
   const handleLending = () => {
     if (!userInfo) {
       showToast('担当者IDを入力してください', 'warning');
       return;
     }
-
     setIsProcessed(true);
-    setProcessedAction('lending');
+    setProcessedAction('lend');
     showToast(`${deviceInfo?.name}を${userInfo.department}へ貸出しました`, 'success');
   };
 
-  // 返却処理
+  // 返却処理（事務）
   const handleReturn = () => {
     if (!userInfo) {
       showToast('担当者IDを入力してください', 'warning');
       return;
     }
-
     setIsProcessed(true);
     setProcessedAction('return');
     showToast(`${deviceInfo?.name}の返却を受け付けました`, 'success');
+  };
+
+  // 使用開始（臨床）
+  const handleStartUse = () => {
+    if (!userInfo) {
+      showToast('担当者IDを入力してください', 'warning');
+      return;
+    }
+    setIsProcessed(true);
+    setProcessedAction('start_use');
+    showToast(`${deviceInfo?.name}の使用を開始しました`, 'success');
+  };
+
+  // 使用終了（臨床）
+  const handleEndUse = () => {
+    if (!userInfo) {
+      showToast('担当者IDを入力してください', 'warning');
+      return;
+    }
+    setIsProcessed(true);
+    setProcessedAction('end_use');
+    showToast(`${deviceInfo?.name}の使用を終了しました`, 'success');
   };
 
   // 次の機器へ
@@ -279,8 +327,59 @@ export default function LendingCheckoutPage() {
     setQrLabel('');
     setIsProcessed(false);
     setProcessedAction(null);
-    // 担当者IDは維持（連続作業のため）
   };
+
+  // カード枠色（開始系=緑、完了系=オレンジ）
+  const getCardBorderColor = (status: DeviceStatus): string => {
+    if (status === 'available' || status === 'lending') return '#4caf50';
+    return '#ff9800';
+  };
+
+  // カード背景色
+  const getCardBgColor = (status: DeviceStatus): string => {
+    if (status === 'available' || status === 'lending') return '#e3f2fd';
+    return '#fff3e0';
+  };
+
+  // QRリンクのラベル
+  const QR_LINKS = [
+    { code: 'QR001', label: 'QR001（貸出可）', color: '#1976d2' },
+    { code: 'QR002', label: 'QR002（貸出中）', color: '#4caf50' },
+    { code: 'QR003', label: 'QR003（使用中）', color: '#ff9800' },
+    { code: 'QR004', label: 'QR004（使用済）', color: '#e65100' },
+  ];
+
+  // 完了メッセージ
+  const getCompletionTitle = (): string => {
+    switch (processedAction) {
+      case 'lend': return '貸出完了';
+      case 'return': return '返却完了';
+      case 'start_use': return '使用開始登録完了';
+      case 'end_use': return '使用終了登録完了';
+      default: return '完了';
+    }
+  };
+
+  const getCompletionDescription = (): string => {
+    if (!deviceInfo) return '';
+    switch (processedAction) {
+      case 'lend': return `${deviceInfo.name}${userInfo ? ` → ${userInfo.department}` : ''}`;
+      case 'return': return `${deviceInfo.name}の返却を受け付けました`;
+      case 'start_use': return `${deviceInfo.name}の使用を開始しました`;
+      case 'end_use': return `${deviceInfo.name}の使用を終了しました`;
+      default: return '';
+    }
+  };
+
+  // 返却予定日を設定可能か（貸出可: 新規設定、貸出中: 表示+変更可）
+  const showReturnDate = deviceInfo && (
+    deviceInfo.status === 'available' || deviceInfo.status === 'lending'
+  );
+
+  // 貸出情報を表示のみ（使用中、使用済）
+  const showLendingInfoReadonly = deviceInfo && deviceInfo.lendingInfo && (
+    deviceInfo.status === 'in_use' || deviceInfo.status === 'used'
+  );
 
   const containerPadding = isMobile ? '16px' : '24px';
 
@@ -309,6 +408,7 @@ export default function LendingCheckoutPage() {
           flexDirection: 'column',
           gap: '20px',
         }}>
+
           {/* ステップ1: QRラベル入力 */}
           <div style={{
             background: 'white',
@@ -349,7 +449,7 @@ export default function LendingCheckoutPage() {
                   setIsProcessed(false);
                   setProcessedAction(null);
                 }}
-                placeholder="例: QR001（貸出）/ QR002（返却）"
+                placeholder="例: QR001（貸出可）/ QR002（貸出中）"
                 style={{
                   flex: 1,
                   padding: '12px 16px',
@@ -389,33 +489,24 @@ export default function LendingCheckoutPage() {
               gap: '12px',
               flexWrap: 'wrap',
             }}>
-              <span
-                onClick={() => { setQrLabel('QR001'); setIsProcessed(false); setProcessedAction(null); }}
-                style={{ cursor: 'pointer', textDecoration: 'underline', color: '#1976d2' }}
-              >
-                QR001（在庫中→貸出）
-              </span>
-              <span
-                onClick={() => { setQrLabel('QR002'); setIsProcessed(false); setProcessedAction(null); }}
-                style={{ cursor: 'pointer', textDecoration: 'underline', color: '#ff9800' }}
-              >
-                QR002（貸出中→返却）
-              </span>
-              <span
-                onClick={() => { setQrLabel('QR003'); setIsProcessed(false); setProcessedAction(null); }}
-                style={{ cursor: 'pointer', textDecoration: 'underline', color: '#1976d2' }}
-              >
-                QR003（在庫中→貸出）
-              </span>
+              {QR_LINKS.map(link => (
+                <span
+                  key={link.code}
+                  onClick={() => { setQrLabel(link.code); setIsProcessed(false); setProcessedAction(null); }}
+                  style={{ cursor: 'pointer', textDecoration: 'underline', color: link.color }}
+                >
+                  {link.label}
+                </span>
+              ))}
             </div>
           </div>
 
           {/* 機器情報・状態表示 */}
           {deviceInfo && !isProcessed && (
             <div style={{
-              background: deviceInfo.status === 'available' ? '#e3f2fd' : '#fff3e0',
+              background: getCardBgColor(deviceInfo.status),
               borderRadius: '12px',
-              border: `2px solid ${deviceInfo.status === 'available' ? '#1976d2' : '#ff9800'}`,
+              border: `2px solid ${getCardBorderColor(deviceInfo.status)}`,
               padding: '20px',
             }}>
               {/* 機器情報 */}
@@ -446,21 +537,22 @@ export default function LendingCheckoutPage() {
                   <span style={{
                     display: 'inline-block',
                     padding: '4px 12px',
-                    borderRadius: '20px',
+                    borderRadius: '4px',
                     fontSize: '13px',
                     fontWeight: 'bold',
-                    background: deviceInfo.status === 'available' ? '#4caf50' : '#ff9800',
-                    color: 'white',
+                    background: '#fffde7',
+                    border: '2px solid #fdd835',
+                    color: '#333',
                   }}>
-                    {deviceInfo.status === 'available' ? '在庫中' : '貸出中'}
+                    {STATUS_LABELS[deviceInfo.status]}
                   </span>
-                  {deviceInfo.status === 'lending' && deviceInfo.lendingInfo && (
+                  {deviceInfo.lendingInfo && (
                     <span style={{ fontSize: '13px', color: '#666' }}>
                       → {deviceInfo.lendingInfo.department}
                     </span>
                   )}
                 </div>
-                {deviceInfo.status === 'lending' && deviceInfo.lendingInfo && (
+                {showLendingInfoReadonly && deviceInfo.lendingInfo && (
                   <div style={{ marginTop: '8px', fontSize: '12px', color: '#888' }}>
                     貸出日: {deviceInfo.lendingInfo.lendingDate} ／ 返却予定: {deviceInfo.lendingInfo.returnDueDate}
                   </div>
@@ -552,8 +644,8 @@ export default function LendingCheckoutPage() {
                 )}
               </div>
 
-              {/* 貸出時: 返却予定日設定 */}
-              {deviceInfo.status === 'available' && (
+              {/* 返却予定日設定（事務:貸出時 / 臨床:使用開始時） */}
+              {showReturnDate && (
                 <div style={{
                   background: 'white',
                   borderRadius: '8px',
@@ -566,7 +658,10 @@ export default function LendingCheckoutPage() {
                   <div>
                     <div style={{ fontSize: '12px', color: '#666' }}>返却予定日</div>
                     <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333', fontVariantNumeric: 'tabular-nums' }}>
-                      {formatDate(returnDate)}
+                      {deviceInfo.status === 'lending' && deviceInfo.lendingInfo
+                        ? deviceInfo.lendingInfo.returnDueDate
+                        : formatDate(returnDate)
+                      }
                     </div>
                   </div>
                   <button
@@ -586,8 +681,8 @@ export default function LendingCheckoutPage() {
                 </div>
               )}
 
-              {/* アクションボタン（状態に応じて1つだけ表示） */}
-              {deviceInfo.status === 'available' ? (
+              {/* アクションボタン（ステータスに応じて1つだけ表示） */}
+              {deviceInfo.status === 'available' && (
                 <button
                   onClick={handleLending}
                   disabled={!userInfo}
@@ -606,7 +701,9 @@ export default function LendingCheckoutPage() {
                 >
                   貸出する
                 </button>
-              ) : (
+              )}
+
+              {deviceInfo.status === 'used' && (
                 <button
                   onClick={handleReturn}
                   disabled={!userInfo}
@@ -624,6 +721,48 @@ export default function LendingCheckoutPage() {
                   }}
                 >
                   返却する
+                </button>
+              )}
+
+              {deviceInfo.status === 'lending' && (
+                <button
+                  onClick={handleStartUse}
+                  disabled={!userInfo}
+                  style={{
+                    width: '100%',
+                    padding: '20px',
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    background: userInfo ? '#1976d2' : '#bdbdbd',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: userInfo ? 'pointer' : 'not-allowed',
+                    boxShadow: userInfo ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none',
+                  }}
+                >
+                  使用を開始する
+                </button>
+              )}
+
+              {deviceInfo.status === 'in_use' && (
+                <button
+                  onClick={handleEndUse}
+                  disabled={!userInfo}
+                  style={{
+                    width: '100%',
+                    padding: '20px',
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    background: userInfo ? '#ff9800' : '#bdbdbd',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: userInfo ? 'pointer' : 'not-allowed',
+                    boxShadow: userInfo ? '0 4px 12px rgba(255, 152, 0, 0.3)' : 'none',
+                  }}
+                >
+                  使用を終了する
                 </button>
               )}
             </div>
@@ -650,17 +789,14 @@ export default function LendingCheckoutPage() {
                 color: '#2e7d32',
                 marginBottom: '8px',
               }}>
-                {processedAction === 'lending' ? '貸出完了' : '返却完了'}
+                {getCompletionTitle()}
               </div>
               <div style={{
                 fontSize: '14px',
                 color: '#666',
                 marginBottom: '24px',
               }}>
-                {deviceInfo.name}
-                {processedAction === 'lending' && userInfo && (
-                  <> → {userInfo.department}</>
-                )}
+                {getCompletionDescription()}
               </div>
               <button
                 onClick={handleNextDevice}
@@ -694,7 +830,7 @@ export default function LendingCheckoutPage() {
                 機器のQRコードを読み取ってください
               </div>
               <div style={{ fontSize: '13px', color: '#999', marginTop: '8px' }}>
-                機器の状態に応じて貸出または返却を行います
+                機器の状態に応じて貸出・返却・使用開始・使用終了を行います
               </div>
             </div>
           )}
