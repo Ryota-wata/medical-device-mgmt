@@ -546,11 +546,6 @@ export default function LendingCheckoutPage() {
                   }}>
                     {STATUS_LABELS[deviceInfo.status]}
                   </span>
-                  {deviceInfo.lendingInfo && (
-                    <span style={{ fontSize: '13px', color: '#666' }}>
-                      → {deviceInfo.lendingInfo.department}
-                    </span>
-                  )}
                 </div>
                 {showLendingInfoReadonly && deviceInfo.lendingInfo && (
                   <div style={{ marginTop: '8px', fontSize: '12px', color: '#888' }}>
