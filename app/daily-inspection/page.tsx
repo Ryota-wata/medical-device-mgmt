@@ -53,7 +53,7 @@ const MOCK_ORIGINAL_ASSETS: Asset[] = [
 interface InspectionItemResult {
   itemName: string;
   content: string;
-  result: '合' | '否' | string;
+  result: '合' | '否' | '交換' | string;
   unit?: string;
 }
 
@@ -65,7 +65,7 @@ const DEFAULT_ITEMS: InspectionItemResult[] = [
   { itemName: '性能点検', content: '流量測定', result: '', unit: 'ml' },
 ];
 
-type Step = 'qr-scan' | 'inspection';
+type Step = 'qr-scan' | 'inspection' | 'confirm';
 
 function DailyInspectionContent() {
   const router = useRouter();
@@ -88,6 +88,7 @@ function DailyInspectionContent() {
   const [selectedMenuId, setSelectedMenuId] = useState('');
   const [itemResults, setItemResults] = useState<InspectionItemResult[]>(DEFAULT_ITEMS);
   const [remarks, setRemarks] = useState('');
+  const [overallResult, setOverallResult] = useState<'合格' | '異常あり' | null>(null);
 
   // 日常点検メニュー取得
   const availableMenus = useMemo(() => {
@@ -179,37 +180,48 @@ function DailyInspectionContent() {
     });
   };
 
-  // 点検完了
-  const handleComplete = (overallResult: '合格' | '再点検' | '修理申請') => {
+  // 確認画面表示
+  const handleShowConfirm = (result: '合格' | '異常あり') => {
     if (!inspectorName) {
       alert('実施者名を入力してください');
       return;
     }
+    setOverallResult(result);
+    setStep('confirm');
+  };
 
-    const resultData = {
-      source: 'daily' as const,
+  // 完了（inspection-prepへ遷移）
+  const handleFinish = () => {
+    // TODO: IndexedDBに保存
+    console.log('点検完了:', {
+      overallResult,
+      qrCode: selectedAsset?.qrCode,
+      itemResults,
+      remarks,
+    });
+    router.push('/inspection-prep');
+  };
+
+  // 修理申請へ
+  const handleRepairRequest = () => {
+    sessionStorage.setItem('repairRequestData', JSON.stringify({
       qrCode: selectedAsset?.qrCode || '',
       largeClass: selectedAsset?.largeClass || '',
       mediumClass: selectedAsset?.mediumClass || '',
       item: selectedAsset?.item || '',
       maker: selectedAsset?.maker || '',
       model: selectedAsset?.model || '',
-      inspectionType: '日常点検' as const,
-      usageTiming,
-      menuName: selectedMenu?.name || '（メニュー未選択）',
-      inspectorName,
+      inspectionRemarks: remarks,
       inspectionDate: new Date().toISOString().split('T')[0],
-      itemResults,
-      remarks,
-      overallResult,
-    };
+      inspectorName,
+    }));
+    router.push('/repair-request');
+  };
 
-    // TODO: IndexedDBに保存
-    console.log('点検完了:', resultData);
-
-    // sessionStorageに結果を保存して結果画面に遷移
-    sessionStorage.setItem('inspectionResult', JSON.stringify(resultData));
-    router.push('/inspection-result');
+  // 次の点検へ
+  const handleNextInspection = () => {
+    resetState();
+    setStep('qr-scan');
   };
 
   // 状態リセット
@@ -221,11 +233,14 @@ function DailyInspectionContent() {
     setSelectedMenuId('');
     setItemResults(DEFAULT_ITEMS);
     setRemarks('');
+    setOverallResult(null);
   };
 
   // 戻る
   const handleBack = () => {
-    if (step === 'inspection') {
+    if (step === 'confirm') {
+      setStep('inspection');
+    } else if (step === 'inspection') {
       setStep('qr-scan');
       setSelectedAsset(null);
     } else {
@@ -249,7 +264,7 @@ function DailyInspectionContent() {
         justifyContent: 'center'
       }}>
         <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-          日常点検 - {step === 'qr-scan' ? 'QRコード読み取り' : '点検実施'}
+          日常点検 - {step === 'qr-scan' ? 'QRコード読み取り' : step === 'confirm' ? '確認' : '点検実施'}
         </h1>
       </header>
 
@@ -362,7 +377,7 @@ function DailyInspectionContent() {
               検索して点検開始
             </button>
           </div>
-        ) : (
+        ) : step === 'inspection' ? (
           /* 点検実施画面 */
           <div style={{
             backgroundColor: '#ffffff',
@@ -400,16 +415,8 @@ function DailyInspectionContent() {
               {/* 機器情報 */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>品目</span>
-                  <span style={styles.infoValue}>{selectedAsset?.item}</span>
-                </div>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>メーカー</span>
-                  <span style={styles.infoValue}>{selectedAsset?.maker}</span>
-                </div>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>型式</span>
-                  <span style={styles.infoValue}>{selectedAsset?.model}</span>
+                  <span style={styles.infoLabel}>対象機器</span>
+                  <span style={styles.infoValue}>{selectedAsset?.item}　{selectedAsset?.maker}　{selectedAsset?.model}</span>
                 </div>
               </div>
 
@@ -494,6 +501,12 @@ function DailyInspectionContent() {
                             >
                               否
                             </button>
+                            <button
+                              style={item.result === '交換' ? styles.resultButtonReplace : styles.resultButton}
+                              onClick={() => handleItemResultChange(index, '交換')}
+                            >
+                              交換
+                            </button>
                           </div>
                         )}
                       </td>
@@ -529,13 +542,13 @@ function DailyInspectionContent() {
               }}>
                 <div style={{ fontSize: '13px', color: '#7f8c8d', marginBottom: '4px' }}>総合評価</div>
                 <button
-                  onClick={() => handleComplete('合格')}
+                  onClick={() => handleShowConfirm('合格')}
                   style={styles.passButton}
                 >
                   合格（使用可）
                 </button>
                 <button
-                  onClick={() => handleComplete('修理申請')}
+                  onClick={() => handleShowConfirm('異常あり')}
                   style={styles.repairButton}
                 >
                   異常あり（使用停止へ）
@@ -543,63 +556,316 @@ function DailyInspectionContent() {
               </div>
             </div>
           </div>
+        ) : (
+          /* 確認画面 */
+          <div style={{
+            maxWidth: '600px',
+            margin: '0 auto'
+          }}>
+            {/* 総合評価バッジ */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: isMobile ? '20px 16px' : '28px 32px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>総合評価</div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px 32px',
+                borderRadius: '12px',
+                border: '2px solid',
+                ...(overallResult === '合格'
+                  ? { backgroundColor: '#e8f5e9', color: '#27ae60', borderColor: '#27ae60' }
+                  : { backgroundColor: '#ffebee', color: '#e74c3c', borderColor: '#e74c3c' }
+                )
+              }}>
+                <span style={{ fontSize: '32px', fontWeight: 700 }}>
+                  {overallResult === '合格' ? '✓' : '⚠'}
+                </span>
+                <span style={{ fontSize: '24px', fontWeight: 700 }}>
+                  {overallResult}
+                </span>
+              </div>
+            </div>
+
+            {/* 点検対象機器 */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px 24px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
+                点検対象機器
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <ConfirmInfoItem label="QRコード" value={selectedAsset?.qrCode || ''} />
+                <ConfirmInfoItem label="対象機器" value={`${selectedAsset?.item}　${selectedAsset?.maker}　${selectedAsset?.model}`} />
+              </div>
+            </div>
+
+            {/* 点検情報 */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px 24px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
+                点検情報
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                <ConfirmInfoItem label="実施者" value={inspectorName} />
+                <ConfirmInfoItem label="実施日" value={today} />
+                <ConfirmInfoItem label="タイミング" value={usageTiming} />
+                <ConfirmInfoItem label="点検メニュー" value={selectedMenu?.name || '（メニュー未選択）'} />
+              </div>
+            </div>
+
+            {/* 点検項目結果テーブル */}
+            <div style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              padding: isMobile ? '16px' : '20px 24px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
+                点検項目結果
+              </h2>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '400px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8f9fa' }}>
+                      <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #e0e0e0' }}>項目</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #e0e0e0' }}>点検内容</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderBottom: '2px solid #e0e0e0', width: '80px' }}>評価</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itemResults.map((item, index) => (
+                      <tr key={index}>
+                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.itemName}</td>
+                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.content}</td>
+                        <td style={{
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #eee',
+                          textAlign: 'center',
+                          fontWeight: 600,
+                          color: item.result === '合' ? '#27ae60' : item.result === '否' ? '#e74c3c' : item.result === '交換' ? '#f39c12' : '#333'
+                        }}>
+                          {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* 備考 */}
+            {remarks && (
+              <div style={{
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                padding: isMobile ? '16px' : '20px 24px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                marginBottom: '16px'
+              }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '8px' }}>
+                  備考
+                </h2>
+                <p style={{ fontSize: '14px', color: '#555', margin: 0, lineHeight: '1.6' }}>
+                  {remarks}
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </main>
 
       {/* Footer */}
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #dee2e6',
-        padding: isMobile ? '12px 16px' : '16px 24px',
-        paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : 'max(16px, env(safe-area-inset-bottom))',
-        display: 'flex',
-        justifyContent: 'flex-start',
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.08)',
-        boxSizing: 'border-box'
-      }}>
-        <button
-          onClick={handleBack}
-          aria-label="戻る"
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '4px',
-            padding: '6px',
-            borderRadius: '8px',
-            minWidth: '44px',
-            minHeight: '44px'
-          }}
-        >
+      {step === 'confirm' ? (
+        <footer style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: '#ffffff',
+          borderTop: '1px solid #e0e0e0',
+          padding: isMobile ? '16px' : '20px 24px',
+          paddingBottom: isMobile ? 'max(16px, env(safe-area-inset-bottom))' : 'max(20px, env(safe-area-inset-bottom))',
+          boxShadow: '0 -2px 8px rgba(0,0,0,0.08)',
+          boxSizing: 'border-box'
+        }}>
           <div style={{
-            background: '#ecf0f1',
-            borderRadius: '50%',
-            width: '44px',
-            height: '44px',
+            maxWidth: '600px',
+            margin: '0 auto',
             display: 'flex',
-            alignItems: 'center',
+            gap: '12px',
             justifyContent: 'center'
           }}>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderRight: '8px solid #34495e',
-              borderTop: '5px solid transparent',
-              borderBottom: '5px solid transparent'
-            }}></div>
+            <button
+              onClick={handleBack}
+              aria-label="戻る"
+              style={{
+                flex: 1,
+                backgroundColor: '#ecf0f1',
+                color: '#2c3e50',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '14px 16px',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minHeight: '48px',
+              }}
+            >
+              戻る
+            </button>
+            <button
+              onClick={handleNextInspection}
+              aria-label="次の点検へ"
+              style={{
+                flex: 1,
+                backgroundColor: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '14px 16px',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minHeight: '48px',
+              }}
+            >
+              → 次の点検へ
+            </button>
+            {overallResult === '合格' ? (
+              <button
+                onClick={handleFinish}
+                aria-label="完了"
+                style={{
+                  flex: 1,
+                  backgroundColor: '#2c3e50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '14px 16px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                }}
+              >
+                ✓ 完了
+              </button>
+            ) : (
+              <button
+                onClick={handleRepairRequest}
+                aria-label="修理申請へ"
+                style={{
+                  flex: 1,
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '14px 16px',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                }}
+              >
+                修理申請へ
+              </button>
+            )}
           </div>
-          <span style={{ fontSize: '11px', color: '#2c3e50' }}>
-            {step === 'inspection' ? 'QR読取に戻る' : '戻る'}
-          </span>
-        </button>
-      </footer>
+        </footer>
+      ) : (
+        <footer style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          backgroundColor: '#ffffff',
+          borderTop: '1px solid #dee2e6',
+          padding: isMobile ? '12px 16px' : '16px 24px',
+          paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : 'max(16px, env(safe-area-inset-bottom))',
+          display: 'flex',
+          justifyContent: 'flex-start',
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.08)',
+          boxSizing: 'border-box'
+        }}>
+          <button
+            onClick={handleBack}
+            aria-label="戻る"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '6px',
+              borderRadius: '8px',
+              minWidth: '44px',
+              minHeight: '44px'
+            }}
+          >
+            <div style={{
+              background: '#ecf0f1',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{
+                width: 0,
+                height: 0,
+                borderRight: '8px solid #34495e',
+                borderTop: '5px solid transparent',
+                borderBottom: '5px solid transparent'
+              }}></div>
+            </div>
+            <span style={{ fontSize: '11px', color: '#2c3e50' }}>
+              {step === 'inspection' ? 'QR読取に戻る' : '戻る'}
+            </span>
+          </button>
+        </footer>
+      )}
+    </div>
+  );
+}
+
+function ConfirmInfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{
+      backgroundColor: '#f8f9fa',
+      borderRadius: '6px',
+      padding: '8px 12px'
+    }}>
+      <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>{label}</div>
+      <div style={{
+        fontSize: '13px',
+        color: '#333',
+        fontWeight: 500,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }}>
+        {value || '-'}
+      </div>
     </div>
   );
 }
@@ -729,6 +995,17 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontSize: '12px',
     color: '#e74c3c',
+    minWidth: '44px',
+    minHeight: '32px',
+  },
+  resultButtonReplace: {
+    padding: '6px 12px',
+    border: '1px solid #f39c12',
+    borderRadius: '4px',
+    backgroundColor: '#fef9e7',
+    cursor: 'pointer',
+    fontSize: '12px',
+    color: '#f39c12',
     minWidth: '44px',
     minHeight: '32px',
   },
