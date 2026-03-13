@@ -46,3 +46,17 @@ next-env.d.ts
 # customer feedback (Excel + extracted output)
 /feedback/input/
 /feedback/output/
+
+# taniguchi api docs
+/taniguchi/api/**
+!/taniguchi/api/
+!/taniguchi/api/Fix/
+!/taniguchi/api/Fix/**
+!/taniguchi/api/API設計書_一覧.md
+!/taniguchi/api/API設計書_記載テンプレート.md
+/taniguchi/api/~$*.docx
+
+# taniguchi work
+/taniguchi/work/**
+!/taniguchi/work/
+!/taniguchi/work/README.md
