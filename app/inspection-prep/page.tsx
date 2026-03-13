@@ -139,6 +139,46 @@ function InspectionPrepContent() {
           maxWidth: '800px',
           margin: '0 auto'
         }}>
+          {/* オンライン環境向けスキップ案内 */}
+          <div style={{
+            backgroundColor: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: '8px',
+            padding: isMobile ? '16px' : '20px',
+            marginBottom: isMobile ? '24px' : '32px',
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: isMobile ? 'stretch' : 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+          }}>
+            <div>
+              <div style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: 600, color: '#1565c0', marginBottom: '4px' }}>
+                オンライン環境で実施する場合
+              </div>
+              <div style={{ fontSize: isMobile ? '12px' : '13px', color: '#1976d2', lineHeight: '1.5' }}>
+                ネットワーク接続がある環境ではダウンロード不要です。そのまま点検を開始できます。
+              </div>
+            </div>
+            <button
+              onClick={handleStartInspection}
+              style={{
+                padding: isMobile ? '12px 20px' : '10px 24px',
+                fontSize: isMobile ? '14px' : '15px',
+                fontWeight: 600,
+                color: '#ffffff',
+                backgroundColor: '#1976d2',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                minHeight: '44px',
+              }}
+            >
+              ダウンロードをスキップして点検開始
+            </button>
+          </div>
+
           {/* データダウンロードセクション */}
           <div style={{
             marginBottom: isMobile ? '24px' : '32px',
@@ -155,7 +195,7 @@ function InspectionPrepContent() {
               gap: '8px'
             }}>
               <span style={{ fontSize: isMobile ? '18px' : '20px' }}>📥</span>
-              点検メニュー　データダウンロード
+              点検メニュー　データダウンロード（オフライン用）
             </h2>
 
             <div style={{
