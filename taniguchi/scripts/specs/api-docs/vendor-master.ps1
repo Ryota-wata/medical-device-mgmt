@@ -1,6 +1,6 @@
 ﻿@{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_業者マスタ.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_業者マスタ.docx'
   ScreenLabel = '業者マスタ'
   CoverDateText = '2026年3月13日'
   RevisionDateText = '2026/3/13'
@@ -34,6 +34,7 @@
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = '業者マスタAPIの位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、業者マスタ画面の一覧参照、登録、更新、削除を提供する。業者情報は `vendors` を正本とし、画面表示時は `facilities` を参照して担当施設名を解決する。' },
+    @{ Type = 'Paragraph'; Text = '新規作成・編集モーダルで選択する担当施設候補は、業者マスタAPI自身では返却せず、既存の施設マスタ取得APIから取得する前提とする。本API群では、選択結果として `facilityId` を受け取り、存在確認のみを行う。' },
     @{ Type = 'Paragraph'; Text = '削除は `deleted_at` を用いた論理削除を前提とし、既存申請・見積・修理・保守などの履歴参照を壊さずに、マスタ候補からは除外する。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
@@ -45,7 +46,7 @@
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('vendors', '一覧取得・新規作成・更新・削除の正本', 'vendor_id, facility_id, invoice_registration_no, vendor_name, address, position_name, role_name, contact_person, phone, email, is_primary_contact, deleted_at'),
-      @('facilities', '担当施設名の解決、施設存在確認', 'facility_id, facility_name'),
+      @('facilities', '担当施設名の解決、施設存在確認、担当施設候補APIの参照元', 'facility_id, facility_name'),
       @('rfq_vendors / quotations / orders / borrowing_application_details / disposal_application_details / repair_request_details / maintenance_contracts / inspection_tasks / edit_list_items', '論理削除後も参照される業者履歴の参照先', 'vendor_id, vendor_name など')
     ) },
 
@@ -69,6 +70,7 @@
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
     @{ Type = 'Bullets'; Items = @(
       'モック画面に合わせ、担当施設名、業者名、キーワードで絞り込む',
+      '担当施設候補は既存の施設マスタAPIから取得し、業者マスタAPIでは候補一覧を返さない',
       'キーワード検索はインボイス登録番号、住所、役職、役割、氏名、連絡先、メールを対象にする',
       '文字列検索は部分一致を基本とする',
       '一覧取得では `deleted_at IS NULL` の業者のみ返却する'
