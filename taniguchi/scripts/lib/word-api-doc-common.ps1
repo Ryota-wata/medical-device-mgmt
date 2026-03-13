@@ -23,6 +23,9 @@ $script:wdWord10ListBehavior = 2
 $script:wdListNumberStyleBullet = 23
 $script:wdListLevelAlignLeft = 0
 $script:wdTrailingTab = 0
+$script:wdAutoFitFixed = 0
+$script:wdAutoFitContent = 1
+$script:wdAutoFitWindow = 2
 $script:tableHeaderShade = -738132173
 
 function Release-ComObjectSafely {
@@ -394,12 +397,48 @@ function Add-Table {
     [Parameter(Mandatory = $true)][object[]]$Rows
   )
 
-  $rowCount = 1 + $Rows.Count
+  $normalizedRows = @()
+  $allScalarRows = $true
+  foreach ($row in $Rows) {
+    if ($null -eq $row) {
+      continue
+    }
+
+    $isScalar = ($row -is [string]) -or
+      ($row -is [ValueType]) -or
+      (-not ($row -is [System.Collections.IEnumerable]))
+
+    if (-not $isScalar) {
+      $allScalarRows = $false
+      break
+    }
+  }
+
+  if ($Headers.Count -gt 1 -and $Rows.Count -gt 0 -and $allScalarRows -and ($Rows.Count % $Headers.Count -eq 0)) {
+    for ($offset = 0; $offset -lt $Rows.Count; $offset += $Headers.Count) {
+      $chunk = @()
+      for ($index = 0; $index -lt $Headers.Count; $index++) {
+        $chunk += $Rows[$offset + $index]
+      }
+      $normalizedRows += ,$chunk
+    }
+  }
+  else {
+    $normalizedRows = $Rows
+  }
+
+  $rowCount = 1 + $normalizedRows.Count
   $colCount = $Headers.Count
   $table = $Document.Tables.Add($Selection.Range, $rowCount, $colCount)
   $table.Style = $script:wdStyleTableGrid
-  $table.AllowAutoFit = $false
+  $table.AllowAutoFit = $true
   $table.Range.Style = $script:wdStyleNormal
+  try {
+    $table.AutoFitBehavior($script:wdAutoFitContent) | Out-Null
+    $table.AutoFitBehavior($script:wdAutoFitWindow) | Out-Null
+  }
+  catch {
+  }
 
   $borders = @(
     $script:wdBorderTop,
@@ -426,8 +465,8 @@ function Add-Table {
     $headerCell.Shading.BackgroundPatternColor = $script:tableHeaderShade
   }
 
-  for ($r = 0; $r -lt $Rows.Count; $r++) {
-    $row = @($Rows[$r])
+  for ($r = 0; $r -lt $normalizedRows.Count; $r++) {
+    $row = @($normalizedRows[$r])
     for ($c = 1; $c -le $colCount; $c++) {
       $cellText = ''
       if ($c -le $row.Count) {
