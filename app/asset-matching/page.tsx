@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
@@ -36,13 +36,26 @@ export default function AssetMatchingPage() {
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
+  // 作業中データがあるか判定
+  const hasWorkInProgress = data.some(r =>
+    r.linked.category || r.linked.majorCategory || r.linked.middleCategory ||
+    r.linked.item || r.linked.manufacturer || r.linked.model
+  ) || data.length < assetMatchingSampleData.length || editingRow !== null;
+
+  // ブラウザのリロード・閉じる操作からの離脱を保護
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasWorkInProgress) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasWorkInProgress]);
+
   const handleBack = () => {
-    // 作業中データがあれば一時保存確認を表示
-    const hasLinkedData = data.some(r =>
-      r.linked.category || r.linked.majorCategory || r.linked.middleCategory ||
-      r.linked.item || r.linked.manufacturer || r.linked.model
-    );
-    if (hasLinkedData || data.length < assetMatchingSampleData.length) {
+    if (hasWorkInProgress) {
       setShowLeaveConfirm(true);
     } else {
       router.push('/main');
@@ -152,11 +165,71 @@ export default function AssetMatchingPage() {
     const top = (window.screen.height - height) / 2;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
     window.open(
-      `${basePath}/ship-asset-master`,
+      `${basePath}/asset-master`,
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
   };
+
+  // 資産マスタからのメッセージを受信
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data.type === 'ASSET_SELECTED' && editingLinked && editingRow !== null) {
+        const assetMasters = event.data.assets as any[];
+        const scope = event.data.scope as 'all' | 'toMaker' | 'toItem';
+
+        if (assetMasters.length > 0) {
+          const master = assetMasters[0];
+
+          let updatedLinked: LinkedMasterData;
+
+          switch (scope) {
+            case 'toItem':
+              updatedLinked = {
+                ...editingLinked,
+                category: master.category || editingLinked.category,
+                majorCategory: master.largeClass || editingLinked.majorCategory,
+                middleCategory: master.mediumClass || editingLinked.middleCategory,
+                item: master.item || editingLinked.item,
+                manufacturer: '',
+                model: '',
+              };
+              break;
+            case 'toMaker':
+              updatedLinked = {
+                ...editingLinked,
+                category: master.category || editingLinked.category,
+                majorCategory: master.largeClass || editingLinked.majorCategory,
+                middleCategory: master.mediumClass || editingLinked.middleCategory,
+                item: master.item || editingLinked.item,
+                manufacturer: master.maker || editingLinked.manufacturer,
+                model: '',
+              };
+              break;
+            case 'all':
+            default:
+              updatedLinked = {
+                ...editingLinked,
+                category: master.category || editingLinked.category,
+                majorCategory: master.largeClass || editingLinked.majorCategory,
+                middleCategory: master.mediumClass || editingLinked.middleCategory,
+                item: master.item || editingLinked.item,
+                manufacturer: master.maker || editingLinked.manufacturer,
+                model: master.model || editingLinked.model,
+              };
+              break;
+          }
+
+          setEditingLinked(updatedLinked);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [editingLinked, editingRow]);
 
   const saveEdit = () => {
     if (!editingLinked || editingRow === null) return;
@@ -192,9 +265,8 @@ export default function AssetMatchingPage() {
 
   const completeMatching = () => {
     if (data.length > 0) {
-      if (confirm(`未確定の項目が${data.length}件あります。このまま完了しますか？`)) {
-        router.push('/main');
-      }
+      // 未確定の項目がある場合は一時保存確認モーダルを表示
+      setShowLeaveConfirm(true);
     } else {
       alert('突き合わせが完了しました');
       router.push('/main');
@@ -446,18 +518,20 @@ export default function AssetMatchingPage() {
             </button>
             <button
               onClick={handleOpenAssetMaster}
+              disabled={editingRow === null}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#1976d2',
+                backgroundColor: editingRow !== null ? '#1976d2' : '#b0bec5',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: 'pointer',
+                cursor: editingRow !== null ? 'pointer' : 'not-allowed',
                 fontSize: '14px',
                 fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                opacity: editingRow !== null ? 1 : 0.7
               }}
             >
               資産マスタを別ウィンドウで開く
