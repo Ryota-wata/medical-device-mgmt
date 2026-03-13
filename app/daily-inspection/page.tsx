@@ -89,6 +89,7 @@ function DailyInspectionContent() {
   const [itemResults, setItemResults] = useState<InspectionItemResult[]>(DEFAULT_ITEMS);
   const [remarks, setRemarks] = useState('');
   const [overallResult, setOverallResult] = useState<'合格' | '異常あり' | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // 日常点検メニュー取得
   const availableMenus = useMemo(() => {
@@ -188,6 +189,15 @@ function DailyInspectionContent() {
     }
     setOverallResult(result);
     setStep('confirm');
+  };
+
+  // 報告書出力
+  const handleExportReport = async () => {
+    setIsExporting(true);
+    // TODO: 実際のPDF生成処理
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsExporting(false);
+    alert('点検結果報告書を出力しました');
   };
 
   // 完了（inspection-prepへ遷移）
@@ -687,6 +697,27 @@ function DailyInspectionContent() {
                 </p>
               </div>
             )}
+
+            {/* 報告書出力 */}
+            <button
+              onClick={handleExportReport}
+              disabled={isExporting}
+              style={{
+                width: '100%',
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '14px 24px',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: isExporting ? 'not-allowed' : 'pointer',
+                opacity: isExporting ? 0.7 : 1,
+                minHeight: '48px',
+              }}
+            >
+              {isExporting ? '出力中...' : '報告書出力'}
+            </button>
           </div>
         )}
       </main>
