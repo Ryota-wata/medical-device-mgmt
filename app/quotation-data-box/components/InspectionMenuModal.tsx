@@ -187,19 +187,6 @@ export function InspectionMenuModal({
     }
   }, [editMenu, isOpen]);
 
-  // プラン名自動生成（新規作成モードのみ）
-  useEffect(() => {
-    if (selectedMenuId === null && formData.item) {
-      let name = formData.item;
-      if (selectedMenuType === '日常点検') {
-        name += ` ${selectedDailyTiming}点検`;
-      } else {
-        name += ` 定期点検 ${formData.cycleMonths}ヶ月`;
-      }
-      setFormData((prev) => ({ ...prev, name }));
-    }
-  }, [formData.item, selectedMenuType, formData.cycleMonths, selectedDailyTiming, selectedMenuId]);
-
   // menuType更新
   useEffect(() => {
     setFormData((prev) => ({
@@ -455,12 +442,9 @@ export function InspectionMenuModal({
                   style={styles.input}
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder={selectedMenuId === null ? '品目選択で自動生成' : ''}
+                  placeholder="点検プラン名称を入力"
                   readOnly={selectedMenuId !== null}
                 />
-                {selectedMenuId === null && (
-                  <p style={styles.hintSmall}>品目を選択するとプラン名が自動生成されます</p>
-                )}
               </div>
               <div style={styles.typeTabSection}>
                 <label style={styles.label}>点検区分設定</label>

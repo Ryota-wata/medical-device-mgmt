@@ -14,15 +14,15 @@ export type EvaluationType = '合否' | '単位' | 'フリー入力';
 /** 単位オプション */
 export type UnitOption = '℃' | '%' | '個' | 'その他';
 
-/** 点検タスクステータス */
+/** 貸出状況ステータス */
+export type LendingStatus = '待機中' | '貸出可' | '貸出中' | '使用中' | '使用済' | '返却済' | '使用不可';
+
+/** 点検タスクステータス（定期ステータス） */
 export type InspectionTaskStatus =
-  | '点検2ヶ月前'
+  | '点検週'
   | '点検月'
-  | '点検月超過'
-  | '点検日調整'      // メーカー保守のみ
-  | '点検実施中'
-  | '点検完了'
-  | '再点検';         // 点検結果が再点検の場合
+  | string             // '点検●ヶ月前' （動的ラベル）
+  | '点検月超過';
 
 /** 点検種別（タスク用） */
 export type InspectionType = '院内定期点検' | 'メーカー保守' | '院内スポット点検';
@@ -108,6 +108,12 @@ export interface InspectionTask {
   vendorName?: string;
   maintenanceContractId?: string;
 
+  // 貸出状況
+  lendingStatus: LendingStatus;
+
+  // 保守・点検グループ名
+  inspectionGroupName?: string;
+
   // スケジュール
   nextInspectionDate: string;       // 次回点検予定日
   lastInspectionDate?: string;      // 前回点検日
@@ -116,7 +122,7 @@ export interface InspectionTask {
   completedCount: number;
   totalCount: number;
 
-  // ステータス
+  // ステータス（定期ステータス）
   status: InspectionTaskStatus;
 }
 

@@ -16,7 +16,11 @@ interface CostItem {
 interface FormData {
   attachedFile: File | null;
   documentType: '点検報告書' | 'その他';
+  customFileName: string;
   inspectionDate: string;
+  vendorName: string;
+  staffName: string;
+  contactInfo: string;
   costItems: CostItem[];
 }
 
@@ -28,7 +32,11 @@ export default function MakerMaintenanceResultPage() {
   const [formData, setFormData] = useState<FormData>({
     attachedFile: null,
     documentType: '点検報告書',
+    customFileName: '',
     inspectionDate: new Date().toISOString().split('T')[0],
+    vendorName: '',
+    staffName: '',
+    contactInfo: '',
     costItems: [
       { id: '1', costType: '部品交換', description: '', amount: '' },
       { id: '2', costType: '作業', description: '', amount: '' },
@@ -46,7 +54,11 @@ export default function MakerMaintenanceResultPage() {
   useEffect(() => {
     const stored = sessionStorage.getItem('makerMaintenanceTask');
     if (stored) {
-      setTask(JSON.parse(stored));
+      const parsed = JSON.parse(stored) as InspectionTask;
+      setTask(parsed);
+      if (parsed.vendorName) {
+        setFormData(prev => ({ ...prev, vendorName: parsed.vendorName || '' }));
+      }
     }
   }, []);
 
@@ -142,8 +154,8 @@ export default function MakerMaintenanceResultPage() {
       plannedDate: task.nextInspectionDate,
       actualDate: formData.inspectionDate,
       result: '合格',
-      staffName: '',
-      vendorName: task.vendorName || '',
+      staffName: formData.staffName,
+      vendorName: formData.vendorName,
       documentType: formData.documentType,
       documentUrl: previewUrl || undefined,
       partsCost: partsCost,
@@ -198,29 +210,22 @@ export default function MakerMaintenanceResultPage() {
           padding: '12px 16px',
           marginBottom: '16px',
           display: 'flex',
-          gap: '24px',
+          alignItems: 'center',
+          gap: '8px',
           flexWrap: 'wrap',
+          fontSize: '14px',
+          fontWeight: 600,
+          color: '#2c3e50',
         }}>
-          <div>
-            <span style={{ color: '#666', fontSize: '12px' }}>QRコード:</span>
-            <span style={{ marginLeft: '8px', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>{task.assetId}</span>
-          </div>
-          <div>
-            <span style={{ color: '#666', fontSize: '12px' }}>品目:</span>
-            <span style={{ marginLeft: '8px', fontWeight: 500 }}>{task.assetName}</span>
-          </div>
-          <div>
-            <span style={{ color: '#666', fontSize: '12px' }}>メーカー:</span>
-            <span style={{ marginLeft: '8px', fontWeight: 500 }}>{task.maker}</span>
-          </div>
-          <div>
-            <span style={{ color: '#666', fontSize: '12px' }}>型式:</span>
-            <span style={{ marginLeft: '8px', fontWeight: 500 }}>{task.model}</span>
-          </div>
-          <div>
-            <span style={{ color: '#666', fontSize: '12px' }}>業者:</span>
-            <span style={{ marginLeft: '8px', fontWeight: 500 }}>{task.vendorName || '-'}</span>
-          </div>
+          <span>{task.inspectionGroupName || '保守・点検グループ名'}</span>
+          <span style={{ color: '#aaa' }}>|</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{task.assetId}</span>
+          <span style={{ color: '#aaa' }}>|</span>
+          <span>{task.assetName}</span>
+          <span style={{ color: '#aaa' }}>|</span>
+          <span>{task.maker}</span>
+          <span style={{ color: '#aaa' }}>|</span>
+          <span>{task.model}</span>
         </div>
 
         {/* メインコンテンツ */}
@@ -282,7 +287,7 @@ export default function MakerMaintenanceResultPage() {
               {/* ドキュメント種類 */}
               <div style={{ marginBottom: '20px' }}>
                 <label style={styles.label}>ドキュメント</label>
-                <div style={{ display: 'flex', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <label style={styles.radioLabel}>
                     <input
                       type="radio"
@@ -303,6 +308,21 @@ export default function MakerMaintenanceResultPage() {
                     />
                     <span>その他</span>
                   </label>
+                  {formData.documentType === 'その他' && (
+                    <input
+                      type="text"
+                      value={formData.customFileName}
+                      onChange={(e) => handleInputChange('customFileName', e.target.value)}
+                      placeholder="ファイル名を入力"
+                      style={{
+                        padding: '6px 12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '13px',
+                        width: '200px',
+                      }}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -315,6 +335,64 @@ export default function MakerMaintenanceResultPage() {
                   onChange={(e) => handleInputChange('inspectionDate', e.target.value)}
                   style={styles.input}
                 />
+              </div>
+
+              {/* 点検業者セクション */}
+              <div style={{
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                marginBottom: '20px',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  padding: '10px 16px',
+                  background: '#f8f9fa',
+                  borderBottom: '1px solid #ddd',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#2c3e50',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <span>点検業者</span>
+                  <span style={{ color: '#aaa' }}>|</span>
+                  <span>担当者</span>
+                  <span style={{ color: '#aaa' }}>|</span>
+                  <span>連絡先</span>
+                </div>
+                <div style={{ padding: '16px', display: 'flex', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>点検業者</label>
+                    <input
+                      type="text"
+                      value={formData.vendorName}
+                      onChange={(e) => handleInputChange('vendorName', e.target.value)}
+                      placeholder="業者名を入力"
+                      style={styles.input}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>担当者</label>
+                    <input
+                      type="text"
+                      value={formData.staffName}
+                      onChange={(e) => handleInputChange('staffName', e.target.value)}
+                      placeholder="担当者名を入力"
+                      style={styles.input}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={styles.label}>連絡先</label>
+                    <input
+                      type="text"
+                      value={formData.contactInfo}
+                      onChange={(e) => handleInputChange('contactInfo', e.target.value)}
+                      placeholder="電話番号・メール等"
+                      style={styles.input}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* 発生費用セクション */}

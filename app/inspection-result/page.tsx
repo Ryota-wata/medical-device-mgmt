@@ -95,10 +95,11 @@ function InspectionResultContent() {
 
             // ステータスを計算
             const diffDays = Math.ceil((nextDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-            let newStatus: '点検2ヶ月前' | '点検月' | '点検月超過' = '点検2ヶ月前';
+            let newStatus: string = '点検2ヶ月前';
             if (diffDays < 0) newStatus = '点検月超過';
+            else if (diffDays <= 7) newStatus = '点検週';
             else if (diffDays <= 30) newStatus = '点検月';
-            else if (diffDays <= 60) newStatus = '点検2ヶ月前';
+            else { const m = Math.ceil(diffDays / 30); newStatus = `点検${m}ヶ月前`; }
 
             updateTask(resultData.taskId, {
               lastInspectionDate: resultData.inspectionDate,
@@ -128,10 +129,11 @@ function InspectionResultContent() {
 
             // ステータスを計算
             const diffDays = Math.ceil((nextDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-            let newStatus: '点検2ヶ月前' | '点検月' | '点検月超過' = '点検2ヶ月前';
+            let newStatus: string = '点検2ヶ月前';
             if (diffDays < 0) newStatus = '点検月超過';
+            else if (diffDays <= 7) newStatus = '点検週';
             else if (diffDays <= 30) newStatus = '点検月';
-            else if (diffDays <= 60) newStatus = '点検2ヶ月前';
+            else { const m = Math.ceil(diffDays / 30); newStatus = `点検${m}ヶ月前`; }
 
             updateTask(resultData.taskId, {
               lastInspectionDate: resultData.inspectionDate,

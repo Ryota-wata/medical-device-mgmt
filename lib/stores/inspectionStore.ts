@@ -80,7 +80,7 @@ const initialTasks: InspectionTask[] = [
   {
     id: 'TASK001',
     assetId: 'QR-2025-0001',
-    assetName: '輸液ポンプ TE-151',
+    assetName: '超音波診断装置',
     maker: 'テルモ',
     model: 'TE-151',
     largeClass: '検査機器',
@@ -93,11 +93,13 @@ const initialTasks: InspectionTask[] = [
     hasDailyInspection: false,
     dailyMenus: {},
     hasLegalInspection: false,
+    lendingStatus: '待機中',
+    inspectionGroupName: '院内定期点検',
     nextInspectionDate: '2026-02-01',
     lastInspectionDate: '2026-01-01',
     completedCount: 1,
     totalCount: 2,
-    status: '点検2ヶ月前',
+    status: '点検月',
   },
   {
     id: 'TASK002',
@@ -116,11 +118,13 @@ const initialTasks: InspectionTask[] = [
     dailyMenus: {},
     hasLegalInspection: false,
     vendorName: 'フィリップスメンテナンス',
+    lendingStatus: '貸出可',
+    inspectionGroupName: 'メーカー保守',
     nextInspectionDate: '2025-12-15',
     lastInspectionDate: '2024-12-15',
     completedCount: 0,
     totalCount: 3,
-    status: '点検日調整',
+    status: '点検月超過',
   },
   {
     id: 'TASK003',
@@ -141,6 +145,8 @@ const initialTasks: InspectionTask[] = [
       after: 'MENU004',
     },
     hasLegalInspection: false,
+    lendingStatus: '使用中',
+    inspectionGroupName: '院内定期点検',
     nextInspectionDate: '2026-03-01',
     lastInspectionDate: '2026-02-01',
     completedCount: 2,
@@ -152,13 +158,16 @@ const initialTasks: InspectionTask[] = [
 // ステータス計算ヘルパー
 function calculateStatus(nextInspectionDate: string): InspectionTaskStatus {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const nextDate = new Date(nextInspectionDate);
+  nextDate.setHours(0, 0, 0, 0);
   const diffDays = Math.ceil((nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) return '点検月超過';
+  if (diffDays <= 7) return '点検週';
   if (diffDays <= 30) return '点検月';
-  if (diffDays <= 60) return '点検2ヶ月前';
-  return '点検2ヶ月前';
+  const diffMonths = Math.ceil(diffDays / 30);
+  return `点検${diffMonths}ヶ月前`;
 }
 
 interface InspectionStore {
@@ -261,10 +270,12 @@ export const useInspectionStore = create<InspectionStore>((set, get) => ({
       dailyMenus: data.dailyMenus,
       hasLegalInspection: data.hasLegalInspection,
       vendorName: data.vendorName,
+      lendingStatus: assetInfo.lendingStatus || '待機中',
+      inspectionGroupName: assetInfo.inspectionGroupName,
       nextInspectionDate: data.nextInspectionDate,
       completedCount: 0,
       totalCount: data.periodicMenuIds.length || 1,
-      status: data.inspectionType === 'メーカー保守' ? '点検日調整' : calculateStatus(data.nextInspectionDate),
+      status: calculateStatus(data.nextInspectionDate),
     };
     set((state) => ({ tasks: [...state.tasks, newTask] }));
   },
