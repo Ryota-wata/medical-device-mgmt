@@ -3,15 +3,14 @@
 import React, { useState, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useOrderStore } from '@/lib/stores/orderStore';
 import {
   OrderType,
-  PaymentTerms,
+  PaymentMethod,
 } from '@/lib/types/order';
-import { OrderPreviewModal } from '@/components/modals/OrderPreviewModal';
+import { OrderPreviewModal, OrderPreviewData } from '@/components/modals/OrderPreviewModal';
 
 /** カラートークン */
 const COLORS = {
@@ -33,49 +32,26 @@ const COLORS = {
   warningBg: '#fffbeb',
   warningBorder: '#f59e0b',
   warningText: '#92400e',
-  disabled: '#9ca3af',
-  disabledBg: '#f3f4f6',
 } as const;
 
 /** 発注形態の選択肢 */
 const ORDER_TYPES: OrderType[] = [
   '購入',
   '割賦',
-  'リース（ファイナンス）',
   'リース（オペレーティング）',
-  'レンタル',
+  'リース（ファイナンス）',
 ];
 
-/** 支払い条件の選択肢 */
-const PAYMENT_TERMS: PaymentTerms[] = [
-  '納品時一括',
-  '検収後一括',
-  '分割払い',
-  '月末締め翌月末払い',
-  'その他',
+/** 支払方法の選択肢 */
+const PAYMENT_METHODS: PaymentMethod[] = [
+  'でんさい',
+  '銀行振込',
+  'クレジット',
+  '現金',
 ];
 
 /** z-index スケール */
 const Z_STICKY_HEADER = 10;
-
-// 共通スタイル
-const thStyle: React.CSSProperties = {
-  background: COLORS.primary,
-  color: COLORS.textOnColor,
-  padding: '8px 12px',
-  fontSize: '14px',
-  fontWeight: 'bold',
-  textAlign: 'left',
-  width: '120px',
-  border: `1px solid ${COLORS.primary}`,
-  whiteSpace: 'nowrap',
-};
-
-const tdStyle: React.CSSProperties = {
-  background: COLORS.white,
-  padding: '8px 12px',
-  border: `1px solid ${COLORS.primary}`,
-};
 
 const inputStyle: React.CSSProperties = {
   padding: '6px 10px',
@@ -110,28 +86,24 @@ export default function OrderRegistrationPage() {
   const handleRfqGroupIdRead = useCallback((id: number | null) => setRfqGroupId(id), []);
 
   // --- フォーム項目 ---
-  const [deliveryDate, setDeliveryDate] = useState('');
+  const [inHouseSettlementNo, setInHouseSettlementNo] = useState('');
   const [orderType, setOrderType] = useState<OrderType>('購入');
-  const [paymentTerms, setPaymentTerms] = useState<PaymentTerms>('検収後一括');
-  const [paymentDueDate, setPaymentDueDate] = useState('');
-  const [leaseCompany, setLeaseCompany] = useState('');
+  const [deliveryDeadline, setDeliveryDeadline] = useState('');
+  const [paymentClosingDate, setPaymentClosingDate] = useState('');
+  const [paymentDate, setPaymentDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | ''>('');
+  const [paymentSiteDays, setPaymentSiteDays] = useState('');
   const [leaseStartDate, setLeaseStartDate] = useState('');
-  const [leaseYears, setLeaseYears] = useState('');
-  const [itemDeliveryDates, setItemDeliveryDates] = useState<Record<string, string>>({});
+  const [leaseEndDate, setLeaseEndDate] = useState('');
+  const [comment, setComment] = useState('');
 
-  // --- ダイアログ・バリデーション ---
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    confirmLabel?: string;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-
+  // --- バリデーション ---
   const [deliveryDateError, setDeliveryDateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- 登録完了状態 ---
+  // --- プレビュー・登録完了状態 ---
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<OrderPreviewData | null>(null);
   const [registrationComplete, setRegistrationComplete] = useState<{
     orderNo: string;
     itemCount: number;
@@ -139,20 +111,6 @@ export default function OrderRegistrationPage() {
     orderGroupId: number;
   } | null>(null);
   const [showOrderPreview, setShowOrderPreview] = useState(false);
-
-  const showDialog = useCallback((opts: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    confirmLabel?: string;
-  }) => {
-    setConfirmDialog({ isOpen: true, ...opts });
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-    setIsSubmitting(false);
-  }, []);
 
   const isLeaseType = orderType === 'リース（ファイナンス）' || orderType === 'リース（オペレーティング）';
 
@@ -170,59 +128,108 @@ export default function OrderRegistrationPage() {
     );
   }, [rfqGroup, quotationGroups, quotationItems]);
 
+  // サンプル明細データ（ストアにデータがない場合のフォールバック）
+  const sampleItems = useMemo(() => [
+    { _expandKey: 'sample-1', itemName: '超音波診断装置 EPIQ Elite', originalItemName: '', manufacturer: 'フィリップス・ジャパン', originalManufacturer: '', model: 'EPIQ Elite 7500', originalModel: '', allocPriceUnit: 32000000 },
+    { _expandKey: 'sample-2', itemName: '超音波プローブ S5-1', originalItemName: '', manufacturer: 'フィリップス・ジャパン', originalManufacturer: '', model: 'S5-1 PureWave', originalModel: '', allocPriceUnit: 2200000 },
+    { _expandKey: 'sample-3', itemName: '超音波プローブ S5-1', originalItemName: '', manufacturer: 'フィリップス・ジャパン', originalManufacturer: '', model: 'S5-1 PureWave', originalModel: '', allocPriceUnit: 2200000 },
+    { _expandKey: 'sample-4', itemName: '超音波プローブ C5-1', originalItemName: '', manufacturer: 'フィリップス・ジャパン', originalManufacturer: '', model: 'C5-1 PureWave', originalModel: '', allocPriceUnit: 2200000 },
+    { _expandKey: 'sample-5', itemName: '設置・据付工事費', originalItemName: '', manufacturer: '-', originalManufacturer: '', model: '-', originalModel: '', allocPriceUnit: 4000000 },
+  ], []);
+
   // 個体管理: 数量分の行に展開した表示用データ
   const expandedItems = useMemo(() => {
-    return targetQuotationItems.flatMap(qi => {
+    const storeItems = targetQuotationItems.flatMap(qi => {
       const qty = qi.aiQuantity || qi.originalQuantity || 1;
       return Array.from({ length: qty }, (_, i) => ({ ...qi, _expandKey: `${qi.id}-${i}` }));
     });
-  }, [targetQuotationItems]);
+    // ストアにデータがなければサンプルを使用
+    return storeItems.length > 0 ? storeItems : sampleItems;
+  }, [targetQuotationItems, sampleItems]);
 
   const totalAmount = useMemo(() => {
-    return targetQuotationItems.reduce((sum, item) => sum + (item.allocTaxTotal || 0), 0);
-  }, [targetQuotationItems]);
+    if (targetQuotationItems.length > 0) {
+      return targetQuotationItems.reduce((sum, item) => sum + (item.allocTaxTotal || 0), 0);
+    }
+    // サンプルデータの合計
+    return sampleItems.reduce((sum, item) => sum + (item.allocPriceUnit || 0), 0);
+  }, [targetQuotationItems, sampleItems]);
 
-  // 登録処理
-  const handleSubmitOrder = () => {
+  // プレビュー表示（バリデーション → プレビューモーダルを開く）
+  const handleShowPreview = () => {
     if (!rfqGroup) return;
-    if (!deliveryDate) {
-      setDeliveryDateError('納品日を設定してください');
+    if (!deliveryDeadline) {
+      setDeliveryDateError('納期を設定してください');
       return;
     }
     setDeliveryDateError('');
 
-    showDialog({
-      title: '発注登録確認',
-      message: `発注を登録します。品目数: ${expandedItems.length}件 / 合計金額: ¥${totalAmount.toLocaleString()}`,
-      confirmLabel: '発注を登録する',
-      onConfirm: () => {
-        setIsSubmitting(true);
-        const orderNo = generateOrderNo();
-        const today = new Date().toISOString().split('T')[0];
+    const orderNo = generateOrderNo();
+    const today = new Date().toISOString().split('T')[0];
 
-        const orderGroupId = addOrderGroup({
-          orderNo,
-          rfqGroupId: rfqGroup.id,
-          rfqNo: rfqGroup.rfqNo,
-          groupName: rfqGroup.groupName,
-          vendorName: rfqGroup.vendorName || '',
-          applicant: rfqGroup.personInCharge || '',
-          applicantEmail: rfqGroup.email || '',
-          orderType,
-          deliveryDate,
-          paymentTerms,
-          paymentDueDate,
-          inspectionCertType: '本体のみ',
-          storageFormat: '未指定',
-          leaseCompany: isLeaseType ? leaseCompany : undefined,
-          leaseStartDate: isLeaseType ? leaseStartDate : undefined,
-          leaseYears: isLeaseType && leaseYears ? Number(leaseYears) : undefined,
-          totalAmount,
-          orderDate: today,
-        });
+    // プレビュー用の明細データを構築
+    const previewItems = expandedItems.map((item) => ({
+      itemName: (item.itemName || item.originalItemName || '') as string,
+      manufacturer: (item.manufacturer || item.originalManufacturer || '-') as string,
+      model: (item.model || item.originalModel || '-') as string,
+      quantity: 1,
+      unitPrice: (item.allocPriceUnit || 0) as number,
+      totalPrice: (item.allocPriceUnit || 0) as number,
+    }));
 
-        // 個体管理: 数量分の行に展開（1行1個体）
-        const orderItems = targetQuotationItems.flatMap(qi => {
+    setPreviewData({
+      orderNo,
+      orderDate: today,
+      vendorName: rfqGroup.vendorName || '',
+      applicant: rfqGroup.personInCharge || '',
+      applicantEmail: rfqGroup.email || '',
+      orderType,
+      deliveryDate: deliveryDeadline,
+      paymentClosingDate: paymentClosingDate || undefined,
+      paymentDate: paymentDate || undefined,
+      paymentMethod: paymentMethod || undefined,
+      paymentSiteDays: paymentSiteDays ? Number(paymentSiteDays) : undefined,
+      leaseStartDate: isLeaseType ? leaseStartDate || undefined : undefined,
+      leaseEndDate: isLeaseType ? leaseEndDate || undefined : undefined,
+      comment: comment || undefined,
+      totalAmount,
+      items: previewItems,
+    });
+    setShowPreview(true);
+  };
+
+  // 登録実行（プレビューから「登録して出力」押下時）
+  const handleRegisterFromPreview = () => {
+    if (!rfqGroup || !previewData) return;
+    setIsSubmitting(true);
+
+    const orderGroupId = addOrderGroup({
+      orderNo: previewData.orderNo,
+      rfqGroupId: rfqGroup.id,
+      rfqNo: rfqGroup.rfqNo,
+      groupName: rfqGroup.groupName,
+      vendorName: previewData.vendorName,
+      applicant: previewData.applicant,
+      applicantEmail: previewData.applicantEmail,
+      inHouseSettlementNo: inHouseSettlementNo || undefined,
+      orderType,
+      deliveryDate: deliveryDeadline,
+      paymentTerms: 'その他',
+      paymentDueDate: paymentClosingDate || undefined,
+      paymentMethod: paymentMethod || undefined,
+      paymentSiteDays: paymentSiteDays ? Number(paymentSiteDays) : undefined,
+      leaseStartDate: isLeaseType ? leaseStartDate || undefined : undefined,
+      leaseEndDate: isLeaseType ? leaseEndDate || undefined : undefined,
+      comment: comment || undefined,
+      inspectionCertType: '本体のみ',
+      storageFormat: '未指定',
+      totalAmount,
+      orderDate: previewData.orderDate,
+    });
+
+    // 個体管理: 数量分の行に展開（1行1個体）
+    const orderItems = targetQuotationItems.length > 0
+      ? targetQuotationItems.flatMap(qi => {
           const qty = qi.aiQuantity || qi.originalQuantity || 1;
           const unitPrice = qi.allocPriceUnit || 0;
           const itemBase = {
@@ -237,23 +244,33 @@ export default function OrderRegistrationPage() {
             totalPrice: unitPrice,
           };
           return Array.from({ length: qty }, () => ({ ...itemBase }));
-        });
-        addOrderItems(orderItems);
-
-        updateRfqGroup(rfqGroup.id, {
-          status: '発注済',
-          deliveryDeadline: deliveryDate,
-        });
-
-        setRegistrationComplete({
-          orderNo,
-          itemCount: expandedItems.length,
-          totalAmount,
+        })
+      : previewData.items.map((item) => ({
           orderGroupId,
-        });
-        setIsSubmitting(false);
-      },
+          quotationItemId: 0,
+          itemName: item.itemName,
+          manufacturer: item.manufacturer,
+          model: item.model,
+          registrationType: '本体' as const,
+          quantity: 1,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+        }));
+    addOrderItems(orderItems);
+
+    updateRfqGroup(rfqGroup.id, {
+      status: '発注済',
+      deliveryDeadline: deliveryDeadline,
     });
+
+    setShowPreview(false);
+    setRegistrationComplete({
+      orderNo: previewData.orderNo,
+      itemCount: expandedItems.length,
+      totalAmount,
+      orderGroupId,
+    });
+    setIsSubmitting(false);
   };
 
   return (
@@ -304,7 +321,16 @@ export default function OrderRegistrationPage() {
                   onClick={() => setShowOrderPreview(true)}
                   style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
                 >
-                  発注書を出力する
+                  印刷する
+                </button>
+                <button
+                  className="order-btn"
+                  onClick={() => {
+                    alert('mail送付機能は今後実装予定です');
+                  }}
+                  style={{ padding: '12px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
+                >
+                  mail送付
                 </button>
                 <button
                   className="order-btn-secondary"
@@ -387,63 +413,153 @@ export default function OrderRegistrationPage() {
                 発注基本登録
               </div>
               <div style={{ padding: '16px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '100px 220px 100px 180px', gap: '8px 16px', alignItems: 'center' }}>
+                {/* 1行目: 院内決済No. / 発注形態 / 納期 / リース開始日・終了日 / コメント */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
+                  {/* 院内決済No. */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>院内決済No.</label>
+                    <input
+                      type="text"
+                      value={inHouseSettlementNo}
+                      onChange={(e) => setInHouseSettlementNo(e.target.value)}
+                      style={{ ...inputStyle, width: '160px' }}
+                    />
+                  </div>
+
                   {/* 発注形態 */}
-                  <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>発注形態</label>
-                  <select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)} style={{ ...inputStyle, width: '220px' }}>
-                    {ORDER_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
-                  </select>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>発注形態</label>
+                    <select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)} style={{ ...inputStyle, width: '220px' }}>
+                      {ORDER_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
+                    </select>
+                  </div>
 
                   {/* 納期 */}
-                  <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>
-                    納期 <span style={{ color: COLORS.error }}>*</span>
-                  </label>
-                  <div>
-                    <input
-                      type="date"
-                      value={deliveryDate}
-                      onChange={(e) => {
-                        setDeliveryDate(e.target.value);
-                        if (e.target.value) setDeliveryDateError('');
-                      }}
-                      style={{
-                        ...inputStyle,
-                        width: '180px',
-                        borderColor: deliveryDateError ? COLORS.error : COLORS.border,
-                      }}
-                    />
-                    {deliveryDateError && (
-                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: COLORS.error }}>
-                        {deliveryDateError}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 支払条件 + 支払期日（独立行） */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap', width: '100px', flexShrink: 0 }}>支払条件</label>
-                  <select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value as PaymentTerms)} style={{ ...inputStyle, width: '200px' }}>
-                    {PAYMENT_TERMS.map((t) => (<option key={t} value={t}>{t}</option>))}
-                  </select>
-                  <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払期日</label>
-                  <input type="date" value={paymentDueDate} onChange={(e) => setPaymentDueDate(e.target.value)} style={{ ...inputStyle, width: '180px' }} />
-                </div>
-
-                {/* リース関連（リース選択時のみ表示） */}
-                {isLeaseType && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap', width: '100px', flexShrink: 0 }}>リース会社</label>
-                    <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} placeholder="リース会社名" style={{ ...inputStyle, width: '220px', color: COLORS.textSecondary }} />
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>開始日</label>
-                    <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} style={{ ...inputStyle, width: '150px', color: COLORS.textSecondary }} />
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>年数</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: COLORS.textSecondary }} />
-                      <span style={{ fontSize: '14px', color: COLORS.textSecondary }}>年</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>
+                      納期 <span style={{ color: COLORS.error }}>*</span>
+                    </label>
+                    <div>
+                      <input
+                        type="date"
+                        value={deliveryDeadline}
+                        onChange={(e) => {
+                          setDeliveryDeadline(e.target.value);
+                          if (e.target.value) setDeliveryDateError('');
+                        }}
+                        style={{
+                          ...inputStyle,
+                          width: '160px',
+                          borderColor: deliveryDateError ? COLORS.error : COLORS.border,
+                        }}
+                      />
+                      {deliveryDateError && (
+                        <p style={{ margin: '4px 0 0', fontSize: '12px', color: COLORS.error }}>
+                          {deliveryDateError}
+                        </p>
+                      )}
                     </div>
                   </div>
-                )}
+
+                  {/* リース開始日・終了日（リース選択時のみ） */}
+                  {isLeaseType && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      border: `1px solid ${COLORS.border}`,
+                      borderRadius: '4px',
+                      background: COLORS.white,
+                    }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>リース</span>
+                      <label style={{ fontSize: '13px', color: COLORS.textSecondary, whiteSpace: 'nowrap' }}>開始日</label>
+                      <input type="date" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} style={{ ...inputStyle, width: '150px', fontSize: '13px' }} />
+                      <label style={{ fontSize: '13px', color: COLORS.textSecondary, whiteSpace: 'nowrap' }}>終了日</label>
+                      <input type="date" value={leaseEndDate} onChange={(e) => setLeaseEndDate(e.target.value)} style={{ ...inputStyle, width: '150px', fontSize: '13px' }} />
+                    </div>
+                  )}
+
+                  {/* リース非選択時のプレースホルダー */}
+                  {!isLeaseType && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px 16px',
+                      border: `1px solid ${COLORS.borderLight}`,
+                      borderRadius: '4px',
+                      background: COLORS.surfaceAlt,
+                      color: COLORS.textMuted,
+                      fontSize: '13px',
+                    }}>
+                      リースの場合：開始日・終了日
+                    </div>
+                  )}
+
+                  {/* コメント */}
+                  <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                    <textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="コメント"
+                      rows={3}
+                      style={{
+                        ...inputStyle,
+                        width: '240px',
+                        resize: 'vertical',
+                        fontSize: '13px',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 2行目: 支払条件 / 支払方法 / 支払期日 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginTop: '12px', flexWrap: 'wrap' }}>
+                  {/* 支払条件 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払条件</label>
+                    <input
+                      type="date"
+                      value={paymentClosingDate}
+                      onChange={(e) => setPaymentClosingDate(e.target.value)}
+                      style={{ ...inputStyle, width: '160px' }}
+                    />
+                    <span style={{ fontSize: '14px', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>締め</span>
+                    <input
+                      type="date"
+                      value={paymentDate}
+                      onChange={(e) => setPaymentDate(e.target.value)}
+                      style={{ ...inputStyle, width: '160px' }}
+                    />
+                    <span style={{ fontSize: '14px', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払</span>
+                  </div>
+
+                  {/* 支払方法 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払方法</label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                      style={{ ...inputStyle, width: '140px' }}
+                    >
+                      <option value="">選択してください</option>
+                      {PAYMENT_METHODS.map((m) => (<option key={m} value={m}>{m}</option>))}
+                    </select>
+                  </div>
+
+                  {/* 支払期日 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払期日</label>
+                    <input
+                      type="text"
+                      value={paymentSiteDays}
+                      onChange={(e) => setPaymentSiteDays(e.target.value)}
+                      placeholder=""
+                      style={{ ...inputStyle, width: '60px', textAlign: 'center' }}
+                    />
+                    <span style={{ fontSize: '14px', color: COLORS.textPrimary }}>日サイト</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -474,13 +590,12 @@ export default function OrderRegistrationPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead style={{ position: 'sticky', top: 0, zIndex: Z_STICKY_HEADER }}>
                     <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>No</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '40px' }}>No</th>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>メーカー</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>型式</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>数量</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>金額（税込）</th>
-                      <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>個別納品日</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '140px' }}>メーカー</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '120px' }}>型式</th>
+                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '60px' }}>数量</th>
+                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '120px' }}>金額（税込）</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -492,19 +607,11 @@ export default function OrderRegistrationPage() {
                         <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.model || item.originalModel || '-'}</td>
                         <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>1</td>
                         <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>¥{(item.allocPriceUnit || 0).toLocaleString()}</td>
-                        <td style={{ padding: '8px', textAlign: 'center' }}>
-                          <input
-                            type="date"
-                            value={itemDeliveryDates[item._expandKey] || ''}
-                            onChange={(e) => setItemDeliveryDates((prev) => ({ ...prev, [item._expandKey]: e.target.value }))}
-                            style={{ ...inputStyle, width: '140px', fontSize: '12px', padding: '4px 8px', color: itemDeliveryDates[item._expandKey] ? COLORS.textPrimary : COLORS.disabled }}
-                          />
-                        </td>
                       </tr>
                     ))}
                     {expandedItems.length === 0 && (
                       <tr>
-                        <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
+                        <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
                           <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px' }}>発注対象の見積明細がありません</p>
                           <p style={{ fontSize: '12px', marginBottom: '16px' }}>見積登録を完了すると、明細が自動的に表示されます。</p>
                           <button
@@ -533,28 +640,28 @@ export default function OrderRegistrationPage() {
               </button>
               <button
                 className="order-btn"
-                onClick={handleSubmitOrder}
+                onClick={handleShowPreview}
                 disabled={isSubmitting}
                 style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold', opacity: isSubmitting ? 0.7 : 1 }}
               >
-                {isSubmitting ? '登録中...' : '発注を登録する'}
+                発注書プレビュー
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* 確認ダイアログ */}
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={closeDialog}
-        onConfirm={confirmDialog.onConfirm}
-        title={confirmDialog.title}
-        message={confirmDialog.message}
-        confirmLabel={confirmDialog.confirmLabel}
-      />
+      {/* 登録前プレビューモーダル */}
+      {previewData && (
+        <OrderPreviewModal
+          isOpen={showPreview}
+          onClose={() => setShowPreview(false)}
+          previewData={previewData}
+          onRegister={handleRegisterFromPreview}
+        />
+      )}
 
-      {/* 発注書プレビューモーダル */}
+      {/* 登録後プレビューモーダル（印刷用） */}
       {registrationComplete && (
         <OrderPreviewModal
           isOpen={showOrderPreview}

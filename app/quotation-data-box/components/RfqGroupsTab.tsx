@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { RfqGroup, RfqGroupStatus } from '@/lib/types';
 
 interface RfqGroupsTabProps {
@@ -68,6 +68,9 @@ const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
   '申請を見送る': { label: '却下日', field: 'rejectionDate' },
 };
 
+// グルーピング色（同一rfqNoが複数ある場合の左ボーダー）
+const GROUP_BORDER_COLORS = ['#3498db', '#e67e22', '#27ae60', '#8e44ad', '#e74c3c', '#16a085'];
+
 export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   rfqGroups,
   onSendRfq,
@@ -78,6 +81,49 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   onDelete,
   onUpdateDeadline,
 }) => {
+  // 同一rfqNoのカウントと色マッピング
+  const rfqNoCountMap = useMemo(() => {
+    const countMap: Record<string, number> = {};
+    rfqGroups.forEach(g => {
+      countMap[g.rfqNo] = (countMap[g.rfqNo] || 0) + 1;
+    });
+    return countMap;
+  }, [rfqGroups]);
+
+  const rfqNoColorMap = useMemo(() => {
+    const colorMap: Record<string, string> = {};
+    let colorIndex = 0;
+    const seen = new Set<string>();
+    rfqGroups.forEach(g => {
+      if (!seen.has(g.rfqNo) && rfqNoCountMap[g.rfqNo] > 1) {
+        colorMap[g.rfqNo] = GROUP_BORDER_COLORS[colorIndex % GROUP_BORDER_COLORS.length];
+        colorIndex++;
+        seen.add(g.rfqNo);
+      }
+    });
+    return colorMap;
+  }, [rfqGroups, rfqNoCountMap]);
+
+  // 同一rfqNoが隣接するようにソート
+  const sortedGroups = useMemo(() => {
+    const grouped: Record<string, RfqGroup[]> = {};
+    rfqGroups.forEach(g => {
+      if (!grouped[g.rfqNo]) grouped[g.rfqNo] = [];
+      grouped[g.rfqNo].push(g);
+    });
+    // 各グループ内はid順にソート
+    Object.values(grouped).forEach(arr => arr.sort((a, b) => a.id - b.id));
+    // rfqGroups内の出現順を維持し、同一rfqNoをまとめる
+    const result: RfqGroup[] = [];
+    const added = new Set<string>();
+    rfqGroups.forEach(g => {
+      if (!added.has(g.rfqNo)) {
+        result.push(...grouped[g.rfqNo]);
+        added.add(g.rfqNo);
+      }
+    });
+    return result;
+  }, [rfqGroups]);
   const getStatusBadge = (status: RfqGroupStatus) => {
     const bg = STATUS_BADGE_COLORS[status] || '#95a5a6';
     return (
@@ -213,11 +259,37 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
           </tr>
         </thead>
         <tbody>
-          {rfqGroups.map((group, index) => {
+          {sortedGroups.map((group, index) => {
             const deadlineMapping = STATUS_DEADLINE_MAP[group.status];
+            const groupColor = rfqNoColorMap[group.rfqNo];
+            const hasMultiple = rfqNoCountMap[group.rfqNo] > 1;
             return (
               <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top' }}>
-                <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{group.rfqNo}</td>
+                <td style={{
+                  ...tdStyle,
+                  fontFamily: 'monospace',
+                  fontWeight: 600,
+                  ...(hasMultiple && groupColor ? {
+                    borderLeft: `4px solid ${groupColor}`,
+                  } : {}),
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {group.rfqNo}
+                    {hasMultiple && (
+                      <span style={{
+                        background: groupColor || '#95a5a6',
+                        color: 'white',
+                        padding: '1px 6px',
+                        borderRadius: '8px',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        fontFamily: 'sans-serif',
+                      }}>
+                        {rfqNoCountMap[group.rfqNo]}社
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td style={tdStyle}>{group.groupName}</td>
                 <td style={tdStyle}>{group.vendorName || '-'}</td>
                 <td style={tdStyle}>{group.personInCharge || '-'}</td>

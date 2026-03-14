@@ -19,6 +19,27 @@ const STEPS = [
 ];
 
 // ──────────────────────────────────────────────
+// VendorEntry型
+// ──────────────────────────────────────────────
+interface VendorEntry {
+  localId: string;
+  rfqGroupId?: number;
+  vendorName: string;
+  personInCharge: string;
+  email: string;
+  tel: string;
+  submitDeadline: string;
+  requestNote: string;
+  isSent: boolean;
+}
+
+let vendorLocalIdCounter = 0;
+function generateLocalId(): string {
+  vendorLocalIdCounter += 1;
+  return `vendor-${vendorLocalIdCounter}`;
+}
+
+// ──────────────────────────────────────────────
 // メインコンテンツ
 // ──────────────────────────────────────────────
 function RfqProcessContent() {
@@ -26,7 +47,7 @@ function RfqProcessContent() {
   const searchParams = useSearchParams();
   const rfqGroupId = searchParams.get('rfqGroupId');
 
-  const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
+  const { rfqGroups, updateRfqGroup, cloneRfqGroupForVendor, getRfqGroupsByRfqNo } = useRfqGroupStore();
   const { getItemsByEditListId } = useEditListStore();
 
   const rfqGroup = useMemo(() => {
@@ -40,15 +61,50 @@ function RfqProcessContent() {
     return getItemsByEditListId(rfqGroup.editListId);
   }, [rfqGroup, getItemsByEditListId]);
 
-  // ── 基本情報フォーム ──
-  const [vendorName, setVendorName] = useState(rfqGroup?.vendorName || '');
-  const [personInCharge, setPersonInCharge] = useState(rfqGroup?.personInCharge || '');
-  const [email, setEmail] = useState(rfqGroup?.email || '');
-  const [tel, setTel] = useState(rfqGroup?.tel || '');
-  const [submitDeadline, setSubmitDeadline] = useState(rfqGroup?.deadline || '');
+  // ── 複数業者の初期化 ──
+  const [vendors, setVendors] = useState<VendorEntry[]>(() => {
+    if (!rfqGroup) return [];
 
-  // ── 依頼事項 ──
-  const [requestNote, setRequestNote] = useState('');
+    // 同一rfqNoの兄弟レコードを取得
+    const siblings = getRfqGroupsByRfqNo(rfqGroup.rfqNo);
+
+    if (siblings.length <= 1) {
+      // 兄弟なし → 現在のグループだけで初期化
+      const isSent = rfqGroup.status !== '見積依頼';
+      return [{
+        localId: generateLocalId(),
+        rfqGroupId: rfqGroup.id,
+        vendorName: rfqGroup.vendorName || '',
+        personInCharge: rfqGroup.personInCharge || '',
+        email: rfqGroup.email || '',
+        tel: rfqGroup.tel || '',
+        submitDeadline: rfqGroup.rfqDeadline || rfqGroup.deadline || '',
+        requestNote: '',
+        isSent,
+      }];
+    }
+
+    // 兄弟あり → URLパラメータのIDを先頭に配置
+    const sorted = [
+      ...siblings.filter(s => s.id === Number(rfqGroupId)),
+      ...siblings.filter(s => s.id !== Number(rfqGroupId)),
+    ];
+
+    return sorted.map(s => ({
+      localId: generateLocalId(),
+      rfqGroupId: s.id,
+      vendorName: s.vendorName || '',
+      personInCharge: s.personInCharge || '',
+      email: s.email || '',
+      tel: s.tel || '',
+      submitDeadline: s.rfqDeadline || s.deadline || '',
+      requestNote: '',
+      isSent: s.status !== '見積依頼',
+    }));
+  });
+
+  // ── アクティブ業者インデックス（プレビュー連動） ──
+  const [activeVendorIndex, setActiveVendorIndex] = useState(0);
 
   // ── 見積登録フォーム ──
   const [quotationPhase, setQuotationPhase] = useState<'定価見積' | '概算見積' | '発注登録用見積'>('定価見積');
@@ -65,6 +121,86 @@ function RfqProcessContent() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<boolean>(false);
   const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // アクティブ業者
+  const activeVendor = vendors[activeVendorIndex] || vendors[0];
+
+  // ── 業者フィールド更新 ──
+  const updateVendorField = useCallback((index: number, field: keyof VendorEntry, value: string) => {
+    setVendors(prev => prev.map((v, i) =>
+      i === index ? { ...v, [field]: value } : v
+    ));
+  }, []);
+
+  // ── 業者追加 ──
+  const handleAddVendor = useCallback(() => {
+    setVendors(prev => [
+      ...prev,
+      {
+        localId: generateLocalId(),
+        vendorName: '',
+        personInCharge: '',
+        email: '',
+        tel: '',
+        submitDeadline: '',
+        requestNote: '',
+        isSent: false,
+      },
+    ]);
+  }, []);
+
+  // ── 業者削除（未送信のみ） ──
+  const handleRemoveVendor = useCallback((index: number) => {
+    setVendors(prev => {
+      if (prev.length <= 1) return prev;
+      const updated = prev.filter((_, i) => i !== index);
+      return updated;
+    });
+    setActiveVendorIndex(prev => {
+      if (prev >= vendors.length - 1) return Math.max(0, vendors.length - 2);
+      return prev;
+    });
+  }, [vendors.length]);
+
+  // ── 個別依頼送信 ──
+  const handleSendSingleVendor = useCallback((index: number) => {
+    if (!rfqGroup) return;
+    const vendor = vendors[index];
+    if (!vendor.vendorName || !vendor.email) {
+      alert('業者名とメールアドレスは必須です');
+      return;
+    }
+
+    if (index === 0 || vendor.rfqGroupId) {
+      // 先頭業者 or 既存レコード → updateRfqGroup
+      const targetId = vendor.rfqGroupId || rfqGroup.id;
+      updateRfqGroup(targetId, {
+        vendorName: vendor.vendorName,
+        personInCharge: vendor.personInCharge,
+        email: vendor.email,
+        tel: vendor.tel,
+        rfqDeadline: vendor.submitDeadline,
+        status: '見積依頼済',
+      });
+      setVendors(prev => prev.map((v, i) =>
+        i === index ? { ...v, isSent: true, rfqGroupId: targetId } : v
+      ));
+    } else {
+      // 追加業者 → cloneRfqGroupForVendor
+      const newGroup = cloneRfqGroupForVendor(rfqGroup.id, {
+        vendorName: vendor.vendorName,
+        personInCharge: vendor.personInCharge,
+        email: vendor.email,
+        tel: vendor.tel,
+        deadline: vendor.submitDeadline,
+      });
+      setVendors(prev => prev.map((v, i) =>
+        i === index ? { ...v, isSent: true, rfqGroupId: newGroup.id } : v
+      ));
+    }
+
+    alert(`${vendor.vendorName} への見積依頼を送信しました`);
+  }, [rfqGroup, vendors, updateRfqGroup, cloneRfqGroupForVendor]);
 
   // ドラッグハンドラ
   const handleDragMove = useCallback((e: MouseEvent) => {
@@ -102,18 +238,48 @@ function RfqProcessContent() {
     }, 1500);
   };
 
-  // ── 「SHIPへ依頼」 ──
-  const handleSendRfq = () => {
+  // ── 「SHIPへ依頼」一括送信 ──
+  const handleSendRfqAll = () => {
     if (!rfqGroup) return;
-    updateRfqGroup(rfqGroup.id, {
-      vendorName,
-      personInCharge,
-      email,
-      tel,
-      deadline: submitDeadline,
-      status: '見積依頼済',
+
+    const unsent = vendors.filter(v => !v.isSent);
+    if (unsent.length === 0) {
+      alert('送信対象の業者がありません');
+      return;
+    }
+
+    // バリデーション
+    const invalid = unsent.filter(v => !v.vendorName || !v.email);
+    if (invalid.length > 0) {
+      alert('未送信の業者すべてに業者名とメールアドレスを入力してください');
+      return;
+    }
+
+    // 各未送信業者を送信
+    unsent.forEach(vendor => {
+      const index = vendors.indexOf(vendor);
+      if (index === 0 || vendor.rfqGroupId) {
+        const targetId = vendor.rfqGroupId || rfqGroup.id;
+        updateRfqGroup(targetId, {
+          vendorName: vendor.vendorName,
+          personInCharge: vendor.personInCharge,
+          email: vendor.email,
+          tel: vendor.tel,
+          rfqDeadline: vendor.submitDeadline,
+          status: '見積依頼済',
+        });
+      } else {
+        cloneRfqGroupForVendor(rfqGroup.id, {
+          vendorName: vendor.vendorName,
+          personInCharge: vendor.personInCharge,
+          email: vendor.email,
+          tel: vendor.tel,
+          deadline: vendor.submitDeadline,
+        });
+      }
     });
-    alert(`見積依頼 ${rfqGroup.rfqNo} をSHIPへ送信しました`);
+
+    alert(`${unsent.length}件の見積依頼をSHIPへ送信しました`);
     router.push('/quotation-data-box/purchase-management');
   };
 
@@ -128,7 +294,7 @@ function RfqProcessContent() {
       <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
         <Header title="見積依頼" showBackButton backHref="/quotation-data-box/purchase-management" backLabel="タスク管理に戻る" hideMenu />
         <div style={{ padding: '60px 40px', textAlign: 'center', color: '#7f8c8d' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#128203;</div>
           <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>見積依頼グループが見つかりません</div>
           <div style={{ fontSize: '13px', marginBottom: '24px' }}>URLのパラメータを確認してください。</div>
           <button
@@ -141,6 +307,9 @@ function RfqProcessContent() {
       </div>
     );
   }
+
+  // 未送信件数
+  const unsentCount = vendors.filter(v => !v.isSent).length;
 
   // ──────────────────────────────────────────────
   // Render
@@ -227,7 +396,7 @@ function RfqProcessContent() {
                     : '#dee2e6',
                   color: step.num <= 1 ? 'white' : '#999',
                 }}>
-                  {step.num < 1 ? '✓' : step.num}
+                  {step.num < 1 ? '\u2713' : step.num}
                 </div>
                 <span style={{
                   fontSize: '11px',
@@ -251,8 +420,23 @@ function RfqProcessContent() {
 
           {/* ========== セクション1: 見積依頼 ========== */}
           <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #dee2e6', overflow: 'hidden' }}>
-            <div style={{ background: '#3498db', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold' }}>
-              見積依頼
+            <div style={{ background: '#3498db', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>見積依頼</span>
+              <button
+                onClick={handleAddVendor}
+                style={{
+                  padding: '4px 12px',
+                  background: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                }}
+              >
+                + 業者追加（{vendors.length}社）
+              </button>
             </div>
 
             {/* 黄色ガイダンス */}
@@ -266,12 +450,12 @@ function RfqProcessContent() {
               color: '#856404',
               fontWeight: 500,
             }}>
-              業者を登録し見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。
+              業者を登録し見積依頼書を作成してください。複数業者への相見積もりが可能です。
             </div>
 
             {/* ヘッダーラベル行 */}
             <div style={{ padding: '0 12px', display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-              <div style={{ width: '44px' }} />
+              <div style={{ width: '56px', flexShrink: 0 }} />
               <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: '#555' }}>
                 業者名 <span style={{ color: '#e74c3c' }}>*</span>
               </div>
@@ -281,91 +465,169 @@ function RfqProcessContent() {
               </div>
               <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: '#555' }}>連絡先</div>
               <div style={{ width: '140px', fontSize: '12px', fontWeight: 600, color: '#555' }}>提出期限</div>
-              <div style={{ width: '160px', fontSize: '12px', fontWeight: 600, color: '#555' }}>アクション</div>
+              <div style={{ width: '200px', fontSize: '12px', fontWeight: 600, color: '#555' }}>アクション</div>
             </div>
 
-            {/* 入力行 */}
-            <div style={{ padding: '0 12px 12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{
-                background: '#f39c12',
-                color: 'white',
-                padding: '4px 10px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 'bold',
-                flexShrink: 0,
-                width: '44px',
-                textAlign: 'center',
-              }}>依頼</span>
-              <input
-                value={vendorName}
-                onChange={(e) => setVendorName(e.target.value)}
-                placeholder="業者名"
-                style={inputStyle}
-              />
-              <input
-                value={personInCharge}
-                onChange={(e) => setPersonInCharge(e.target.value)}
-                placeholder="担当者"
-                style={inputStyle}
-              />
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
-                style={inputStyle}
-              />
-              <input
-                value={tel}
-                onChange={(e) => setTel(e.target.value)}
-                placeholder="03-0000-0000"
-                style={{ ...inputStyle, maxWidth: '150px' }}
-              />
-              <input
-                type="date"
-                value={submitDeadline}
-                onChange={(e) => setSubmitDeadline(e.target.value)}
-                style={{ ...inputStyle, width: '140px', flexShrink: 0 }}
-              />
-              <div style={{ display: 'flex', gap: '4px', width: '160px', flexShrink: 0 }}>
-                <button
-                  onClick={() => setShowPreview(p => !p)}
-                  style={{
-                    padding: '6px 10px',
-                    background: showPreview ? '#2c3e50' : '#6c757d',
+            {/* 業者入力行 ループ */}
+            {vendors.map((vendor, index) => (
+              <div key={vendor.localId}>
+                <div style={{
+                  padding: '0 12px 8px',
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center',
+                  opacity: vendor.isSent ? 0.7 : 1,
+                }}>
+                  {/* インデックスバッジ */}
+                  <span style={{
+                    background: vendor.isSent ? '#27ae60' : '#f39c12',
                     color: 'white',
-                    border: 'none',
+                    padding: '4px 6px',
                     borderRadius: '4px',
-                    cursor: 'pointer',
                     fontSize: '11px',
+                    fontWeight: 'bold',
+                    flexShrink: 0,
+                    width: '56px',
+                    textAlign: 'center',
                     whiteSpace: 'nowrap',
-                  }}
-                >{showPreview ? 'プレビュー閉' : 'プレビュー'}</button>
-                <button style={accentBtnSmall}>依頼送信</button>
-              </div>
-            </div>
+                  }}>
+                    {vendor.isSent ? '済' : `依頼${index + 1}`}
+                  </span>
+                  <input
+                    value={vendor.vendorName}
+                    onChange={(e) => updateVendorField(index, 'vendorName', e.target.value)}
+                    placeholder="業者名"
+                    disabled={vendor.isSent}
+                    style={{ ...inputStyle, ...(vendor.isSent ? disabledInputStyle : {}) }}
+                  />
+                  <input
+                    value={vendor.personInCharge}
+                    onChange={(e) => updateVendorField(index, 'personInCharge', e.target.value)}
+                    placeholder="担当者"
+                    disabled={vendor.isSent}
+                    style={{ ...inputStyle, ...(vendor.isSent ? disabledInputStyle : {}) }}
+                  />
+                  <input
+                    value={vendor.email}
+                    onChange={(e) => updateVendorField(index, 'email', e.target.value)}
+                    placeholder="email@example.com"
+                    disabled={vendor.isSent}
+                    style={{ ...inputStyle, ...(vendor.isSent ? disabledInputStyle : {}) }}
+                  />
+                  <input
+                    value={vendor.tel}
+                    onChange={(e) => updateVendorField(index, 'tel', e.target.value)}
+                    placeholder="03-0000-0000"
+                    disabled={vendor.isSent}
+                    style={{ ...inputStyle, maxWidth: '150px', ...(vendor.isSent ? disabledInputStyle : {}) }}
+                  />
+                  <input
+                    type="date"
+                    value={vendor.submitDeadline}
+                    onChange={(e) => updateVendorField(index, 'submitDeadline', e.target.value)}
+                    disabled={vendor.isSent}
+                    style={{ ...inputStyle, width: '140px', flexShrink: 0, ...(vendor.isSent ? disabledInputStyle : {}) }}
+                  />
+                  <div style={{ display: 'flex', gap: '4px', width: '200px', flexShrink: 0 }}>
+                    <button
+                      onClick={() => {
+                        setActiveVendorIndex(index);
+                        setShowPreview(true);
+                      }}
+                      style={{
+                        padding: '6px 8px',
+                        background: activeVendorIndex === index && showPreview ? '#2c3e50' : '#6c757d',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >プレビュー</button>
+                    {!vendor.isSent && (
+                      <button
+                        onClick={() => handleSendSingleVendor(index)}
+                        style={accentBtnSmall}
+                      >依頼送信</button>
+                    )}
+                    {!vendor.isSent && vendors.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveVendor(index)}
+                        style={{
+                          padding: '6px 8px',
+                          background: '#e74c3c',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >削除</button>
+                    )}
+                  </div>
+                </div>
 
-            {/* ご依頼事項 */}
-            <div style={{ borderTop: '1px solid #dee2e6' }}>
-              <div style={{
-                padding: '6px 12px',
-                fontSize: '12px',
-                color: '#555',
-                borderBottom: '1px solid #dee2e6',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{ color: '#f39c12', fontWeight: 600 }}>依頼先1</span>
-                <span style={{ fontWeight: 600 }}>ご依頼事項</span>
+                {/* ご依頼事項（業者ごと） */}
+                <div style={{
+                  margin: '0 12px 12px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    color: '#555',
+                    background: '#f8f9fa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}>
+                    <span style={{ color: vendor.isSent ? '#27ae60' : '#f39c12', fontWeight: 600 }}>
+                      依頼先{index + 1}
+                    </span>
+                    <span style={{ fontWeight: 600 }}>ご依頼事項</span>
+                  </div>
+                  <textarea
+                    value={vendor.requestNote}
+                    onChange={(e) => updateVendorField(index, 'requestNote', e.target.value)}
+                    placeholder="ご依頼事項を入力してください"
+                    rows={2}
+                    disabled={vendor.isSent}
+                    style={{
+                      ...textareaStyle,
+                      ...(vendor.isSent ? { background: '#f8f9fa', color: '#999' } : {}),
+                    }}
+                  />
+                </div>
               </div>
-              <textarea
-                value={requestNote}
-                onChange={(e) => setRequestNote(e.target.value)}
-                placeholder="ご依頼事項を入力してください"
-                rows={3}
-                style={textareaStyle}
-              />
+            ))}
+
+            {/* 一括送信エリア */}
+            <div style={{
+              padding: '12px',
+              borderTop: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={handleSendRfqAll}
+                disabled={unsentCount === 0}
+                style={{
+                  padding: '8px 24px',
+                  background: unsentCount === 0 ? '#95a5a6' : '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: unsentCount === 0 ? 'not-allowed' : 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                }}
+              >
+                {unsentCount > 0 ? `SHIPへ一括依頼（${unsentCount}件）` : '全件送信済'}
+              </button>
             </div>
           </div>
 
@@ -379,8 +641,16 @@ function RfqProcessContent() {
             display: 'flex',
             flexDirection: 'column',
           }}>
-            <div style={{ background: '#27ae60', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold' }}>
-              見積登録
+            <div style={{ background: '#27ae60', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>見積登録</span>
+              <span style={{
+                background: 'rgba(255,255,255,0.25)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+              }}>
+                {rfqGroup.vendorName || '業者未設定'}
+              </span>
             </div>
 
             {/* 登録フォーム */}
@@ -501,21 +771,6 @@ function RfqProcessContent() {
                   onChange={(e) => setRegistrationDeadline(e.target.value)}
                   style={{ ...inputStyleCompact, width: '160px' }}
                 />
-                <button
-                  onClick={handleSendRfq}
-                  style={{
-                    padding: '8px 24px',
-                    background: '#e74c3c',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  SHIPへ依頼
-                </button>
               </div>
             </div>
           </div>
@@ -560,7 +815,19 @@ function RfqProcessContent() {
             alignItems: 'center',
             flexShrink: 0,
           }}>
-            <span style={{ fontSize: '13px', fontWeight: 'bold' }}>見積依頼書 プレビュー</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 'bold' }}>見積依頼書 プレビュー</span>
+              {showPreview && activeVendor && (
+                <span style={{
+                  background: '#3498db',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                }}>
+                  依頼先{activeVendorIndex + 1}: {activeVendor.vendorName || '（未入力）'}
+                </span>
+              )}
+            </div>
             {showPreview && (
               <button
                 onClick={() => window.print()}
@@ -580,7 +847,7 @@ function RfqProcessContent() {
           </div>
 
           {/* 帳票本体 or プレースホルダー */}
-          {showPreview ? (
+          {showPreview && activeVendor ? (
             <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
               <div style={{
                 background: 'white',
@@ -617,12 +884,12 @@ function RfqProcessContent() {
                 {/* 宛先 */}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '15px', fontWeight: 'bold', borderBottom: '1px solid #555', display: 'inline-block', paddingBottom: '2px' }}>
-                    {vendorName || '（業者名未入力）'}
+                    {activeVendor.vendorName || '（業者名未入力）'}
                   </div>
                   <span style={{ fontSize: '15px', marginLeft: '4px' }}>御中</span>
-                  {personInCharge && (
+                  {activeVendor.personInCharge && (
                     <div style={{ fontSize: '12px', color: '#555', marginTop: '4px' }}>
-                      ご担当: {personInCharge} 様
+                      ご担当: {activeVendor.personInCharge} 様
                     </div>
                   )}
                 </div>
@@ -658,7 +925,7 @@ function RfqProcessContent() {
                 </div>
 
                 {/* 提出期限 */}
-                {submitDeadline && (
+                {activeVendor.submitDeadline && (
                   <div style={{
                     marginBottom: '20px',
                     padding: '8px 12px',
@@ -669,7 +936,7 @@ function RfqProcessContent() {
                   }}>
                     <span style={{ fontWeight: 'bold' }}>ご提出期限:</span>{' '}
                     <span className="tabular-nums">
-                      {new Date(submitDeadline + 'T00:00:00').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(activeVendor.submitDeadline + 'T00:00:00').toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
                 )}
@@ -714,7 +981,7 @@ function RfqProcessContent() {
                 </div>
 
                 {/* ご依頼事項 */}
-                {requestNote && (
+                {activeVendor.requestNote && (
                   <div style={{ marginBottom: '20px' }}>
                     <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', borderBottom: '1px solid #dee2e6', paddingBottom: '4px' }}>
                       ご依頼事項
@@ -728,7 +995,7 @@ function RfqProcessContent() {
                       whiteSpace: 'pre-wrap',
                       minHeight: '40px',
                     }}>
-                      {requestNote}
+                      {activeVendor.requestNote}
                     </div>
                   </div>
                 )}
@@ -742,9 +1009,9 @@ function RfqProcessContent() {
                   color: '#555',
                 }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>ご回答送付先</div>
-                  {email && <div>E-mail: {email}</div>}
-                  {tel && <div>TEL: {tel}</div>}
-                  {!email && !tel && <div style={{ color: '#999' }}>（連絡先未入力）</div>}
+                  {activeVendor.email && <div>E-mail: {activeVendor.email}</div>}
+                  {activeVendor.tel && <div>TEL: {activeVendor.tel}</div>}
+                  {!activeVendor.email && !activeVendor.tel && <div style={{ color: '#999' }}>（連絡先未入力）</div>}
                 </div>
 
                 <div style={{ textAlign: 'right', marginTop: '24px', fontSize: '12px' }}>以上</div>
@@ -824,7 +1091,7 @@ function RfqProcessContent() {
             textAlign: 'center',
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⏳</div>
+            <div style={{ fontSize: '32px', marginBottom: '12px' }}>&#9203;</div>
             <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
               OCR処理中...
             </div>
@@ -848,6 +1115,11 @@ const inputStyle: React.CSSProperties = {
   borderRadius: '4px',
   fontSize: '13px',
   minWidth: 0,
+};
+
+const disabledInputStyle: React.CSSProperties = {
+  background: '#f8f9fa',
+  color: '#999',
 };
 
 const inputStyleCompact: React.CSSProperties = {

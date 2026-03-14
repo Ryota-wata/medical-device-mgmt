@@ -10,13 +10,20 @@ export type OrderType =
   | 'リース（オペレーティング）'
   | 'レンタル';
 
-/** 支払い条件 */
+/** 支払い条件（レガシー — OrderRegistrationModal で使用） */
 export type PaymentTerms =
   | '納品時一括'
   | '検収後一括'
   | '分割払い'
   | '月末締め翌月末払い'
   | 'その他';
+
+/** 支払方法 */
+export type PaymentMethod =
+  | 'でんさい'
+  | '銀行振込'
+  | 'クレジット'
+  | '現金';
 
 /** 検収書の発行 */
 export type InspectionCertType = '本体のみ' | '付属品含む';
@@ -38,20 +45,38 @@ export interface OrderGroup {
   /** 申請者 */
   applicant: string;
   applicantEmail: string;
+  /** 院内決済No. */
+  inHouseSettlementNo?: string;
   /** 発注形態 */
   orderType: OrderType;
-  /** 納品日（品目ごとに異なる可能性あり） */
+  /** 納期（発注段階で確定。納品日は検収準備で登録） */
   deliveryDate?: string;
-  /** 支払い条件 */
+  /** 支払い条件（レガシー） */
   paymentTerms: PaymentTerms;
-  /** 支払い期日 */
+  /** 支払条件: 締め月 */
+  paymentClosingMonth?: string;
+  /** 支払条件: 締め日 */
+  paymentClosingDay?: string;
+  /** 支払条件: 支払月 */
+  paymentMonth?: string;
+  /** 支払条件: 支払日 */
+  paymentDay?: string;
+  /** 支払方法 */
+  paymentMethod?: PaymentMethod;
+  /** 支払期日（○日サイト） */
+  paymentSiteDays?: number;
+  /** 支払い期日（レガシー） */
   paymentDueDate?: string;
   /** リース会社 */
   leaseCompany?: string;
   /** リース開始日 */
   leaseStartDate?: string;
-  /** リース年数 */
+  /** リース終了日 */
+  leaseEndDate?: string;
+  /** リース年数（レガシー） */
   leaseYears?: number;
+  /** コメント */
+  comment?: string;
   /** 検収書の発行 */
   inspectionCertType: InspectionCertType;
   /** 保管形式 */

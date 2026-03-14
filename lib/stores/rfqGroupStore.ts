@@ -8,6 +8,14 @@ interface RfqGroupState {
   deleteRfqGroup: (id: number) => void;
   getRfqGroupById: (id: number) => RfqGroup | undefined;
   generateRfqNo: () => string;
+  cloneRfqGroupForVendor: (sourceId: number, vendorInfo: {
+    vendorName: string;
+    personInCharge: string;
+    email: string;
+    tel: string;
+    deadline?: string;
+  }) => RfqGroup;
+  getRfqGroupsByRfqNo: (rfqNo: string) => RfqGroup[];
 }
 
 // テストデータ（新ステータス体系）
@@ -24,6 +32,20 @@ const testRfqGroups: RfqGroup[] = [
     personInCharge: '松本和也',
     email: 'matsumoto@hitachi-med.co.jp',
     tel: '03-8901-2345',
+  },
+  {
+    id: 11,
+    rfqNo: 'RFQ-20250108-0010',
+    groupName: '2025年度皮膚科機器新規導入',
+    createdDate: '2025-01-08',
+    applicationIds: ['10'],
+    status: '見積依頼済',
+    editListId: 'edit-list-001',
+    vendorName: '東芝メディカルシステムズ',
+    personInCharge: '加藤隆',
+    email: 'kato@toshiba-med.co.jp',
+    tel: '03-1111-2222',
+    rfqDeadline: '2025-02-20',
   },
   {
     id: 1,
@@ -195,5 +217,36 @@ export const useRfqGroupStore = create<RfqGroupState>((set, get) => ({
     const sequence = String(get().rfqGroups.length + 1).padStart(4, '0');
 
     return `RFQ-${year}${month}${day}-${sequence}`;
+  },
+
+  cloneRfqGroupForVendor: (sourceId, vendorInfo) => {
+    const source = get().rfqGroups.find(g => g.id === sourceId);
+    if (!source) throw new Error(`RfqGroup not found: ${sourceId}`);
+
+    const newId = Math.max(...get().rfqGroups.map(g => g.id)) + 1;
+    const newGroup: RfqGroup = {
+      id: newId,
+      rfqNo: source.rfqNo,
+      groupName: source.groupName,
+      createdDate: source.createdDate,
+      applicationIds: [...source.applicationIds],
+      status: '見積依頼済',
+      editListId: source.editListId,
+      vendorName: vendorInfo.vendorName,
+      personInCharge: vendorInfo.personInCharge,
+      email: vendorInfo.email,
+      tel: vendorInfo.tel,
+      rfqDeadline: vendorInfo.deadline,
+    };
+
+    set((state) => ({
+      rfqGroups: [...state.rfqGroups, newGroup],
+    }));
+
+    return newGroup;
+  },
+
+  getRfqGroupsByRfqNo: (rfqNo) => {
+    return get().rfqGroups.filter(g => g.rfqNo === rfqNo);
   },
 }));
