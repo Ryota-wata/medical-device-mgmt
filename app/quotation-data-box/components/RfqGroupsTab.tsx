@@ -301,8 +301,8 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                 </td>
                 <td style={{ ...tdStyle, verticalAlign: 'top' }}>
                   {deadlineMapping && group[deadlineMapping.field] ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '11px', color: '#5a6c7d', whiteSpace: 'nowrap', minWidth: '80px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '11px', color: '#5a6c7d', whiteSpace: 'nowrap' }}>
                         {deadlineMapping.label}
                       </span>
                       <span style={{ fontSize: '12px', color: '#2c3e50' }} className="tabular-nums">
