@@ -7,17 +7,6 @@ import { StepProgressBar } from '../components/StepProgressBar';
 // 会計区分の型
 type AccountingCategoryType = '医療機器' | '什器備品' | '情報システム' | '消耗品' | '保守' | '';
 
-// categoryフィルターの選択肢
-const CATEGORY_FILTER_OPTIONS = [
-  { value: '有形資産', label: '① 有形資産' },
-  { value: '無形資産', label: '② 無形資産' },
-  { value: '費用', label: '③ 費用' },
-  { value: '長期前払費用', label: '④ 長期前払費用' },
-];
-
-// 会計区分(category)の選択肢
-const ACCOUNTING_CATEGORY_OPTIONS = ['医療機器', '什器備品', '情報システム', '消耗品', '保守'];
-
 // 前画面からの入力データ（入力済み - 固定表示）
 interface PreviousInputData {
   quotationPhase: string;       // 見積フェーズ
@@ -25,14 +14,11 @@ interface PreviousInputData {
   rfqGroupName: string;         // 見積依頼G名称
   facilityName: string;         // 宛先（施設名）
   vendorName: string;           // 業者・メーカー（業者名）
-  contact: string;              // 連絡先
-  mail: string;                 // mail
 }
 
 // OCR読み取り結果データ（編集可能）
 interface OcrResultData {
   quotationDate: string;        // 見積日付
-  invoiceNo: string;            // 事業者登録番号（インボイス）
   deliveryPeriod: string;       // 納期
   validityPeriod: string;       // 見積有効期限
 }
@@ -48,8 +34,8 @@ interface DetailItem {
   listPrice: number | null;       // 定価金額
   purchaseUnitPrice: number | null; // 購入単価
   purchaseAmount: number | null;    // 購入金額
-  accountingCategory: AccountingCategoryType; // 会計区分(category)
-  categoryType?: string;      // フィルター用カテゴリ
+  accountingCategory: AccountingCategoryType; // 会計区分(category) - 次STEPで使用
+  categoryType?: string;      // フィルター用カテゴリ - 次STEPで使用
 }
 
 // テスト用明細データ
@@ -222,23 +208,17 @@ export default function OcrConfirmPage() {
     rfqGroupName: '2025年度放射線科機器更新',
     facilityName: '医療法人○○会 ○○病院',
     vendorName: 'GEヘルスケア・ジャパン',
-    contact: '03-1234-5678',
-    mail: 'yamada@gehealthcare.co.jp',
   });
 
   // OCR読み取り結果データ（編集可能）
   const [ocrResult, setOcrResult] = useState<OcrResultData>({
     quotationDate: '2025/01/15',
-    invoiceNo: 'T1234567890123',
     deliveryPeriod: '3',
     validityPeriod: '1',
   });
 
   // 明細データ
   const [detailItems, setDetailItems] = useState<DetailItem[]>(testDetailItems);
-
-  // categoryフィルター（デフォルト: 有形資産）
-  const [categoryFilter, setCategoryFilter] = useState<string>('有形資産');
 
   // 合計金額（税抜）- 編集可能
   const [totalAmountInput, setTotalAmountInput] = useState<string>('18,000,000');
@@ -270,11 +250,6 @@ export default function OcrConfirmPage() {
     document.addEventListener('mouseup', handleDragEnd);
   }, [handleDragMove, handleDragEnd]);
 
-  // フィルタリングされた明細
-  const filteredDetailItems = useMemo(() => {
-    return detailItems.filter(item => item.categoryType === categoryFilter);
-  }, [detailItems, categoryFilter]);
-
   // 合計金額計算（税抜）
   const totalAmount = useMemo(() => {
     return detailItems.reduce((sum, item) => sum + (item.purchaseAmount || 0), 0);
@@ -292,6 +267,11 @@ export default function OcrConfirmPage() {
       updated[index] = { ...updated[index], [field]: value };
       return updated;
     });
+  };
+
+  // Excel取込（モック）
+  const handleExcelImport = () => {
+    alert('Excel取込機能は今後実装予定です。\nOCR結果の明細データをExcelファイルで差し替えます。');
   };
 
   // 戻るボタン
@@ -413,35 +393,14 @@ export default function OcrConfirmPage() {
                         <span style={{ padding: '6px 8px', display: 'inline-block' }}>{previousInput.rfqGroupName}</span>
                       </td>
                     </tr>
-                    {/* 行4: 業者・メーカー / 事業者登録番号 */}
+                    {/* 行4: 業者・メーカー */}
                     <tr>
                       <th style={headerCellStyle}>業者・メーカー</th>
-                      <td style={cellStyle}>
+                      <td style={cellStyle} colSpan={4}>
                         <span style={{ padding: '6px 8px', display: 'inline-block' }}>{previousInput.vendorName}</span>
                       </td>
-                      <th style={headerCellStyle}>事業者登録番号</th>
-                      <td style={cellStyle} colSpan={2}>
-                        <input
-                          type="text"
-                          placeholder="インボイス"
-                          value={ocrResult.invoiceNo}
-                          onChange={(e) => handleOcrResultChange('invoiceNo', e.target.value)}
-                          style={inputStyle}
-                        />
-                      </td>
                     </tr>
-                    {/* 行5: 連絡先 / mail */}
-                    <tr>
-                      <th style={headerCellStyle}>連絡先</th>
-                      <td style={cellStyle}>
-                        <span style={{ padding: '6px 8px', display: 'inline-block' }}>{previousInput.contact}</span>
-                      </td>
-                      <th style={headerCellStyle}>mail</th>
-                      <td style={cellStyle} colSpan={2}>
-                        <span style={{ padding: '6px 8px', display: 'inline-block' }}>{previousInput.mail}</span>
-                      </td>
-                    </tr>
-                    {/* 行6: 納期 / 見積有効期限 */}
+                    {/* 行5: 納期 / 見積有効期限 */}
                     <tr>
                       <th style={headerCellStyle}>納期</th>
                       <td style={cellStyle}>
@@ -492,25 +451,6 @@ export default function OcrConfirmPage() {
               >
                 見積明細チェック
               </div>
-              <div style={{ display: 'flex', marginLeft: '16px', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#333' }}>category</span>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  style={{
-                    padding: '6px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    background: 'white',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {CATEGORY_FILTER_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
               <div style={{ flex: 1 }}></div>
               {/* 合計金額（税抜）- 編集可能 */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
@@ -528,6 +468,7 @@ export default function OcrConfirmPage() {
                     width: '150px',
                     textAlign: 'right',
                     background: '#fff9c4',
+                    fontVariantNumeric: 'tabular-nums',
                   }}
                 />
               </div>
@@ -536,14 +477,13 @@ export default function OcrConfirmPage() {
             {/* 明細テーブル */}
             <div style={{ padding: '16px' }}>
               <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '1100px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '900px' }}>
                   <thead style={{ position: 'sticky', top: 0 }}>
                     {/* グループヘッダー行 */}
                     <tr>
                       <th rowSpan={2} style={{ padding: '6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '40px' }}>No.</th>
                       <th colSpan={4} style={{ padding: '6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80' }}>商品情報（原本情報）</th>
                       <th colSpan={4} style={{ padding: '6px', textAlign: 'center', background: '#6b8cae', color: 'white', border: '1px solid #3d5a80' }}>価格情報（原本情報）</th>
-                      <th rowSpan={2} style={{ padding: '6px', textAlign: 'center', background: '#e91e63', color: 'white', border: '1px solid #c2185b', whiteSpace: 'nowrap' }}>会計区分<br/>(category)</th>
                     </tr>
                     {/* カラムヘッダー行 */}
                     <tr>
@@ -558,115 +498,118 @@ export default function OcrConfirmPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredDetailItems.map((item) => {
-                      const originalIndex = detailItems.findIndex(d => d.id === item.id);
-                      return (
-                        <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
-                          <td style={{ padding: '4px 6px', textAlign: 'center', background: '#f8f9fa', border: '1px solid #ddd' }}>{item.id}</td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.itemName}
-                              onChange={(e) => handleDetailChange(originalIndex, 'itemName', e.target.value)}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.manufacturer}
-                              onChange={(e) => handleDetailChange(originalIndex, 'manufacturer', e.target.value)}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.model}
-                              onChange={(e) => handleDetailChange(originalIndex, 'model', e.target.value)}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd', textAlign: 'center' }}>
-                            <input
-                              type="text"
-                              value={item.quantity ?? ''}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? null : parseInt(e.target.value, 10) || 0;
-                                handleDetailChange(originalIndex, 'quantity', value as number);
-                              }}
-                              style={{ width: '40px', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'center' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.listUnitPrice?.toLocaleString() ?? ''}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                handleDetailChange(originalIndex, 'listUnitPrice', value as number);
-                              }}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.listPrice?.toLocaleString() ?? ''}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                handleDetailChange(originalIndex, 'listPrice', value as number);
-                              }}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.purchaseUnitPrice?.toLocaleString() ?? ''}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                handleDetailChange(originalIndex, 'purchaseUnitPrice', value as number);
-                              }}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
-                            <input
-                              type="text"
-                              value={item.purchaseAmount?.toLocaleString() ?? ''}
-                              onChange={(e) => {
-                                const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                                handleDetailChange(originalIndex, 'purchaseAmount', value as number);
-                              }}
-                              style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right' }}
-                            />
-                          </td>
-                          <td style={{ padding: '4px 6px', background: '#fce4ec', border: '1px solid #ddd' }}>
-                            <select
-                              value={item.accountingCategory}
-                              onChange={(e) => handleDetailChange(originalIndex, 'accountingCategory', e.target.value)}
-                              style={{ width: '100%', padding: '3px 5px', fontSize: '11px', border: '1px solid #ddd', borderRadius: '2px' }}
-                            >
-                              <option value="">選択...</option>
-                              {ACCOUNTING_CATEGORY_OPTIONS.map(opt => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              ))}
-                            </select>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {detailItems.map((item, index) => (
+                      <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', background: '#f8f9fa', border: '1px solid #ddd' }}>{item.id}</td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.itemName}
+                            onChange={(e) => handleDetailChange(index, 'itemName', e.target.value)}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.manufacturer}
+                            onChange={(e) => handleDetailChange(index, 'manufacturer', e.target.value)}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.model}
+                            onChange={(e) => handleDetailChange(index, 'model', e.target.value)}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                          <input
+                            type="text"
+                            value={item.quantity ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value, 10) || 0;
+                              handleDetailChange(index, 'quantity', value as number);
+                            }}
+                            style={{ width: '40px', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'center' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.listUnitPrice?.toLocaleString() ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                              handleDetailChange(index, 'listUnitPrice', value as number);
+                            }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.listPrice?.toLocaleString() ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                              handleDetailChange(index, 'listPrice', value as number);
+                            }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.purchaseUnitPrice?.toLocaleString() ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                              handleDetailChange(index, 'purchaseUnitPrice', value as number);
+                            }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                          />
+                        </td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                          <input
+                            type="text"
+                            value={item.purchaseAmount?.toLocaleString() ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                              handleDetailChange(index, 'purchaseAmount', value as number);
+                            }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* 注記 */}
-            <div style={{ padding: '14px 16px', borderTop: '1px solid #ddd', background: '#fafafa', fontSize: '12px', color: '#666', lineHeight: 2 }}>
-              <div>① 読み込んだお見積もりと相違ないか確認・修正を行って下さい</div>
-              <div>② 金額は単価×数量にて登録されています</div>
-              <div>③ 仮でのcategory、会計区分を登録して下さい</div>
+            {/* 注記 + Excel取込 */}
+            <div style={{ padding: '14px 16px', borderTop: '1px solid #ddd', background: '#fafafa', display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
+              <div style={{ flex: 1, fontSize: '12px', color: '#666', lineHeight: 2 }}>
+                <div>① 読み込んだお見積もりと相違ないか確認・修正を行って下さい</div>
+                <div>② 金額は単価×数量にて登録されています</div>
+              </div>
+              <button
+                onClick={handleExcelImport}
+                style={{
+                  padding: '12px 32px',
+                  background: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                Excel取込
+              </button>
             </div>
 
           </div>
