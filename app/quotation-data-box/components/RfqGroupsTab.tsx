@@ -8,6 +8,7 @@ interface RfqGroupsTabProps {
   onRegisterOrder: (rfqGroupId: number) => void;
   onRegisterInspection: (rfqGroupId: number) => void;
   onRegisterAssetProvisional: (rfqGroupId: number) => void;
+  onRegisterAsset: (rfqGroupId: number) => void;
   onDelete?: (rfqGroupId: number) => void;
   onUpdateDeadline: (rfqGroupId: number, field: string, value: string | undefined) => void;
 }
@@ -78,6 +79,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   onRegisterOrder,
   onRegisterInspection,
   onRegisterAssetProvisional,
+  onRegisterAsset,
   onDelete,
   onUpdateDeadline,
 }) => {
@@ -210,18 +212,18 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
           </button>
         );
         break;
-      // ⑤検収準備
+      // ⑤検収登録
       case '納期確定':
         buttons.push(
-          <button key="inspection" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#16a085' }}>
-            検収準備
+          <button key="inspection" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#16a085' }}>
+            検収登録
           </button>
         );
         break;
       // ⑥資産登録
       case '検収済':
         buttons.push(
-          <button key="asset" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#2c3e50' }}>
+          <button key="asset" onClick={() => onRegisterAsset(group.id)} style={{ ...btnBase, background: '#2c3e50' }}>
             資産登録
           </button>
         );

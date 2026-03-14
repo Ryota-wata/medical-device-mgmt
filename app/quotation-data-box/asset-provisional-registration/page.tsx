@@ -91,21 +91,6 @@ const EMPTY_FORM: FormData = {
   largeClass: '', mediumClass: '', itemClass: '',
 };
 
-/** PC 契約単位の編集データ */
-interface ContractEditData {
-  approvalNo: string;         // 院内決済番号
-  applicationDept: string;    // 申請部署
-  applicationPerson: string;  // 申請担当者
-  managementDept: string;     // 管理部署
-  managementPerson: string;   // 管理担当者
-  vendorRegNo: string;        // 事業者登録番号
-}
-
-const EMPTY_CONTRACT: ContractEditData = {
-  approvalNo: '', applicationDept: '', applicationPerson: '',
-  managementDept: '', managementPerson: '', vendorRegNo: '',
-};
-
 /** PC テーブル行ごとの編集データ */
 interface RowEditData {
   assetMasterId: string;      // 資産MasterID
@@ -113,19 +98,13 @@ interface RowEditData {
   largeClass: string;         // 大分類
   mediumClass: string;        // 中分類
   itemClass: string;          // 品目
-  qrCode: string;             // QRコード
-  fixedAssetNo: string;       // 固定資産番号
-  meDeviceNo: string;         // ME機器管理No.
-  serialNumber: string;       // シリアルNo.
-  makerRegNo: string;         // メーカー事業者登録番号
-  salesPerson: string;        // 担当者（営業）
-  techPerson: string;         // 担当者（技術）
   floor: string;              // 階
   department: string;         // 部門
   section: string;            // 部署
   roomName: string;           // 室名
-  accountType: string;        // 会計区分
-  accountItem: string;        // 勘定科目
+  qrCode: string;             // QRコード
+  serialNumber: string;       // シリアルNo.
+  photoFileName: string;      // 写真ファイル名
 }
 
 /** SearchParams 読み取り */
@@ -176,7 +155,6 @@ export default function AssetProvisionalRegistrationPage() {
   } | null>(null);
 
   // PC state
-  const [contractEdit, setContractEdit] = useState<ContractEditData>(EMPTY_CONTRACT);
   const [rowEditMap, setRowEditMap] = useState<Record<number, RowEditData>>({});
 
   // Confirm dialog
@@ -265,19 +243,13 @@ export default function AssetProvisionalRegistrationPage() {
           largeClass: match?.largeClass || '',
           mediumClass: match?.mediumClass || '',
           itemClass: match?.item || '',
-          qrCode: '',
-          fixedAssetNo: '',
-          meDeviceNo: '',
-          serialNumber: '',
-          makerRegNo: '',
-          salesPerson: '',
-          techPerson: '',
           floor: appMatch?.facility?.floor || '',
           department: appMatch?.facility?.department || '',
           section: appMatch?.facility?.section || '',
           roomName: appMatch?.roomName || '',
-          accountType: '',
-          accountItem: '',
+          qrCode: '',
+          serialNumber: '',
+          photoFileName: '',
         };
       });
       setRowEditMap(newMap);
@@ -367,10 +339,6 @@ export default function AssetProvisionalRegistrationPage() {
   }, [selectedItem, orderGroup, rfqGroup, formData, addIndividual]);
 
   // PC handlers
-  const handleContractChange = useCallback((field: keyof ContractEditData, value: string) => {
-    setContractEdit(prev => ({ ...prev, [field]: value }));
-  }, []);
-
   const handlePcCellChange = useCallback((itemId: number, field: keyof RowEditData, value: string) => {
     setRowEditMap(prev => ({
       ...prev,
@@ -381,9 +349,9 @@ export default function AssetProvisionalRegistrationPage() {
   const handlePcRegisterAll = useCallback(() => {
     if (!orderGroup || !rfqGroup || !rfqGroupId) return;
     showDialog({
-      title: '資産仮登録確認',
-      message: `全${totalItems}件の資産仮登録を実行し、ステータスを「資産仮登録済」に更新します。`,
-      confirmLabel: '資産仮登録する',
+      title: '検収登録確認',
+      message: `全${totalItems}件の検収登録を実行し、ステータスを「検収登録済」に更新します。`,
+      confirmLabel: '検収登録する',
       onConfirm: () => {
         orderItems.forEach(item => {
           const rowData = rowEditMap[item.id];
@@ -407,7 +375,7 @@ export default function AssetProvisionalRegistrationPage() {
             itemClass: rowData.itemClass,
           });
         });
-        updateRfqGroup(rfqGroupId, { status: '完了' });
+        updateRfqGroup(rfqGroupId, { status: '検収済' });
         setRegistrationComplete({
           groupName: rfqGroup.groupName,
           itemCount: totalItems,
@@ -421,11 +389,11 @@ export default function AssetProvisionalRegistrationPage() {
   const handleCompleteAll = useCallback(() => {
     if (!rfqGroupId || !allRegistered || !rfqGroup || !orderGroup) return;
     showDialog({
-      title: '資産仮登録完了確認',
-      message: `全${totalItems}件の資産仮登録を完了します。ステータスを「資産仮登録済」に更新します。`,
+      title: '検収登録完了確認',
+      message: `全${totalItems}件の検収登録を完了します。ステータスを「検収済」に更新します。`,
       confirmLabel: '登録を完了する',
       onConfirm: () => {
-        updateRfqGroup(rfqGroupId, { status: '完了' });
+        updateRfqGroup(rfqGroupId, { status: '検収済' });
         setRegistrationComplete({
           groupName: rfqGroup.groupName,
           itemCount: totalItems,
@@ -457,7 +425,7 @@ export default function AssetProvisionalRegistrationPage() {
         </Suspense>
 
         <Header
-          title={registrationComplete ? '資産仮登録完了' : '資産仮登録'}
+          title={registrationComplete ? '検収登録完了' : '検収登録'}
           hideMenu={true}
           showBackButton={false}
         />
@@ -474,7 +442,7 @@ export default function AssetProvisionalRegistrationPage() {
               }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
                 <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px', textWrap: 'balance' }}>
-                  資産仮登録が完了しました
+                  検収登録が完了しました
                 </h2>
                 <p style={{ fontSize: '14px', color: COLORS.textSecondary, marginBottom: '24px', fontVariantNumeric: 'tabular-nums', textWrap: 'pretty' }}>
                   {registrationComplete.groupName}（{registrationComplete.itemCount}品目 / 検収日: {registrationComplete.inspectionDate}）
@@ -561,31 +529,6 @@ export default function AssetProvisionalRegistrationPage() {
                 </div>
               </div>
 
-              {/* 登録情報入力セクション（編集可能） */}
-              <div style={{ border: `2px solid ${COLORS.accent}`, borderRadius: '8px', marginBottom: '16px' }}>
-                <div style={{ background: COLORS.accent, color: COLORS.textOnAccent, padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', textWrap: 'balance' }}>
-                  登録情報入力
-                </div>
-                <div style={{ padding: '16px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 120px 1fr 120px 1fr', gap: '8px 16px', alignItems: 'center' }}>
-                    <label style={pcLabelStyle}>院内決済番号</label>
-                    <input className="prov-cell-input" type="text" value={contractEdit.approvalNo} onChange={(e) => handleContractChange('approvalNo', e.target.value)} placeholder="未設定" style={pcInputStyle} />
-                    <label style={pcLabelStyle}>申請部署</label>
-                    <input className="prov-cell-input" type="text" value={contractEdit.applicationDept} onChange={(e) => handleContractChange('applicationDept', e.target.value)} placeholder="未設定" style={pcInputStyle} />
-                    <label style={pcLabelStyle}>管理部署</label>
-                    <input className="prov-cell-input" type="text" value={contractEdit.managementDept} onChange={(e) => handleContractChange('managementDept', e.target.value)} placeholder="未設定" style={pcInputStyle} />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 120px 1fr 120px 1fr', gap: '8px 16px', alignItems: 'center', marginTop: '8px' }}>
-                    <label style={pcLabelStyle}>管理担当者</label>
-                    <input className="prov-cell-input" type="text" value={contractEdit.managementPerson} onChange={(e) => handleContractChange('managementPerson', e.target.value)} placeholder="未設定" style={pcInputStyle} />
-                    <label style={pcLabelStyle}>事業者登録番号</label>
-                    <input className="prov-cell-input" type="text" value={contractEdit.vendorRegNo} onChange={(e) => handleContractChange('vendorRegNo', e.target.value)} placeholder="T0000000000000" style={{ ...pcInputStyle, maxWidth: '200px' }} />
-                    <div />
-                    <div />
-                  </div>
-                </div>
-              </div>
-
               {/* 明細テーブル */}
               <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: '4px', marginBottom: '16px' }}>
                 <div style={{
@@ -610,17 +553,13 @@ export default function AssetProvisionalRegistrationPage() {
                   </span>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: 2400 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: 1400 }}>
                     <thead>
                       {/* グループヘッダー行 */}
                       <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
                         <th style={{ ...pcTableThStyle, textAlign: 'center' }} rowSpan={2}>No</th>
                         <th style={pcTableThStyle} colSpan={7}>商品分類</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={4}>管理番号</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={3}>メーカー情報</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={4}>設置場所</th>
-                        <th style={pcTableThStyle} colSpan={1}>金額</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={2}>会計</th>
+                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={7}>入力項目</th>
                       </tr>
                       {/* 個別ヘッダー行 */}
                       <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
@@ -631,20 +570,13 @@ export default function AssetProvisionalRegistrationPage() {
                         <th style={pcTableThStyle}>品名</th>
                         <th style={pcTableThStyle}>メーカー名</th>
                         <th style={pcTableThStyle}>型式</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>QRコード</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>固定資産番号</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>ME機器管理No.</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>シリアルNo.</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>事業者登録番号</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>担当者(営業)</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>担当者(技術)</th>
                         <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>階</th>
                         <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>部門</th>
                         <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>部署</th>
                         <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>室名</th>
-                        <th style={{ ...pcTableThStyle, textAlign: 'right' }}>取得金額(税別)</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>会計区分</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>勘定科目</th>
+                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>QRコード</th>
+                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>シリアルNo.</th>
+                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>写真撮影</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -661,20 +593,34 @@ export default function AssetProvisionalRegistrationPage() {
                             <td style={{ ...pcTableTdStyle, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>{item.itemName}</td>
                             <td style={{ ...pcTableTdStyle, whiteSpace: 'nowrap' }}>{item.manufacturer}</td>
                             <td style={{ ...pcTableTdStyle, fontFamily: 'monospace', fontSize: '10px' }}>{item.model}</td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.qrCode} onChange={(e) => handlePcCellChange(item.id, 'qrCode', e.target.value)} placeholder="QRコード" style={{ ...pcCellInputStyle, width: '120px', fontFamily: 'monospace' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.fixedAssetNo} onChange={(e) => handlePcCellChange(item.id, 'fixedAssetNo', e.target.value)} placeholder="入力" style={{ ...pcCellInputStyle, width: '90px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.meDeviceNo} onChange={(e) => handlePcCellChange(item.id, 'meDeviceNo', e.target.value)} placeholder="入力" style={{ ...pcCellInputStyle, width: '90px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.serialNumber} onChange={(e) => handlePcCellChange(item.id, 'serialNumber', e.target.value)} placeholder="入力" style={pcCellInputStyle} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.makerRegNo} onChange={(e) => handlePcCellChange(item.id, 'makerRegNo', e.target.value)} placeholder="T000..." style={{ ...pcCellInputStyle, width: '100px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.salesPerson} onChange={(e) => handlePcCellChange(item.id, 'salesPerson', e.target.value)} placeholder="氏名" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.techPerson} onChange={(e) => handlePcCellChange(item.id, 'techPerson', e.target.value)} placeholder="氏名" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
                             <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.floor} onChange={(e) => handlePcCellChange(item.id, 'floor', e.target.value)} placeholder="階" style={{ ...pcCellInputStyle, width: '40px' }} /></td>
                             <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.department} onChange={(e) => handlePcCellChange(item.id, 'department', e.target.value)} placeholder="部門" style={{ ...pcCellInputStyle, width: '80px' }} /></td>
                             <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.section} onChange={(e) => handlePcCellChange(item.id, 'section', e.target.value)} placeholder="部署" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
                             <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.roomName} onChange={(e) => handlePcCellChange(item.id, 'roomName', e.target.value)} placeholder="室名" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
-                            <td style={{ ...pcTableTdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600, whiteSpace: 'nowrap' }}>¥{item.totalPrice.toLocaleString()}</td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.accountType} onChange={(e) => handlePcCellChange(item.id, 'accountType', e.target.value)} placeholder="区分" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.accountItem} onChange={(e) => handlePcCellChange(item.id, 'accountItem', e.target.value)} placeholder="科目" style={{ ...pcCellInputStyle, width: '80px' }} /></td>
+                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.qrCode} onChange={(e) => handlePcCellChange(item.id, 'qrCode', e.target.value)} placeholder="QRコード" style={{ ...pcCellInputStyle, width: '120px', fontFamily: 'monospace' }} /></td>
+                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.serialNumber} onChange={(e) => handlePcCellChange(item.id, 'serialNumber', e.target.value)} placeholder="入力" style={pcCellInputStyle} /></td>
+                            <td style={pcEditCellStyle}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                {r.photoFileName ? (
+                                  <span style={{ fontSize: '11px', color: COLORS.green, fontWeight: 500 }}>{r.photoFileName}</span>
+                                ) : (
+                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', color: '#c2410c', whiteSpace: 'nowrap' }}>
+                                    <span>📷 アップロード</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      style={{ display: 'none' }}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          handlePcCellChange(item.id, 'photoFileName', file.name);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+                            </td>
                           </tr>
                         );
                       })}
@@ -697,7 +643,7 @@ export default function AssetProvisionalRegistrationPage() {
                   onClick={handlePcRegisterAll}
                   style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', minHeight: '44px' }}
                 >
-                  資産仮登録する
+                  検収登録する
                 </button>
               </div>
             </>
@@ -751,7 +697,7 @@ export default function AssetProvisionalRegistrationPage() {
             margin: 0,
             textWrap: 'balance',
           }}>
-            {registrationComplete ? '資産仮登録完了' : '資産仮登録'}
+            {registrationComplete ? '検収登録完了' : '検収登録'}
           </h1>
           <span style={{
             fontSize: '11px',
@@ -797,7 +743,7 @@ export default function AssetProvisionalRegistrationPage() {
                 &#10003;
               </div>
               <h2 style={{ fontSize: '18px', fontWeight: 600, color: C.textDark, marginBottom: '8px', textWrap: 'balance' }}>
-                資産仮登録が完了しました
+                検収登録が完了しました
               </h2>
               <p style={{ fontSize: '14px', color: C.textMuted, marginBottom: '24px', fontVariantNumeric: 'tabular-nums', textWrap: 'pretty' }}>
                 {registrationComplete.groupName}<br />
@@ -1373,24 +1319,6 @@ const pcInfoTdStyle: React.CSSProperties = {
   padding: '4px 8px',
   border: `1px solid ${COLORS.borderLight}`,
   fontSize: '12px',
-};
-
-/** PC 入力セクション: ラベル */
-const pcLabelStyle: React.CSSProperties = {
-  fontSize: '14px',
-  fontWeight: 'bold',
-  color: COLORS.textPrimary,
-  whiteSpace: 'nowrap',
-};
-
-/** PC 入力セクション: input */
-const pcInputStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: '4px',
-  fontSize: '14px',
-  width: '100%',
-  boxSizing: 'border-box' as const,
 };
 
 /** PC 明細テーブル: ヘッダー */

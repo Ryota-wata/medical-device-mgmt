@@ -63,7 +63,7 @@ function PurchaseManagementContent() {
     { key: 'order-rfq', label: '②発注見積依頼', statuses: ['見積登録依頼中', '発注用見積依頼済'] },
     { key: 'order', label: '③発注登録', statuses: ['発注見積登録済'] },
     { key: 'delivery', label: '④納品日登録', statuses: ['発注済'] },
-    { key: 'inspection', label: '⑤検収準備', statuses: ['納期確定'] },
+    { key: 'inspection', label: '⑤検収登録', statuses: ['納期確定'] },
     { key: 'asset', label: '⑥資産登録', statuses: ['検収済'] },
   ];
   const [activeStep, setActiveStep] = useState<StepKey>('all');
@@ -306,6 +306,11 @@ function PurchaseManagementContent() {
   const handleStartAssetProvisionalRegistration = (rfqGroupId: number) => {
     setPendingRfqGroupId(rfqGroupId);
     setShowModeSelection(true);
+  };
+
+  // 資産登録開始（画面遷移）
+  const handleStartAssetRegistration = (rfqGroupId: number) => {
+    router.push(`/quotation-data-box/asset-registration?rfqGroupId=${rfqGroupId}`);
   };
 
   const handleModeSelected = (mode: 'mobile' | 'pc') => {
@@ -602,6 +607,7 @@ function PurchaseManagementContent() {
                   onRegisterOrder={handleStartOrderRegistration}
                   onRegisterInspection={handleStartInspectionRegistration}
                   onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
+                  onRegisterAsset={handleStartAssetRegistration}
                   onDelete={(id) => {
                     if (confirm('この見積（発注）グループを削除しますか？')) {
                       deleteRfqGroup(id);
@@ -653,8 +659,8 @@ function PurchaseManagementContent() {
       {showModeSelection && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textWrap: 'balance' }}>資産仮登録の入力方法を選択</h2>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>登録作業の状況に応じて入力方法を選んでください。</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textWrap: 'balance' }}>検収登録の入力方法を選択</h2>
+            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>検収登録の作業状況に応じて入力方法を選んでください。</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
@@ -669,8 +675,8 @@ function PurchaseManagementContent() {
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>モバイル（現場作業）</div>
                   <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
-                    現場でQRラベル貼付・写真撮影・シリアルNo.入力を行います。<br />
-                    1品目ずつ登録する操作フローです。
+                    現場で納品確認・検収日入力を行います。<br />
+                    1品目ずつ確認する操作フローです。
                   </div>
                 </div>
               </button>
@@ -685,9 +691,9 @@ function PurchaseManagementContent() {
                   <span style={{ fontSize: 24 }}>&#128187;</span>
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>PC（手書き検収書から手入力）</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>PC（一括入力）</div>
                   <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
-                    手書き検収書の内容をテーブル形式で一括入力します。<br />
+                    納品日・検収日をテーブル形式で一括入力します。<br />
                     全品目を一覧しながら効率的に登録できます。
                   </div>
                 </div>

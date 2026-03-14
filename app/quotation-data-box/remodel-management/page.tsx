@@ -48,6 +48,11 @@ function RemodelManagementContent() {
     setShowModeSelection(true);
   };
 
+  // 資産登録開始（画面遷移）
+  const handleStartAssetRegistration = (rfqGroupId: number) => {
+    router.push(`/quotation-data-box/asset-registration?rfqGroupId=${rfqGroupId}`);
+  };
+
   const handleModeSelected = (mode: 'mobile' | 'pc') => {
     if (pendingRfqGroupId !== null) {
       router.push(`/quotation-data-box/asset-provisional-registration?rfqGroupId=${pendingRfqGroupId}&mode=${mode}`);
@@ -193,6 +198,7 @@ function RemodelManagementContent() {
               onRegisterOrder={handleStartOrderRegistration}
               onRegisterInspection={handleStartInspectionRegistration}
               onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
+              onRegisterAsset={handleStartAssetRegistration}
               onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
             />
           </div>
