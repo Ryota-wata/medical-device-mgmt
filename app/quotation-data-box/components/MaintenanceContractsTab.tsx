@@ -1,1140 +1,1041 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { useMasterStore } from '@/lib/stores';
-import { MaintenanceContractRegistrationModal, MaintenanceContractFormData } from './MaintenanceContractRegistrationModal';
-import { ContractReviewModal, ContractReviewResult } from './ContractReviewModal';
+
+// 契約種別
+type ContractType = '保守契約' | '定期点検' | 'スポット契約' | '借用契約' | 'その他';
+
+// 進行ステップ
+type MaintenanceStep = 1 | 2 | 3 | 4 | 'completed';
+
+// 保守契約データ型（契約グループ単位）
+interface MaintenanceContract {
+  id: string;
+  applicationNo: string;
+  contractGroupName: string;
+  contractType: ContractType;
+  contractTypeNote: string;
+  contractDate: string;
+  contractStartDate: string;
+  contractEndDate: string;
+  contractAmount: number;
+  annualAmount: number;
+  contractorName: string;
+  contractorPerson: string;
+  contractorPhone: string;
+  warrantyEndDate: string;
+  comment: string;
+  currentStep: MaintenanceStep;
+}
+
+// 個体管理品目データ型
+interface ContractGroupAsset {
+  id: number;
+  managementDept: string;
+  installDept: string;
+  qrLabel: string;
+  itemName: string;
+  maker: string;
+  model: string;
+  // 点検情報（編集可能）
+  inspectionGroupName: string;
+  inspectionType: string;
+  inspectionCycle: string;
+  warrantyStart: string;
+  warrantyEnd: string;
+  partsExemption: boolean;
+  exemptionAmount: string;
+  onCall: boolean;
+  remote: boolean;
+  legalInspection: boolean;
+  legalInspectionBasis: string;
+  comment: string;
+}
+
+// ステータス表示の算出結果
+interface StatusDisplay {
+  label: string;
+  color: string;
+  fontWeight?: string;
+  sortValue: number;
+}
+
+// ソート状態
+type SortDirection = 'asc' | 'desc' | null;
 
 interface MaintenanceContractsTabProps {
   isMobile?: boolean;
 }
 
-// 保守契約ステータス（ワークフロー）
-type ContractStatus = '保守・点検申請' | '見積依頼済' | '登録済' | '廃棄申請';
+// ステータス算出ロジック
+const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-// 契約グループ内の資産詳細
-interface ContractAsset {
-  qrLabel: string;
-  managementDepartment: string;
-  installationDepartment: string;
-  item: string;
-  maker: string;
-  model: string;
-  maintenanceType: string;
-  acceptanceDate: string;
-  contractStartDate: string;
-  contractEndDate: string;
-  inspectionCountPerYear: number;
-  partsExemption: string;
-  onCall: boolean;
-  hasRemote: boolean;
-  comment: string;
-}
+  if (contract.warrantyEndDate) {
+    const warrantyEnd = new Date(contract.warrantyEndDate);
+    warrantyEnd.setHours(0, 0, 0, 0);
+    const diffMs = warrantyEnd.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-// 保守契約データ型（契約グループ単位）
-interface MaintenanceContract {
-  id: string;
-  // 契約グループ
-  contractGroupName: string;
-  // 部署情報（代表）
-  managementDepartment: string;
-  installationDepartment: string;
-  // 保守種別
-  maintenanceType: string;
-  // 検収年月日
-  acceptanceDate: string;
-  // 保守契約期間
-  contractStartDate: string;
-  contractEndDate: string;
-  // 業者情報
-  contractorName: string;
-  contractorPerson: string;
-  contractorEmail: string;
-  contractorPhone: string;
-  // 契約金額（税別）
-  contractAmount: number;
-  // ステータス
-  status: ContractStatus;
-  // 保証期間終了日
-  warrantyEndDate: string;
-  // 期限（日数: 負の値は期限超過）
-  deadlineDays: number | null;
-  // フリーコメント
-  comment: string;
-  // フィルター用
-  category: string;
-  largeClass: string;
-  mediumClass: string;
-  item: string;
-  maker: string;
-  hasRemoteMaintenance: boolean;
-  // 契約グループ内の資産一覧
-  assets: ContractAsset[];
-}
+    if (diffDays < 0) {
+      return { label: '保証期限切れ', color: '#b71c1c', fontWeight: 'bold', sortValue: diffDays };
+    }
+
+    const diffMonths = Math.ceil(diffDays / 30);
+    if (diffMonths <= 6) {
+      return {
+        label: `保証期間終了 ${diffMonths}ヶ月前`,
+        color: diffMonths <= 2 ? '#c62828' : '#e65100',
+        fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
+        sortValue: diffDays,
+      };
+    }
+  }
+
+  if (contract.contractEndDate) {
+    const contractEnd = new Date(contract.contractEndDate);
+    contractEnd.setHours(0, 0, 0, 0);
+    const diffMs = contractEnd.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const diffMonths = Math.ceil(diffDays / 30);
+
+    if (diffMonths <= 6) {
+      return {
+        label: `契約更新 ${diffMonths}ヶ月前`,
+        color: diffMonths <= 2 ? '#c62828' : '#1565c0',
+        fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
+        sortValue: diffDays,
+      };
+    }
+  }
+
+  return { label: '-', color: '#999', sortValue: 9999 };
+};
+
+// 期限表示
+const calcDeadlineDisplay = (contract: MaintenanceContract): { label: string; color: string } => {
+  const status = calcStatus(contract);
+  if (status.label === '-') return { label: '-', color: '#999' };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let nearestDays = 9999;
+
+  if (contract.warrantyEndDate) {
+    const d = new Date(contract.warrantyEndDate);
+    d.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (Math.abs(diff) < Math.abs(nearestDays)) nearestDays = diff;
+  }
+  if (contract.contractEndDate) {
+    const d = new Date(contract.contractEndDate);
+    d.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff < nearestDays) nearestDays = diff;
+  }
+
+  if (nearestDays < 0) {
+    return { label: `${Math.abs(nearestDays)}日超過`, color: '#b71c1c' };
+  }
+  return { label: `${nearestDays}日前`, color: nearestDays <= 30 ? '#c62828' : '#e65100' };
+};
 
 // モック契約データ
 const MOCK_CONTRACTS: MaintenanceContract[] = [
   {
     id: '1',
-    managementDepartment: '臨床工学部',
-    installationDepartment: '外科',
-    contractGroupName: '',
-    maintenanceType: '',
-    acceptanceDate: '2025/04/01',
-    contractStartDate: '',
-    contractEndDate: '',
-    contractorName: '',
-    contractorPerson: '',
-    contractorEmail: 'info@philips.co.jp',
+    applicationNo: 'MC-2026-001',
+    contractGroupName: 'CT装置保守契約',
+    contractType: '保守契約',
+    contractTypeNote: 'フルメンテナンス',
+    contractDate: '2025-04-01',
+    contractStartDate: '2025-04-01',
+    contractEndDate: '2026-03-31',
+    contractAmount: 3500000,
+    annualAmount: 3500000,
+    contractorName: 'シーメンスヘルスケア',
+    contractorPerson: '田中太郎',
     contractorPhone: '03-1234-5678',
-    contractAmount: 0,
-    status: '保守・点検申請',
-    warrantyEndDate: '2026/03/31',
-    deadlineDays: 42, // 保証期間42日前
+    warrantyEndDate: '2026-05-15',
     comment: '',
-    category: '医療機器',
-    largeClass: '人工呼吸器',
-    mediumClass: '集中治療用',
-    item: '人工呼吸器',
-    maker: 'フィリップス',
-    hasRemoteMaintenance: false,
-    assets: [
-      { qrLabel: 'QR-2025-0001', managementDepartment: '臨床工学部', installationDepartment: '外科', item: '人工呼吸器', maker: 'フィリップス', model: 'V680', maintenanceType: '', acceptanceDate: '2025/04/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
-      { qrLabel: 'QR-2025-0016', managementDepartment: '臨床工学部', installationDepartment: 'ICU', item: '人工呼吸器', maker: 'フィリップス', model: 'V680', maintenanceType: '', acceptanceDate: '2025/04/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
-    ],
+    currentStep: 1,
   },
   {
     id: '2',
-    managementDepartment: '放射線部',
-    installationDepartment: '内科',
-    contractGroupName: '超音波診断装置保守',
-    maintenanceType: '',
-    acceptanceDate: '2024/04/01',
-    contractStartDate: '',
-    contractEndDate: '',
+    applicationNo: 'MC-2026-002',
+    contractGroupName: '超音波診断装置 定期点検',
+    contractType: '定期点検',
+    contractTypeNote: '年2回実施',
+    contractDate: '2025-06-01',
+    contractStartDate: '2025-06-01',
+    contractEndDate: '2027-05-31',
+    contractAmount: 960000,
+    annualAmount: 480000,
     contractorName: 'GEヘルスケアジャパン',
-    contractorPerson: '',
-    contractorEmail: 'service@ge.com',
-    contractorPhone: '03-2345-6789',
-    contractAmount: 0,
-    status: '見積依頼済',
-    warrantyEndDate: '2025/03/31',
-    deadlineDays: null, // 見積依頼済は期限表示なし
-    comment: '見積回答待ち',
-    category: '医療機器',
-    largeClass: '検査機器',
-    mediumClass: '超音波診断装置',
-    item: '超音波診断装置',
-    maker: 'GEヘルスケア',
-    hasRemoteMaintenance: false,
-    assets: [
-      { qrLabel: 'QR-2025-0002', managementDepartment: '放射線部', installationDepartment: '内科', item: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', maintenanceType: '', acceptanceDate: '2024/04/01', contractStartDate: '', contractEndDate: '', inspectionCountPerYear: 0, partsExemption: '', onCall: false, hasRemote: false, comment: '' },
-    ],
+    contractorPerson: '佐藤花子',
+    contractorPhone: '03-9876-5432',
+    warrantyEndDate: '2026-04-30',
+    comment: '次回点検: 2026年4月',
+    currentStep: 2,
   },
   {
     id: '3',
-    managementDepartment: '臨床工学部',
-    installationDepartment: '外科',
-    contractGroupName: '電気手術器保守契約',
-    maintenanceType: 'フルメンテナンス',
-    acceptanceDate: '2023/06/01',
-    contractStartDate: '2024/06/01',
-    contractEndDate: '2026/05/31',
+    applicationNo: 'MC-2026-003',
+    contractGroupName: '電気手術器 スポット',
+    contractType: 'スポット契約',
+    contractTypeNote: '',
+    contractDate: '2026-01-15',
+    contractStartDate: '2026-01-15',
+    contractEndDate: '2026-07-14',
+    contractAmount: 500000,
+    annualAmount: 1000000,
     contractorName: 'オリンパスメディカルサービス',
     contractorPerson: '鈴木一郎',
-    contractorEmail: 'suzuki@olympus.co.jp',
-    contractorPhone: '03-3456-7890',
-    contractAmount: 500000,
-    status: '登録済',
-    warrantyEndDate: '2024/05/31',
-    deadlineDays: 75, // 契約期限75日前
+    contractorPhone: '03-5555-1234',
+    warrantyEndDate: '2025-12-31',
     comment: '',
-    category: '医療機器',
-    largeClass: '手術関連機器',
-    mediumClass: '電気メス 双極',
-    item: '電気手術器',
-    maker: 'オリンパス',
-    hasRemoteMaintenance: false,
-    assets: [
-      { qrLabel: 'QR-2025-0013', managementDepartment: '臨床工学部', installationDepartment: '外科', item: '電気手術器', maker: 'オリンパス', model: 'ESG-400', maintenanceType: 'フルメンテナンス', acceptanceDate: '2023/06/01', contractStartDate: '2024/06/01', contractEndDate: '2026/05/31', inspectionCountPerYear: 2, partsExemption: '50万', onCall: true, hasRemote: false, comment: '' },
-    ],
+    currentStep: 3,
   },
   {
     id: '4',
-    managementDepartment: '放射線部',
-    installationDepartment: '放射線科',
-    contractGroupName: 'CTスキャナー保守契約2024',
-    maintenanceType: 'フルメンテナンス',
-    acceptanceDate: '2021/04/01',
-    contractStartDate: '2024/04/01',
-    contractEndDate: '2026/03/31',
-    contractorName: 'シーメンスヘルスケア',
-    contractorPerson: '田中次郎',
-    contractorEmail: 'tanaka@siemens.com',
-    contractorPhone: '03-4567-8901',
-    contractAmount: 3500000,
-    status: '登録済',
-    warrantyEndDate: '2022/03/31',
-    deadlineDays: 30, // 契約期限30日前
-    comment: '契約更新検討時期',
-    category: '医療機器',
-    largeClass: '画像診断機器',
-    mediumClass: 'CT関連',
-    item: 'CTスキャナー',
-    maker: 'シーメンス',
-    hasRemoteMaintenance: true,
-    assets: [
-      { qrLabel: 'QR-2025-0014', managementDepartment: '放射線部', installationDepartment: '放射線科', item: 'CTスキャナー', maker: 'シーメンス', model: 'SOMATOM Drive', maintenanceType: 'フルメンテナンス', acceptanceDate: '2021/04/01', contractStartDate: '2024/04/01', contractEndDate: '2026/03/31', inspectionCountPerYear: 4, partsExemption: '200万', onCall: true, hasRemote: true, comment: 'ソフトバージョンアップ込み' },
-    ],
+    applicationNo: 'MC-2026-004',
+    contractGroupName: '透析装置保守契約2024',
+    contractType: '保守契約',
+    contractTypeNote: 'パーツ保証付',
+    contractDate: '2024-04-01',
+    contractStartDate: '2024-04-01',
+    contractEndDate: '2026-03-31',
+    contractAmount: 1200000,
+    annualAmount: 600000,
+    contractorName: '日機装',
+    contractorPerson: '高橋次郎',
+    contractorPhone: '03-3333-4444',
+    warrantyEndDate: '2026-03-31',
+    comment: '契約更新要検討',
+    currentStep: 4,
   },
   {
     id: '5',
-    managementDepartment: '臨床工学部',
-    installationDepartment: '透析センター',
-    contractGroupName: '透析装置保守契約2024',
-    maintenanceType: '定期点検',
-    acceptanceDate: '2022/04/01',
-    contractStartDate: '2023/04/01',
-    contractEndDate: '2025/03/31',
-    contractorName: '日機装',
-    contractorPerson: '高橋三郎',
-    contractorEmail: 'takahashi@nikkiso.co.jp',
-    contractorPhone: '03-5678-9012',
-    contractAmount: 600000,
-    status: '廃棄申請',
-    warrantyEndDate: '2023/03/31',
-    deadlineDays: null, // 廃棄申請は「至急対応」表示
-    comment: '機器廃棄に伴い契約変更要',
-    category: '医療機器',
-    largeClass: '透析関連機器',
-    mediumClass: '血液透析装置',
-    item: '個人用透析装置',
-    maker: '日機装',
-    hasRemoteMaintenance: false,
-    assets: [
-      { qrLabel: 'QR-2025-0011', managementDepartment: '臨床工学部', installationDepartment: '透析センター', item: '個人用透析装置', maker: '日機装', model: 'DCS-200Si', maintenanceType: '定期点検', acceptanceDate: '2022/04/01', contractStartDate: '2023/04/01', contractEndDate: '2025/03/31', inspectionCountPerYear: 2, partsExemption: '30万', onCall: false, hasRemote: false, comment: '' },
-    ],
+    applicationNo: 'MC-2026-005',
+    contractGroupName: 'MRI装置 借用契約',
+    contractType: '借用契約',
+    contractTypeNote: 'デモ機借用',
+    contractDate: '2026-02-01',
+    contractStartDate: '2026-02-01',
+    contractEndDate: '2026-08-31',
+    contractAmount: 0,
+    annualAmount: 0,
+    contractorName: 'フィリップスジャパン',
+    contractorPerson: '中村三郎',
+    contractorPhone: '03-2222-3333',
+    warrantyEndDate: '2027-01-31',
+    comment: '',
+    currentStep: 'completed',
   },
   {
     id: '6',
-    managementDepartment: '施設管理部',
-    installationDepartment: '本館',
-    contractGroupName: 'エレベーター保守契約',
-    maintenanceType: 'POG契約',
-    acceptanceDate: '2019/01/01',
-    contractStartDate: '2024/01/01',
-    contractEndDate: '2026/12/31',
+    applicationNo: 'MC-2026-006',
+    contractGroupName: 'エレベーター保守',
+    contractType: 'その他',
+    contractTypeNote: '建物設備',
+    contractDate: '2025-04-01',
+    contractStartDate: '2025-04-01',
+    contractEndDate: '2028-03-31',
+    contractAmount: 1440000,
+    annualAmount: 480000,
     contractorName: '三菱電機ビルソリューションズ',
-    contractorPerson: '山田太郎',
-    contractorEmail: 'yamada@meltec.co.jp',
-    contractorPhone: '03-6789-0123',
-    contractAmount: 480000,
-    status: '登録済',
-    warrantyEndDate: '2020/12/31',
-    deadlineDays: 320, // 契約期限320日前
+    contractorPerson: '加藤四郎',
+    contractorPhone: '03-6666-7777',
+    warrantyEndDate: '2028-03-31',
     comment: '',
-    category: '建物設備',
-    largeClass: '搬送設備',
-    mediumClass: 'エレベーター',
-    item: '乗用エレベーター',
-    maker: '三菱電機',
-    hasRemoteMaintenance: true,
-    assets: [
-      { qrLabel: 'EV-001', managementDepartment: '施設管理部', installationDepartment: '本館', item: '乗用エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', maintenanceType: 'POG契約', acceptanceDate: '2019/01/01', contractStartDate: '2024/01/01', contractEndDate: '2026/12/31', inspectionCountPerYear: 12, partsExemption: '', onCall: true, hasRemote: true, comment: '' },
-      { qrLabel: 'EV-002', managementDepartment: '施設管理部', installationDepartment: '本館', item: '乗用エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', maintenanceType: 'POG契約', acceptanceDate: '2019/01/01', contractStartDate: '2024/01/01', contractEndDate: '2026/12/31', inspectionCountPerYear: 12, partsExemption: '', onCall: true, hasRemote: true, comment: '' },
-    ],
+    currentStep: 1,
   },
 ];
 
-const CONTRACT_STATUSES: ContractStatus[] = ['保守・点検申請', '見積依頼済', '登録済', '廃棄申請'];
+// 契約グループごとの個体管理品目モックデータ
+const MOCK_GROUP_ASSETS: Record<string, ContractGroupAsset[]> = {
+  '1': [
+    { id: 1, managementDept: '臨床工学部', installDept: '放射線科', qrLabel: 'QR-2025-0101', itemName: 'CT装置', maker: 'シーメンス', model: 'SOMATOM go.Top', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+  ],
+  '2': [
+    { id: 2, managementDept: '臨床工学部', installDept: '外科', qrLabel: 'QR-2025-0001', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+    { id: 3, managementDept: '臨床工学部', installDept: 'ICU', qrLabel: 'QR-2025-0016', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+  ],
+  '3': [
+    { id: 4, managementDept: '臨床工学部', installDept: '手術室', qrLabel: 'QR-2025-0030', itemName: '電気手術器', maker: 'オリンパス', model: 'ESG-400', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+    { id: 5, managementDept: '臨床工学部', installDept: '手術室', qrLabel: 'QR-2025-0031', itemName: '電気手術器', maker: 'オリンパス', model: 'ESG-400', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+  ],
+  '4': [
+    { id: 6, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0050', itemName: '透析装置', maker: '日機装', model: 'DBG-03', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2024/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+    { id: 7, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0051', itemName: '透析装置', maker: '日機装', model: 'DBG-03', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2024/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+    { id: 8, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0052', itemName: '透析装置', maker: '日機装', model: 'DBG-03', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2024/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+  ],
+  '5': [
+    { id: 9, managementDept: '臨床工学部', installDept: '放射線科', qrLabel: 'QR-2025-0070', itemName: 'MRI装置', maker: 'フィリップス', model: 'Ingenia Ambition', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2026/02/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
+  ],
+  '6': [
+    { id: 10, managementDept: '施設管理部', installDept: '本館', qrLabel: 'QR-2025-0090', itemName: 'エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: true, legalInspectionBasis: '資産M', comment: '' },
+    { id: 11, managementDept: '施設管理部', installDept: '別館', qrLabel: 'QR-2025-0091', itemName: 'エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: true, legalInspectionBasis: '資産M', comment: '' },
+  ],
+};
 
-export function MaintenanceContractsTab({ isMobile = false }: MaintenanceContractsTabProps) {
-  const router = useRouter();
-  const { assets, departments } = useMasterStore();
+// テーブルスタイル
+const thGroupStyle: React.CSSProperties = {
+  padding: '8px 6px',
+  border: '1px solid #495057',
+  fontWeight: 600,
+  fontSize: '12px',
+  whiteSpace: 'nowrap',
+  verticalAlign: 'middle',
+};
 
-  // マスタデータからユニーク値を抽出
-  const categories = useMemo(() => [...new Set(['医療機器', '建物設備', ...assets.map((a) => a.category)])], [assets]);
-  const largeClasses = useMemo(() => [...new Set(assets.map((a) => a.largeClass))], [assets]);
-  const mediumClassesMap = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    assets.forEach((a) => {
-      if (!map[a.largeClass]) map[a.largeClass] = [];
-      if (!map[a.largeClass].includes(a.mediumClass)) {
-        map[a.largeClass].push(a.mediumClass);
-      }
-    });
-    return map;
+const thSubStyle: React.CSSProperties = {
+  padding: '6px 8px',
+  border: '1px solid #6c757d',
+  textAlign: 'left',
+  fontWeight: 600,
+  fontSize: '12px',
+  whiteSpace: 'nowrap',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '8px',
+  border: '1px solid #ddd',
+  whiteSpace: 'nowrap',
+  fontSize: '13px',
+};
+
+// === 契約グループ詳細モーダル ===
+const ContractGroupDetailModal = ({
+  isOpen,
+  onClose,
+  contract,
+  assets,
+  onAssetsUpdate,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  contract: MaintenanceContract;
+  assets: ContractGroupAsset[];
+  onAssetsUpdate: (assets: ContractGroupAsset[]) => void;
+}) => {
+  const [localAssets, setLocalAssets] = useState<ContractGroupAsset[]>(assets);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // assets が変わったら同期
+  React.useEffect(() => {
+    setLocalAssets(assets);
   }, [assets]);
-  const itemsMap = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    assets.forEach((a) => {
-      if (!map[a.mediumClass]) map[a.mediumClass] = [];
-      if (!map[a.mediumClass].includes(a.item)) {
-        map[a.mediumClass].push(a.item);
-      }
-    });
-    return map;
-  }, [assets]);
-  // 全中分類リスト
-  const allMediumClasses = useMemo(() => [...new Set(assets.map((a) => a.mediumClass))], [assets]);
-  // 全品目リスト
-  const allItems = useMemo(() => [...new Set(assets.map((a) => a.item))], [assets]);
-  // 中分類→大分類の逆引き
-  const mediumToLargeMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    assets.forEach((a) => {
-      if (!map[a.mediumClass]) map[a.mediumClass] = a.largeClass;
-    });
-    return map;
-  }, [assets]);
-  // 品目→中分類の逆引き
-  const itemToMediumMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    assets.forEach((a) => {
-      if (!map[a.item]) map[a.item] = a.mediumClass;
-    });
-    return map;
-  }, [assets]);
-  const makers = useMemo(() => [...new Set(assets.map((a) => a.maker))], [assets]);
-  const departmentNames = useMemo(() => [...new Set(departments.map((d) => d.department))], [departments]);
-  const contractGroupNames = useMemo(
-    () => [...new Set(MOCK_CONTRACTS.filter((c) => c.contractGroupName).map((c) => c.contractGroupName))],
-    []
+
+  if (!isOpen) return null;
+
+  const updateAsset = (assetId: number, updates: Partial<ContractGroupAsset>) => {
+    setLocalAssets(prev => prev.map(a => a.id === assetId ? { ...a, ...updates } : a));
+  };
+
+  const handleSaveRow = (assetId: number) => {
+    setEditingId(null);
+    // localAssets は既に更新済み
+  };
+
+  // 資産追加
+  const handleAddAsset = () => {
+    const maxId = localAssets.length > 0 ? Math.max(...localAssets.map(a => a.id)) : 0;
+    const newAsset: ContractGroupAsset = {
+      id: maxId + 1,
+      managementDept: '',
+      installDept: '',
+      qrLabel: '',
+      itemName: '',
+      maker: '',
+      model: '',
+      inspectionGroupName: '',
+      inspectionType: '',
+      inspectionCycle: '',
+      warrantyStart: '',
+      warrantyEnd: '',
+      partsExemption: false,
+      exemptionAmount: '',
+      onCall: false,
+      remote: false,
+      legalInspection: false,
+      legalInspectionBasis: '',
+      comment: '',
+    };
+    setLocalAssets(prev => [...prev, newAsset]);
+    setEditingId(newAsset.id);
+  };
+
+  const handleRegister = () => {
+    onAssetsUpdate(localAssets);
+    alert('点検管理リストに登録しました。');
+    onClose();
+  };
+
+  // モーダル内テーブルスタイル
+  const mThGroup: React.CSSProperties = {
+    padding: '6px 8px',
+    border: '1px solid #aaa',
+    fontWeight: 600,
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    textAlign: 'center',
+    verticalAlign: 'middle',
+  };
+  const mThSub: React.CSSProperties = {
+    padding: '5px 6px',
+    border: '1px solid #bbb',
+    fontWeight: 600,
+    fontSize: '11px',
+    whiteSpace: 'nowrap',
+    textAlign: 'center',
+  };
+  const mTd: React.CSSProperties = {
+    padding: '6px 8px',
+    border: '1px solid #ddd',
+    fontSize: '12px',
+    whiteSpace: 'nowrap',
+    verticalAlign: 'middle',
+  };
+  const cellInput: React.CSSProperties = {
+    padding: '3px 6px',
+    border: '1px solid #ccc',
+    borderRadius: '3px',
+    fontSize: '11px',
+    boxSizing: 'border-box' as const,
+  };
+
+  // ○/× 表示
+  const boolDisplay = (val: boolean) => (
+    <span style={{ color: val ? '#27ae60' : '#999', fontWeight: val ? 'bold' : 'normal' }}>
+      {val ? '○' : '×'}
+    </span>
   );
 
-  // 契約データ（登録で追加される）
-  const [contracts, setContracts] = useState<MaintenanceContract[]>(MOCK_CONTRACTS);
+  // 点検情報の10列を表示モード or 編集モードで描画
+  const renderInspectionCells = (asset: ContractGroupAsset) => {
+    const isEditing = editingId === asset.id;
 
-  // モーダル状態
-  const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
-  const [selectedContractForDetail, setSelectedContractForDetail] = useState<MaintenanceContract | null>(null);
-  const [isContractReviewModalOpen, setIsContractReviewModalOpen] = useState(false);
-  const [contractForReview, setContractForReview] = useState<MaintenanceContract | null>(null);
-
-  // フィルター状態
-  const [filters, setFilters] = useState({
-    category: '',
-    status: '',
-    deadline: '', // 期限フィルター: 'near' = 3ヶ月以内
-    managementDepartment: '',
-    installationDepartment: '',
-    contractGroupName: '',
-    largeClass: '',
-    mediumClass: '',
-    item: '',
-    maker: '',
-    remoteMaintenance: '', // 'yes' | 'no' | ''
-  });
-
-  // フィルタリング
-  const filteredContracts = useMemo(() => {
-    return contracts.filter((contract) => {
-      if (filters.category && contract.category !== filters.category) return false;
-      if (filters.status && contract.status !== filters.status) return false;
-      if (filters.deadline === 'near') {
-        // 期限90日以内または廃棄申請
-        const isNearDeadline =
-          (contract.deadlineDays !== null && contract.deadlineDays <= 90) ||
-          contract.status === '廃棄申請';
-        if (!isNearDeadline) return false;
-      }
-      if (filters.managementDepartment && contract.managementDepartment !== filters.managementDepartment) return false;
-      if (filters.installationDepartment && contract.installationDepartment !== filters.installationDepartment)
-        return false;
-      if (filters.contractGroupName && contract.contractGroupName !== filters.contractGroupName) return false;
-      if (filters.largeClass && contract.largeClass !== filters.largeClass) return false;
-      if (filters.mediumClass && contract.mediumClass !== filters.mediumClass) return false;
-      if (filters.item && contract.item !== filters.item) return false;
-      if (filters.maker && contract.maker !== filters.maker) return false;
-      if (filters.remoteMaintenance === 'yes' && !contract.hasRemoteMaintenance) return false;
-      if (filters.remoteMaintenance === 'no' && contract.hasRemoteMaintenance) return false;
-      return true;
-    });
-  }, [contracts, filters]);
-
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters((prev) => {
-      const newFilters = { ...prev, [field]: value };
-      // 品目選択時は中分類・大分類を自動設定
-      if (field === 'item' && value) {
-        const mc = itemToMediumMap[value];
-        if (mc) {
-          newFilters.mediumClass = mc;
-          const lc = mediumToLargeMap[mc];
-          if (lc) newFilters.largeClass = lc;
-        }
-      }
-      // 中分類選択時は大分類を自動設定
-      if (field === 'mediumClass' && value) {
-        const lc = mediumToLargeMap[value];
-        if (lc) newFilters.largeClass = lc;
-      }
-      // 大分類変更時は中分類・品目をリセット
-      if (field === 'largeClass') {
-        newFilters.mediumClass = '';
-        newFilters.item = '';
-      }
-      return newFilters;
-    });
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      category: '',
-      status: '',
-      deadline: '',
-      managementDepartment: '',
-      installationDepartment: '',
-      contractGroupName: '',
-      largeClass: '',
-      mediumClass: '',
-      item: '',
-      maker: '',
-      remoteMaintenance: '',
-    });
-  };
-
-  // 保守契約登録
-  const handleRegisterContract = (data: MaintenanceContractFormData) => {
-    // 1契約グループ = 1レコード（複数資産を内包）
-    const firstAsset = data.selectedAssets[0];
-
-    // 保証期間終了日を1年後として設定（仮）
-    const warrantyEnd = new Date();
-    warrantyEnd.setFullYear(warrantyEnd.getFullYear() + 1);
-    const warrantyEndDate = `${warrantyEnd.getFullYear()}/${String(warrantyEnd.getMonth() + 1).padStart(2, '0')}/${String(warrantyEnd.getDate()).padStart(2, '0')}`;
-
-    // 保証期間までの日数を計算
-    const today = new Date();
-    const deadlineDays = Math.ceil((warrantyEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    const newContract: MaintenanceContract = {
-      id: `new-${Date.now()}`,
-      managementDepartment: data.managementDepartment,
-      installationDepartment: firstAsset?.section || '',
-      contractGroupName: data.contractGroupName,
-      maintenanceType: data.maintenanceType,
-      acceptanceDate: `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`,
-      contractStartDate: '',
-      contractEndDate: '',
-      contractorName: '',
-      contractorPerson: '',
-      contractorEmail: '',
-      contractorPhone: '',
-      contractAmount: 0,
-      status: '保守・点検申請' as ContractStatus,
-      warrantyEndDate,
-      deadlineDays,
-      comment: data.hasLegalInspection ? '法令点検あり' : '',
-      category: firstAsset?.category || '',
-      largeClass: firstAsset?.largeClass || '',
-      mediumClass: firstAsset?.mediumClass || '',
-      item: firstAsset?.item || '',
-      maker: firstAsset?.maker || '',
-      hasRemoteMaintenance: false,
-      assets: data.selectedAssets.map((asset) => ({
-        qrLabel: asset.qrCode,
-        managementDepartment: data.managementDepartment,
-        installationDepartment: asset.section,
-        item: asset.item,
-        maker: asset.maker,
-        model: asset.model,
-        maintenanceType: data.maintenanceType,
-        acceptanceDate: '',
-        contractStartDate: '',
-        contractEndDate: '',
-        inspectionCountPerYear: 0,
-        partsExemption: '',
-        onCall: false,
-        hasRemote: false,
-        comment: '',
-      })),
-    };
-    setContracts((prev) => [...prev, newContract]);
-    alert(`契約グループ「${data.contractGroupName}」を登録しました（${data.selectedAssets.length}件の資産）\n\nステータス: 保守・点検申請\n次のタスク: 見積依頼（mail送信）`);
-  };
-
-  const getStatusStyle = (status: ContractStatus): React.CSSProperties => {
-    switch (status) {
-      case '保守・点検申請':
-        return { backgroundColor: '#e74c3c', color: 'white' };
-      case '見積依頼済':
-        return { backgroundColor: '#f39c12', color: 'white' };
-      case '登録済':
-        return { backgroundColor: '#27ae60', color: 'white' };
-      case '廃棄申請':
-        return { backgroundColor: '#34495e', color: 'white' };
-      default:
-        return { backgroundColor: '#95a5a6', color: 'white' };
+    if (isEditing) {
+      return (
+        <>
+          <td style={mTd}>
+            <input type="text" value={asset.inspectionGroupName} onChange={(e) => updateAsset(asset.id, { inspectionGroupName: e.target.value })} placeholder={contract.contractGroupName || '-'} style={{ ...cellInput, width: '120px' }} />
+          </td>
+          <td style={mTd}>
+            <select value={asset.inspectionType} onChange={(e) => updateAsset(asset.id, { inspectionType: e.target.value })} style={{ ...cellInput, width: '110px' }}>
+              <option value="">-</option>
+              <option value="院内点検">院内点検</option>
+              <option value="メーカー点検">メーカー点検</option>
+              <option value="スポット点検">スポット点検</option>
+            </select>
+          </td>
+          <td style={mTd}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <input type="number" min="0" max="120" value={asset.inspectionCycle} onChange={(e) => updateAsset(asset.id, { inspectionCycle: e.target.value })} placeholder="-" style={{ ...cellInput, width: '45px', textAlign: 'right' }} />
+              <span style={{ fontSize: '10px', color: '#666' }}>ヶ月</span>
+            </div>
+          </td>
+          <td style={mTd}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <input type="date" value={asset.warrantyStart ? asset.warrantyStart.replace(/\//g, '-') : ''} onChange={(e) => updateAsset(asset.id, { warrantyStart: e.target.value })} style={{ ...cellInput, width: '120px', fontSize: '10px' }} />
+              <span style={{ fontSize: '10px' }}>〜</span>
+              <input type="date" value={asset.warrantyEnd ? asset.warrantyEnd.replace(/\//g, '-') : ''} onChange={(e) => updateAsset(asset.id, { warrantyEnd: e.target.value })} style={{ ...cellInput, width: '120px', fontSize: '10px' }} />
+            </div>
+          </td>
+          <td style={{ ...mTd, textAlign: 'center' }}>
+            <select value={asset.partsExemption ? '有' : '無'} onChange={(e) => updateAsset(asset.id, { partsExemption: e.target.value === '有' })} style={{ ...cellInput, width: '50px' }}>
+              <option value="無">無</option>
+              <option value="有">有</option>
+            </select>
+          </td>
+          <td style={mTd}>
+            <input type="text" value={asset.exemptionAmount} onChange={(e) => updateAsset(asset.id, { exemptionAmount: e.target.value })} placeholder="-" style={{ ...cellInput, width: '80px' }} />
+          </td>
+          <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { onCall: !asset.onCall })}>
+            {boolDisplay(asset.onCall)}
+          </td>
+          <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { remote: !asset.remote })}>
+            {boolDisplay(asset.remote)}
+          </td>
+          <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { legalInspection: !asset.legalInspection })}>
+            {boolDisplay(asset.legalInspection)}
+          </td>
+          <td style={mTd}>
+            <input type="text" value={asset.comment} onChange={(e) => updateAsset(asset.id, { comment: e.target.value })} placeholder="-" style={{ ...cellInput, width: '100px' }} />
+          </td>
+        </>
+      );
     }
-  };
 
-  // 期限表示の生成
-  const getDeadlineDisplay = (contract: MaintenanceContract): { text: string; style: React.CSSProperties } => {
-    switch (contract.status) {
-      case '保守・点検申請':
-        if (contract.deadlineDays !== null) {
-          const isUrgent = contract.deadlineDays <= 30;
-          return {
-            text: `保証期間${contract.deadlineDays}日前`,
-            style: { color: isUrgent ? '#e74c3c' : '#f39c12', fontWeight: isUrgent ? 'bold' : 'normal' },
-          };
-        }
-        return { text: '-', style: {} };
-      case '見積依頼済':
-        return { text: '-', style: { color: '#999' } };
-      case '登録済':
-        if (contract.deadlineDays !== null) {
-          const isUrgent = contract.deadlineDays <= 30;
-          return {
-            text: `契約期限${contract.deadlineDays}日前`,
-            style: { color: isUrgent ? '#e74c3c' : '#f39c12', fontWeight: isUrgent ? 'bold' : 'normal' },
-          };
-        }
-        return { text: '-', style: {} };
-      case '廃棄申請':
-        return { text: '至急対応', style: { color: '#e74c3c', fontWeight: 'bold' } };
-      default:
-        return { text: '-', style: {} };
-    }
-  };
-
-  // 操作ボタンの生成
-  const getActionButton = (contract: MaintenanceContract): { label: string; style: React.CSSProperties; onClick: () => void } => {
-    switch (contract.status) {
-      case '保守・点検申請':
-        return {
-          label: '見積依頼',
-          style: { backgroundColor: '#3498db' },
-          onClick: () => handleQuoteRequest(contract),
-        };
-      case '見積依頼済':
-        return {
-          label: '見積登録',
-          style: { backgroundColor: '#27ae60' },
-          onClick: () => handleQuoteRegistration(contract),
-        };
-      case '登録済':
-        return {
-          label: '見積依頼',
-          style: { backgroundColor: '#3498db' },
-          onClick: () => handleQuoteRequest(contract),
-        };
-      case '廃棄申請':
-        return {
-          label: '契約内容見直し',
-          style: { backgroundColor: '#e74c3c' },
-          onClick: () => handleContractReview(contract),
-        };
-      default:
-        return {
-          label: '詳細',
-          style: { backgroundColor: '#95a5a6' },
-          onClick: () => setSelectedContractForDetail(contract),
-        };
-    }
-  };
-
-  // 見積依頼
-  const handleQuoteRequest = (contract: MaintenanceContract) => {
-    // ステータスを見積依頼済に更新
-    setContracts((prev) =>
-      prev.map((c) =>
-        c.id === contract.id
-          ? { ...c, status: '見積依頼済' as ContractStatus, deadlineDays: null }
-          : c
-      )
+    // 表示モード
+    return (
+      <>
+        <td style={mTd}>{asset.inspectionGroupName || '-'}</td>
+        <td style={mTd}>{asset.inspectionType || '-'}</td>
+        <td style={mTd}>{asset.inspectionCycle ? `${asset.inspectionCycle}ヶ月` : '-'}</td>
+        <td style={mTd}>
+          {asset.warrantyStart || asset.warrantyEnd
+            ? `${asset.warrantyStart || ''}〜${asset.warrantyEnd || ''}`
+            : '-'}
+        </td>
+        <td style={{ ...mTd, textAlign: 'center' }}>{asset.partsExemption ? '有' : '-'}</td>
+        <td style={mTd}>{asset.exemptionAmount || '-'}</td>
+        <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.onCall)}</td>
+        <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.remote)}</td>
+        <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.legalInspection)}</td>
+        <td style={mTd}>{asset.comment || '-'}</td>
+      </>
     );
-
-    alert('見積依頼を実行しました。ステータスが「見積依頼済」に更新されました。');
-  };
-
-  // 見積登録
-  const handleQuoteRegistration = (contract: MaintenanceContract) => {
-    // 見積登録画面へ遷移（contractデータをsessionStorageに保存）
-    sessionStorage.setItem('maintenanceContract', JSON.stringify(contract));
-    router.push(`/maintenance-quote-registration?id=${contract.id}`);
-  };
-
-  // 契約内容見直しモーダルを開く
-  const handleContractReview = (contract: MaintenanceContract) => {
-    setContractForReview(contract);
-    setIsContractReviewModalOpen(true);
-  };
-
-  // 契約内容見直しの実行
-  const handleContractReviewSubmit = (contractId: string, result: ContractReviewResult) => {
-    setContracts((prev) =>
-      prev.map((c) => {
-        if (c.id !== contractId) return c;
-
-        // 選択された資産を除外
-        const remainingAssets = c.assets.filter(
-          (asset) => !result.removedAssetQrLabels.includes(asset.qrLabel)
-        );
-
-        // 契約期限を再計算
-        const deadlineDays = c.contractEndDate
-          ? Math.ceil(
-              (new Date(c.contractEndDate.replace(/\//g, '-')).getTime() - new Date().getTime()) /
-                (1000 * 60 * 60 * 24)
-            )
-          : null;
-
-        // コメントに見直し理由を追記
-        const updatedComment = c.comment
-          ? `${c.comment}｜${result.reviewReason}`
-          : result.reviewReason;
-
-        return {
-          ...c,
-          status: '登録済' as ContractStatus,
-          contractAmount: result.newContractAmount,
-          comment: updatedComment,
-          deadlineDays,
-          assets: remainingAssets,
-        };
-      })
-    );
-
-    alert(
-      `契約内容の見直しを完了しました。\n\n` +
-      `除外資産: ${result.removedAssetQrLabels.length}件\n` +
-      `見直し後金額: ¥${result.newContractAmount.toLocaleString()}（税別）\n` +
-      `添付ファイル: ${result.uploadedFiles.length}件`
-    );
-  };
-
-  const styles: Record<string, React.CSSProperties> = {
-    container: {
-      padding: isMobile ? '12px' : '24px',
-    },
-    filterSection: {
-      padding: '16px',
-      borderBottom: '1px solid #e0e0e0',
-      backgroundColor: '#f8f9fa',
-    },
-    filterHeader: {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      marginBottom: '12px',
-    },
-    filterRow: {
-      display: 'flex',
-      flexWrap: 'wrap' as const,
-      gap: '12px',
-    },
-    filterItem: {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      gap: '4px',
-      minWidth: '100px',
-      flex: '1 1 100px',
-      maxWidth: '130px',
-    },
-    filterLabel: {
-      fontSize: '12px',
-      color: '#7f8c8d',
-    },
-    select: {
-      padding: '8px 12px',
-      borderRadius: '4px',
-      border: '1px solid #ddd',
-      fontSize: '14px',
-      backgroundColor: 'white',
-    },
-    buttonGroup: {
-      display: 'flex',
-      gap: '8px',
-      marginTop: '12px',
-    },
-    clearButton: {
-      padding: '8px 16px',
-      backgroundColor: '#95a5a6',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-    },
-    actionButtonGroup: {
-      display: 'flex',
-      gap: '8px',
-      marginBottom: '16px',
-      flexWrap: 'wrap' as const,
-    },
-    actionButton: {
-      padding: '10px 20px',
-      backgroundColor: '#3498db',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: 500,
-    },
-    secondaryButton: {
-      padding: '10px 20px',
-      backgroundColor: '#27ae60',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: 500,
-    },
-    tableContainer: {
-      overflowX: 'auto' as const,
-      border: '1px solid #dee2e6',
-      borderRadius: '8px',
-    },
-    table: {
-      width: '100%',
-      borderCollapse: 'collapse' as const,
-      fontSize: '13px',
-    },
-    th: {
-      backgroundColor: '#f8f9fa',
-      padding: '10px 8px',
-      textAlign: 'left' as const,
-      fontWeight: 600,
-      whiteSpace: 'nowrap' as const,
-      border: '1px solid #ddd',
-    },
-    thGroup: {
-      backgroundColor: '#e8ecef',
-      padding: '8px',
-      textAlign: 'center' as const,
-      fontWeight: 600,
-      fontSize: '12px',
-      border: '1px solid #ddd',
-      borderLeft: '2px solid #ccc',
-    },
-    thFirstInGroup: {
-      borderLeft: '2px solid #ccc',
-    },
-    td: {
-      padding: '8px',
-      border: '1px solid #ddd',
-      whiteSpace: 'nowrap' as const,
-    },
-    tdFirstInGroup: {
-      borderLeft: '2px solid #ccc',
-    },
-    statusBadge: {
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '11px',
-      fontWeight: 500,
-      display: 'inline-block',
-    },
-    rowEven: {
-      backgroundColor: 'white',
-    },
-    rowOdd: {
-      backgroundColor: '#fafafa',
-    },
-    remoteBadge: {
-      padding: '2px 6px',
-      borderRadius: '4px',
-      fontSize: '10px',
-      fontWeight: 500,
-    },
-    emptyState: {
-      textAlign: 'center' as const,
-      padding: '48px 24px',
-      color: '#7f8c8d',
-    },
-    editButton: {
-      padding: '4px 8px',
-      backgroundColor: '#3498db',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      fontSize: '12px',
-    },
   };
 
   return (
-    <div style={styles.container}>
-      {/* フィルターセクション */}
-      <div style={styles.filterSection}>
-        <div style={styles.filterHeader}>
-          <button style={styles.actionButton} onClick={() => setIsRegistrationModalOpen(true)}>
-            保守契約登録
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(0,0,0,0.5)',
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '8px',
+        width: '95%',
+        maxWidth: '1400px',
+        maxHeight: '85vh',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+      }}>
+        {/* ヘッダー */}
+        <div style={{
+          padding: '16px 20px',
+          borderBottom: '1px solid #eee',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', color: '#333' }}>
+              契約グループ詳細: {contract.contractGroupName || '未設定'}
+            </h3>
+            <button
+              onClick={handleAddAsset}
+              style={{
+                padding: '6px 14px',
+                background: '#2c3e50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+              }}
+            >
+              資産を追加
+            </button>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: '20px',
+              cursor: 'pointer',
+              color: '#666',
+              padding: '4px 8px',
+            }}
+            aria-label="閉じる"
+          >
+            ×
           </button>
         </div>
-        <div style={styles.filterRow}>
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>category</label>
-            <select
-              style={styles.select}
-              value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-            >
-              <option value="">すべて</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>ステータス</label>
-            <select
-              style={styles.select}
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-            >
-              <option value="">すべて</option>
-              {CONTRACT_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>期限</label>
-            <select
-              style={styles.select}
-              value={filters.deadline}
-              onChange={(e) => handleFilterChange('deadline', e.target.value)}
-            >
-              <option value="">すべて</option>
-              <option value="near">3ヶ月以内に期限到来</option>
-            </select>
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>管理部署</label>
-            <SearchableSelect
-              options={departmentNames}
-              value={filters.managementDepartment}
-              onChange={(v) => handleFilterChange('managementDepartment', v)}
-              placeholder="選択してください"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>設置部署</label>
-            <SearchableSelect
-              options={departmentNames}
-              value={filters.installationDepartment}
-              onChange={(v) => handleFilterChange('installationDepartment', v)}
-              placeholder="選択してください"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>契約グループ名称</label>
-            <SearchableSelect
-              options={contractGroupNames}
-              value={filters.contractGroupName}
-              onChange={(v) => handleFilterChange('contractGroupName', v)}
-              placeholder="選択してください"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>大分類</label>
-            <SearchableSelect
-              options={largeClasses}
-              value={filters.largeClass}
-              onChange={(v) => handleFilterChange('largeClass', v)}
-              placeholder="選択してください"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>中分類</label>
-            <SearchableSelect
-              options={filters.largeClass ? mediumClassesMap[filters.largeClass] || [] : allMediumClasses}
-              value={filters.mediumClass}
-              onChange={(v) => handleFilterChange('mediumClass', v)}
-              placeholder="全て"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>品目</label>
-            <SearchableSelect
-              options={filters.mediumClass ? itemsMap[filters.mediumClass] || [] : allItems}
-              value={filters.item}
-              onChange={(v) => handleFilterChange('item', v)}
-              placeholder="全て"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>メーカー</label>
-            <SearchableSelect
-              options={makers}
-              value={filters.maker}
-              onChange={(v) => handleFilterChange('maker', v)}
-              placeholder="選択してください"
-            />
-          </div>
-
-          <div style={styles.filterItem}>
-            <label style={styles.filterLabel}>リモートメンテ</label>
-            <select
-              style={styles.select}
-              value={filters.remoteMaintenance}
-              onChange={(e) => handleFilterChange('remoteMaintenance', e.target.value)}
-            >
-              <option value="">すべて</option>
-              <option value="yes">あり</option>
-              <option value="no">なし</option>
-            </select>
-          </div>
+        {/* テーブルコンテンツ */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              {/* グループヘッダー行 */}
+              <tr>
+                <th colSpan={2} style={{ ...mThGroup, background: '#e0e0e0', color: '#333' }}>部署情報</th>
+                <th colSpan={4} style={{ ...mThGroup, background: '#e0e0e0', color: '#333' }}>商品情報</th>
+                <th colSpan={10} style={{ ...mThGroup, background: '#fff176', color: '#333' }}>点検情報</th>
+                <th rowSpan={2} style={{ ...mThGroup, background: '#e0e0e0', color: '#333' }}>操作</th>
+              </tr>
+              {/* サブカラムヘッダー行 */}
+              <tr>
+                {/* 部署情報 */}
+                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>管理部署</th>
+                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>設置部署</th>
+                {/* 商品情報 */}
+                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>QRラベル</th>
+                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>品目</th>
+                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>メーカー</th>
+                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>型式</th>
+                {/* 点検情報 */}
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>点検グループ名</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>点検種別</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>点検周期</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>保証期間</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>部品免責</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>免責金額</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>オンコール</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>リモート</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>法定点検</th>
+                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>コメント</th>
+              </tr>
+            </thead>
+            <tbody>
+              {localAssets.map((asset, idx) => {
+                const isEditing = editingId === asset.id;
+                const isNewAsset = !asset.qrLabel && !asset.itemName;
+                return (
+                <tr key={asset.id} style={{ background: isEditing ? '#fffde7' : idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                  {/* 部署情報（新規追加時は編集可能） */}
+                  {isEditing && isNewAsset ? (
+                    <>
+                      <td style={mTd}><input type="text" value={asset.managementDept} onChange={(e) => updateAsset(asset.id, { managementDept: e.target.value })} placeholder="管理部署" style={{ ...cellInput, width: '90px' }} /></td>
+                      <td style={mTd}><input type="text" value={asset.installDept} onChange={(e) => updateAsset(asset.id, { installDept: e.target.value })} placeholder="設置部署" style={{ ...cellInput, width: '90px' }} /></td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.managementDept || '-'}</td>
+                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.installDept || '-'}</td>
+                    </>
+                  )}
+                  {/* 商品情報（新規追加時は編集可能） */}
+                  {isEditing && isNewAsset ? (
+                    <>
+                      <td style={mTd}><input type="text" value={asset.qrLabel} onChange={(e) => updateAsset(asset.id, { qrLabel: e.target.value })} placeholder="QRラベル" style={{ ...cellInput, width: '120px', fontFamily: 'monospace' }} /></td>
+                      <td style={mTd}><input type="text" value={asset.itemName} onChange={(e) => updateAsset(asset.id, { itemName: e.target.value })} placeholder="品目" style={{ ...cellInput, width: '140px' }} /></td>
+                      <td style={mTd}><input type="text" value={asset.maker} onChange={(e) => updateAsset(asset.id, { maker: e.target.value })} placeholder="メーカー" style={{ ...cellInput, width: '100px' }} /></td>
+                      <td style={mTd}><input type="text" value={asset.model} onChange={(e) => updateAsset(asset.id, { model: e.target.value })} placeholder="型式" style={{ ...cellInput, width: '100px' }} /></td>
+                    </>
+                  ) : (
+                    <>
+                      <td style={{ ...mTd, background: '#f9f9f9', fontFamily: 'monospace', fontWeight: 600, color: '#3498db' }}>{asset.qrLabel || '-'}</td>
+                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.itemName || '-'}</td>
+                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.maker || '-'}</td>
+                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.model || '-'}</td>
+                    </>
+                  )}
+                  {/* 点検情報（表示 or 編集） */}
+                  {renderInspectionCells(asset)}
+                  {/* 操作 */}
+                  <td style={{ ...mTd, textAlign: 'center' }}>
+                    {isEditing ? (
+                      <button
+                        onClick={() => handleSaveRow(asset.id)}
+                        style={{
+                          padding: '4px 10px',
+                          background: '#27ae60',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        保存
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setEditingId(asset.id)}
+                        style={{
+                          padding: '4px 10px',
+                          background: '#3498db',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                        }}
+                      >
+                        編集
+                      </button>
+                    )}
+                  </td>
+                </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
-        <div style={styles.buttonGroup}>
-          <button style={styles.clearButton} onClick={handleClearFilters}>
-            条件をクリア
+        {/* フッター */}
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid #eee',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '8px',
+        }}>
+          <button
+            onClick={handleRegister}
+            style={{
+              padding: '10px 20px',
+              background: '#27ae60',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+            }}
+          >
+            点検管理リストに登録
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 20px',
+              background: '#999',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: 600,
+            }}
+          >
+            閉じる
           </button>
         </div>
       </div>
 
-      {/* 結果件数 */}
-      <div style={{ marginBottom: '12px', fontSize: '14px', color: '#7f8c8d' }}>
-        {filteredContracts.length}件表示
+    </div>
+  );
+};
+
+export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = () => {
+  const router = useRouter();
+  const [contracts, setContracts] = useState<MaintenanceContract[]>(MOCK_CONTRACTS);
+
+  // フリーコメント編集用
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<MaintenanceContract | null>(null);
+  const [editComment, setEditComment] = useState('');
+
+  // 契約グループ詳細モーダル
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailContract, setDetailContract] = useState<MaintenanceContract | null>(null);
+  const [groupAssets, setGroupAssets] = useState<Record<string, ContractGroupAsset[]>>({ ...MOCK_GROUP_ASSETS });
+
+  // ソート状態
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+
+  // ソート適用
+  const sortedContracts = useMemo(() => {
+    if (!sortDirection) return contracts;
+    const sorted = [...contracts];
+    const multiplier = sortDirection === 'asc' ? 1 : -1;
+    sorted.sort((a, b) => {
+      const statusA = calcStatus(a);
+      const statusB = calcStatus(b);
+      return (statusA.sortValue - statusB.sortValue) * multiplier;
+    });
+    return sorted;
+  }, [contracts, sortDirection]);
+
+  // ソートトグル
+  const handleSortToggle = () => {
+    setSortDirection(prev => {
+      if (prev === null) return 'asc';
+      if (prev === 'asc') return 'desc';
+      return null;
+    });
+  };
+
+  const getSortArrow = () => {
+    const upColor = sortDirection === 'asc' ? '#c0392b' : '#aaa';
+    const downColor = sortDirection === 'desc' ? '#c0392b' : '#aaa';
+    return (
+      <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '4px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
+        <span style={{ color: upColor }}>&#9650;</span>
+        <span style={{ color: downColor, marginTop: '-2px' }}>&#9660;</span>
+      </span>
+    );
+  };
+
+  // フリーコメント
+  const openCommentModal = (contract: MaintenanceContract) => {
+    setSelectedContract(contract);
+    setEditComment(contract.comment);
+    setShowCommentModal(true);
+  };
+
+  const handleSaveComment = () => {
+    if (!selectedContract) return;
+    setContracts(prev => prev.map(c =>
+      c.id === selectedContract.id ? { ...c, comment: editComment } : c
+    ));
+    setShowCommentModal(false);
+    setSelectedContract(null);
+  };
+
+  // 契約グループ詳細モーダル
+  const handleRowDoubleClick = (contract: MaintenanceContract) => {
+    setDetailContract(contract);
+    setShowDetailModal(true);
+  };
+
+  const handleAssetsUpdate = (updatedAssets: ContractGroupAsset[]) => {
+    if (!detailContract) return;
+    setGroupAssets(prev => ({ ...prev, [detailContract.id]: updatedAssets }));
+  };
+
+  // 金額フォーマット
+  const formatAmount = (amount: number) => {
+    if (amount === 0) return '-';
+    return amount.toLocaleString();
+  };
+
+  // 契約種別バッジ色
+  const getContractTypeBadge = (type: ContractType) => {
+    const colors: Record<ContractType, string> = {
+      '保守契約': '#2980b9',
+      '定期点検': '#27ae60',
+      'スポット契約': '#e67e22',
+      '借用契約': '#8e44ad',
+      'その他': '#7f8c8d',
+    };
+    return (
+      <span style={{
+        padding: '3px 10px',
+        borderRadius: '10px',
+        fontSize: '11px',
+        fontWeight: 'bold',
+        background: colors[type] || '#95a5a6',
+        color: 'white',
+        whiteSpace: 'nowrap',
+      }}>
+        {type}
+      </span>
+    );
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* 情報バー */}
+      <div style={{
+        padding: '12px 16px',
+        background: '#f8f9fa',
+        borderBottom: '1px solid #dee2e6',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span style={{ fontSize: '13px', color: '#333' }}>
+          <strong>{sortedContracts.length}件</strong>表示
+        </span>
+        <button
+          onClick={() => alert('保守契約登録（未実装）')}
+          style={{
+            padding: '8px 16px',
+            background: '#2c3e50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}
+        >
+          保守契約登録
+        </button>
       </div>
 
       {/* テーブル */}
-      <div style={styles.tableContainer}>
-        <table style={styles.table}>
-          <thead>
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
-            <tr>
-              <th style={{ ...styles.thGroup }} colSpan={2}>部署情報</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>契約グループ</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>保守種別</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>検収年月日</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>保守契約期間</th>
-              <th style={{ ...styles.thGroup }} colSpan={4}>業者情報（導入業者）</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>契約金額（税別）</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>ステータス</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>期限</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>操作</th>
-              <th style={{ ...styles.thGroup }} rowSpan={2}>フリーコメント</th>
+            <tr style={{ background: '#343a40', color: 'white' }}>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>契約情報</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>業者情報</th>
+              <th
+                colSpan={2}
+                style={{ ...thGroupStyle, textAlign: 'center', background: '#ffcc80', color: '#333', borderColor: '#ef6c00', cursor: 'pointer' }}
+                onClick={handleSortToggle}
+              >
+                契約検討開始{getSortArrow()}
+              </th>
+              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#ef5350', color: 'white', borderColor: '#c62828' }}>操作</th>
             </tr>
-            {/* カラムヘッダー */}
-            <tr>
-              <th style={styles.th}>管理部署</th>
-              <th style={styles.th}>設置部署</th>
-              <th style={{ ...styles.th, ...styles.thFirstInGroup }}>契約業者</th>
-              <th style={styles.th}>担当</th>
-              <th style={styles.th}>mail</th>
-              <th style={styles.th}>連絡先</th>
+            {/* サブカラムヘッダー */}
+            <tr style={{ background: '#495057', color: 'white' }}>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>申請No.</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約グループ名</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約種別</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>種別備考</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約日</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約期間</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約金額</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>単年度金額</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約業者</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>担当者</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>連絡先</th>
+              <th style={{ ...thSubStyle, background: '#ffe0b2', color: '#333', borderColor: '#ef6c00' }}>ステータス</th>
+              <th style={{ ...thSubStyle, background: '#ffe0b2', color: '#333', borderColor: '#ef6c00' }}>期限</th>
+              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>登録</th>
+              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>フリーコメント</th>
             </tr>
           </thead>
           <tbody>
-            {filteredContracts.length === 0 ? (
-              <tr>
-                <td colSpan={15} style={styles.emptyState}>
-                  条件に一致する契約がありません
-                </td>
-              </tr>
-            ) : (
-              filteredContracts.map((contract, index) => (
+            {sortedContracts.map((contract, index) => {
+              const status = calcStatus(contract);
+              const deadline = calcDeadlineDisplay(contract);
+              return (
                 <tr
                   key={contract.id}
-                  style={{ ...(index % 2 === 0 ? styles.rowEven : styles.rowOdd), cursor: 'pointer' }}
-                  onDoubleClick={() => setSelectedContractForDetail(contract)}
+                  style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top', cursor: 'pointer' }}
+                  onDoubleClick={() => handleRowDoubleClick(contract)}
                 >
-                  <td style={styles.td}>{contract.managementDepartment}</td>
-                  <td style={styles.td}>{contract.installationDepartment}</td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.contractGroupName || '-'}</td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.maintenanceType || '-'}</td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.acceptanceDate || '-'}</td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>
+                  <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{contract.applicationNo}</td>
+                  <td style={tdStyle}>{contract.contractGroupName}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>{getContractTypeBadge(contract.contractType)}</td>
+                  <td style={{ ...tdStyle, fontSize: '11px', color: '#555' }}>{contract.contractTypeNote || '-'}</td>
+                  <td style={tdStyle} className="tabular-nums">{contract.contractDate}</td>
+                  <td style={{ ...tdStyle, fontSize: '11px' }} className="tabular-nums">
                     {contract.contractStartDate && contract.contractEndDate
                       ? `${contract.contractStartDate}～${contract.contractEndDate}`
-                      : '-'}
+                      : '-'
+                    }
                   </td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.contractorName || '-'}</td>
-                  <td style={styles.td}>{contract.contractorPerson || '-'}</td>
-                  <td style={styles.td}>{contract.contractorEmail || '-'}</td>
-                  <td style={styles.td}>{contract.contractorPhone || '-'}</td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                    {contract.contractAmount > 0 ? contract.contractAmount.toLocaleString() : '-'}
+                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">{formatAmount(contract.contractAmount)}</td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">{formatAmount(contract.annualAmount)}</td>
+                  <td style={tdStyle}>{contract.contractorName || '-'}</td>
+                  <td style={tdStyle}>{contract.contractorPerson || '-'}</td>
+                  <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums">{contract.contractorPhone || '-'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <span style={{
+                      padding: '3px 10px',
+                      borderRadius: '10px',
+                      fontSize: '11px',
+                      fontWeight: status.fontWeight === 'bold' ? 'bold' : 'normal',
+                      color: status.color,
+                      background: status.label === '保証期限切れ' ? '#ffebee' : status.label === '-' ? 'transparent' : '#fff8e1',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {status.label}
+                    </span>
                   </td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>
-                    <span style={{ ...styles.statusBadge, ...getStatusStyle(contract.status) }}>{contract.status}</span>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <span style={{
+                      fontSize: '12px',
+                      color: deadline.color,
+                      fontWeight: deadline.label.includes('超過') ? 'bold' : 'normal',
+                    }} className="tabular-nums">
+                      {deadline.label}
+                    </span>
                   </td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup, ...getDeadlineDisplay(contract).style, whiteSpace: 'nowrap' }}>
-                    {getDeadlineDisplay(contract).text}
-                  </td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
                     {(() => {
-                      const action = getActionButton(contract);
+                      const stepConfig: Record<number, { label: string; color: string }> = {
+                        1: { label: '見積依頼', color: '#7c3aed' },
+                        2: { label: '見積登録', color: '#d97706' },
+                        3: { label: '契約発注', color: '#3498db' },
+                        4: { label: '完了登録', color: '#27ae60' },
+                      };
+                      if (contract.currentStep === 'completed') {
+                        return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>完了</span>;
+                      }
+                      const cfg = stepConfig[contract.currentStep];
                       return (
                         <button
-                          style={{ ...styles.editButton, ...action.style, whiteSpace: 'nowrap' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            action.onClick();
+                          onClick={(e) => { e.stopPropagation(); router.push(`/maintenance-quote-registration?id=${contract.id}&step=${contract.currentStep}`); }}
+                          style={{
+                            padding: '6px 12px',
+                            background: cfg.color,
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            whiteSpace: 'nowrap',
                           }}
                         >
-                          {action.label}
+                          {cfg.label}
                         </button>
                       );
                     })()}
                   </td>
-                  <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{contract.comment || '-'}</td>
+                  <td style={{ ...tdStyle, fontSize: '11px', color: contract.comment ? '#333' : '#bbb' }}>
+                    {contract.comment || '-'}
+                  </td>
                 </tr>
-              ))
-            )}
+              );
+            })}
           </tbody>
         </table>
+
+        {sortedContracts.length === 0 && (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+            該当する保守契約がありません
+          </div>
+        )}
       </div>
 
-      {/* 保守契約登録モーダル */}
-      <MaintenanceContractRegistrationModal
-        isOpen={isRegistrationModalOpen}
-        onClose={() => setIsRegistrationModalOpen(false)}
-        onRegister={handleRegisterContract}
-      />
-
-      {/* 契約内容見直しモーダル */}
-      <ContractReviewModal
-        isOpen={isContractReviewModalOpen}
-        onClose={() => {
-          setIsContractReviewModalOpen(false);
-          setContractForReview(null);
-        }}
-        contract={contractForReview}
-        onSubmit={handleContractReviewSubmit}
-      />
-
-      {/* 契約グループ詳細モーダル */}
-      {selectedContractForDetail && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setSelectedContractForDetail(null)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              width: '95%',
-              maxWidth: '1200px',
-              maxHeight: '90vh',
-              overflow: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '18px', fontWeight: 600, color: '#2c3e50' }}>
-                契約グループ詳細: {selectedContractForDetail.contractGroupName || '未設定'}
-              </span>
-              <button
-                style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#7f8c8d' }}
-                onClick={() => setSelectedContractForDetail(null)}
-              >
-                ×
-              </button>
+      {/* フリーコメントモーダル */}
+      {showCommentModal && selectedContract && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
+          <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee' }}>
+              <h3 style={{ margin: 0, fontSize: '15px', color: '#333' }}>フリーコメント編集</h3>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
+                {selectedContract.applicationNo} - {selectedContract.contractGroupName}
+              </p>
             </div>
-            <div style={{ padding: '24px', overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...styles.thGroup }} colSpan={2}>部署情報</th>
-                    <th style={{ ...styles.thGroup }} colSpan={4}>商品情報</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>保守種別</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>検収年月日</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>保守契約期間</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>点検回数／年</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>部品免責</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>オンコール</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>リモート</th>
-                    <th style={{ ...styles.thGroup }} rowSpan={2}>フリーコメント</th>
-                  </tr>
-                  <tr>
-                    <th style={styles.th}>管理部署</th>
-                    <th style={styles.th}>設置部署</th>
-                    <th style={{ ...styles.th, ...styles.thFirstInGroup }}>QRラベル</th>
-                    <th style={styles.th}>品目</th>
-                    <th style={styles.th}>メーカー</th>
-                    <th style={styles.th}>型式</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedContractForDetail.assets.length === 0 ? (
-                    <tr>
-                      <td colSpan={14} style={{ padding: '24px', textAlign: 'center', color: '#999' }}>
-                        登録された資産がありません
-                      </td>
-                    </tr>
-                  ) : (
-                    selectedContractForDetail.assets.map((asset, idx) => (
-                      <tr key={idx} style={idx % 2 === 0 ? styles.rowEven : styles.rowOdd}>
-                        <td style={styles.td}>{asset.managementDepartment}</td>
-                        <td style={styles.td}>{asset.installationDepartment}</td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{asset.qrLabel}</td>
-                        <td style={styles.td}>{asset.item}</td>
-                        <td style={styles.td}>{asset.maker}</td>
-                        <td style={styles.td}>{asset.model}</td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{asset.maintenanceType || '-'}</td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{asset.acceptanceDate || '-'}</td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>
-                          {asset.contractStartDate && asset.contractEndDate
-                            ? `${asset.contractStartDate}～${asset.contractEndDate}`
-                            : '-'}
-                        </td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup, textAlign: 'center' }}>
-                          {asset.inspectionCountPerYear > 0 ? `${asset.inspectionCountPerYear}回` : '-'}
-                        </td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{asset.partsExemption || '-'}</td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup, textAlign: 'center' }}>
-                          {asset.onCall ? '○' : '×'}
-                        </td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup, textAlign: 'center' }}>
-                          {asset.hasRemote ? '○' : '×'}
-                        </td>
-                        <td style={{ ...styles.td, ...styles.tdFirstInGroup }}>{asset.comment || '-'}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div style={{ padding: '20px' }}>
+              <textarea
+                value={editComment}
+                onChange={(e) => setEditComment(e.target.value)}
+                placeholder="コメントを入力..."
+                style={{
+                  width: '100%',
+                  minHeight: '100px',
+                  padding: '10px',
+                  fontSize: '13px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid #e0e0e0', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
-                style={{ padding: '10px 20px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                onClick={() => alert('点検管理リストに登録しました')}
+                onClick={() => { setShowCommentModal(false); setSelectedContract(null); }}
+                style={{ padding: '8px 16px', background: 'white', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
               >
-                点検管理リストに登録
+                キャンセル
               </button>
               <button
-                style={{ padding: '10px 20px', backgroundColor: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                onClick={() => setSelectedContractForDetail(null)}
+                onClick={handleSaveComment}
+                style={{ padding: '8px 16px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
               >
-                閉じる
+                保存
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* 契約グループ詳細モーダル */}
+      {detailContract && (
+        <ContractGroupDetailModal
+          isOpen={showDetailModal}
+          onClose={() => { setShowDetailModal(false); setDetailContract(null); }}
+          contract={detailContract}
+          assets={groupAssets[detailContract.id] || []}
+          onAssetsUpdate={handleAssetsUpdate}
+        />
+      )}
     </div>
   );
-}
+};
