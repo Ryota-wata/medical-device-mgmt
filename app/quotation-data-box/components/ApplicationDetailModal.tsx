@@ -3,8 +3,6 @@
 import React from 'react';
 import {
   PurchaseApplication,
-  getPurchaseApplicationTypeStyle,
-  getPurchaseApplicationStatusStyle,
 } from '@/lib/types/purchaseApplication';
 
 interface ApplicationDetailModalProps {
@@ -15,6 +13,54 @@ interface ApplicationDetailModalProps {
   onAddToEditList: (id: string) => void;
 }
 
+// 希望順ラベル
+const getHopeLabel = (index: number): string => {
+  const labels = ['第一希望', '第二希望', '第三希望'];
+  return labels[index] || `第${index + 1}希望`;
+};
+
+// 申請種別 → ヘッダータイトル
+const getHeaderTitle = (type: string): string => {
+  switch (type) {
+    case '新規申請': return '新規購入申請 - 内容確認';
+    case '更新申請': return '更新申請 - 内容確認';
+    case '増設申請': return '増設申請 - 内容確認';
+    default: return `${type} - 内容確認`;
+  }
+};
+
+const thStyle: React.CSSProperties = {
+  padding: '8px 12px',
+  background: '#f8f9fa',
+  border: '1px solid #ddd',
+  textAlign: 'left',
+  width: '150px',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '8px 12px',
+  border: '1px solid #ddd',
+};
+
+const tableStyle: React.CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  fontSize: '13px',
+};
+
+const sectionTitleStyle: React.CSSProperties = {
+  fontSize: '14px',
+  fontWeight: 'bold',
+  color: '#4a6741',
+  marginBottom: '16px',
+  paddingBottom: '8px',
+  borderBottom: '2px solid #4a6741',
+};
+
+const sectionStyle: React.CSSProperties = {
+  marginBottom: '24px',
+};
+
 export function ApplicationDetailModal({
   isOpen,
   onClose,
@@ -24,8 +70,7 @@ export function ApplicationDetailModal({
 }: ApplicationDetailModalProps) {
   if (!isOpen || !application) return null;
 
-  const typeStyle = getPurchaseApplicationTypeStyle(application.applicationType);
-  const statusStyle = getPurchaseApplicationStatusStyle(application.status);
+  const commentText = application.comment || application.applicationReason;
 
   return (
     <div
@@ -47,18 +92,19 @@ export function ApplicationDetailModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '12px',
-          width: '90%',
-          maxWidth: '700px',
+          borderRadius: '8px',
+          width: '95%',
+          maxWidth: '900px',
           maxHeight: '90vh',
-          overflow: 'auto',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* ヘッダー */}
         <div
           style={{
-            background: '#3498db',
+            background: '#4a6741',
             color: 'white',
             padding: '16px 24px',
             fontSize: '18px',
@@ -66,15 +112,27 @@ export function ApplicationDetailModal({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderTopLeftRadius: '12px',
-            borderTopRightRadius: '12px',
           }}
         >
-          <span>申請詳細 - {application.applicationNo}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span>{getHeaderTitle(application.applicationType)}</span>
+            <span
+              style={{
+                background: 'white',
+                color: '#4a6741',
+                padding: '4px 12px',
+                borderRadius: '4px',
+                fontSize: '13px',
+                fontWeight: 'bold',
+              }}
+            >
+              購入申請No. {application.applicationNo}
+            </span>
+          </div>
           <button
             onClick={onClose}
             style={{
-              background: 'transparent',
+              background: 'none',
               border: 'none',
               color: 'white',
               fontSize: '24px',
@@ -90,239 +148,210 @@ export function ApplicationDetailModal({
         </div>
 
         {/* ボディ */}
-        <div style={{ padding: '24px' }}>
-          {/* 基本情報 */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '4px' }}>申請種別</div>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '4px',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    ...typeStyle,
-                  }}
-                >
-                  {application.applicationType}
-                </span>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '4px' }}>ステータス</div>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '4px',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    ...statusStyle,
-                  }}
-                >
-                  {application.status}
-                </span>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '4px' }}>申請者</div>
-                <div style={{ fontSize: '14px', color: '#2c3e50', fontWeight: 'bold' }}>
-                  {application.applicantName}
-                </div>
-                <div style={{ fontSize: '12px', color: '#5a6c7d' }}>
-                  {application.applicantDepartment}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '4px' }}>申請日</div>
-                <div style={{ fontSize: '14px', color: '#2c3e50' }}>
-                  {application.applicationDate}
-                </div>
-              </div>
-              {application.desiredDeliveryDate && (
-                <div>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginBottom: '4px' }}>希望納期</div>
-                  <div style={{ fontSize: '14px', color: '#2c3e50' }}>
-                    {application.desiredDeliveryDate}
-                  </div>
-                </div>
-              )}
-            </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+          {/* 基本情報テーブル */}
+          <div style={sectionStyle}>
+            <table style={tableStyle}>
+              <tbody>
+                <tr>
+                  <th style={thStyle}>設置部門</th>
+                  <td style={tdStyle}>{application.department || '-'}</td>
+                  <th style={thStyle}>設置部署</th>
+                  <td style={tdStyle}>{application.section || '-'}</td>
+                </tr>
+                <tr>
+                  <th style={thStyle}>設置室名</th>
+                  <td style={tdStyle}>{application.roomName || '-'}</td>
+                  <th style={thStyle}>希望納期</th>
+                  <td style={tdStyle}>{application.desiredDeliveryDate || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          {/* 設置場所 */}
-          <div style={{ marginBottom: '24px' }}>
-            <div
-              style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#2c3e50',
-                marginBottom: '12px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #3498db',
-              }}
-            >
-              設置場所
-            </div>
-            <div style={{ fontSize: '14px', color: '#2c3e50', lineHeight: '1.8' }}>
-              <div>{application.facility} {application.building} {application.floor}</div>
-              <div>{application.department} / {application.section}</div>
-              <div>諸室名: {application.roomName}</div>
-            </div>
+          {/* 申請品目 */}
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>申請品目</div>
+            <table style={tableStyle}>
+              <tbody>
+                <tr>
+                  <th style={thStyle}>品目名</th>
+                  <td style={tdStyle}>{application.assets[0]?.name || '-'}</td>
+                  <th style={thStyle}>台数</th>
+                  <td style={tdStyle}>
+                    {application.assets[0]
+                      ? `${application.assets[0].quantity} ${application.assets[0].unit}`
+                      : '-'}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          {/* 申請理由 */}
-          {application.applicationReason && (
-            <div style={{ marginBottom: '24px' }}>
-              <div
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#2c3e50',
-                  marginBottom: '12px',
-                  paddingBottom: '8px',
-                  borderBottom: '2px solid #3498db',
-                }}
-              >
-                申請理由
-              </div>
-              <div
-                style={{
-                  fontSize: '14px',
-                  color: '#2c3e50',
-                  lineHeight: '1.6',
-                  background: '#f8f9fa',
-                  padding: '12px',
-                  borderRadius: '6px',
-                }}
-              >
-                {application.applicationReason}
+          {/* 要望機器 */}
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>要望機器</div>
+            <table style={tableStyle}>
+              <thead>
+                <tr style={{ background: '#f8f9fa' }}>
+                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
+                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
+                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
+                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                </tr>
+              </thead>
+              <tbody>
+                {application.assets.map((asset, index) => (
+                  <tr key={index}>
+                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                      {getHopeLabel(index)}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.name || '-'}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.maker || '-'}</td>
+                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.model || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 使用用途及び件数 */}
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>使用用途及び件数</div>
+            <table style={tableStyle}>
+              <tbody>
+                <tr>
+                  <th style={thStyle}>用途</th>
+                  <td style={tdStyle}>{application.usagePurpose || '-'}</td>
+                  <th style={thStyle}>件数</th>
+                  <td style={tdStyle}>{application.caseCount || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* コメント（必要理由 他） */}
+          {commentText && (
+            <div style={sectionStyle}>
+              <div style={sectionTitleStyle}>コメント（必要理由 他）</div>
+              <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                {commentText}
               </div>
             </div>
           )}
-
-          {/* 対象資産 */}
-          <div style={{ marginBottom: '24px' }}>
-            <div
-              style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#2c3e50',
-                marginBottom: '12px',
-                paddingBottom: '8px',
-                borderBottom: '2px solid #3498db',
-              }}
-            >
-              対象資産
-            </div>
-            <div style={{ border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
-              {application.assets.map((asset, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: index < application.assets.length - 1 ? '1px solid #f0f0f0' : 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                  }}
-                >
-                  {asset.qrCode && (
-                    <span
-                      style={{
-                        background: '#ecf0f1',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        color: '#5a6c7d',
-                      }}
-                    >
-                      {asset.qrCode}
-                    </span>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50' }}>
-                      {asset.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
-                      {asset.maker} / {asset.model}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#2c3e50' }}>
-                    {asset.quantity} {asset.unit}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* 添付ファイル */}
           {application.attachedFiles && application.attachedFiles.length > 0 && (
-            <div style={{ marginBottom: '24px' }}>
-              <div
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#2c3e50',
-                  marginBottom: '12px',
-                  paddingBottom: '8px',
-                  borderBottom: '2px solid #3498db',
-                }}
-              >
-                添付資料
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={sectionStyle}>
+              <div style={sectionTitleStyle}>添付ファイル</div>
+              <ul style={{ margin: 0, paddingLeft: '20px' }}>
                 {application.attachedFiles.map((file, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      padding: '6px 12px',
-                      background: '#e3f2fd',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      color: '#1976d2',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    📎 {file}
-                  </span>
+                  <li key={index} style={{ padding: '4px 0' }}>{file}</li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
+
+          {/* システム接続要望 */}
+          <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>システム接続要望</div>
+            <table style={tableStyle}>
+              <tbody>
+                <tr>
+                  <th style={thStyle}>接続要望</th>
+                  <td style={tdStyle}>
+                    {application.requestConnectionStatus === 'wired'
+                      ? '有線接続'
+                      : application.requestConnectionStatus === 'wireless'
+                        ? '無線接続'
+                        : application.requestConnectionStatus || '接続不要'}
+                  </td>
+                  <th style={thStyle}>接続先</th>
+                  <td style={tdStyle}>{application.requestConnectionDestination || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* フッター */}
-        {application.status === '申請中' && (
-          <div
-            style={{
-              padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px',
-              background: '#f8f9fa',
-              borderBottomLeftRadius: '12px',
-              borderBottomRightRadius: '12px',
-            }}
-          >
+        <div
+          style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #dee2e6',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: '#f8f9fa',
+          }}
+        >
+          <div>
+            {application.status === '申請中' && (
+              <button
+                onClick={() => {
+                  onReject(application.id);
+                  onClose();
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                却下
+              </button>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => {
-                onReject(application.id);
-                onClose();
-              }}
+              onClick={() => window.print()}
               style={{
                 padding: '10px 20px',
-                background: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
+                background: 'white',
+                color: '#f39c12',
+                border: '2px solid #f39c12',
+                borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: 'bold',
               }}
             >
-              却下
+              印刷
+            </button>
+            <button
+              onClick={() => alert('修正機能は今後実装予定です')}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                color: '#6c757d',
+                border: '2px solid #6c757d',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+              }}
+            >
+              修正する
+            </button>
+            <button
+              onClick={() => alert('添付ファイルダウンロード機能は今後実装予定です')}
+              style={{
+                padding: '10px 20px',
+                background: '#2c3e50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+              }}
+            >
+              添付ファイルDL
             </button>
             <button
               onClick={() => {
@@ -331,10 +360,10 @@ export function ApplicationDetailModal({
               }}
               style={{
                 padding: '10px 20px',
-                background: '#27ae60',
+                background: '#2c3e50',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: 'bold',
@@ -343,7 +372,7 @@ export function ApplicationDetailModal({
               編集リストへ追加
             </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
