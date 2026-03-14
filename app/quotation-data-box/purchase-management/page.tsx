@@ -63,7 +63,7 @@ function PurchaseManagementContent() {
     { key: 'order-rfq', label: '②発注見積依頼', statuses: ['見積登録依頼中', '発注用見積依頼済'] },
     { key: 'order', label: '③発注登録', statuses: ['発注見積登録済'] },
     { key: 'delivery', label: '④納品日登録', statuses: ['発注済'] },
-    { key: 'inspection', label: '⑤検収登録', statuses: ['納期確定'] },
+    { key: 'inspection', label: '⑤検収準備', statuses: ['納期確定'] },
     { key: 'asset', label: '⑥資産登録', statuses: ['検収済'] },
   ];
   const [activeStep, setActiveStep] = useState<StepKey>('all');

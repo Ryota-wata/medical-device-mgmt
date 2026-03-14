@@ -3,7 +3,6 @@
 import React, { useState, useMemo, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useOrderStore } from '@/lib/stores/orderStore';
 import { InspectionCertType } from '@/lib/types/order';
@@ -39,6 +38,12 @@ const inputStyle: React.CSSProperties = {
   fontSize: '14px',
 };
 
+/** 検収書の発行: 内部値 → 表示ラベル */
+const CERT_TYPE_LABELS: Record<InspectionCertType, string> = {
+  '本体のみ': '資産登録単位',
+  '付属品含む': '附属品を含む',
+};
+
 /** SearchParams 読み取り */
 function RfqGroupIdReader({ onRead }: { onRead: (id: number | null) => void }) {
   const searchParams = useSearchParams();
@@ -60,16 +65,9 @@ export default function InspectionRegistrationPage() {
   // --- フォーム項目 ---
   const [inspectionDate, setInspectionDate] = useState('');
   const [inspectionCertType, setInspectionCertType] = useState<InspectionCertType>('本体のみ');
+  const [itemDeliveryDates, setItemDeliveryDates] = useState<Record<number, string>>({});
 
-  // --- ダイアログ・バリデーション ---
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    confirmLabel?: string;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-
+  // --- バリデーション ---
   const [inspectionDateError, setInspectionDateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,20 +80,6 @@ export default function InspectionRegistrationPage() {
     inspectionCertType: InspectionCertType;
   } | null>(null);
   const [showCertPreview, setShowCertPreview] = useState(false);
-
-  const showDialog = useCallback((opts: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    confirmLabel?: string;
-  }) => {
-    setConfirmDialog({ isOpen: true, ...opts });
-  }, []);
-
-  const closeDialog = useCallback(() => {
-    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-    setIsSubmitting(false);
-  }, []);
 
   // データ取得
   const rfqGroup = useMemo(() => {
@@ -126,33 +110,26 @@ export default function InspectionRegistrationPage() {
     }
     setInspectionDateError('');
 
-    showDialog({
-      title: '検収登録確認',
-      message: `検収を登録します。品目数: ${orderItems.length}件 / 合計金額: ¥${totalAmount.toLocaleString()}`,
-      confirmLabel: '検収を登録する',
-      onConfirm: () => {
-        setIsSubmitting(true);
+    setIsSubmitting(true);
 
-        updateOrderGroup(orderGroup.id, {
-          inspectionDate,
-          inspectionCertType,
-        });
-
-        updateRfqGroup(rfqGroupId!, {
-          status: '検収済',
-          inspectionDate,
-        });
-
-        setRegistrationComplete({
-          itemCount: orderItems.length,
-          totalAmount,
-          orderGroupId: orderGroup.id,
-          inspectionDate,
-          inspectionCertType,
-        });
-        setIsSubmitting(false);
-      },
+    updateOrderGroup(orderGroup.id, {
+      inspectionDate,
+      inspectionCertType,
     });
+
+    updateRfqGroup(rfqGroupId!, {
+      status: '検収済',
+      inspectionDate,
+    });
+
+    setRegistrationComplete({
+      itemCount: orderItems.length,
+      totalAmount,
+      orderGroupId: orderGroup.id,
+      inspectionDate,
+      inspectionCertType,
+    });
+    setIsSubmitting(false);
   };
 
   return (
@@ -175,7 +152,7 @@ export default function InspectionRegistrationPage() {
 
       {/* ヘッダー */}
       <Header
-        title={registrationComplete ? '検収登録完了' : '検収登録'}
+        title={registrationComplete ? '納品検収日登録完了' : '納品日登録（検収準備）'}
         hideMenu={true}
         showBackButton={false}
       />
@@ -193,10 +170,10 @@ export default function InspectionRegistrationPage() {
             }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
               <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px', textWrap: 'balance' }}>
-                検収を登録しました
+                納品検収日を登録しました
               </h2>
               <p style={{ fontSize: '14px', color: COLORS.textSecondary, marginBottom: '24px', fontVariantNumeric: 'tabular-nums', textWrap: 'pretty' }}>
-                {registrationComplete.itemCount}品目 / ¥{registrationComplete.totalAmount.toLocaleString()}
+                {registrationComplete.itemCount}品目
                 <br />
                 検収日: {registrationComplete.inspectionDate}
               </p>
@@ -251,7 +228,7 @@ export default function InspectionRegistrationPage() {
               color: COLORS.infoText,
               textWrap: 'pretty',
             }}>
-              検収日を入力し「検収を登録する」を押してください。
+              検収日を入力し「納品検収日を登録」を押してください。
             </div>
 
             {/* 基本情報セクション */}
@@ -337,7 +314,7 @@ export default function InspectionRegistrationPage() {
                           onChange={() => setInspectionCertType(type)}
                           style={{ width: '16px', height: '16px', accentColor: COLORS.accent }}
                         />
-                        {type}
+                        {CERT_TYPE_LABELS[type]}
                       </label>
                     ))}
                   </div>
@@ -345,7 +322,7 @@ export default function InspectionRegistrationPage() {
               </div>
             </div>
 
-            {/* 発注明細テーブル（読取専用） */}
+            {/* 発注明細テーブル */}
             <div style={{
               background: COLORS.white,
               border: `1px solid ${COLORS.border}`,
@@ -353,47 +330,51 @@ export default function InspectionRegistrationPage() {
               marginBottom: '24px',
             }}>
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
                 padding: '8px 16px',
                 background: COLORS.primary,
                 color: COLORS.textOnColor,
               }}>
                 <span style={{ fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>発注明細</span>
-                <span style={{ fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>
-                  合計金額（税込）:
-                  <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px' }}>
-                    ¥{totalAmount.toLocaleString()}
-                  </span>
-                </span>
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>No</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>部門</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>部署</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>室名</th>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>メーカー</th>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>型式</th>
                       <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>数量</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>金額（税込）</th>
+                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>納品日登録</th>
                     </tr>
                   </thead>
                   <tbody>
                     {orderItems.map((item, idx) => (
                       <tr key={item.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                         <td style={{ padding: '8px', fontVariantNumeric: 'tabular-nums' }}>{idx + 1}</td>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>-</td>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>-</td>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>-</td>
                         <td style={{ padding: '8px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.itemName}</td>
                         <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.manufacturer || '-'}</td>
                         <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.model || '-'}</td>
                         <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{item.quantity}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>¥{item.totalPrice.toLocaleString()}</td>
+                        <td style={{ padding: '8px' }}>
+                          <input
+                            type="date"
+                            value={itemDeliveryDates[item.id] || ''}
+                            onChange={(e) => setItemDeliveryDates(prev => ({ ...prev, [item.id]: e.target.value }))}
+                            style={{ ...inputStyle, fontSize: '11px', padding: '4px 6px', width: '150px' }}
+                          />
+                        </td>
                       </tr>
                     ))}
                     {orderItems.length === 0 && (
                       <tr>
-                        <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
+                        <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
                           <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px', textWrap: 'balance' }}>発注明細がありません</p>
                           <p style={{ fontSize: '12px', textWrap: 'pretty' }}>発注登録を完了すると、明細が自動的に表示されます。</p>
                         </td>
@@ -419,22 +400,12 @@ export default function InspectionRegistrationPage() {
                 disabled={isSubmitting}
                 style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold', opacity: isSubmitting ? 0.7 : 1 }}
               >
-                {isSubmitting ? '登録中...' : '検収を登録する'}
+                {isSubmitting ? '登録中...' : '納品検収日を登録'}
               </button>
             </div>
           </>
         )}
       </div>
-
-      {/* 確認ダイアログ */}
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={closeDialog}
-        onConfirm={confirmDialog.onConfirm}
-        title={confirmDialog.title}
-        message={confirmDialog.message}
-        confirmLabel={confirmDialog.confirmLabel}
-      />
 
       {/* 検収書プレビューモーダル */}
       {registrationComplete && (

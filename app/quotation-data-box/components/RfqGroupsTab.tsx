@@ -210,11 +210,11 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
           </button>
         );
         break;
-      // ⑤検収登録
+      // ⑤検収準備
       case '納期確定':
         buttons.push(
           <button key="inspection" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#16a085' }}>
-            検収登録
+            検収準備
           </button>
         );
         break;
