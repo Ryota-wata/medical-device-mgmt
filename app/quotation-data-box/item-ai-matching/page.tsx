@@ -5,14 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
 
-// 登録区分の型
-type RegistrationCategory =
-  | 'A' // 表紙明細
-  | 'B' // 明細代表
-  | 'C' // 個体管理品目
-  | 'D' // 付属品
-  | 'E' // その他役務など
-  | 'F' // 値引き
+// 明細区分の型（STEP3と統一）
+type DetailClassification =
+  | '明細代表'
+  | '内訳代表'
+  | '親明細'
+  | '子明細'
+  | '孫明細'
+  | 'その他'
+  | '値引き'
   | '';
 
 // AI判定結果の型
@@ -49,11 +50,11 @@ interface DetailItem {
   manufacturer: string;       // メーカー
   model: string;              // 型式（見積名称）
   quantity: number | null;    // 数量
-  registrationCategory: RegistrationCategory; // 登録区分（STEP2から引継ぎ）
+  detailClassification: DetailClassification; // 明細区分（STEP3から引継ぎ）
   aiJudgment: AIJudgmentResult | null; // AI判定結果
 }
 
-// テスト用明細データ（STEP2から引き継いだデータ + AI判定結果）
+// テスト用明細データ（STEP3から引き継いだデータ + AI判定結果）
 const testDetailItems: DetailItem[] = [
   {
     id: 1,
@@ -62,7 +63,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: 'さららEFUS01',
     quantity: 4,
-    registrationCategory: 'B',
+    detailClassification: '明細代表',
     aiJudgment: {
       category: '有形資産',
       majorCategory: '医療用機器備品',
@@ -79,7 +80,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'E',
+    detailClassification: 'その他',
     aiJudgment: null,
   },
   {
@@ -89,7 +90,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: 'さらら',
     quantity: 4,
-    registrationCategory: 'C',
+    detailClassification: '親明細',
     aiJudgment: {
       category: '有形資産',
       majorCategory: '医療用機器備品',
@@ -106,7 +107,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -116,7 +117,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -126,7 +127,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -136,7 +137,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'C',
+    detailClassification: '親明細',
     aiJudgment: {
       category: '有形資産',
       majorCategory: '医療用機器備品',
@@ -153,7 +154,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -163,7 +164,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -173,7 +174,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -183,7 +184,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: null,
-    registrationCategory: 'D',
+    detailClassification: '子明細',
     aiJudgment: null,
   },
   {
@@ -193,7 +194,7 @@ const testDetailItems: DetailItem[] = [
     manufacturer: '第一医科',
     model: '',
     quantity: 4,
-    registrationCategory: 'C',
+    detailClassification: '親明細',
     aiJudgment: {
       category: '有形資産',
       majorCategory: '医療用機器備品',
@@ -217,9 +218,11 @@ export default function ItemAiMatchingPage() {
   // 選択中の行（資産マスタ選択待ち）
   const [selectingRow, setSelectingRow] = useState<number | null>(null);
 
-  // C_個体管理品目のみをフィルタ
+  // 親明細・子明細のみをフィルタ（個体管理品目）
   const individualItems = useMemo(() => {
-    return detailItems.filter(item => item.registrationCategory === 'C');
+    return detailItems.filter(
+      item => item.detailClassification === '親明細' || item.detailClassification === '子明細'
+    );
   }, [detailItems]);
 
   // 確定状態を取得
@@ -233,21 +236,62 @@ export default function ItemAiMatchingPage() {
     return individualItems.filter(item => getConfirmedInfo(item.id) !== null).length;
   }, [individualItems, confirmedState]);
 
-  // 別ウィンドウからの資産マスタ選択を受信
+  // 別ウィンドウからの資産マスタ選択を受信（registration-editと同じパターン）
   const handleAssetMasterMessage = useCallback((event: MessageEvent) => {
     if (event.origin !== window.location.origin) return;
 
-    if (event.data?.type === 'ASSET_MASTER_SELECTED' && selectingRow !== null) {
-      const assetData: ConfirmedAssetInfo = event.data.data;
-      const key = `${selectingRow}`;
-      setConfirmedState(prev => ({
-        ...prev,
-        [key]: {
-          status: 'asset_master_selected',
-          assetInfo: assetData,
-        },
-      }));
-      setSelectingRow(null);
+    if (event.data?.type === 'ASSET_SELECTED' && selectingRow !== null) {
+      const assetMasters = event.data.assets as Record<string, string>[];
+      const scope = (event.data.scope as 'all' | 'toMaker' | 'toItem') || 'all';
+
+      if (assetMasters && assetMasters.length > 0) {
+        const master = assetMasters[0];
+        let assetInfo: ConfirmedAssetInfo;
+
+        switch (scope) {
+          case 'toItem':
+            assetInfo = {
+              category: master.category || '',
+              majorCategory: master.largeClass || '',
+              middleCategory: master.mediumClass || '',
+              assetName: master.item || '',
+              manufacturer: '',
+              model: '',
+            };
+            break;
+          case 'toMaker':
+            assetInfo = {
+              category: master.category || '',
+              majorCategory: master.largeClass || '',
+              middleCategory: master.mediumClass || '',
+              assetName: master.item || '',
+              manufacturer: master.maker || '',
+              model: '',
+            };
+            break;
+          case 'all':
+          default:
+            assetInfo = {
+              category: master.category || '',
+              majorCategory: master.largeClass || '',
+              middleCategory: master.mediumClass || '',
+              assetName: master.item || '',
+              manufacturer: master.maker || '',
+              model: master.model || '',
+            };
+            break;
+        }
+
+        const key = `${selectingRow}`;
+        setConfirmedState(prev => ({
+          ...prev,
+          [key]: {
+            status: 'asset_master_selected',
+            assetInfo,
+          },
+        }));
+        setSelectingRow(null);
+      }
     }
   }, [selectingRow]);
 
@@ -287,11 +331,20 @@ export default function ItemAiMatchingPage() {
     });
   };
 
-  // 資産マスタを別ウィンドウで開いて選択させる
-  const handleOpenAssetMasterForSelection = (id: number) => {
+  // 資産マスタを別ウィンドウで開く（registration-editと同じパターン）
+  const handleOpenAssetMaster = (id: number) => {
     setSelectingRow(id);
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.open(`${basePath}/ship-asset-master?mode=select`, '_blank', 'width=1200,height=800');
+
+    window.open(
+      `${basePath}/asset-master`,
+      'AssetMasterWindow',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
   };
 
   // 戻るボタン
@@ -348,7 +401,7 @@ export default function ItemAiMatchingPage() {
               個体管理品目のAI判定を実施し確認・修正を実施してください
             </div>
             <div style={{ fontSize: '11px', color: '#555' }}>
-              ・不適格な場合は資産Masterから選択が可能です<br />
+              ・不適格な場合は資産マスタを別ウィンドウで開いて選択が可能です<br />
               ・IDの登録により耐用年数、推奨使用年数、添付文書などの情報が登録できます
             </div>
           </div>
@@ -408,7 +461,7 @@ export default function ItemAiMatchingPage() {
                   }}>
                     個体品目のAI判定
                   </th>
-                  <th style={{ padding: '6px', background: '#f8f9fa', width: '150px', fontSize: '11px' }}>操作</th>
+                  <th style={{ padding: '6px', background: '#f8f9fa', width: '200px', fontSize: '11px' }}>操作</th>
                 </tr>
                 <tr style={{ background: '#f8f9fa' }}>
                   <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px', fontSize: '9px' }}>No</th>
@@ -506,7 +559,7 @@ export default function ItemAiMatchingPage() {
                             選択中...
                           </span>
                         ) : (
-                          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
                             {aiJudgment && (
                               <button
                                 onClick={() => handleApplyAI(item.id, aiJudgment)}
@@ -525,19 +578,20 @@ export default function ItemAiMatchingPage() {
                               </button>
                             )}
                             <button
-                              onClick={() => handleOpenAssetMasterForSelection(item.id)}
+                              onClick={() => handleOpenAssetMaster(item.id)}
                               style={{
                                 padding: '3px 5px',
-                                background: '#1976d2',
+                                background: '#27ae60',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '3px',
                                 cursor: 'pointer',
                                 fontSize: '8px',
                                 fontWeight: 'bold',
+                                whiteSpace: 'nowrap',
                               }}
                             >
-                              マスタ選択
+                              資産マスタ
                             </button>
                           </div>
                         )}
