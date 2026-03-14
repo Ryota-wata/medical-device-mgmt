@@ -31,7 +31,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 function PurchaseManagementContent() {
   const router = useRouter();
-  const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
+  const { rfqGroups, updateRfqGroup, deleteRfqGroup } = useRfqGroupStore();
   const {
     addQuotationGroup,
     addQuotationItems,
@@ -56,23 +56,30 @@ function PurchaseManagementContent() {
   const [applicationToReject, setApplicationToReject] = useState<string | null>(null);
 
   // 見積依頼グループ: ステップタブ
-  type StepKey = 'all' | 'rfq-quotation' | 'order' | 'delivery' | 'inspection' | 'asset';
+  type StepKey = 'all' | 'rfq-quotation' | 'order-rfq' | 'order' | 'delivery' | 'inspection' | 'asset';
   const STEP_TABS: { key: StepKey; label: string; statuses: RfqGroupStatus[] }[] = [
     { key: 'all', label: 'すべて', statuses: [] },
-    { key: 'rfq-quotation', label: '①依頼・見積登録', statuses: ['見積依頼', '見積依頼済', '見積登録済'] },
-    { key: 'order', label: '③発注登録', statuses: ['見積登録済'] },
-    { key: 'delivery', label: '④納期登録', statuses: ['発注登録済'] },
-    { key: 'inspection', label: '⑤検収登録', statuses: ['発注登録済', '検収登録済'] },
-    { key: 'asset', label: '⑥資産登録', statuses: ['検収登録済', '資産仮登録済', '資産登録済'] },
+    { key: 'rfq-quotation', label: '①見積依頼/登録', statuses: ['見積依頼', '見積依頼済', '見積DB登録済'] },
+    { key: 'order-rfq', label: '②発注見積依頼', statuses: ['見積登録依頼中', '発注用見積依頼済'] },
+    { key: 'order', label: '③発注登録', statuses: ['発注見積登録済'] },
+    { key: 'delivery', label: '④納品日登録', statuses: ['発注済'] },
+    { key: 'inspection', label: '⑤検収登録', statuses: ['納期確定'] },
+    { key: 'asset', label: '⑥資産登録', statuses: ['検収済'] },
   ];
   const [activeStep, setActiveStep] = useState<StepKey>('all');
+
+  // 完了・見送りを除いたアクティブなグループ
+  const activeRfqGroups = useMemo(() => {
+    const EXCLUDED_STATUSES: RfqGroupStatus[] = ['完了', '申請を見送る'];
+    return rfqGroups.filter(g => !EXCLUDED_STATUSES.includes(g.status));
+  }, [rfqGroups]);
 
   // ステップタブでフィルタされた見積依頼グループ
   const filteredRfqGroups = useMemo(() => {
     const tab = STEP_TABS.find(t => t.key === activeStep);
-    if (!tab || tab.statuses.length === 0) return rfqGroups;
-    return rfqGroups.filter(g => tab.statuses.includes(g.status));
-  }, [rfqGroups, activeStep]);
+    if (!tab || tab.statuses.length === 0) return activeRfqGroups;
+    return activeRfqGroups.filter(g => tab.statuses.includes(g.status));
+  }, [activeRfqGroups, activeStep]);
 
   // 見積書登録モーダル
   const [showQuotationModal, setShowQuotationModal] = useState(false);
@@ -272,7 +279,7 @@ function PurchaseManagementContent() {
     addQuotationItems(itemsToAdd);
 
     if (rfqGroup) {
-      updateRfqGroup(rfqGroup.id, { status: '見積登録済' });
+      updateRfqGroup(rfqGroup.id, { status: '見積DB登録済' });
     }
 
     alert(MESSAGES.QUOTATION_REGISTERED(quotationNo, itemsToAdd.length));
@@ -375,21 +382,24 @@ function PurchaseManagementContent() {
                             onChange={(e) => handleSelectAllApplications(e.target.checked)}
                           />
                         </th>
-                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請項目</th>
+                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請情報</th>
+                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>品目情報</th>
                         <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
-                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
-                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}>品目情報</th>
                         <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}>コメント</th>
+                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}></th>
                       </tr>
                       {/* サブカラムヘッダー行 */}
                       <tr style={{ background: '#495057', color: 'white' }}>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No.</th>
                         <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請日</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No, 種別</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>室名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>品目名</th>
                         <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>所属部署</th>
                         <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>氏名</th>
                         <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>連絡先</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -412,6 +422,8 @@ function PurchaseManagementContent() {
                                 onChange={() => handleSelectApplication(app.id)}
                               />
                             </td>
+                            {/* 申請情報: 申請日, 申請No/種別 */}
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
                             <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>
                               <span style={{ color: '#3498db', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                               <span style={{
@@ -426,17 +438,39 @@ function PurchaseManagementContent() {
                                 {app.applicationType}
                               </span>
                             </td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.applicantName}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>-</td>
+                            {/* 設置情報: 部門名, 部署名, 室名 */}
                             <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.department}</td>
                             <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
+                            {/* 品目名 */}
                             <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50', fontSize: '12px' }}>
                               {app.assets.map(a => a.name).join(', ')}
                             </td>
+                            {/* 院内担当情報: 所属部署, 氏名, 連絡先 */}
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.applicantName}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>-</td>
+                            {/* コメント */}
                             <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>
                               {app.comment || '-'}
+                            </td>
+                            {/* 申請内容ボタン */}
+                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => handleViewApplicationDetail(app)}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: 'white',
+                                  border: '1px solid #dee2e6',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                  color: '#2c3e50',
+                                }}
+                              >
+                                申請内容
+                              </button>
                             </td>
                           </tr>
                         );
@@ -498,7 +532,7 @@ function PurchaseManagementContent() {
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>見積依頼グループ</span>
+              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>見積（発注）グループ</span>
             </div>
 
             {/* ステップタブ */}
@@ -511,8 +545,8 @@ function PurchaseManagementContent() {
               {STEP_TABS.map((tab) => {
                 const isActive = activeStep === tab.key;
                 const count = tab.statuses.length === 0
-                  ? rfqGroups.length
-                  : rfqGroups.filter(g => tab.statuses.includes(g.status)).length;
+                  ? activeRfqGroups.length
+                  : activeRfqGroups.filter(g => tab.statuses.includes(g.status)).length;
                 return (
                   <button
                     key={tab.key}
@@ -568,7 +602,12 @@ function PurchaseManagementContent() {
                   onRegisterOrder={handleStartOrderRegistration}
                   onRegisterInspection={handleStartInspectionRegistration}
                   onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
-                  onUpdateDeadline={(id, deadline) => updateRfqGroup(id, { deadline })}
+                  onDelete={(id) => {
+                    if (confirm('この見積（発注）グループを削除しますか？')) {
+                      deleteRfqGroup(id);
+                    }
+                  }}
+                  onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
                 />
               )}
             </div>

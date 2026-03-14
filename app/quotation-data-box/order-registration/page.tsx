@@ -241,8 +241,8 @@ export default function OrderRegistrationPage() {
         addOrderItems(orderItems);
 
         updateRfqGroup(rfqGroup.id, {
-          status: '発注登録済',
-          deadline: deliveryDate,
+          status: '発注済',
+          deliveryDeadline: deliveryDate,
         });
 
         setRegistrationComplete({

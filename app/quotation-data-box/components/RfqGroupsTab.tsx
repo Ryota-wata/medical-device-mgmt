@@ -1,5 +1,5 @@
 import React from 'react';
-import { RfqGroup } from '@/lib/types';
+import { RfqGroup, RfqGroupStatus } from '@/lib/types';
 
 interface RfqGroupsTabProps {
   rfqGroups: RfqGroup[];
@@ -8,7 +8,8 @@ interface RfqGroupsTabProps {
   onRegisterOrder: (rfqGroupId: number) => void;
   onRegisterInspection: (rfqGroupId: number) => void;
   onRegisterAssetProvisional: (rfqGroupId: number) => void;
-  onUpdateDeadline: (rfqGroupId: number, deadline: string | undefined) => void;
+  onDelete?: (rfqGroupId: number) => void;
+  onUpdateDeadline: (rfqGroupId: number, field: string, value: string | undefined) => void;
 }
 
 const thGroupStyle: React.CSSProperties = {
@@ -35,6 +36,38 @@ const tdStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// ステータス別のバッジ色
+const STATUS_BADGE_COLORS: Record<RfqGroupStatus, string> = {
+  '見積依頼': '#95a5a6',
+  '見積依頼済': '#3498db',
+  '見積DB登録済': '#2980b9',
+  '見積登録依頼中': '#f39c12',
+  '発注用見積依頼済': '#8e44ad',
+  '発注見積登録済': '#9b59b6',
+  '発注済': '#e67e22',
+  '納期確定': '#27ae60',
+  '検収済': '#16a085',
+  '完了': '#7f8c8d',
+  '申請を見送る': '#e74c3c',
+};
+
+// ステータスに紐づく期限フィールド（そのステータスに入った時に設定済みのもの、読み取り専用）
+interface DeadlineMapping {
+  label: string;
+  field: 'rfqDeadline' | 'orderDeadline' | 'registrationDeadline' | 'deliveryDeadline' | 'deliveryDate' | 'inspectionDate' | 'rejectionDate';
+}
+
+const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
+  '見積依頼済': { label: '見積提出期限', field: 'rfqDeadline' },
+  '見積DB登録済': { label: '発注期限', field: 'orderDeadline' },
+  '見積登録依頼中': { label: '登録期限', field: 'registrationDeadline' },
+  '発注用見積依頼済': { label: '見積提出期限', field: 'rfqDeadline' },
+  '発注済': { label: '納入期限', field: 'deliveryDeadline' },
+  '納期確定': { label: '納入年月日', field: 'deliveryDate' },
+  '検収済': { label: '検収年月日', field: 'inspectionDate' },
+  '申請を見送る': { label: '却下日', field: 'rejectionDate' },
+};
+
 export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   rfqGroups,
   onSendRfq,
@@ -42,18 +75,11 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   onRegisterOrder,
   onRegisterInspection,
   onRegisterAssetProvisional,
+  onDelete,
   onUpdateDeadline,
 }) => {
-  const getStatusBadge = (status: string) => {
-    const bg =
-      status === '見積依頼' ? '#3498db' :
-      status === '見積依頼済' ? '#f39c12' :
-      status === '見積登録済' ? '#27ae60' :
-      status === '発注登録済' ? '#8e44ad' :
-      status === '検収登録済' ? '#e67e22' :
-      status === '資産仮登録済' ? '#16a085' :
-      status === '資産登録済' ? '#7f8c8d' : '#95a5a6';
-
+  const getStatusBadge = (status: RfqGroupStatus) => {
+    const bg = STATUS_BADGE_COLORS[status] || '#95a5a6';
     return (
       <span style={{
         padding: '4px 12px',
@@ -69,7 +95,8 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
     );
   };
 
-  const getActionButton = (group: RfqGroup) => {
+  // 次のステップのActionボタンを返す
+  const getActionButtons = (group: RfqGroup) => {
     const btnBase: React.CSSProperties = {
       padding: '6px 12px',
       color: 'white',
@@ -81,49 +108,88 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       flexShrink: 0,
     };
 
-    if (group.status === '見積依頼') {
-      return (
-        <button onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#3498db' }}>
-          見積依頼
-        </button>
-      );
+    const buttons: React.ReactNode[] = [];
+
+    switch (group.status) {
+      // 見積依頼 → 見積依頼（送信） → 見積依頼済へ
+      case '見積依頼':
+        buttons.push(
+          <button key="rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#3498db' }}>
+            見積依頼
+          </button>
+        );
+        break;
+      // 見積依頼済 → 見積登録
+      case '見積依頼済':
+        buttons.push(
+          <button key="quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#3498db' }}>
+            見積登録
+          </button>
+        );
+        break;
+      // 見積DB登録済 → 削除
+      case '見積DB登録済':
+        if (onDelete) {
+          buttons.push(
+            <button key="delete" onClick={() => onDelete(group.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+              削除
+            </button>
+          );
+        }
+        break;
+      // ②発注見積依頼
+      case '見積登録依頼中':
+        // SHIP依頼済のため操作なし
+        break;
+      case '発注用見積依頼済':
+        buttons.push(
+          <button key="order-rfq-reg" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#8e44ad' }}>
+            発注見積登録
+          </button>
+        );
+        break;
+      // ③発注登録
+      case '発注見積登録済':
+        buttons.push(
+          <button key="order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#e67e22' }}>
+            発注登録
+          </button>
+        );
+        break;
+      // ④納品日登録
+      case '発注済':
+        buttons.push(
+          <button key="delivery" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
+            納品日登録
+          </button>
+        );
+        break;
+      // ⑤検収登録
+      case '納期確定':
+        buttons.push(
+          <button key="inspection" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#16a085' }}>
+            検収登録
+          </button>
+        );
+        break;
+      // ⑥資産登録
+      case '検収済':
+        buttons.push(
+          <button key="asset" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#2c3e50' }}>
+            資産登録
+          </button>
+        );
+        break;
+      // 完了・申請を見送る → 操作なし
+      case '完了':
+      case '申請を見送る':
+        break;
     }
-    if (group.status === '見積依頼済') {
-      return (
-        <button onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
-          見積登録
-        </button>
-      );
+
+    if (buttons.length === 0) {
+      return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>;
     }
-    if (group.status === '見積登録済') {
-      return (
-        <button onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#8e44ad' }}>
-          発注登録
-        </button>
-      );
-    }
-    if (group.status === '発注登録済') {
-      return (
-        <button onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#e67e22' }}>
-          検収登録
-        </button>
-      );
-    }
-    if (group.status === '検収登録済') {
-      return (
-        <button onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#16a085' }}>
-          資産仮登録
-        </button>
-      );
-    }
-    if (group.status === '資産仮登録済') {
-      return (
-        <button onClick={() => {}} style={{ ...btnBase, background: '#2c3e50' }}>
-          資産登録
-        </button>
-      );
-    }
-    return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>;
+    return <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>{buttons}</div>;
   };
 
   return (
@@ -132,8 +198,8 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
           {/* グループヘッダー行 */}
           <tr style={{ background: '#343a40', color: 'white' }}>
-            <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積依頼No.</th>
-            <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積グループ名称</th>
+            <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）依頼No,</th>
+            <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）グループ名称</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>業者情報</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>ステータス</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>期限</th>
@@ -147,38 +213,38 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
           </tr>
         </thead>
         <tbody>
-          {rfqGroups.map((group, index) => (
-            <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-              <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{group.rfqNo}</td>
-              <td style={tdStyle}>{group.groupName}</td>
-              <td style={tdStyle}>{group.vendorName || '-'}</td>
-              <td style={tdStyle}>{group.personInCharge || '-'}</td>
-              <td style={tdStyle}>{group.tel || '-'}</td>
-              <td style={{ ...tdStyle, textAlign: 'center' }}>
-                {getStatusBadge(group.status)}
-              </td>
-              <td style={{ ...tdStyle, textAlign: 'center' }}>
-                <input
-                  type="date"
-                  value={group.deadline || ''}
-                  onChange={(e) => onUpdateDeadline(group.id, e.target.value || undefined)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    color: group.deadline ? '#2c3e50' : '#aaa',
-                    background: 'white',
-                    cursor: 'pointer',
-                    width: '130px',
-                  }}
-                />
-              </td>
-              <td style={{ ...tdStyle, textAlign: 'center' }}>
-                {getActionButton(group)}
-              </td>
-            </tr>
-          ))}
+          {rfqGroups.map((group, index) => {
+            const deadlineMapping = STATUS_DEADLINE_MAP[group.status];
+            return (
+              <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top' }}>
+                <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{group.rfqNo}</td>
+                <td style={tdStyle}>{group.groupName}</td>
+                <td style={tdStyle}>{group.vendorName || '-'}</td>
+                <td style={tdStyle}>{group.personInCharge || '-'}</td>
+                <td style={tdStyle}>{group.tel || '-'}</td>
+                <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  {getStatusBadge(group.status)}
+                </td>
+                <td style={{ ...tdStyle, verticalAlign: 'top' }}>
+                  {deadlineMapping && group[deadlineMapping.field] ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', color: '#5a6c7d', whiteSpace: 'nowrap', minWidth: '80px' }}>
+                        {deadlineMapping.label}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#2c3e50' }} className="tabular-nums">
+                        {group[deadlineMapping.field]}
+                      </span>
+                    </div>
+                  ) : (
+                    <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>
+                  )}
+                </td>
+                <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'top' }}>
+                  {getActionButtons(group)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

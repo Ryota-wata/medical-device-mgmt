@@ -407,7 +407,7 @@ export default function AssetProvisionalRegistrationPage() {
             itemClass: rowData.itemClass,
           });
         });
-        updateRfqGroup(rfqGroupId, { status: '資産仮登録済' });
+        updateRfqGroup(rfqGroupId, { status: '完了' });
         setRegistrationComplete({
           groupName: rfqGroup.groupName,
           itemCount: totalItems,
@@ -425,7 +425,7 @@ export default function AssetProvisionalRegistrationPage() {
       message: `全${totalItems}件の資産仮登録を完了します。ステータスを「資産仮登録済」に更新します。`,
       confirmLabel: '登録を完了する',
       onConfirm: () => {
-        updateRfqGroup(rfqGroupId, { status: '資産仮登録済' });
+        updateRfqGroup(rfqGroupId, { status: '完了' });
         setRegistrationComplete({
           groupName: rfqGroup.groupName,
           itemCount: totalItems,

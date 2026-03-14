@@ -171,11 +171,15 @@ function RemodelManagementContent() {
                 <option value="">すべて</option>
                 <option value="見積依頼">見積依頼</option>
                 <option value="見積依頼済">見積依頼済</option>
-                <option value="見積登録済">見積登録済</option>
-                <option value="発注登録済">発注登録済</option>
-                <option value="検収登録済">検収登録済</option>
-                <option value="資産仮登録済">資産仮登録済</option>
-                <option value="資産登録済">資産登録済</option>
+                <option value="見積DB登録済">見積DB登録済</option>
+                <option value="見積登録依頼中">見積登録依頼中</option>
+                <option value="発注用見積依頼済">発注用見積依頼済</option>
+                <option value="発注見積登録済">発注見積登録済</option>
+                <option value="発注済">発注済</option>
+                <option value="納期確定">納期確定</option>
+                <option value="検収済">検収済</option>
+                <option value="完了">完了</option>
+                <option value="申請を見送る">申請を見送る</option>
               </select>
             </div>
           </div>
@@ -189,7 +193,7 @@ function RemodelManagementContent() {
               onRegisterOrder={handleStartOrderRegistration}
               onRegisterInspection={handleStartInspectionRegistration}
               onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
-              onUpdateDeadline={(id, deadline) => updateRfqGroup(id, { deadline })}
+              onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
             />
           </div>
         </div>

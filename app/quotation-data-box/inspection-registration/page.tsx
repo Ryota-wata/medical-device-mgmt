@@ -139,7 +139,8 @@ export default function InspectionRegistrationPage() {
         });
 
         updateRfqGroup(rfqGroupId!, {
-          status: '検収登録済',
+          status: '検収済',
+          inspectionDate,
         });
 
         setRegistrationComplete({
