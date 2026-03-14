@@ -7,8 +7,8 @@ import { StepProgressBar } from '../components/StepProgressBar';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { QuotationItemType } from '@/lib/types/quotation';
 
-// 登録区分の型
-type RegistrationCategory = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | '';
+// 明細区分の型（STEP 5 と同一）
+type DetailClassification = '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';
 
 // 基本情報の型（STEP1で登録した内容）
 interface BasicInfo {
@@ -36,19 +36,23 @@ interface RegistrationDetail {
   model: string;
   manufacturer: string;
   quantity: number | null;
+  // 明細区分・グループ
+  detailClassification: DetailClassification;
+  groupNo: string;              // 親子No.
   // 個体登録及び金額按分（前画面からの情報）
-  category: RegistrationCategory; // 登録区分
-  majorCategory: string;      // 大分類
-  middleCategory: string;     // 中分類
-  assetName: string;          // 個体管理品目
-  assetManufacturer: string;  // メーカー（AI判定後）
-  assetModel: string;         // 型式（AI判定後）
-  seqId: string;              // SEQ_ID
-  unit: string;               // 単位
-  listUnitPrice: number | null;   // 定価単価
-  allocatedUnitPrice: number | null; // 按分単価
-  allocatedAmount: number | null;    // 按分金額
-  parentSeqId: string;        // 親と紐付け
+  majorCategory: string;        // 大分類
+  middleCategory: string;       // 中分類
+  assetName: string;            // 個体管理品目
+  assetManufacturer: string;    // メーカー（AI判定後）
+  assetModel: string;           // 型式（AI判定後）
+  seqId: string;                // SEQ_ID
+  unit: string;                 // 単位
+  allocatedAmount: number | null; // 按分金額
+  // 設置場所（編集可能）
+  department: string;           // 設置部門
+  section: string;              // 設置部署
+  roomName: string;             // 設置室名
+  managingSection: string;      // 管理部署
 }
 
 // テスト用基本情報（STEP1で登録した内容）
@@ -70,44 +74,50 @@ const testBasicInfo: BasicInfo = {
 
 // テスト用登録明細データ
 const testRegistrationDetails: RegistrationDetail[] = [
-  // B: 明細代表
-  { id: '1', originalSeq: 1, itemName: '具象眼科用ユニット', model: 'さららEFUS01', manufacturer: '第一医科', quantity: 4, category: 'B', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '具象眼科用ユニット', assetManufacturer: '第一医科', assetModel: 'さららEFUS01', seqId: '', unit: '台', listUnitPrice: 3300000, allocatedUnitPrice: 1650000, allocatedAmount: 6600000, parentSeqId: '' },
-  // E: その他役務
-  { id: '2', originalSeq: 2, itemName: '仕様', model: '', manufacturer: '第一医科', quantity: null, category: 'E', majorCategory: '', middleCategory: '', assetName: '仕様', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  // C: 個体管理品目（4台）
-  { id: '3-1', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット EFUS01', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '1', unit: '台', listUnitPrice: 3300000, allocatedUnitPrice: 1650000, allocatedAmount: 1650000, parentSeqId: '本体' },
-  { id: '3-2', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット EFUS01', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '2', unit: '台', listUnitPrice: 3300000, allocatedUnitPrice: 1650000, allocatedAmount: 1650000, parentSeqId: '本体' },
-  { id: '3-3', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット EFUS01', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '3', unit: '台', listUnitPrice: 3300000, allocatedUnitPrice: 1650000, allocatedAmount: 1650000, parentSeqId: '本体' },
-  { id: '3-4', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット EFUS01', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '4', unit: '台', listUnitPrice: 3300000, allocatedUnitPrice: 1650000, allocatedAmount: 1650000, parentSeqId: '本体' },
-  // D: 付属品
-  { id: '4', originalSeq: 4, itemName: 'ホース付きスプレー2本', model: '', manufacturer: '第一', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ホース付きスプレー2本', assetManufacturer: '第一', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  { id: '5', originalSeq: 5, itemName: '吸引清掃式　ロック枠掛付', model: '', manufacturer: '第一医科', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '吸引清掃式　ロック枠掛付', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  { id: '6', originalSeq: 6, itemName: '通気清掃式　ロック枠掛付', model: '', manufacturer: '第一医科', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '通気清掃式　ロック枠掛付', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  // C: ツインボール
-  { id: '7', originalSeq: 7, itemName: 'ツインボール', model: '', manufacturer: '第一医科', quantity: null, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール（眼科用）', assetManufacturer: '第一医科', assetModel: '', seqId: '5', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '本体' },
-  // D: 付属品
-  { id: '8', originalSeq: 8, itemName: '照明灯あり', model: '', manufacturer: '第一医科', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '照明灯あり', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  { id: '9', originalSeq: 9, itemName: '吸引便ディスポ', model: '', manufacturer: '第一医科', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '吸引便ディスポ', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  { id: '10', originalSeq: 10, itemName: 'キャスターあり', model: '', manufacturer: '第一医科', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'キャスターあり', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  { id: '11', originalSeq: 11, itemName: '天板フラット', model: '', manufacturer: '第一医科', quantity: null, category: 'D', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '天板フラット', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', listUnitPrice: null, allocatedUnitPrice: null, allocatedAmount: null, parentSeqId: '' },
-  // C: 棚（4台）
-  { id: '12-1', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '6', unit: '台', listUnitPrice: 162000, allocatedUnitPrice: 162000, allocatedAmount: 162000, parentSeqId: '本体' },
-  { id: '12-2', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '7', unit: '台', listUnitPrice: 162000, allocatedUnitPrice: 162000, allocatedAmount: 162000, parentSeqId: '本体' },
-  { id: '12-3', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '8', unit: '台', listUnitPrice: 162000, allocatedUnitPrice: 162000, allocatedAmount: 162000, parentSeqId: '本体' },
-  { id: '12-4', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, category: 'C', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '9', unit: '台', listUnitPrice: 162000, allocatedUnitPrice: 162000, allocatedAmount: 162000, parentSeqId: '本体' },
+  // 明細代表（非表示）
+  { id: '1', originalSeq: 1, itemName: '具象眼科用ユニット', model: 'さららEFUS01', manufacturer: '第一医科', quantity: 4, detailClassification: '明細代表', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '具象眼科用ユニット', assetManufacturer: '第一医科', assetModel: 'さららEFUS01', seqId: '', unit: '台', allocatedAmount: 6600000, department: '', section: '', roomName: '', managingSection: '' },
+  // その他（非表示）
+  { id: '2', originalSeq: 2, itemName: '仕様', model: '', manufacturer: '第一医科', quantity: null, detailClassification: 'その他', groupNo: '', majorCategory: '', middleCategory: '', assetName: '仕様', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  // 親明細: 眼科用ユニット さらら × 4台（groupNo: 1）
+  { id: '3-1', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '1', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '3-2', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '2', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '3-3', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '3', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '3-4', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '4', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
+  // 子明細: groupNo: 1 の付属品
+  { id: '4', originalSeq: 4, itemName: 'ホース付きスプレー2本', model: '', manufacturer: '第一', quantity: null, detailClassification: '子明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ホース付きスプレー2本', assetManufacturer: '第一', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '5', originalSeq: 5, itemName: '吸引清掃式　ロック枠掛付', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '吸引清掃式　ロック枠掛付', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '6', originalSeq: 6, itemName: '通気清掃式　ロック枠掛付', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '通気清掃式　ロック枠掛付', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  // 親明細: ツインボール（groupNo: 2）
+  { id: '7', originalSeq: 7, itemName: 'ツインボール', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '親明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール（眼科用）', assetManufacturer: '第一医科', assetModel: '', seqId: '5', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  // 子明細: groupNo: 2 の付属品
+  { id: '8', originalSeq: 8, itemName: '照明灯あり', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '照明灯あり', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '9', originalSeq: 9, itemName: '吸引便ディスポ', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '吸引便ディスポ', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '10', originalSeq: 10, itemName: 'キャスターあり', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'キャスターあり', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '11', originalSeq: 11, itemName: '天板フラット', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '天板フラット', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
+  // 親明細: ツインボール用棚 × 4台（groupNo: 3）
+  { id: '12-1', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '6', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '12-2', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '7', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '12-3', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '8', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
+  { id: '12-4', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '9', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
 ];
 
-// 登録区分からQuotationItemTypeへの変換
-const categoryToItemType = (category: RegistrationCategory): QuotationItemType => {
+// 明細区分からQuotationItemTypeへの変換
+const detailClassificationToItemType = (classification: DetailClassification): QuotationItemType => {
   const mapping: Record<string, QuotationItemType> = {
-    'A': 'A_表紙明細',
-    'B': 'B_明細代表',
-    'C': 'C_個体管理品目',
-    'D': 'D_付属品',
-    'E': 'E_その他役務',
-    'F': 'F_値引き',
+    '明細代表': 'B_明細代表',
+    '親明細': 'C_個体管理品目',
+    '子明細': 'D_付属品',
+    'その他': 'E_その他役務',
+    '値引き': 'F_値引き',
   };
-  return mapping[category] || 'C_個体管理品目';
+  return mapping[classification] || 'C_個体管理品目';
+};
+
+// 明細区分の短縮表示
+const classificationLabel = (classification: DetailClassification): string => {
+  if (classification === '親明細') return '親';
+  if (classification === '子明細') return '子';
+  return '';
 };
 
 export default function RegistrationConfirmPage() {
@@ -117,15 +127,42 @@ export default function RegistrationConfirmPage() {
   // 基本情報
   const [basicInfo] = useState<BasicInfo>(testBasicInfo);
 
-  // 登録明細データ
-  const [details] = useState<RegistrationDetail[]>(testRegistrationDetails);
+  // 登録明細データ（設置場所の編集のため useState で管理）
+  const [details, setDetails] = useState<RegistrationDetail[]>(testRegistrationDetails);
 
-  // 合計金額（税抜）
-  const totalAmount = useMemo(() => {
-    return details.reduce((sum, detail) => sum + (detail.allocatedAmount || 0), 0);
+  // 表示対象（親明細・子明細のみ）をグループ化表示
+  const displayDetails = useMemo(() => {
+    const visible = details.filter(
+      (d) => d.detailClassification === '親明細' || d.detailClassification === '子明細'
+    );
+    // groupNo 順 → 親明細 → 子明細 の順でソート
+    return visible.sort((a, b) => {
+      const groupA = parseInt(a.groupNo) || 999;
+      const groupB = parseInt(b.groupNo) || 999;
+      if (groupA !== groupB) return groupA - groupB;
+      // 同一グループ内: 親明細を先に
+      if (a.detailClassification === '親明細' && b.detailClassification === '子明細') return -1;
+      if (a.detailClassification === '子明細' && b.detailClassification === '親明細') return 1;
+      // 同一区分内: seqId or originalSeq 順
+      const seqA = parseInt(a.seqId) || a.originalSeq;
+      const seqB = parseInt(b.seqId) || b.originalSeq;
+      return seqA - seqB;
+    });
   }, [details]);
 
-  // 戻るボタン（原本へ/登録情報修正）
+  // 合計金額（税抜）— 表示対象レコードの allocatedAmount 合計
+  const totalAmount = useMemo(() => {
+    return displayDetails.reduce((sum, detail) => sum + (detail.allocatedAmount || 0), 0);
+  }, [displayDetails]);
+
+  // 設置場所の入力ハンドラ
+  const handleLocationChange = (id: string, field: 'department' | 'section' | 'roomName' | 'managingSection', value: string) => {
+    setDetails((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
+    );
+  };
+
+  // 戻るボタン
   const handleBack = () => {
     router.push('/quotation-data-box/price-allocation');
   };
@@ -150,7 +187,7 @@ export default function RegistrationConfirmPage() {
         totalAmount: totalAmount,
       });
 
-      // 見積明細を登録
+      // 見積明細を登録（全件送信）
       const itemsToAdd = details.map((detail) => ({
         quotationGroupId: groupId,
         receivedQuotationNo: quotationNo,
@@ -159,7 +196,7 @@ export default function RegistrationConfirmPage() {
         originalManufacturer: detail.manufacturer,
         originalModel: detail.model,
         originalQuantity: detail.quantity || 1,
-        itemType: categoryToItemType(detail.category),
+        itemType: detailClassificationToItemType(detail.detailClassification),
         category: detail.majorCategory,
         largeClass: detail.majorCategory,
         middleClass: detail.middleCategory,
@@ -169,12 +206,9 @@ export default function RegistrationConfirmPage() {
         aiQuantity: 1,
         rfqNo: basicInfo.rfqNo,
         unit: detail.unit,
-        listPriceUnit: detail.listUnitPrice || undefined,
-        allocListPriceUnit: detail.listUnitPrice || undefined,
-        allocPriceUnit: detail.allocatedUnitPrice || undefined,
         allocListPriceTotal: detail.allocatedAmount || undefined,
         seqId: detail.seqId || undefined,
-        parentSeqId: detail.parentSeqId || undefined,
+        parentSeqId: detail.groupNo || undefined,
         linkedApplicationIds: [],
       }));
 
@@ -284,7 +318,7 @@ export default function RegistrationConfirmPage() {
             <span style={{ fontSize: '12px', fontWeight: 'bold' }}>登録明細確認</span>
             <span style={{ fontSize: '12px' }}>
               合計金額（税抜）:
-              <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px' }}>
+              <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px', fontVariantNumeric: 'tabular-nums' }}>
                 ¥{totalAmount.toLocaleString()}
               </span>
             </span>
@@ -295,68 +329,106 @@ export default function RegistrationConfirmPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                 <tr style={{ background: '#4a6fa5', color: 'white' }}>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>登録区分</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>明細区分</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '50px', fontSize: '11px', fontWeight: 'bold' }}>SEQ</th>
                   <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>大分類</th>
                   <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>中分類</th>
                   <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', fontSize: '11px', fontWeight: 'bold' }}>個体管理品目</th>
                   <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>メーカー</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '120px', fontSize: '11px', fontWeight: 'bold' }}>型式</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '50px', fontSize: '11px', fontWeight: 'bold' }}>単位</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #3d5a80', width: '90px', fontSize: '11px', fontWeight: 'bold' }}>定価単価</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #3d5a80', width: '90px', fontSize: '11px', fontWeight: 'bold' }}>按分単価</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #3d5a80', width: '90px', fontSize: '11px', fontWeight: 'bold' }}>按分金額</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>SEQ_ID</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '80px', fontSize: '11px', fontWeight: 'bold' }}>親と紐付け</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>型式</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '80px', fontSize: '11px', fontWeight: 'bold' }}>数量／単位</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #3d5a80', width: '120px', fontSize: '11px', fontWeight: 'bold' }}>案分金額（税別）</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>部門</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>部署</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>室名</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>管理部署</th>
                 </tr>
               </thead>
               <tbody>
-                {details.map((detail) => {
-                  const rowBg = detail.category === 'C' ? '#e8f5e9' : detail.category === 'D' ? '#fffde7' : detail.category === 'B' ? '#e3f2fd' : 'white';
+                {displayDetails.map((detail) => {
+                  const isParent = detail.detailClassification === '親明細';
+                  const rowBg = isParent ? '#e8f5e9' : '#fffde7';
 
                   return (
                     <tr key={detail.id} style={{ borderBottom: '1px solid #ddd', background: rowBg }}>
+                      {/* 明細区分 */}
                       <td style={{
                         padding: '8px 6px',
                         textAlign: 'center',
-                        background: detail.category === 'C' ? '#4caf50' : detail.category === 'D' ? '#ffc107' : detail.category === 'B' ? '#2196f3' : '#9e9e9e',
+                        background: isParent ? '#4caf50' : '#ffc107',
                         color: 'white',
                         fontWeight: 'bold',
                         fontSize: '12px'
                       }}>
-                        {detail.category || '-'}
+                        {classificationLabel(detail.detailClassification)}
                       </td>
+                      {/* SEQ */}
+                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px', fontWeight: isParent ? 'bold' : 'normal', fontVariantNumeric: 'tabular-nums' }}>
+                        {detail.seqId || '-'}
+                      </td>
+                      {/* 大分類 */}
                       <td style={{ padding: '8px 6px', fontSize: '11px' }}>
                         {detail.majorCategory || '-'}
                       </td>
+                      {/* 中分類 */}
                       <td style={{ padding: '8px 6px', fontSize: '11px' }}>
                         {detail.middleCategory || '-'}
                       </td>
-                      <td style={{ padding: '8px 6px', fontWeight: detail.category === 'C' ? 'bold' : 'normal', fontSize: '12px' }}>
+                      {/* 個体管理品目 */}
+                      <td style={{ padding: '8px 6px', fontWeight: 'bold', fontSize: '12px' }}>
                         {detail.assetName}
                       </td>
+                      {/* メーカー */}
                       <td style={{ padding: '8px 6px', fontSize: '11px' }}>
                         {detail.assetManufacturer || '-'}
                       </td>
+                      {/* 型式 */}
                       <td style={{ padding: '8px 6px', fontSize: '11px' }}>
                         {detail.assetModel || '-'}
                       </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px' }}>
-                        {detail.unit}
+                      {/* 数量／単位 */}
+                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
+                        1 / {detail.unit}
                       </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '11px' }}>
-                        {detail.listUnitPrice?.toLocaleString() || '-'}
+                      {/* 案分金額（税別） */}
+                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', color: '#c62828', fontVariantNumeric: 'tabular-nums' }}>
+                        {detail.allocatedAmount ? `¥${detail.allocatedAmount.toLocaleString()}` : '-'}
                       </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'right', fontSize: '11px' }}>
-                        {detail.allocatedUnitPrice?.toLocaleString() || '-'}
+                      {/* 部門 */}
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="text"
+                          value={detail.department}
+                          onChange={(e) => handleLocationChange(detail.id, 'department', e.target.value)}
+                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
+                        />
                       </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', color: '#c62828' }}>
-                        {detail.allocatedAmount?.toLocaleString() || '-'}
+                      {/* 部署 */}
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="text"
+                          value={detail.section}
+                          onChange={(e) => handleLocationChange(detail.id, 'section', e.target.value)}
+                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
+                        />
                       </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px', fontWeight: detail.category === 'C' ? 'bold' : 'normal' }}>
-                        {detail.seqId || '-'}
+                      {/* 室名 */}
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="text"
+                          value={detail.roomName}
+                          onChange={(e) => handleLocationChange(detail.id, 'roomName', e.target.value)}
+                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
+                        />
                       </td>
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px' }}>
-                        {detail.parentSeqId || '-'}
+                      {/* 管理部署 */}
+                      <td style={{ padding: '4px' }}>
+                        <input
+                          type="text"
+                          value={detail.managingSection}
+                          onChange={(e) => handleLocationChange(detail.id, 'managingSection', e.target.value)}
+                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
+                        />
                       </td>
                     </tr>
                   );

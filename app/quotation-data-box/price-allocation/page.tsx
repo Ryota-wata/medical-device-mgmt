@@ -244,13 +244,6 @@ export default function PriceAllocationPage() {
     [],
   );
 
-  const allocatedTotal = useMemo(
-    () => individualRecords.reduce((sum, r) => sum + (r.allocatedAmount || 0), 0),
-    [individualRecords],
-  );
-
-  const remainingAmount = quotationTotal - allocatedTotal;
-
   // -----------------------------------------------------------------------
   // ハンドラー
   // -----------------------------------------------------------------------
@@ -270,25 +263,6 @@ export default function PriceAllocationPage() {
     setIndividualRecords((prev) =>
       prev.map((r) => (r.id === recordId ? { ...r, groupNo } : r)),
     );
-  }, []);
-
-  // 按分実行: 元明細ごとに totalPrice をレコード数で均等割
-  const handleAllocate = useCallback(() => {
-    setIndividualRecords((prev) => {
-      const countByOriginal = new Map<number, number>();
-      prev.forEach((r) => {
-        countByOriginal.set(r.originalItemId, (countByOriginal.get(r.originalItemId) || 0) + 1);
-      });
-
-      return prev.map((record) => {
-        const orig = testOriginalItems.find((o) => o.id === record.originalItemId);
-        if (!orig?.totalPrice) return record;
-
-        const count = countByOriginal.get(record.originalItemId) || 1;
-        const perRecord = Math.floor(orig.totalPrice / count);
-        return { ...record, allocatedAmount: perRecord, allocatedUnitPrice: perRecord };
-      });
-    });
   }, []);
 
   const handleAddRecord = useCallback(
@@ -380,48 +354,12 @@ export default function PriceAllocationPage() {
             }}
           >
             <span style={{ fontSize: '14px', fontWeight: 'bold' }}>個体登録及び金額按分</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '11px' }}>
-                見積合計（税抜）:
-                <span style={{ fontWeight: 'bold', fontSize: '14px', marginLeft: '4px' }}>
-                  ¥{quotationTotal.toLocaleString()}
-                </span>
+            <span style={{ fontSize: '11px' }}>
+              見積合計（税抜）:
+              <span style={{ fontWeight: 'bold', fontSize: '14px', marginLeft: '4px', fontVariantNumeric: 'tabular-nums' }}>
+                ¥{quotationTotal.toLocaleString()}
               </span>
-              <span style={{ fontSize: '11px' }}>
-                按分済:
-                <span style={{ fontWeight: 'bold', fontSize: '14px', marginLeft: '4px' }}>
-                  ¥{allocatedTotal.toLocaleString()}
-                </span>
-              </span>
-              <span style={{ fontSize: '11px' }}>
-                残額:
-                <span
-                  style={{
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    marginLeft: '4px',
-                    color: remainingAmount !== 0 ? '#ffeb3b' : '#a5d6a7',
-                  }}
-                >
-                  ¥{remainingAmount.toLocaleString()}
-                </span>
-              </span>
-              <button
-                onClick={handleAllocate}
-                style={{
-                  padding: '6px 16px',
-                  background: '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                }}
-              >
-                按分実行
-              </button>
-            </div>
+            </span>
           </div>
 
           {/* 明細テーブル */}
