@@ -1,4 +1,4 @@
-# feature_code 設計方針（たたき台）
+﻿# feature_code 設計方針（たたき台）
 
 ## 目的
 - `role_permissions.feature_code` を `permissions` テーブルなしで運用する前提で、権限コードの粒度と命名規則を揃える。

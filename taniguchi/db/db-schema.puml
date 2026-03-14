@@ -196,7 +196,7 @@ package "施設・ロケーション" {
   }
 
   note right of ship_departments
-    病院個別施設マスタとの関係は 1:1 ではない。
+    個別部署マスタとの関係は 1:1 ではない。
     1つの SHIP部署に複数の facility_locations が
     紐づくことを許容する。
     共通マスタとして並び替え・絞り込み・
