@@ -5,24 +5,47 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
 
-// 登録区分の型
-type RegistrationCategory =
-  | 'A' // 表紙明細
-  | 'B' // 明細代表
-  | 'C' // 個体管理品目
-  | 'D' // 付属品
-  | 'E' // その他役務など
-  | 'F' // 値引き
+// 明細区分の型
+type DetailClassification =
+  | '明細代表'
+  | '内訳代表'
+  | '親明細'
+  | '子明細'
+  | '孫明細'
+  | 'その他'
+  | '値引き'
   | '';
 
-// 登録区分の選択肢
-const REGISTRATION_CATEGORY_OPTIONS: { value: RegistrationCategory; label: string }[] = [
-  { value: 'A', label: 'A_表紙明細' },
-  { value: 'B', label: 'B_明細代表' },
-  { value: 'C', label: 'C_個体管理品目' },
-  { value: 'D', label: 'D_付属品' },
-  { value: 'E', label: 'E_その他役務など（工事・設置費・接続費・交通費など）' },
-  { value: 'F', label: 'F_値引き' },
+// 明細区分の選択肢
+const DETAIL_CLASSIFICATION_OPTIONS: { value: DetailClassification; label: string }[] = [
+  { value: '明細代表', label: '明細代表' },
+  { value: '内訳代表', label: '内訳代表' },
+  { value: '親明細', label: '親明細' },
+  { value: '子明細', label: '子明細' },
+  { value: '孫明細', label: '孫明細' },
+  { value: 'その他', label: 'その他' },
+  { value: '値引き', label: '値引き' },
+];
+
+// category（会計区分）の選択肢
+const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: '01', label: '01 医療機器' },
+  { value: '02', label: '02 医療用具' },
+  { value: '03', label: '03 鋼製小物' },
+  { value: '04', label: '04 什器備品' },
+  { value: '05', label: '05 家電製品' },
+  { value: '06', label: '06 その他器械備品' },
+  { value: '07', label: '07 情報機器' },
+  { value: '08', label: '08 ソフトウェア' },
+  { value: '09', label: '09 車両他' },
+  { value: '10', label: '10 放射線同位元素' },
+  { value: '11', label: '11 建物' },
+  { value: '12', label: '12 建物付帯設備' },
+  { value: '13', label: '13 その他' },
+  { value: '14', label: '14 器械保守料' },
+  { value: '15', label: '15 修繕費' },
+  { value: '16', label: '16 器械賃借料' },
+  { value: '17', label: '17 材料費' },
 ];
 
 // 明細データの型
@@ -36,7 +59,8 @@ interface DetailItem {
   listPrice: number | null;       // 定価金額
   purchaseUnitPrice: number | null; // 購入単価
   purchaseAmount: number | null;    // 購入金額
-  registrationCategory: RegistrationCategory; // 登録区分（AI判定結果）
+  category: string;                // category（会計区分）
+  detailClassification: DetailClassification; // 明細区分（AI判定結果）
   isRegistered: boolean;       // 登録済みかどうか
 }
 
@@ -52,7 +76,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: 13200000,
     purchaseUnitPrice: 1650000,
     purchaseAmount: 6600000,
-    registrationCategory: 'B',
+    category: '01',
+    detailClassification: '明細代表',
     isRegistered: false,
   },
   {
@@ -65,7 +90,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'E',
+    category: '01',
+    detailClassification: 'その他',
     isRegistered: false,
   },
   {
@@ -78,7 +104,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'C',
+    category: '01',
+    detailClassification: '親明細',
     isRegistered: false,
   },
   {
@@ -91,7 +118,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -104,7 +132,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -117,7 +146,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -130,7 +160,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'C',
+    category: '01',
+    detailClassification: '親明細',
     isRegistered: false,
   },
   {
@@ -143,7 +174,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -156,7 +188,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -169,7 +202,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -182,7 +216,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: null,
-    registrationCategory: 'D',
+    category: '01',
+    detailClassification: '子明細',
     isRegistered: false,
   },
   {
@@ -195,7 +230,8 @@ const testDetailItems: DetailItem[] = [
     listPrice: null,
     purchaseUnitPrice: null,
     purchaseAmount: 648000,
-    registrationCategory: 'C',
+    category: '01',
+    detailClassification: '親明細',
     isRegistered: false,
   },
 ];
@@ -211,11 +247,20 @@ export default function CategoryRegistrationPage() {
     return detailItems.filter(item => item.isRegistered).length;
   }, [detailItems]);
 
-  // 登録区分の更新
-  const handleCategoryChange = (index: number, value: RegistrationCategory) => {
+  // category の更新
+  const handleCategoryChange = (index: number, value: string) => {
     setDetailItems(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], registrationCategory: value };
+      updated[index] = { ...updated[index], category: value };
+      return updated;
+    });
+  };
+
+  // 明細区分の更新
+  const handleClassificationChange = (index: number, value: DetailClassification) => {
+    setDetailItems(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], detailClassification: value };
       return updated;
     });
   };
@@ -306,7 +351,8 @@ export default function CategoryRegistrationPage() {
                     <th style={{ padding: '8px 6px', textAlign: 'left', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '100px' }}>メーカー</th>
                     <th style={{ padding: '8px 6px', textAlign: 'left', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '120px' }}>型式（見積名称）</th>
                     <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '50px' }}>数量</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#e91e63', color: 'white', border: '1px solid #c2185b', width: '280px' }}>登録区分（AI判定）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f39c12', color: 'white', border: '1px solid #e08e0b', width: '160px', fontWeight: 'bold' }}>category</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#2c3e50', color: 'white', border: '1px solid #1a252f', width: '200px', fontWeight: 'bold' }}>明細区分</th>
                     <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '80px' }}>ステータス</th>
                     <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '80px' }}>アクション</th>
                   </tr>
@@ -321,10 +367,28 @@ export default function CategoryRegistrationPage() {
                       <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px' }}>{item.manufacturer}</td>
                       <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px' }}>{item.model}</td>
                       <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center', fontSize: '11px' }}>{item.quantity ?? '-'}</td>
+                      <td style={{ padding: '6px', background: '#fff8e1', border: '1px solid #ddd' }}>
+                        <select
+                          value={item.category}
+                          onChange={(e) => handleCategoryChange(index, e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '4px 6px',
+                            fontSize: '11px',
+                            border: '1px solid #ddd',
+                            borderRadius: '3px',
+                            background: 'white',
+                          }}
+                        >
+                          {CATEGORY_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </td>
                       <td style={{ padding: '6px', background: '#fce4ec', border: '1px solid #ddd' }}>
                         <select
-                          value={item.registrationCategory}
-                          onChange={(e) => handleCategoryChange(index, e.target.value as RegistrationCategory)}
+                          value={item.detailClassification}
+                          onChange={(e) => handleClassificationChange(index, e.target.value as DetailClassification)}
                           style={{
                             width: '100%',
                             padding: '4px 6px',
@@ -335,7 +399,7 @@ export default function CategoryRegistrationPage() {
                           }}
                         >
                           <option value="">選択...</option>
-                          {REGISTRATION_CATEGORY_OPTIONS.map(opt => (
+                          {DETAIL_CLASSIFICATION_OPTIONS.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
@@ -373,14 +437,14 @@ export default function CategoryRegistrationPage() {
                         ) : (
                           <button
                             onClick={() => handleRegister(index)}
-                            disabled={!item.registrationCategory}
+                            disabled={!item.detailClassification}
                             style={{
                               padding: '4px 12px',
-                              background: item.registrationCategory ? '#27ae60' : '#bdc3c7',
+                              background: item.detailClassification ? '#27ae60' : '#bdc3c7',
                               color: 'white',
                               border: 'none',
                               borderRadius: '3px',
-                              cursor: item.registrationCategory ? 'pointer' : 'not-allowed',
+                              cursor: item.detailClassification ? 'pointer' : 'not-allowed',
                               fontSize: '10px',
                               fontWeight: 'bold',
                             }}
