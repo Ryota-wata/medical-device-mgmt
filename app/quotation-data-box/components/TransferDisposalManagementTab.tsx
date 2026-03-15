@@ -8,6 +8,14 @@ import { RfqGroupModal } from '@/components/remodel/RfqGroupModal';
 // ステータス体系（添付画像準拠）
 type DisposalRfqStatus = '見積依頼' | '見積依頼済' | '見積登録済' | '発注済' | '作業日確定' | '完了' | '申請を見送る';
 
+// 要望機器データ型
+interface DesiredEquipment {
+  rank: string;          // 希望順（第一希望、第二希望...）
+  itemName: string;      // 品目
+  maker: string;         // メーカー
+  model: string;         // 型式
+}
+
 // 申請受付用データ型
 interface PendingApplication {
   id: string;
@@ -18,11 +26,18 @@ interface PendingApplication {
   department: string;
   section: string;
   roomName: string;
+  desiredDelivery: string;  // 希望納期
   // 品目情報
   qrCode: string;
   itemName: string;
+  quantity: number;         // 台数
   maker: string;
   model: string;
+  // 要望機器
+  desiredEquipments: DesiredEquipment[];
+  // 使用用途及び件数
+  purpose: string;          // 用途
+  usageCount: string;       // 件数
   // 院内担当情報
   applicantDepartment: string;
   applicantName: string;
@@ -32,6 +47,11 @@ interface PendingApplication {
   destSection: string;
   destRoomName: string;
   comment: string;
+  // 添付ファイル
+  attachments: string[];
+  // システム接続要望
+  connectionRequired: string;  // 接続不要 / 接続要
+  connectionTarget: string;    // 接続先
 }
 
 // 見積依頼グループ用データ型
@@ -98,31 +118,57 @@ const getApplicationTypeStyle = (type: '移動申請' | '廃棄申請'): React.C
 
 const MOCK_PENDING_APPLICATIONS: PendingApplication[] = [
   {
-    id: 'td-001', applicationNo: 'AP-2026-0101', applicationType: '廃棄申請',
+    id: 'td-001', applicationNo: '廃-26001', applicationType: '廃棄申請',
     applicationDate: '2026-02-18',
-    department: '診療技術部', section: 'ME室', roomName: 'ME機器管理室',
-    qrCode: 'QR-00123', itemName: '心電計', maker: '日本光電', model: 'ECG-2550',
+    department: '01 救急部', section: '01 救命救急センター', roomName: '初療室',
+    desiredDelivery: '2027年3月',
+    qrCode: 'QR-00123', itemName: '電気メス', quantity: 1,
+    maker: '日本光電', model: 'ECG-2550',
+    desiredEquipments: [
+      { rank: '第一希望', itemName: '電気手術器(電気メス)', maker: '日本メドトロニック', model: 'AEXジェネレータ' },
+      { rank: '第二希望', itemName: '高周波焼灼装置', maker: 'アムコ', model: '高周波手術装置VIO200S' },
+    ],
+    purpose: '初療室ないでの簡易的な処置に使用', usageCount: '15 件／月',
     applicantDepartment: 'ME室', applicantName: '山田 太郎', applicantContact: '内線1234',
     destDepartment: '', destSection: '', destRoomName: '',
-    comment: '耐用年数超過のため廃棄',
+    comment: '現状は必要時にMEより借りているが件数増加に伴い、救急部に１台配置したい',
+    attachments: ['見積_電気メス_アムコ.pdf'],
+    connectionRequired: '接続不要', connectionTarget: '-',
   },
   {
-    id: 'td-002', applicationNo: 'AP-2026-0102', applicationType: '廃棄申請',
+    id: 'td-002', applicationNo: '廃-26002', applicationType: '廃棄申請',
     applicationDate: '2026-02-17',
     department: '診療技術部', section: '放射線科', roomName: '生理検査室',
-    qrCode: 'QR-00456', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ S8',
+    desiredDelivery: '2027年4月',
+    qrCode: 'QR-00456', itemName: '超音波診断装置', quantity: 1,
+    maker: 'GEヘルスケア', model: 'LOGIQ S8',
+    desiredEquipments: [
+      { rank: '第一希望', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10s' },
+    ],
+    purpose: '生理検査全般', usageCount: '20 件／月',
     applicantDepartment: '放射線科', applicantName: '佐藤 花子', applicantContact: '内線5678',
     destDepartment: '', destSection: '', destRoomName: '',
-    comment: '故障頻発のため廃棄',
+    comment: '故障頻発のため廃棄・更新を希望',
+    attachments: [],
+    connectionRequired: '接続不要', connectionTarget: '-',
   },
   {
-    id: 'td-003', applicationNo: 'AP-2026-0103', applicationType: '移動申請',
+    id: 'td-003', applicationNo: '移-26001', applicationType: '移動申請',
     applicationDate: '2026-02-16',
-    department: '手術部', section: '手術室', roomName: '手術室1',
-    qrCode: 'QR-00789', itemName: '電気メス', maker: 'コヴィディエン', model: 'ForceTriad',
+    department: '01 救急部', section: '01 救命救急センター', roomName: '初療室',
+    desiredDelivery: '2027年3月',
+    qrCode: 'QR-00789', itemName: '電気メス', quantity: 1,
+    maker: 'コヴィディエン', model: 'ForceTriad',
+    desiredEquipments: [
+      { rank: '第一希望', itemName: '電気手術器(電気メス)', maker: '日本メドトロニック', model: 'AEXジェネレータ' },
+      { rank: '第二希望', itemName: '高周波焼灼装置', maker: 'アムコ', model: '高周波手術装置VIO200S' },
+    ],
+    purpose: '初療室ないでの簡易的な処置に使用', usageCount: '15 件／月',
     applicantDepartment: '手術部', applicantName: '鈴木 一郎', applicantContact: '内線9012',
     destDepartment: '内科', destSection: '検査室', destRoomName: '内科検査室1',
-    comment: '4月からの部署統合に伴い移動',
+    comment: '現状は必要時にMEより借りているが件数増加に伴い、救急部に１台配置したい',
+    attachments: ['見積_電気メス_アムコ.pdf'],
+    connectionRequired: '接続不要', connectionTarget: '-',
   },
 ];
 
@@ -217,13 +263,8 @@ export function TransferDisposalManagementTab() {
   };
 
   const handleViewDetail = (app: PendingApplication) => {
-    if (app.applicationType === '移動申請') {
-      setSelectedApplication(app);
-      setIsApprovalModalOpen(true);
-    } else {
-      // 廃棄申請の詳細は見積依頼グループ操作から開く
-      alert('廃棄申請の詳細は、見積依頼グループを作成後、操作ボタンから確認できます。');
-    }
+    setSelectedApplication(app);
+    setIsApprovalModalOpen(true);
   };
 
   const handleConfirmApproval = () => {
@@ -673,94 +714,228 @@ export function TransferDisposalManagementTab() {
         </div>
       </div>
 
-      {/* ===== 移動申請 承認確認モーダル ===== */}
-      {isApprovalModalOpen && selectedApplication && (
-        <div
-          onClick={() => setIsApprovalModalOpen(false)}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
+      {/* ===== 申請内容確認モーダル ===== */}
+      {isApprovalModalOpen && selectedApplication && (() => {
+        const app = selectedApplication;
+        const isTransfer = app.applicationType === '移動申請';
+        const typeLabel = isTransfer ? '移動申請' : '廃棄申請';
+        const modalTh: React.CSSProperties = {
+          background: '#e8e8e8', padding: '8px 12px', fontSize: '13px',
+          fontWeight: 600, textAlign: 'left', border: '1px solid #ccc',
+          whiteSpace: 'nowrap', width: '120px',
+        };
+        const modalTd: React.CSSProperties = {
+          background: 'white', padding: '8px 12px', fontSize: '13px',
+          border: '1px solid #ccc',
+        };
+        const sectionLabel: React.CSSProperties = {
+          fontSize: '13px', fontWeight: 'bold', color: '#333',
+          borderBottom: '1px solid #999', paddingBottom: '4px', marginTop: '16px', marginBottom: '8px',
+        };
+        return (
           <div
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => setIsApprovalModalOpen(false)}
             style={{
-              background: 'white', borderRadius: '8px',
-              width: '90%', maxWidth: '600px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1000,
             }}
           >
-            <div style={{
-              background: '#4caf50', padding: '16px',
-              borderRadius: '8px 8px 0 0', color: 'white',
-              fontWeight: 'bold', fontSize: '16px',
-            }}>
-              移動申請の承認
-            </div>
-            <div style={{ padding: '24px' }}>
-              <p style={{ fontSize: '14px', marginBottom: '20px', color: '#333' }}>
-                以下の移動申請を承認し、原本に反映してよろしいですか？
-              </p>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#f5f5f0', borderRadius: '8px',
+                width: '90%', maxWidth: '700px', maxHeight: '90vh',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                display: 'flex', flexDirection: 'column',
+              }}
+            >
+              {/* ヘッダー */}
               <div style={{
-                background: '#f8f9fa', padding: '16px',
-                borderRadius: '8px', marginBottom: '20px',
+                background: '#3d4f3d', padding: '12px 16px',
+                borderRadius: '8px 8px 0 0', color: 'white',
+                display: 'flex', alignItems: 'center', gap: '12px',
               }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '8px 12px', fontSize: '13px' }}>
-                  <span style={{ color: '#666' }}>申請No:</span>
-                  <span style={{ fontWeight: 'bold' }}>{selectedApplication.applicationNo}</span>
-                  <span style={{ color: '#666' }}>申請日:</span>
-                  <span>{selectedApplication.applicationDate}</span>
-                  <span style={{ color: '#666' }}>申請者:</span>
-                  <span>{selectedApplication.applicantName}</span>
-                  <span style={{ color: '#666' }}>品目名:</span>
-                  <span>{selectedApplication.itemName}</span>
-                  <span style={{ color: '#666' }}>設置部門:</span>
-                  <span>{selectedApplication.department}</span>
-                  <span style={{ color: '#666' }}>設置部署:</span>
-                  <span>{selectedApplication.section}</span>
-                  <span style={{ color: '#666' }}>設置室名:</span>
-                  <span>{selectedApplication.roomName || '-'}</span>
-                  <span style={{ color: '#666' }}>移動先部門:</span>
-                  <span style={{ color: '#1565c0', fontWeight: 'bold' }}>{selectedApplication.destDepartment}</span>
-                  <span style={{ color: '#666' }}>移動先部署:</span>
-                  <span style={{ color: '#1565c0', fontWeight: 'bold' }}>{selectedApplication.destSection}</span>
-                  <span style={{ color: '#666' }}>移動先室名:</span>
-                  <span style={{ color: '#1565c0', fontWeight: 'bold' }}>{selectedApplication.destRoomName}</span>
-                  {selectedApplication.comment && (
-                    <>
-                      <span style={{ color: '#666' }}>コメント:</span>
-                      <span>{selectedApplication.comment}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <span style={{
+                  background: '#fffde7', color: '#1f2937', padding: '4px 12px',
+                  borderRadius: '4px', fontSize: '14px', fontWeight: 'bold',
+                }}>
+                  {typeLabel} 内容確認
+                </span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                  {typeLabel}No, {app.applicationNo}
+                </span>
                 <button
                   onClick={() => setIsApprovalModalOpen(false)}
                   style={{
-                    padding: '10px 24px', background: '#6c757d', color: 'white',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px',
+                    marginLeft: 'auto', background: 'transparent', border: 'none',
+                    color: 'white', fontSize: '18px', cursor: 'pointer', padding: '4px 8px',
+                  }}
+                  aria-label="閉じる"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* コンテンツ */}
+              <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
+                {/* 設置情報 */}
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                  <tbody>
+                    <tr>
+                      <th style={modalTh}>設置部門</th>
+                      <td style={modalTd}>{app.department}</td>
+                      <th style={modalTh}>設置部署</th>
+                      <td style={modalTd}>{app.section}</td>
+                    </tr>
+                    <tr>
+                      <th style={modalTh}>設置室名</th>
+                      <td style={modalTd}>{app.roomName}</td>
+                      <th style={modalTh}>希望納期</th>
+                      <td style={modalTd}>{app.desiredDelivery}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* 申請品目 */}
+                <div style={sectionLabel}>申請品目</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                  <tbody>
+                    <tr>
+                      <th style={modalTh}>品目名</th>
+                      <td style={modalTd}>{app.itemName}</td>
+                      <th style={{ ...modalTh, width: '80px' }}>台数</th>
+                      <td style={{ ...modalTd, width: '80px' }}>{app.quantity}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* 要望機器 */}
+                <div style={sectionLabel}>要望機器</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...modalTh, width: '80px' }}>希望順</th>
+                      <th style={modalTh}>品目</th>
+                      <th style={modalTh}>メーカー</th>
+                      <th style={modalTh}>型式</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {app.desiredEquipments.map((eq, i) => (
+                      <tr key={i}>
+                        <td style={modalTd}>{eq.rank}</td>
+                        <td style={modalTd}>{eq.itemName}</td>
+                        <td style={modalTd}>{eq.maker}</td>
+                        <td style={modalTd}>{eq.model}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* 使用用途及び件数 */}
+                <div style={sectionLabel}>使用用途及び件数</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                  <tbody>
+                    <tr>
+                      <th style={modalTh}>用途</th>
+                      <td style={modalTd}>{app.purpose}</td>
+                      <th style={{ ...modalTh, width: '80px' }}>件数</th>
+                      <td style={{ ...modalTd, width: '120px' }}>{app.usageCount}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* コメント（必要理由 他） */}
+                <div style={sectionLabel}>コメント（必要理由 他）</div>
+                <div style={{
+                  background: '#f8f9fa', padding: '10px 12px', borderRadius: '4px',
+                  fontSize: '13px', color: '#333', border: '1px solid #ccc',
+                  marginBottom: '4px', minHeight: '40px',
+                }}>
+                  {app.comment || '-'}
+                </div>
+
+                {/* 添付ファイル */}
+                <div style={sectionLabel}>添付ファイル</div>
+                <div style={{
+                  background: 'white', padding: '10px 12px', borderRadius: '4px',
+                  fontSize: '13px', color: '#333', border: '1px solid #ccc',
+                  marginBottom: '4px',
+                }}>
+                  {app.attachments.length > 0 ? app.attachments.map((f, i) => (
+                    <div key={i} style={{ padding: '2px 0' }}>{f}</div>
+                  )) : '-'}
+                </div>
+
+                {/* システム接続要望 */}
+                <div style={sectionLabel}>システム接続要望</div>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    <tr>
+                      <th style={modalTh}>接続要望</th>
+                      <td style={modalTd}>{app.connectionRequired}</td>
+                      <th style={modalTh}>接続先</th>
+                      <td style={modalTd}>{app.connectionTarget}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* フッターボタン */}
+              <div style={{
+                padding: '12px 20px', borderTop: '1px solid #ccc',
+                display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center',
+              }}>
+                <button
+                  onClick={() => alert('印刷プレビューを表示します（モック）')}
+                  style={{
+                    padding: '10px 24px', background: '#fffde7', color: '#333',
+                    border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
+                    fontSize: '14px', fontWeight: 'bold',
+                  }}
+                >
+                  印刷
+                </button>
+                {isTransfer ? (
+                  <button
+                    onClick={handleConfirmApproval}
+                    style={{
+                      padding: '10px 24px', background: '#fffde7', color: '#333',
+                      border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
+                      fontSize: '14px', fontWeight: 'bold',
+                    }}
+                  >
+                    承認して原本に反映
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => alert('添付ファイルを表示します（モック）')}
+                    style={{
+                      padding: '10px 24px', background: '#fffde7', color: '#333',
+                      border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
+                      fontSize: '14px', fontWeight: 'bold',
+                    }}
+                  >
+                    添付ファイル
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsApprovalModalOpen(false)}
+                  style={{
+                    padding: '10px 32px', background: '#fffde7', color: '#333',
+                    border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
+                    fontSize: '14px', fontWeight: 'bold',
                   }}
                 >
                   キャンセル
                 </button>
-                <button
-                  onClick={handleConfirmApproval}
-                  style={{
-                    padding: '10px 24px', background: '#4caf50', color: 'white',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer',
-                    fontSize: '14px', fontWeight: 'bold',
-                  }}
-                >
-                  承認して原本に反映
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
       {/* ===== 見積依頼グループ作成モーダル ===== */}
       <RfqGroupModal
         isOpen={isRfqGroupModalOpen}
