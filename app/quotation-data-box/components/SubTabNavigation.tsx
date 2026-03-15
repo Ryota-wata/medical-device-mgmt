@@ -4,12 +4,11 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePermissions } from '@/lib/hooks';
 
-export type SubTabType = 'remodelManagement' | 'purchaseManagement' | 'borrowingManagement' | 'transferDisposalManagement' | 'repairRequests' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
+export type SubTabType = 'remodelManagement' | 'purchaseManagement' | 'transferDisposalManagement' | 'repairRequests' | 'makerMaintenance' | 'inHouseInspection' | 'lendingManagement';
 
 export const SUB_TABS: { key: SubTabType; label: string; path: string }[] = [
   { key: 'remodelManagement', label: 'リモデル管理', path: '/quotation-data-box/remodel-management' },
   { key: 'purchaseManagement', label: '購入管理', path: '/quotation-data-box/purchase-management' },
-  { key: 'borrowingManagement', label: '借用管理', path: '/quotation-data-box/borrowing-management' },
   { key: 'transferDisposalManagement', label: '移動・廃棄管理', path: '/quotation-data-box/transfer-management' },
   { key: 'repairRequests', label: '修理管理', path: '/quotation-data-box/repair-requests' },
   { key: 'makerMaintenance', label: '保守契約管理', path: '/quotation-data-box/maintenance-contracts' },

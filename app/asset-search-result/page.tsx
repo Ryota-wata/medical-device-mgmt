@@ -9,7 +9,6 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
 import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
-import { BorrowingApplicationModal } from '@/components/ui/BorrowingApplicationModal';
 import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationModal';
 import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
 import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
@@ -57,9 +56,6 @@ export default function AssetSearchResultPage() {
 
   // 廃棄申請モーダル関連の状態
   const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
-
-  // 借用申請モーダル関連の状態
-  const [isBorrowingModalOpen, setIsBorrowingModalOpen] = useState(false);
 
   // 購入申請モーダル関連の状態
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
@@ -219,23 +215,6 @@ export default function AssetSearchResultPage() {
             新規申請
           </button>
 
-          {/* 中央ボタン */}
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-            <button
-              style={getButtonStyle(!isAnySelected)}
-              onClick={() => {
-                if (isAnySelected) {
-                  alert('借用申請は資産を選択せずに行ってください');
-                  return;
-                }
-                setIsBorrowingModalOpen(true);
-              }}
-              title={!isAnySelected ? '' : '資産の選択を解除してください'}
-            >
-              借用申請
-            </button>
-          </div>
-
           {/* 右側ボタン群 */}
           <button
             style={getButtonStyle(isAnySelected)}
@@ -283,7 +262,7 @@ export default function AssetSearchResultPage() {
           </span>
           {selectedItems.size === 0 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 新規・借用申請が可能です
+              ✓ 新規申請が可能です
             </span>
           )}
           {selectedItems.size === 1 && (
@@ -643,15 +622,6 @@ export default function AssetSearchResultPage() {
         isOpen={isDisposalModalOpen}
         onClose={() => setIsDisposalModalOpen(false)}
         assets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
-        onSuccess={() => {
-          setSelectedItems(new Set());
-        }}
-      />
-
-      {/* 借用申請モーダル */}
-      <BorrowingApplicationModal
-        isOpen={isBorrowingModalOpen}
-        onClose={() => setIsBorrowingModalOpen(false)}
         onSuccess={() => {
           setSelectedItems(new Set());
         }}
