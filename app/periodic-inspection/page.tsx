@@ -3,57 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useState, useRef, Suspense, useMemo, useEffect } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-import { Asset } from '@/lib/types/asset';
+import { InspectionTask } from '@/lib/types';
 import { useInspectionStore, useAuthStore } from '@/lib/stores';
-
-// モック: 原本資産データ（実際はIndexedDBまたはAPIから取得）
-const MOCK_ORIGINAL_ASSETS: Asset[] = [
-  {
-    qrCode: 'QR001234',
-    no: 1,
-    facility: '本院',
-    building: '本館',
-    floor: '3F',
-    department: '内科',
-    section: '外来',
-    category: 'ME機器',
-    largeClass: '生体情報モニタ',
-    mediumClass: 'ベッドサイドモニタ',
-    item: '輸液ポンプ',
-    name: '輸液ポンプ TE-161',
-    maker: 'テルモ',
-    model: 'TE-161',
-    quantity: 1,
-    width: 130,
-    depth: 180,
-    height: 220,
-  },
-  {
-    qrCode: 'QR001235',
-    no: 2,
-    facility: '本院',
-    building: '本館',
-    floor: '3F',
-    department: '内科',
-    section: '外来',
-    category: 'ME機器',
-    largeClass: '生体情報モニタ',
-    mediumClass: 'ベッドサイドモニタ',
-    item: 'シリンジポンプ',
-    name: 'シリンジポンプ TE-351',
-    maker: 'テルモ',
-    model: 'TE-351',
-    quantity: 1,
-    width: 100,
-    depth: 150,
-    height: 80,
-  },
-];
 
 interface InspectionItemResult {
   itemName: string;
   content: string;
-  result: '合' | '否' | '交換' | string;
+  result: '合' | '否' | string;
   unit?: string;
 }
 
@@ -67,12 +23,15 @@ const DEFAULT_ITEMS: InspectionItemResult[] = [
 
 type Step = 'qr-scan' | 'inspection' | 'confirm';
 
-function DailyInspectionContent() {
+function PeriodicInspectionContent() {
   const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
-  const { menus } = useInspectionStore();
+  const { menus, getMenuById, completeInspection, startInspection } = useInspectionStore();
   const { user } = useAuthStore();
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // タスク情報（sessionStorageから取得）
+  const [task, setTask] = useState<InspectionTask | null>(null);
 
   // ステップ管理
   const [step, setStep] = useState<Step>('qr-scan');
@@ -80,32 +39,36 @@ function DailyInspectionContent() {
   // QRスキャン状態
   const [qrCode, setQrCode] = useState('');
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
   // 点検実施状態
-  const [inspectorName, setInspectorName] = useState(user?.username || '');
-  const [usageTiming, setUsageTiming] = useState<'使用前' | '使用中' | '使用後'>('使用前');
-  const [selectedMenuId, setSelectedMenuId] = useState('');
+  const [inspectorName, setInspectorName] = useState('');
   const [itemResults, setItemResults] = useState<InspectionItemResult[]>(DEFAULT_ITEMS);
   const [remarks, setRemarks] = useState('');
   const [overallResult, setOverallResult] = useState<'合格' | '異常あり' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  // 日常点検メニュー取得
-  const availableMenus = useMemo(() => {
-    if (!selectedAsset) return [];
-    return menus.filter(
-      (m) => m.menuType === '日常点検' && m.item === selectedAsset.item
-    );
-  }, [menus, selectedAsset]);
+  // sessionStorageからタスク情報を取得
+  useEffect(() => {
+    const stored = sessionStorage.getItem('periodicInspectionTask');
+    if (stored) {
+      const parsed = JSON.parse(stored) as InspectionTask;
+      setTask(parsed);
+    }
+  }, []);
 
-  const filteredMenus = useMemo(() => {
-    return availableMenus.filter((m) => m.dailyTiming === usageTiming);
-  }, [availableMenus, usageTiming]);
+  // ログインユーザー名を自動取得
+  useEffect(() => {
+    if (user?.username) {
+      setInspectorName(user.username);
+    }
+  }, [user]);
 
+  // タスクに紐付く点検メニュー
   const selectedMenu = useMemo(() => {
-    return menus.find((m) => m.id === selectedMenuId) || null;
-  }, [menus, selectedMenuId]);
+    if (!task || task.periodicMenuIds.length === 0) return null;
+    return getMenuById(task.periodicMenuIds[0]) || null;
+  }, [task, getMenuById]);
 
   // メニュー変更時に点検項目を更新
   useEffect(() => {
@@ -122,15 +85,6 @@ function DailyInspectionContent() {
       setItemResults(DEFAULT_ITEMS);
     }
   }, [selectedMenu]);
-
-  // タイミング変更時にメニュー自動選択（事前登録済みの最初のメニューを適用）
-  useEffect(() => {
-    if (filteredMenus.length > 0) {
-      setSelectedMenuId(filteredMenus[0].id);
-    } else {
-      setSelectedMenuId('');
-    }
-  }, [filteredMenus]);
 
   // カメラ起動
   const handleStartCamera = async () => {
@@ -157,18 +111,30 @@ function DailyInspectionContent() {
     }
   };
 
-  // QRコード検索 → 点検実施へ
-  const handleSearchByQR = () => {
-    const asset = qrCode.trim()
-      ? MOCK_ORIGINAL_ASSETS.find((a) => a.qrCode === qrCode.trim())
-      : MOCK_ORIGINAL_ASSETS[0];
+  // QRコード照合 → 点検実施へ
+  const handleVerifyQR = () => {
+    if (!task) {
+      alert('タスク情報が読み込まれていません');
+      return;
+    }
 
-    if (asset) {
-      setSelectedAsset(asset);
+    const inputQr = qrCode.trim();
+
+    // 空欄の場合はそのまま進む（デモ用）
+    if (!inputQr) {
+      setIsVerified(true);
+      handleStopCamera();
+      setStep('inspection');
+      return;
+    }
+
+    // QRコード照合
+    if (inputQr === task.assetId) {
+      setIsVerified(true);
       handleStopCamera();
       setStep('inspection');
     } else {
-      alert('該当する資産が見つかりませんでした');
+      alert(`QRコードが一致しません。\n期待: ${task.assetId}\n入力: ${inputQr}`);
     }
   };
 
@@ -194,56 +160,54 @@ function DailyInspectionContent() {
   // 報告書出力
   const handleExportReport = async () => {
     setIsExporting(true);
-    // TODO: 実際のPDF生成処理
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsExporting(false);
     alert('点検結果報告書を出力しました');
   };
 
-  // 完了（inspection-prepへ遷移）
+  // 完了
   const handleFinish = () => {
-    // TODO: IndexedDBに保存
-    console.log('点検完了:', {
-      overallResult,
-      qrCode: selectedAsset?.qrCode,
-      itemResults,
-      remarks,
+    if (!task) return;
+
+    // 点検実績を登録
+    completeInspection(task.id, {
+      taskId: task.id,
+      assetId: task.assetId,
+      menuId: selectedMenu?.id || '',
+      plannedDate: task.nextInspectionDate,
+      actualDate: new Date().toISOString().split('T')[0],
+      result: '合格',
+      staffName: inspectorName,
+      resultDetails: itemResults.map((item) => ({
+        itemId: item.itemName,
+        itemName: item.itemName,
+        result: item.result || '-',
+        note: item.unit ? `${item.result} ${item.unit}` : undefined,
+      })),
+      memo: remarks || undefined,
     });
-    router.push('/inspection-prep');
+
+    sessionStorage.removeItem('periodicInspectionTask');
+    alert('点検記録を登録しました');
+    router.push('/quotation-data-box/inspection-requests');
   };
 
   // 修理申請へ
   const handleRepairRequest = () => {
+    if (!task) return;
     sessionStorage.setItem('repairRequestData', JSON.stringify({
-      qrCode: selectedAsset?.qrCode || '',
-      largeClass: selectedAsset?.largeClass || '',
-      mediumClass: selectedAsset?.mediumClass || '',
-      item: selectedAsset?.item || '',
-      maker: selectedAsset?.maker || '',
-      model: selectedAsset?.model || '',
+      qrCode: task.assetId,
+      largeClass: task.largeClass,
+      mediumClass: task.mediumClass,
+      item: task.assetName,
+      maker: task.maker,
+      model: task.model,
       inspectionRemarks: remarks,
       inspectionDate: new Date().toISOString().split('T')[0],
       inspectorName,
     }));
+    sessionStorage.removeItem('periodicInspectionTask');
     router.push('/repair-request');
-  };
-
-  // 次の点検へ
-  const handleNextInspection = () => {
-    resetState();
-    setStep('qr-scan');
-  };
-
-  // 状態リセット
-  const resetState = () => {
-    setQrCode('');
-    setSelectedAsset(null);
-    setInspectorName('');
-    setUsageTiming('使用前');
-    setSelectedMenuId('');
-    setItemResults(DEFAULT_ITEMS);
-    setRemarks('');
-    setOverallResult(null);
   };
 
   // 戻る
@@ -252,14 +216,36 @@ function DailyInspectionContent() {
       setStep('inspection');
     } else if (step === 'inspection') {
       setStep('qr-scan');
-      setSelectedAsset(null);
+      setIsVerified(false);
     } else {
       handleStopCamera();
-      router.push('/inspection-prep');
+      sessionStorage.removeItem('periodicInspectionTask');
+      router.push('/quotation-data-box/inspection-requests');
     }
   };
 
   const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '/');
+
+  if (!task) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
+        <header style={{
+          background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+          color: 'white',
+          padding: '16px 24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>定期点検</h1>
+        </header>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p>タスク情報を読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
@@ -274,7 +260,7 @@ function DailyInspectionContent() {
         justifyContent: 'center'
       }}>
         <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-          日常点検 - {step === 'qr-scan' ? 'QRコード読み取り' : step === 'confirm' ? '確認' : '点検実施'}
+          定期点検 - {step === 'qr-scan' ? 'QRコード読み取り' : step === 'confirm' ? '確認' : '点検実施'}
         </h1>
       </header>
 
@@ -294,6 +280,25 @@ function DailyInspectionContent() {
             maxWidth: '600px',
             margin: '0 auto'
           }}>
+            {/* 対象機器情報 */}
+            <div style={{
+              backgroundColor: '#f0f7ff',
+              border: '1px solid #c8ddf5',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              fontSize: '13px',
+              color: '#2c3e50',
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: '8px', color: '#3498db' }}>点検対象機器</div>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                <span><span style={{ color: '#7f8c8d' }}>QRコード:</span> {task.assetId}</span>
+                <span><span style={{ color: '#7f8c8d' }}>品目:</span> {task.assetName}</span>
+                <span><span style={{ color: '#7f8c8d' }}>メーカー:</span> {task.maker}</span>
+                <span><span style={{ color: '#7f8c8d' }}>型式:</span> {task.model}</span>
+              </div>
+            </div>
+
             <div style={{
               backgroundColor: '#000',
               borderRadius: '8px',
@@ -357,7 +362,7 @@ function DailyInspectionContent() {
                 type="text"
                 value={qrCode}
                 onChange={(e) => setQrCode(e.target.value)}
-                placeholder="例: QR001234（空欄可）"
+                placeholder={`例: ${task.assetId}（空欄可）`}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -370,7 +375,7 @@ function DailyInspectionContent() {
             </div>
 
             <button
-              onClick={handleSearchByQR}
+              onClick={handleVerifyQR}
               style={{
                 width: '100%',
                 padding: '14px',
@@ -384,7 +389,7 @@ function DailyInspectionContent() {
                 minHeight: '44px'
               }}
             >
-              検索して点検開始
+              照合して点検開始
             </button>
           </div>
         ) : step === 'inspection' ? (
@@ -407,7 +412,7 @@ function DailyInspectionContent() {
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>QRコード</span>
-                  <span style={{ ...styles.infoValue, fontVariantNumeric: 'tabular-nums' }}>{selectedAsset?.qrCode}</span>
+                  <span style={{ ...styles.infoValue, fontVariantNumeric: 'tabular-nums' }}>{task.assetId}</span>
                 </div>
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>実施者名</span>
@@ -426,27 +431,15 @@ function DailyInspectionContent() {
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>対象機器</span>
-                  <span style={styles.infoValue}>{selectedAsset?.item}　{selectedAsset?.maker}　{selectedAsset?.model}</span>
+                  <span style={styles.infoValue}>{task.assetName}　{task.maker}　{task.model}</span>
                 </div>
               </div>
 
-              {/* 点検タイミング */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ ...styles.infoLabel, marginRight: '4px' }}>点検タイミング</span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  {(['使用前', '使用中', '使用後'] as const).map((timing) => (
-                    <label key={timing} style={usageTiming === timing ? styles.tabActive : styles.tab}>
-                      <input
-                        type="radio"
-                        name="usageTiming"
-                        value={timing}
-                        checked={usageTiming === timing}
-                        onChange={() => setUsageTiming(timing)}
-                        style={{ display: 'none' }}
-                      />
-                      {timing}
-                    </label>
-                  ))}
+              {/* 点検種別 */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                <div style={styles.infoItem}>
+                  <span style={styles.infoLabel}>点検種別</span>
+                  <span style={{ ...styles.infoValue, color: '#27ae60' }}>定期点検</span>
                 </div>
               </div>
 
@@ -455,16 +448,10 @@ function DailyInspectionContent() {
                 <span style={styles.infoLabel}>点検メニュー</span>
                 <div style={styles.infoItem}>
                   <span style={styles.infoValue}>
-                    {filteredMenus.length > 0 ? filteredMenus[0].name : '（未登録）'}
+                    {selectedMenu?.name || '（メニュー未設定）'}
                   </span>
                 </div>
               </div>
-
-              {filteredMenus.length === 0 && (
-                <div style={styles.warning}>
-                  この品目の「{usageTiming}」点検メニューが登録されていません。点検管理画面でメニューを登録してください。
-                </div>
-              )}
             </div>
 
             {/* 点検項目 */}
@@ -510,12 +497,6 @@ function DailyInspectionContent() {
                               onClick={() => handleItemResultChange(index, '否')}
                             >
                               否
-                            </button>
-                            <button
-                              style={item.result === '交換' ? styles.resultButtonReplace : styles.resultButton}
-                              onClick={() => handleItemResultChange(index, '交換')}
-                            >
-                              交換
                             </button>
                           </div>
                         )}
@@ -631,9 +612,13 @@ function DailyInspectionContent() {
               <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
                 点検対象機器
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <ConfirmInfoItem label="QRコード" value={selectedAsset?.qrCode || ''} />
-                <ConfirmInfoItem label="対象機器" value={`${selectedAsset?.item}　${selectedAsset?.maker}　${selectedAsset?.model}`} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                <ConfirmInfoItem label="QRコード" value={task.assetId} />
+                <ConfirmInfoItem label="大分類" value={task.largeClass} />
+                <ConfirmInfoItem label="中分類" value={task.mediumClass} />
+                <ConfirmInfoItem label="品目" value={task.assetName} />
+                <ConfirmInfoItem label="メーカー" value={task.maker} />
+                <ConfirmInfoItem label="型式" value={task.model} />
               </div>
             </div>
 
@@ -649,10 +634,10 @@ function DailyInspectionContent() {
                 点検情報
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: '8px' }}>
+                <ConfirmInfoItem label="点検種別" value="定期点検" />
+                <ConfirmInfoItem label="点検メニュー" value={selectedMenu?.name || '（メニュー未設定）'} />
                 <ConfirmInfoItem label="実施者" value={inspectorName} />
                 <ConfirmInfoItem label="実施日" value={today} />
-                <ConfirmInfoItem label="タイミング" value={usageTiming} />
-                <ConfirmInfoItem label="点検メニュー" value={selectedMenu?.name || '（メニュー未選択）'} />
               </div>
             </div>
 
@@ -686,7 +671,7 @@ function DailyInspectionContent() {
                           borderBottom: '1px solid #eee',
                           textAlign: 'center',
                           fontWeight: 600,
-                          color: item.result === '合' ? '#27ae60' : item.result === '否' ? '#e74c3c' : item.result === '交換' ? '#f39c12' : '#333'
+                          color: item.result === '合' ? '#27ae60' : item.result === '否' ? '#e74c3c' : '#333'
                         }}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
@@ -778,24 +763,6 @@ function DailyInspectionContent() {
             >
               戻る
             </button>
-            <button
-              onClick={handleNextInspection}
-              aria-label="次の点検へ"
-              style={{
-                flex: 1,
-                backgroundColor: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '14px 16px',
-                fontSize: '15px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minHeight: '48px',
-              }}
-            >
-              → 次の点検へ
-            </button>
             {overallResult === '合格' ? (
               <button
                 onClick={handleFinish}
@@ -813,7 +780,7 @@ function DailyInspectionContent() {
                   minHeight: '48px',
                 }}
               >
-                ✓ 完了
+                完了
               </button>
             ) : (
               <button
@@ -944,48 +911,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '14px',
     width: '100px',
   },
-  select: {
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    padding: '6px 10px',
-    fontSize: '14px',
-    minWidth: '180px',
-    backgroundColor: 'white',
-  },
   dateDisplay: {
     backgroundColor: '#e8f5e9',
     padding: '6px 12px',
     borderRadius: '4px',
     fontSize: '13px',
     color: '#27ae60',
-  },
-  tab: {
-    padding: '6px 12px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    backgroundColor: 'white',
-    cursor: 'pointer',
-    fontSize: '13px',
-    minHeight: '32px',
-  },
-  tabActive: {
-    padding: '6px 12px',
-    border: '1px solid #27ae60',
-    borderRadius: '4px',
-    backgroundColor: '#e8f5e9',
-    cursor: 'pointer',
-    fontSize: '13px',
-    color: '#27ae60',
-    minHeight: '32px',
-  },
-  warning: {
-    backgroundColor: '#fff3cd',
-    border: '1px solid #ffc107',
-    borderRadius: '4px',
-    padding: '8px 12px',
-    fontSize: '13px',
-    color: '#856404',
-    marginTop: '8px',
   },
   notice: {
     backgroundColor: '#fff3cd',
@@ -1046,17 +977,6 @@ const styles: Record<string, React.CSSProperties> = {
     minWidth: '44px',
     minHeight: '32px',
   },
-  resultButtonReplace: {
-    padding: '6px 12px',
-    border: '1px solid #f39c12',
-    borderRadius: '4px',
-    backgroundColor: '#fef9e7',
-    cursor: 'pointer',
-    fontSize: '12px',
-    color: '#f39c12',
-    minWidth: '44px',
-    minHeight: '32px',
-  },
   numericInput: {
     border: '1px solid #ddd',
     borderRadius: '4px',
@@ -1096,10 +1016,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-export default function DailyInspectionPage() {
+export default function PeriodicInspectionPage() {
   return (
     <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh' }}>Loading...</div>}>
-      <DailyInspectionContent />
+      <PeriodicInspectionContent />
     </Suspense>
   );
 }

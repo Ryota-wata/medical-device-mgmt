@@ -7,7 +7,6 @@ import { useInspectionStore, useMasterStore } from '@/lib/stores';
 import { InspectionTask, LendingStatus } from '@/lib/types';
 import { InspectionMenuModal } from './InspectionMenuModal';
 import { InspectionRegistrationModal } from './InspectionRegistrationModal';
-import { InspectionExecutionModal, InspectionResult } from './InspectionExecutionModal';
 
 interface InspectionManagementTabProps {
   isMobile?: boolean;
@@ -72,7 +71,7 @@ const LENDING_STATUS_ORDER: Record<LendingStatus, number> = {
 
 export function InspectionManagementTab({ isMobile = false }: InspectionManagementTabProps) {
   const router = useRouter();
-  const { tasks, menus, startInspection, skipInspection, setInspectionDate, getMenuById } = useInspectionStore();
+  const { tasks, menus, skipInspection, setInspectionDate, getMenuById } = useInspectionStore();
   const { assets } = useMasterStore();
 
   // assetsからユニーク値抽出
@@ -116,9 +115,6 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [selectedTaskForDate, setSelectedTaskForDate] = useState<InspectionTask | null>(null);
   const [newDate, setNewDate] = useState('');
-  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
-  const [selectedTaskForExecution, setSelectedTaskForExecution] = useState<InspectionTask | null>(null);
-
   // Actionドロップダウン状態
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const actionRef = useRef<HTMLDivElement | null>(null);
@@ -241,12 +237,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   // 操作ハンドラ
   const handleStartInspection = (task: InspectionTask) => {
     setOpenActionId(null);
-    setSelectedTaskForExecution(task);
-    setIsExecutionModalOpen(true);
-  };
-
-  const handleCompleteInspection = (result: InspectionResult) => {
-    if (result.taskId) startInspection(result.taskId);
+    sessionStorage.setItem('periodicInspectionTask', JSON.stringify(task));
+    router.push('/periodic-inspection');
   };
 
   const handleSkipInspection = (task: InspectionTask) => {
@@ -605,17 +597,6 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
         </div>
       )}
 
-      {/* 点検実施モーダル */}
-      <InspectionExecutionModal
-        isOpen={isExecutionModalOpen}
-        task={selectedTaskForExecution}
-        menu={selectedTaskForExecution?.periodicMenuIds[0] ? getMenuById(selectedTaskForExecution.periodicMenuIds[0]) ?? null : null}
-        onClose={() => {
-          setIsExecutionModalOpen(false);
-          setSelectedTaskForExecution(null);
-        }}
-        onComplete={handleCompleteInspection}
-      />
     </div>
   );
 }
