@@ -1518,6 +1518,8 @@ package "調査・登録・履歴" {
     型式ID / model_id : bigint
     調査日 / survey_date : date
     調査担当者ユーザーID / surveyor_user_id : bigint
+    確定者ユーザーID / confirmed_by_user_id : bigint
+    確定日時 / confirmed_at : timestamp
     棟 / building : varchar
     階 / floor : varchar
     部門名 / department_name : varchar
@@ -1560,6 +1562,9 @@ package "調査・登録・履歴" {
     室名は候補選択 + 自由記述を許容。
     既存ロケーションに解決できない場合
     facility_location_id は NULL 可。
+    surveyor_user_id は調査実行者。
+    confirmed_by_user_id / confirmed_at は
+    修正画面での確定者監査。
   end note
 
   entity "asset_survey_photos <<VIEW>>" as asset_survey_photos {

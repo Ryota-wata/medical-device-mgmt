@@ -509,6 +509,13 @@ function Add-ApiEndpointBlock {
     Add-Table -Document $Document -Selection $Selection -Headers $Spec.RequestHeaders -Rows $Spec.RequestRows
   }
 
+  if ($Spec.ContainsKey('RequestSubtables')) {
+    foreach ($subtable in $Spec.RequestSubtables) {
+      Add-Paragraph -Selection $Selection -Text $subtable.Title -Style $script:wdStyleHeading4
+      Add-Table -Document $Document -Selection $Selection -Headers $subtable.Headers -Rows $subtable.Rows
+    }
+  }
+
   if ($Spec.ContainsKey('PermissionLines')) {
     Add-Paragraph -Selection $Selection -Text '権限チェック' -Style $script:wdStyleHeading4
     foreach ($line in $Spec.PermissionLines) {

@@ -2,7 +2,7 @@
 
 最終更新: 2026-03-14
 
-ステータス件数: `Fix 5件` / `作成済み 2件` / `未着手 17件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
+ステータス件数: `Fix 7件` / `作成済み 1件` / `未着手 16件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
 
 本一覧は、[機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) の画面一覧をもとに、API設計書の作成対象を機能単位で管理するための台帳である。  
 既存ファイルの羅列ではなく、「どの機能を、どの設計書で管理するか」を正として扱う。
@@ -29,12 +29,12 @@
 ## QR/ラベル発行
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 4 | QR発行・ラベル印刷 | 未作成 | 5. `/qr-issue`、6. `/qr-print` | `未着手` | QR発行から印刷までを1本で扱う想定 |
+| 4 | QR発行・ラベル印刷 | `Fix/API設計書_QR発行・ラベル印刷.docx` | 5. `/qr-issue`、6. `/qr-print` | `Fix` | QR発行から印刷までを1本で扱う想定。要件・DB設計レビュー済み。 |
 
 ## 現有品調査・資産台帳取込・突合
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 5 | 現有品調査 | `作成済み/API設計書_現有品調査.docx` | 7. `/offline-prep`、8. `/survey-location`、9. `/asset-survey`、10. `/history`、11. `/registration-edit` | `作成済み` | 現有品調査関連を1本で扱う。 |
+| 5 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱う。 |
 | 6 | 資産台帳取込・マスタ突き合わせ | `作成済み/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `作成済み` | 資産台帳取込とマスタ突き合わせを1本で扱う |
 | 7 | データ突合 | 未作成 | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `未着手` | データ統合・原本確定を別途定義予定 |
 
