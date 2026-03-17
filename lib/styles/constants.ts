@@ -1,6 +1,11 @@
 /**
  * スタイル定数
  * アプリケーション全体で使用する共通のスタイル定数を定義
+ *
+ * NOTE: このファイルは design/sync-tokens.mjs により自動生成されます。
+ * 直接編集せず、design/tokens.json を編集してから
+ *   node design/sync-tokens.mjs
+ * を実行してください。
  */
 
 /**
@@ -8,12 +13,9 @@
  * 使用頻度の高い色を定数化
  */
 export const colors = {
-  // Primary Colors
-  primary: '#27ae60',
-  primaryHover: '#229954',
-  primaryDark: '#1e8449',
-
-  // Background Colors
+  primary: '#4a6fa5',
+  primaryHover: '#3d5a80',
+  primaryDark: '#3d5a80',
   background: {
     primary: '#2c3e50',
     secondary: '#34495e',
@@ -22,38 +24,55 @@ export const colors = {
     white: '#fff',
     gray: '#f8f8f8',
   },
-
-  // Text Colors
   text: {
-    primary: '#2c3e50',
-    secondary: '#7f8c8d',
+    primary: '#1f2937',
+    secondary: '#374151',
     light: '#ecf0f1',
     white: '#fff',
-    muted: '#95a5a6',
+    muted: '#6b7280',
   },
-
-  // Border Colors
   border: {
-    light: '#ddd',
-    medium: '#ccc',
+    light: '#e5e7eb',
+    medium: '#d1d5db',
     dark: '#2c3e50',
   },
-
-  // Status Colors
   status: {
     success: '#27ae60',
-    warning: '#f39c12',
-    error: '#e74c3c',
+    warning: '#f59e0b',
+    error: '#dc2626',
     info: '#3498db',
   },
-
-  // Accent Colors
   accent: {
     blue: '#3498db',
     blueHover: '#2980b9',
     orange: '#e67e22',
     red: '#e74c3c',
   },
+  surface: '#f9fafb',
+  surfaceAlt: '#f3f4f6',
+  surfaceHeader: '#f8f9fa',
+  sectionHeader: '#4b5563',
+  textOnColor: '#ffffff',
+  textOnAccent: '#1f2937',
+  disabled: '#9ca3af',
+  disabledBg: '#f3f4f6',
+  successLight: '#e8f5e9',
+  successBg: '#f0fdf4',
+  successText: '#166534',
+  warningBg: '#fffbeb',
+  warningBorder: '#f59e0b',
+  warningText: '#92400e',
+  infoBg: '#eff6ff',
+  infoBorder: '#93c5fd',
+  infoText: '#1e40af',
+  accentBlueLight: '#e0f2fe',
+  stepActive: '#3498db',
+  stepCompleted: '#27ae60',
+  stepPending: '#dee2e6',
+  step1: '#7c3aed',
+  step2: '#d97706',
+  step3: '#3498db',
+  step4: '#27ae60',
 } as const;
 
 /**
@@ -153,9 +172,18 @@ export const transitions = {
  * アイコンサイズ
  */
 export const iconSize = {
-  sm: { mobile: '16px', desktop: '20px' },
-  md: { mobile: '20px', desktop: '24px' },
-  lg: { mobile: '24px', desktop: '28px' },
+  sm: {
+    mobile: '16px',
+    desktop: '20px',
+  },
+  md: {
+    mobile: '20px',
+    desktop: '24px',
+  },
+  lg: {
+    mobile: '24px',
+    desktop: '28px',
+  },
 } as const;
 
 /**
@@ -163,15 +191,39 @@ export const iconSize = {
  */
 export const buttonSize = {
   sm: {
-    mobile: { width: '32px', height: '32px', padding: '6px 12px' },
-    desktop: { width: '40px', height: '40px', padding: '8px 16px' },
+    mobile: {
+      width: '32px',
+      height: '32px',
+      padding: '6px 12px',
+    },
+    desktop: {
+      width: '40px',
+      height: '40px',
+      padding: '8px 16px',
+    },
   },
   md: {
-    mobile: { width: '40px', height: '40px', padding: '8px 16px' },
-    desktop: { width: '48px', height: '48px', padding: '10px 20px' },
+    mobile: {
+      width: '40px',
+      height: '40px',
+      padding: '8px 16px',
+    },
+    desktop: {
+      width: '48px',
+      height: '48px',
+      padding: '10px 20px',
+    },
   },
   lg: {
-    mobile: { width: '48px', height: '48px', padding: '10px 20px' },
-    desktop: { width: '56px', height: '56px', padding: '12px 24px' },
+    mobile: {
+      width: '48px',
+      height: '48px',
+      padding: '10px 20px',
+    },
+    desktop: {
+      width: '56px',
+      height: '56px',
+      padding: '12px 24px',
+    },
   },
 } as const;
