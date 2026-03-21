@@ -11,6 +11,8 @@ interface EditListState {
   getEditListById: (id: string) => EditList | undefined;
   addItemsFromApplications: (editListId: string, applications: PurchaseApplication[]) => number;
   updateRfqInfo: (editListId: string, selectedNos: Set<number>, rfqNo: string, rfqGroupName: string) => void;
+  updateBaseAsset: (editListId: string, assetNo: number, patch: Record<string, unknown>) => void;
+  addBaseAssets: (editListId: string, newAssets: import('@/lib/types').Asset[], afterNo?: number) => void;
   getItemsByEditListId: (editListId: string) => EditListItem[];
   getTotalItemCount: (editListId: string) => number;
 }
@@ -174,6 +176,45 @@ export const useEditListStore = create<EditListState>((set, get) => ({
           ...list,
           baseAssets: updatedBaseAssets,
           items: updatedItems,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  updateBaseAsset: (editListId: string, assetNo: number, patch: Record<string, unknown>) => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+        return {
+          ...list,
+          baseAssets: list.baseAssets.map((asset) =>
+            asset.no === assetNo ? { ...asset, ...patch } : asset
+          ),
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  addBaseAssets: (editListId: string, newAssets: import('@/lib/types').Asset[], afterNo?: number) => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+        let updated: import('@/lib/types').Asset[];
+        if (afterNo != null) {
+          const idx = list.baseAssets.findIndex(a => a.no === afterNo);
+          if (idx >= 0) {
+            updated = [...list.baseAssets.slice(0, idx + 1), ...newAssets, ...list.baseAssets.slice(idx + 1)];
+          } else {
+            updated = [...list.baseAssets, ...newAssets];
+          }
+        } else {
+          updated = [...list.baseAssets, ...newAssets];
+        }
+        return {
+          ...list,
+          baseAssets: updated,
           updatedAt: new Date().toISOString(),
         };
       }),

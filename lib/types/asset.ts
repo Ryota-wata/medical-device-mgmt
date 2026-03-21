@@ -138,6 +138,11 @@ export interface Asset {
   newSection?: string; // 新部署
   newRoomName?: string; // 新室名
 
+  // リモデル区分
+  purchaseCategory?: '新規' | '更新' | '移設' | '増設' | '廃棄予定';
+  executionFiscalYear?: string; // 執行希望年度
+  updateSourceNo?: number; // 更新元レコードNo.
+
   sourceType?: 'base' | 'added'; // レコードソース（原本 or 追加）
 }
 

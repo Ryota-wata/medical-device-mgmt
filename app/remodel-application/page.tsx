@@ -16,11 +16,6 @@ import { Header } from '@/components/layouts/Header';
 import { REMODEL_COLUMNS, REMODEL_COLUMN_GROUPS, type ColumnDef } from '@/lib/constants/assetColumns';
 import { RfqGroupModal } from '@/components/remodel/RfqGroupModal';
 import { DataLinkModal } from '@/components/remodel/DataLinkModal';
-import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationModal';
-import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
-import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
-import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
-import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { generateMockAssets, BUILDING_LIST } from '@/lib/data/generateMockAssets';
 
 const ALL_COLUMNS = REMODEL_COLUMNS;
@@ -31,8 +26,8 @@ function RemodelApplicationContent() {
   const { addApplication, applications } = useApplicationStore();
   const { getNewLocationByCurrentLocation, facilities: hospitalFacilities, swapToNewLocation } = useHospitalFacilityStore();
   const { individuals, updateIndividual } = useIndividualStore();
-  const { getEditListById, addItemsFromApplications, updateRfqInfo } = useEditListStore();
-  const { addRfqGroup, generateRfqNo } = useRfqGroupStore();
+  const { getEditListById, addItemsFromApplications, updateRfqInfo, updateBaseAsset, addBaseAssets } = useEditListStore();
+  const { addRfqGroup, generateRfqNo, rfqGroups } = useRfqGroupStore();
   const { assets: assetMasters, vendors } = useMasterStore();
   const { quotationGroups, quotationItems } = useQuotationStore();
   const { applications: purchaseApplications } = usePurchaseApplicationStore();
@@ -70,12 +65,9 @@ function RemodelApplicationContent() {
   // Data Linkモーダル関連の状態
   const [isDataLinkModalOpen, setIsDataLinkModalOpen] = useState(false);
 
-  // 各種申請モーダル状態（資産一覧と同等のリッチモーダル）
-  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
-  const [updateModalOpen, setUpdateModalOpen] = useState(false);
-  const [additionModalOpen, setAdditionModalOpen] = useState(false);
-  const [transferModalOpen, setTransferModalOpen] = useState(false);
-  const [disposalModalOpen, setDisposalModalOpen] = useState(false);
+  // 購入区分の確認ダイアログ
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState<{ rowNo: number } | null>(null);
+  const [showAdditionInput, setShowAdditionInput] = useState<{ rowNo: number; quantity: number } | null>(null);
 
   // セル編集関連の状態
   const [editingCell, setEditingCell] = useState<{ rowNo: number; colKey: string } | null>(null);
@@ -303,6 +295,7 @@ function RemodelApplicationContent() {
   // useAssetTableフックを使用
   const {
     visibleColumns,
+    setVisibleColumns,
     columnWidths,
     resizingColumn,
     toggleColumnVisibility,
@@ -357,72 +350,10 @@ function RemodelApplicationContent() {
     router.push(`/asset-detail?qrCode=${asset.qrCode}&readonly=true&from=remodel`);
   };
 
-  // 資産の申請ステータスを取得（applicationStore + purchaseApplicationStore 両方を参照）
-  const getAssetApplicationTypes = (asset: Asset): string[] => {
-    const types: string[] = [];
-
-    // applicationStore（移動・廃棄申請）
-    applications.forEach(app => {
-      if (app.asset.name === asset.name && app.asset.model === asset.model) {
-        types.push(app.applicationType);
-      }
-    });
-
-    // purchaseApplicationStore（新規・更新・増設申請）
-    purchaseApplications.forEach(app => {
-      const hasMatchingAsset = app.assets.some(a =>
-        a.name === asset.name && a.model === asset.model
-      );
-      if (hasMatchingAsset) {
-        types.push(app.applicationType);
-      }
-    });
-
-    return Array.from(new Set(types));
-  };
-
-  // 申請ステータスバッジを描画
-  const renderApplicationStatus = (asset: Asset) => {
-    const uniqueTypes = getAssetApplicationTypes(asset);
-
-    if (uniqueTypes.length === 0) {
-      return <span style={{ color: '#95a5a6', fontSize: '12px' }}>-</span>;
-    }
-
-    // 申請タイプごとの色定義
-    const typeColors: Record<string, string> = {
-      '新規申請': '#27ae60',
-      '増設申請': '#3498db',
-      '更新申請': '#e67e22',
-      '移動申請': '#9b59b6',
-      '廃棄申請': '#e74c3c',
-      '保留': '#95a5a6',
-    };
-
-    return (
-      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-        {uniqueTypes.map((type, index) => (
-          <span
-            key={index}
-            style={{
-              padding: '2px 8px',
-              background: typeColors[type] || '#95a5a6',
-              color: 'white',
-              borderRadius: '12px',
-              fontSize: '11px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {type}
-          </span>
-        ))}
-      </div>
-    );
-  };
-
   // セル編集開始
   const handleCellDoubleClick = (rowNo: number, colKey: string, currentValue: string) => {
+    // 購入区分は常時selectなのでスキップ
+    if (colKey === 'purchaseCategory') return;
     // 見積依頼No.カラムの場合はモーダルを開く
     if (colKey === 'rfqNo') {
       // 選択されていない場合は該当行を選択
@@ -437,26 +368,88 @@ function RemodelApplicationContent() {
     setEditingValue(currentValue);
   };
 
+  // 資産マスターID自動紐付け: item/maker/model から assetMasterId を検索
+  const resolveAssetMasterId = (asset: Asset, patchedField: string, patchedValue: string): string | undefined => {
+    const currentItem = patchedField === 'item' ? patchedValue : (asset.item || '');
+    const currentMaker = patchedField === 'maker' ? patchedValue : (asset.maker || '');
+    const currentModel = patchedField === 'model' ? patchedValue : (asset.model || '');
+
+    if (!currentItem && !currentMaker && !currentModel) return undefined;
+
+    // 完全一致（item + maker + model）
+    const exact = assetMasters.find(m =>
+      m.item === currentItem && m.maker === currentMaker && m.model === currentModel
+    );
+    if (exact) return exact.assetMasterId;
+
+    // 部分一致（item + maker）
+    const partial = assetMasters.find(m =>
+      m.item === currentItem && m.maker === currentMaker
+    );
+    if (partial) return partial.assetMasterId;
+
+    // 部分一致（itemのみ）
+    const itemOnly = assetMasters.find(m => m.item === currentItem);
+    if (itemOnly) return itemOnly.assetMasterId;
+
+    return undefined;
+  };
+
   // セル編集確定（複数選択時は一括編集）
   const handleCellSave = () => {
     if (!editingCell) return;
 
-    // 複数選択されていて、編集中のセルが選択レコードに含まれている場合は一括編集
-    if (selectedItems.size > 1 && selectedItems.has(editingCell.rowNo)) {
-      setMockAssets(prev => prev.map(asset => {
-        if (selectedItems.has(asset.no)) {
-          return { ...asset, [editingCell.colKey]: editingValue };
+    const colKey = editingCell.colKey;
+    const patch: Record<string, string> = { [colKey]: editingValue };
+
+    // 資産マスターID自動紐付け（item/maker/model変更時）
+    const autoLinkFields = ['item', 'maker', 'model'];
+    const shouldAutoLink = autoLinkFields.includes(colKey);
+
+    if (isEditListMode && listId) {
+      // 編集リストモード: ストア経由で更新
+      const targetNos = (selectedItems.size > 1 && selectedItems.has(editingCell.rowNo))
+        ? Array.from(selectedItems)
+        : [editingCell.rowNo];
+
+      targetNos.forEach(no => {
+        const targetPatch = { ...patch };
+        if (shouldAutoLink) {
+          const asset = displayAssets.find(a => a.no === no);
+          if (asset) {
+            const masterId = resolveAssetMasterId(asset, colKey, editingValue);
+            if (masterId) {
+              targetPatch.assetMasterId = masterId;
+            } else {
+              targetPatch.assetMasterId = '';
+            }
+          }
         }
-        return asset;
-      }));
+        updateBaseAsset(listId, no, targetPatch);
+      });
     } else {
-      // 単一編集
-      setMockAssets(prev => prev.map(asset => {
-        if (asset.no === editingCell.rowNo) {
-          return { ...asset, [editingCell.colKey]: editingValue };
-        }
-        return asset;
-      }));
+      // 通常モード: ローカルstate更新
+      if (selectedItems.size > 1 && selectedItems.has(editingCell.rowNo)) {
+        setMockAssets(prev => prev.map(asset => {
+          if (!selectedItems.has(asset.no)) return asset;
+          const targetPatch = { ...patch };
+          if (shouldAutoLink) {
+            const masterId = resolveAssetMasterId(asset, colKey, editingValue);
+            targetPatch.assetMasterId = masterId || '';
+          }
+          return { ...asset, ...targetPatch };
+        }));
+      } else {
+        setMockAssets(prev => prev.map(asset => {
+          if (asset.no !== editingCell.rowNo) return asset;
+          const targetPatch = { ...patch };
+          if (shouldAutoLink) {
+            const masterId = resolveAssetMasterId(asset, colKey, editingValue);
+            targetPatch.assetMasterId = masterId || '';
+          }
+          return { ...asset, ...targetPatch };
+        }));
+      }
     }
 
     setEditingCell(null);
@@ -481,6 +474,19 @@ function RemodelApplicationContent() {
     }));
   };
 
+  // Data Link: 新規行追加ハンドラ
+  const handleDataLinkAddNewAssets = (newAssets: Asset[]) => {
+    if (newAssets.length === 0) return;
+    // 既存の最大Noを取得して連番を振り直す
+    const maxNo = Math.max(...displayAssets.map(a => a.no), 0);
+    const renumbered = newAssets.map((asset, i) => ({ ...asset, no: maxNo + 1 + i }));
+    if (isEditListMode && listId) {
+      addBaseAssets(listId, renumbered);
+    } else {
+      setMockAssets(prev => [...prev, ...renumbered]);
+    }
+  };
+
   // Data Link モーダルに渡す選択中レコード
   const dataLinkSelectedAssets = useMemo(() => {
     return finalFilteredAssets.filter(a => selectedItems.has(a.no));
@@ -496,34 +502,106 @@ function RemodelApplicationContent() {
 
   // 編集可能なカラム
   const editableColumns = ALL_COLUMNS.filter(col =>
-    !['applicationStatus'].includes(col.key)
+    !['purchaseCategory'].includes(col.key)
   );
 
-  // 選択された行をAsset[]として取得（リッチモーダル用）
-  const selectedAssetsForModal = useMemo(() => {
-    return finalFilteredAssets.filter(a => selectedItems.has(a.no));
-  }, [finalFilteredAssets, selectedItems]);
+  // 購入区分変更ハンドラ（常時表示selectから直接呼ばれる）
+  const handlePurchaseCategoryChange = (rowNo: number, newCategory: Asset['purchaseCategory']) => {
+    if (newCategory === '更新') {
+      setShowUpdateConfirm({ rowNo });
+      return;
+    }
+    if (newCategory === '増設') {
+      setShowAdditionInput({ rowNo, quantity: 1 });
+      return;
+    }
+    // 移設・廃棄予定・新規・クリアはそのまま設定
+    if (isEditListMode && listId) {
+      updateBaseAsset(listId, rowNo, { purchaseCategory: newCategory });
+    } else {
+      setMockAssets(prev => prev.map(asset =>
+        asset.no === rowNo ? { ...asset, purchaseCategory: newCategory } : asset
+      ));
+    }
+  };
 
-  // リッチモーダル申請ボタンハンドラ
-  const handleRichApplicationClick = (type: 'purchase' | 'update' | 'addition' | 'transfer' | 'disposal') => {
-    if (type === 'purchase') {
-      handleStartInlineNew();
-      return;
+  // 更新確定ハンドラ（旧→廃棄予定、新レコード生成 → 選択行の直下に挿入）
+  const handleUpdateConfirm = () => {
+    if (!showUpdateConfirm) return;
+    const { rowNo } = showUpdateConfirm;
+    const sourceAsset = displayAssets.find(a => a.no === rowNo);
+    if (!sourceAsset) return;
+
+    const maxNo = Math.max(...displayAssets.map(a => a.no)) + 1;
+    const newAsset: Asset = {
+      ...sourceAsset,
+      no: maxNo,
+      qrCode: '',
+      assetNo: '',
+      managementNo: '',
+      serialNumber: '',
+      purchaseCategory: '更新',
+      updateSourceNo: rowNo,
+      sourceType: 'added',
+    };
+
+    if (isEditListMode && listId) {
+      updateBaseAsset(listId, rowNo, { purchaseCategory: '廃棄予定' });
+      addBaseAssets(listId, [newAsset], rowNo);
+    } else {
+      setMockAssets(prev => {
+        const result: Asset[] = [];
+        for (const asset of prev) {
+          if (asset.no === rowNo) {
+            result.push({ ...asset, purchaseCategory: '廃棄予定' as const });
+            result.push(newAsset);
+          } else {
+            result.push(asset);
+          }
+        }
+        return result;
+      });
     }
-    if (selectedItems.size === 0) {
-      alert('申請する資産を選択してください');
-      return;
+    setShowUpdateConfirm(null);
+  };
+
+  // 増設確定ハンドラ（選択行の直下に挿入）
+  const handleAdditionConfirm = () => {
+    if (!showAdditionInput) return;
+    const { rowNo, quantity } = showAdditionInput;
+    const sourceAsset = displayAssets.find(a => a.no === rowNo);
+    if (!sourceAsset) return;
+
+    const maxNo = Math.max(...displayAssets.map(a => a.no));
+    const newAssets: Asset[] = [];
+    for (let i = 0; i < quantity; i++) {
+      newAssets.push({
+        ...sourceAsset,
+        no: maxNo + 1 + i,
+        qrCode: '',
+        assetNo: '',
+        managementNo: '',
+        serialNumber: '',
+        purchaseCategory: '増設',
+        sourceType: 'added',
+      });
     }
-    if ((type === 'update' || type === 'addition') && selectedItems.size !== 1) {
-      alert(`${type === 'update' ? '更新' : '増設'}申請は1件のみ選択してください`);
-      return;
+
+    if (isEditListMode && listId) {
+      addBaseAssets(listId, newAssets, rowNo);
+    } else {
+      setMockAssets(prev => {
+        const result: Asset[] = [];
+        for (const asset of prev) {
+          result.push(asset);
+          if (asset.no === rowNo) {
+            result.push(...newAssets);
+          }
+        }
+        return result;
+      });
     }
-    switch (type) {
-      case 'update': setUpdateModalOpen(true); break;
-      case 'addition': setAdditionModalOpen(true); break;
-      case 'transfer': setTransferModalOpen(true); break;
-      case 'disposal': setDisposalModalOpen(true); break;
-    }
+    setShowAdditionInput(null);
   };
 
   // 申請アクションハンドラー
@@ -1031,43 +1109,46 @@ function RemodelApplicationContent() {
           見積依頼グループ作成（{selectedItems.size}件選択中）
         </button>
 
-        {/* 申請ボタン群 */}
+        {/* 一括新規追加ボタン */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #dee2e6' }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#555' }}>申請:</span>
-          {([
-            { type: 'purchase' as const, label: '新規購入', color: '#4a6741', needsSelection: false },
-            { type: 'update' as const, label: '更新', color: '#e67e22', needsSelection: true },
-            { type: 'addition' as const, label: '増設', color: '#2980b9', needsSelection: true },
-            { type: 'transfer' as const, label: '移動', color: '#546e7a', needsSelection: true },
-            { type: 'disposal' as const, label: '廃棄', color: '#c62828', needsSelection: true },
-          ]).map(({ type, label, color, needsSelection }) => {
-            const disabled = needsSelection && selectedItems.size === 0;
-            return (
-              <button
-                key={type}
-                onClick={() => handleRichApplicationClick(type)}
-                disabled={disabled}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  backgroundColor: disabled ? '#e0e0e0' : color,
-                  color: disabled ? '#999' : 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+          <button
+            onClick={handleStartInlineNew}
+            style={{
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              backgroundColor: '#4a6741',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#3d5636'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#4a6741'; }}
+          >
+            一括新規追加
+          </button>
         </div>
 
-        {/* 右側: タスク管理リンク + 合計表示 */}
+        </div>
+
+        {/* 右側: 選択件数 + タスク管理リンク + 合計表示 */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {selectedItems.size > 0 && (
+            <div style={{
+              padding: '6px 12px',
+              background: '#1565c0',
+              color: 'white',
+              borderRadius: '4px',
+              fontSize: '13px',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
+            }}>
+              選択: {selectedItems.size}件
+            </div>
+          )}
           <button
             onClick={() => router.push('/quotation-data-box/remodel-management')}
             style={{
@@ -1195,6 +1276,39 @@ function RemodelApplicationContent() {
       {/* テーブル表示 */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
         <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+
+        {/* 一括適用バナー */}
+        {selectedItems.size > 1 && editingCell !== null && selectedItems.has(editingCell.rowNo) && (
+          <div style={{
+            padding: '8px 16px',
+            background: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: '4px',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            color: '#1565c0',
+            fontWeight: 600,
+          }}>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '20px',
+              height: '20px',
+              background: '#1565c0',
+              color: 'white',
+              borderRadius: '50%',
+              fontSize: '11px',
+              fontWeight: 700,
+            }}>
+              {selectedItems.size}
+            </span>
+            {selectedItems.size}件のレコードに一括適用されます
+          </div>
+        )}
 
         {/* 資産テーブル（編集リストモード・従来モード共通） */}
         {currentView === 'list' && (
@@ -1434,16 +1548,27 @@ function RemodelApplicationContent() {
                     const isEditing = editingCell?.rowNo === asset.no && editingCell?.colKey === col.key;
                     const isHovered = hoveredCell?.rowNo === asset.no && hoveredCell?.colKey === col.key;
                     const cellValue = getCellValue(asset, col.key);
-                    const isEditable = col.key !== 'applicationStatus';
+                    const isEditable = col.key !== 'purchaseCategory';
                     const isRowSelected = selectedItems.has(asset.no);
+
+                    // 一括編集対象かどうか（他行で編集中 + 自分が選択中）
+                    const isBulkEditTarget = editingCell !== null
+                      && editingCell.rowNo !== asset.no
+                      && selectedItems.size > 1
+                      && isRowSelected
+                      && selectedItems.has(editingCell.rowNo);
 
                     // セル背景色の決定
                     const getCellBackground = () => {
                       if (isEditing) return '#fff3cd';
+                      // 一括適用対象行のハイライト
+                      if (isBulkEditTarget && editingCell?.colKey === col.key) return '#fff8e1';
                       if (isHovered && isEditable) {
                         // 選択状態では濃い青、非選択では薄い青
                         return isRowSelected ? '#bbdefb' : '#e8f4fd';
                       }
+                      // 一括適用対象行の通常ハイライト
+                      if (isBulkEditTarget) return '#fffde7';
                       // デフォルトは行の背景色に合わせる
                       return isRowSelected ? '#e3f2fd' : 'white';
                     };
@@ -1469,8 +1594,62 @@ function RemodelApplicationContent() {
                         onMouseLeave={() => setHoveredCell(null)}
                         onDoubleClick={() => isEditable && handleCellDoubleClick(asset.no, col.key, cellValue)}
                       >
-                        {col.key === 'applicationStatus' ? (
-                          renderApplicationStatus(asset)
+                        {col.key === 'purchaseCategory' ? (
+                          (() => {
+                            const currentVal = asset.purchaseCategory || '';
+                            const categoryColors: Record<string, string> = {
+                              '新規': '#27ae60',
+                              '更新': '#e67e22',
+                              '移設': '#3498db',
+                              '増設': '#8e44ad',
+                              '廃棄予定': '#e74c3c',
+                            };
+                            // 新規追加レコード（sourceType === 'added' かつ purchaseCategory === '新規'）はバッジ固定
+                            if (currentVal === '新規') {
+                              return (
+                                <span style={{
+                                  padding: '2px 8px',
+                                  background: '#27ae60',
+                                  color: 'white',
+                                  borderRadius: '12px',
+                                  fontSize: '11px',
+                                  fontWeight: 'bold',
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  新規
+                                </span>
+                              );
+                            }
+                            // 既存レコード: プルダウン（新規なし）
+                            return (
+                              <select
+                                value={currentVal}
+                                onChange={(e) => {
+                                  const val = e.target.value as Asset['purchaseCategory'];
+                                  handlePurchaseCategoryChange(asset.no, val || undefined);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  width: '100%',
+                                  padding: '4px 2px',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer',
+                                  background: currentVal ? categoryColors[currentVal] || '#f0f0f0' : 'transparent',
+                                  color: currentVal ? 'white' : '#95a5a6',
+                                  appearance: 'auto',
+                                }}
+                              >
+                                <option value="">-</option>
+                                <option value="更新">更新</option>
+                                <option value="移設">移設</option>
+                                <option value="増設">増設</option>
+                                <option value="廃棄予定">廃棄予定</option>
+                              </select>
+                            );
+                          })()
                         ) : isEditing ? (
                           <input
                             type="text"
@@ -1590,8 +1769,8 @@ function RemodelApplicationContent() {
                           }}
                           onClick={() => isEditable && handleInlineCellClick(col.key)}
                         >
-                          {/* 申請種別バッジ */}
-                          {col.key === 'applicationStatus' ? (
+                          {/* リモデル区分バッジ（新規追加は固定） */}
+                          {col.key === 'purchaseCategory' ? (
                             <span style={{
                               padding: '2px 8px',
                               background: '#27ae60',
@@ -1599,7 +1778,7 @@ function RemodelApplicationContent() {
                               borderRadius: '12px',
                               fontSize: '11px',
                               fontWeight: 'bold',
-                            }}>新規申請</span>
+                            }}>新規</span>
 
                           /* ドロップダウン編集（設置情報の選択カラム） */
                           ) : isInlineEditing && isDropdown ? (
@@ -2749,70 +2928,193 @@ function RemodelApplicationContent() {
         vendors={vendors}
         quotationGroups={quotationGroups}
         quotationItems={quotationItems}
+        rfqGroups={rfqGroups}
         onExecute={handleDataLinkExecute}
+        onAddNewAssets={handleDataLinkAddNewAssets}
       />
 
-      {/* 各種申請モーダル（資産一覧と同等） */}
-      <PurchaseApplicationModal
-        isOpen={purchaseModalOpen}
-        onClose={() => setPurchaseModalOpen(false)}
-        onSuccess={(application) => {
-          setPurchaseModalOpen(false);
-          setSelectedItems(new Set());
-          if (isEditListMode && listId) {
-            addItemsFromApplications(listId, [application]);
-          }
-        }}
-        returnDestination="編集リスト"
-        returnHref={`/remodel-application?listId=${listId}`}
-      />
-      <UpdateApplicationModal
-        isOpen={updateModalOpen}
-        onClose={() => setUpdateModalOpen(false)}
-        assets={selectedAssetsForModal}
-        onSuccess={() => {
-          setUpdateModalOpen(false);
-          setSelectedItems(new Set());
-        }}
-        returnDestination="編集リスト"
-        returnHref={`/remodel-application?listId=${listId}`}
-      />
-      <AdditionApplicationModal
-        isOpen={additionModalOpen}
-        onClose={() => setAdditionModalOpen(false)}
-        assets={selectedAssetsForModal}
-        onSuccess={(application) => {
-          setAdditionModalOpen(false);
-          setSelectedItems(new Set());
-          if (isEditListMode && listId) {
-            addItemsFromApplications(listId, [application]);
-          }
-        }}
-        returnDestination="編集リスト"
-        returnHref={`/remodel-application?listId=${listId}`}
-      />
-      <TransferApplicationModal
-        isOpen={transferModalOpen}
-        onClose={() => setTransferModalOpen(false)}
-        assets={selectedAssetsForModal}
-        onSuccess={() => {
-          setTransferModalOpen(false);
-          setSelectedItems(new Set());
-        }}
-        returnDestination="編集リスト"
-        returnHref={`/remodel-application?listId=${listId}`}
-      />
-      <DisposalApplicationModal
-        isOpen={disposalModalOpen}
-        onClose={() => setDisposalModalOpen(false)}
-        assets={selectedAssetsForModal}
-        onSuccess={() => {
-          setDisposalModalOpen(false);
-          setSelectedItems(new Set());
-        }}
-        returnDestination="編集リスト"
-        returnHref={`/remodel-application?listId=${listId}`}
-      />
+      {/* 更新確認ダイアログ */}
+      {showUpdateConfirm && (
+        <div
+          onClick={() => setShowUpdateConfirm(null)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '480px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              background: '#e67e22',
+              color: 'white',
+              padding: '16px 20px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+            }}>
+              更新レコードの作成確認
+            </div>
+            <div style={{ padding: '20px' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#2c3e50' }}>
+                以下の処理が実行されます:
+              </p>
+              <ul style={{ margin: '0 0 16px 0', paddingLeft: '20px', fontSize: '14px', color: '#555', lineHeight: 1.8 }}>
+                <li>現在のレコード → 購入区分が「廃棄予定」に変更</li>
+                <li>新しいレコード → 品目・メーカー・型式をコピーして「更新」として追加</li>
+              </ul>
+            </div>
+            <div style={{
+              padding: '12px 20px',
+              borderTop: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px',
+            }}>
+              <button
+                onClick={() => setShowUpdateConfirm(null)}
+                style={{
+                  padding: '8px 20px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleUpdateConfirm}
+                style={{
+                  padding: '8px 20px',
+                  background: '#e67e22',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                更新レコードを作成
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 増設数量入力ダイアログ */}
+      {showAdditionInput && (
+        <div
+          onClick={() => setShowAdditionInput(null)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '400px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{
+              background: '#8e44ad',
+              color: 'white',
+              padding: '16px 20px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+            }}>
+              増設数量の入力
+            </div>
+            <div style={{ padding: '20px' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#2c3e50' }}>
+                追加するレコード数を入力してください:
+              </p>
+              <input
+                type="number"
+                min="1"
+                max="99"
+                value={showAdditionInput.quantity}
+                onChange={(e) => setShowAdditionInput(prev => prev ? { ...prev, quantity: Math.max(1, Number(e.target.value)) } : null)}
+                autoFocus
+                style={{
+                  width: '80px',
+                  padding: '8px 12px',
+                  border: '1px solid #d0d0d0',
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  textAlign: 'center',
+                }}
+              />
+              <span style={{ marginLeft: '8px', fontSize: '14px', color: '#555' }}>件</span>
+            </div>
+            <div style={{
+              padding: '12px 20px',
+              borderTop: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px',
+            }}>
+              <button
+                onClick={() => setShowAdditionInput(null)}
+                style={{
+                  padding: '8px 20px',
+                  background: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAdditionConfirm}
+                style={{
+                  padding: '8px 20px',
+                  background: '#8e44ad',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                増設レコードを追加
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

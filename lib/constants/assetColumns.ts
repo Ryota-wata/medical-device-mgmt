@@ -91,7 +91,8 @@ export const ASSET_COLUMNS: ColumnDef[] = [
 
 export const REMODEL_COLUMNS: ColumnDef[] = [
   // 処理方針
-  { key: 'applicationStatus', label: '申請種別', width: '100px', defaultVisible: true, group: 'applicationOverview' },
+  { key: 'purchaseCategory', label: 'リモデル区分', width: '110px', defaultVisible: true, group: 'applicationOverview' },
+  { key: 'executionFiscalYear', label: '執行希望年度', width: '120px', defaultVisible: true, group: 'applicationOverview' },
 
   // 共通部署マスタ
   { key: 'shipDivision', label: '部門名', width: '120px', defaultVisible: true, group: 'commonMaster' },
@@ -176,6 +177,30 @@ export const REMODEL_COLUMN_GROUPS: { id: string; label: string; color: string }
   { id: 'estimate', label: '見積・積算', color: '#8e44ad' },
   { id: 'disposalApplication', label: '廃棄申請情報', color: '#dc3545' },
   { id: 'transferApplication', label: '移動申請情報', color: '#0dcaf0' },
+];
+
+// リモデル編集リスト用カラムプリセット
+export const REMODEL_COLUMN_PRESETS: { id: string; label: string; columns: string[] }[] = [
+  {
+    id: 'all',
+    label: '全カラム',
+    columns: [], // 空 = 全て表示
+  },
+  {
+    id: 'hearing',
+    label: 'ヒアリング用',
+    columns: ['purchaseCategory', 'executionFiscalYear', 'shipDivision', 'shipDepartment', 'newRoomName', 'item', 'maker', 'model', 'quantity', 'comment'],
+  },
+  {
+    id: 'equipment',
+    label: '設備条件用',
+    columns: ['purchaseCategory', 'newRoomName', 'assetMasterId', 'item', 'maker', 'model', 'width', 'depth', 'height'],
+  },
+  {
+    id: 'rfq',
+    label: '見積依頼用',
+    columns: ['purchaseCategory', 'rfqNo', 'rfqGroupName', 'item', 'maker', 'model', 'estimatedAmount', 'rfqVendor'],
+  },
 ];
 
 // ユーティリティ関数: カラムのラベルを上書き
