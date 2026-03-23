@@ -11,6 +11,11 @@ interface RfqGroupsTabProps {
   onRegisterAsset: (rfqGroupId: number) => void;
   onDelete?: (rfqGroupId: number) => void;
   onUpdateDeadline: (rfqGroupId: number, field: string, value: string | undefined) => void;
+  // 廃棄・移設ワークフロー用
+  onApprove?: (rfqGroupId: number) => void;
+  onReject?: (rfqGroupId: number) => void;
+  onCompleteDisposal?: (rfqGroupId: number) => void;
+  onCompleteTransfer?: (rfqGroupId: number) => void;
 }
 
 const thGroupStyle: React.CSSProperties = {
@@ -50,12 +55,20 @@ const STATUS_BADGE_COLORS: Record<RfqGroupStatus, string> = {
   '検収済': '#16a085',
   '完了': '#7f8c8d',
   '申請を見送る': '#e74c3c',
+  // 廃棄ワークフロー
+  '廃棄承認待ち': '#f39c12',
+  '廃棄承認済み': '#27ae60',
+  '廃棄完了': '#7b1fa2',
+  // 移設ワークフロー
+  '移動承認待ち': '#f39c12',
+  '移動承認済み': '#27ae60',
+  '移動完了': '#3f51b5',
 };
 
 // ステータスに紐づく期限フィールド（そのステータスに入った時に設定済みのもの、読み取り専用）
 interface DeadlineMapping {
   label: string;
-  field: 'rfqDeadline' | 'orderDeadline' | 'registrationDeadline' | 'deliveryDeadline' | 'deliveryDate' | 'inspectionDate' | 'rejectionDate';
+  field: 'rfqDeadline' | 'orderDeadline' | 'registrationDeadline' | 'deliveryDeadline' | 'deliveryDate' | 'inspectionDate' | 'rejectionDate' | 'approvalDate' | 'completionDate';
 }
 
 const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
@@ -67,6 +80,11 @@ const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
   '納期確定': { label: '納入年月日', field: 'deliveryDate' },
   '検収済': { label: '検収年月日', field: 'inspectionDate' },
   '申請を見送る': { label: '却下日', field: 'rejectionDate' },
+  // 廃棄・移設
+  '廃棄承認済み': { label: '承認日', field: 'approvalDate' },
+  '廃棄完了': { label: '完了日', field: 'completionDate' },
+  '移動承認済み': { label: '承認日', field: 'approvalDate' },
+  '移動完了': { label: '完了日', field: 'completionDate' },
 };
 
 // グルーピング色（同一rfqNoが複数ある場合の左ボーダー）
@@ -82,6 +100,10 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   onRegisterAsset,
   onDelete,
   onUpdateDeadline,
+  onApprove,
+  onReject,
+  onCompleteDisposal,
+  onCompleteTransfer,
 }) => {
   // 同一rfqNoのカウントと色マッピング
   const rfqNoCountMap = useMemo(() => {
@@ -231,6 +253,64 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 完了・申請を見送る → 操作なし
       case '完了':
       case '申請を見送る':
+        break;
+
+      // 廃棄ワークフロー
+      case '廃棄承認待ち':
+        if (onApprove) {
+          buttons.push(
+            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
+              承認
+            </button>
+          );
+        }
+        if (onReject) {
+          buttons.push(
+            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+              却下
+            </button>
+          );
+        }
+        break;
+      case '廃棄承認済み':
+        if (onCompleteDisposal) {
+          buttons.push(
+            <button key="complete-disposal" onClick={() => onCompleteDisposal(group.id)} style={{ ...btnBase, background: '#7b1fa2' }}>
+              廃棄完了
+            </button>
+          );
+        }
+        break;
+      case '廃棄完了':
+        break;
+
+      // 移設ワークフロー
+      case '移動承認待ち':
+        if (onApprove) {
+          buttons.push(
+            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
+              承認
+            </button>
+          );
+        }
+        if (onReject) {
+          buttons.push(
+            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+              却下
+            </button>
+          );
+        }
+        break;
+      case '移動承認済み':
+        if (onCompleteTransfer) {
+          buttons.push(
+            <button key="complete-transfer" onClick={() => onCompleteTransfer(group.id)} style={{ ...btnBase, background: '#3f51b5' }}>
+              移動完了
+            </button>
+          );
+        }
+        break;
+      case '移動完了':
         break;
     }
 

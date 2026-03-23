@@ -554,4 +554,5 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
   getApplicationsByRfqNo: (rfqNo) => {
     return get().applications.filter((app) => app.rfqNo === rfqNo);
   },
+
 }));

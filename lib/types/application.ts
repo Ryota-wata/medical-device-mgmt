@@ -95,6 +95,9 @@ export interface Application {
   };
   // 廃棄申請用：添付ファイル
   attachedFiles?: string[];
+  // リモデル連携
+  source?: 'remodel' | 'normal';
+  editListId?: string;
 }
 
 /**

@@ -10,6 +10,7 @@ export interface RfqGroup {
   applicationIds: string[];  // 申請ID または EditListItemのID
   status: RfqGroupStatus;
   editListId?: string;       // 作成元の編集リストID
+  workflowType?: 'rfq' | 'disposal' | 'transfer';  // rfq=購入系, disposal=廃棄, transfer=移設
   vendorName?: string;
   personInCharge?: string;
   email?: string;
@@ -23,6 +24,9 @@ export interface RfqGroup {
   deliveryDate?: string;           // 納入年月日
   inspectionDate?: string;         // 検収年月日
   rejectionDate?: string;          // 却下日
+  // 廃棄・移設用
+  approvalDate?: string;           // 承認日
+  completionDate?: string;         // 完了日（廃棄完了 or 移動完了）
 }
 
 export type RfqGroupStatus =
@@ -36,4 +40,12 @@ export type RfqGroupStatus =
   | '納期確定'
   | '検収済'
   | '完了'
-  | '申請を見送る';
+  | '申請を見送る'
+  // 廃棄ワークフロー
+  | '廃棄承認待ち'
+  | '廃棄承認済み'
+  | '廃棄完了'
+  // 移設ワークフロー
+  | '移動承認待ち'
+  | '移動承認済み'
+  | '移動完了';

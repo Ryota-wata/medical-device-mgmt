@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { RfqGroupStatus } from '@/lib/types';
@@ -17,7 +17,7 @@ function RemodelManagementContent() {
   // 選択中の編集リスト
   const [selectedEditListId, setSelectedEditListId] = useState<string>('');
 
-  // 見積依頼グループタブ用のステータスフィルター
+  // ステータスフィルター
   const [rfqStatusFilter, setRfqStatusFilter] = useState<RfqGroupStatus | ''>('');
   const filteredRfqGroups = useMemo(() => {
     if (!rfqStatusFilter) return rfqGroups;
@@ -59,6 +59,27 @@ function RemodelManagementContent() {
     }
     setShowModeSelection(false);
     setPendingRfqGroupId(null);
+  };
+
+  // 廃棄・移設の承認操作
+  const today = new Date().toISOString().split('T')[0];
+  const handleApprove = (rfqGroupId: number) => {
+    const group = rfqGroups.find(g => g.id === rfqGroupId);
+    if (!group) return;
+    if (group.status === '廃棄承認待ち') {
+      updateRfqGroup(rfqGroupId, { status: '廃棄承認済み', approvalDate: today });
+    } else if (group.status === '移動承認待ち') {
+      updateRfqGroup(rfqGroupId, { status: '移動承認済み', approvalDate: today });
+    }
+  };
+  const handleReject = (rfqGroupId: number) => {
+    updateRfqGroup(rfqGroupId, { status: '申請を見送る', rejectionDate: today });
+  };
+  const handleCompleteDisposal = (rfqGroupId: number) => {
+    updateRfqGroup(rfqGroupId, { status: '廃棄完了', completionDate: today });
+  };
+  const handleCompleteTransfer = (rfqGroupId: number) => {
+    updateRfqGroup(rfqGroupId, { status: '移動完了', completionDate: today });
   };
 
   return (
@@ -137,71 +158,81 @@ function RemodelManagementContent() {
 
           {/* フィルター */}
           <div style={{
-            background: 'white',
-            padding: '12px 16px',
-            borderBottom: '1px solid #ddd',
-            display: 'flex',
-            gap: '16px',
-            alignItems: 'center',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="purchase">購入</option>
-                <option value="lease">リース</option>
-                <option value="installment">割賦</option>
-                <option value="rental">レンタル</option>
-                <option value="trial">試用</option>
-                <option value="borrow">借用</option>
-                <option value="repair">修理</option>
-                <option value="maintenance">保守</option>
-                <option value="inspection">点検</option>
-                <option value="other">その他</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="listPrice">定価</option>
-                <option value="estimate">概算</option>
-                <option value="final">最終原本登録用</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-              <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
-                <option value="">すべて</option>
-                <option value="見積依頼">見積依頼</option>
-                <option value="見積依頼済">見積依頼済</option>
-                <option value="見積DB登録済">見積DB登録済</option>
-                <option value="見積登録依頼中">見積登録依頼中</option>
-                <option value="発注用見積依頼済">発注用見積依頼済</option>
-                <option value="発注見積登録済">発注見積登録済</option>
-                <option value="発注済">発注済</option>
-                <option value="納期確定">納期確定</option>
-                <option value="検収済">検収済</option>
-                <option value="完了">完了</option>
-                <option value="申請を見送る">申請を見送る</option>
-              </select>
-            </div>
-          </div>
+                background: 'white',
+                padding: '12px 16px',
+                borderBottom: '1px solid #ddd',
+                display: 'flex',
+                gap: '16px',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
+                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                    <option value="">すべて</option>
+                    <option value="purchase">購入</option>
+                    <option value="lease">リース</option>
+                    <option value="installment">割賦</option>
+                    <option value="rental">レンタル</option>
+                    <option value="trial">試用</option>
+                    <option value="borrow">借用</option>
+                    <option value="repair">修理</option>
+                    <option value="maintenance">保守</option>
+                    <option value="inspection">点検</option>
+                    <option value="other">その他</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
+                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                    <option value="">すべて</option>
+                    <option value="listPrice">定価</option>
+                    <option value="estimate">概算</option>
+                    <option value="final">最終原本登録用</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
+                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                    <option value="">すべて</option>
+                    <option value="見積依頼">見積依頼</option>
+                    <option value="見積依頼済">見積依頼済</option>
+                    <option value="見積DB登録済">見積DB登録済</option>
+                    <option value="見積登録依頼中">見積登録依頼中</option>
+                    <option value="発注用見積依頼済">発注用見積依頼済</option>
+                    <option value="発注見積登録済">発注見積登録済</option>
+                    <option value="発注済">発注済</option>
+                    <option value="納期確定">納期確定</option>
+                    <option value="検収済">検収済</option>
+                    <option value="完了">完了</option>
+                    <option value="申請を見送る">申請を見送る</option>
+                    <option value="廃棄承認待ち">廃棄承認待ち</option>
+                    <option value="廃棄承認済み">廃棄承認済み</option>
+                    <option value="廃棄完了">廃棄完了</option>
+                    <option value="移動承認待ち">移動承認待ち</option>
+                    <option value="移動承認済み">移動承認済み</option>
+                    <option value="移動完了">移動完了</option>
+                  </select>
+                </div>
+              </div>
 
-          {/* テーブルエリア */}
-          <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
-            <RfqGroupsTab
-              rfqGroups={filteredRfqGroups}
-              onSendRfq={handleNavigateToRfqProcess}
-              onRegisterQuotation={handleNavigateToRfqProcess}
-              onRegisterOrder={handleStartOrderRegistration}
-              onRegisterInspection={handleStartInspectionRegistration}
-              onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
-              onRegisterAsset={handleStartAssetRegistration}
-              onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
-            />
-          </div>
+              {/* テーブルエリア */}
+              <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
+                <RfqGroupsTab
+                  rfqGroups={filteredRfqGroups}
+                  onSendRfq={handleNavigateToRfqProcess}
+                  onRegisterQuotation={handleNavigateToRfqProcess}
+                  onRegisterOrder={handleStartOrderRegistration}
+                  onRegisterInspection={handleStartInspectionRegistration}
+                  onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
+                  onRegisterAsset={handleStartAssetRegistration}
+                  onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                  onCompleteDisposal={handleCompleteDisposal}
+                  onCompleteTransfer={handleCompleteTransfer}
+                />
+              </div>
         </div>
       </div>
 

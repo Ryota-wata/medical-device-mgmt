@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Asset, Application, ApplicationType } from '@/lib/types';
+import { Asset } from '@/lib/types';
 import { PurchaseApplication } from '@/lib/types/purchaseApplication';
 import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndividualStore, useEditListStore, useRfqGroupStore, useQuotationStore, useAuthStore } from '@/lib/stores';
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
@@ -23,11 +23,11 @@ const ALL_COLUMNS = REMODEL_COLUMNS;
 function RemodelApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addApplication, applications } = useApplicationStore();
+  const { applications } = useApplicationStore();
   const { getNewLocationByCurrentLocation, facilities: hospitalFacilities, swapToNewLocation } = useHospitalFacilityStore();
   const { individuals, updateIndividual } = useIndividualStore();
   const { getEditListById, addItemsFromApplications, updateRfqInfo, updateBaseAsset, addBaseAssets } = useEditListStore();
-  const { addRfqGroup, generateRfqNo, rfqGroups } = useRfqGroupStore();
+  const { addRfqGroup, generateRfqNo, generateDisposalNo, generateTransferNo, rfqGroups } = useRfqGroupStore();
   const { assets: assetMasters, vendors } = useMasterStore();
   const { quotationGroups, quotationItems } = useQuotationStore();
   const { applications: purchaseApplications } = usePurchaseApplicationStore();
@@ -49,14 +49,13 @@ function RemodelApplicationContent() {
   // 編集リストモードかどうか（listIdが指定されていて編集リストが存在する場合）
   const isEditListMode = Boolean(listId && editList);
 
-  // 申請モーダル関連の状態
-  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-  const [currentApplicationType, setCurrentApplicationType] = useState<ApplicationType | ''>('');
-  const [applicationBuilding, setApplicationBuilding] = useState('');
-  const [applicationFloor, setApplicationFloor] = useState('');
-  const [applicationDepartment, setApplicationDepartment] = useState('');
-  const [applicationSection, setApplicationSection] = useState('');
-  const [applicationRoomName, setApplicationRoomName] = useState('');
+  // インライン申請実行関連の状態
+  const [showApplicationConfirm, setShowApplicationConfirm] = useState(false);
+  const [applicationBreakdown, setApplicationBreakdown] = useState<Record<string, number>>({});
+  const [applicationErrors, setApplicationErrors] = useState<{ rowNo: number; field: string; message: string }[]>([]);
+  const [appliedRows, setAppliedRows] = useState<Set<number>>(new Set());
+  const [errorRows, setErrorRows] = useState<Set<number>>(new Set());
+  const [applicationFeedback, setApplicationFeedback] = useState<string | null>(null);
 
   // 見積依頼グループ作成モーダル関連の状態
   const [isRfqGroupModalOpen, setIsRfqGroupModalOpen] = useState(false);
@@ -74,31 +73,13 @@ function RemodelApplicationContent() {
   const [editingValue, setEditingValue] = useState('');
   const [hoveredCell, setHoveredCell] = useState<{ rowNo: number; colKey: string } | null>(null);
 
-  // 新規申請モーダル関連の状態
-  const [isNewApplicationModalOpen, setIsNewApplicationModalOpen] = useState(false);
-  const [newAppBuilding, setNewAppBuilding] = useState('');
-  const [newAppFloor, setNewAppFloor] = useState('');
-  const [newAppDepartment, setNewAppDepartment] = useState('');
-  const [newAppSection, setNewAppSection] = useState('');
-  const [newAppRoomName, setNewAppRoomName] = useState('');
-
-  // 選択された資産リスト（新規申請用）
+  // 資産マスタ選択（インライン新規用）
   interface SelectedAsset {
     asset: Asset;
     quantity: number;
     unit: string;
   }
   const [selectedAssets, setSelectedAssets] = useState<SelectedAsset[]>([]);
-
-  // システム関連情報（任意）
-  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'connected' | 'disconnected'>('disconnected');
-  const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
-  const [requestConnectionStatus, setRequestConnectionStatus] = useState<'required' | 'not-required'>('not-required');
-  const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
-
-  // その他情報（任意）
-  const [applicationReason, setApplicationReason] = useState('');
-  const [executionYear, setExecutionYear] = useState('');
 
   // クローズ確認モーダル
   const [showCloseConfirmModal, setShowCloseConfirmModal] = useState(false);
@@ -509,10 +490,24 @@ function RemodelApplicationContent() {
   const handlePurchaseCategoryChange = (rowNo: number, newCategory: Asset['purchaseCategory']) => {
     if (newCategory === '更新') {
       setShowUpdateConfirm({ rowNo });
+      // カラム自動表示: 購入申請情報
+      const purchaseCols = ALL_COLUMNS.filter(c => c.group === 'purchaseApplication');
+      setVisibleColumns(prev => {
+        const next = { ...prev };
+        purchaseCols.forEach(c => { next[c.key] = true; });
+        return next;
+      });
       return;
     }
     if (newCategory === '増設') {
       setShowAdditionInput({ rowNo, quantity: 1 });
+      // カラム自動表示: 購入申請情報
+      const purchaseCols = ALL_COLUMNS.filter(c => c.group === 'purchaseApplication');
+      setVisibleColumns(prev => {
+        const next = { ...prev };
+        purchaseCols.forEach(c => { next[c.key] = true; });
+        return next;
+      });
       return;
     }
     // 移設・廃棄予定・新規・クリアはそのまま設定
@@ -522,6 +517,23 @@ function RemodelApplicationContent() {
       setMockAssets(prev => prev.map(asset =>
         asset.no === rowNo ? { ...asset, purchaseCategory: newCategory } : asset
       ));
+    }
+
+    // カラム自動表示
+    if (newCategory === '廃棄予定') {
+      const disposalCols = ALL_COLUMNS.filter(c => c.group === 'disposalApplication');
+      setVisibleColumns(prev => {
+        const next = { ...prev };
+        disposalCols.forEach(c => { next[c.key] = true; });
+        return next;
+      });
+    } else if (newCategory === '移設') {
+      const transferCols = ALL_COLUMNS.filter(c => c.group === 'transferApplication');
+      setVisibleColumns(prev => {
+        const next = { ...prev };
+        transferCols.forEach(c => { next[c.key] = true; });
+        return next;
+      });
     }
   };
 
@@ -604,100 +616,145 @@ function RemodelApplicationContent() {
     setShowAdditionInput(null);
   };
 
-  // 申請アクションハンドラー
-  const handleApplicationAction = (actionType: string) => {
-    if (selectedItems.size === 0 && actionType !== '新規申請') {
-      alert('申請する資産を選択してください');
-      return;
-    }
-
-    if (actionType === '新規申請') {
-      // 新規申請モーダルを開く
-      setNewAppBuilding('');
-      setNewAppFloor('');
-      setNewAppDepartment('');
-      setNewAppSection('');
-      setNewAppRoomName('');
-      setSelectedAssets([]);
-      setCurrentConnectionStatus('disconnected');
-      setCurrentConnectionDestination('');
-      setRequestConnectionStatus('not-required');
-      setRequestConnectionDestination('');
-      setApplicationReason('');
-      setExecutionYear('');
-      setIsNewApplicationModalOpen(true);
-      return;
-    }
-
-    // 増設・更新・移動・廃棄申請の場合はモーダルを開く
-    setCurrentApplicationType(actionType as ApplicationType);
-    setApplicationBuilding('');
-    setApplicationFloor('');
-    setApplicationDepartment('');
-    setApplicationSection('');
-    setApplicationRoomName('');
-    setIsApplicationModalOpen(true);
+  // 廃棄・移設のみの申請対象マッピング
+  const disposalTransferCategories: Record<string, { workflowType: 'disposal' | 'transfer'; initialStatus: '廃棄承認待ち' | '移動承認待ち'; label: string }> = {
+    '廃棄予定': { workflowType: 'disposal', initialStatus: '廃棄承認待ち', label: '廃棄申請' },
+    '移設': { workflowType: 'transfer', initialStatus: '移動承認待ち', label: '移動申請' },
   };
 
-  // 申請送信処理
-  const handleSubmitApplication = () => {
-    // 申請タイプのバリデーション
-    if (!currentApplicationType) {
-      alert('申請タイプを選択してください');
+  // インライン申請バリデーション（廃棄・移設のみ対象）
+  const validateAssetForApplication = (asset: Asset): { valid: boolean; errors: { field: string; message: string }[] } => {
+    const errors: { field: string; message: string }[] = [];
+    const cat = asset.purchaseCategory;
+    if (!cat) return { valid: false, errors: [{ field: 'purchaseCategory', message: 'リモデル区分が未設定' }] };
+
+    // 購入系（新規・更新・増設）は見積依頼グループで管理するため申請対象外
+    if (cat === '新規' || cat === '更新' || cat === '増設') {
+      return { valid: false, errors: [{ field: 'purchaseCategory', message: '購入系は見積依頼グループで管理します' }] };
+    }
+
+    // 廃棄予定・移設ともに必須なし（移設先情報はカラム上で任意入力）
+
+    return { valid: errors.length === 0, errors };
+  };
+
+  // 申請実行前のバリデーション＋確認ダイアログ表示（廃棄・移設のみ）
+  const handleApplicationExecute = () => {
+    if (selectedItems.size === 0) return;
+
+    const selectedAssetsList = finalFilteredAssets.filter(a => selectedItems.has(a.no));
+    const breakdown: Record<string, number> = {};
+    const errors: { rowNo: number; field: string; message: string }[] = [];
+    const newErrorRows = new Set<number>();
+    let skippedPurchase = 0;
+
+    selectedAssetsList.forEach(asset => {
+      const cat = asset.purchaseCategory;
+      if (!cat) {
+        errors.push({ rowNo: asset.no, field: 'purchaseCategory', message: 'リモデル区分が未設定' });
+        newErrorRows.add(asset.no);
+        return;
+      }
+      // 購入系はスキップ
+      if (cat === '新規' || cat === '更新' || cat === '増設') {
+        skippedPurchase++;
+        return;
+      }
+      // 申請済みスキップ
+      if (appliedRows.has(asset.no)) return;
+
+      const result = validateAssetForApplication(asset);
+      if (result.valid) {
+        const mapping = disposalTransferCategories[cat];
+        if (mapping) {
+          breakdown[mapping.label] = (breakdown[mapping.label] || 0) + 1;
+        }
+      } else {
+        result.errors.forEach(err => errors.push({ rowNo: asset.no, field: err.field, message: err.message }));
+        newErrorRows.add(asset.no);
+      }
+    });
+
+    // 対象がない場合
+    if (Object.keys(breakdown).length === 0 && errors.length === 0) {
+      if (skippedPurchase > 0) {
+        setApplicationFeedback(`購入系（${skippedPurchase}件）は見積依頼グループで管理します。廃棄・移設のレコードを選択してください。`);
+        setTimeout(() => setApplicationFeedback(null), 4000);
+      }
       return;
     }
 
-    // 選択された資産を取得
-    const selectedAssets = finalFilteredAssets.filter(asset => selectedItems.has(asset.no));
+    setApplicationBreakdown(breakdown);
+    setApplicationErrors(errors);
+    setErrorRows(newErrorRows);
+    setShowApplicationConfirm(true);
+  };
 
-    // 廃棄申請以外はバリデーション
-    if (currentApplicationType !== '廃棄申請') {
-      if (!applicationBuilding || !applicationDepartment || !applicationSection || !applicationRoomName) {
-        alert('すべての設置情報を入力してください');
-        return;
+  // 申請作成を実行（廃棄・移設 → rfqGroupStoreにレコード追加）
+  const handleApplicationConfirm = () => {
+    const selectedAssetsList = finalFilteredAssets.filter(a => selectedItems.has(a.no));
+    const today = new Date().toISOString().split('T')[0];
+    const newAppliedRows = new Set(appliedRows);
+    let successCount = 0;
+
+    selectedAssetsList.forEach(asset => {
+      const cat = asset.purchaseCategory;
+      if (!cat || appliedRows.has(asset.no) || errorRows.has(asset.no)) return;
+      // 購入系はスキップ
+      if (cat === '新規' || cat === '更新' || cat === '増設') return;
+
+      const result = validateAssetForApplication(asset);
+      if (!result.valid) return;
+
+      const mapping = disposalTransferCategories[cat];
+      if (!mapping) return;
+
+      const rfqNo = mapping.workflowType === 'disposal'
+        ? generateDisposalNo()
+        : generateTransferNo();
+
+      const assetName = asset.item || asset.name;
+      const groupName = mapping.workflowType === 'disposal'
+        ? `廃棄：${assetName}`
+        : `移設：${assetName}（→${asset.transferDepartment || ''}${asset.transferRoomName || ''}）`;
+
+      // rfqGroupStoreに追加
+      addRfqGroup({
+        rfqNo,
+        groupName,
+        createdDate: today,
+        applicationIds: [String(asset.no)],
+        status: mapping.initialStatus,
+        editListId: listId || undefined,
+        workflowType: mapping.workflowType,
+      });
+
+      // baseAssetへの自動書き込み
+      const patch: Record<string, unknown> = {};
+
+      if (mapping.workflowType === 'disposal') {
+        patch.disposalApplicationNo = rfqNo;
+        patch.disposalApplicationDate = today;
       }
-    }
+      if (mapping.workflowType === 'transfer') {
+        patch.transferApplicationNo = rfqNo;
+        patch.transferApplicationDate = today;
+      }
 
-    // 申請データを作成してストアに保存（各資産ごとに1レコード）
-    selectedAssets.forEach(asset => {
-      const applicationData: Omit<Application, 'id'> = {
-        applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        applicationDate: new Date().toISOString().split('T')[0],
-        applicationType: currentApplicationType as ApplicationType,
-        asset: {
-          name: asset.name,
-          model: asset.model,
-        },
-        vendor: asset.maker,
-        quantity: '1',
-        unit: '台',
-        status: '承認待ち',
-        approvalProgress: {
-          current: 0,
-          total: 3,
-        },
-        facility: {
-          building: currentApplicationType !== '廃棄申請' ? applicationBuilding : asset.building,
-          floor: currentApplicationType !== '廃棄申請' ? applicationFloor : asset.floor,
-          department: currentApplicationType !== '廃棄申請' ? applicationDepartment : asset.department,
-          section: currentApplicationType !== '廃棄申請' ? applicationSection : asset.section,
-        },
-        roomName: currentApplicationType !== '廃棄申請' ? applicationRoomName : undefined,
-        freeInput: currentApplicationType !== '廃棄申請' ? applicationRoomName : '廃棄',
-        executionYear: new Date().getFullYear().toString(),
-        currentConnectionStatus: currentApplicationType === '移動申請' ? currentConnectionStatus : undefined,
-        currentConnectionDestination: currentApplicationType === '移動申請' ? currentConnectionDestination : undefined,
-      };
+      if (isEditListMode && listId) {
+        updateBaseAsset(listId, asset.no, patch);
+      } else {
+        setMockAssets(prev => prev.map(a => a.no === asset.no ? { ...a, ...patch } as Asset : a));
+      }
 
-      // ストアに申請データを追加
-      addApplication(applicationData);
+      newAppliedRows.add(asset.no);
+      successCount++;
     });
 
-    alert(`${currentApplicationType}を送信しました\n申請件数: ${selectedAssets.length}件`);
-
-    // モーダルを閉じて選択をクリア
-    setIsApplicationModalOpen(false);
-    setSelectedItems(new Set());
+    setAppliedRows(newAppliedRows);
+    setShowApplicationConfirm(false);
+    setApplicationFeedback(`${successCount}件の廃棄・移設申請を作成しました`);
+    setTimeout(() => setApplicationFeedback(null), 4000);
   };
 
   // 資産マスタ別ウィンドウを開く
@@ -706,7 +763,6 @@ function RemodelApplicationContent() {
     const height = 800;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
-    // GitHub Pages対応: basePathを付与
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
     window.open(
@@ -719,18 +775,15 @@ function RemodelApplicationContent() {
   // 資産マスタからのメッセージを受信
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // セキュリティチェック: 同じオリジンからのメッセージのみ受け入れる
       if (event.origin !== window.location.origin) return;
 
       if (event.data.type === 'ASSET_SELECTED') {
         const assetMasters = event.data.assets as any[];
-
-        // AssetMaster型をAsset型に変換して selectedAssets に追加
         const newSelectedAssets = assetMasters.map(assetMaster => ({
           asset: {
             ...assetMaster,
-            name: assetMaster.item, // AssetMasterの item を Asset の name にマッピング
-            no: 0, // ダミー値
+            name: assetMaster.item,
+            no: 0,
             qrCode: '',
             facility: '',
             building: '',
@@ -751,7 +804,6 @@ function RemodelApplicationContent() {
           quantity: 1,
           unit: '台'
         }));
-
         setSelectedAssets(prev => [...prev, ...newSelectedAssets]);
       }
     };
@@ -759,83 +811,6 @@ function RemodelApplicationContent() {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
-
-  // 選択資産の削除
-  const handleRemoveSelectedAsset = (index: number) => {
-    setSelectedAssets(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // 選択資産の数量変更
-  const handleQuantityChange = (index: number, quantity: number) => {
-    setSelectedAssets(prev =>
-      prev.map((item, i) => i === index ? { ...item, quantity } : item)
-    );
-  };
-
-  // 選択資産の単位変更
-  const handleUnitChange = (index: number, unit: string) => {
-    setSelectedAssets(prev =>
-      prev.map((item, i) => i === index ? { ...item, unit } : item)
-    );
-  };
-
-  // 新規申請の送信処理
-  const handleSubmitNewApplication = () => {
-    // バリデーション
-    if (!newAppBuilding || !newAppDepartment || !newAppSection || !newAppRoomName) {
-      alert('すべての設置情報を入力してください');
-      return;
-    }
-
-    if (selectedAssets.length === 0) {
-      alert('資産を選択してください');
-      return;
-    }
-
-    // 申請データを作成（各資産ごとに1レコード）
-    selectedAssets.forEach(({ asset, quantity, unit }) => {
-      const applicationData: Omit<Application, 'id'> = {
-        applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        applicationDate: new Date().toISOString().split('T')[0],
-        applicationType: '新規申請',
-        asset: {
-          name: asset.name,
-          model: asset.model,
-        },
-        vendor: asset.maker,
-        quantity: `${quantity}`,
-        unit: unit,
-        status: '承認待ち',
-        approvalProgress: {
-          current: 0,
-          total: 3,
-        },
-        facility: {
-          building: newAppBuilding,
-          floor: newAppFloor,
-          department: newAppDepartment,
-          section: newAppSection,
-        },
-        roomName: newAppRoomName,
-        freeInput: applicationReason,
-        executionYear: executionYear || new Date().getFullYear().toString(),
-        requestConnectionStatus: requestConnectionStatus,
-        requestConnectionDestination: requestConnectionDestination,
-        applicationReason: applicationReason,
-      };
-
-      // ストアに申請データを追加
-      addApplication(applicationData);
-    });
-
-    alert(`新規申請を送信しました\n申請件数: ${selectedAssets.length}件`);
-
-    // モーダルを閉じる
-    setIsNewApplicationModalOpen(false);
-
-    // 選択された資産をクリア
-    setSelectedAssets([]);
-  };
 
   // --- インライン新規申請関連 ---
   const getInitialInlineData = (): Record<string, string> => ({
@@ -1108,6 +1083,35 @@ function RemodelApplicationContent() {
         >
           見積依頼グループ作成（{selectedItems.size}件選択中）
         </button>
+
+        {/* 廃棄・移設申請ボタン（選択行に廃棄予定 or 移設がある場合のみ活性） */}
+        {(() => {
+          const dtCount = finalFilteredAssets.filter(a =>
+            selectedItems.has(a.no) &&
+            (a.purchaseCategory === '廃棄予定' || a.purchaseCategory === '移設') &&
+            !appliedRows.has(a.no)
+          ).length;
+          const disabled = dtCount === 0;
+          return (
+            <button
+              onClick={handleApplicationExecute}
+              disabled={disabled}
+              style={{
+                padding: '8px 16px',
+                background: disabled ? '#bdc3c7' : '#e67e22',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 600,
+                transition: 'background 0.2s',
+              }}
+            >
+              廃棄・移設申請{dtCount > 0 ? `（${dtCount}件）` : ''}
+            </button>
+          );
+        })()}
 
         {/* 一括新規追加ボタン */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #dee2e6' }}>
@@ -1522,9 +1526,18 @@ function RemodelApplicationContent() {
               </tr>
             </thead>
             <tbody>
-              {finalFilteredAssets.map((asset) => (
+              {finalFilteredAssets.map((asset) => {
+                // 行ステータスの左ボーダー色
+                const getRowBorderColor = () => {
+                  if (errorRows.has(asset.no)) return '#e74c3c';
+                  if (appliedRows.has(asset.no)) return '#27ae60';
+                  if (asset.purchaseCategory) return '#f39c12';
+                  return 'transparent';
+                };
+                return (
                 <tr
                   key={asset.no}
+                  style={{ borderLeft: `4px solid ${getRowBorderColor()}` }}
                 >
                   <td style={{
                     padding: '12px 8px',
@@ -1677,7 +1690,8 @@ function RemodelApplicationContent() {
                     );
                   })}
                 </tr>
-              ))}
+                );
+              })}
 
               {/* インライン新規行 */}
               {isInlineNewMode && (() => {
@@ -1927,6 +1941,24 @@ function RemodelApplicationContent() {
           </div>
         )}
         </div>
+
+        {/* 申請実行フィードバック */}
+        {applicationFeedback && (
+          <div style={{
+            padding: '10px 16px',
+            background: '#d4edda',
+            border: '1px solid #c3e6cb',
+            color: '#155724',
+            fontSize: '13px',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <span style={{ fontSize: '16px' }}>&#10003;</span>
+            {applicationFeedback}
+          </div>
+        )}
       </div>
 
       {/* カラム設定モーダル */}
@@ -1940,10 +1972,10 @@ function RemodelApplicationContent() {
         onDeselectAll={handleDeselectAllColumns}
       />
 
-      {/* 申請モーダル */}
-      {isApplicationModalOpen && (
+      {/* 申請実行確認ダイアログ */}
+      {showApplicationConfirm && (
         <div
-          onClick={() => setIsApplicationModalOpen(false)}
+          onClick={() => setShowApplicationConfirm(false)}
           style={{
             position: 'fixed',
             top: 0,
@@ -1961,41 +1993,34 @@ function RemodelApplicationContent() {
             onClick={(e) => e.stopPropagation()}
             style={{
               background: 'white',
-              borderRadius: '12px',
+              borderRadius: '8px',
               width: '90%',
-              maxWidth: '800px',
-              maxHeight: '90vh',
+              maxWidth: '480px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'auto',
-              display: 'flex',
-              flexDirection: 'column'
+              overflow: 'hidden',
             }}
           >
-            {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: '#3498db',
-                color: 'white',
-                padding: '20px 24px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderTopLeftRadius: '12px',
-                borderTopRightRadius: '12px',
-              }}
-            >
-              <span>{currentApplicationType}</span>
+            <div style={{
+              background: '#e67e22',
+              color: 'white',
+              padding: '16px 20px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <span>廃棄・移設申請の確認</span>
               <button
-                onClick={() => setIsApplicationModalOpen(false)}
+                onClick={() => setShowApplicationConfirm(false)}
+                aria-label="閉じる"
                 style={{
                   background: 'transparent',
                   border: 'none',
                   color: 'white',
-                  fontSize: '24px',
+                  fontSize: '20px',
                   cursor: 'pointer',
-                  padding: '0',
+                  padding: 0,
                   width: '30px',
                   height: '30px',
                 }}
@@ -2003,691 +2028,41 @@ function RemodelApplicationContent() {
                 ×
               </button>
             </div>
-
-            {/* モーダルボディ */}
-            <div style={{ padding: '32px', flex: 1 }}>
-              {/* 選択された資産リスト */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                  選択された資産 ({selectedItems.size}件)
-                </h3>
-                <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6', borderRadius: '4px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead style={{ background: '#f8f9fa', position: 'sticky', top: 0 }}>
-                      <tr>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>品目</th>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
-                        <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {finalFilteredAssets.filter(asset => selectedItems.has(asset.no)).map((asset) => (
-                        <tr key={asset.no} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.name}</td>
-                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.maker}</td>
-                          <td style={{ padding: '10px', color: '#2c3e50' }}>{asset.model}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {currentApplicationType !== '廃棄申請' && (
-                  <p style={{ fontSize: '13px', color: '#777', marginTop: '12px' }}>
-                    ※ 一括申請の場合、すべての資産に同じ設置情報が適用されます。
-                  </p>
-                )}
+            <div style={{ padding: '20px' }}>
+              {/* 種別ごとの件数 */}
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
+                以下の廃棄・移設申請を作成します:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
+                {Object.entries(applicationBreakdown).map(([type, count]) => (
+                  <div key={type} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#2c3e50' }}>
+                    <span>{type}</span>
+                    <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{count}件</span>
+                  </div>
+                ))}
               </div>
-
-              {/* 新しい設置情報（廃棄申請以外） */}
-              {currentApplicationType !== '廃棄申請' && (
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
-                      新しい設置情報
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // 選択された資産の現在の設置場所から新居情報を自動取得
-                        const selectedAssetsList = finalFilteredAssets.filter(a => selectedItems.has(a.no));
-                        if (selectedAssetsList.length === 0) {
-                          alert('資産を選択してください');
-                          return;
-                        }
-                        const firstAsset = selectedAssetsList[0];
-                        const newLocation = getNewLocationByCurrentLocation({
-                          hospitalId: facility,
-                          floor: firstAsset.floor,
-                          department: firstAsset.department,
-                          section: firstAsset.section,
-                          roomName: firstAsset.roomName || '',
-                        });
-                        if (newLocation && newLocation.floor) {
-                          setApplicationFloor(newLocation.floor);
-                          setApplicationDepartment(newLocation.department);
-                          setApplicationRoomName(newLocation.roomName);
-                          alert('個別部署マスタから新居情報を取得しました');
-                        } else {
-                          alert('個別部署マスタに該当するマッピング情報がありません。\n個別部署マスタで現状→新居のマッピングを登録してください。');
-                        }
-                      }}
-                      style={{
-                        padding: '6px 12px',
-                        background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <span>🏢</span>
-                      <span>個別部署マスタから自動入力</span>
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-                    <div style={{ position: 'relative', zIndex: 5 }}>
-                      <SearchableSelect
-                        label="棟"
-                        value={applicationBuilding}
-                        onChange={setApplicationBuilding}
-                        options={buildingOptions}
-                        placeholder="選択してください"
-                        isMobile={isMobile}
-                      />
-                    </div>
-
-                    <div style={{ position: 'relative', zIndex: 4 }}>
-                      <SearchableSelect
-                        label="階"
-                        value={applicationFloor}
-                        onChange={setApplicationFloor}
-                        options={floorOptions}
-                        placeholder="選択してください"
-                        isMobile={isMobile}
-                      />
-                    </div>
-
-                    <div style={{ position: 'relative', zIndex: 3 }}>
-                      <SearchableSelect
-                        label="部門"
-                        value={applicationDepartment}
-                        onChange={setApplicationDepartment}
-                        options={departmentOptions}
-                        placeholder="選択してください"
-                        isMobile={isMobile}
-                      />
-                    </div>
-
-                    <div style={{ position: 'relative', zIndex: 2 }}>
-                      <SearchableSelect
-                        label="部署"
-                        value={applicationSection}
-                        onChange={setApplicationSection}
-                        options={sectionOptions}
-                        placeholder="選択してください"
-                        isMobile={isMobile}
-                      />
-                    </div>
-
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#2c3e50',
-                        marginBottom: '8px'
-                      }}>
-                        諸室名
-                      </label>
-                      <input
-                        type="text"
-                        value={applicationRoomName}
-                        onChange={(e) => setApplicationRoomName(e.target.value)}
-                        placeholder="諸室名を入力してください"
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 移動申請の場合のみ接続状況を表示 */}
-                  {currentApplicationType === '移動申請' && (
-                    <div style={{ display: 'grid', gap: '20px', marginTop: '20px' }}>
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          color: '#2c3e50',
-                          marginBottom: '8px'
-                        }}>
-                          現在の接続状況
-                        </label>
-                        <div style={{ display: 'flex', gap: '16px' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                              type="radio"
-                              checked={currentConnectionStatus === 'connected'}
-                              onChange={() => setCurrentConnectionStatus('connected')}
-                              style={{ cursor: 'pointer' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続あり</span>
-                          </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input
-                              type="radio"
-                              checked={currentConnectionStatus === 'disconnected'}
-                              onChange={() => setCurrentConnectionStatus('disconnected')}
-                              style={{ cursor: 'pointer' }}
-                            />
-                            <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続なし</span>
-                          </label>
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          color: '#2c3e50',
-                          marginBottom: '8px'
-                        }}>
-                          現在の接続先
-                        </label>
-                        <input
-                          type="text"
-                          value={currentConnectionDestination}
-                          onChange={(e) => setCurrentConnectionDestination(e.target.value)}
-                          placeholder="接続先を入力してください"
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            border: '1px solid #d0d0d0',
-                            borderRadius: '6px',
-                            fontSize: '14px',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
+              {Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0 && (
+                <div style={{ padding: '12px', background: '#fff3cd', borderRadius: '4px', fontSize: '13px', color: '#856404', marginBottom: '12px' }}>
+                  有効な廃棄・移設対象がありません。リモデル区分を確認してください。
+                </div>
+              )}
+              {applicationErrors.length > 0 && (
+                <div style={{ padding: '12px', background: '#f8d7da', borderRadius: '4px', fontSize: '13px', color: '#721c24', marginBottom: '12px' }}>
+                  バリデーションエラー: {applicationErrors.length}件（スキップされます）
                 </div>
               )}
             </div>
-
-            {/* モーダルフッター */}
-            <div
-              style={{
-                padding: '16px 24px',
-                borderTop: '1px solid #dee2e6',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '12px',
-              }}
-            >
-              <button
-                onClick={() => setIsApplicationModalOpen(false)}
-                style={{
-                  padding: '10px 24px',
-                  background: '#95a5a6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleSubmitApplication}
-                style={{
-                  padding: '10px 24px',
-                  background: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                申請する
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 新規申請モーダル */}
-      {isNewApplicationModalOpen && (
-        <div
-          onClick={() => setIsNewApplicationModalOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'white',
-              borderRadius: '12px',
-              width: '90%',
-              maxWidth: '1000px',
-              maxHeight: '90vh',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              overflow: 'auto',
+            <div style={{
+              padding: '12px 20px',
+              borderTop: '1px solid #dee2e6',
               display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* モーダルヘッダー */}
-            <div
-              style={{
-                background: '#3498db',
-                color: 'white',
-                padding: '20px 24px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderTopLeftRadius: '12px',
-                borderTopRightRadius: '12px',
-              }}
-            >
-              <span>新規申請</span>
+              justifyContent: 'flex-end',
+              gap: '10px',
+            }}>
               <button
-                onClick={() => setIsNewApplicationModalOpen(false)}
+                onClick={() => setShowApplicationConfirm(false)}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'white',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: '30px',
-                  height: '30px',
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* モーダルボディ */}
-            <div style={{ padding: '32px', flex: 1, overflowY: 'auto' }}>
-              {/* 設置情報 */}
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                  設置情報
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '20px' }}>
-                  <div style={{ position: 'relative', zIndex: 5 }}>
-                    <SearchableSelect
-                      label="棟"
-                      value={newAppBuilding}
-                      onChange={setNewAppBuilding}
-                      options={buildingOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
-                  <div style={{ position: 'relative', zIndex: 4 }}>
-                    <SearchableSelect
-                      label="階"
-                      value={newAppFloor}
-                      onChange={setNewAppFloor}
-                      options={floorOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
-                  <div style={{ position: 'relative', zIndex: 3 }}>
-                    <SearchableSelect
-                      label="部門"
-                      value={newAppDepartment}
-                      onChange={setNewAppDepartment}
-                      options={departmentOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
-                  <div style={{ position: 'relative', zIndex: 2 }}>
-                    <SearchableSelect
-                      label="部署"
-                      value={newAppSection}
-                      onChange={setNewAppSection}
-                      options={sectionOptions}
-                      placeholder="選択してください"
-                      isMobile={isMobile}
-                    />
-                  </div>
-                  <div style={{ gridColumn: isMobile ? '1' : '1 / -1' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      諸室名
-                    </label>
-                    <input
-                      type="text"
-                      value={newAppRoomName}
-                      onChange={(e) => setNewAppRoomName(e.target.value)}
-                      placeholder="諸室名を入力してください"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* 資産選択 */}
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '8px', flex: 1 }}>
-                    資産選択
-                  </h3>
-                </div>
-                <button
-                  onClick={handleOpenAssetMaster}
-                  style={{
-                    padding: '12px 24px',
-                    background: '#27ae60',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    marginBottom: '16px',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#229954';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#27ae60';
-                  }}
-                >
-                  📋 資産マスタを別ウィンドウで開く
-                </button>
-
-                {/* 選択された資産リスト */}
-                {selectedAssets.length > 0 && (
-                  <div style={{ border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                      <thead style={{ background: '#f8f9fa' }}>
-                        <tr>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>品目</th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>メーカー</th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>数量</th>
-                          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>単位</th>
-                          <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '80px' }}>削除</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedAssets.map((item, index) => (
-                          <tr key={index} style={{ borderBottom: index < selectedAssets.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
-                            <td style={{ padding: '12px', color: '#2c3e50' }}>{item.asset.name}</td>
-                            <td style={{ padding: '12px', color: '#2c3e50' }}>{item.asset.maker}</td>
-                            <td style={{ padding: '12px', color: '#2c3e50' }}>{item.asset.model}</td>
-                            <td style={{ padding: '8px' }}>
-                              <input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => handleQuantityChange(index, Number(e.target.value))}
-                                min="1"
-                                style={{
-                                  width: '100%',
-                                  padding: '6px 8px',
-                                  border: '1px solid #d0d0d0',
-                                  borderRadius: '4px',
-                                  fontSize: '13px',
-                                  boxSizing: 'border-box'
-                                }}
-                              />
-                            </td>
-                            <td style={{ padding: '8px' }}>
-                              <select
-                                value={item.unit}
-                                onChange={(e) => handleUnitChange(index, e.target.value)}
-                                style={{
-                                  width: '100%',
-                                  padding: '6px 8px',
-                                  border: '1px solid #d0d0d0',
-                                  borderRadius: '4px',
-                                  fontSize: '13px',
-                                  boxSizing: 'border-box',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                <option value="台">台</option>
-                                <option value="個">個</option>
-                                <option value="式">式</option>
-                                <option value="セット">セット</option>
-                              </select>
-                            </td>
-                            <td style={{ padding: '8px', textAlign: 'center' }}>
-                              <button
-                                onClick={() => handleRemoveSelectedAsset(index)}
-                                style={{
-                                  padding: '6px 12px',
-                                  background: '#e74c3c',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                  fontWeight: 'bold',
-                                  transition: 'background 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#c0392b';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = '#e74c3c';
-                                }}
-                              >
-                                削除
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {selectedAssets.length === 0 && (
-                  <div style={{
-                    padding: '24px',
-                    textAlign: 'center',
-                    color: '#7f8c8d',
-                    background: '#f8f9fa',
-                    borderRadius: '8px',
-                    border: '1px dashed #d0d0d0'
-                  }}>
-                    資産が選択されていません
-                  </div>
-                )}
-              </div>
-
-              {/* システム関連情報（任意） */}
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                  システム関連情報（任意）
-                </h3>
-                <div style={{ display: 'grid', gap: '20px' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      要望機器の接続要望
-                    </label>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          checked={requestConnectionStatus === 'required'}
-                          onChange={() => setRequestConnectionStatus('required')}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続要望</span>
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          checked={requestConnectionStatus === 'not-required'}
-                          onChange={() => setRequestConnectionStatus('not-required')}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px', color: '#2c3e50' }}>接続不要</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      要望機器の接続先
-                    </label>
-                    <input
-                      type="text"
-                      value={requestConnectionDestination}
-                      onChange={(e) => setRequestConnectionDestination(e.target.value)}
-                      placeholder="接続先を入力してください"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* その他情報（任意） */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '16px', borderBottom: '2px solid #3498db', paddingBottom: '8px' }}>
-                  その他情報（任意）
-                </h3>
-                <div style={{ display: 'grid', gap: '20px' }}>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      申請理由・コメント等
-                    </label>
-                    <textarea
-                      value={applicationReason}
-                      onChange={(e) => setApplicationReason(e.target.value)}
-                      placeholder="申請理由やコメントを入力してください"
-                      rows={4}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: '1px solid #d0d0d0',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        boxSizing: 'border-box',
-                        resize: 'vertical'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#2c3e50',
-                      marginBottom: '8px'
-                    }}>
-                      執行年度
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input
-                        type="number"
-                        value={executionYear}
-                        onChange={(e) => setExecutionYear(e.target.value)}
-                        placeholder="例: 2024"
-                        style={{
-                          width: '150px',
-                          padding: '10px 12px',
-                          border: '1px solid #d0d0d0',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                      <span style={{ fontSize: '14px', color: '#2c3e50' }}>年度</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* モーダルフッター */}
-            <div
-              style={{
-                padding: '16px 24px',
-                borderTop: '1px solid #dee2e6',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '12px',
-                background: '#f8f9fa'
-              }}
-            >
-              <button
-                onClick={() => setIsNewApplicationModalOpen(false)}
-                style={{
-                  padding: '10px 24px',
+                  padding: '8px 20px',
                   background: '#95a5a6',
                   color: 'white',
                   border: 'none',
@@ -2695,38 +2070,25 @@ function RemodelApplicationContent() {
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: 'bold',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#7f8c8d';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#95a5a6';
                 }}
               >
                 キャンセル
               </button>
               <button
-                onClick={handleSubmitNewApplication}
+                onClick={handleApplicationConfirm}
+                disabled={Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0}
                 style={{
-                  padding: '10px 24px',
-                  background: '#3498db',
+                  padding: '8px 20px',
+                  background: Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0 ? '#bdc3c7' : '#e67e22',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: 'pointer',
+                  cursor: Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0 ? 'not-allowed' : 'pointer',
                   fontSize: '14px',
                   fontWeight: 'bold',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#2980b9';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#3498db';
                 }}
               >
-                申請する
+                申請を作成
               </button>
             </div>
           </div>

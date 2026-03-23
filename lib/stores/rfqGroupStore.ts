@@ -8,6 +8,8 @@ interface RfqGroupState {
   deleteRfqGroup: (id: number) => void;
   getRfqGroupById: (id: number) => RfqGroup | undefined;
   generateRfqNo: () => string;
+  generateDisposalNo: () => string;
+  generateTransferNo: () => string;
   cloneRfqGroupForVendor: (sourceId: number, vendorInfo: {
     vendorName: string;
     personInCharge: string;
@@ -16,6 +18,7 @@ interface RfqGroupState {
     deadline?: string;
   }) => RfqGroup;
   getRfqGroupsByRfqNo: (rfqNo: string) => RfqGroup[];
+  getRfqGroupsByWorkflowType: (type: 'rfq' | 'disposal' | 'transfer') => RfqGroup[];
 }
 
 // テストデータ（新ステータス体系）
@@ -248,5 +251,29 @@ export const useRfqGroupStore = create<RfqGroupState>((set, get) => ({
 
   getRfqGroupsByRfqNo: (rfqNo) => {
     return get().rfqGroups.filter(g => g.rfqNo === rfqNo);
+  },
+
+  generateDisposalNo: () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const disposalCount = get().rfqGroups.filter(g => g.workflowType === 'disposal').length;
+    const sequence = String(disposalCount + 1).padStart(4, '0');
+    return `DISP-${year}${month}${day}-${sequence}`;
+  },
+
+  generateTransferNo: () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const transferCount = get().rfqGroups.filter(g => g.workflowType === 'transfer').length;
+    const sequence = String(transferCount + 1).padStart(4, '0');
+    return `TRAN-${year}${month}${day}-${sequence}`;
+  },
+
+  getRfqGroupsByWorkflowType: (type) => {
+    return get().rfqGroups.filter(g => g.workflowType === type);
   },
 }));
