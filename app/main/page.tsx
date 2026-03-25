@@ -35,6 +35,7 @@ export default function MainPage() {
 
   // 権限フック
   const {
+    isAdmin,
     isShipUser,
     isHospitalUser,
     isMainButtonVisible,
@@ -671,6 +672,20 @@ export default function MainPage() {
                     className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
                   >
                     <span>👤 ユーザー管理</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
+
+                {/* 権限管理（admin のみ） */}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/permission-management');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-amber-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-amber-500 hover:text-white"
+                  >
+                    <span>🔐 権限管理</span>
                     <span className="text-xl">→</span>
                   </button>
                 )}

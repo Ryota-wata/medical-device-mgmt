@@ -168,48 +168,75 @@ const MAIN_BUTTON_VISIBILITY: Record<MainButtonId, Record<UserRole, boolean>> = 
 };
 
 /**
- * 機能に対する権限レベルを取得
+ * デフォルトの権限レベルを取得（PERMISSION_MATRIX から直接取得）
  */
-export function getPermissionLevel(featureId: FeatureId, role: UserRole): PermissionLevel {
+export function getDefaultPermissionLevel(featureId: FeatureId, role: UserRole): PermissionLevel {
   return PERMISSION_MATRIX[featureId]?.[role] ?? 'X';
 }
 
 /**
+ * 機能に対する権限レベルを取得
+ * facilityName が指定された場合、オーバーライド設定を考慮する
+ */
+export function getPermissionLevel(
+  featureId: FeatureId,
+  role: UserRole,
+  facilityName?: string,
+  getOverride?: (facilityName: string, role: UserRole, featureId: FeatureId) => boolean | undefined
+): PermissionLevel {
+  const defaultLevel = PERMISSION_MATRIX[featureId]?.[role] ?? 'X';
+
+  // admin はオーバーライド不可（常にデフォルト権限）
+  if (role === 'admin') return defaultLevel;
+
+  // facilityName と getOverride が指定されている場合、オーバーライドを確認
+  if (facilityName && getOverride) {
+    const override = getOverride(facilityName, role, featureId);
+    if (override === false) return 'X';
+  }
+
+  return defaultLevel;
+}
+
+/** オーバーライド取得関数の型 */
+type GetOverrideFn = (facilityName: string, role: UserRole, featureId: FeatureId) => boolean | undefined;
+
+/**
  * 機能にアクセス可能かどうか（X以外ならアクセス可能）
  */
-export function canAccess(featureId: FeatureId, role: UserRole): boolean {
-  return getPermissionLevel(featureId, role) !== 'X';
+export function canAccess(featureId: FeatureId, role: UserRole, facilityName?: string, getOverride?: GetOverrideFn): boolean {
+  return getPermissionLevel(featureId, role, facilityName, getOverride) !== 'X';
 }
 
 /**
  * 機能を閲覧可能かどうか（R, C, W, F のいずれか）
  */
-export function canView(featureId: FeatureId, role: UserRole): boolean {
-  const level = getPermissionLevel(featureId, role);
+export function canView(featureId: FeatureId, role: UserRole, facilityName?: string, getOverride?: GetOverrideFn): boolean {
+  const level = getPermissionLevel(featureId, role, facilityName, getOverride);
   return ['R', 'C', 'W', 'F'].includes(level);
 }
 
 /**
  * 機能を編集可能かどうか（W, F のいずれか）
  */
-export function canEdit(featureId: FeatureId, role: UserRole): boolean {
-  const level = getPermissionLevel(featureId, role);
+export function canEdit(featureId: FeatureId, role: UserRole, facilityName?: string, getOverride?: GetOverrideFn): boolean {
+  const level = getPermissionLevel(featureId, role, facilityName, getOverride);
   return ['W', 'F'].includes(level);
 }
 
 /**
  * 機能で作成可能かどうか（C, W, F のいずれか）
  */
-export function canCreate(featureId: FeatureId, role: UserRole): boolean {
-  const level = getPermissionLevel(featureId, role);
+export function canCreate(featureId: FeatureId, role: UserRole, facilityName?: string, getOverride?: GetOverrideFn): boolean {
+  const level = getPermissionLevel(featureId, role, facilityName, getOverride);
   return ['C', 'W', 'F'].includes(level);
 }
 
 /**
  * フルアクセス権限があるかどうか
  */
-export function hasFullAccess(featureId: FeatureId, role: UserRole): boolean {
-  return getPermissionLevel(featureId, role) === 'F';
+export function hasFullAccess(featureId: FeatureId, role: UserRole, facilityName?: string, getOverride?: GetOverrideFn): boolean {
+  return getPermissionLevel(featureId, role, facilityName, getOverride) === 'F';
 }
 
 /**

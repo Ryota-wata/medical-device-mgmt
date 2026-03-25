@@ -3,7 +3,7 @@
  */
 
 import { useMemo } from 'react';
-import { useAuthStore } from '../stores';
+import { useAuthStore, usePermissionOverrideStore } from '../stores';
 import {
   FeatureId,
   MainButtonId,
@@ -49,7 +49,8 @@ export interface UsePermissionsReturn {
 }
 
 export function usePermissions(): UsePermissionsReturn {
-  const { user } = useAuthStore();
+  const { user, selectedFacility } = useAuthStore();
+  const { getOverride } = usePermissionOverrideStore();
   const role = user?.role ?? null;
 
   return useMemo(() => {
@@ -76,14 +77,17 @@ export function usePermissions(): UsePermissionsReturn {
     const isShipUser = role === 'admin' || role === 'consultant' || role === 'sales';
     const isHospitalUser = role === 'office_admin' || role === 'office_staff' || role === 'clinical_staff';
 
+    // 施設名（オーバーライドチェック用）
+    const facility = selectedFacility ?? undefined;
+
     return {
       role,
-      getPermission: (featureId: FeatureId) => getPermissionLevel(featureId, role),
-      canAccess: (featureId: FeatureId) => canAccess(featureId, role),
-      canView: (featureId: FeatureId) => canView(featureId, role),
-      canEdit: (featureId: FeatureId) => canEdit(featureId, role),
-      canCreate: (featureId: FeatureId) => canCreate(featureId, role),
-      hasFullAccess: (featureId: FeatureId) => hasFullAccess(featureId, role),
+      getPermission: (featureId: FeatureId) => getPermissionLevel(featureId, role, facility, getOverride),
+      canAccess: (featureId: FeatureId) => canAccess(featureId, role, facility, getOverride),
+      canView: (featureId: FeatureId) => canView(featureId, role, facility, getOverride),
+      canEdit: (featureId: FeatureId) => canEdit(featureId, role, facility, getOverride),
+      canCreate: (featureId: FeatureId) => canCreate(featureId, role, facility, getOverride),
+      hasFullAccess: (featureId: FeatureId) => hasFullAccess(featureId, role, facility, getOverride),
       isMainButtonVisible: (buttonId: MainButtonId) => isMainButtonVisible(buttonId, role),
       visibleMainButtons: getVisibleMainButtons(role),
       canAccessFacility: (facilityName: string) =>
@@ -92,5 +96,5 @@ export function usePermissions(): UsePermissionsReturn {
       isShipUser,
       isHospitalUser,
     };
-  }, [role, user?.hospital, user?.accessibleFacilities]);
+  }, [role, user?.hospital, user?.accessibleFacilities, selectedFacility, getOverride]);
 }
