@@ -56,34 +56,34 @@ export default function FacilitySelectPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-slate-100 overflow-y-auto py-8">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-5 p-12 my-auto">
-        {/* ロゴ */}
-        <div className="size-20 rounded-3xl flex items-center justify-center text-white text-3xl font-bold mx-auto mb-8 bg-emerald-500">
-          SHIP
-        </div>
-
+    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-gray-50 overflow-y-auto py-8">
+      <div className="bg-white w-full max-w-md mx-5 p-12 my-auto rounded-xl shadow-md">
         {/* タイトル */}
-        <h1 className="text-2xl font-bold text-center mb-2 text-balance text-slate-800">
+        <h1 className="text-2xl font-bold text-center mb-2 text-balance text-gray-800">
           作業対象施設の選択
         </h1>
-        <p className="text-sm text-slate-500 text-center mb-8 text-pretty">
+        <p className="text-sm text-gray-500 text-center mb-8 text-pretty">
           作業を行う施設を選択してください
         </p>
 
         {/* ユーザー情報 */}
-        <div className="mb-8 px-4 py-3 bg-slate-50 rounded-lg text-sm text-slate-600">
-          <span className="font-semibold">{user.username}</span>
-          <span className="mx-2 text-slate-300">|</span>
-          <span>{user.email}</span>
+        <div className="mb-6">
+          <label className="block text-sm font-semibold mb-1 text-gray-800">
+            管理者太郎
+          </label>
+          <div className="w-full px-4 py-3 text-sm text-gray-500 bg-gray-100 rounded-lg border border-gray-200">
+            {user.email}
+          </div>
         </div>
 
         {isAllFacilityAdmin ? (
           /* 全施設管理者: SearchableSelect + 決定ボタン */
           <>
             <div className="mb-8">
+              <label className="block text-sm font-semibold mb-1 text-gray-800">
+                <span className="text-red-600">※</span>施設を選択
+              </label>
               <SearchableSelect
-                label="施設を選択"
                 value={selected}
                 onChange={setSelected}
                 options={['', ...allFacilityOptions]}
@@ -93,10 +93,10 @@ export default function FacilitySelectPage() {
             <button
               onClick={handleSubmit}
               disabled={!selected}
-              className={`w-full border-0 rounded-lg text-base font-semibold py-3.5 px-6 transition-all ${
+              className={`w-full border-0 rounded-lg text-base font-semibold py-3.5 px-6 transition-colors ${
                 selected
-                  ? 'bg-emerald-500 text-white cursor-pointer shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/40 active:translate-y-0'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
             >
               決定
@@ -109,17 +109,17 @@ export default function FacilitySelectPage() {
               <button
                 key={facilityName}
                 onClick={() => handleFacilitySelect(facilityName)}
-                className="w-full text-left px-5 py-4 bg-white border-2 border-slate-200 rounded-xl text-base font-semibold text-slate-700 cursor-pointer transition-all hover:border-emerald-500 hover:bg-emerald-50 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/10"
+                className="w-full text-left px-5 py-4 bg-white border border-gray-200 rounded-lg text-base font-semibold text-gray-700 cursor-pointer transition-colors hover:border-green-500 hover:bg-green-50"
               >
                 <div className="flex items-center justify-between">
                   <span>{facilityName}</span>
-                  <span className="text-emerald-500 text-xl">→</span>
+                  <span className="text-green-600 text-xl">→</span>
                 </div>
               </button>
             ))}
 
             {facilityList.length === 0 && (
-              <div className="text-center py-10 text-slate-400 text-pretty">
+              <div className="text-center py-10 text-gray-400 text-pretty">
                 <p>アクセス可能な施設がありません</p>
                 <p className="text-sm mt-2">管理者にお問い合わせください</p>
               </div>

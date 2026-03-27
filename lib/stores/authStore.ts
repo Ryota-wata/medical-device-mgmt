@@ -110,17 +110,9 @@ export const useAuthStore = create<AuthStore>()(
               accessibleFacilities: testUser.accessibleFacilities,
             };
           } else {
-            // 未登録メールアドレスの場合はデフォルトで臨床スタッフとして扱う
-            const isHospitalUser = credentials.username.includes('@hospital');
-            mockUser = {
-              id: 'user-unknown-001',
-              username: credentials.username.split('@')[0],
-              email: credentials.username,
-              role: isHospitalUser ? 'clinical_staff' : 'consultant',
-              hospital: isHospitalUser ? '東京中央病院' : undefined,
-              department: isHospitalUser ? '未設定' : undefined,
-              section: isHospitalUser ? '未設定' : undefined,
-            };
+            // 未登録ユーザーはログインエラー
+            set({ isLoading: false });
+            throw new Error('認証に失敗しました');
           }
 
           set({
