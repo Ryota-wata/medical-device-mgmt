@@ -14,57 +14,78 @@ import { UserRole } from '../types';
 export type PermissionLevel = 'F' | 'W' | 'R' | 'C' | 'X';
 
 /**
- * 機能ID一覧
+ * 機能ID一覧（Excelマッピング表準拠）
  */
 export type FeatureId =
-  // メイン画面
-  | 'main'
-  // 資産関連
-  | 'asset_search'
-  | 'asset_detail'
-  | 'asset_edit'
-  | 'edit_list_create'
-  // 現有資産調査
-  | 'offline_prep'
-  | 'survey_location'
-  | 'asset_survey'
-  | 'survey_history'
-  // 棚卸
-  | 'inventory'
-  // QRコード
-  | 'qr_issue'
-  | 'qr_print'
-  // 購入管理
-  | 'quotation_data_box'
-  | 'quotation_processing'
-  // 見積管理
-  | 'quotation_management'
-  // 修理
-  | 'repair_request'
-  | 'repair_task'
-  // 貸出
-  | 'lending_available'
-  | 'lending_checkout'
-  | 'lending_task'
-  // 点検
-  | 'daily_inspection'
-  | 'inspection_prep'
-  | 'inspection_result'
-  // 保守
-  | 'maintenance_quote'
-  | 'maker_maintenance_result'
-  // 廃棄
-  | 'disposal_task'
-  // マスタ管理
-  | 'ship_asset_master'
-  | 'ship_facility_master'
-  | 'ship_department_master'
-  | 'hospital_facility_master'
   // ユーザー管理
+  | 'user_facility_access'
   | 'user_management'
-  // データ管理
-  | 'asset_import'
-  | 'data_matching';
+  // 認証/認可
+  | 'auth_login'
+  | 'facility_select'
+  | 'facility_select_all'
+  // 原本リスト（■メニュー: 資産閲覧・申請）
+  | 'original_list_view'
+  | 'original_price_column'
+  | 'original_list_edit'
+  | 'original_application'
+  // 保守・点検／貸出／修理申請（■メニュー）
+  | 'daily_inspection'
+  | 'lending_checkout'
+  | 'repair_application'
+  | 'application_status'
+  // 棚卸し（■メニュー）
+  | 'inventory_field'
+  | 'inventory_office'
+  // リモデルメニュー（■メニュー）
+  | 'remodel_edit_list'
+  | 'remodel_purchase'
+  | 'remodel_order'
+  | 'remodel_acceptance'
+  | 'remodel_quotation'
+  // 編集リスト・通常（■メニュー）
+  | 'normal_edit_list'
+  | 'ship_column'
+  // タスク管理（■メニュー）
+  | 'normal_purchase'
+  | 'normal_order'
+  | 'normal_acceptance'
+  | 'normal_quotation'
+  | 'transfer_disposal'
+  | 'repair_management'
+  | 'maintenance_contract'
+  | 'inspection_management'
+  | 'periodic_inspection'
+  | 'lending_management'
+  // QRコード（■メニュー）
+  | 'qr_issue'
+  | 'qr_scan'
+  // データ閲覧・自施設（■メニュー）
+  | 'own_asset_master_view'
+  | 'own_user_master'
+  | 'own_asset_list'
+  | 'own_price_column'
+  | 'own_estimate'
+  | 'own_data_history'
+  // データ閲覧・他施設（■メニュー）
+  | 'other_asset_list'
+  | 'other_price_column'
+  | 'other_estimate'
+  | 'other_data_history'
+  // マスタ管理（■メニュー）
+  | 'asset_master_list'
+  | 'facility_master_list'
+  | 'dept_vendor_master_list'
+  | 'asset_master_edit'
+  | 'facility_master_edit'
+  | 'ship_dept_master_edit'
+  | 'hospital_dept_master_edit'
+  | 'vendor_master_edit'
+  // 個体管理リスト作成
+  | 'existing_survey'
+  | 'survey_data_edit'
+  | 'asset_ledger_import'
+  | 'survey_ledger_matching';
 
 /**
  * メイン画面ボタンID
@@ -83,88 +104,186 @@ export type MainButtonId =
   | 'user_management';
 
 /**
- * 権限マトリクス
+ * 17ロール分の権限定義ヘルパー
+ * 順序: system_admin, org_default_1, org_default_2, org_default_3, org_default_4,
+ *       hospital_sys_admin, hospital_office, hospital_dept_head, hospital_me, hospital_doctor_nurse,
+ *       rimo_hospital, estimate_staff, consignment_staff, lending_warehouse, inspection_mobile, transport_mobile, vendor_receiving_mobile
+ */
+function pm(levels: [
+  PermissionLevel, // system_admin
+  PermissionLevel, // org_default_1
+  PermissionLevel, // org_default_2
+  PermissionLevel, // org_default_3
+  PermissionLevel, // org_default_4
+  PermissionLevel, // hospital_sys_admin
+  PermissionLevel, // hospital_office
+  PermissionLevel, // hospital_dept_head
+  PermissionLevel, // hospital_me
+  PermissionLevel, // hospital_doctor_nurse
+  PermissionLevel, // rimo_hospital
+  PermissionLevel, // estimate_staff
+  PermissionLevel, // consignment_staff
+  PermissionLevel, // lending_warehouse
+  PermissionLevel, // inspection_mobile
+  PermissionLevel, // transport_mobile
+  PermissionLevel, // vendor_receiving_mobile
+]): Record<UserRole, PermissionLevel> {
+  return {
+    system_admin: levels[0],
+    org_default_1: levels[1],
+    org_default_2: levels[2],
+    org_default_3: levels[3],
+    org_default_4: levels[4],
+    hospital_sys_admin: levels[5],
+    hospital_office: levels[6],
+    hospital_dept_head: levels[7],
+    hospital_me: levels[8],
+    hospital_doctor_nurse: levels[9],
+    rimo_hospital: levels[10],
+    estimate_staff: levels[11],
+    consignment_staff: levels[12],
+    lending_warehouse: levels[13],
+    inspection_mobile: levels[14],
+    transport_mobile: levels[15],
+    vendor_receiving_mobile: levels[16],
+  };
+}
+
+/**
+ * 権限マトリクス（17ロール対応 / Excelマッピング表準拠）
+ * ●→F(sysAdmin)/W, ー/空白→X, ON→W or R, OFF→X, ▲→W, ■→W
  */
 const PERMISSION_MATRIX: Record<FeatureId, Record<UserRole, PermissionLevel>> = {
-  // メイン画面
-  main: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'R' },
+  //                                           sysAdm org1  org2  org3  org4  hSysAd hOff  hDpHd hME   hDrNr rimo  estSt conSt lendW insMb trMob vndMb
 
-  // 資産関連
-  asset_search: { admin: 'F', consultant: 'R', sales: 'R', office_admin: 'W', office_staff: 'R', clinical_staff: 'R' },
-  asset_detail: { admin: 'F', consultant: 'R', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'R' },
-  asset_edit: { admin: 'F', consultant: 'X', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
-  edit_list_create: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'X', office_staff: 'X', clinical_staff: 'X' },
+  // ── ユーザー管理 ──
+  user_facility_access:              pm(['F',   'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  user_management:                   pm(['F',   'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // 現有資産調査
-  offline_prep: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'W' },
-  survey_location: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'W' },
-  asset_survey: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'W' },
-  survey_history: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'W' },
+  // ── 認証/認可 ──
+  auth_login:                        pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W']),
+  facility_select:                   pm(['X',   'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  facility_select_all:               pm(['X',   'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X']),
 
-  // 棚卸
-  inventory: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'R' },
+  // ── 原本リスト（■資産閲覧・申請） ──
+  original_list_view:                pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'W',  'X',  'X',  'X',  'X']),
+  original_price_column:             pm(['F',   'W',  'W',  'W',  'W',  'R',  'R',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  original_list_edit:                pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  original_application:              pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
 
-  // QRコード
-  qr_issue: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
-  qr_print: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // ── 保守・点検／貸出／修理申請 ──
+  daily_inspection:                  pm(['F',   'W',  'X',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X',  'W',  'X',  'X']),
+  lending_checkout:                  pm(['F',   'X',  'X',  'X',  'X',  'X',  'X',  'W',  'W',  'W',  'X',  'X',  'W',  'W',  'X',  'W',  'X']),
+  repair_application:                pm(['F',   'X',  'X',  'X',  'X',  'W',  'W',  'C',  'C',  'C',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  application_status:                pm(['F',   'X',  'X',  'X',  'X',  'W',  'W',  'R',  'R',  'R',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // タスク管理（quotation_data_box）
-  quotation_data_box: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
-  quotation_processing: { admin: 'F', consultant: 'X', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // ── 棚卸し ──
+  inventory_field:                   pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'W',  'X',  'X',  'X',  'X']),
+  inventory_office:                  pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // 見積管理
-  quotation_management: { admin: 'F', consultant: 'R', sales: 'R', office_admin: 'R', office_staff: 'R', clinical_staff: 'X' },
+  // ── リモデルメニュー ──
+  remodel_edit_list:                 pm(['F',   'W',  'W',  'W',  'X',  'X',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X',  'X']),
+  remodel_purchase:                  pm(['F',   'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X']),
+  remodel_order:                     pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  remodel_acceptance:                pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'W']),
+  remodel_quotation:                 pm(['F',   'W',  'X',  'W',  'X',  'W',  'W',  'X',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X']),
 
-  // 修理
-  repair_request: { admin: 'F', consultant: 'X', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'C' },
-  repair_task: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // ── 編集リスト（通常） ──
+  normal_edit_list:                  pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  ship_column:                       pm(['F',   'W',  'X',  'W',  'X',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // 貸出
-  lending_available: { admin: 'F', consultant: 'X', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'R' },
-  lending_checkout: { admin: 'F', consultant: 'X', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'W' },
-  lending_task: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // ── タスク管理 ──
+  normal_purchase:                   pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X']),
+  normal_order:                      pm(['F',   'W',  'X',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  normal_acceptance:                 pm(['F',   'W',  'X',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'W']),
+  normal_quotation:                  pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X']),
+  transfer_disposal:                 pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  repair_management:                 pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  maintenance_contract:              pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  inspection_management:             pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  periodic_inspection:               pm(['F',   'W',  'X',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'W',  'X',  'X']),
+  lending_management:                pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'W',  'X']),
 
-  // 点検
-  daily_inspection: { admin: 'F', consultant: 'X', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'W' },
-  inspection_prep: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
-  inspection_result: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'R' },
+  // ── QRコード ──
+  qr_issue:                          pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  qr_scan:                           pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // 保守
-  maintenance_quote: { admin: 'F', consultant: 'X', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
-  maker_maintenance_result: { admin: 'F', consultant: 'W', sales: 'R', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // ── データ閲覧（自施設） ──
+  own_asset_master_view:             pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  own_user_master:                   pm(['F',   'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  own_asset_list:                    pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  own_price_column:                  pm(['F',   'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  own_estimate:                      pm(['F',   'X',  'X',  'X',  'X',  'X',  'X',  'W',  'W',  'X',  'X',  'W',  'W',  'X',  'X',  'X',  'X']),
+  own_data_history:                  pm(['F',   'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // 廃棄
-  disposal_task: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'W', clinical_staff: 'X' },
+  // ── データ閲覧（他施設） ──
+  other_asset_list:                  pm(['F',   'W',  'W',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  other_price_column:                pm(['F',   'W',  'X',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  other_estimate:                    pm(['F',   'X',  'X',  'X',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X']),
+  other_data_history:                pm(['F',   'W',  'X',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // マスタ管理
-  ship_asset_master: { admin: 'F', consultant: 'R', sales: 'X', office_admin: 'X', office_staff: 'X', clinical_staff: 'X' },
-  ship_facility_master: { admin: 'F', consultant: 'R', sales: 'X', office_admin: 'X', office_staff: 'X', clinical_staff: 'X' },
-  ship_department_master: { admin: 'F', consultant: 'R', sales: 'X', office_admin: 'X', office_staff: 'X', clinical_staff: 'X' },
-  hospital_facility_master: { admin: 'F', consultant: 'R', sales: 'X', office_admin: 'W', office_staff: 'R', clinical_staff: 'X' },
+  // ── マスタ管理 ──
+  asset_master_list:                 pm(['F',   'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  facility_master_list:              pm(['F',   'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  dept_vendor_master_list:           pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  asset_master_edit:                 pm(['F',   'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  facility_master_edit:              pm(['F',   'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  ship_dept_master_edit:             pm(['F',   'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  hospital_dept_master_edit:         pm(['F',   'W',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  vendor_master_edit:                pm(['F',   'W',  'X',  'X',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 
-  // ユーザー管理
-  user_management: { admin: 'F', consultant: 'X', sales: 'X', office_admin: 'W', office_staff: 'X', clinical_staff: 'X' },
-
-  // データ管理
-  asset_import: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'X', clinical_staff: 'X' },
-  data_matching: { admin: 'F', consultant: 'W', sales: 'X', office_admin: 'W', office_staff: 'X', clinical_staff: 'X' },
+  // ── 個体管理リスト作成 ──
+  existing_survey:                   pm(['F',   'W',  'X',  'X',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  survey_data_edit:                  pm(['F',   'W',  'X',  'X',  'X',  'W',  'W',  'W',  'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X']),
+  asset_ledger_import:               pm(['F',   'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
+  survey_ledger_matching:            pm(['F',   'W',  'X',  'X',  'X',  'W',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X',  'X']),
 };
 
 /**
- * メイン画面ボタン表示マトリクス
+ * メイン画面ボタン表示ヘルパー
+ */
+function bv(vals: [
+  boolean, boolean, boolean, boolean, boolean,
+  boolean, boolean, boolean, boolean, boolean,
+  boolean, boolean, boolean, boolean, boolean, boolean, boolean,
+]): Record<UserRole, boolean> {
+  return {
+    system_admin: vals[0],
+    org_default_1: vals[1],
+    org_default_2: vals[2],
+    org_default_3: vals[3],
+    org_default_4: vals[4],
+    hospital_sys_admin: vals[5],
+    hospital_office: vals[6],
+    hospital_dept_head: vals[7],
+    hospital_me: vals[8],
+    hospital_doctor_nurse: vals[9],
+    rimo_hospital: vals[10],
+    estimate_staff: vals[11],
+    consignment_staff: vals[12],
+    lending_warehouse: vals[13],
+    inspection_mobile: vals[14],
+    transport_mobile: vals[15],
+    vendor_receiving_mobile: vals[16],
+  };
+}
+
+/**
+ * メイン画面ボタン表示マトリクス（17ロール対応）
  */
 const MAIN_BUTTON_VISIBILITY: Record<MainButtonId, Record<UserRole, boolean>> = {
-  asset_list: { admin: true, consultant: true, sales: true, office_admin: true, office_staff: true, clinical_staff: true },
-  edit_list: { admin: true, consultant: true, sales: false, office_admin: false, office_staff: false, clinical_staff: false },
-  purchase_management: { admin: true, consultant: true, sales: true, office_admin: true, office_staff: true, clinical_staff: false },
-  maintenance_inspection: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  lending_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  repair_request: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  asset_survey: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  inventory: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: true, clinical_staff: true },
-  master_management: { admin: true, consultant: true, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
-  user_management: { admin: true, consultant: false, sales: false, office_admin: true, office_staff: false, clinical_staff: false },
-  quotation_management: { admin: true, consultant: true, sales: true, office_admin: true, office_staff: true, clinical_staff: false },
+  //                                      sysAdm org1  org2  org3  org4  hSysAd hOff  hDpHd hME   hDrNr rimo  estSt conSt lendW insMb trMob vndMb
+  asset_list:              bv([true,  true, true, true, true, true, true, true, true, true, true, true, false, false, false, false, false]),
+  edit_list:               bv([true,  true, false,false,false,false,false,false,false,false,false,false,false, false, false, false, false]),
+  purchase_management:     bv([true,  true, true, false,false,true, true, true, false,false,false,true, false, false, false, false, false]),
+  maintenance_inspection:  bv([true,  false,false,false,false,true, true, true, true, false,false,false,false, false, true,  false, false]),
+  lending_management:      bv([true,  false,false,false,false,true, true, true, true, true, false,false,false, true,  false, false, false]),
+  repair_request:          bv([true,  false,false,false,false,true, true, true, true, true, false,false,false, false, false, false, false]),
+  asset_survey:            bv([true,  true, false,false,false,true, true, true, true, false,false,false,false, false, false, false, false]),
+  inventory:               bv([true,  true, false,false,false,true, true, true, true, true, false,false,false, false, false, false, false]),
+  master_management:       bv([true,  true, false,false,false,true, false,false,false,false,false,false,false, false, false, false, false]),
+  user_management:         bv([true,  false,false,false,false,true, false,false,false,false,false,false,false, false, false, false, false]),
+  quotation_management:    bv([true,  true, true, false,false,true, true, false,false,false,false,true, false, false, false, false, false]),
 };
 
 /**
@@ -186,8 +305,8 @@ export function getPermissionLevel(
 ): PermissionLevel {
   const defaultLevel = PERMISSION_MATRIX[featureId]?.[role] ?? 'X';
 
-  // admin はオーバーライド不可（常にデフォルト権限）
-  if (role === 'admin') return defaultLevel;
+  // system_admin はオーバーライド不可（常にデフォルト権限）
+  if (role === 'system_admin') return defaultLevel;
 
   // facilityName と getOverride が指定されている場合、オーバーライドを確認
   if (facilityName && getOverride) {
@@ -257,8 +376,6 @@ export function getVisibleMainButtons(role: UserRole): MainButtonId[] {
 
 /**
  * ユーザーが施設にアクセス可能かどうか
- * consultant は accessibleFacilities に含まれる施設のみアクセス可能
- * office_admin/office_staff/clinical_staff は所属施設のみアクセス可能
  */
 export function canAccessFacility(
   role: UserRole,
@@ -266,23 +383,20 @@ export function canAccessFacility(
   userHospital?: string,
   accessibleFacilities?: string[]
 ): boolean {
-  // admin は全施設アクセス可能
-  if (role === 'admin') return true;
+  // system_admin は全施設アクセス可能
+  if (role === 'system_admin') return true;
 
-  // consultant は担当施設のみ
-  if (role === 'consultant') {
+  // 組織デフォルトロールは担当施設のみ
+  if (isOrgDefaultRole(role)) {
     if (!accessibleFacilities || accessibleFacilities.length === 0) return false;
     if (accessibleFacilities.includes('全施設')) return true;
     return accessibleFacilities.includes(facilityName);
   }
 
-  // sales は閲覧のみなので施設制限なし
-  if (role === 'sales') return true;
-
   // 病院側ロールは所属施設のみ
-  if (role === 'office_admin' || role === 'office_staff' || role === 'clinical_staff') {
-    return userHospital === facilityName;
-  }
+  return userHospital === facilityName;
+}
 
-  return false;
+function isOrgDefaultRole(role: UserRole): boolean {
+  return role.startsWith('org_default_');
 }

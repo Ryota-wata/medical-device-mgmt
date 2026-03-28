@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore, usePermissionOverrideStore } from '@/lib/stores';
-import { UserRole, USER_ROLE_LABELS } from '@/lib/types';
+import { UserRole, USER_ROLE_LABELS, ROLE_CATEGORIES, ROLE_CATEGORY_LABELS, RoleCategory } from '@/lib/types';
 import { FeatureId, PermissionLevel, getDefaultPermissionLevel } from '@/lib/utils/permissions';
 import { useToast } from '@/components/ui/Toast';
 
@@ -15,110 +15,136 @@ interface FeatureCategory {
 
 const FEATURE_CATEGORIES: FeatureCategory[] = [
   {
-    label: '資産関連',
+    label: 'ユーザー管理',
     features: [
-      { id: 'asset_search', label: '資産検索' },
-      { id: 'asset_detail', label: '資産詳細' },
-      { id: 'asset_edit', label: '資産編集' },
-      { id: 'edit_list_create', label: '編集リスト作成' },
+      { id: 'user_facility_access', label: 'アクセス可能施設の選択' },
+      { id: 'user_management', label: 'ユーザー一覧・編集・新規作成' },
     ],
   },
   {
-    label: '現有資産調査',
+    label: '認証/認可',
     features: [
-      { id: 'offline_prep', label: 'オフライン準備' },
-      { id: 'survey_location', label: '調査場所設定' },
-      { id: 'asset_survey', label: '資産調査' },
-      { id: 'survey_history', label: '調査履歴' },
+      { id: 'auth_login', label: 'ログイン・パスワード再設定' },
+      { id: 'facility_select', label: '施設選択' },
+      { id: 'facility_select_all', label: '施設選択（全施設）' },
     ],
   },
   {
-    label: '棚卸',
+    label: '原本リスト',
     features: [
-      { id: 'inventory', label: '棚卸' },
+      { id: 'original_list_view', label: '原本リスト・カード・カルテ閲覧' },
+      { id: 'original_price_column', label: '原本価格情報カラム' },
+      { id: 'original_list_edit', label: '原本リスト修正・追加' },
+      { id: 'original_application', label: '新規・更新・増設・移動・廃棄申請' },
+    ],
+  },
+  {
+    label: '保守・点検／貸出／修理申請',
+    features: [
+      { id: 'daily_inspection', label: 'オフライン準備・日常点検' },
+      { id: 'lending_checkout', label: '貸出可能機器・貸出・返却' },
+      { id: 'repair_application', label: '修理申請' },
+      { id: 'application_status', label: '申請ステータス' },
+    ],
+  },
+  {
+    label: '棚卸し',
+    features: [
+      { id: 'inventory_field', label: '棚卸し（現場）' },
+      { id: 'inventory_office', label: '棚卸し（事務）' },
+    ],
+  },
+  {
+    label: 'リモデルメニュー',
+    features: [
+      { id: 'remodel_edit_list', label: '編集リスト（リモデル）' },
+      { id: 'remodel_purchase', label: 'リモデル購入管理' },
+      { id: 'remodel_order', label: '発注登録～資産登録' },
+      { id: 'remodel_acceptance', label: '検収登録' },
+      { id: 'remodel_quotation', label: '見積管理（リモデル）' },
+    ],
+  },
+  {
+    label: '編集リスト（通常）',
+    features: [
+      { id: 'normal_edit_list', label: '通常申請の編集リスト' },
+      { id: 'ship_column', label: 'DataLINK SHIPカラム' },
+    ],
+  },
+  {
+    label: 'タスク管理',
+    features: [
+      { id: 'normal_purchase', label: '通常購入管理' },
+      { id: 'normal_order', label: '発注登録～仮資産登録' },
+      { id: 'normal_acceptance', label: '検収登録' },
+      { id: 'normal_quotation', label: '見積管理（通常）' },
+      { id: 'transfer_disposal', label: '移動・廃棄管理' },
+      { id: 'repair_management', label: '修理管理' },
+      { id: 'maintenance_contract', label: '保守契約管理' },
+      { id: 'inspection_management', label: '点検管理' },
+      { id: 'periodic_inspection', label: '定期点検実施' },
+      { id: 'lending_management', label: '貸出管理' },
     ],
   },
   {
     label: 'QRコード',
     features: [
       { id: 'qr_issue', label: 'QRコード発行' },
-      { id: 'qr_print', label: 'QR印刷' },
+      { id: 'qr_scan', label: 'QR読取' },
     ],
   },
   {
-    label: '購入管理',
+    label: 'データ閲覧（自施設）',
     features: [
-      { id: 'quotation_data_box', label: 'タスク管理' },
-      { id: 'quotation_processing', label: '見積処理' },
+      { id: 'own_asset_master_view', label: '資産マスタデータ' },
+      { id: 'own_user_master', label: 'ユーザーマスタ' },
+      { id: 'own_asset_list', label: '資産リスト' },
+      { id: 'own_price_column', label: '価格カラム' },
+      { id: 'own_estimate', label: '見積データ' },
+      { id: 'own_data_history', label: 'データ履歴' },
     ],
   },
   {
-    label: '見積管理',
+    label: 'データ閲覧（他施設）',
     features: [
-      { id: 'quotation_management', label: '見積管理' },
-    ],
-  },
-  {
-    label: '修理',
-    features: [
-      { id: 'repair_request', label: '修理申請' },
-      { id: 'repair_task', label: '修理タスク' },
-    ],
-  },
-  {
-    label: '貸出',
-    features: [
-      { id: 'lending_available', label: '貸出可能機器' },
-      { id: 'lending_checkout', label: '貸出・返却' },
-      { id: 'lending_task', label: '貸出タスク' },
-    ],
-  },
-  {
-    label: '点検',
-    features: [
-      { id: 'daily_inspection', label: '日常点検' },
-      { id: 'inspection_prep', label: '点検準備' },
-      { id: 'inspection_result', label: '点検結果' },
-    ],
-  },
-  {
-    label: '保守',
-    features: [
-      { id: 'maintenance_quote', label: '保守見積' },
-      { id: 'maker_maintenance_result', label: 'メーカー保守結果' },
-    ],
-  },
-  {
-    label: '廃棄',
-    features: [
-      { id: 'disposal_task', label: '廃棄タスク' },
+      { id: 'other_asset_list', label: '資産リスト' },
+      { id: 'other_price_column', label: '価格カラム' },
+      { id: 'other_estimate', label: '見積データ' },
+      { id: 'other_data_history', label: 'データ履歴' },
     ],
   },
   {
     label: 'マスタ管理',
     features: [
-      { id: 'ship_asset_master', label: 'SHIP資産マスタ' },
-      { id: 'ship_facility_master', label: 'SHIP施設マスタ' },
-      { id: 'ship_department_master', label: 'SHIP部署マスタ' },
-      { id: 'hospital_facility_master', label: '個別部署マスタ' },
+      { id: 'asset_master_list', label: '資産マスタ一覧' },
+      { id: 'facility_master_list', label: '施設マスタ一覧' },
+      { id: 'dept_vendor_master_list', label: '部署・業者マスタ一覧' },
+      { id: 'asset_master_edit', label: '資産マスタ編集' },
+      { id: 'facility_master_edit', label: '施設マスタ編集' },
+      { id: 'ship_dept_master_edit', label: 'SHIP部署マスタ編集' },
+      { id: 'hospital_dept_master_edit', label: '個別部署マスタ編集' },
+      { id: 'vendor_master_edit', label: '業者マスタ編集' },
     ],
   },
   {
-    label: 'ユーザー管理',
+    label: '個体管理リスト作成',
     features: [
-      { id: 'user_management', label: 'ユーザー管理' },
-    ],
-  },
-  {
-    label: 'データ管理',
-    features: [
-      { id: 'asset_import', label: '資産台帳取込' },
-      { id: 'data_matching', label: 'データ突合' },
+      { id: 'existing_survey', label: '現有品調査' },
+      { id: 'survey_data_edit', label: '現調データ修正' },
+      { id: 'asset_ledger_import', label: '資産台帳取込登録' },
+      { id: 'survey_ledger_matching', label: '現調・台帳突合' },
     ],
   },
 ];
 
-const ALL_ROLES: UserRole[] = ['admin', 'consultant', 'sales', 'office_admin', 'office_staff', 'clinical_staff'];
+const CATEGORY_ORDER: RoleCategory[] = ['system', 'org_default', 'hospital', 'dedicated'];
+
+const CATEGORY_TAB_COLORS: Record<RoleCategory, { active: string; inactive: string }> = {
+  system: { active: 'bg-red-500 text-white', inactive: 'bg-white text-slate-600 hover:bg-red-50' },
+  org_default: { active: 'bg-purple-500 text-white', inactive: 'bg-white text-slate-600 hover:bg-purple-50' },
+  hospital: { active: 'bg-sky-500 text-white', inactive: 'bg-white text-slate-600 hover:bg-sky-50' },
+  dedicated: { active: 'bg-amber-500 text-white', inactive: 'bg-white text-slate-600 hover:bg-amber-50' },
+};
 
 /** 権限レベルのバッジ表示 */
 function PermissionBadge({ level }: { level: PermissionLevel }) {
@@ -152,7 +178,8 @@ export default function PermissionManagementPage() {
   const { setOverride, getOverride } = usePermissionOverrideStore();
   const { showToast } = useToast();
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>('consultant');
+  const [selectedCategory, setSelectedCategory] = useState<RoleCategory>('org_default');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('org_default_1');
   // 現在のロールの未保存変更バッファ
   const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
 
@@ -169,8 +196,8 @@ export default function PermissionManagementPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasPendingChanges]);
 
-  // admin以外はアクセス不可
-  if (user?.role !== 'admin') {
+  // system_admin以外はアクセス不可
+  if (user?.role !== 'system_admin') {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-100">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
@@ -205,7 +232,7 @@ export default function PermissionManagementPage() {
     );
   }
 
-  const isAdminRole = selectedRole === 'admin';
+  const isAdminRole = selectedRole === 'system_admin';
 
   /** ストア上での有効状態を取得（pending未反映） */
   const getSavedEnabled = (featureId: FeatureId): boolean => {
@@ -256,6 +283,20 @@ export default function PermissionManagementPage() {
     setPendingChanges({});
   };
 
+  const handleCategoryChange = (category: RoleCategory) => {
+    if (hasPendingChanges) {
+      if (!window.confirm(`${USER_ROLE_LABELS[selectedRole]} の未保存の変更があります。破棄して切り替えますか？`)) {
+        return;
+      }
+    }
+    setPendingChanges({});
+    setSelectedCategory(category);
+    const rolesInCategory = ROLE_CATEGORIES[category];
+    if (rolesInCategory.length > 0) {
+      setSelectedRole(rolesInCategory[0]);
+    }
+  };
+
   const handleRoleChange = (role: UserRole) => {
     if (hasPendingChanges) {
       if (!window.confirm(`${USER_ROLE_LABELS[selectedRole]} の未保存の変更があります。破棄して切り替えますか？`)) {
@@ -274,6 +315,8 @@ export default function PermissionManagementPage() {
     }
     router.push('/main');
   };
+
+  const rolesInSelectedCategory = ROLE_CATEGORIES[selectedCategory];
 
   return (
     <div className="min-h-dvh flex flex-col bg-slate-100">
@@ -301,10 +344,30 @@ export default function PermissionManagementPage() {
           </div>
         </div>
 
-        {/* ロールタブ */}
+        {/* カテゴリタブ（上段） */}
+        <div className="bg-white rounded-lg shadow mb-2">
+          <div className="flex border-b border-slate-200 overflow-x-auto">
+            {CATEGORY_ORDER.map((cat) => {
+              const colors = CATEGORY_TAB_COLORS[cat];
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryChange(cat)}
+                  className={`px-5 py-3 text-sm font-bold whitespace-nowrap border-0 cursor-pointer transition-colors ${
+                    selectedCategory === cat ? colors.active : colors.inactive
+                  }`}
+                >
+                  {ROLE_CATEGORY_LABELS[cat]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ロールタブ（下段） */}
         <div className="bg-white rounded-lg shadow mb-4">
           <div className="flex border-b border-slate-200 overflow-x-auto">
-            {ALL_ROLES.map((role) => (
+            {rolesInSelectedCategory.map((role) => (
               <button
                 key={role}
                 onClick={() => handleRoleChange(role)}
@@ -320,11 +383,11 @@ export default function PermissionManagementPage() {
           </div>
         </div>
 
-        {/* admin ロール選択時の注意表示 */}
+        {/* system_admin ロール選択時の注意表示 */}
         {isAdminRole && (
           <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">
             <p className="text-sm text-amber-800 font-semibold text-pretty">
-              システム管理者（admin）の権限は変更できません。すべての機能がフルアクセスで固定されています。
+              システム管理者の権限は変更できません。すべての機能がフルアクセスで固定されています。
             </p>
           </div>
         )}
@@ -418,6 +481,7 @@ export default function PermissionManagementPage() {
             </tbody>
           </table>
         </div>
+
       </div>
 
       {/* 未保存変更バー */}

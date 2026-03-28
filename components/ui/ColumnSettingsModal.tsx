@@ -18,6 +18,8 @@ interface ColumnSettingsModalProps {
   onVisibilityChange: (key: string) => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
+  /** 管理者によりロックされたカラムキー（ユーザーがONにできない） */
+  lockedColumns?: Set<string>;
 }
 
 interface Bookmark {
@@ -57,6 +59,7 @@ export function ColumnSettingsModal({
   onVisibilityChange,
   onSelectAll,
   onDeselectAll,
+  lockedColumns,
 }: ColumnSettingsModalProps) {
   // ドラッグ機能の状態管理
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -644,10 +647,19 @@ export function ColumnSettingsModal({
                         <input
                           type="checkbox"
                           checked={visibleColumns[col.key]}
-                          onChange={() => onVisibilityChange(col.key)}
-                          style={{ cursor: 'pointer' }}
+                          onChange={() => {
+                            if (lockedColumns?.has(col.key)) return;
+                            onVisibilityChange(col.key);
+                          }}
+                          disabled={lockedColumns?.has(col.key)}
+                          style={{ cursor: lockedColumns?.has(col.key) ? 'not-allowed' : 'pointer' }}
                         />
-                        <span style={{ fontSize: '13px', color: '#2c3e50' }}>{col.label}</span>
+                        <span style={{ fontSize: '13px', color: lockedColumns?.has(col.key) ? '#95a5a6' : '#2c3e50' }}>
+                          {col.label}
+                          {lockedColumns?.has(col.key) && (
+                            <span style={{ fontSize: '10px', color: '#e74c3c', marginLeft: '4px' }}>管理者により非表示</span>
+                          )}
+                        </span>
                       </label>
                     ))}
                   </div>

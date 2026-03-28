@@ -18,3 +18,4 @@ export * from './editList';
 export * from './order';
 export * from './inspection';
 export * from './purchaseApplication';
+export * from './facilityGroup';

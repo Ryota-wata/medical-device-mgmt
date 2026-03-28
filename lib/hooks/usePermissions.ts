@@ -3,7 +3,10 @@
  */
 
 import { useMemo } from 'react';
-import { useAuthStore, usePermissionOverrideStore } from '../stores';
+import { useAuthStore, usePermissionOverrideStore, useFacilityGroupStore } from '../stores';
+import { isShipRole, isHospitalRole, getRoleCategory } from '../types/user';
+import type { SharingDataType } from '../types/facilityGroup';
+import type { RoleCategory } from '../types/user';
 import {
   FeatureId,
   MainButtonId,
@@ -40,17 +43,24 @@ export interface UsePermissionsReturn {
   visibleMainButtons: MainButtonId[];
   /** 施設にアクセス可能か */
   canAccessFacility: (facilityName: string) => boolean;
-  /** admin ロールか */
+  /** system_admin ロールか */
   isAdmin: boolean;
-  /** SHIP側ロールか（admin, consultant, sales） */
+  /** SHIP側ロールか（system_admin, org_default_*） */
   isShipUser: boolean;
-  /** 病院側ロールか（office_admin, office_staff, clinical_staff） */
+  /** 病院側ロールか（hospital_*, dedicated_*） */
   isHospitalUser: boolean;
+  /** 施設管理者か（hospital_sys_admin） */
+  isFacilityAdmin: boolean;
+  /** ロールカテゴリ */
+  roleCategory: RoleCategory | null;
+  /** 他施設の共有データにアクセスできるか */
+  canAccessSharedData: (facilityName: string, dataType: SharingDataType) => boolean;
 }
 
 export function usePermissions(): UsePermissionsReturn {
   const { user, selectedFacility } = useAuthStore();
   const { getOverride } = usePermissionOverrideStore();
+  const { canShareData } = useFacilityGroupStore();
   const role = user?.role ?? null;
 
   return useMemo(() => {
@@ -70,12 +80,17 @@ export function usePermissions(): UsePermissionsReturn {
         isAdmin: false,
         isShipUser: false,
         isHospitalUser: false,
+        isFacilityAdmin: false,
+        roleCategory: null,
+        canAccessSharedData: () => false,
       };
     }
 
-    const isAdmin = role === 'admin';
-    const isShipUser = role === 'admin' || role === 'consultant' || role === 'sales';
-    const isHospitalUser = role === 'office_admin' || role === 'office_staff' || role === 'clinical_staff';
+    const isAdmin = role === 'system_admin';
+    const isShipUserFlag = isShipRole(role);
+    const isHospitalUserFlag = isHospitalRole(role);
+    const isFacilityAdmin = role === 'hospital_sys_admin';
+    const roleCategory = getRoleCategory(role);
 
     // 施設名（オーバーライドチェック用）
     const facility = selectedFacility ?? undefined;
@@ -93,8 +108,15 @@ export function usePermissions(): UsePermissionsReturn {
       canAccessFacility: (facilityName: string) =>
         canAccessFacility(role, facilityName, user?.hospital, user?.accessibleFacilities),
       isAdmin,
-      isShipUser,
-      isHospitalUser,
+      isShipUser: isShipUserFlag,
+      isHospitalUser: isHospitalUserFlag,
+      isFacilityAdmin,
+      roleCategory,
+      canAccessSharedData: (facilityName: string, dataType: SharingDataType) => {
+        const myFacility = selectedFacility ?? user?.hospital ?? '';
+        if (!myFacility) return false;
+        return canShareData(myFacility, facilityName, dataType);
+      },
     };
-  }, [role, user?.hospital, user?.accessibleFacilities, selectedFacility, getOverride]);
+  }, [role, user?.hospital, user?.accessibleFacilities, selectedFacility, getOverride, canShareData]);
 }

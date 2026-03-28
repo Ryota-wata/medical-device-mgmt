@@ -6,17 +6,28 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
-import { User, UserRole, USER_ROLE_LABELS, isShipRole } from '@/lib/types/user';
+import { User, UserRole, USER_ROLE_LABELS, isShipRole, isHospitalRole, ROLE_CATEGORIES, ROLE_CATEGORY_LABELS, RoleCategory } from '@/lib/types/user';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 // ロールバッジカラー
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
-  admin: { bg: '#e74c3c', text: 'white' },
-  consultant: { bg: '#9b59b6', text: 'white' },
-  sales: { bg: '#3498db', text: 'white' },
-  office_admin: { bg: '#27ae60', text: 'white' },
-  office_staff: { bg: '#2ecc71', text: 'white' },
-  clinical_staff: { bg: '#e67e22', text: 'white' },
+  system_admin: { bg: '#e74c3c', text: 'white' },
+  org_default_1: { bg: '#9b59b6', text: 'white' },
+  org_default_2: { bg: '#8e44ad', text: 'white' },
+  org_default_3: { bg: '#7d3c98', text: 'white' },
+  org_default_4: { bg: '#6c3483', text: 'white' },
+  hospital_sys_admin: { bg: '#27ae60', text: 'white' },
+  hospital_office: { bg: '#2ecc71', text: 'white' },
+  hospital_dept_head: { bg: '#1abc9c', text: 'white' },
+  hospital_me: { bg: '#3498db', text: 'white' },
+  hospital_doctor_nurse: { bg: '#2980b9', text: 'white' },
+  rimo_hospital: { bg: '#e67e22', text: 'white' },
+  estimate_staff: { bg: '#d35400', text: 'white' },
+  consignment_staff: { bg: '#f39c12', text: 'white' },
+  lending_warehouse: { bg: '#e74c3c', text: 'white' },
+  inspection_mobile: { bg: '#c0392b', text: 'white' },
+  transport_mobile: { bg: '#95a5a6', text: 'white' },
+  vendor_receiving_mobile: { bg: '#7f8c8d', text: 'white' },
 };
 
 export default function UserManagementPage() {
@@ -42,7 +53,7 @@ export default function UserManagementPage() {
     position: '',
     contactPerson: '',
     phone: '',
-    role: 'office_staff' as UserRole,
+    role: 'hospital_office' as UserRole,
     accessibleFacilities: [] as string[],
   });
 
@@ -72,7 +83,7 @@ export default function UserManagementPage() {
           username: '管理者太郎',
           email: 'admin@ship.com',
           hospital: undefined,
-          role: 'admin',
+          role: 'system_admin',
           department: '情報システム部',
           position: '部長',
           contactPerson: '管理者太郎',
@@ -84,9 +95,9 @@ export default function UserManagementPage() {
         {
           id: 'U002',
           username: '山田花子',
-          email: 'consultant@ship.com',
+          email: 'org1@ship.com',
           hospital: undefined,
-          role: 'consultant',
+          role: 'org_default_1',
           department: 'コンサル部',
           position: '主任',
           contactPerson: '山田花子',
@@ -98,9 +109,9 @@ export default function UserManagementPage() {
         {
           id: 'U003',
           username: '鈴木一郎',
-          email: 'sales@ship.com',
+          email: 'org2@ship.com',
           hospital: undefined,
-          role: 'sales',
+          role: 'org_default_2',
           department: '営業部',
           position: '担当',
           contactPerson: '鈴木一郎',
@@ -112,9 +123,9 @@ export default function UserManagementPage() {
         {
           id: 'U004',
           username: '佐藤美智子',
-          email: 'office-admin@hospital.com',
+          email: 'hospital-admin@hospital.com',
           hospital: '東京中央病院',
-          role: 'office_admin',
+          role: 'hospital_sys_admin',
           department: '医事課',
           position: '課長',
           contactPerson: '佐藤美智子',
@@ -126,9 +137,9 @@ export default function UserManagementPage() {
         {
           id: 'U005',
           username: '高橋健二',
-          email: 'office@hospital.com',
+          email: 'hospital-office@hospital.com',
           hospital: '東京中央病院',
-          role: 'office_staff',
+          role: 'hospital_office',
           department: '医事課',
           position: '主任',
           contactPerson: '高橋健二',
@@ -140,9 +151,9 @@ export default function UserManagementPage() {
         {
           id: 'U006',
           username: '田中花子',
-          email: 'user@hospital.com',
+          email: 'hospital-me@hospital.com',
           hospital: '東京中央病院',
-          role: 'clinical_staff',
+          role: 'hospital_me',
           department: 'ME室',
           position: '臨床工学技士',
           contactPerson: '田中花子',
@@ -209,7 +220,7 @@ export default function UserManagementPage() {
       position: '',
       contactPerson: '',
       phone: '',
-      role: 'office_staff',
+      role: 'hospital_office',
       accessibleFacilities: [],
     });
     setShowNewModal(true);
@@ -284,13 +295,14 @@ export default function UserManagementPage() {
       const f = user.accessibleFacilities || [];
       return f.length > 0 ? f.join(', ') : '未設定';
     }
-    if (user.role === 'office_admin' || user.role === 'office_staff') {
+    if (user.role === 'hospital_sys_admin' || user.role === 'hospital_office') {
       const ownFacility = user.hospital ? [user.hospital] : [];
       const otherFacilities = user.accessibleFacilities || [];
       const all = [...ownFacility, ...otherFacilities.filter(f => f !== user.hospital)];
       return all.length > 0 ? all.join(', ') : '-';
     }
-    if (user.role === 'clinical_staff') {
+    // 病院側その他のロールは所属施設のみ
+    if (isHospitalRole(user.role)) {
       return user.hospital || '-';
     }
     return '-';
@@ -301,8 +313,8 @@ export default function UserManagementPage() {
     if (!isOpen) return null;
 
     const isShipRoleSelected = isShipRole(formData.role);
-    const isOfficeRole = formData.role === 'office_admin' || formData.role === 'office_staff';
-    const isClinicalRole = formData.role === 'clinical_staff';
+    const isOfficeRole = formData.role === 'hospital_sys_admin' || formData.role === 'hospital_office';
+    const isClinicalRole = isHospitalRole(formData.role) && !isOfficeRole;
 
     return (
       <div
@@ -413,12 +425,13 @@ export default function UserManagementPage() {
                   fontSize: '14px',
                 }}
               >
-                <option value="admin">システム管理者</option>
-                <option value="consultant">SHRCコンサル</option>
-                <option value="sales">GHS営業</option>
-                <option value="office_admin">事務管理者</option>
-                <option value="office_staff">事務担当者</option>
-                <option value="clinical_staff">臨床スタッフ</option>
+                {(Object.keys(ROLE_CATEGORIES) as RoleCategory[]).map((cat) => (
+                  <optgroup key={cat} label={ROLE_CATEGORY_LABELS[cat]}>
+                    {ROLE_CATEGORIES[cat].map((role) => (
+                      <option key={role} value={role}>{USER_ROLE_LABELS[role]}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </div>
 
@@ -559,7 +572,7 @@ export default function UserManagementPage() {
                   textAlign: 'center',
                   lineHeight: '20px',
                 }}>
-                  {formData.role === 'admin' ? 'A' : formData.role === 'consultant' ? 'C' : formData.role === 'sales' ? 'S' : formData.role === 'office_admin' ? 'M' : formData.role === 'office_staff' ? 'O' : 'L'}
+                  {formData.role.charAt(0).toUpperCase()}
                 </span>
                 施設アクセス設定（{USER_ROLE_LABELS[formData.role]}）
               </h3>
@@ -922,12 +935,13 @@ export default function UserManagementPage() {
             }}
           >
             <option value="">すべて</option>
-            <option value="admin">システム管理者</option>
-            <option value="consultant">SHRCコンサル</option>
-            <option value="sales">GHS営業</option>
-            <option value="office_admin">事務管理者</option>
-            <option value="office_staff">事務担当者</option>
-            <option value="clinical_staff">臨床スタッフ</option>
+            {(Object.keys(ROLE_CATEGORIES) as RoleCategory[]).map((cat) => (
+              <optgroup key={cat} label={ROLE_CATEGORY_LABELS[cat]}>
+                {ROLE_CATEGORIES[cat].map((role) => (
+                  <option key={role} value={role}>{USER_ROLE_LABELS[role]}</option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
       </div>

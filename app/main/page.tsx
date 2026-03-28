@@ -38,6 +38,7 @@ export default function MainPage() {
     isAdmin,
     isShipUser,
     isHospitalUser,
+    isFacilityAdmin,
     isMainButtonVisible,
     canAccess,
   } = usePermissions();
@@ -362,7 +363,7 @@ export default function MainPage() {
             )}
 
             {/* タスク管理（購入管理へのアクセス権がある場合のみ） */}
-            {canAccess('quotation_data_box') && (
+            {canAccess('normal_purchase') && (
               <button
                 onClick={handleQuotationManagement}
                 className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
@@ -593,7 +594,7 @@ export default function MainPage() {
             <div className="p-6 overflow-y-auto">
               <div className="flex flex-col gap-3">
                 {/* SHIP資産マスタ（admin, consultant閲覧可） */}
-                {canAccess('ship_asset_master') && (
+                {canAccess('asset_master_list') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
@@ -607,7 +608,7 @@ export default function MainPage() {
                 )}
 
                 {/* SHIP施設マスタ（admin, consultant閲覧可） */}
-                {canAccess('ship_facility_master') && (
+                {canAccess('facility_master_list') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
@@ -621,7 +622,7 @@ export default function MainPage() {
                 )}
 
                 {/* SHIP部署マスタ（admin, consultant閲覧可） */}
-                {canAccess('ship_department_master') && (
+                {canAccess('dept_vendor_master_list') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
@@ -635,7 +636,7 @@ export default function MainPage() {
                 )}
 
                 {/* 個別部署マスタ（admin, consultant, office_admin, office_staff） */}
-                {canAccess('hospital_facility_master') && (
+                {canAccess('hospital_dept_master_edit') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
@@ -649,7 +650,7 @@ export default function MainPage() {
                 )}
 
                 {/* 業者マスタ（admin のみ） */}
-                {canAccess('ship_asset_master') && (
+                {canAccess('vendor_master_edit') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
@@ -676,7 +677,7 @@ export default function MainPage() {
                   </button>
                 )}
 
-                {/* 権限管理（admin のみ） */}
+                {/* 権限管理（system_admin のみ） */}
                 {isAdmin && (
                   <button
                     onClick={() => {
@@ -690,8 +691,22 @@ export default function MainPage() {
                   </button>
                 )}
 
+                {/* 施設グループ管理（system_admin のみ） */}
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      closeMasterModal();
+                      router.push('/facility-group-management');
+                    }}
+                    className="px-6 py-4 bg-white border-2 border-teal-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-teal-500 hover:text-white"
+                  >
+                    <span>🏢 施設グループ管理</span>
+                    <span className="text-xl">→</span>
+                  </button>
+                )}
+
                 {/* 個体管理リスト作成（admin, consultant のみ） */}
-                {canAccess('edit_list_create') && (
+                {canAccess('existing_survey') && (
                   <button
                     onClick={() => {
                       closeMasterModal();
@@ -892,7 +907,7 @@ export default function MainPage() {
                   <span>個別部署マスタ</span>
                 </button>
 
-                {/* ユーザー管理（事務管理者のみ） */}
+                {/* ユーザー管理（hospital_sys_admin のみ） */}
                 {isMainButtonVisible('user_management') && (
                   <button
                     onClick={() => {
@@ -903,6 +918,20 @@ export default function MainPage() {
                   >
                     <span className="text-xl">👤</span>
                     <span>ユーザー管理</span>
+                  </button>
+                )}
+
+                {/* ユーザー権限管理（hospital_sys_admin のみ） */}
+                {isFacilityAdmin && (
+                  <button
+                    onClick={() => {
+                      setIsHospitalMasterModalOpen(false);
+                      router.push('/user-permission-management');
+                    }}
+                    className="px-5 py-4 bg-amber-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-600/40"
+                  >
+                    <span className="text-xl">🔐</span>
+                    <span>ユーザー権限管理</span>
                   </button>
                 )}
               </div>
