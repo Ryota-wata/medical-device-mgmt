@@ -24,6 +24,8 @@ export default function MainPage() {
   const [isHospitalMasterModalOpen, setIsHospitalMasterModalOpen] = useState(false);
   const [isLendingMenuModalOpen, setIsLendingMenuModalOpen] = useState(false);
   const [isApplicationStatusModalOpen, setIsApplicationStatusModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
   // 編集リスト関連のstate
   const [editListMode, setEditListMode] = useState<'select' | 'create'>('select');
@@ -123,7 +125,6 @@ export default function MainPage() {
   // ステータスのバッジスタイル取得
   const getStatusBadgeStyle = (status: string): { bg: string; text: string } => {
     const styles: Record<string, { bg: string; text: string }> = {
-      // PurchaseApplication系
       '申請中': { bg: 'bg-amber-100', text: 'text-amber-800' },
       '編集中': { bg: 'bg-sky-100', text: 'text-sky-800' },
       '見積中': { bg: 'bg-purple-100', text: 'text-purple-800' },
@@ -131,11 +132,9 @@ export default function MainPage() {
       '検収済': { bg: 'bg-teal-100', text: 'text-teal-800' },
       '完了': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
       '却下': { bg: 'bg-red-100', text: 'text-red-800' },
-      // Application系
       '承認待ち': { bg: 'bg-amber-100', text: 'text-amber-800' },
       '承認済み': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
       '見積依頼中': { bg: 'bg-purple-100', text: 'text-purple-800' },
-      // RepairRequest系
       '受付': { bg: 'bg-orange-100', text: 'text-orange-800' },
       '依頼済': { bg: 'bg-sky-100', text: 'text-sky-800' },
       '引取済': { bg: 'bg-purple-100', text: 'text-purple-800' },
@@ -158,6 +157,11 @@ export default function MainPage() {
   };
 
   const handleLogout = () => {
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const executeLogout = () => {
+    setIsLogoutConfirmOpen(false);
     logout();
     router.push('/login');
   };
@@ -166,10 +170,10 @@ export default function MainPage() {
     showToast('QR読取機能（開発中）', 'info');
   };
 
-  // 編集リスト関連の関数
   const handleEditListManagement = () => {
     setIsEditListModalOpen(true);
     setEditListMode('select');
+    setIsMobileMenuOpen(false);
   };
 
   const closeEditListModal = () => {
@@ -188,7 +192,6 @@ export default function MainPage() {
       return;
     }
 
-    // ログイン時に選択した施設の原本資産を生成
     const baseAssets = generateMockAssets([selectedFacility]);
     addEditList({
       name: newEditListName.trim(),
@@ -209,10 +212,12 @@ export default function MainPage() {
   };
 
   const handleQuotationManagement = () => {
+    setIsMobileMenuOpen(false);
     router.push('/quotation-data-box');
   };
 
   const showMasterModal = () => {
+    setIsMobileMenuOpen(false);
     setIsMasterModalOpen(true);
   };
 
@@ -251,6 +256,7 @@ export default function MainPage() {
   };
 
   const handleQRIssueFromModal = () => {
+    setIsMobileMenuOpen(false);
     router.push('/qr-issue');
   };
 
@@ -270,17 +276,8 @@ export default function MainPage() {
     router.push('/repair-request');
   };
 
-  const handleAllDataView = () => {
-    showToast('全データ閲覧機能（開発中）', 'info');
-  };
-
-  // 病院ユーザー用ハンドラー
   const handleAssetListForHospital = () => {
     router.push('/asset-search-result');
-  };
-
-  const handleLendingMenu = () => {
-    setIsLendingMenuModalOpen(true);
   };
 
   const handleAvailableDevices = () => {
@@ -310,119 +307,201 @@ export default function MainPage() {
     }
   };
 
+  // ヘッダーナビアイテムのスタイル
+  const navItemClass = 'flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#1f2937] hover:bg-[#f3f4f6] rounded-md transition-colors cursor-pointer border-0 bg-transparent';
+  const navIconClass = 'size-4 text-[#6b7280]';
+
+  // ヘッダーナビアイテムの構築
+  const headerNavItems = useMemo(() => {
+    const items: { key: string; label: string; icon: string; onClick: () => void; visible: boolean }[] = [
+      { key: 'qr', label: 'QR読取', icon: 'qr', onClick: handleQRRead, visible: isShipUser },
+      { key: 'editList', label: '編集リスト', icon: 'list', onClick: handleEditListManagement, visible: isMainButtonVisible('edit_list') },
+      { key: 'taskMgmt', label: 'タスク管理', icon: 'clipboard', onClick: handleQuotationManagement, visible: canAccess('normal_purchase') },
+      { key: 'quotation', label: '見積管理', icon: 'clipboard', onClick: () => router.push('/quotation-management'), visible: isMainButtonVisible('quotation_management') },
+      { key: 'qrIssue', label: 'QRコード発行', icon: 'qr', onClick: handleQRIssueFromModal, visible: isHospitalUser && canAccess('qr_issue') },
+      { key: 'master', label: 'マスタ管理', icon: 'user', onClick: isShipUser ? showMasterModal : () => { setIsMobileMenuOpen(false); setIsHospitalMasterModalOpen(true); }, visible: isMainButtonVisible('master_management') },
+    ];
+    return items.filter(item => item.visible);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isShipUser, isHospitalUser, isAdmin, canAccess, isMainButtonVisible]);
+
+  // SVGアイコンコンポーネント
+  const NavIcon = ({ type }: { type: string }) => {
+    switch (type) {
+      case 'qr':
+        return (
+          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
+            <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h1a1 1 0 110 2h-2a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM13 11a1 1 0 100 2h3a1 1 0 100-2h-3zM15 13a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1z" />
+          </svg>
+        );
+      case 'list':
+        return (
+          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'clipboard':
+        return (
+          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+            <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'user':
+        return (
+          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-dvh flex flex-col bg-slate-100 p-5">
-      <div className="max-w-[1400px] mx-auto bg-white rounded-lg shadow-lg w-full">
+    <div className="min-h-dvh flex flex-col bg-[#f9fafb] p-5">
+      <div className="max-w-[1400px] mx-auto bg-white rounded-lg shadow-lg w-full flex flex-col">
         {/* ヘッダー */}
-        <header className="bg-slate-700 text-white px-5 py-4 rounded-t-lg flex justify-between items-center flex-wrap gap-4">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-[#e5e7eb] px-5 py-3 rounded-t-lg">
+          <div className="flex justify-between items-center">
+            {/* 左: ロゴ + タイトル */}
             <div className="flex items-center gap-2.5">
-              <div className="size-10 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                SHIP
+              <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px]">
+                logo
               </div>
-              <div className="text-lg font-bold text-balance">
-                HEALTHCARE 医療機器管理システム
-              </div>
+              {!isMobile && (
+                <div className="text-lg font-bold text-[#1f2937] text-balance">
+                  HEALTHCARE 医療機器管理システム
+                </div>
+              )}
             </div>
+
+            {/* PC/タブレット: ナビゲーション */}
+            {!isMobile && (
+              <div className="flex items-center gap-0.5">
+                {/* 施設バッジ */}
+                {selectedFacility && user?.accessibleFacilities && (
+                  <div className="flex items-center gap-2 mr-2">
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium">
+                      {selectedFacility}
+                    </span>
+                    <button
+                      onClick={() => router.push('/facility-select')}
+                      className="px-2 py-1 text-xs text-[#6b7280] hover:text-[#1f2937] hover:bg-[#f3f4f6] rounded border-0 bg-transparent cursor-pointer transition-colors"
+                    >
+                      施設切替
+                    </button>
+                  </div>
+                )}
+
+                {/* ナビアイテム */}
+                {headerNavItems.map(item => (
+                  <button key={item.key} onClick={item.onClick} className={navItemClass}>
+                    <NavIcon type={item.icon} />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+
+                {/* ユーティリティアイコン */}
+                <div className="flex items-center gap-0.5 ml-2 pl-2 border-l border-[#e5e7eb]">
+                  <button
+                    className="size-9 flex items-center justify-center rounded-md text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                    aria-label="ユーザー情報"
+                    title={user?.username || ''}
+                  >
+                    <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="size-9 flex items-center justify-center rounded-md text-[#6b7280] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border-0 bg-transparent"
+                    aria-label="ログアウト"
+                  >
+                    <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4.414l-4.293 4.293a1 1 0 01-1.414-1.414L11.586 7H7a1 1 0 110-2h6a1 1 0 011 1v6a1 1 0 11-2 0V7.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* スマートフォン: ハンバーガーメニュー */}
+            {isMobile && (
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="size-10 flex items-center justify-center rounded-md text-[#1f2937] hover:bg-[#f3f4f6] transition-colors cursor-pointer border-0 bg-transparent"
+                aria-label="メニュー"
+              >
+                {isMobileMenuOpen ? (
+                  <svg className="size-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="size-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            )}
           </div>
 
-          <div className="flex gap-2.5 flex-wrap items-center">
-            {/* 選択中施設バッジ（複数施設アクセス可能なユーザーのみ） */}
-            {selectedFacility && user?.accessibleFacilities && (
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-sm font-semibold">
-                  {selectedFacility}
-                </span>
+          {/* スマートフォン: 展開メニュー */}
+          {isMobile && isMobileMenuOpen && (
+            <div className="mt-3 pt-3 border-t border-[#e5e7eb] flex flex-col gap-1">
+              {/* 施設バッジ */}
+              {selectedFacility && user?.accessibleFacilities && (
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium">
+                    {selectedFacility}
+                  </span>
+                  <button
+                    onClick={() => router.push('/facility-select')}
+                    className="text-xs text-[#6b7280] hover:text-[#1f2937] border-0 bg-transparent cursor-pointer"
+                  >
+                    施設切替
+                  </button>
+                </div>
+              )}
+
+              {headerNavItems.map(item => (
+                <button key={item.key} onClick={item.onClick} className={navItemClass}>
+                  <NavIcon type={item.icon} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+
+              <div className="border-t border-[#e5e7eb] mt-1 pt-1">
                 <button
-                  onClick={() => router.push('/facility-select')}
-                  className="px-3 py-1.5 bg-slate-500 text-white border-0 rounded text-xs cursor-pointer hover:bg-slate-600 transition-colors"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer border-0 bg-transparent w-full"
                 >
-                  施設切替
+                  <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4.414l-4.293 4.293a1 1 0 01-1.414-1.414L11.586 7H7a1 1 0 110-2h6a1 1 0 011 1v6a1 1 0 11-2 0V7.414z" clipRule="evenodd" />
+                  </svg>
+                  <span>ログアウト</span>
                 </button>
               </div>
-            )}
-
-            {/* QR読取（SHIP側のみ） */}
-            {isShipUser && (
-              <button
-                onClick={handleQRRead}
-                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-              >
-                QR読取
-              </button>
-            )}
-
-            {/* 編集リスト（admin, consultant のみ） */}
-            {isMainButtonVisible('edit_list') && (
-              <button
-                onClick={handleEditListManagement}
-                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-              >
-                編集リスト
-              </button>
-            )}
-
-            {/* タスク管理（購入管理へのアクセス権がある場合のみ） */}
-            {canAccess('normal_purchase') && (
-              <button
-                onClick={handleQuotationManagement}
-                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-              >
-                タスク管理
-              </button>
-            )}
-
-            {/* 見積管理 */}
-            {isMainButtonVisible('quotation_management') && (
-              <button
-                onClick={() => router.push('/quotation-management')}
-                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-              >
-                見積管理
-              </button>
-            )}
-
-            {/* QRコード発行（病院側でQR発行権限がある場合） */}
-            {isHospitalUser && canAccess('qr_issue') && (
-              <button
-                onClick={handleQRIssueFromModal}
-                className="px-4 py-2 bg-emerald-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-emerald-600 transition-colors"
-              >
-                QRコード発行
-              </button>
-            )}
-
-            {/* マスタ管理（権限に応じてSHIP用/病院用を表示） */}
-            {isMainButtonVisible('master_management') && (
-              <button
-                onClick={isShipUser ? showMasterModal : () => setIsHospitalMasterModalOpen(true)}
-                className="px-4 py-2 bg-slate-600 text-white border-0 rounded cursor-pointer text-sm hover:bg-slate-700 transition-colors"
-              >
-                マスタ管理
-              </button>
-            )}
-
-            {/* ログアウトボタン（全ユーザー共通） */}
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white border-0 rounded cursor-pointer text-sm hover:bg-red-600 transition-colors"
-            >
-              ログアウト
-            </button>
-          </div>
+            </div>
+          )}
         </header>
 
         {/* メニューセクション */}
-        <div className={`bg-slate-50 ${isMobile ? 'px-2.5 py-4' : isTablet ? 'px-2.5 py-5' : 'px-5 py-8'}`}>
-          <div className={`max-w-[1400px] mx-auto justify-center ${
-            isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-wrap gap-3'
+        <div className={`bg-white ${isMobile ? 'px-4 py-5' : isTablet ? 'px-5 py-6' : 'px-8 py-10'}`}>
+          <div className={`max-w-[1000px] mx-auto ${
+            isMobile
+              ? 'flex flex-col gap-3'
+              : isTablet
+                ? 'grid grid-cols-3 gap-3'
+                : 'flex flex-wrap justify-center gap-3'
           }`}>
             {/* 資産リスト（全ロール） */}
             {isMainButtonVisible('asset_list') && (
               <button
                 onClick={isHospitalUser ? handleAssetListForHospital : handleAssetBrowseAndApplication}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
                 {isHospitalUser ? '資産リスト（各種申請）' : '資産閲覧・申請'}
@@ -433,8 +512,8 @@ export default function MainPage() {
             {isMainButtonVisible('maintenance_inspection') && (
               <button
                 onClick={handleMaintenanceInspection}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
                 保守・点検
@@ -444,24 +523,12 @@ export default function MainPage() {
             {/* 貸出管理/貸出 */}
             {isMainButtonVisible('lending_management') && (
               <button
-                onClick={isHospitalUser ? handleLendingMenu : handleLendingManagement}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                onClick={isHospitalUser ? () => setIsLendingMenuModalOpen(true) : handleLendingManagement}
+                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
                 {isHospitalUser ? '貸出' : '貸出管理'}
-              </button>
-            )}
-
-            {/* 修理申請 */}
-            {isMainButtonVisible('repair_request') && (
-              <button
-                onClick={handleRepairApplication}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
-                }`}
-              >
-                修理申請
               </button>
             )}
 
@@ -469,11 +536,23 @@ export default function MainPage() {
             {isMainButtonVisible('inventory') && (
               <button
                 onClick={() => router.push('/inventory')}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
                 棚卸し
+              </button>
+            )}
+
+            {/* 修理申請 */}
+            {isMainButtonVisible('repair_request') && (
+              <button
+                onClick={handleRepairApplication}
+                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                }`}
+              >
+                修理申請
               </button>
             )}
 
@@ -481,85 +560,84 @@ export default function MainPage() {
             {isHospitalUser && (
               <button
                 onClick={handleApplicationStatus}
-                className={`bg-white border-2 border-slate-200 rounded-md font-semibold text-slate-700 cursor-pointer transition-all whitespace-nowrap hover:bg-emerald-500 hover:text-white hover:border-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/20 ${
-                  isMobile ? 'px-3 py-3 text-xs min-h-11' : 'px-5 py-3.5 text-[15px]'
+                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
                 申請ステータス
               </button>
             )}
-
           </div>
         </div>
 
         {/* ダッシュボードボディ（次スコープ用） */}
-        <div className="px-5 py-10 min-h-[300px] flex items-center justify-center">
-          <div className="text-center text-slate-500 text-base p-10 bg-white border-2 border-dashed border-slate-300 rounded-lg max-w-[600px] mx-auto">
+        <div className="px-5 py-10 min-h-[300px] flex items-center justify-center flex-1">
+          <div className="text-center text-[#6b7280] text-base p-10 bg-white border-2 border-dashed border-[#d1d5db] rounded-lg max-w-[600px] mx-auto">
             <p className="text-pretty">※ ダッシュボード機能は次スコープで実装予定です</p>
           </div>
         </div>
+
+        {/* フッター */}
+        <footer className="text-center text-xs text-[#9ca3af] py-4 border-t border-[#e5e7eb]">
+          &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+        </footer>
       </div>
 
       {/* 個体管理リスト作成モーダル */}
       {isListModalOpen && (
         <div
           onClick={closeListModal}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg w-[90%] max-w-[600px] shadow-xl overflow-hidden"
+            className="bg-white rounded-lg w-[90%] max-w-[500px] shadow-xl overflow-hidden"
           >
             {/* モーダルヘッダー */}
-            <div className="bg-emerald-500 text-white px-6 py-5 text-xl font-bold text-balance flex justify-between items-center">
-              <span>個体管理リスト作成</span>
+            <div className="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center">
+              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">個体管理リスト作成</h2>
               <button
                 onClick={closeListModal}
-                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
-                ×
+                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
 
-            {/* モーダルボディ */}
+            {/* 施設選択 */}
+            <div className="px-6 pt-5">
+              <label className="block text-sm font-medium text-[#6b7280] mb-2">施設選択</label>
+              {selectedFacility && (
+                <div className="px-4 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-md text-sm text-[#1f2937]">
+                  {selectedFacility}
+                </div>
+              )}
+            </div>
+
+            {/* メニューボタン */}
             <div className="p-6">
-              {/* メニューボタン */}
-              <div className="grid grid-cols-1 gap-4">
-                <button
-                  onClick={() => handleMenuSelect('QRコード発行')}
-                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
-                >
-                  QRコード発行
-                </button>
-
-                <button
-                  onClick={() => handleMenuSelect('現有品調査')}
-                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
-                >
-                  現有品調査
-                </button>
-
-                <button
-                  onClick={() => handleMenuSelect('現有品調査内容修正')}
-                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
-                >
-                  現有品調査内容修正
-                </button>
-
-                <button
-                  onClick={() => handleMenuSelect('資産台帳取込')}
-                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
-                >
-                  資産台帳取込
-                </button>
-
-                <button
-                  onClick={() => handleMenuSelect('データ突合')}
-                  className="px-4 py-3.5 rounded-md text-[15px] font-semibold transition-all min-h-[50px] flex items-center justify-center relative overflow-hidden bg-white text-slate-700 border-2 border-emerald-500 cursor-pointer hover:bg-emerald-500 hover:text-white"
-                >
-                  データ突合
-                </button>
+              <div className="flex flex-col gap-3">
+                {['ラベル発行', '現有品調査', '現有品調査内容修正', '資産台帳取込', 'データ突合'].map((label) => {
+                  const menuMap: Record<string, string> = {
+                    'ラベル発行': 'QRコード発行',
+                    '現有品調査': '現有品調査',
+                    '現有品調査内容修正': '現有品調査内容修正',
+                    '資産台帳取込': '資産台帳取込',
+                    'データ突合': 'データ突合',
+                  };
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => handleMenuSelect(menuMap[label])}
+                      className="px-4 py-3 bg-white border border-[#d1d5db] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -574,155 +652,107 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-full max-w-[500px] max-h-[80vh] flex flex-col shadow-xl"
+            className="bg-white rounded-lg w-full max-w-[460px] max-h-[80vh] flex flex-col shadow-xl"
           >
             {/* モーダルヘッダー */}
-            <div className="p-6 border-b border-slate-200 flex justify-between items-center shrink-0">
-              <h2 className="m-0 text-xl font-semibold text-slate-700 text-balance">
-                マスタ管理
-              </h2>
+            <div className="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center shrink-0">
+              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">マスタ管理</h2>
               <button
                 onClick={closeMasterModal}
-                className="bg-transparent border-0 text-2xl cursor-pointer text-slate-400 p-0 size-8 flex items-center justify-center rounded-full transition-colors hover:bg-slate-100"
+                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
-                ×
+                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
 
             {/* モーダルコンテンツ */}
-            <div className="p-6 overflow-y-auto">
-              <div className="flex flex-col gap-3">
-                {/* SHIP資産マスタ（admin, consultant閲覧可） */}
-                {canAccess('asset_master_list') && (
-                  <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/ship-asset-master');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-sky-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-sky-500 hover:text-white"
-                  >
-                    <span>🏥 SHIP資産マスタ</span>
-                    <span className="text-xl">→</span>
-                  </button>
-                )}
-
-                {/* SHIP施設マスタ（admin, consultant閲覧可） */}
+            <div className="px-6 pt-4 pb-6 overflow-y-auto">
+              <p className="text-sm text-[#6b7280] mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
+              <div className="flex flex-col gap-2">
+                {/* SHIP施設マスタ */}
                 {canAccess('facility_master_list') && (
                   <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/ship-facility-master');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
+                    onClick={() => { closeMasterModal(); router.push('/ship-facility-master'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span>🏥 SHIP施設マスタ</span>
-                    <span className="text-xl">→</span>
+                    SHIP施設マスタ
                   </button>
                 )}
 
-                {/* SHIP部署マスタ（admin, consultant閲覧可） */}
-                {canAccess('dept_vendor_master_list') && (
+                {/* SHIP資産マスタ */}
+                {canAccess('asset_master_list') && (
                   <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/ship-department-master');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-emerald-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-emerald-500 hover:text-white"
+                    onClick={() => { closeMasterModal(); router.push('/ship-asset-master'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span>🏢 SHIP部署マスタ</span>
-                    <span className="text-xl">→</span>
+                    SHIP資産マスタ
                   </button>
                 )}
 
-                {/* 個別部署マスタ（admin, consultant, office_admin, office_staff） */}
-                {canAccess('hospital_dept_master_edit') && (
-                  <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/hospital-facility-master');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-purple-600 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-600 hover:text-white"
-                  >
-                    <span>🏢 個別部署マスタ</span>
-                    <span className="text-xl">→</span>
-                  </button>
-                )}
-
-                {/* 業者マスタ（admin のみ） */}
-                {canAccess('vendor_master_edit') && (
-                  <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/vendor-master');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
-                  >
-                    <span>🏭 業者マスタ</span>
-                    <span className="text-xl">→</span>
-                  </button>
-                )}
-
-                {/* ユーザー管理（admin, office_admin） */}
+                {/* ユーザー管理 */}
                 {isMainButtonVisible('user_management') && (
                   <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/user-management');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-purple-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-purple-500 hover:text-white"
+                    onClick={() => { closeMasterModal(); router.push('/user-management'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span>👤 ユーザー管理</span>
-                    <span className="text-xl">→</span>
+                    ユーザー管理
+                  </button>
+                )}
+
+                {/* 個別施設マスタ → サブメニュー展開 */}
+                {canAccess('hospital_dept_master_edit') && (
+                  <button
+                    onClick={() => { closeMasterModal(); router.push('/hospital-facility-master'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                  >
+                    個別施設マスタ
+                  </button>
+                )}
+
+                {/* 個体管理リスト作成 → サブメニュー展開 */}
+                {canAccess('existing_survey') && (
+                  <button
+                    onClick={() => { closeMasterModal(); showListModal(); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center relative transition-all hover:bg-[#27ae60] hover:text-white"
+                  >
+                    個体管理リスト作成
+                    <svg xmlns="http://www.w3.org/2000/svg" className="size-4 absolute right-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                )}
+
+                {/* 業者マスタ */}
+                {canAccess('vendor_master_edit') && (
+                  <button
+                    onClick={() => { closeMasterModal(); router.push('/vendor-master'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                  >
+                    業者マスタ
                   </button>
                 )}
 
                 {/* 権限管理（system_admin のみ） */}
                 {isAdmin && (
                   <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/permission-management');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-amber-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-amber-500 hover:text-white"
+                    onClick={() => { closeMasterModal(); router.push('/permission-management'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span>🔐 権限管理</span>
-                    <span className="text-xl">→</span>
+                    権限管理
                   </button>
                 )}
 
                 {/* 施設グループ管理（system_admin のみ） */}
                 {isAdmin && (
                   <button
-                    onClick={() => {
-                      closeMasterModal();
-                      router.push('/facility-group-management');
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-teal-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-teal-500 hover:text-white"
+                    onClick={() => { closeMasterModal(); router.push('/facility-group-management'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span>🏢 施設グループ管理</span>
-                    <span className="text-xl">→</span>
-                  </button>
-                )}
-
-                {/* 個体管理リスト作成（admin, consultant のみ） */}
-                {canAccess('existing_survey') && (
-                  <button
-                    onClick={() => {
-                      closeMasterModal();
-                      showListModal();
-                    }}
-                    className="px-6 py-4 bg-white border-2 border-red-500 rounded-lg text-base font-semibold text-slate-700 cursor-pointer flex items-center justify-between transition-all hover:bg-red-500 hover:text-white"
-                  >
-                    <span>📋 個体管理リスト作成</span>
-                    <span className="text-xl">→</span>
+                    施設グループ管理
                   </button>
                 )}
               </div>
-
-              <p className="mt-5 text-sm text-slate-500 text-center text-pretty">
-                マスタ管理と各種リスト管理を行えます
-              </p>
             </div>
           </div>
         </div>
@@ -736,34 +766,40 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-[90%] max-w-[600px] shadow-xl overflow-visible flex flex-col"
+            className="bg-white rounded-lg w-[90%] max-w-[600px] shadow-xl overflow-visible flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div className="bg-emerald-500 text-white px-5 py-4 text-lg font-bold flex justify-between items-center">
-              <span className="text-balance">編集リスト</span>
+            <div className="px-5 py-4 border-b border-[#e5e7eb] flex justify-between items-center">
+              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">編集リスト</h2>
               <button
                 onClick={closeEditListModal}
-                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
-                ×
+                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
 
             {/* タブ切り替え */}
-            <div className="flex border-b border-slate-300">
+            <div className="flex border-b border-[#e5e7eb]">
               <button
                 onClick={() => setEditListMode('select')}
-                className={`flex-1 p-3 border-0 cursor-pointer font-semibold text-sm transition-all ${
-                  editListMode === 'select' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-700'
+                className={`flex-1 py-3 text-sm font-semibold transition-all cursor-pointer border-0 ${
+                  editListMode === 'select'
+                    ? 'bg-white text-[#27ae60] border-b-2 border-b-[#27ae60]'
+                    : 'bg-[#f9fafb] text-[#6b7280] hover:text-[#1f2937]'
                 }`}
               >
-                作成済みリストを選択
+                作成済みリスト
               </button>
               <button
                 onClick={() => setEditListMode('create')}
-                className={`flex-1 p-3 border-0 cursor-pointer font-semibold text-sm transition-all ${
-                  editListMode === 'create' ? 'bg-emerald-500 text-white' : 'bg-white text-slate-700'
+                className={`flex-1 py-3 text-sm font-semibold transition-all cursor-pointer border-0 ${
+                  editListMode === 'create'
+                    ? 'bg-white text-[#27ae60] border-b-2 border-b-[#27ae60]'
+                    : 'bg-[#f9fafb] text-[#6b7280] hover:text-[#1f2937]'
                 }`}
               >
                 新規リスト作成
@@ -773,30 +809,26 @@ export default function MainPage() {
             {/* モーダルボディ */}
             <div className="p-6 overflow-visible">
               {editListMode === 'select' ? (
-                /* 作成済みリスト選択モード */
                 <div>
                   {editLists.length === 0 ? (
-                    <p className="text-center text-slate-500 p-5 text-pretty">
+                    <p className="text-center text-[#6b7280] p-5 text-pretty">
                       作成済みの編集リストがありません
                     </p>
                   ) : (
                     <div className="flex flex-col gap-3">
                       {editLists.map((list) => (
-                        <div
-                          key={list.id}
-                          className="flex items-stretch gap-2"
-                        >
+                        <div key={list.id} className="flex items-stretch gap-2">
                           <button
                             onClick={() => handleSelectEditList(list.id)}
-                            className="flex-1 p-4 bg-white border-2 border-emerald-500 rounded-lg cursor-pointer text-left transition-all hover:bg-emerald-500 hover:text-white"
+                            className="flex-1 p-4 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-left transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
                           >
-                            <div className="font-semibold text-base mb-2">
+                            <div className="font-semibold text-sm text-[#1f2937] mb-1">
                               {list.name}
                             </div>
-                            <div className="text-sm opacity-80">
+                            <div className="text-xs text-[#6b7280]">
                               施設: {list.facilities.join(', ')}
                             </div>
-                            <div className="text-xs opacity-60 mt-1">
+                            <div className="text-xs text-[#9ca3af] mt-1 tabular-nums">
                               作成日: {new Date(list.createdAt).toLocaleDateString('ja-JP')}
                             </div>
                           </button>
@@ -805,7 +837,7 @@ export default function MainPage() {
                               e.stopPropagation();
                               handleDeleteEditList({ id: list.id, name: list.name });
                             }}
-                            className="px-4 py-3 bg-white border-2 border-red-500 rounded-lg cursor-pointer text-red-500 text-sm font-semibold flex items-center justify-center transition-all hover:bg-red-500 hover:text-white"
+                            className="px-3 py-2 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-[#dc2626] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#dc2626]"
                             title="削除"
                           >
                             削除
@@ -816,11 +848,9 @@ export default function MainPage() {
                   )}
                 </div>
               ) : (
-                /* 新規作成モード */
                 <div>
-                  {/* 編集リスト名称 */}
                   <div className="mb-5">
-                    <label className="block mb-2 font-semibold text-slate-700">
+                    <label className="block mb-2 text-sm font-medium text-[#1f2937]">
                       編集リスト名称
                     </label>
                     <input
@@ -828,42 +858,39 @@ export default function MainPage() {
                       value={newEditListName}
                       onChange={(e) => setNewEditListName(e.target.value)}
                       placeholder="例: 2025年度リモデル計画"
-                      className="w-full p-3 border-2 border-slate-300 rounded-md text-sm"
+                      className="w-full p-3 border border-[#d1d5db] rounded-lg text-sm focus:outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]"
                     />
                   </div>
 
-                  {/* 対象施設（ログイン時に選択済み） */}
                   {selectedFacility && (
                     <div className="mb-5">
-                      <label className="block mb-2 font-semibold text-slate-700">
-                        対象施設
+                      <label className="block mb-2 text-sm font-medium text-[#1f2937]">
+                        取り込む原本データ（施設）を選択
                       </label>
-                      <div className="px-4 py-3 bg-emerald-50 border border-emerald-300 rounded-lg text-sm text-slate-700">
-                        {selectedFacility}
-                      </div>
+                      <select className="w-full p-3 border border-[#d1d5db] rounded-lg text-sm bg-white focus:outline-none focus:border-[#27ae60]">
+                        <option>{selectedFacility}</option>
+                      </select>
                     </div>
                   )}
 
-                  {/* 作成ボタン */}
-                  <div className="mt-6 flex gap-3 justify-end">
-                    <button
-                      onClick={closeEditListModal}
-                      className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      onClick={handleCreateEditList}
-                      disabled={!newEditListName.trim()}
-                      className={`px-5 py-2.5 border-0 rounded text-sm font-semibold transition-colors ${
-                        newEditListName.trim()
-                          ? 'bg-emerald-500 text-white cursor-pointer hover:bg-emerald-600'
-                          : 'bg-slate-300 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      作成
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleCreateEditList}
+                    disabled={!newEditListName.trim()}
+                    className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${
+                      newEditListName.trim()
+                        ? 'bg-[#27ae60] text-white cursor-pointer hover:bg-[#219a52]'
+                        : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+                    }`}
+                  >
+                    作成
+                  </button>
+
+                  <button
+                    onClick={closeEditListModal}
+                    className="w-full mt-2 py-2.5 text-sm font-medium text-[#dc2626] hover:bg-red-50 rounded-md transition-colors cursor-pointer border-0 bg-transparent"
+                  >
+                    閉じる
+                  </button>
                 </div>
               )}
             </div>
@@ -879,71 +906,59 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-[90%] max-w-[500px] max-h-[90vh] shadow-xl flex flex-col"
+            className="bg-white rounded-lg w-[90%] max-w-[460px] max-h-[90vh] shadow-xl flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div className="bg-slate-600 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl shrink-0">
-              <span className="text-balance">マスタ管理</span>
+            <div className="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center shrink-0">
+              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">マスタ管理</h2>
               <button
                 onClick={() => setIsHospitalMasterModalOpen(false)}
-                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
-                ×
+                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
 
             {/* モーダルボディ */}
             <div className="p-6 overflow-y-auto">
-              <div className="flex flex-col gap-3">
+              <p className="text-sm text-[#6b7280] mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => {
                     setIsHospitalMasterModalOpen(false);
                     router.push('/hospital-facility-master');
                   }}
-                  className="px-5 py-4 bg-purple-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-600/40"
+                  className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                 >
-                  <span className="text-xl">🏢</span>
-                  <span>個別部署マスタ</span>
+                  個別部署マスタ
                 </button>
 
-                {/* ユーザー管理（hospital_sys_admin のみ） */}
                 {isMainButtonVisible('user_management') && (
                   <button
                     onClick={() => {
                       setIsHospitalMasterModalOpen(false);
                       router.push('/user-management');
                     }}
-                    className="px-5 py-4 bg-indigo-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-600/40"
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span className="text-xl">👤</span>
-                    <span>ユーザー管理</span>
+                    ユーザー管理
                   </button>
                 )}
 
-                {/* ユーザー権限管理（hospital_sys_admin のみ） */}
                 {isFacilityAdmin && (
                   <button
                     onClick={() => {
                       setIsHospitalMasterModalOpen(false);
                       router.push('/user-permission-management');
                     }}
-                    className="px-5 py-4 bg-amber-600 text-white border-0 rounded-lg cursor-pointer text-[15px] font-semibold flex items-center gap-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-600/40"
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
-                    <span className="text-xl">🔐</span>
-                    <span>ユーザー権限管理</span>
+                    ユーザー権限管理
                   </button>
                 )}
-              </div>
-
-              {/* 閉じるボタン */}
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => setIsHospitalMasterModalOpen(false)}
-                  className="px-5 py-2.5 bg-slate-400 text-white border-0 rounded-md cursor-pointer text-sm font-semibold transition-colors hover:bg-slate-500"
-                >
-                  閉じる
-                </button>
               </div>
             </div>
           </div>
@@ -958,36 +973,34 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-xl w-[90%] max-w-[400px] shadow-xl flex flex-col"
+            className="bg-white rounded-lg w-[90%] max-w-[400px] shadow-xl flex flex-col"
           >
-            {/* モーダルヘッダー */}
-            <div className="bg-emerald-500 text-white px-5 py-4 text-lg font-bold flex justify-between items-center rounded-t-xl shrink-0">
-              <span className="text-balance">貸出メニュー</span>
+            <div className="px-5 py-4 border-b border-[#e5e7eb] flex justify-between items-center shrink-0">
+              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">貸出メニュー</h2>
               <button
                 onClick={() => setIsLendingMenuModalOpen(false)}
-                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
-                ×
+                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
 
-            {/* モーダルボディ */}
-            <div className="p-6">
-              <div className="flex flex-col gap-3">
+            <div className="p-5">
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={handleAvailableDevices}
-                  className="px-5 py-4 bg-white border-2 border-emerald-500 rounded-lg cursor-pointer text-[15px] font-semibold text-slate-700 flex items-center gap-3 transition-all hover:bg-emerald-500 hover:text-white"
+                  className="px-4 py-3 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-sm font-medium text-[#1f2937] transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
                 >
-                  <span className="text-xl">📋</span>
-                  <span>貸出可能機器閲覧</span>
+                  貸出可能機器閲覧
                 </button>
                 <button
                   onClick={handleLendingCheckout}
-                  className="px-5 py-4 bg-white border-2 border-sky-500 rounded-lg cursor-pointer text-[15px] font-semibold text-slate-700 flex items-center gap-3 transition-all hover:bg-sky-500 hover:text-white"
+                  className="px-4 py-3 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-sm font-medium text-[#1f2937] transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
                 >
-                  <span className="text-xl">🔄</span>
-                  <span>貸出・返却</span>
+                  貸出・返却
                 </button>
               </div>
             </div>
@@ -1003,52 +1016,49 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`bg-white rounded-xl w-full max-h-[95vh] shadow-xl flex flex-col ${
+            className={`bg-white rounded-lg w-full max-h-[95vh] shadow-xl flex flex-col ${
               isMobile ? 'max-w-full mx-2' : isTablet ? 'max-w-[700px]' : 'max-w-[900px]'
             }`}
           >
-            {/* モーダルヘッダー */}
-            <div className={`bg-emerald-600 text-white ${isMobile ? 'px-3 py-3 text-base' : 'px-5 py-4 text-lg'} font-bold flex justify-between items-center rounded-t-xl shrink-0`}>
-              <span className="text-balance">申請ステータス</span>
+            <div className={`bg-white border-b border-[#e5e7eb] ${isMobile ? 'px-3 py-3 text-base' : 'px-5 py-4 text-lg'} font-bold flex justify-between items-center rounded-t-lg shrink-0`}>
+              <span className="text-[#1f2937] text-balance">申請ステータス</span>
               <button
                 onClick={() => setIsApplicationStatusModalOpen(false)}
-                className="bg-transparent border-0 text-xl cursor-pointer text-white p-0 size-7 flex items-center justify-center rounded-full transition-colors hover:bg-white/20"
+                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
-                ×
+                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
 
-            {/* 所属部署表示 */}
-            <div className={`${isMobile ? 'px-3 py-2' : 'px-5 py-3'} border-b border-slate-200 bg-slate-50 shrink-0`}>
+            <div className={`${isMobile ? 'px-3 py-2' : 'px-5 py-3'} border-b border-[#e5e7eb] bg-[#f9fafb] shrink-0`}>
               <div className="flex items-center gap-2">
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-slate-600 whitespace-nowrap`}>申請部署</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-slate-800`}>{userDepartment}</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-slate-500 ml-2`}>({unifiedApplications.length}件)</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-[#6b7280] whitespace-nowrap`}>申請部署</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-[#1f2937]`}>{userDepartment}</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-[#9ca3af] ml-2 tabular-nums`}>({unifiedApplications.length}件)</span>
               </div>
             </div>
 
-            {/* モーダルボディ */}
             <div className={`${isMobile ? 'p-2' : 'p-4'} overflow-y-auto flex-1`}>
               {unifiedApplications.length === 0 ? (
-                <div className="text-center py-10 text-slate-500">
+                <div className="text-center py-10 text-[#6b7280]">
                   <p className="text-pretty">申請履歴がありません</p>
-                  <p className="text-sm mt-2 text-slate-400 text-pretty">資産リスト画面から各種申請を行ってください</p>
+                  <p className="text-sm mt-2 text-[#9ca3af] text-pretty">資産リスト画面から各種申請を行ってください</p>
                 </div>
               ) : isMobile ? (
-                /* モバイル: カード形式 */
                 <div className="flex flex-col gap-3">
                   {unifiedApplications.map((app) => {
                     const statusStyle = getStatusBadgeStyle(app.status);
                     const typeStyle = getTypeBadgeStyle(app.applicationType);
-
                     return (
-                      <div key={app.id} className="border border-slate-200 rounded-lg p-3 bg-white">
+                      <div key={app.id} className="border border-[#e5e7eb] rounded-lg p-3 bg-white">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs text-slate-600">{app.applicationNo}</span>
-                            <span className="text-xs text-slate-400">|</span>
-                            <span className="text-xs text-slate-500 tabular-nums">{app.applicationDate}</span>
+                            <span className="font-mono text-xs text-[#6b7280]">{app.applicationNo}</span>
+                            <span className="text-xs text-[#d1d5db]">|</span>
+                            <span className="text-xs text-[#6b7280] tabular-nums">{app.applicationDate}</span>
                           </div>
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                             {app.status}
@@ -1058,46 +1068,42 @@ export default function MainPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
                             {app.applicationType}
                           </span>
-                          <span className="text-sm font-medium text-slate-800 truncate">{app.itemName}</span>
+                          <span className="text-sm font-medium text-[#1f2937] truncate">{app.itemName}</span>
                         </div>
                         {app.deadline && (
-                          <div className="text-xs text-orange-600">
-                            期限: {app.deadline}
-                          </div>
+                          <div className="text-xs text-orange-600">期限: {app.deadline}</div>
                         )}
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                /* PC/タブレット: テーブル形式 */
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="bg-slate-100">
-                        <th className="py-2.5 px-3 text-left font-semibold text-slate-700 whitespace-nowrap border-b border-slate-200">申請No.</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-slate-700 whitespace-nowrap border-b border-slate-200">申請日</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-slate-700 whitespace-nowrap border-b border-slate-200">申請種別</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-slate-700 whitespace-nowrap border-b border-slate-200">品目</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-slate-700 whitespace-nowrap border-b border-slate-200">ステータス</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-slate-700 whitespace-nowrap border-b border-slate-200">期限</th>
+                      <tr className="bg-[#f9fafb]">
+                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">申請No.</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">申請日</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">申請種別</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">品目</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">ステータス</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">期限</th>
                       </tr>
                     </thead>
                     <tbody>
                       {unifiedApplications.map((app) => {
                         const statusStyle = getStatusBadgeStyle(app.status);
                         const typeStyle = getTypeBadgeStyle(app.applicationType);
-
                         return (
-                          <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
-                            <td className="py-2.5 px-3 font-mono text-xs text-slate-600">{app.applicationNo}</td>
-                            <td className="py-2.5 px-3 text-slate-600 tabular-nums">{app.applicationDate}</td>
+                          <tr key={app.id} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb]">
+                            <td className="py-2.5 px-3 font-mono text-xs text-[#6b7280]">{app.applicationNo}</td>
+                            <td className="py-2.5 px-3 text-[#6b7280] tabular-nums">{app.applicationDate}</td>
                             <td className="py-2.5 px-3">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
                                 {app.applicationType}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 text-slate-800 max-w-[200px] truncate">{app.itemName}</td>
+                            <td className="py-2.5 px-3 text-[#1f2937] max-w-[200px] truncate">{app.itemName}</td>
                             <td className="py-2.5 px-3">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                                 {app.status}
@@ -1113,12 +1119,11 @@ export default function MainPage() {
               )}
             </div>
 
-            {/* フッター */}
-            <div className={`${isMobile ? 'px-3 py-3' : 'px-5 py-4'} border-t border-slate-200 bg-slate-50 rounded-b-xl shrink-0`}>
+            <div className={`${isMobile ? 'px-3 py-3' : 'px-5 py-4'} border-t border-[#e5e7eb] bg-[#f9fafb] rounded-b-lg shrink-0`}>
               <div className="flex justify-end">
                 <button
                   onClick={() => setIsApplicationStatusModalOpen(false)}
-                  className={`px-4 py-2 bg-slate-600 text-white rounded-md font-medium transition-colors hover:bg-slate-700 ${
+                  className={`px-4 py-2 bg-[#4b5563] text-white rounded-md font-medium transition-colors hover:bg-[#374151] border-0 cursor-pointer ${
                     isMobile ? 'text-sm' : 'text-base'
                   }`}
                 >
@@ -1143,6 +1148,17 @@ export default function MainPage() {
         confirmLabel="削除"
         cancelLabel="キャンセル"
         variant="danger"
+      />
+
+      {/* ログアウト確認ダイアログ */}
+      <ConfirmDialog
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirm={executeLogout}
+        title="ログアウト"
+        message="ログアウトしますか？"
+        confirmLabel="ログアウト"
+        cancelLabel="キャンセル"
       />
     </div>
   );
