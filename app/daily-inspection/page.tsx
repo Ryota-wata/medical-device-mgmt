@@ -83,7 +83,7 @@ function DailyInspectionContent() {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   // 点検実施状態
-  const [inspectorName, setInspectorName] = useState(user?.username || '');
+  const inspectorName = user?.username || '';
   const [usageTiming, setUsageTiming] = useState<'使用前' | '使用中' | '使用後'>('使用前');
   const [selectedMenuId, setSelectedMenuId] = useState('');
   const [itemResults, setItemResults] = useState<InspectionItemResult[]>(DEFAULT_ITEMS);
@@ -183,10 +183,6 @@ function DailyInspectionContent() {
 
   // 確認画面表示
   const handleShowConfirm = (result: '合格' | '異常あり') => {
-    if (!inspectorName) {
-      alert('実施者名を入力してください');
-      return;
-    }
     setOverallResult(result);
     setStep('confirm');
   };
@@ -236,7 +232,6 @@ function DailyInspectionContent() {
   const resetState = () => {
     setQrCode('');
     setSelectedAsset(null);
-    setInspectorName('');
     setUsageTiming('使用前');
     setSelectedMenuId('');
     setItemResults(DEFAULT_ITEMS);
@@ -473,9 +468,8 @@ function DailyInspectionContent() {
                 <input
                   type="text"
                   value={inspectorName}
-                  onChange={(e) => setInspectorName(e.target.value)}
-                  placeholder="入力してください"
-                  className="w-full px-3 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors text-[#1f2937]"
+                  readOnly
+                  className="w-full px-3 py-2 text-sm bg-[#f3f4f6] border border-[#d1d5db] rounded-md text-[#1f2937] outline-none"
                 />
               </div>
             </div>
