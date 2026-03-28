@@ -96,7 +96,6 @@ function RepairRequestContent() {
   // QRコード読み取りシミュレーション
   const handleQrScan = () => {
     setIsQrScanning(true);
-    // 実際のアプリではカメラAPIを使用
     setTimeout(() => {
       const mockQr = 'QR-001';
       setQrCode(mockQr);
@@ -130,7 +129,6 @@ function RepairRequestContent() {
       };
       reader.readAsDataURL(file);
     });
-    // 同じファイルを再選択可能にする
     if (photoInputRef.current) photoInputRef.current.value = '';
   };
 
@@ -142,11 +140,7 @@ function RepairRequestContent() {
   const isFormDirty = qrCode !== '' || symptoms !== '' || manualItemName !== '' || capturedPhotos.length > 0 || freeComment !== '';
 
   const handleHomeClick = () => {
-    if (isConfirmView) {
-      setIsConfirmView(false);
-      return;
-    }
-    if (isFormDirty) {
+    if (isFormDirty || isConfirmView) {
       setShowHomeConfirm(true);
     } else {
       router.push('/main');
@@ -178,7 +172,6 @@ function RepairRequestContent() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
-    // 送信データ作成
     const requestData = {
       requestNo,
       requestDate,
@@ -204,7 +197,6 @@ function RepairRequestContent() {
 
     console.log('修理依頼データ:', requestData);
 
-    // 送信シミュレーション
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     setIsSubmitting(false);
@@ -238,956 +230,464 @@ function RepairRequestContent() {
   const getDeviceRoom = () => isRegisteredAsset ? (deviceInfo?.roomName || '-') : (manualRoomName || '-');
   const alternativeLabel = alternativeDevice === 'needed' ? '必要' : alternativeDevice === 'requested' ? '依頼済' : '不要';
 
+  // 共通の入力クラス
+  const inputClass = 'w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors';
+
   return (
-    <div style={{
-      minHeight: '100dvh',
-      backgroundColor: '#f5f5f5',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div className="min-h-dvh flex flex-col bg-[#f9fafb]">
       {/* ヘッダー */}
-      <header style={{
-        backgroundColor: '#2c3e50',
-        color: 'white',
-        padding: isMobile ? '12px 16px' : '16px 24px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          maxWidth: '800px',
-          margin: '0 auto'
-        }}>
-          <button
-            onClick={handleHomeClick}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            {isConfirmView ? '← 修正する' : '← 戻る'}
-          </button>
-          <h1 style={{
-            fontSize: isMobile ? '16px' : '18px',
-            fontWeight: 'bold',
-            margin: 0
-          }}>
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
+          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+            logo
+          </div>
+          <div className="text-base font-bold text-[#1f2937] text-balance">
             {isConfirmView ? '修理依頼 - 内容確認' : '修理依頼'}
-          </h1>
-          <div style={{ width: '80px' }} />
+          </div>
         </div>
       </header>
 
       {/* メインコンテンツ */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '16px' : '24px',
-        maxWidth: '800px',
-        width: '100%',
-        margin: '0 auto',
-        boxSizing: 'border-box'
-      }}>
+      <div className="flex-1 w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
         {isConfirmView ? (
           /* ========== 確認画面 ========== */
           <>
-            <div style={{
-              background: '#e8f5e9',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              textAlign: 'center'
-            }}>
-              <span style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '14px' }}>
+            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-3 mb-4 text-center">
+              <span className="text-sm font-bold text-[#27ae60]">
                 以下の内容で送信します。内容をご確認ください。
               </span>
             </div>
 
-            {/* 依頼情報 */}
-            <section style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-            }}>
-              <h2 style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '16px',
-                borderBottom: '1px solid #ddd',
-                paddingBottom: '8px'
-              }}>
-                依頼情報
-              </h2>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <tbody>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px' }}>修理依頼No.</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{requestNo}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '80px' : '120px' }}>依頼日</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestDate} {requestTime}</td>
-                  </tr>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請部署</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantDepartment}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請者</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantName}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
-
-            {/* 機器情報 */}
-            <section style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-            }}>
-              <h2 style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '16px',
-                borderBottom: '1px solid #ddd',
-                paddingBottom: '8px'
-              }}>
-                機器情報
-                <span style={{
-                  marginLeft: '12px',
-                  fontSize: '12px',
-                  color: isRegisteredAsset ? '#3498db' : '#e67e22',
-                  fontWeight: 'normal'
-                }}>
-                  ({isRegisteredAsset ? '登録済み資産' : '未登録資産'})
-                </span>
-              </h2>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <tbody>
-                  {isRegisteredAsset && (
-                    <tr>
-                      <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px' }}>QRラベル</th>
-                      <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{qrCode}</td>
-                    </tr>
-                  )}
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px' }}>品目</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceName()}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '80px' : '120px' }}>メーカー</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceMaker()}</td>
-                  </tr>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceModel()}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>シリアルNo.</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceSerial()}</td>
-                  </tr>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceDepartment()}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>室名</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{getDeviceRoom()}</td>
-                  </tr>
-                </tbody>
-              </table>
-              {capturedPhotos.length > 0 && (
-                <div style={{ marginTop: '16px' }}>
-                  <div style={{ fontSize: '12px', color: '#7a8a9a', marginBottom: '8px' }}>添付写真（{capturedPhotos.length}枚）</div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {capturedPhotos.map((photo, i) => (
-                      <div key={i} style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        border: '1px solid #ddd',
-                      }}>
-                        <img src={photo} alt={`写真${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ))}
+            <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+              {/* 依頼情報 */}
+              <div className="pb-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">依頼情報</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">修理依頼No.</div>
+                    <div className="text-sm font-semibold text-[#1f2937] tabular-nums">{requestNo}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">依頼日</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{requestDate} {requestTime}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">申請部署</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{applicantDepartment}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">申請者</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{applicantName}</div>
                   </div>
                 </div>
-              )}
-            </section>
+              </div>
 
-            {/* 症状・代替機 */}
-            <section style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-            }}>
-              <h2 style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '16px',
-                borderBottom: '1px solid #ddd',
-                paddingBottom: '8px'
-              }}>
-                症状・代替機
-              </h2>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <tbody>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: isMobile ? '100px' : '120px', verticalAlign: 'top' }}>症状</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>{symptoms}</td>
-                  </tr>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>代替機</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{alternativeLabel}</td>
-                  </tr>
-                  {freeComment && (
-                    <tr>
-                      <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', verticalAlign: 'top' }}>フリーコメント</th>
-                      <td style={{ padding: '8px 12px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>{freeComment}</td>
-                    </tr>
+              {/* 機器情報 */}
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">
+                  機器情報
+                  <span className="ml-2 text-xs font-normal text-[#6b7280]">
+                    ({isRegisteredAsset ? '登録済み資産' : '未登録資産'})
+                  </span>
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {isRegisteredAsset && (
+                    <div className="sm:col-span-2">
+                      <div className="text-xs text-[#6b7280] mb-0.5">QRラベル</div>
+                      <div className="text-sm font-semibold text-[#1f2937]">{qrCode}</div>
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </section>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">品目</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceName()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">メーカー</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceMaker()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">型式</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceModel()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">シリアルNo.</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceSerial()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">設置部署</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceDepartment()}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">室名</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceRoom()}</div>
+                  </div>
+                </div>
+                {capturedPhotos.length > 0 && (
+                  <div className="mt-4">
+                    <div className="text-xs text-[#6b7280] mb-2">添付写真（{capturedPhotos.length}枚）</div>
+                    <div className="flex gap-2 flex-wrap">
+                      {capturedPhotos.map((photo, i) => (
+                        <div key={i} className="w-20 h-20 rounded-lg overflow-hidden border border-[#e5e7eb]">
+                          <img src={photo} alt={`写真${i + 1}`} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            {/* 確認画面のボタン */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '16px',
-              marginBottom: '32px'
-            }}>
-              <button
-                onClick={() => setIsConfirmView(false)}
-                style={{
-                  padding: '14px 32px',
-                  backgroundColor: 'white',
-                  color: '#4a6741',
-                  border: '2px solid #4a6741',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  minHeight: '48px'
-                }}
-              >
-                ← 修正する
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                style={{
-                  padding: '14px 32px',
-                  backgroundColor: isSubmitting ? '#95a5a6' : '#4a6741',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  minHeight: '48px'
-                }}
-              >
-                {isSubmitting ? '送信中...' : '修理依頼を送信する'}
-              </button>
+              {/* 症状・代替機 */}
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">症状・代替機</h2>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">症状</div>
+                    <div className="text-sm text-[#1f2937] whitespace-pre-wrap">{symptoms}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#6b7280] mb-0.5">代替機</div>
+                    <div className="text-sm font-semibold text-[#1f2937]">{alternativeLabel}</div>
+                  </div>
+                  {freeComment && (
+                    <div>
+                      <div className="text-xs text-[#6b7280] mb-0.5">フリーコメント</div>
+                      <div className="text-sm text-[#1f2937] whitespace-pre-wrap">{freeComment}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 確認画面のボタン */}
+              <div className="pt-6 flex justify-center gap-4">
+                <button
+                  onClick={() => setIsConfirmView(false)}
+                  className="px-8 py-3 bg-[#e5e7eb] text-sm font-bold text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors min-h-[48px]"
+                >
+                  修正する
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className={`px-8 py-3 text-sm font-bold text-white rounded-md border-0 transition-colors min-h-[48px] ${
+                    isSubmitting
+                      ? 'bg-[#9ca3af] cursor-not-allowed'
+                      : 'bg-[#27ae60] cursor-pointer hover:bg-[#219a52]'
+                  }`}
+                >
+                  {isSubmitting ? '送信中...' : '修理依頼を送信する'}
+                </button>
+              </div>
             </div>
           </>
         ) : (
           /* ========== 入力画面 ========== */
           <>
-        {/* ① 依頼情報（自動生成） */}
-        <section style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#7a8a9a',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              backgroundColor: '#3498db',
-              color: 'white',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px'
-            }}>1</span>
-            依頼情報
-          </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: '12px'
-          }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                修理依頼No.
-              </label>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                padding: '8px 12px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '6px'
-              }}>
-                {requestNo}
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                依頼日
-              </label>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                padding: '8px 12px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '6px'
-              }}>
-                {requestDate}
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                依頼時間
-              </label>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#2c3e50',
-                padding: '8px 12px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '6px'
-              }}>
-                {requestTime}
-              </div>
-            </div>
-          </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: '12px',
-            marginTop: '12px'
-          }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                申請部署 <span style={{ color: '#e74c3c' }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={applicantDepartment}
-                onChange={(e) => setApplicantDepartment(e.target.value)}
-                placeholder="例: 外科病棟"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                申請者 <span style={{ color: '#e74c3c' }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={applicantName}
-                onChange={(e) => setApplicantName(e.target.value)}
-                placeholder="例: 山田太郎"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          </div>
-        </section>
+            <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
 
-        {/* ② 機器情報 */}
-        <section style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#7a8a9a',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              backgroundColor: '#3498db',
-              color: 'white',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px'
-            }}>2</span>
-            機器情報
-          </h2>
+              {/* ① 依頼情報 */}
+              <div className="pb-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">依頼情報</h2>
+                <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+                  <div>
+                    <label className="block text-xs text-[#6b7280] mb-1">修理依頼No.</label>
+                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-[#1f2937] tabular-nums">
+                      {requestNo}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#6b7280] mb-1">依頼日</label>
+                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-[#1f2937]">
+                      {requestDate}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#6b7280] mb-1">依頼時間</label>
+                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-[#1f2937]">
+                      {requestTime}
+                    </div>
+                  </div>
+                </div>
+                <div className={`grid gap-3 mt-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  <div>
+                    <label className="block text-xs text-[#6b7280] mb-1">
+                      申請部署 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={applicantDepartment}
+                      onChange={(e) => setApplicantDepartment(e.target.value)}
+                      placeholder="例: 外科病棟"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-[#6b7280] mb-1">
+                      申請者 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={applicantName}
+                      onChange={(e) => setApplicantName(e.target.value)}
+                      placeholder="例: 山田太郎"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+              </div>
 
-          {/* 登録済み/未登録切り替え */}
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px'
-          }}>
-            <button
-              onClick={() => setIsRegisteredAsset(true)}
-              style={{
-                flex: 1,
-                padding: '10px',
-                border: isRegisteredAsset ? '2px solid #3498db' : '1px solid #ddd',
-                borderRadius: '8px',
-                backgroundColor: isRegisteredAsset ? '#ebf5fb' : 'white',
-                color: isRegisteredAsset ? '#3498db' : '#7a8a9a',
-                fontWeight: isRegisteredAsset ? '600' : '400',
-                cursor: 'pointer',
-                fontSize: '13px'
-              }}
-            >
-              登録済み資産
-            </button>
-            <button
-              onClick={() => setIsRegisteredAsset(false)}
-              style={{
-                flex: 1,
-                padding: '10px',
-                border: !isRegisteredAsset ? '2px solid #e67e22' : '1px solid #ddd',
-                borderRadius: '8px',
-                backgroundColor: !isRegisteredAsset ? '#fef5e7' : 'white',
-                color: !isRegisteredAsset ? '#e67e22' : '#7a8a9a',
-                fontWeight: !isRegisteredAsset ? '600' : '400',
-                cursor: 'pointer',
-                fontSize: '13px'
-              }}
-            >
-              未登録資産
-            </button>
-          </div>
+              {/* ② 機器情報 */}
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">機器情報</h2>
 
-          {isRegisteredAsset ? (
-            /* 登録済み資産の場合 */
-            <>
-              {/* QRコード読み取り */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '8px' }}>
-                  QRラベル
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                {/* 登録済み/未登録切り替え（ラジオボタン） */}
+                <div className="flex flex-wrap gap-x-5 gap-y-2 mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
+                    <input
+                      type="radio"
+                      name="asset-type"
+                      checked={isRegisteredAsset}
+                      onChange={() => setIsRegisteredAsset(true)}
+                      className="size-4 accent-[#27ae60] cursor-pointer"
+                    />
+                    <span className={`text-sm ${isRegisteredAsset ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                      登録済み資産
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
+                    <input
+                      type="radio"
+                      name="asset-type"
+                      checked={!isRegisteredAsset}
+                      onChange={() => setIsRegisteredAsset(false)}
+                      className="size-4 accent-[#27ae60] cursor-pointer"
+                    />
+                    <span className={`text-sm ${!isRegisteredAsset ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                      未登録資産
+                    </span>
+                  </label>
+                </div>
+
+                {isRegisteredAsset ? (
+                  <>
+                    {/* QRコード読み取り */}
+                    <div className="mb-4">
+                      <label className="block text-xs text-[#6b7280] mb-1">QRラベル</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={qrCode}
+                          onChange={(e) => handleQrInput(e.target.value)}
+                          placeholder="例: QR-001 / QR-002"
+                          className={`flex-1 ${inputClass}`}
+                        />
+                        <button
+                          onClick={handleQrScan}
+                          disabled={isQrScanning}
+                          className={`px-4 py-2.5 text-white text-sm font-medium border-0 rounded-md whitespace-nowrap transition-colors ${
+                            isQrScanning
+                              ? 'bg-[#9ca3af] cursor-not-allowed'
+                              : 'bg-[#27ae60] cursor-pointer hover:bg-[#219a52]'
+                          }`}
+                        >
+                          {isQrScanning ? '読取中...' : 'QR読取'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 読み取った機器情報 */}
+                    {deviceInfo && (
+                      <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-[120px_1fr]'}`}>
+                          {/* 機器写真プレースホルダー */}
+                          <div className={`${isMobile ? 'w-full h-[150px]' : 'w-[120px] h-[120px]'} bg-[#e5e7eb] rounded-lg flex items-center justify-center`}>
+                            <svg className="w-10 h-10 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          </div>
+                          {/* 機器詳細 */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-[11px] text-[#6b7280]">品目</span>
+                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.itemName}</div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-[#6b7280]">メーカー</span>
+                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.maker}</div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-[#6b7280]">型式</span>
+                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.model}</div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-[#6b7280]">シリアルNo.</span>
+                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.serialNo}</div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-[#6b7280]">設置部署</span>
+                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.department}</div>
+                            </div>
+                            <div>
+                              <span className="text-[11px] text-[#6b7280]">室名</span>
+                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.roomName}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  /* 未登録資産の場合 */
+                  <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    <div>
+                      <label className="block text-xs text-[#6b7280] mb-1">品目</label>
+                      <input type="text" value={manualItemName} onChange={(e) => setManualItemName(e.target.value)} placeholder="例: 人工呼吸器" className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6b7280] mb-1">メーカー</label>
+                      <input type="text" value={manualMaker} onChange={(e) => setManualMaker(e.target.value)} placeholder="例: フクダ電子" className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6b7280] mb-1">型式</label>
+                      <input type="text" value={manualModel} onChange={(e) => setManualModel(e.target.value)} placeholder="例: RES-500" className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6b7280] mb-1">シリアルNo.</label>
+                      <input type="text" value={manualSerialNo} onChange={(e) => setManualSerialNo(e.target.value)} placeholder="例: SN-2024-001" className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6b7280] mb-1">設置部署</label>
+                      <input type="text" value={manualDepartment} onChange={(e) => setManualDepartment(e.target.value)} placeholder="例: 外科病棟" className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6b7280] mb-1">室名</label>
+                      <input type="text" value={manualRoomName} onChange={(e) => setManualRoomName(e.target.value)} placeholder="例: 301号室" className={inputClass} />
+                    </div>
+                  </div>
+                )}
+
+                {/* 機器写真 */}
+                <div className="mt-4">
+                  <label className="block text-xs text-[#6b7280] mb-2">機器写真</label>
                   <input
-                    type="text"
-                    value={qrCode}
-                    onChange={(e) => handleQrInput(e.target.value)}
-                    placeholder="QRコードを入力"
-                    style={{
-                      flex: 1,
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px'
-                    }}
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handlePhotoAdd}
+                    className="hidden"
                   />
+                  {capturedPhotos.length > 0 && (
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {capturedPhotos.map((photo, i) => (
+                        <div key={i} className="relative w-[100px] h-[100px] rounded-lg overflow-hidden border border-[#e5e7eb]">
+                          <img src={photo} alt={`写真${i + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => handlePhotoRemove(i)}
+                            aria-label={`写真${i + 1}を削除`}
+                            className="absolute top-1 right-1 size-6 bg-black/60 text-white border-0 rounded-full cursor-pointer text-sm leading-6 text-center p-0"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <button
-                    onClick={handleQrScan}
-                    disabled={isQrScanning}
-                    style={{
-                      padding: '10px 16px',
-                      backgroundColor: '#3498db',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      whiteSpace: 'nowrap',
-                      opacity: isQrScanning ? 0.7 : 1
-                    }}
+                    onClick={() => photoInputRef.current?.click()}
+                    className="w-full py-4 bg-[#f3f4f6] border-2 border-dashed border-[#d1d5db] rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:border-[#27ae60] transition-colors"
                   >
-                    {isQrScanning ? '読取中...' : '📷 読取'}
+                    <svg className="w-5 h-5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-sm text-[#6b7280]">
+                      {isMobile ? '写真を撮影・選択して添付' : '写真を選択して添付'}
+                    </span>
                   </button>
                 </div>
               </div>
 
-              {/* 読み取った機器情報 */}
-              {deviceInfo && (
-                <div style={{
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
-                  padding: '16px',
-                  border: '1px solid #e0e0e0'
-                }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
-                    gap: '16px'
-                  }}>
-                    {/* 機器写真 */}
-                    <div style={{
-                      width: isMobile ? '100%' : '120px',
-                      height: isMobile ? '150px' : '120px',
-                      backgroundColor: '#e0e0e0',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#7a8a9a',
-                      fontSize: '40px'
-                    }}>
-                      📷
-                    </div>
-                    {/* 機器詳細 */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(2, 1fr)',
-                      gap: '8px'
-                    }}>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#7a8a9a' }}>品目</span>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>{deviceInfo.itemName}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#7a8a9a' }}>メーカー</span>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>{deviceInfo.maker}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#7a8a9a' }}>型式</span>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>{deviceInfo.model}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#7a8a9a' }}>シリアルNo.</span>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>{deviceInfo.serialNo}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#7a8a9a' }}>設置部署</span>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>{deviceInfo.department}</div>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#7a8a9a' }}>室名</span>
-                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#2c3e50' }}>{deviceInfo.roomName}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            /* 未登録資産の場合 */
-            <>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                gap: '12px'
-              }}>
-                <div>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                    品目
-                  </label>
-                  <input
-                    type="text"
-                    value={manualItemName}
-                    onChange={(e) => setManualItemName(e.target.value)}
-                    placeholder="例: 人工呼吸器"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                    メーカー
-                  </label>
-                  <input
-                    type="text"
-                    value={manualMaker}
-                    onChange={(e) => setManualMaker(e.target.value)}
-                    placeholder="例: フクダ電子"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                    型式
-                  </label>
-                  <input
-                    type="text"
-                    value={manualModel}
-                    onChange={(e) => setManualModel(e.target.value)}
-                    placeholder="例: RES-500"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                    シリアルNo.
-                  </label>
-                  <input
-                    type="text"
-                    value={manualSerialNo}
-                    onChange={(e) => setManualSerialNo(e.target.value)}
-                    placeholder="例: SN-2024-001"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                    設置部署
-                  </label>
-                  <input
-                    type="text"
-                    value={manualDepartment}
-                    onChange={(e) => setManualDepartment(e.target.value)}
-                    placeholder="例: 外科病棟"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '4px' }}>
-                    室名
-                  </label>
-                  <input
-                    type="text"
-                    value={manualRoomName}
-                    onChange={(e) => setManualRoomName(e.target.value)}
-                    placeholder="例: 301号室"
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
+              {/* ③ 症状 */}
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">
+                  症状 <span className="text-red-500">*</span>
+                </h2>
+                <textarea
+                  value={symptoms}
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  placeholder="機器の症状や不具合の詳細を入力してください"
+                  rows={4}
+                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors resize-y"
+                />
+              </div>
+
+              {/* ④ 代替機（ラジオボタン） */}
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">代替機</h2>
+                <div className="flex flex-wrap gap-x-5 gap-y-2">
+                  {[
+                    { value: 'not_needed' as const, label: '不要' },
+                    { value: 'needed' as const, label: '必要' },
+                    { value: 'requested' as const, label: '依頼済' },
+                  ].map((option) => (
+                    <label key={option.value} className="flex items-center gap-2 cursor-pointer min-h-[44px]">
+                      <input
+                        type="radio"
+                        name="alternative-device"
+                        value={option.value}
+                        checked={alternativeDevice === option.value}
+                        onChange={() => setAlternativeDevice(option.value)}
+                        className="size-4 accent-[#27ae60] cursor-pointer"
+                      />
+                      <span className={`text-sm ${alternativeDevice === option.value ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                        {option.label}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
-            </>
-          )}
-
-          {/* 機器写真（登録済み・未登録共通） */}
-          <div style={{ marginTop: '16px' }}>
-            <label style={{ fontSize: '12px', color: '#7a8a9a', display: 'block', marginBottom: '8px' }}>
-              機器写真
-            </label>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handlePhotoAdd}
-              style={{ display: 'none' }}
-            />
-            {capturedPhotos.length > 0 && (
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                flexWrap: 'wrap',
-                marginBottom: '12px',
-              }}>
-                {capturedPhotos.map((photo, i) => (
-                  <div key={i} style={{
-                    position: 'relative',
-                    width: '100px',
-                    height: '100px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid #ddd',
-                  }}>
-                    <img src={photo} alt={`写真${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    <button
-                      onClick={() => handlePhotoRemove(i)}
-                      aria-label={`写真${i + 1}を削除`}
-                      style={{
-                        position: 'absolute',
-                        top: '4px',
-                        right: '4px',
-                        width: '24px',
-                        height: '24px',
-                        padding: 0,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '50%',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        lineHeight: '24px',
-                        textAlign: 'center',
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+              {/* ⑤ フリーコメント */}
+              <div className="py-6">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">フリーコメント</h2>
+                <textarea
+                  value={freeComment}
+                  onChange={(e) => setFreeComment(e.target.value)}
+                  placeholder="その他連絡事項があれば入力してください"
+                  rows={3}
+                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors resize-y"
+                />
               </div>
-            )}
-            <button
-              onClick={() => photoInputRef.current?.click()}
-              style={{
-                width: '100%',
-                padding: '16px',
-                backgroundColor: '#f8f9fa',
-                border: '2px dashed #ddd',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              <span style={{ fontSize: '20px' }}>📷</span>
-              <span style={{ fontSize: '14px', color: '#7a8a9a' }}>
-                {isMobile ? '写真を撮影・選択して添付' : '写真を選択して添付'}
-              </span>
-            </button>
-          </div>
-        </section>
+            </div>
 
-        {/* ③ 症状 */}
-        <section style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#7a8a9a',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              backgroundColor: '#3498db',
-              color: 'white',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px'
-            }}>3</span>
-            症状 <span style={{ color: '#e74c3c' }}>*</span>
-          </h2>
-          <textarea
-            value={symptoms}
-            onChange={(e) => setSymptoms(e.target.value)}
-            placeholder="機器の症状や不具合の詳細を入力してください"
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '6px',
-              fontSize: '14px',
-              resize: 'vertical',
-              boxSizing: 'border-box'
-            }}
-          />
-        </section>
-
-        {/* ④ 代替機 */}
-        <section style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#7a8a9a',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              backgroundColor: '#3498db',
-              color: 'white',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px'
-            }}>4</span>
-            代替機
-          </h2>
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            flexWrap: 'wrap'
-          }}>
-            {[
-              { value: 'not_needed', label: '不要' },
-              { value: 'needed', label: '必要' },
-              { value: 'requested', label: '依頼済' }
-            ].map((option) => (
+            {/* 確認画面へボタン */}
+            <div className="mt-4">
               <button
-                key={option.value}
-                onClick={() => setAlternativeDevice(option.value as typeof alternativeDevice)}
-                style={{
-                  flex: isMobile ? '1' : 'none',
-                  padding: '12px 24px',
-                  border: alternativeDevice === option.value ? '2px solid #27ae60' : '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: alternativeDevice === option.value ? '#e8f8f0' : 'white',
-                  color: alternativeDevice === option.value ? '#27ae60' : '#5a6c7d',
-                  fontWeight: alternativeDevice === option.value ? '600' : '400',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
+                onClick={handleConfirm}
+                className="w-full py-3.5 bg-[#27ae60] text-white text-base font-bold border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors"
               >
-                {option.label}
+                記載内容を確認する
               </button>
-            ))}
-          </div>
-        </section>
-
-        {/* ⑤ フリーコメント */}
-        <section style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{
-            fontSize: '14px',
-            fontWeight: 'bold',
-            color: '#7a8a9a',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              backgroundColor: '#3498db',
-              color: 'white',
-              borderRadius: '50%',
-              width: '24px',
-              height: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px'
-            }}>5</span>
-            フリーコメント
-          </h2>
-          <textarea
-            value={freeComment}
-            onChange={(e) => setFreeComment(e.target.value)}
-            placeholder="その他連絡事項があれば入力してください"
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '6px',
-              fontSize: '14px',
-              resize: 'vertical',
-              boxSizing: 'border-box'
-            }}
-          />
-        </section>
-
-        {/* 確認画面へボタン */}
-        <button
-          onClick={handleConfirm}
-          style={{
-            width: '100%',
-            padding: '16px',
-            backgroundColor: '#4a6741',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            marginBottom: '32px'
-          }}
-        >
-          記載内容を確認する
-        </button>
+            </div>
           </>
         )}
-      </main>
+
+        {/* 戻るボタン */}
+        <div className="mt-4">
+          <button
+            onClick={handleHomeClick}
+            className="px-8 py-2.5 bg-[#e5e7eb] text-sm font-medium text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors"
+          >
+            戻る
+          </button>
+        </div>
+      </div>
+
+      {/* フッター */}
+      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+      </footer>
 
       {/* 完了モーダル */}
       <ApplicationCompleteModal
