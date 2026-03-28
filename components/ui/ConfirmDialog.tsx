@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -25,6 +26,8 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
+  useBodyScrollLock(isOpen);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -34,13 +37,11 @@ export function ConfirmDialog({
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
       confirmButtonRef.current?.focus();
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
@@ -55,7 +56,7 @@ export function ConfirmDialog({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"

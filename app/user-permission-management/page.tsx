@@ -320,7 +320,7 @@ export default function UserPermissionManagementPage() {
         </div>
       </header>
 
-      <div className="flex-1 p-5 max-w-[1200px] mx-auto w-full pb-24">
+      <div className="flex-1 px-3 py-5 sm:px-5 max-w-[1200px] mx-auto w-full pb-24">
         {/* コントロールバー */}
         <div className="bg-white rounded-lg shadow p-4 mb-4">
           <div className="flex items-center gap-6 flex-wrap">

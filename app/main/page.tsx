@@ -10,6 +10,7 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 
 export default function MainPage() {
   const router = useRouter();
@@ -34,6 +35,10 @@ export default function MainPage() {
   // 削除確認ダイアログ用のstate
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTargetList, setDeleteTargetList] = useState<{ id: string; name: string } | null>(null);
+
+  // モーダル表示中のbodyスクロールロック
+  const isAnyModalOpen = isListModalOpen || isMasterModalOpen || isEditListModalOpen || isHospitalMasterModalOpen || isLendingMenuModalOpen || isApplicationStatusModalOpen || isLogoutConfirmOpen || deleteConfirmOpen;
+  useBodyScrollLock(isAnyModalOpen);
 
   // 権限フック
   const {
@@ -587,7 +592,7 @@ export default function MainPage() {
       {isListModalOpen && (
         <div
           onClick={closeListModal}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -648,7 +653,7 @@ export default function MainPage() {
       {isMasterModalOpen && (
         <div
           onClick={closeMasterModal}
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-5"
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-3 sm:p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -669,7 +674,7 @@ export default function MainPage() {
             </div>
 
             {/* モーダルコンテンツ */}
-            <div className="px-6 pt-4 pb-6 overflow-y-auto">
+            <div className="px-6 pt-4 pb-6 overflow-y-auto overscroll-contain">
               <p className="text-sm text-[#6b7280] mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
               <div className="flex flex-col gap-2">
                 {/* SHIP施設マスタ */}
@@ -762,7 +767,7 @@ export default function MainPage() {
       {isEditListModalOpen && (
         <div
           onClick={closeEditListModal}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -902,7 +907,7 @@ export default function MainPage() {
       {isHospitalMasterModalOpen && (
         <div
           onClick={() => setIsHospitalMasterModalOpen(false)}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -923,7 +928,7 @@ export default function MainPage() {
             </div>
 
             {/* モーダルボディ */}
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 overflow-y-auto overscroll-contain">
               <p className="text-sm text-[#6b7280] mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
               <div className="flex flex-col gap-2">
                 <button
@@ -969,7 +974,7 @@ export default function MainPage() {
       {isLendingMenuModalOpen && (
         <div
           onClick={() => setIsLendingMenuModalOpen(false)}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -1012,7 +1017,7 @@ export default function MainPage() {
       {isApplicationStatusModalOpen && (
         <div
           onClick={() => setIsApplicationStatusModalOpen(false)}
-          className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isMobile ? 'p-2' : 'p-5'}`}
+          className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isMobile ? 'p-2' : 'p-3 sm:p-5'}`}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -1041,7 +1046,7 @@ export default function MainPage() {
               </div>
             </div>
 
-            <div className={`${isMobile ? 'p-2' : 'p-4'} overflow-y-auto flex-1`}>
+            <div className={`${isMobile ? 'p-2' : 'p-4'} overflow-y-auto overscroll-contain flex-1`}>
               {unifiedApplications.length === 0 ? (
                 <div className="text-center py-10 text-[#6b7280]">
                   <p className="text-pretty">申請履歴がありません</p>

@@ -43,7 +43,7 @@ export default function PasswordResetPage() {
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-slate-100">
+    <div className="min-h-dvh flex items-center justify-center bg-slate-100">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-5 p-12">
         {/* タイトル */}
         <h1 className="text-3xl font-bold text-center mb-4 text-balance text-slate-800">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export const Modal: React.FC<ModalProps> = ({
     xl: 'max-w-6xl'
   };
 
+  useBodyScrollLock(isOpen);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -37,12 +40,10 @@ export const Modal: React.FC<ModalProps> = ({
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
@@ -50,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -59,7 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
-        className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
+        className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto overscroll-contain`}
       >
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between p-4 border-b">
@@ -68,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Close modal"
+                aria-label="閉じる"
               >
                 <svg
                   className="w-6 h-6"

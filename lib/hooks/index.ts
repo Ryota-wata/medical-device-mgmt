@@ -1,4 +1,5 @@
 export { useAssetFilter } from './useAssetFilter';
+export { useBodyScrollLock } from './useBodyScrollLock';
 export { useAssetMatchingFilters } from './useAssetMatchingFilters';
 export { useAssetTable } from './useAssetTable';
 export { useColumnFeatures } from './useColumnFeatures';

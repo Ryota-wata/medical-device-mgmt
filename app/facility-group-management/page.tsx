@@ -123,7 +123,7 @@ export default function FacilityGroupManagementPage() {
         </div>
       </header>
 
-      <div className={`flex-1 ${isMobile ? 'flex flex-col' : 'flex'} gap-4 p-5 max-w-[1400px] mx-auto w-full`}>
+      <div className={`flex-1 ${isMobile ? 'flex flex-col' : 'flex'} gap-4 px-3 py-5 sm:px-5 max-w-[1400px] mx-auto w-full`}>
         {/* 左パネル: グループ一覧 */}
         <div className={`bg-white rounded-lg shadow ${isMobile ? 'w-full' : 'w-[320px] shrink-0'}`}>
           <div className="p-4 border-b border-slate-200">
