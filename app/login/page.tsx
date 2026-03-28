@@ -214,7 +214,7 @@ export default function LoginPage() {
           </button>
 
           {showTestAccounts && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 max-h-[40vh] overflow-y-auto">
               {CATEGORY_ORDER.map((cat) => {
                 const catInfo = CATEGORY_LABELS[cat];
                 const users = TEST_USERS.filter(u => u.category === cat);
