@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useToast } from '@/components/ui/Toast';
+import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 
 // 4段階ステータス
 type DeviceStatus = 'available' | 'lending' | 'in_use' | 'used';
@@ -14,10 +14,10 @@ type ProcessedAction = 'lend' | 'return' | 'start_use' | 'end_use';
 
 // 担当者マスタモック
 const MOCK_USERS: { [id: string]: { name: string; department: string } } = {
-  '12345': { name: '山田太郎', department: '3階東病棟' },
-  '12346': { name: '佐藤花子', department: 'ICU' },
-  '12347': { name: '鈴木一郎', department: 'ME室' },
-  '12348': { name: '田中美咲', department: '手術室' },
+  '1': { name: '山田太郎', department: '3階東病棟' },
+  '2': { name: '佐藤花子', department: 'ICU' },
+  '3': { name: '鈴木一郎', department: 'ME室' },
+  '4': { name: '田中美咲', department: '手術室' },
 };
 
 // 機器マスタモック（状態付き）
@@ -36,14 +36,14 @@ interface DeviceInfo {
 
 // 機器モックデータ（4ステータスを網羅）
 const MOCK_DEVICES: { [qrCode: string]: DeviceInfo } = {
-  'QR001': {
+  '1': {
     name: '輸液ポンプ',
     manufacturer: 'テルモ',
     model: 'TE-161S',
     meNo: 'ME-0001',
     status: 'available',
   },
-  'QR002': {
+  '2': {
     name: 'シリンジポンプ',
     manufacturer: 'テルモ',
     model: 'TE-331S',
@@ -55,7 +55,7 @@ const MOCK_DEVICES: { [qrCode: string]: DeviceInfo } = {
       returnDueDate: '2026/3/6',
     },
   },
-  'QR003': {
+  '3': {
     name: 'ベッドサイドモニター',
     manufacturer: 'フクダ電子',
     model: 'DS-8500',
@@ -67,7 +67,7 @@ const MOCK_DEVICES: { [qrCode: string]: DeviceInfo } = {
       returnDueDate: '2026/3/14',
     },
   },
-  'QR004': {
+  '4': {
     name: 'パルスオキシメーター',
     manufacturer: 'コニカミノルタ',
     model: 'PULSOX-Neo',
@@ -87,6 +87,14 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
   lending: '貸出中',
   in_use: '使用中',
   used: '使用済',
+};
+
+// ステータスに応じたバッジスタイル
+const STATUS_STYLES: Record<DeviceStatus, string> = {
+  available: 'bg-[#e8f5e9] text-[#2e7d32] border-[#27ae60]',
+  lending: 'bg-[#e3f2fd] text-[#1565c0] border-[#42a5f5]',
+  in_use: 'bg-[#fff3e0] text-[#e65100] border-[#ff9800]',
+  used: 'bg-[#fce4ec] text-[#c62828] border-[#ef5350]',
 };
 
 export default function LendingCheckoutPage() {
@@ -119,6 +127,9 @@ export default function LendingCheckoutPage() {
   const dayScrollRef = useRef<HTMLDivElement>(null);
 
   const ITEM_HEIGHT = 44;
+
+  // モーダル表示時のbodyスクロールロック
+  useBodyScrollLock(isReturnDateModalOpen);
 
   // 担当者情報（IDから自動取得）
   const userInfo = useMemo(() => {
@@ -260,7 +271,7 @@ export default function LendingCheckoutPage() {
   const handleQRScan = () => {
     showToast('QR読取機能を起動中...', 'info');
     setTimeout(() => {
-      const codes = ['QR001', 'QR002', 'QR003', 'QR004'];
+      const codes = ['1', '2', '3', '4'];
       const randomCode = codes[Math.floor(Math.random() * codes.length)];
       setQrLabel(randomCode);
       setIsProcessed(false);
@@ -273,7 +284,7 @@ export default function LendingCheckoutPage() {
   const handleBarcodeScan = () => {
     showToast('バーコード読取機能を起動中...', 'info');
     setTimeout(() => {
-      setUserId('12345');
+      setUserId('1');
       showToast('バーコードを読み取りました', 'success');
     }, 500);
   };
@@ -325,29 +336,10 @@ export default function LendingCheckoutPage() {
   // 次の機器へ
   const handleNextDevice = () => {
     setQrLabel('');
+    setUserId('');
     setIsProcessed(false);
     setProcessedAction(null);
   };
-
-  // カード枠色（開始系=緑、完了系=オレンジ）
-  const getCardBorderColor = (status: DeviceStatus): string => {
-    if (status === 'available' || status === 'lending') return '#4caf50';
-    return '#ff9800';
-  };
-
-  // カード背景色
-  const getCardBgColor = (status: DeviceStatus): string => {
-    if (status === 'available' || status === 'lending') return '#e3f2fd';
-    return '#fff3e0';
-  };
-
-  // QRリンクのラベル
-  const QR_LINKS = [
-    { code: 'QR001', label: 'QR001（貸出可）', color: '#1976d2' },
-    { code: 'QR002', label: 'QR002（貸出中）', color: '#4caf50' },
-    { code: 'QR003', label: 'QR003（使用中）', color: '#ff9800' },
-    { code: 'QR004', label: 'QR004（使用済）', color: '#e65100' },
-  ];
 
   // 完了メッセージ
   const getCompletionTitle = (): string => {
@@ -381,66 +373,52 @@ export default function LendingCheckoutPage() {
     deviceInfo.status === 'in_use' || deviceInfo.status === 'used'
   );
 
-  const containerPadding = isMobile ? '16px' : '24px';
+  // アクションボタンのラベル
+  const getActionLabel = (): string => {
+    if (!deviceInfo) return '';
+    switch (deviceInfo.status) {
+      case 'available': return '貸出する';
+      case 'lending': return '使用を開始する';
+      case 'in_use': return '使用を終了する';
+      case 'used': return '返却する';
+      default: return '';
+    }
+  };
+
+  // アクションボタンのハンドラー
+  const getActionHandler = () => {
+    if (!deviceInfo) return () => {};
+    switch (deviceInfo.status) {
+      case 'available': return handleLending;
+      case 'lending': return handleStartUse;
+      case 'in_use': return handleEndUse;
+      case 'used': return handleReturn;
+      default: return () => {};
+    }
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
-      <Header
-        title="貸出・返却"
-        showBackButton={true}
-        backHref="/main"
-        backLabel="メイン画面に戻る"
-        hideMenu={true}
-      />
+    <div className="min-h-dvh flex flex-col bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
+          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+            logo
+          </div>
+          <div className="text-base font-bold text-[#1f2937] text-balance">
+            貸出・返却
+          </div>
+        </div>
+      </header>
 
-      <div style={{
-        flex: 1,
-        padding: containerPadding,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '24px',
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '500px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px',
-        }}>
+      {/* メインコンテンツ */}
+      <div className="flex-1 w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
 
-          {/* ステップ1: QRラベル入力 */}
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            border: deviceInfo ? '2px solid #4caf50' : '1px solid #ddd',
-            padding: '16px',
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '12px',
-            }}>
-              <span style={{
-                background: deviceInfo ? '#4caf50' : '#1976d2',
-                color: 'white',
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '14px',
-                fontWeight: 'bold',
-              }}>
-                {deviceInfo ? '✓' : '1'}
-              </span>
-              <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
-                機器のQRコードを読み取る
-              </span>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          {/* QRラベル入力セクション */}
+          <div className="pb-6 border-b border-[#e5e7eb]">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">機器のQRコードを読み取る</h2>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={qrLabel}
@@ -449,514 +427,251 @@ export default function LendingCheckoutPage() {
                   setIsProcessed(false);
                   setProcessedAction(null);
                 }}
-                placeholder="例: QR001（貸出可）/ QR002（貸出中）"
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  fontSize: '16px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  outline: 'none',
-                }}
+                placeholder="例: 1（貸出可）/ 2（貸出中）/ 3（使用中）/ 4（使用済）"
+                className="flex-1 px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
               />
               {(isTablet || isMobile) && (
                 <button
                   onClick={handleQRScan}
-                  style={{
-                    padding: '12px 16px',
-                    background: '#1976d2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
+                  className="px-4 py-2.5 bg-[#27ae60] text-white text-sm font-medium border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors whitespace-nowrap"
                 >
-                  <span>📷</span>
-                  <span style={{ fontSize: '14px' }}>読取</span>
+                  QR読取
                 </button>
               )}
             </div>
-            {/* テスト用QRコード例 */}
-            <div style={{
-              marginTop: '8px',
-              fontSize: '11px',
-              color: '#888',
-              display: 'flex',
-              gap: '12px',
-              flexWrap: 'wrap',
-            }}>
-              {QR_LINKS.map(link => (
-                <span
-                  key={link.code}
-                  onClick={() => { setQrLabel(link.code); setIsProcessed(false); setProcessedAction(null); }}
-                  style={{ cursor: 'pointer', textDecoration: 'underline', color: link.color }}
-                >
-                  {link.label}
-                </span>
-              ))}
-            </div>
           </div>
 
-          {/* 機器情報・状態表示 */}
+          {/* 機器情報・操作セクション */}
           {deviceInfo && !isProcessed && (
-            <div style={{
-              background: getCardBgColor(deviceInfo.status),
-              borderRadius: '12px',
-              border: `2px solid ${getCardBorderColor(deviceInfo.status)}`,
-              padding: '20px',
-            }}>
+            <>
               {/* 機器情報 */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>
-                  {deviceInfo.name}
-                </div>
-                <div style={{ fontSize: '13px', color: '#666' }}>
-                  {deviceInfo.manufacturer} / {deviceInfo.model}
-                </div>
-                <div style={{ fontSize: '12px', color: '#888' }}>
-                  ME管理No: {deviceInfo.meNo}
-                </div>
-              </div>
-
-              {/* 現在の状態 */}
-              <div style={{
-                background: 'white',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                marginBottom: '16px',
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}>
-                  <span style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '4px',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    background: '#fffde7',
-                    border: '2px solid #fdd835',
-                    color: '#333',
-                  }}>
-                    {STATUS_LABELS[deviceInfo.status]}
-                  </span>
-                </div>
-                {showLendingInfoReadonly && deviceInfo.lendingInfo && (
-                  <div style={{ marginTop: '8px', fontSize: '12px', color: '#888' }}>
-                    貸出日: {deviceInfo.lendingInfo.lendingDate} ／ 返却予定: {deviceInfo.lendingInfo.returnDueDate}
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">機器ポンプ</h2>
+                <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <div className="text-base font-bold text-[#1f2937]">{deviceInfo.name}</div>
+                      <div className="text-xs text-[#6b7280] mt-0.5">
+                        {deviceInfo.manufacturer} / {deviceInfo.model}
+                      </div>
+                    </div>
+                    <span className={`shrink-0 px-2.5 py-1 text-xs font-bold rounded border ${STATUS_STYLES[deviceInfo.status]}`}>
+                      {STATUS_LABELS[deviceInfo.status]}
+                    </span>
                   </div>
-                )}
+                  <div className="text-xs text-[#6b7280]">
+                    ME管理No: <span className="font-semibold text-[#374151] tabular-nums">{deviceInfo.meNo}</span>
+                  </div>
+                  {showLendingInfoReadonly && deviceInfo.lendingInfo && (
+                    <div className="mt-2 pt-2 border-t border-[#bbf7d0] text-xs text-[#6b7280]">
+                      貸出日: <span className="tabular-nums">{deviceInfo.lendingInfo.lendingDate}</span> ／
+                      返却予定: <span className="tabular-nums">{deviceInfo.lendingInfo.returnDueDate}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* 担当者ID入力 */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  color: '#333',
-                  marginBottom: '8px',
-                }}>
-                  担当者ID
-                </label>
-                <div style={{ display: 'flex', gap: '8px' }}>
+              <div className="py-6 border-b border-[#e5e7eb]">
+                <h2 className="text-sm font-bold text-[#1f2937] mb-3">担当者ID</h2>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
-                    placeholder="例: 12345"
-                    style={{
-                      flex: 1,
-                      padding: '12px 16px',
-                      fontSize: '16px',
-                      border: '2px solid #ddd',
-                      borderRadius: '8px',
-                      outline: 'none',
-                      background: 'white',
-                    }}
+                    placeholder="例: 1 / 2 / 3 / 4"
+                    className="flex-1 px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
                   />
                   {(isTablet || isMobile) && (
                     <button
                       onClick={handleBarcodeScan}
-                      style={{
-                        padding: '12px 16px',
-                        background: '#ff9800',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        whiteSpace: 'nowrap',
-                      }}
+                      className="px-4 py-2.5 bg-[#6b7280] text-white text-sm font-medium border-0 rounded-md cursor-pointer hover:bg-[#4b5563] transition-colors whitespace-nowrap"
                     >
                       バーコード
                     </button>
                   )}
                 </div>
-                {userInfo ? (
-                  <div style={{
-                    marginTop: '8px',
-                    fontSize: '14px',
-                    color: '#1976d2',
-                    fontWeight: 'bold',
-                  }}>
+                {userInfo && (
+                  <div className="mt-2 text-sm font-semibold text-[#27ae60]">
                     {userInfo.name}（{userInfo.department}）
-                  </div>
-                ) : (
-                  <div style={{
-                    marginTop: '8px',
-                    fontSize: '11px',
-                    color: '#888',
-                    display: 'flex',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                  }}>
-                    <span
-                      onClick={() => setUserId('12345')}
-                      style={{ cursor: 'pointer', textDecoration: 'underline', color: '#666' }}
-                    >
-                      12345（山田太郎）
-                    </span>
-                    <span
-                      onClick={() => setUserId('12346')}
-                      style={{ cursor: 'pointer', textDecoration: 'underline', color: '#666' }}
-                    >
-                      12346（佐藤花子）
-                    </span>
-                    <span
-                      onClick={() => setUserId('12347')}
-                      style={{ cursor: 'pointer', textDecoration: 'underline', color: '#666' }}
-                    >
-                      12347（鈴木一郎）
-                    </span>
                   </div>
                 )}
               </div>
 
-              {/* 返却予定日設定（事務:貸出時 / 臨床:使用開始時） */}
+              {/* 返却予定日（貸出可/貸出中のときのみ） */}
               {showReturnDate && (
-                <div style={{
-                  background: 'white',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                  <div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>返却予定日</div>
-                    <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#333', fontVariantNumeric: 'tabular-nums' }}>
+                <div className="py-6 border-b border-[#e5e7eb]">
+                  <h2 className="text-sm font-bold text-[#1f2937] mb-3">返却予定日</h2>
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-semibold text-[#1f2937] tabular-nums">
                       {deviceInfo.status === 'lending' && deviceInfo.lendingInfo
                         ? deviceInfo.lendingInfo.returnDueDate
                         : formatDate(returnDate)
                       }
-                    </div>
+                    </span>
+                    <button
+                      onClick={openDatePicker}
+                      className="px-4 py-2 bg-[#6b7280] text-white text-sm font-medium border-0 rounded-md cursor-pointer hover:bg-[#4b5563] transition-colors"
+                    >
+                      変更
+                    </button>
                   </div>
-                  <button
-                    onClick={openDatePicker}
-                    style={{
-                      padding: '8px 16px',
-                      background: '#e65100',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
-                  >
-                    変更
-                  </button>
                 </div>
               )}
 
-              {/* アクションボタン（ステータスに応じて1つだけ表示） */}
-              {deviceInfo.status === 'available' && (
+              {/* アクションボタン */}
+              <div className="pt-6">
                 <button
-                  onClick={handleLending}
+                  onClick={getActionHandler()}
                   disabled={!userInfo}
-                  style={{
-                    width: '100%',
-                    padding: '20px',
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    background: userInfo ? '#1976d2' : '#bdbdbd',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: userInfo ? 'pointer' : 'not-allowed',
-                    boxShadow: userInfo ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none',
-                  }}
+                  className={`w-full py-3.5 text-base font-bold border-0 rounded-md transition-colors ${
+                    userInfo
+                      ? 'bg-[#27ae60] text-white cursor-pointer hover:bg-[#219a52]'
+                      : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+                  }`}
                 >
-                  貸出する
+                  {getActionLabel()}
                 </button>
-              )}
-
-              {deviceInfo.status === 'used' && (
-                <button
-                  onClick={handleReturn}
-                  disabled={!userInfo}
-                  style={{
-                    width: '100%',
-                    padding: '20px',
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    background: userInfo ? '#4caf50' : '#bdbdbd',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: userInfo ? 'pointer' : 'not-allowed',
-                    boxShadow: userInfo ? '0 4px 12px rgba(76, 175, 80, 0.3)' : 'none',
-                  }}
-                >
-                  返却する
-                </button>
-              )}
-
-              {deviceInfo.status === 'lending' && (
-                <button
-                  onClick={handleStartUse}
-                  disabled={!userInfo}
-                  style={{
-                    width: '100%',
-                    padding: '20px',
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    background: userInfo ? '#1976d2' : '#bdbdbd',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: userInfo ? 'pointer' : 'not-allowed',
-                    boxShadow: userInfo ? '0 4px 12px rgba(25, 118, 210, 0.3)' : 'none',
-                  }}
-                >
-                  使用を開始する
-                </button>
-              )}
-
-              {deviceInfo.status === 'in_use' && (
-                <button
-                  onClick={handleEndUse}
-                  disabled={!userInfo}
-                  style={{
-                    width: '100%',
-                    padding: '20px',
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    background: userInfo ? '#ff9800' : '#bdbdbd',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: userInfo ? 'pointer' : 'not-allowed',
-                    boxShadow: userInfo ? '0 4px 12px rgba(255, 152, 0, 0.3)' : 'none',
-                  }}
-                >
-                  使用を終了する
-                </button>
-              )}
-            </div>
+              </div>
+            </>
           )}
 
           {/* 処理完了表示 */}
           {isProcessed && deviceInfo && (
-            <div style={{
-              background: '#e8f5e9',
-              borderRadius: '12px',
-              border: '2px solid #4caf50',
-              padding: '24px',
-              textAlign: 'center',
-            }}>
-              <div style={{
-                fontSize: '48px',
-                marginBottom: '16px',
-              }}>
-                ✓
+            <div className="py-6">
+              <div className="text-center mb-6">
+                <div className="text-[#27ae60] text-lg font-bold mb-1">{getCompletionTitle()}</div>
+                <div className="text-sm text-[#6b7280]">{getCompletionDescription()}</div>
               </div>
-              <div style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: '#2e7d32',
-                marginBottom: '8px',
-              }}>
-                {getCompletionTitle()}
+
+              {/* 完了時の機器情報カード */}
+              <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4 mb-6">
+                <div className="text-base font-bold text-[#1f2937] mb-1">{deviceInfo.name}</div>
+                <div className="text-xs text-[#6b7280]">
+                  {deviceInfo.manufacturer} / {deviceInfo.model}
+                </div>
+                <div className="text-xs text-[#6b7280] mt-1">
+                  ME管理No: <span className="font-semibold text-[#374151] tabular-nums">{deviceInfo.meNo}</span>
+                </div>
               </div>
-              <div style={{
-                fontSize: '14px',
-                color: '#666',
-                marginBottom: '24px',
-              }}>
-                {getCompletionDescription()}
+
+              <div className="text-center">
+                <span
+                  onClick={handleNextDevice}
+                  className="text-sm text-[#27ae60] font-semibold underline cursor-pointer hover:text-[#219a52] transition-colors"
+                >
+                  次の機器を処理
+                </span>
               </div>
-              <button
-                onClick={handleNextDevice}
-                style={{
-                  padding: '16px 32px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  background: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                次の機器を処理
-              </button>
             </div>
           )}
 
           {/* 初期状態（機器未選択） */}
-          {!deviceInfo && (
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              border: '2px dashed #ddd',
-              padding: '40px 24px',
-              textAlign: 'center',
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}>📷</div>
-              <div style={{ fontSize: '16px', color: '#666' }}>
+          {!deviceInfo && !isProcessed && (
+            <div className="py-12 text-center">
+              <div className="w-20 h-16 mx-auto mb-4 bg-[#f3f4f6] rounded-lg flex items-center justify-center">
+                <svg className="w-8 h-8 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="text-sm text-[#6b7280] text-pretty">
                 機器のQRコードを読み取ってください
               </div>
-              <div style={{ fontSize: '13px', color: '#999', marginTop: '8px' }}>
+              <div className="text-xs text-[#9ca3af] mt-2 text-pretty">
                 機器の状態に応じて貸出・返却・使用開始・使用終了を行います
               </div>
             </div>
           )}
         </div>
+
+        {/* 戻るボタン */}
+        <div className="mt-4">
+          <button
+            onClick={() => router.push('/main')}
+            className="px-8 py-2.5 bg-[#e5e7eb] text-sm font-medium text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors"
+          >
+            戻る
+          </button>
+        </div>
       </div>
+
+      {/* フッター */}
+      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+      </footer>
 
       {/* 返却予定日変更モーダル（ドラムロール式） */}
       {isReturnDateModalOpen && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-5"
           onClick={cancelDatePicker}
         >
           <div
-            style={{
-              background: 'white',
-              borderRadius: '16px',
-              width: '90%',
-              maxWidth: '400px',
-              padding: '0',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-            }}
+            className="bg-white rounded-2xl w-full max-w-[400px] shadow-lg overflow-hidden overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 20px',
-              borderBottom: '1px solid #eee'
-            }}>
+            {/* モーダルヘッダー */}
+            <div className="flex justify-between items-center px-5 py-4 border-b border-[#e5e7eb]">
               <button
                 onClick={cancelDatePicker}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '16px',
-                  color: '#999',
-                  cursor: 'pointer',
-                  padding: '4px 8px'
-                }}
+                className="bg-transparent border-0 text-base text-[#9ca3af] cursor-pointer px-1 py-1"
               >
                 キャンセル
               </button>
-              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>
+              <span className="text-base font-bold text-[#1f2937]">
                 返却予定日
               </span>
               <button
                 onClick={confirmDatePicker}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '16px',
-                  color: '#e65100',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  padding: '4px 8px'
-                }}
+                className="bg-transparent border-0 text-base text-[#27ae60] font-bold cursor-pointer px-1 py-1"
               >
                 完了
               </button>
             </div>
 
-            <div style={{
-              display: 'flex',
-              padding: '8px 10px',
-              borderBottom: '1px solid #eee',
-              background: '#fafafa'
-            }}>
-              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>年</div>
-              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>月</div>
-              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>日</div>
+            {/* 年月日ヘッダー */}
+            <div className="flex px-2.5 py-2 border-b border-[#e5e7eb] bg-[#fafafa]">
+              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">年</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">月</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">日</div>
             </div>
 
-            <div style={{
-              display: 'flex',
-              height: '200px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '10px',
-                right: '10px',
-                height: `${ITEM_HEIGHT}px`,
-                transform: 'translateY(-50%)',
-                background: '#fff3e0',
-                borderRadius: '8px',
-                pointerEvents: 'none',
-                zIndex: 1
-              }} />
+            {/* ドラムロール */}
+            <div className="flex h-[200px] relative overflow-hidden">
+              {/* 選択行ハイライト */}
+              <div
+                className="absolute left-2.5 right-2.5 bg-[#f0fdf4] rounded-lg pointer-events-none z-[1]"
+                style={{
+                  top: '50%',
+                  height: `${ITEM_HEIGHT}px`,
+                  transform: 'translateY(-50%)',
+                }}
+              />
 
-              <div style={{ flex: 1, position: 'relative' }}>
+              {/* 年カラム */}
+              <div className="flex-1 relative">
                 <div
                   ref={yearScrollRef}
                   onScroll={handleYearScroll}
+                  className="h-full overflow-y-auto overscroll-contain"
                   style={{
-                    height: '100%',
-                    overflowY: 'auto',
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
                     paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
+                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`,
                   }}
                 >
                   {yearOptions.map(year => (
                     <div
                       key={year}
+                      className="flex items-center justify-center relative z-[2] tabular-nums"
                       style={{
                         height: `${ITEM_HEIGHT}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempYear === year ? '#e65100' : '#2c3e50',
+                        color: tempYear === year ? '#27ae60' : '#1f2937',
                         fontWeight: tempYear === year ? 'bold' : 'normal',
-                        position: 'relative',
-                        zIndex: 2,
-                        fontVariantNumeric: 'tabular-nums'
                       }}
                     >
                       {year}
@@ -965,34 +680,29 @@ export default function LendingCheckoutPage() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, position: 'relative' }}>
+              {/* 月カラム */}
+              <div className="flex-1 relative">
                 <div
                   ref={monthScrollRef}
                   onScroll={handleMonthScroll}
+                  className="h-full overflow-y-auto overscroll-contain"
                   style={{
-                    height: '100%',
-                    overflowY: 'auto',
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
                     paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
+                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`,
                   }}
                 >
                   {monthOptions.map(month => (
                     <div
                       key={month}
+                      className="flex items-center justify-center relative z-[2] tabular-nums"
                       style={{
                         height: `${ITEM_HEIGHT}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempMonth === month ? '#e65100' : '#2c3e50',
+                        color: tempMonth === month ? '#27ae60' : '#1f2937',
                         fontWeight: tempMonth === month ? 'bold' : 'normal',
-                        position: 'relative',
-                        zIndex: 2,
-                        fontVariantNumeric: 'tabular-nums'
                       }}
                     >
                       {month}
@@ -1001,34 +711,29 @@ export default function LendingCheckoutPage() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, position: 'relative' }}>
+              {/* 日カラム */}
+              <div className="flex-1 relative">
                 <div
                   ref={dayScrollRef}
                   onScroll={handleDayScroll}
+                  className="h-full overflow-y-auto overscroll-contain"
                   style={{
-                    height: '100%',
-                    overflowY: 'auto',
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
                     paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
+                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`,
                   }}
                 >
                   {dayOptions.map(day => (
                     <div
                       key={day}
+                      className="flex items-center justify-center relative z-[2] tabular-nums"
                       style={{
                         height: `${ITEM_HEIGHT}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempDay === day ? '#e65100' : '#2c3e50',
+                        color: tempDay === day ? '#27ae60' : '#1f2937',
                         fontWeight: tempDay === day ? 'bold' : 'normal',
-                        position: 'relative',
-                        zIndex: 2,
-                        fontVariantNumeric: 'tabular-nums'
                       }}
                     >
                       {day}
@@ -1038,9 +743,10 @@ export default function LendingCheckoutPage() {
               </div>
             </div>
 
-            <div style={{ padding: '12px 20px', borderTop: '1px solid #eee' }}>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>クイック選択:</div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {/* クイック選択 */}
+            <div className="px-5 py-3 border-t border-[#e5e7eb]">
+              <div className="text-xs text-[#6b7280] mb-2">クイック選択:</div>
+              <div className="flex gap-2 flex-wrap">
                 {[7, 14, 21, 30].map(days => {
                   const targetDate = new Date();
                   targetDate.setDate(targetDate.getDate() + days);
@@ -1052,15 +758,7 @@ export default function LendingCheckoutPage() {
                         setTempMonth((targetDate.getMonth() + 1).toString());
                         setTempDay(targetDate.getDate().toString());
                       }}
-                      style={{
-                        padding: '8px 16px',
-                        background: 'white',
-                        border: '1px solid #e65100',
-                        borderRadius: '20px',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        color: '#e65100',
-                      }}
+                      className="px-4 py-2 bg-white border border-[#27ae60] rounded-full text-[13px] cursor-pointer text-[#27ae60] hover:bg-[#f0fdf4] transition-colors"
                     >
                       {days}日後
                     </button>
