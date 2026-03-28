@@ -85,7 +85,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center fixed inset-0 bg-gray-50 overflow-y-auto py-8">
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50 overflow-y-auto py-8">
       <div className="bg-white w-full max-w-md mx-5 p-12 my-auto rounded-xl shadow-md">
         {/* タイトル */}
         <h1 className="text-2xl font-bold text-center mb-8 text-balance text-gray-800">
