@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
 // 貸出種別と対象機種の型
@@ -14,46 +13,44 @@ interface LendingCategory {
 
 interface LendingDevice {
   id: string;
-  item: string;
-  maker: string;
-  model: string;
+  name: string;
   availableCount: number;
 }
 
 // モックデータ
 const MOCK_CATEGORIES: LendingCategory[] = [
   {
-    id: 'infusion-pump',
-    name: '輸液ポンプ（病棟貸出機）',
+    id: 'pump',
+    name: 'ポンプ関連',
     devices: [
-      { id: 'fp-n17a', item: '輸液ポンプ', maker: 'ニプロ', model: 'FP-N17a-NS', availableCount: 5 },
-      { id: 'te-161s', item: '輸液ポンプ', maker: 'テルモ', model: 'TE-161S', availableCount: 3 },
-      { id: 'pca-pump', item: 'PCAポンプ', maker: 'テルモ', model: 'TE-PCA2', availableCount: 4 },
+      { id: 'infusion-pump', name: '輸液ポンプ', availableCount: 5 },
+      { id: 'syringe-pump', name: 'シリンジポンプ', availableCount: 3 },
+      { id: 'pca-pump', name: 'PCAポンプ', availableCount: 4 },
     ],
   },
   {
-    id: 'inhaler',
-    name: '吸入器関連',
+    id: 'transport',
+    name: '搬入搬出',
     devices: [
-      { id: 'nebulizer-1', item: 'ネブライザ', maker: 'オムロン', model: 'NE-C803', availableCount: 10 },
-      { id: 'oxygen', item: '酸素濃縮器', maker: 'フクダ電子', model: 'OC-3', availableCount: 2 },
+      { id: 'stretcher', name: 'ストレッチャー', availableCount: 6 },
+      { id: 'wheelchair', name: '車椅子', availableCount: 8 },
     ],
   },
   {
     id: 'monitor',
     name: 'モニター関連',
     devices: [
-      { id: 'bedside', item: 'ベッドサイドモニター', maker: '日本光電', model: 'BSM-6701', availableCount: 4 },
-      { id: 'ecg', item: '心電計', maker: 'フクダ電子', model: 'FX-8322', availableCount: 6 },
-      { id: 'spo2', item: 'パルスオキシメーター', maker: 'コニカミノルタ', model: 'PULSOX-Neo', availableCount: 15 },
+      { id: 'bedside-monitor', name: 'ベッドサイドモニター', availableCount: 4 },
+      { id: 'ecg', name: '心電計', availableCount: 6 },
+      { id: 'spo2', name: 'パルスオキシメーター', availableCount: 15 },
     ],
   },
   {
     id: 'life-support',
-    name: '生命維持装置',
+    name: '生命維持関連装置',
     devices: [
-      { id: 'ventilator', item: '人工呼吸器', maker: 'フィリップス', model: 'V60', availableCount: 2 },
-      { id: 'defibrillator', item: '除細動器', maker: '日本光電', model: 'TEC-5631', availableCount: 3 },
+      { id: 'ventilator', name: '人工呼吸器', availableCount: 2 },
+      { id: 'defibrillator', name: '除細動器', availableCount: 3 },
     ],
   },
 ];
@@ -62,13 +59,18 @@ export default function LendingAvailablePage() {
   const router = useRouter();
   const { isMobile } = useResponsive();
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('pump');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('infusion-pump');
 
   // 選択されたカテゴリ
   const selectedCategory = useMemo(() => {
     return MOCK_CATEGORIES.find(c => c.id === selectedCategoryId);
   }, [selectedCategoryId]);
+
+  // 選択された機器
+  const selectedDevice = useMemo(() => {
+    return selectedCategory?.devices.find(d => d.id === selectedDeviceId);
+  }, [selectedCategory, selectedDeviceId]);
 
   // カテゴリの貸出可能合計
   const categoryTotal = useMemo(() => {
@@ -79,215 +81,126 @@ export default function LendingAvailablePage() {
   // カテゴリ変更時
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
-    setSelectedDeviceId('');
+    const cat = MOCK_CATEGORIES.find(c => c.id === categoryId);
+    if (cat && cat.devices.length > 0) {
+      setSelectedDeviceId(cat.devices[0].id);
+    } else {
+      setSelectedDeviceId('');
+    }
   };
 
-  const containerPadding = isMobile ? '12px' : '24px';
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
-      <Header
-        title="貸出可能機器閲覧"
-        showBackButton={true}
-        backHref="/main"
-        backLabel="メイン画面に戻る"
-        hideMenu={true}
-      />
-
-      <div style={{
-        flex: 1,
-        padding: containerPadding,
-        overflow: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        maxWidth: '640px',
-        width: '100%',
-        margin: '0 auto',
-        boxSizing: 'border-box',
-      }}>
-        {/* 貸出種別名 */}
-        <div style={{
-          background: 'white',
-          borderRadius: '8px',
-          border: '1px solid #ddd',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '12px 16px',
-            background: '#f8f9fa',
-            borderBottom: '1px solid #ddd',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>貸出種別名</span>
-            <span style={{ color: '#999', fontSize: '12px' }}>▼</span>
+    <div className="min-h-dvh flex flex-col bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
+          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+            logo
           </div>
-          <div style={{ padding: '8px' }}>
-            {MOCK_CATEGORIES.map(category => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryChange(category.id)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: isMobile ? '10px 12px' : '12px 16px',
-                  background: selectedCategoryId === category.id ? '#fffde7' : 'white',
-                  border: selectedCategoryId === category.id ? '2px solid #fdd835' : '1px solid #e0e0e0',
-                  borderRadius: '6px',
-                  marginBottom: '8px',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: selectedCategoryId === category.id ? 'bold' : 'normal',
-                  color: '#333',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {category.name}
-              </button>
-            ))}
+          <div className="text-base font-bold text-[#1f2937] text-balance">
+            貸出可能機器閲覧
           </div>
         </div>
+      </header>
 
-        {/* 貸出可能対象機種 */}
-        <div style={{
-          background: 'white',
-          borderRadius: '8px',
-          border: '1px solid #ddd',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '12px 16px',
-            background: '#f8f9fa',
-            borderBottom: '1px solid #ddd',
-          }}>
-            <span style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold' }}>貸出可能対象機種</span>
+      {/* メインコンテンツ */}
+      <div className="flex-1 w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+          {/* 貸出種別名 */}
+          <div className="pb-6 border-b border-[#e5e7eb]">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出種別名</h2>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {MOCK_CATEGORIES.map(category => (
+                <label
+                  key={category.id}
+                  className="flex items-center gap-2 cursor-pointer min-h-[44px]"
+                >
+                  <input
+                    type="radio"
+                    name="lending-category"
+                    value={category.id}
+                    checked={selectedCategoryId === category.id}
+                    onChange={() => handleCategoryChange(category.id)}
+                    className="size-4 accent-[#27ae60] cursor-pointer"
+                  />
+                  <span className={`text-sm ${selectedCategoryId === category.id ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                    {category.name}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-          <div style={{ padding: '8px', minHeight: '120px' }}>
+
+          {/* 貸出可能対象機種 */}
+          <div className="py-6 border-b border-[#e5e7eb]">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出可能対象機種</h2>
             {selectedCategory ? (
-              selectedCategory.devices.map(device => {
-                const isSelected = selectedDeviceId === device.id;
-                return (
-                  <button
+              <div className="flex flex-wrap gap-x-5 gap-y-2">
+                {selectedCategory.devices.map(device => (
+                  <label
                     key={device.id}
-                    onClick={() => setSelectedDeviceId(device.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      width: '100%',
-                      padding: '0',
-                      background: 'none',
-                      border: 'none',
-                      borderRadius: '6px',
-                      marginBottom: '8px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s',
-                      overflow: 'hidden',
-                    }}
+                    className="flex items-center gap-2 cursor-pointer min-h-[44px]"
                   >
-                    {/* 機種情報 */}
-                    <div style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: isMobile ? '12px' : '16px',
-                      padding: isMobile ? '10px 12px' : '12px 16px',
-                      background: isSelected ? '#fffde7' : 'white',
-                      border: isSelected ? '2px solid #fdd835' : '1px solid #e0e0e0',
-                      borderRadius: '6px 0 0 6px',
-                      borderRight: 'none',
-                      minWidth: 0,
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        fontWeight: isSelected ? 'bold' : 'normal',
-                        color: '#333',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {device.item}
-                      </span>
-                      <span style={{
-                        fontSize: isMobile ? '12px' : '13px',
-                        color: '#666',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {device.maker}
-                      </span>
-                      <span style={{
-                        fontSize: isMobile ? '12px' : '13px',
-                        color: '#666',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}>
-                        {device.model}
-                      </span>
-                    </div>
-                    {/* 数量バッジ */}
-                    <div style={{
-                      padding: isMobile ? '10px 12px' : '12px 16px',
-                      background: isSelected ? '#fdd835' : '#e0e0e0',
-                      borderRadius: '0 6px 6px 0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '2px',
-                      whiteSpace: 'nowrap',
-                      fontVariantNumeric: 'tabular-nums',
-                      alignSelf: 'stretch',
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '16px' : '18px',
-                        fontWeight: 'bold',
-                        color: '#333',
-                      }}>
-                        {device.availableCount}
-                      </span>
-                      <span style={{ fontSize: '12px', color: '#555' }}>台</span>
-                    </div>
-                  </button>
-                );
-              })
-            ) : (
-              <div style={{
-                padding: '24px',
-                textAlign: 'center',
-                color: '#999',
-                fontSize: isMobile ? '12px' : '13px',
-              }}>
-                貸出種別名を選択してください
+                    <input
+                      type="radio"
+                      name="lending-device"
+                      value={device.id}
+                      checked={selectedDeviceId === device.id}
+                      onChange={() => setSelectedDeviceId(device.id)}
+                      className="size-4 accent-[#27ae60] cursor-pointer"
+                    />
+                    <span className={`text-sm ${selectedDeviceId === device.id ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                      {device.name}
+                    </span>
+                  </label>
+                ))}
               </div>
+            ) : (
+              <p className="text-sm text-[#9ca3af]">貸出種別名を選択してください</p>
             )}
           </div>
-        </div>
 
-        {/* 貸出可能合計 */}
-        {selectedCategory && (
-          <div style={{
-            background: '#1976d2',
-            borderRadius: '8px',
-            padding: isMobile ? '16px' : '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            color: 'white',
-          }}>
-            <span style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 'bold' }}>
-              貸出可能合計
-            </span>
-            <span style={{
-              fontSize: isMobile ? '24px' : '28px',
-              fontWeight: 'bold',
-              fontVariantNumeric: 'tabular-nums',
-            }}>
-              {categoryTotal}
-              <span style={{ fontSize: '14px', fontWeight: 'normal', marginLeft: '4px' }}>台</span>
-            </span>
+          {/* 貸出可能合計 */}
+          <div className="pt-6 pb-6">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出可能合計</h2>
+            {selectedDevice ? (
+              <div>
+                <p className="text-sm font-bold text-[#27ae60] mb-3">{selectedDevice.name}</p>
+                <div className="flex flex-col mb-4">
+                  {selectedCategory?.devices.map(device => (
+                    <div key={device.id} className="flex items-baseline justify-between gap-2 py-2 border-b border-[#e5e7eb] min-w-[140px]">
+                      <span className="text-sm text-[#4b5563]">{device.name}</span>
+                      <span className="text-sm font-semibold text-[#1f2937] tabular-nums">{device.availableCount} 台</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm font-bold text-[#1f2937]">合計</span>
+                  <span className="text-2xl font-bold text-[#27ae60] tabular-nums">{categoryTotal}</span>
+                  <span className="text-sm text-[#4b5563]">台</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-red-500">選択した条件に在庫がありません</p>
+            )}
           </div>
-        )}
+
+          {/* 戻るボタン */}
+          <div>
+            <button
+              onClick={() => router.push('/main')}
+              className="px-8 py-2.5 bg-[#e5e7eb] text-sm font-medium text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors"
+            >
+              戻る
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* フッター */}
+      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+      </footer>
     </div>
   );
 }
