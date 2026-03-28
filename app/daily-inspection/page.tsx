@@ -557,31 +557,23 @@ function DailyInspectionContent() {
                               <span className="text-xs text-[#6b7280]">{item.unit}</span>
                             </div>
                           ) : (
-                            <div className="flex items-center justify-center gap-3">
-                              <button
-                                onClick={() => handleItemResultChange(index, '合')}
-                                className={`size-8 flex items-center justify-center rounded-full cursor-pointer transition-colors border-0 ${
-                                  item.result === '合' ? 'text-[#27ae60] bg-[#f0fdf4]' : 'text-[#d1d5db] bg-transparent hover:text-[#27ae60]'
-                                }`}
-                                aria-label="合格"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <path d="m9 12 2 2 4-4" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() => handleItemResultChange(index, '否')}
-                                className={`size-8 flex items-center justify-center rounded-full cursor-pointer transition-colors border-0 ${
-                                  item.result === '否' ? 'text-[#dc2626] bg-[#fef2f2]' : 'text-[#d1d5db] bg-transparent hover:text-[#dc2626]'
-                                }`}
-                                aria-label="不合格"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <line x1="18" y1="6" x2="6" y2="18" />
-                                  <line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                              </button>
+                            <div className="flex gap-1">
+                              {['合', '否', '交換'].map((val) => {
+                                const base = 'px-3 py-1.5 text-xs rounded border cursor-pointer transition-colors min-w-[44px] min-h-[32px]';
+                                const active = item.result === val;
+                                const color = val === '合' ? 'border-[#27ae60] bg-[#f0fdf4] text-[#27ae60]'
+                                  : val === '否' ? 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626]'
+                                  : 'border-[#f59e0b] bg-[#fffbeb] text-[#f59e0b]';
+                                return (
+                                  <button
+                                    key={val}
+                                    className={`${base} ${active ? color : 'border-[#d1d5db] bg-white text-[#1f2937] hover:bg-[#f9fafb]'}`}
+                                    onClick={() => handleItemResultChange(index, val)}
+                                  >
+                                    {val}
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                         </td>
@@ -743,24 +735,10 @@ function DailyInspectionContent() {
                       <tr key={index} className="border-b border-[#e5e7eb] last:border-b-0">
                         <td className="px-3 py-2.5 text-sm text-[#1f2937]">{item.itemName}</td>
                         <td className="px-3 py-2.5 text-sm text-[#1f2937] border-l border-[#e5e7eb]">{item.content}</td>
-                        <td className="px-3 py-2.5 text-center border-l border-[#e5e7eb]">
-                          {item.unit ? (
-                            <span className="text-sm font-semibold text-[#1f2937] tabular-nums">
-                              {item.result} <span className="text-xs text-[#6b7280]">{item.unit}</span>
-                            </span>
-                          ) : item.result === '合' ? (
-                            <svg className="inline-block text-[#27ae60]" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10" />
-                              <path d="m9 12 2 2 4-4" />
-                            </svg>
-                          ) : item.result === '否' || item.result === '交換' ? (
-                            <svg className="inline-block text-[#dc2626]" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18" />
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          ) : (
-                            <span className="text-[#9ca3af]">-</span>
-                          )}
+                        <td className={`px-3 py-2.5 text-sm text-center font-semibold border-l border-[#e5e7eb] ${
+                          item.result === '合' ? 'text-[#27ae60]' : item.result === '否' ? 'text-[#dc2626]' : item.result === '交換' ? 'text-[#f59e0b]' : 'text-[#1f2937]'
+                        }`}>
+                          {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
                       </tr>
                     ))}
