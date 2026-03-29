@@ -3,11 +3,9 @@
 ## やることの全体像
 
 ```
-Figmaで対象フレームを選択 → Export で一括PNG保存
-    ↓ design/input/ に移動
-node design/distribute.mjs（自動で振り分け）
-    ↓ design/screens/(画面名)/full.png に配置される
-Claude Code に差分確認を指示
+node design/fetch-figma.mjs        ← Figma API で全画面PNG自動取得（30秒）
+    ↓ design/screens/(画面名)/full.png に自動配置
+Claude Code: 「Figma反映して」
     ↓ 現モックとFigmaデザインの差分一覧を提示
 差分を確認し、反映を許可
     ↓
@@ -16,55 +14,100 @@ app/(画面名)/page.tsx にデザイン反映
 
 ---
 
-## 1. FigmaのスクショをまとめてPNG保存する
+## 0. 初回セットアップ（1回だけ）
 
-### 手順
+### Figma Personal Access Token を取得
 
-Figmaの一括エクスポート機能を使う:
+1. Figma を開く → 左上のアイコン → **Settings**
+2. **Personal Access Tokens** → **Generate new token**
+3. 名前を入力（例: `design-sync`）→ **Generate token**
+4. 表示されたトークンをコピー（画面を閉じると二度と見られない）
 
-1. Figmaで対象セクション内の **通常状態のフレーム** を複数選択（`Shift + クリック`）
-2. 右パネル下部の **Export** セクションで **`PNG 1x`** を設定
-3. **「Export N layers」** をクリック → ダウンロードフォルダに保存される
-4. ダウンロードされたPNGファイルを **`design/input/`** に移動
+### .env.figma を作成
 
-**ファイル名はFigmaのフレーム名が自動で付くので手入力不要。**
+```bash
+cp .env.figma.example .env.figma
+```
 
-> **事前設定（初回のみ）:** ブラウザ設定で「ダウンロード前にファイルの保存場所を確認する」をONにすると、手順4の移動が不要になり直接 `design/input/` に保存できる。
+`.env.figma` を開いて値を入力:
 
-全セクション分を `design/input/` に置いたら次へ。
+```
+FIGMA_TOKEN=figd_xxxxxxxxxxxxxxxx
+FIGMA_FILE_KEY=xxxxxxxxxxxxxxxx
+```
+
+**ファイルキーの取得方法:**
+
+FigmaファイルのURLからコピー:
+```
+https://www.figma.com/design/AbCdEfGhIjKlMnOp/ファイル名?...
+                               ^^^^^^^^^^^^^^^^ ← この部分
+```
+
+### screen-map.json の初期マッピング
+
+```bash
+node design/fetch-figma.mjs --dry-run
+```
+
+`--dry-run` で実際のダウンロードはせず、マッピング結果だけ表示される。
+未マッチのフレームが表示されたら `screen-map.json` に追記して再実行。
 
 ---
 
-## 2. スクリプトで振り分ける
+## 1. Figma から全画面PNGを一括取得する
+
+```bash
+node design/fetch-figma.mjs
+```
+
+これだけで:
+1. Figma API からファイル構造を取得
+2. 全フレームを `screen-map.json` でマッピング
+3. PNGを一括ダウンロード
+4. `design/screens/(画面名)/full.png` に自動配置
+
+### オプション
+
+```bash
+# マッピング確認のみ（ダウンロードしない）
+node design/fetch-figma.mjs --dry-run
+
+# 特定ページのフレームだけ取得
+node design/fetch-figma.mjs --page "ページ名"
+
+# 解像度指定（デフォルト: 2x）
+node design/fetch-figma.mjs --scale 1
+```
+
+### 未マッチのフレームが出た場合
+
+スクリプトが `screen-map.json` への追記例を表示するので、コピーして追記:
+
+```json
+{
+  "Figmaのフレーム名": "next-jsのディレクトリ名"
+}
+```
+
+追記したら再実行すれば反映される。
+
+---
+
+## 1b. 手動エクスポート（代替手段）
+
+Figma API が使えない場合の代替手段。
+
+1. Figmaで対象フレームを複数選択（`Shift + クリック`）
+2. 右パネル **Export** → **`PNG 1x`** → **Export N layers**
+3. ダウンロードしたPNGを `design/input/` に移動
+4. 振り分けスクリプトを実行:
 
 ```bash
 node design/distribute.mjs
 ```
 
-このスクリプトが `design/input/` のPNGファイル名と `design/screen-map.json` の対応表を照合し、`design/screens/(画面名)/full.png` に自動コピーします。
-
-**マッピングなしと表示されたファイルがある場合:**
-
-`design/screen-map.json` に対応を追記して再実行:
-
-```json
-{
-  "1,2：ログイン": "login",
-  "Figmaのセクション名": "next-jsのディレクトリ名",
-  ...
-}
-```
-
-### 複数の状態がある場合
-
-セクション内にエラー状態など通常以外のフレームもある場合は、手動で追加保存:
-
-```
-design/screens/(画面名)/detail-error.png
-design/screens/(画面名)/detail-filled.png
-```
-
-**最低限 `full.png` だけあれば反映できる。** 他は気になる状態だけ追加。
+**ファイル名はFigmaのフレーム名が自動で付く**ので、`screen-map.json` に対応があればリネーム不要。
 
 ---
 
