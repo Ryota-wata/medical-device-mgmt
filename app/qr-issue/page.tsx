@@ -4,12 +4,13 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { QRCodePlaceholder } from '@/components/ui/QRCodePlaceholder';
 
 function QRIssueContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
 
   // 戻り先マッピング
   const backConfig = (() => {
@@ -70,180 +71,92 @@ function QRIssueContent() {
   const range = calculateRange();
 
   const handleGoToPrintPreview = () => {
-    // 印刷プレビュー画面へ遷移
     router.push(`/qr-print?template=${template}&start=${range.start}&end=${range.end}&footer=${encodeURIComponent(footerText)}`);
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7fa' }}>
+    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
       {/* ヘッダー */}
-      <div
-        style={{
-          background: '#2c3e50',
-          color: 'white',
-          padding: isMobile ? '12px 16px' : '15px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? '12px' : '20px',
-        }}
-      >
-        {backConfig.href !== '/main' && (
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center gap-3 max-w-[800px] mx-auto">
           <button
-            onClick={handleHomeClick}
-            style={{
-              background: '#34495e',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: isMobile ? '6px 12px' : '8px 16px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '13px' : '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#2c3e50'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#34495e'; }}
+            onClick={() => router.push(backConfig.href)}
+            className="text-sm text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors flex items-center gap-1"
           >
-            <span>メイン画面に戻る</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
-        )}
-        <button
-          onClick={() => router.push(backConfig.href)}
-          style={{
-            background: '#34495e',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            padding: isMobile ? '6px 12px' : '8px 16px',
-            cursor: 'pointer',
-            fontSize: isMobile ? '13px' : '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <span>←</span>
-          <span>{backConfig.label}</span>
-        </button>
-        <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 'bold', margin: 0 }}>QRコード発行</h1>
-      </div>
+          <h1 className="text-sm font-bold text-[#1f2937]">QRコード発行</h1>
+          {backConfig.href !== '/main' && (
+            <button
+              onClick={handleHomeClick}
+              className="ml-auto text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            >
+              メイン画面に戻る
+            </button>
+          )}
+        </div>
+      </header>
 
       {/* メインコンテンツ */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '20px 12px' : isTablet ? '30px 16px' : '40px 20px' }}>
-        {/* ページヘッダー */}
-        <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
-          <h2 style={{ fontSize: isMobile ? '20px' : isTablet ? '22px' : '24px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
-            QRコード発行
-          </h2>
-          <p style={{ color: '#5a6c7d', fontSize: isMobile ? '13px' : '14px' }}>資産管理用のQRコードを発行します</p>
-        </div>
+      <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
+        <p className="text-sm text-[#6b7280] mb-4">資産管理用のQRコードを発行します</p>
 
-        {/* フォームコンテナ */}
-        <div style={{ background: 'white', borderRadius: '8px', padding: isMobile ? '20px' : isTablet ? '24px' : '30px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          {/* タブ切り替え */}
-          <div style={{ display: 'flex', gap: isMobile ? '5px' : '10px', marginBottom: isMobile ? '20px' : '30px', borderBottom: '2px solid #dee2e6' }}>
-            <button
-              onClick={() => setTab('new')}
-              style={{
-                padding: isMobile ? '10px 16px' : isTablet ? '11px 20px' : '12px 24px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: tab === 'new' ? '3px solid #27ae60' : '3px solid transparent',
-                color: tab === 'new' ? '#27ae60' : '#5a6c7d',
-                fontWeight: tab === 'new' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                fontSize: isMobile ? '14px' : isTablet ? '15px' : '16px',
-                marginBottom: '-2px',
-              }}
-            >
-              新規発行
-            </button>
-            <button
-              onClick={() => setTab('reissue')}
-              style={{
-                padding: isMobile ? '10px 16px' : isTablet ? '11px 20px' : '12px 24px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: tab === 'reissue' ? '3px solid #27ae60' : '3px solid transparent',
-                color: tab === 'reissue' ? '#27ae60' : '#5a6c7d',
-                fontWeight: tab === 'reissue' ? 'bold' : 'normal',
-                cursor: 'pointer',
-                fontSize: isMobile ? '14px' : isTablet ? '15px' : '16px',
-                marginBottom: '-2px',
-              }}
-            >
-              再発行
-            </button>
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+          {/* タブ切り替え（ラジオボタン） */}
+          <div className="flex gap-6 mb-6">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="issueTab" checked={tab === 'new'} onChange={() => setTab('new')} className="accent-[#27ae60] size-4 cursor-pointer" />
+              <span className={`text-sm ${tab === 'new' ? 'font-bold text-[#27ae60]' : 'text-[#1f2937]'}`}>新規発行</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" name="issueTab" checked={tab === 'reissue'} onChange={() => setTab('reissue')} className="accent-[#27ae60] size-4 cursor-pointer" />
+              <span className={`text-sm ${tab === 'reissue' ? 'font-bold text-[#27ae60]' : 'text-[#1f2937]'}`}>再発行</span>
+            </label>
           </div>
 
           {/* 新規発行タブ */}
           {tab === 'new' && (
-            <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
-                QRコード番号 <span style={{ color: '#e74c3c' }}>*</span>
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#1f2937] mb-2">
+                QRコード番号 <span className="text-[#dc2626]">*</span>
               </label>
-              <div style={{ display: 'flex', alignItems: 'end', gap: isMobile ? '8px' : '10px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-                <div style={{ flex: isMobile ? '1 0 100%' : '0 0 auto' }}>
-                  <label style={{ display: 'block', fontSize: isMobile ? '11px' : '12px', color: '#5a6c7d', marginBottom: '5px' }}>
-                    アルファベット
-                  </label>
+              <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
+                <div className={isMobile ? 'w-full' : ''}>
+                  <label className="block text-xs text-[#6b7280] mb-1">アルファベット</label>
                   <select
                     value={alpha}
                     onChange={(e) => setAlpha(e.target.value)}
-                    style={{
-                      padding: isMobile ? '8px' : '10px',
-                      border: '1px solid #dee2e6',
-                      borderRadius: '4px',
-                      fontSize: isMobile ? '14px' : '16px',
-                      width: isMobile ? '100%' : '80px',
-                    }}
+                    className="px-2.5 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] w-full sm:w-[80px] bg-white"
                   >
                     {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => (
-                      <option key={letter} value={letter}>
-                        {letter}
-                      </option>
+                      <option key={letter} value={letter}>{letter}</option>
                     ))}
                   </select>
                 </div>
-                {!isMobile && <span style={{ fontSize: '24px', color: '#5a6c7d', marginBottom: '8px' }}>-</span>}
-                <div style={{ flex: isMobile ? '1 0 100%' : '0 0 auto' }}>
-                  <label style={{ display: 'block', fontSize: isMobile ? '11px' : '12px', color: '#5a6c7d', marginBottom: '5px' }}>
-                    2桁数字
-                  </label>
+                {!isMobile && <span className="text-lg text-[#6b7280] mb-1.5">-</span>}
+                <div className={isMobile ? 'w-full' : ''}>
+                  <label className="block text-xs text-[#6b7280] mb-1">2桁数字</label>
                   <input
                     type="text"
                     value={twoDigit}
                     onChange={(e) => setTwoDigit(e.target.value.slice(0, 2))}
                     maxLength={2}
                     placeholder="07"
-                    style={{
-                      padding: isMobile ? '8px' : '10px',
-                      border: '1px solid #dee2e6',
-                      borderRadius: '4px',
-                      fontSize: isMobile ? '14px' : '16px',
-                      width: isMobile ? '100%' : '80px',
-                    }}
+                    className="px-2.5 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] w-full sm:w-[80px] tabular-nums"
                   />
                 </div>
-                {!isMobile && <span style={{ fontSize: '24px', color: '#5a6c7d', marginBottom: '8px' }}>-</span>}
-                <div style={{ flex: isMobile ? '1 0 100%' : '0 0 auto' }}>
-                  <label style={{ display: 'block', fontSize: isMobile ? '11px' : '12px', color: '#5a6c7d', marginBottom: '5px' }}>
-                    5桁数字（開始番号）
-                  </label>
+                {!isMobile && <span className="text-lg text-[#6b7280] mb-1.5">-</span>}
+                <div className={isMobile ? 'w-full' : ''}>
+                  <label className="block text-xs text-[#6b7280] mb-1">5桁数字（開始番号）</label>
                   <input
                     type="text"
                     value={fiveDigit}
                     onChange={(e) => setFiveDigit(e.target.value.slice(0, 5))}
                     maxLength={5}
                     placeholder="00001"
-                    style={{
-                      padding: isMobile ? '8px' : '10px',
-                      border: '1px solid #dee2e6',
-                      borderRadius: '4px',
-                      fontSize: isMobile ? '14px' : '16px',
-                      width: isMobile ? '100%' : '120px',
-                    }}
+                    className="px-2.5 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] w-full sm:w-[120px] tabular-nums"
                   />
                 </div>
               </div>
@@ -252,8 +165,8 @@ function QRIssueContent() {
 
           {/* 再発行タブ */}
           {tab === 'reissue' && (
-            <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-[#1f2937] mb-2">
                 再発行したい番号を入力
               </label>
               <input
@@ -261,73 +174,84 @@ function QRIssueContent() {
                 value={reissueNumber}
                 onChange={(e) => setReissueNumber(e.target.value)}
                 placeholder="R-07-00001"
-                style={{
-                  padding: isMobile ? '8px' : '10px',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '4px',
-                  fontSize: isMobile ? '14px' : '16px',
-                  width: '100%',
-                  maxWidth: isMobile ? '100%' : '400px',
-                }}
+                className="px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] w-full max-w-[400px]"
               />
-              <div style={{ fontSize: isMobile ? '12px' : '13px', color: '#5a6c7d', marginTop: '6px' }}>
+              <p className="text-xs text-[#6b7280] mt-1.5">
                 （社内で作成済みの番号を入力してください）
-              </div>
+              </p>
             </div>
           )}
 
-          {/* ラベルテンプレート選択 */}
-          <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
-              QRコードテンプレートを選択 <span style={{ color: '#e74c3c' }}>*</span>
+          {/* 発行枚数 */}
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-[#1f2937] mb-2">
+              発行枚数 <span className="text-[#dc2626]">*</span>
             </label>
+            <input
+              type="number"
+              value={issueCount}
+              onChange={(e) => setIssueCount(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
+              min={1}
+              max={100}
+              className="px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] w-full sm:w-[120px] tabular-nums"
+            />
+            <p className="text-xs text-[#6b7280] mt-1.5">
+              ※最大100枚まで一括発行可能です
+            </p>
+          </div>
 
-            {/* QRコードテンプレート */}
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '10px' }}>
-                {[
-                  { value: 'qr-12x12', label: '12×12mm' },
-                  { value: 'qr-12x24', label: '12×24mm' },
-                  { value: 'qr-18x18', label: '18×18mm' },
-                  { value: 'qr-18x24', label: '18×24mm' },
-                  { value: 'qr-24x24', label: '24×24mm' },
-                  { value: 'qr-24x32', label: '24×32mm' },
-                ].map((item) => (
-                  <label
-                    key={item.value}
-                    style={{
-                      border: template === item.value ? '3px solid #27ae60' : '2px solid #dee2e6',
-                      borderRadius: '8px',
-                      padding: isMobile ? '12px' : '15px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      background: template === item.value ? '#f0f9f4' : 'white',
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="template"
-                      value={item.value}
-                      checked={template === item.value}
-                      onChange={(e) => setTemplate(e.target.value)}
-                      style={{ display: 'none' }}
-                    />
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: isMobile ? '24px' : '28px', marginBottom: '8px' }}>▣</div>
-                      <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#2c3e50' }}>
-                        {item.label}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+          {/* 発行予定番号範囲 */}
+          <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-md p-4 mb-6">
+            <div className="text-xs font-bold text-[#1f2937] mb-2">発行予定番号範囲</div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-base font-bold text-[#1f2937] tabular-nums">{range.start}</span>
+              <span className="text-base text-[#6b7280]">〜</span>
+              <span className="text-base font-bold text-[#1f2937] tabular-nums">{range.end}</span>
             </div>
+          </div>
 
+          {/* サイズ選択 */}
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-[#1f2937] mb-2">
+              QRコードテンプレートを選択 <span className="text-[#dc2626]">*</span>
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { value: 'qr-12x12', label: '12×12mm' },
+                { value: 'qr-12x24', label: '12×24mm' },
+                { value: 'qr-18x18', label: '18×18mm' },
+                { value: 'qr-18x24', label: '18×24mm' },
+                { value: 'qr-24x24', label: '24×24mm' },
+                { value: 'qr-24x32', label: '24×32mm' },
+              ].map((item) => (
+                <label
+                  key={item.value}
+                  className={`flex flex-col items-center py-3 px-2 rounded-lg cursor-pointer transition-colors ${
+                    template === item.value
+                      ? 'border-2 border-[#27ae60] bg-[#f0fdf4]'
+                      : 'border border-[#d1d5db] bg-white hover:bg-[#f9fafb]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="template"
+                    value={item.value}
+                    checked={template === item.value}
+                    onChange={(e) => setTemplate(e.target.value)}
+                    className="sr-only"
+                  />
+                  <QRCodePlaceholder size={28} color={template === item.value ? '#27ae60' : '#6b7280'} className="mb-1.5" />
+                  <span className={`text-xs font-bold ${template === item.value ? 'text-[#27ae60]' : 'text-[#1f2937]'}`}>
+                    {item.label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* フリー記入項目 */}
-          <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-[#1f2937] mb-2">
               フリー記入項目
             </label>
             <input
@@ -336,101 +260,35 @@ function QRIssueContent() {
               onChange={(e) => setFooterText(e.target.value.slice(0, footerCharMax))}
               maxLength={footerCharMax}
               placeholder="テキストを入力"
-              style={{
-                padding: isMobile ? '8px' : '10px',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                fontSize: isMobile ? '14px' : '16px',
-                width: '100%',
-              }}
+              className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors"
             />
-            <div style={{ fontSize: isMobile ? '12px' : '13px', color: '#5a6c7d', marginTop: '6px', textAlign: 'right' }}>
+            <p className="text-xs text-[#6b7280] mt-1.5 text-right tabular-nums">
               {footerText.length} / {footerCharMax} 文字
-            </div>
-          </div>
-
-          {/* 発行枚数 */}
-          <div style={{ marginBottom: isMobile ? '20px' : '30px' }}>
-            <label style={{ display: 'block', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px', fontSize: isMobile ? '14px' : '16px' }}>
-              発行枚数 <span style={{ color: '#e74c3c' }}>*</span>
-            </label>
-            <input
-              type="number"
-              value={issueCount}
-              onChange={(e) => setIssueCount(Math.min(100, Math.max(1, parseInt(e.target.value) || 1)))}
-              min={1}
-              max={100}
-              style={{
-                padding: isMobile ? '8px' : '10px',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                fontSize: isMobile ? '14px' : '16px',
-                width: isMobile ? '100%' : '150px',
-              }}
-            />
-            <div style={{ fontSize: isMobile ? '12px' : '13px', color: '#5a6c7d', marginTop: '6px' }}>
-              ※最大100枚まで一括発行可能です
-            </div>
-          </div>
-
-          {/* 発行予定番号範囲 */}
-          <div
-            style={{
-              background: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '8px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: isMobile ? '20px' : '30px',
-            }}
-          >
-            <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px' }}>
-              発行予定番号範囲
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '15px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 'bold', color: '#2c3e50' }}>{range.start}</span>
-              <span style={{ fontSize: isMobile ? '16px' : '18px', color: '#5a6c7d' }}>〜</span>
-              <span style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 'bold', color: '#2c3e50' }}>{range.end}</span>
-              <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#5a6c7d' }}>({range.count}枚)</span>
-            </div>
+            </p>
           </div>
 
           {/* ボタン */}
-          <div style={{ display: 'flex', gap: isMobile ? '8px' : '10px', justifyContent: 'flex-end', flexDirection: isMobile ? 'column' : 'row' }}>
+          <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'justify-end'}`}>
             <button
               onClick={() => router.push(backConfig.href)}
-              style={{
-                padding: isMobile ? '12px 20px' : '12px 30px',
-                background: '#95a5a6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '15px' : '16px',
-                fontWeight: 'bold',
-                width: isMobile ? '100%' : 'auto',
-              }}
+              className={`py-2.5 text-sm font-bold text-[#4b5563] bg-white border border-[#d1d5db] rounded-md cursor-pointer hover:bg-[#f9fafb] transition-colors ${isMobile ? 'w-full order-2' : 'px-8'}`}
             >
               キャンセル
             </button>
             <button
               onClick={handleGoToPrintPreview}
-              style={{
-                padding: isMobile ? '12px 20px' : '12px 30px',
-                background: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '15px' : '16px',
-                fontWeight: 'bold',
-                width: isMobile ? '100%' : 'auto',
-              }}
+              className={`py-2.5 text-sm font-bold text-[#27ae60] bg-white border border-[#27ae60] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors ${isMobile ? 'w-full order-1' : 'px-8'}`}
             >
               印刷プレビューへ →
             </button>
           </div>
         </div>
       </div>
+
+      {/* フッター */}
+      <footer className="mt-auto py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+      </footer>
 
       <ConfirmDialog
         isOpen={showHomeConfirm}
@@ -448,7 +306,7 @@ function QRIssueContent() {
 
 export default function QRIssuePage() {
   return (
-    <Suspense fallback={<div>読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
       <QRIssueContent />
     </Suspense>
   );

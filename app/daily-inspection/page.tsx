@@ -5,6 +5,7 @@ import { useState, useRef, Suspense, useMemo, useEffect } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { Asset } from '@/lib/types/asset';
 import { useInspectionStore, useAuthStore } from '@/lib/stores';
+import { QRCodePlaceholder } from '@/components/ui/QRCodePlaceholder';
 
 // モック: 原本資産データ（実際はIndexedDBまたはAPIから取得）
 const MOCK_ORIGINAL_ASSETS: Asset[] = [
@@ -317,18 +318,7 @@ function DailyInspectionContent() {
           <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
             {/* QRコード表示エリア */}
             <div className="bg-[#f3f4f6] rounded-md flex flex-col items-center justify-center py-10 mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="6" height="6" rx="1" />
-                <rect x="16" y="2" width="6" height="6" rx="1" />
-                <rect x="2" y="16" width="6" height="6" rx="1" />
-                <rect x="16" y="16" width="4" height="4" rx="0.5" />
-                <path d="M10 2h2v6h-2z" />
-                <path d="M2 10h6v2H2z" />
-                <path d="M10 10h4v4h-4z" />
-                <path d="M22 10v2h-4" />
-                <path d="M10 18h2v4" />
-                <path d="M22 18v4h-2" />
-              </svg>
+              <QRCodePlaceholder size={48} color="#9ca3af" />
               <p className="text-sm text-[#9ca3af] mt-2">QRコードを読んでください</p>
             </div>
 

@@ -1,11 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { useResponsive } from '@/lib/hooks/useResponsive';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { useAuthStore } from '@/lib/stores';
-
 interface HistoryCardData {
   id: number;
   labelNumber: string;
@@ -17,70 +13,46 @@ interface HistoryCardData {
 
 function HistoryContent() {
   const router = useRouter();
-  const facilityName = useAuthStore().selectedFacility || '';
-  const { isMobile, isTablet } = useResponsive();
   const [selectedCards, setSelectedCards] = useState<Set<number>>(new Set());
-  const [editingCards, setEditingCards] = useState<Set<number>>(new Set());
-  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  const [perPage, setPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showPerPageMenu, setShowPerPageMenu] = useState(false);
 
-  const handleHomeClick = () => {
-    if (selectedCards.size > 0) {
-      setShowHomeConfirm(true);
-    } else {
-      router.push('/main');
-    }
-  };
-
-  const historyData: HistoryCardData[] = [
-    {
-      id: 1,
-      labelNumber: 'L-001234',
-      item: '超音波診断装置',
-      maker: 'ABC社',
-      model: 'US-1000',
-      size: '450×380×120'
-    },
-    {
-      id: 2,
-      labelNumber: 'L-001235',
-      item: 'ノートPC',
-      maker: 'XYZ社',
-      model: 'NB-2000',
-      size: '350×250×25'
-    },
-    {
-      id: 3,
-      labelNumber: 'L-001236',
-      item: '人工呼吸器',
-      maker: 'DEF社',
-      model: 'RES-500',
-      size: '300×350×280'
-    },
-    {
-      id: 4,
-      labelNumber: 'L-001237',
-      item: '事務デスク',
-      maker: '家具工房',
-      model: 'D-1200',
-      size: '1200×700×720'
-    },
-    {
-      id: 5,
-      labelNumber: 'L-001238',
-      item: '血液分析装置',
-      maker: 'メディカル社',
-      model: 'BA-3000',
-      size: '420×360×340'
-    },
-    {
-      id: 6,
-      labelNumber: 'L-001239',
-      item: '業務用複合機',
-      maker: 'オフィス機器',
-      model: 'MFP-7000',
-      size: '550×580×680'
-    }
+  const allHistoryData: HistoryCardData[] = [
+    { id: 1, labelNumber: 'L-001234', item: '超音波診断装置', maker: 'オフィス機器GH', model: 'RES-500', size: '300×350×280' },
+    { id: 2, labelNumber: 'L-001236', item: 'CTスキャナー', maker: 'イメージテック', model: 'CT-9000', size: '700×600×500' },
+    { id: 3, labelNumber: 'L-001235', item: '心電図モニター', maker: 'メディカルデバイスタイムズ', model: 'ECG-100', size: '250×200×150' },
+    { id: 4, labelNumber: 'L-001237', item: 'MRI装置', maker: 'ヘルスケアソリューションズ', model: 'MRI-300', size: '900×800×700' },
+    { id: 5, labelNumber: 'L-001238', item: '血液分析装置', maker: 'バイオメディカルトレンド', model: 'BA-1500', size: '400×350×200' },
+    { id: 6, labelNumber: 'L-001239', item: '業務用複合機', maker: 'オフィス機器', model: 'MFP-7000', size: '550×580×680' },
+    { id: 7, labelNumber: 'L-001240', item: '電子カルテ端末', maker: 'メディカルIT', model: 'EHR-200', size: '320×220×30' },
+    { id: 8, labelNumber: 'L-001241', item: '人工呼吸器', maker: 'DEF社', model: 'RES-500', size: '300×350×280' },
+    { id: 9, labelNumber: 'L-001242', item: 'ノートPC', maker: 'XYZ社', model: 'NB-2000', size: '350×250×25' },
+    { id: 10, labelNumber: 'L-001243', item: '事務デスク', maker: '家具工房', model: 'D-1200', size: '1200×700×720' },
+    { id: 11, labelNumber: 'L-001244', item: '輸液ポンプ', maker: 'メディカル社', model: 'IP-400', size: '150×120×200' },
+    { id: 12, labelNumber: 'L-001245', item: '除細動器', maker: 'ライフセーブ', model: 'AED-X1', size: '280×250×100' },
   ];
+
+  const totalPages = Math.ceil(allHistoryData.length / perPage);
+  const pageData = useMemo(() => {
+    const start = (currentPage - 1) * perPage;
+    return allHistoryData.slice(start, start + perPage);
+  }, [currentPage, perPage]);
+
+  const startIndex = (currentPage - 1) * perPage + 1;
+  const endIndex = Math.min(currentPage * perPage, allHistoryData.length);
+
+  const allPageSelected = pageData.length > 0 && pageData.every(d => selectedCards.has(d.id));
+
+  const handleSelectAll = () => {
+    const newSelected = new Set(selectedCards);
+    if (allPageSelected) {
+      pageData.forEach(d => newSelected.delete(d.id));
+    } else {
+      pageData.forEach(d => newSelected.add(d.id));
+    }
+    setSelectedCards(newSelected);
+  };
 
   const handleSelectCard = (id: number) => {
     const newSelected = new Set(selectedCards);
@@ -90,10 +62,6 @@ function HistoryContent() {
       newSelected.add(id);
     }
     setSelectedCards(newSelected);
-  };
-
-  const handleBack = () => {
-    router.push('/survey-location');
   };
 
   const handleEdit = () => {
@@ -109,401 +77,255 @@ function HistoryContent() {
       alert('再利用する項目を選択してください');
       return;
     }
-    const selectedData = historyData.filter(item => selectedCards.has(item.id));
-    console.log('再利用データ:', selectedData);
     alert(`${selectedCards.size}件のデータを再利用します`);
     router.push('/asset-survey-integrated');
   };
 
+  const handleBack = () => {
+    router.push('/survey-location');
+  };
+
+  const handlePerPageChange = (value: number) => {
+    setPerPage(value);
+    setCurrentPage(1);
+    setShowPerPageMenu(false);
+  };
+
+  // ページネーション番号の生成
+  const pageNumbers = useMemo(() => {
+    const pages: (number | '...')[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1, 2, 3, 4);
+      if (currentPage > 4) pages.push('...');
+      if (currentPage > 4 && currentPage < totalPages) pages.push(currentPage);
+      if (currentPage < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+    return [...new Set(pages)];
+  }, [totalPages, currentPage]);
+
+  const selectedOnPage = pageData.filter(d => selectedCards.has(d.id)).length;
+
+  const fields: { label: string; key: keyof HistoryCardData }[] = [
+    { label: 'ラベル番号', key: 'labelNumber' },
+    { label: '品目', key: 'item' },
+    { label: 'メーカー', key: 'maker' },
+    { label: '型式', key: 'model' },
+    { label: 'サイズ（W×D×H）', key: 'size' },
+  ];
+
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
-    }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
-        padding: isMobile ? '12px 16px' : '16px 24px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          maxWidth: '1400px',
-          margin: '0 auto'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: isMobile ? '14px' : '16px',
-              fontWeight: '600'
-            }}>
-              <div style={{
-                backgroundColor: '#1976d2',
-                color: 'white',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontWeight: 'bold'
-              }}>
-                SHIP
-              </div>
-              {!isMobile && <span style={{ color: '#2c3e50' }}>HEALTHCARE 医療機器管理システム</span>}
-            </div>
-          </div>
-          <h1 style={{
-            fontSize: isMobile ? '18px' : '24px',
-            fontWeight: 'bold',
-            color: '#2c3e50',
-            margin: 0
-          }}>
-            登録履歴
-          </h1>
+    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center justify-between max-w-[800px] mx-auto">
+          <button
+            onClick={handleBack}
+            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            aria-label="戻る"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="text-sm font-bold text-[#1f2937]">登録履歴</h1>
+          <div className="size-10" />
         </div>
       </header>
 
-      {/* Main Content */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '16px' : '24px',
-        maxWidth: '1400px',
-        width: '100%',
-        margin: '0 auto',
-        boxSizing: 'border-box'
-      }}>
-        <div style={{
-          marginBottom: '20px',
-          fontSize: isMobile ? '14px' : '16px',
-          color: '#5a6c7d',
-          fontWeight: '600'
-        }}>
-          {historyData.length}件の登録履歴
-        </div>
-
-        {/* Cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-          gap: isMobile ? '12px' : '16px'
-        }}>
-          {historyData.map((card) => (
-            <div
-              key={card.id}
-              onClick={() => handleSelectCard(card.id)}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                border: selectedCards.has(card.id) ? '3px solid #1976d2' : '1px solid #e0e0e0',
-                padding: isMobile ? '12px' : '16px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: selectedCards.has(card.id)
-                  ? '0 4px 12px rgba(25, 118, 210, 0.3)'
-                  : '0 2px 4px rgba(0,0,0,0.05)',
-                position: 'relative'
-              }}
-            >
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start'
-              }}>
-                <div style={{ flex: 1 }}>
-                  {/* Row 1 */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-                    gap: isMobile ? '12px' : '8px',
-                    marginBottom: '12px'
-                  }}>
-                    <div>
-                      <label style={{
-                        fontSize: '11px',
-                        color: '#7a8a9a',
-                        display: 'block',
-                        marginBottom: '4px'
-                      }}>
-                        ラベル番号
-                      </label>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#2c3e50',
-                        fontWeight: '500'
-                      }}>
-                        {card.labelNumber}
-                      </span>
+      {/* メインコンテンツ */}
+      <div className="w-full max-w-[800px] mx-auto px-3 py-4 sm:px-6 flex-1">
+        {/* ツールバー */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            {/* 全選択 */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={allPageSelected}
+                onChange={handleSelectAll}
+                className="size-4 accent-[#27ae60] cursor-pointer"
+              />
+              <span className="text-sm text-[#1f2937]">全選択</span>
+            </label>
+            {/* ページ情報 + 件数選択 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#6b7280] tabular-nums">{startIndex}-{endIndex} / {allHistoryData.length}P</span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowPerPageMenu(!showPerPageMenu)}
+                  className="flex items-center gap-1 text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {showPerPageMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowPerPageMenu(false)} />
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-[#e5e7eb] rounded-md shadow-lg z-20 min-w-[80px]">
+                      {[10, 30].map(n => (
+                        <button
+                          key={n}
+                          onClick={() => handlePerPageChange(n)}
+                          className={`w-full px-3 py-2 text-xs text-left border-0 cursor-pointer transition-colors ${
+                            perPage === n ? 'text-[#27ae60] font-bold bg-[#f0fdf4]' : 'text-[#1f2937] bg-white hover:bg-[#f9fafb]'
+                          }`}
+                        >
+                          {n}件
+                        </button>
+                      ))}
                     </div>
-                    <div>
-                      <label style={{
-                        fontSize: '11px',
-                        color: '#7a8a9a',
-                        display: 'block',
-                        marginBottom: '4px'
-                      }}>
-                        品目
-                      </label>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#2c3e50',
-                        fontWeight: '500'
-                      }}>
-                        {card.item}
-                      </span>
-                    </div>
-                    <div>
-                      <label style={{
-                        fontSize: '11px',
-                        color: '#7a8a9a',
-                        display: 'block',
-                        marginBottom: '4px'
-                      }}>
-                        メーカー
-                      </label>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#2c3e50',
-                        fontWeight: '500'
-                      }}>
-                        {card.maker}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Row 2 */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                    gap: isMobile ? '12px' : '8px'
-                  }}>
-                    <div>
-                      <label style={{
-                        fontSize: '11px',
-                        color: '#7a8a9a',
-                        display: 'block',
-                        marginBottom: '4px'
-                      }}>
-                        型式
-                      </label>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#2c3e50',
-                        fontWeight: '500'
-                      }}>
-                        {card.model}
-                      </span>
-                    </div>
-                    <div>
-                      <label style={{
-                        fontSize: '11px',
-                        color: '#7a8a9a',
-                        display: 'block',
-                        marginBottom: '4px'
-                      }}>
-                        サイズ (W×D×H mm)
-                      </label>
-                      <span style={{
-                        fontSize: isMobile ? '13px' : '14px',
-                        color: '#2c3e50',
-                        fontWeight: '500'
-                      }}>
-                        {card.size}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Checkbox */}
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  border: selectedCards.has(card.id) ? '2px solid #1976d2' : '2px solid #ccc',
-                  backgroundColor: selectedCards.has(card.id) ? '#1976d2' : '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginLeft: '12px',
-                  flexShrink: 0
-                }}>
-                  {selectedCards.has(card.id) && (
-                    <div style={{ color: 'white', fontSize: '14px' }}>✓</div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* 選択状態テキスト */}
+          {selectedOnPage > 0 && (
+            <p className="text-xs text-[#6b7280] mb-2">
+              ページ内のスレッド<span className="font-bold text-[#1f2937]">{selectedOnPage}件</span>が選択されています。
+            </p>
+          )}
+
+          {/* アクションボタン */}
+          <div className="flex gap-2">
+            <button
+              onClick={handleEdit}
+              disabled={selectedCards.size === 0}
+              className={`px-4 py-1.5 text-xs font-bold rounded border transition-colors ${
+                selectedCards.size > 0
+                  ? 'text-[#27ae60] border-[#27ae60] bg-white cursor-pointer hover:bg-[#f0fdf4]'
+                  : 'text-[#9ca3af] border-[#e5e7eb] bg-[#f9fafb] cursor-not-allowed'
+              }`}
+            >
+              修正
+            </button>
+            <button
+              onClick={handleReuse}
+              disabled={selectedCards.size === 0}
+              className={`px-4 py-1.5 text-xs font-bold rounded border transition-colors ${
+                selectedCards.size > 0
+                  ? 'text-[#27ae60] border-[#27ae60] bg-white cursor-pointer hover:bg-[#f0fdf4]'
+                  : 'text-[#9ca3af] border-[#e5e7eb] bg-[#f9fafb] cursor-not-allowed'
+              }`}
+            >
+              再利用
+            </button>
+          </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer style={{
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #e0e0e0',
-        padding: isMobile ? '12px 16px' : '16px 24px',
-        position: 'sticky',
-        bottom: 0,
-        boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: isMobile ? '12px' : '24px',
-          maxWidth: '800px',
-          margin: '0 auto'
-        }}>
-          <button
-            onClick={handleHomeClick}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              padding: isMobile ? '8px 16px' : '12px 24px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontSize: isMobile ? '12px' : '14px'
-            }}
-          >
-            <div style={{
-              width: isMobile ? '32px' : '40px',
-              height: isMobile ? '32px' : '40px',
-              borderRadius: '50%',
-              backgroundColor: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: isMobile ? '16px' : '20px'
-            }}>
-              🏠
-            </div>
-            <span>メイン画面</span>
-          </button>
-
-          <button
-            onClick={handleBack}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              padding: isMobile ? '8px 16px' : '12px 24px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontSize: isMobile ? '12px' : '14px'
-            }}
-          >
-            <div style={{
-              width: isMobile ? '32px' : '40px',
-              height: isMobile ? '32px' : '40px',
-              borderRadius: '50%',
-              backgroundColor: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: isMobile ? '16px' : '20px'
-            }}>
-              ←
-            </div>
-            <span>調査場所選択に戻る</span>
-          </button>
-
-          <button
-            onClick={handleEdit}
-            disabled={selectedCards.size === 0}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              padding: isMobile ? '8px 16px' : '12px 24px',
-              backgroundColor: selectedCards.size === 0 ? '#f5f5f5' : '#ffffff',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              cursor: selectedCards.size === 0 ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              fontSize: isMobile ? '12px' : '14px',
-              opacity: selectedCards.size === 0 ? 0.5 : 1
-            }}
-          >
-            <div style={{
-              width: isMobile ? '32px' : '40px',
-              height: isMobile ? '32px' : '40px',
-              borderRadius: '50%',
-              backgroundColor: '#fff3e0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: isMobile ? '16px' : '20px'
-            }}>
-              ✏️
-            </div>
-            <span>修正</span>
-          </button>
-
-          <button
-            onClick={handleReuse}
-            disabled={selectedCards.size === 0}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              padding: isMobile ? '8px 16px' : '12px 24px',
-              backgroundColor: selectedCards.size === 0 ? '#f5f5f5' : '#1976d2',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: selectedCards.size === 0 ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              fontSize: isMobile ? '12px' : '14px',
-              color: selectedCards.size === 0 ? '#999' : '#ffffff',
-              opacity: selectedCards.size === 0 ? 0.5 : 1
-            }}
-          >
-            <div style={{
-              width: isMobile ? '32px' : '40px',
-              height: isMobile ? '32px' : '40px',
-              borderRadius: '50%',
-              backgroundColor: selectedCards.size === 0 ? '#e0e0e0' : '#1565c0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: isMobile ? '16px' : '20px'
-            }}>
-              ↩️
-            </div>
-            <span>再利用</span>
-          </button>
+        {/* カードリスト */}
+        <div className="flex flex-col gap-3">
+          {pageData.map((card) => {
+            const isSelected = selectedCards.has(card.id);
+            return (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => handleSelectCard(card.id)}
+                className={`text-left bg-white rounded-lg border-0 cursor-pointer transition-all ${
+                  isSelected ? 'ring-2 ring-[#27ae60]' : 'ring-1 ring-[#e5e7eb]'
+                }`}
+              >
+                {fields.map((field, i) => (
+                  <div
+                    key={field.key}
+                    className={`flex items-center px-4 py-2.5 ${
+                      i < fields.length - 1 ? 'border-b border-[#f3f4f6]' : ''
+                    }`}
+                  >
+                    <span className="text-xs text-[#9ca3af] w-[100px] shrink-0">{field.label}</span>
+                    <span className={`text-sm text-[#1f2937] flex-1 ${field.key === 'labelNumber' || field.key === 'size' ? 'tabular-nums' : ''}`}>
+                      {card[field.key]}
+                    </span>
+                    {/* チェックボックス（ラベル番号行のみ） */}
+                    {field.key === 'labelNumber' && (
+                      <div className={`size-5 rounded flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected ? 'bg-[#27ae60]' : 'border-2 border-[#d1d5db] bg-white'
+                      }`}>
+                        {isSelected && (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </button>
+            );
+          })}
         </div>
+
+        {/* ページネーション */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1 mt-6">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="size-8 flex items-center justify-center text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              &laquo;
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="size-8 flex items-center justify-center text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              &lsaquo;
+            </button>
+            {pageNumbers.map((p, i) =>
+              p === '...' ? (
+                <span key={`dots-${i}`} className="size-8 flex items-center justify-center text-xs text-[#9ca3af]">...</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p as number)}
+                  className={`size-8 flex items-center justify-center text-xs rounded border-0 cursor-pointer transition-colors tabular-nums ${
+                    currentPage === p
+                      ? 'text-[#27ae60] font-bold bg-transparent'
+                      : 'text-[#6b7280] bg-transparent hover:text-[#1f2937]'
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="size-8 flex items-center justify-center text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              &rsaquo;
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="size-8 flex items-center justify-center text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              &raquo;
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* フッター */}
+      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 
-      <ConfirmDialog
-        isOpen={showHomeConfirm}
-        onClose={() => setShowHomeConfirm(false)}
-        onConfirm={() => router.push('/main')}
-        title="メイン画面に戻る"
-        message="選択状態が破棄されます。メイン画面に戻りますか？"
-        confirmLabel="メイン画面に戻る"
-        cancelLabel="選択を続ける"
-        variant="warning"
-      />
     </div>
   );
 }
 
 export default function HistoryPage() {
-  return <HistoryContent />;
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
+      <HistoryContent />
+    </Suspense>
+  );
 }

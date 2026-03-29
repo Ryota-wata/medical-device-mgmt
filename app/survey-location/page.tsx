@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
@@ -11,17 +11,20 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 function SurveyLocationContent() {
   const router = useRouter();
   const facilityName = useAuthStore().selectedFacility || '';
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
   const { facilities: hospitalFacilities } = useHospitalFacilityStore();
 
-  // 選択された施設の個別部署マスタデータをフィルター
   const facilityMasterData = useMemo(() => {
     if (!facilityName) return [];
     return hospitalFacilities.filter(f => f.hospitalName === facilityName);
   }, [hospitalFacilities, facilityName]);
 
-  const [surveyDate, setSurveyDate] = useState('');
+  const surveyDate = useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+  }, []);
+
   const [category, setCategory] = useState('');
   const [department, setDepartment] = useState('');
   const [section, setSection] = useState('');
@@ -38,19 +41,16 @@ function SurveyLocationContent() {
     }
   };
 
-  // 資産マスタからカテゴリーオプションを生成
   const categoryOptions = useMemo(() => {
     const uniqueCategories = Array.from(new Set(assetMasters.map(a => a.category)));
     return uniqueCategories.filter(Boolean);
   }, [assetMasters]);
 
-  // SHIP部署マスタから部門オプションを生成
   const departmentOptions = useMemo(() => {
     const uniqueDivisions = Array.from(new Set(facilityMasterData.map(f => f.oldShipDivision).filter((d): d is string => !!d)));
     return uniqueDivisions;
   }, [facilityMasterData]);
 
-  // SHIP部署マスタから部署オプションを生成（選択された部門で絞り込み）
   const sectionOptions = useMemo(() => {
     const filtered = department
       ? facilityMasterData.filter(f => f.oldShipDivision === department)
@@ -59,19 +59,9 @@ function SurveyLocationContent() {
     return uniqueDepartments;
   }, [facilityMasterData, department]);
 
-  useEffect(() => {
-    // Set current date in Japanese format
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-    setSurveyDate(`${year}年${month}月${day}日`);
-  }, []);
 
-  // 部門変更時に部署をクリア
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
-    // 選択済みの部署が新しい部門に属さない場合はクリア
     if (value) {
       const validSections = facilityMasterData
         .filter(f => f.oldShipDivision === value)
@@ -87,104 +77,57 @@ function SurveyLocationContent() {
   };
 
   const handleNext = () => {
-    // Validate that all fields are selected
     if (!category || !department || !section) {
       alert('Category・部門・部署を選択してください');
       return;
     }
-
-    // Navigate to asset input screen with location data
-    const queryParams = new URLSearchParams({
-      category,
-      department,
-      section,
-      room,
-      surveyDate
-    });
+    const queryParams = new URLSearchParams({ category, department, section, room, surveyDate });
     router.push(`/asset-survey-integrated?${queryParams.toString()}`);
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
-      {/* Header */}
-      <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: isMobile ? 'center' : 'space-between',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '8px' : '0'
-      }}>
-        {!isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: isTablet ? '10px' : '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #27ae60, #229954)',
-              padding: isTablet ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isTablet ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px'
-            }}>
-              SHIP
-            </div>
-            <div style={{ fontSize: isTablet ? '14px' : '16px', fontWeight: 500 }}>
-              HEALTHCARE 医療機器管理システム
-            </div>
-          </div>
-        )}
-        <div style={{ flex: isMobile ? '0' : '1', display: 'flex', justifyContent: 'center' }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-            現有資産調査
-          </h1>
+    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center justify-between max-w-[800px] mx-auto">
+          <button
+            onClick={handleBack}
+            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            aria-label="戻る"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <span className="text-sm font-bold text-[#1f2937] text-balance">HEALTHCARE 医療機器管理システム</span>
+          <button
+            onClick={handleHomeClick}
+            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            aria-label="閉じる"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
-        {!isMobile && <div style={{ width: isTablet ? '150px' : '200px' }}></div>}
       </header>
 
-      {/* Main Content */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '20px 12px 120px 12px' : isTablet ? '28px 20px 120px 20px' : '38px 40px 120px 40px',
-        overflowY: 'auto'
-      }}>
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: isMobile ? '8px' : '12px',
-          padding: isMobile ? '20px 16px' : isTablet ? '28px 24px' : '36px 40px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          maxWidth: '600px',
-          margin: '0 auto',
-          width: '100%'
-        }}>
-          {/* Survey Date */}
-          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              調査日
-            </label>
-            <div style={{
-              backgroundColor: '#f8f8f8',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: isMobile ? '12px 14px' : '14px 18px',
-              fontSize: isMobile ? '15px' : '16px',
-              color: '#666666',
-              width: '100%',
-              boxSizing: 'border-box'
-            }}>
+      {/* メインコンテンツ */}
+      <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6 flex-1">
+        <h1 className="text-lg font-bold text-[#1f2937] mb-4 text-balance">現有資産調査</h1>
+
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+          {/* 調査日 */}
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-[#1f2937] mb-2">調査日</label>
+            <div className="px-3 py-2.5 text-sm text-[#1f2937] border border-[#d1d5db] rounded-md bg-[#f9fafb] tabular-nums">
               {surveyDate}
             </div>
           </div>
 
           {/* Category */}
-          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
+          <div className="mb-6">
             <SearchableSelect
               label="Category"
               value={category}
@@ -195,8 +138,8 @@ function SurveyLocationContent() {
             />
           </div>
 
-          {/* Department (部門) - SHIP部署マスタ */}
-          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
+          {/* 部門 */}
+          <div className="mb-6">
             <SearchableSelect
               label="部門"
               value={department}
@@ -207,8 +150,8 @@ function SurveyLocationContent() {
             />
           </div>
 
-          {/* Section (部署) - SHIP部署マスタ */}
-          <div style={{ marginBottom: isMobile ? '20px' : '26px' }}>
+          {/* 部署 */}
+          <div className="mb-6">
             <SearchableSelect
               label="部署"
               value={section}
@@ -219,178 +162,39 @@ function SurveyLocationContent() {
             />
           </div>
 
-          {/* Room (諸室) - フリー入力 */}
-          <div style={{ marginBottom: 0 }}>
-            <label style={{
-              display: 'block',
-              fontSize: isMobile ? '14px' : '15px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: '10px'
-            }}>
-              諸室
-            </label>
+          {/* 諸室 */}
+          <div>
+            <label className="block text-sm font-bold text-[#1f2937] mb-2">諸室</label>
             <input
               type="text"
               value={room}
               onChange={(e) => setRoom(e.target.value)}
               placeholder="諸室名を入力"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                padding: isMobile ? '12px 14px' : '14px 18px',
-                fontSize: isMobile ? '15px' : '16px',
-                color: '#333333',
-                backgroundColor: '#ffffff',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#2c3e50'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#e0e0e0'; }}
+              className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors"
             />
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #ddd',
-        padding: isMobile ? '16px 20px' : isTablet ? '18px 30px' : '20px 40px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        boxShadow: '0 -2px 4px rgba(0,0,0,0.1)',
-        height: isMobile ? '90px' : '100px',
-        boxSizing: 'border-box',
-        zIndex: 1000
-      }}>
-        <button
-          onClick={handleHomeClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: isMobile ? '6px' : '5px',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? undefined : '70px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            background: '#ecf0f1',
-            borderRadius: '50%',
-            width: isMobile ? '48px' : '52px',
-            height: isMobile ? '48px' : '52px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            🏠
-          </div>
-          <span style={{ fontSize: '12px', color: '#2c3e50' }}>メイン画面</span>
-        </button>
+        {/* 下部ボタン */}
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={handleBack}
+            className="flex-1 py-3 text-sm font-bold text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors"
+          >
+            戻る
+          </button>
+          <button
+            onClick={handleNext}
+            className="flex-1 py-3 text-sm font-bold text-[#27ae60] bg-white border border-[#27ae60] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors"
+          >
+            次へ
+          </button>
+        </div>
+      </div>
 
-        <button
-          onClick={handleBack}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: isMobile ? '6px' : '5px',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? undefined : '70px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            background: '#ecf0f1',
-            borderRadius: '50%',
-            width: isMobile ? '48px' : '52px',
-            height: isMobile ? '48px' : '52px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderRight: isMobile ? '9px solid #34495e' : '10px solid #34495e',
-              borderTop: isMobile ? '5px solid transparent' : '6px solid transparent',
-              borderBottom: isMobile ? '5px solid transparent' : '6px solid transparent'
-            }}></div>
-          </div>
-          <span style={{ fontSize: '12px', color: '#2c3e50' }}>オフライン準備に戻る</span>
-        </button>
-
-        <button
-          onClick={handleNext}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: isMobile ? '6px' : '5px',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? undefined : '70px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#d5f4e6';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            background: '#d5f4e6',
-            borderRadius: '50%',
-            width: isMobile ? '48px' : '52px',
-            height: isMobile ? '48px' : '52px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderLeft: isMobile ? '9px solid #34495e' : '10px solid #34495e',
-              borderTop: isMobile ? '5px solid transparent' : '6px solid transparent',
-              borderBottom: isMobile ? '5px solid transparent' : '6px solid transparent'
-            }}></div>
-          </div>
-          <span style={{ fontSize: '12px', color: '#27ae60', fontWeight: 600 }}>次へ</span>
-        </button>
+      {/* フッター */}
+      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 
       <ConfirmDialog
@@ -409,6 +213,8 @@ function SurveyLocationContent() {
 
 export default function SurveyLocationPage() {
   return (
-    <SurveyLocationContent />
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
+      <SurveyLocationContent />
+    </Suspense>
   );
 }

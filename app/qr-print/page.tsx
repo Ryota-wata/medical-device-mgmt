@@ -4,11 +4,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { QRCodePlaceholder } from '@/components/ui/QRCodePlaceholder';
 
 function QRPrintContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
 
   const [printer, setPrinter] = useState('sr5900p');
   const [qrNumbers, setQrNumbers] = useState<string[]>([]);
@@ -16,8 +17,10 @@ function QRPrintContent() {
   const [footerText, setFooterText] = useState('');
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
 
+  const isFormDirty = qrNumbers.length > 0;
+
   const handleHomeClick = () => {
-    if (qrNumbers.length > 0) {
+    if (isFormDirty) {
       setShowHomeConfirm(true);
     } else {
       router.push('/main');
@@ -25,7 +28,6 @@ function QRPrintContent() {
   };
 
   useEffect(() => {
-    // Get parameters from URL
     const templateParam = searchParams.get('template') || 'qr-small';
     const startParam = searchParams.get('start') || '';
     const endParam = searchParams.get('end') || '';
@@ -34,7 +36,6 @@ function QRPrintContent() {
     setTemplate(templateParam);
     setFooterText(footerParam);
 
-    // Generate QR number list from start to end
     if (startParam && endParam) {
       const numbers = generateQRNumberList(startParam, endParam);
       setQrNumbers(numbers);
@@ -42,13 +43,10 @@ function QRPrintContent() {
   }, [searchParams]);
 
   const generateQRNumberList = (start: string, end: string): string[] => {
-    // If start and end are the same (reissue), return single item
     if (start === end) {
       return [start];
     }
 
-    // Parse start and end numbers
-    // Format: AA-DD-NNNNN (e.g., R07-01-00001)
     const startParts = start.split('-');
     const endParts = end.split('-');
 
@@ -70,26 +68,14 @@ function QRPrintContent() {
     return numbers;
   };
 
-  const getTemplateDisplayName = (templateKey: string): string => {
-    const names: Record<string, string> = {
-      'qr-12x12': 'QRコード 12×12mm',
-      'qr-12x24': 'QRコード 12×24mm',
-      'qr-18x18': 'QRコード 18×18mm',
-      'qr-18x24': 'QRコード 18×24mm',
-      'qr-24x24': 'QRコード 24×24mm',
-      'qr-24x32': 'QRコード 24×32mm',
-    };
-    return names[templateKey] || templateKey;
-  };
-
   const getSealSizeFromTemplate = (templateKey: string): string => {
     const sizes: Record<string, string> = {
-      'qr-12x12': '12×12mm',
-      'qr-12x24': '12×24mm',
-      'qr-18x18': '18×18mm',
-      'qr-18x24': '18×24mm',
-      'qr-24x24': '24×24mm',
-      'qr-24x32': '24×32mm',
+      'qr-12x12': '12mm幅',
+      'qr-12x24': '12mm幅（長尺）',
+      'qr-18x18': '18mm幅',
+      'qr-18x24': '18mm幅（長尺）',
+      'qr-24x24': '24mm幅',
+      'qr-24x32': '24mm幅（長尺）',
     };
     return sizes[templateKey] || templateKey;
   };
@@ -103,251 +89,105 @@ function QRPrintContent() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
-      {/* Header */}
-      <div style={{
-        background: '#2d7f3e',
-        color: 'white',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px' }}>
-          <button
-            onClick={handleHomeClick}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              color: 'white',
-              padding: isMobile ? '8px 12px' : '10px 16px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; }}
-          >
-            <span>メイン画面に戻る</span>
-          </button>
+    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center gap-3 max-w-[800px] mx-auto">
           <button
             onClick={() => router.push('/qr-issue')}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              color: 'white',
-              padding: isMobile ? '8px 12px' : '10px 16px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className="text-sm text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors flex items-center gap-1"
           >
-            <span>←</span>
-            <span>QRラベル発行に戻る</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            QRコード発行
           </button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '22px', fontWeight: 600, margin: 0 }}>QRコード印刷</h1>
-            <span style={{ fontSize: isMobile ? '12px' : '14px', opacity: 0.9 }}>東京総合病院</span>
-          </div>
+          <button
+            onClick={handleHomeClick}
+            className="ml-auto text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+          >
+            メイン画面に戻る
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div style={{
-        flex: 1,
-        padding: isMobile ? '20px 12px' : isTablet ? '24px 16px' : '32px 40px',
-        maxWidth: '1200px',
-        width: '100%',
-        margin: '0 auto'
-      }}>
-        {/* Page Header */}
-        <div style={{ marginBottom: isMobile ? '20px' : isTablet ? '24px' : '32px' }}>
-          <h2 style={{ fontSize: isMobile ? '20px' : isTablet ? '24px' : '28px', fontWeight: 600, color: '#2c3e50', marginBottom: '8px' }}>
-            QRコード印刷プレビュー
-          </h2>
-        </div>
+      {/* メインコンテンツ */}
+      <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
+        <h1 className="text-base font-bold text-[#1f2937] mb-4 text-balance">QRコード印刷プレビュー</h1>
 
-        {/* Grid Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: (isMobile || isTablet) ? '1fr' : '1fr 1fr', gap: isMobile ? '16px' : isTablet ? '20px' : '24px' }}>
-          {/* Left Column: Settings */}
-          <div>
-            {/* Print Settings Section */}
-            <div style={{
-              background: 'white',
-              border: '2px solid #e0e0e0',
-              borderRadius: isMobile ? '8px' : '12px',
-              padding: isMobile ? '16px' : isTablet ? '20px' : '24px',
-              marginBottom: isMobile ? '16px' : isTablet ? '20px' : '24px'
-            }}>
-              <div style={{
-                marginBottom: isMobile ? '16px' : '20px',
-                paddingBottom: isMobile ? '12px' : '16px',
-                borderBottom: '2px solid #f0f0f0'
-              }}>
-                <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 600, color: '#2c3e50', margin: 0 }}>
-                  ⚙️ 印刷設定
-                </h3>
-              </div>
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+          {/* プレビュー */}
+          <div className="pb-6 border-b border-[#e5e7eb]">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-4">プレビュー</h2>
 
-              <div style={{ marginBottom: isMobile ? '16px' : '20px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 600,
-                  color: '#333',
-                  marginBottom: '8px'
-                }}>
-                  プリンタ
-                </label>
-                <select
-                  value={printer}
-                  onChange={(e) => setPrinter(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: isMobile ? '10px 12px' : '12px 14px',
-                    fontSize: isMobile ? '14px' : '15px',
-                    border: '2px solid #d0d0d0',
-                    borderRadius: '8px',
-                    background: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="sr5900p">TEPRA SR5900P (USB接続)</option>
-                  <option value="sr970">TEPRA SR970 (Bluetooth)</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '0' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 600,
-                  color: '#333',
-                  marginBottom: '8px'
-                }}>
-                  シールサイズ
-                </label>
-                <div style={{
-                  width: '100%',
-                  padding: isMobile ? '10px 12px' : '12px 14px',
-                  fontSize: isMobile ? '14px' : '15px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  background: '#f5f5f5',
-                  color: '#333'
-                }}>
-                  {getSealSizeFromTemplate(template)}
+            <div className={`flex gap-6 ${isMobile ? 'flex-col items-center' : 'items-start'}`}>
+              {/* QRコード画像 */}
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <div className="w-[100px] h-[100px] border border-[#d1d5db] rounded bg-white flex items-center justify-center p-2">
+                  <QRCodePlaceholder size={80} />
                 </div>
-                <div style={{ fontSize: isMobile ? '11px' : '12px', color: '#666', marginTop: '6px' }}>
-                  ※前の画面で設定したテンプレートに基づいて表示されます
+                <span className="text-xs font-bold text-[#27ae60] tabular-nums">
+                  {qrNumbers.length > 0 ? qrNumbers[0] : ''}
+                </span>
+                {footerText && (
+                  <span className="text-[10px] text-[#6b7280] text-center max-w-[120px] truncate">
+                    {footerText}
+                  </span>
+                )}
+              </div>
+
+              {/* 設定 */}
+              <div className={`flex flex-col gap-4 ${isMobile ? 'w-full' : 'flex-1'}`}>
+                <div>
+                  <label className="block text-xs font-bold text-[#1f2937] mb-1">プリンタ</label>
+                  <select
+                    value={printer}
+                    onChange={(e) => setPrinter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] bg-white cursor-pointer"
+                  >
+                    <option value="sr5900p">TEPRA SR5900P (USB接続)</option>
+                    <option value="sr970">TEPRA SR970 (Bluetooth)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1f2937] mb-1">シールサイズ</label>
+                  <div className="w-full px-3 py-2 text-sm border border-[#e5e7eb] rounded-md bg-[#f9fafb] text-[#1f2937]">
+                    {getSealSizeFromTemplate(template)}
+                  </div>
+                  <p className="text-[10px] text-[#9ca3af] mt-1">
+                    ※前の画面で設定したテンプレートに基づいて表示されます
+                  </p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Print Target List Section */}
-            <div style={{
-              background: 'white',
-              border: '2px solid #e0e0e0',
-              borderRadius: isMobile ? '8px' : '12px',
-              padding: isMobile ? '16px' : isTablet ? '20px' : '24px',
-              marginBottom: isMobile ? '16px' : isTablet ? '20px' : '24px'
-            }}>
-              <div style={{
-                marginBottom: isMobile ? '16px' : '20px',
-                paddingBottom: isMobile ? '12px' : '16px',
-                borderBottom: '2px solid #f0f0f0'
-              }}>
-                <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 600, color: '#2c3e50', margin: 0 }}>
-                  📋 印刷対象リスト
-                </h3>
-              </div>
+          {/* 印刷対象リスト */}
+          <div className="pt-6">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">印刷対象リスト</h2>
 
-              <div style={{
-                border: '2px solid #e0e0e0',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                maxHeight: isMobile ? '300px' : '400px',
-                overflowY: 'auto'
-              }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="border border-[#e5e7eb] rounded-md overflow-hidden">
+              <div className="max-h-[300px] overflow-y-auto">
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr>
-                      <th style={{
-                        background: '#fafbfc',
-                        padding: isMobile ? '8px 10px' : '10px 12px',
-                        textAlign: 'left',
-                        fontSize: isMobile ? '11px' : '12px',
-                        fontWeight: 600,
-                        color: '#5a6c7d',
-                        borderBottom: '2px solid #e0e0e0',
-                        position: 'sticky',
-                        top: 0
-                      }}>No.</th>
-                      <th style={{
-                        background: '#fafbfc',
-                        padding: isMobile ? '8px 10px' : '10px 12px',
-                        textAlign: 'left',
-                        fontSize: isMobile ? '11px' : '12px',
-                        fontWeight: 600,
-                        color: '#5a6c7d',
-                        borderBottom: '2px solid #e0e0e0',
-                        position: 'sticky',
-                        top: 0
-                      }}>QR番号</th>
-                      <th style={{
-                        background: '#fafbfc',
-                        padding: isMobile ? '8px 10px' : '10px 12px',
-                        textAlign: 'left',
-                        fontSize: isMobile ? '11px' : '12px',
-                        fontWeight: 600,
-                        color: '#5a6c7d',
-                        borderBottom: '2px solid #e0e0e0',
-                        position: 'sticky',
-                        top: 0
-                      }}>ステータス</th>
+                    <tr className="bg-[#f9fafb]">
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] sticky top-0 bg-[#f9fafb] w-[60px]">No.</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] sticky top-0 bg-[#f9fafb]">QR番号</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] sticky top-0 bg-[#f9fafb]">ステータス</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {qrNumbers.slice(0, 10).map((number, index) => (
-                      <tr key={index}>
-                        <td style={{
-                          padding: isMobile ? '8px 10px' : '10px 12px',
-                          fontSize: isMobile ? '12px' : '13px',
-                          color: '#2c3e50',
-                          borderBottom: index < Math.min(qrNumbers.length, 10) - 1 ? '1px solid #f0f0f0' : 'none'
-                        }}>{index + 1}</td>
-                        <td style={{
-                          padding: isMobile ? '8px 10px' : '10px 12px',
-                          fontSize: isMobile ? '12px' : '13px',
-                          color: '#2d7f3e',
-                          borderBottom: index < Math.min(qrNumbers.length, 10) - 1 ? '1px solid #f0f0f0' : 'none',
-                          fontFamily: "'Courier New', monospace",
-                          fontWeight: 600
-                        }}>{number}</td>
-                        <td style={{
-                          padding: isMobile ? '8px 10px' : '10px 12px',
-                          fontSize: isMobile ? '12px' : '13px',
-                          color: '#2c3e50',
-                          borderBottom: index < Math.min(qrNumbers.length, 10) - 1 ? '1px solid #f0f0f0' : 'none'
-                        }}>印刷待機中</td>
+                    {qrNumbers.map((number, index) => (
+                      <tr key={index} className={index < qrNumbers.length - 1 ? 'border-b border-[#f3f4f6]' : ''}>
+                        <td className="px-3 py-2 text-xs text-[#6b7280] tabular-nums">{index + 1}</td>
+                        <td className="px-3 py-2 text-xs font-semibold text-[#27ae60] tabular-nums font-mono">{number}</td>
+                        <td className="px-3 py-2 text-xs text-[#6b7280]">印刷待機中</td>
                       </tr>
                     ))}
-                    {qrNumbers.length > 10 && (
+                    {qrNumbers.length === 0 && (
                       <tr>
-                        <td colSpan={3} style={{
-                          padding: isMobile ? '8px 10px' : '10px 12px',
-                          fontSize: isMobile ? '12px' : '13px',
-                          color: '#666',
-                          textAlign: 'center',
-                          fontStyle: 'italic'
-                        }}>
-                          ... 他 {qrNumbers.length - 10} 件
+                        <td colSpan={3} className="px-3 py-6 text-center text-xs text-[#9ca3af]">
+                          印刷対象がありません
                         </td>
                       </tr>
                     )}
@@ -356,172 +196,29 @@ function QRPrintContent() {
               </div>
             </div>
           </div>
-
-          {/* Right Column: Preview */}
-          <div>
-            <div style={{
-              background: 'white',
-              border: '2px solid #e0e0e0',
-              borderRadius: isMobile ? '8px' : '12px',
-              padding: isMobile ? '16px' : isTablet ? '20px' : '24px',
-              marginBottom: isMobile ? '16px' : isTablet ? '20px' : '24px'
-            }}>
-              <div style={{
-                marginBottom: isMobile ? '16px' : '20px',
-                paddingBottom: isMobile ? '12px' : '16px',
-                borderBottom: '2px solid #f0f0f0'
-              }}>
-                <h3 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 600, color: '#2c3e50', margin: 0 }}>
-                  👁️ 印刷プレビュー
-                </h3>
-              </div>
-
-              <div style={{
-                background: '#fafbfc',
-                border: '2px solid #e0e0e0',
-                borderRadius: isMobile ? '8px' : '12px',
-                padding: isMobile ? '20px' : isTablet ? '24px' : '32px',
-                textAlign: 'center',
-                minHeight: isMobile ? '300px' : '400px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <div style={{
-                  fontSize: isMobile ? '12px' : '13px',
-                  fontWeight: 600,
-                  color: '#666',
-                  marginBottom: isMobile ? '16px' : '24px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
-                }}>
-                  シール印刷イメージ
-                </div>
-
-                <div style={{
-                  fontSize: isMobile ? '12px' : '13px',
-                  color: '#666',
-                  background: '#f5f5f5',
-                  padding: isMobile ? '6px 12px' : '8px 16px',
-                  borderRadius: '4px',
-                  marginBottom: isMobile ? '12px' : '16px'
-                }}>
-                  {getTemplateDisplayName(template)}
-                </div>
-
-                <div style={{
-                  background: 'white',
-                  border: isMobile ? '2px solid #2d7f3e' : '3px solid #2d7f3e',
-                  borderRadius: '8px',
-                  padding: isMobile ? '16px' : '24px',
-                  display: 'inline-flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: isMobile ? '10px' : '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }}>
-                  {/* QR Code Placeholder */}
-                  <div style={{
-                    width: isMobile ? '100px' : '120px',
-                    height: isMobile ? '100px' : '120px',
-                    background: 'white',
-                    border: isMobile ? '2px solid #333' : '3px solid #333',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '40px' : '48px',
-                    color: '#333'
-                  }}>
-                    ▣
-                  </div>
-
-                  {/* QR Number */}
-                  <div style={{
-                    fontFamily: "'Courier New', monospace",
-                    fontSize: isMobile ? '16px' : '18px',
-                    fontWeight: 700,
-                    color: '#2d7f3e'
-                  }}>
-                    {qrNumbers.length > 0 ? qrNumbers[0] : ''}
-                  </div>
-
-                  {/* Footer Text */}
-                  {footerText && (
-                    <div style={{
-                      fontSize: isMobile ? '10px' : '11px',
-                      color: '#333',
-                      textAlign: 'center',
-                      marginTop: '8px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '100%'
-                    }}>
-                      {footerText}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Button Group */}
-        <div style={{
-          display: 'flex',
-          gap: isMobile ? '10px' : '12px',
-          justifyContent: 'flex-end',
-          marginTop: isMobile ? '20px' : isTablet ? '24px' : '32px',
-          paddingTop: isMobile ? '16px' : '24px',
-          borderTop: '1px solid #e0e0e0',
-          flexDirection: isMobile ? 'column' : 'row'
-        }}>
+        {/* ボタン */}
+        <div className={`mt-4 flex gap-3 ${isMobile ? 'flex-col' : 'justify-end'}`}>
           <button
             onClick={handleCancel}
-            style={{
-              padding: isMobile ? '12px 24px' : isTablet ? '13px 28px' : '14px 32px',
-              fontSize: isMobile ? '15px' : '16px',
-              fontWeight: 600,
-              border: '2px solid #d0d0d0',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              background: 'white',
-              color: '#666',
-              width: isMobile ? '100%' : 'auto'
-            }}
+            className={`py-2.5 text-sm font-bold text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors ${isMobile ? 'w-full order-2' : 'px-8'}`}
           >
-            <span>キャンセル</span>
+            キャンセル
           </button>
           <button
             onClick={handlePrintStart}
-            style={{
-              padding: isMobile ? '12px 24px' : isTablet ? '13px 28px' : '14px 32px',
-              fontSize: isMobile ? '15px' : '16px',
-              fontWeight: 600,
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              background: 'linear-gradient(135deg, #2ecc71, #27ae60)',
-              color: 'white',
-              boxShadow: '0 4px 12px rgba(39, 174, 96, 0.3)',
-              width: isMobile ? '100%' : 'auto'
-            }}
+            className={`py-2.5 text-sm font-bold text-white bg-[#27ae60] border-0 rounded-md cursor-pointer hover:bg-[#229954] transition-colors ${isMobile ? 'w-full order-1' : 'px-8'}`}
           >
-            <span>🖨️</span>
-            <span>印刷を開始</span>
+            印刷を開始
           </button>
         </div>
       </div>
+
+      {/* フッター */}
+      <footer className="mt-auto py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+      </footer>
 
       <ConfirmDialog
         isOpen={showHomeConfirm}
@@ -537,10 +234,9 @@ function QRPrintContent() {
   );
 }
 
-
 export default function QRPrintPage() {
   return (
-    <Suspense fallback={<div>読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
       <QRPrintContent />
     </Suspense>
   );

@@ -101,7 +101,7 @@ function InspectionPrepContent() {
     <div className="flex flex-col bg-[#f9fafb]">
       {/* ヘッダー */}
       <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
-        <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
+        <div className="flex items-center justify-between max-w-[800px] mx-auto">
           <div className="flex items-center gap-2.5">
             <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
               logo
@@ -110,6 +110,18 @@ function InspectionPrepContent() {
               HEALTHCARE 医療機器管理システム
             </div>
           </div>
+          {isMobile && (
+            <button
+              onClick={handleClose}
+              className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer"
+              aria-label="閉じる"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
       </header>
 

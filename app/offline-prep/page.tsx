@@ -1,376 +1,206 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-import { useAuthStore } from '@/lib/stores';
 
 function OfflinePrepContent() {
   const router = useRouter();
-  const facility = useAuthStore().selectedFacility || '';
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
 
-  const [downloadStatus, setDownloadStatus] = useState('✓ 最新');
-  const [lastDownloadTime, setLastDownloadTime] = useState('2025/06/02 10:30');
-  const [dataCount, setDataCount] = useState('施設:125件 / 資産:1,234件');
+  // ダウンロードセクション
+  const [downloadStatus, setDownloadStatus] = useState<'none' | 'downloading' | 'completed'>('completed');
+  const [lastDownloadTime, setLastDownloadTime] = useState<string | null>('2025/06/02 10:30');
+  const [facilityCount, setFacilityCount] = useState('125件');
+  const [assetCount, setAssetCount] = useState('1,234件');
 
-  const [unsyncedCount, setUnsyncedCount] = useState('25件');
-  const [lastSyncTime, setLastSyncTime] = useState('2025/06/01 18:45');
-  const [connectionStatus, setConnectionStatus] = useState('✓ オンライン');
+  // 送信セクション
+  const [connectionStatus] = useState('オンライン');
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>('2025/06/01 18:45');
+  const [unsyncedCount, setUnsyncedCount] = useState(25);
+  const [isOnline] = useState(true);
 
   const handleDownloadMaster = () => {
-    alert('マスタデータをダウンロードします（この機能は実装予定）');
+    setDownloadStatus('downloading');
+    setTimeout(() => {
+      setDownloadStatus('completed');
+      setLastDownloadTime(new Date().toLocaleString('ja-JP'));
+      setFacilityCount('125件');
+      setAssetCount('1,234件');
+    }, 2000);
   };
 
   const handleSyncData = () => {
-    alert('データを送信します（この機能は実装予定）');
-  };
-
-  const handleBack = () => {
-    router.push('/main');
+    if (!isOnline) {
+      alert('オフライン状態のため送信できません。オンラインに接続してください。');
+      return;
+    }
+    alert('調査データを送信しました');
+    setUnsyncedCount(0);
+    setLastSyncTime(new Date().toLocaleString('ja-JP'));
   };
 
   const handleStartSurvey = () => {
+    if (downloadStatus !== 'completed' && !isOnline) {
+      alert('オフライン状態でデータがダウンロードされていません。先にデータをダウンロードしてください。');
+      return;
+    }
     router.push('/survey-location');
   };
 
+  const handleClose = () => {
+    router.push('/main');
+  };
+
+  const getStatusText = () => {
+    switch (downloadStatus) {
+      case 'none': return 'ー';
+      case 'downloading': return 'ダウンロード中...';
+      case 'completed': return '最新';
+    }
+  };
+
+  // ダウンロードセクションのテーブルデータ
+  const downloadTableData = [
+    { label: '状態', value: getStatusText() },
+    { label: '最終更新', value: lastDownloadTime || 'ー', tabular: true },
+    { label: '施設', value: downloadStatus === 'completed' ? facilityCount : 'ー', tabular: true },
+    { label: '資産', value: downloadStatus === 'completed' ? assetCount : 'ー', tabular: true },
+  ];
+
+  // 送信セクションのテーブルデータ
+  const syncTableData = [
+    { label: '接続状態', value: connectionStatus, color: isOnline ? 'text-[#27ae60]' : 'text-red-500' },
+    { label: '最終送信', value: lastSyncTime || 'ー', tabular: true },
+    { label: '未送信データ', value: `${unsyncedCount}件`, tabular: true, color: unsyncedCount > 0 ? 'text-red-500' : undefined },
+  ];
+
+  // テーブルコンポーネント（ヘッダー行+データ行、縦横罫線）
+  const StatusTable = ({ data }: { data: { label: string; value: string; tabular?: boolean; color?: string }[] }) => (
+    <div className="border border-[#e5e7eb] rounded-md overflow-hidden mb-4">
+      {/* ヘッダー行 */}
+      <div className="flex border-b border-[#e5e7eb]">
+        {data.map((item, i) => (
+          <div key={i} className={`flex-1 px-3 py-2 text-xs text-[#6b7280] ${i > 0 ? 'border-l border-[#e5e7eb]' : ''}`}>
+            {item.label}
+          </div>
+        ))}
+      </div>
+      {/* データ行 */}
+      <div className="flex">
+        {data.map((item, i) => (
+          <div key={i} className={`flex-1 px-3 py-2.5 text-sm font-semibold ${item.tabular ? 'tabular-nums' : ''} ${item.color || 'text-[#1f2937]'} ${i > 0 ? 'border-l border-[#e5e7eb]' : ''}`}>
+            {item.value}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
-      {/* Header */}
-      <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: isMobile ? 'center' : 'space-between',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '8px' : '0'
-      }}>
-        {!isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: isTablet ? '10px' : '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #27ae60, #229954)',
-              padding: isTablet ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isTablet ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px'
-            }}>
-              SHIP
+    <div className="flex flex-col bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="flex items-center justify-between max-w-[800px] mx-auto">
+          <div className="flex items-center gap-2.5">
+            <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+              logo
             </div>
-            <div style={{ fontSize: isTablet ? '14px' : '16px', fontWeight: 500 }}>
+            <div className="text-sm font-bold text-[#1f2937] text-balance">
               HEALTHCARE 医療機器管理システム
             </div>
           </div>
-        )}
-        <div style={{ flex: isMobile ? '0' : '1', display: 'flex', justifyContent: 'center' }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-            現有品調査 - オフライン準備
-          </h1>
+          {isMobile && (
+            <button
+              onClick={handleClose}
+              className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer"
+              aria-label="閉じる"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
-        {!isMobile && <div style={{ width: isTablet ? '150px' : '200px' }}></div>}
       </header>
 
-      {/* Main Content */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '20px 12px 120px 12px' : isTablet ? '28px 20px 120px 20px' : '38px 40px 120px 40px',
-        overflowY: 'auto'
-      }}>
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: isMobile ? '8px' : '12px',
-          padding: isMobile ? '20px 16px' : isTablet ? '28px 24px' : '36px 40px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          maxWidth: '800px',
-          margin: '0 auto'
-        }}>
-          {/* Master Data Download Section */}
-          <div style={{
-            marginBottom: isMobile ? '24px' : '32px',
-            paddingBottom: isMobile ? '24px' : '32px',
-            borderBottom: '2px solid #f0f0f0'
-          }}>
-            <h2 style={{
-              fontSize: isMobile ? '16px' : '18px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: isMobile ? '12px' : '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span style={{ fontSize: isMobile ? '18px' : '20px' }}>📥</span>
-              マスタデータダウンロード（オフライン用）
-            </h2>
+      {/* メインコンテンツ */}
+      <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
+        <h1 className="text-lg font-bold text-[#1f2937] mb-4 text-balance">
+          現有品調査：オフライン準備
+        </h1>
 
-            <div style={{
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: isMobile ? '12px 16px' : isTablet ? '14px 18px' : '16px 20px',
-              marginBottom: isMobile ? '12px' : '16px'
-            }}>
-              <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#666666', lineHeight: '1.6', marginBottom: '8px' }}>
-                オフライン環境で調査を実施する場合は、事前にマスタデータをダウンロードしてください。
-              </p>
-              <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#666666', lineHeight: '1.6', margin: 0 }}>
-                ダウンロード後、タブレット/スマートフォンがオフラインでも調査画面の選択肢が表示されます。
-              </p>
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+          {/* マスタデータダウンロード */}
+          <div className="pb-6 border-b border-[#e5e7eb]">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">マスタデータダウンロード（オフライン用）</h2>
+            <p className="text-xs text-[#6b7280] leading-relaxed mb-4 text-pretty">
+              オフライン環境で調査を実施する場合は、事前にマスタデータをダウンロードしてください。ダウンロード後、タブレット/スマートフォンがオフラインでも調査画面の選択肢が表示されます。
+            </p>
 
-            <div style={{
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: isMobile ? '12px 16px' : isTablet ? '14px 18px' : '16px 20px',
-              marginBottom: isMobile ? '12px' : '16px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: isMobile ? '8px 0' : '10px 0',
-                fontSize: isMobile ? '13px' : '14px'
-              }}>
-                <span style={{ color: '#666666', fontWeight: 500 }}>ダウンロード状態:</span>
-                <span style={{ color: '#27ae60', fontWeight: 600 }}>{downloadStatus}</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: isMobile ? '8px 0' : '10px 0',
-                fontSize: isMobile ? '13px' : '14px'
-              }}>
-                <span style={{ color: '#666666', fontWeight: 500 }}>最終更新:</span>
-                <span style={{ color: '#333333', fontWeight: 600 }}>{lastDownloadTime}</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: isMobile ? '8px 0' : '10px 0',
-                fontSize: isMobile ? '13px' : '14px'
-              }}>
-                <span style={{ color: '#666666', fontWeight: 500 }}>データ件数:</span>
-                <span style={{ color: '#333333', fontWeight: 600 }}>{dataCount}</span>
-              </div>
-            </div>
+            <StatusTable data={downloadTableData} />
 
             <button
               onClick={handleDownloadMaster}
-              style={{
-                width: '100%',
-                padding: isMobile ? '14px 20px' : '16px 24px',
-                fontSize: isMobile ? '15px' : '16px',
-                fontWeight: 600,
-                color: '#ffffff',
-                backgroundColor: '#27ae60',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 6px rgba(39, 174, 96, 0.2)'
-              }}
+              disabled={downloadStatus === 'downloading'}
+              className={`w-full py-2.5 text-sm font-bold rounded-md transition-colors ${
+                downloadStatus === 'downloading'
+                  ? 'text-[#9ca3af] bg-[#f3f4f6] border border-[#d1d5db] cursor-not-allowed'
+                  : 'text-[#27ae60] bg-white border border-[#27ae60] cursor-pointer hover:bg-[#f0fdf4]'
+              }`}
             >
-              <span style={{ fontSize: isMobile ? '16px' : '18px' }}>📥</span>
-              <span>マスタデータをダウンロード</span>
+              {downloadStatus === 'downloading' ? 'ダウンロード中...' : 'マスタデータをダウンロード'}
             </button>
           </div>
 
-          {/* Data Synchronization Section */}
-          <div>
-            <h2 style={{
-              fontSize: isMobile ? '16px' : '18px',
-              fontWeight: 600,
-              color: '#333333',
-              marginBottom: isMobile ? '12px' : '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span style={{ fontSize: isMobile ? '18px' : '20px' }}>📤</span>
-              オフライン調査データ送信
-            </h2>
+          {/* オフライン調査データ送信 */}
+          <div className="pt-6">
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">オフライン調査データ送信</h2>
+            <p className="text-xs text-[#6b7280] leading-relaxed mb-4 text-pretty">
+              オフライン環境で登録した調査データをシステムに送信します。送信前にオンライン環境に接続していることを確認してください。
+            </p>
 
-            <div style={{
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: isMobile ? '12px 16px' : isTablet ? '14px 18px' : '16px 20px',
-              marginBottom: isMobile ? '12px' : '16px'
-            }}>
-              <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#666666', lineHeight: '1.6', marginBottom: '8px' }}>
-                オフライン環境で登録した調査データをシステムに送信します。
-              </p>
-              <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#666666', lineHeight: '1.6', margin: 0 }}>
-                送信前にオンライン環境に接続していることを確認してください。
-              </p>
-            </div>
-
-            <div style={{
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: isMobile ? '12px 16px' : isTablet ? '14px 18px' : '16px 20px',
-              marginBottom: isMobile ? '12px' : '16px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: isMobile ? '8px 0' : '10px 0',
-                fontSize: isMobile ? '13px' : '14px'
-              }}>
-                <span style={{ color: '#666666', fontWeight: 500 }}>未送信データ:</span>
-                <span style={{ color: '#f39c12', fontWeight: 600 }}>{unsyncedCount}</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: isMobile ? '8px 0' : '10px 0',
-                fontSize: isMobile ? '13px' : '14px'
-              }}>
-                <span style={{ color: '#666666', fontWeight: 500 }}>最終送信:</span>
-                <span style={{ color: '#333333', fontWeight: 600 }}>{lastSyncTime}</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: isMobile ? '8px 0' : '10px 0',
-                fontSize: isMobile ? '13px' : '14px'
-              }}>
-                <span style={{ color: '#666666', fontWeight: 500 }}>接続状態:</span>
-                <span style={{ color: '#27ae60', fontWeight: 600 }}>{connectionStatus}</span>
-              </div>
-            </div>
+            <StatusTable data={syncTableData} />
 
             <button
               onClick={handleSyncData}
-              style={{
-                width: '100%',
-                padding: isMobile ? '14px 20px' : '16px 24px',
-                fontSize: isMobile ? '15px' : '16px',
-                fontWeight: 600,
-                color: '#ffffff',
-                backgroundColor: '#3498db',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'all 0.2s',
-                boxShadow: '0 2px 6px rgba(52, 152, 219, 0.2)'
-              }}
+              className="w-full py-2.5 text-sm font-bold text-[#27ae60] bg-white border border-[#27ae60] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors"
             >
-              <span style={{ fontSize: isMobile ? '16px' : '18px' }}>📤</span>
-              <span>データを送信</span>
+              調査データを送信
             </button>
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        width: '100%',
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #dee2e6',
-        padding: isMobile ? '16px 16px' : isTablet ? '18px 20px' : '20px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.08)',
-        height: isMobile ? '90px' : isTablet ? '100px' : '110px',
-        boxSizing: 'border-box'
-      }}>
-        <button
-          onClick={handleBack}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: isMobile ? '4px' : '5px',
-            padding: isMobile ? '6px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.2s'
-          }}
-        >
-          <div style={{
-            background: '#ecf0f1',
-            borderRadius: '50%',
-            width: isMobile ? '44px' : isTablet ? '48px' : '52px',
-            height: isMobile ? '44px' : isTablet ? '48px' : '52px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderRight: isMobile ? '8px solid #34495e' : '10px solid #34495e',
-              borderTop: isMobile ? '5px solid transparent' : '6px solid transparent',
-              borderBottom: isMobile ? '5px solid transparent' : '6px solid transparent'
-            }}></div>
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>メイン画面に戻る</span>
-        </button>
+        {/* 下部ボタン */}
+        <div className={`mt-4 ${isMobile ? 'flex flex-col gap-3' : 'flex gap-3'}`}>
+          <button
+            onClick={handleClose}
+            className={`${isMobile ? 'w-full order-2' : 'flex-1'} py-3 text-sm font-medium text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors`}
+          >
+            閉じる
+          </button>
+          <button
+            onClick={handleStartSurvey}
+            className={`${isMobile ? 'w-full order-1' : 'flex-1'} py-3 text-sm font-bold text-[#27ae60] bg-white border border-[#27ae60] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors`}
+          >
+            調査を開始する
+          </button>
+        </div>
+      </div>
 
-        <button
-          onClick={handleStartSurvey}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: isMobile ? '4px' : '5px',
-            padding: isMobile ? '6px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.2s'
-          }}
-        >
-          <div style={{
-            background: '#d5f4e6',
-            borderRadius: '50%',
-            width: isMobile ? '44px' : isTablet ? '48px' : '52px',
-            height: isMobile ? '44px' : isTablet ? '48px' : '52px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderLeft: isMobile ? '8px solid #34495e' : '10px solid #34495e',
-              borderTop: isMobile ? '5px solid transparent' : '6px solid transparent',
-              borderBottom: isMobile ? '5px solid transparent' : '6px solid transparent'
-            }}></div>
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#27ae60', fontWeight: 600 }}>調査開始</span>
-        </button>
+      {/* フッター */}
+      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+        &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
     </div>
   );
 }
 
 export default function OfflinePrepPage() {
-  return <OfflinePrepContent />;
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
+      <OfflinePrepContent />
+    </Suspense>
+  );
 }

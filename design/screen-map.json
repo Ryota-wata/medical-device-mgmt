@@ -1,0 +1,27 @@
+{
+  "1,2：ログイン": "login",
+  "ログイン": "login",
+  "パスワード再設定": "password-reset",
+  "4：施設選択画面": "facility-select",
+  "5：メニュー画面": "main",
+  "6：貸出可能機器閲覧": "lending-available",
+  "7：貸出・返却": "lending-checkout",
+  "7：修正申請画面": "registration-edit",
+  "9：日常点検実施（オフライン準備）画面": "inspection-prep",
+  "10：日常点検実施（QRコード読み取り）画面": "daily-inspection",
+  "11,12：日常点検実施画面": "daily-inspection",
+  "11：日常点検実施画面_SP": "daily-inspection",
+  "12：点検完了画面_SP": "daily-inspection",
+  "13,14：ラベル発行": ["qr-issue", "qr-print"],
+  "13,14：QRコード発行": ["qr-issue", "qr-print"],
+  "15,16,17,18：オフライン準備〜現有品調査画面": ["offline-prep", "survey-location", "history"],
+  "19：登録内容修正画面": "registration-edit",
+  "20：資産マスタ選択画面": "asset-master",
+  "21：資産台帳取込画面": "asset-import",
+
+  "調査場所入力画面": "survey-location",
+  "現有品調査画面": "asset-survey-integrated",
+  "登録履歴画面": "history",
+
+  "_comment": "↑ Figmaのセクション名と保存先の対応。値は文字列または配列。セクションが増えたらここに追記する"
+}

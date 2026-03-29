@@ -3,17 +3,17 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-import { useMasterStore } from '@/lib/stores';
-import { useAuthStore } from '@/lib/stores';
+import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { QRCodePlaceholder } from '@/components/ui/QRCodePlaceholder';
 
 function AssetSurveyIntegratedContent() {
   const router = useRouter();
-
   const facilityName = useAuthStore().selectedFacility || '';
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
+
   const [bulkMode, setBulkMode] = useState(false);
   const [qrScanned, setQrScanned] = useState(false);
   const [photoTaken, setPhotoTaken] = useState(false);
@@ -22,12 +22,20 @@ function AssetSurveyIntegratedContent() {
   const [item, setItem] = useState('');
   const [maker, setMaker] = useState('');
   const [model, setModel] = useState('');
+  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
 
-  // 購入年月日（年、月、日を個別に管理）
+  // 購入年月日
   const [purchaseYear, setPurchaseYear] = useState('');
   const [purchaseMonth, setPurchaseMonth] = useState('');
   const [purchaseDay, setPurchaseDay] = useState('');
-  const [showHomeConfirm, setShowHomeConfirm] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempYear, setTempYear] = useState('');
+  const [tempMonth, setTempMonth] = useState('');
+  const [tempDay, setTempDay] = useState('');
+
+  const yearScrollRef = useRef<HTMLDivElement>(null);
+  const monthScrollRef = useRef<HTMLDivElement>(null);
+  const dayScrollRef = useRef<HTMLDivElement>(null);
 
   const isFormDirty = qrScanned || photoTaken || largeClass !== '' || mediumClass !== '' || item !== '' || maker !== '' || model !== '' || purchaseYear !== '';
 
@@ -39,18 +47,7 @@ function AssetSurveyIntegratedContent() {
     }
   };
 
-  // 日付ピッカーモーダル
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [tempYear, setTempYear] = useState('');
-  const [tempMonth, setTempMonth] = useState('');
-  const [tempDay, setTempDay] = useState('');
-
-  // ドラムロールのスクロール参照
-  const yearScrollRef = useRef<HTMLDivElement>(null);
-  const monthScrollRef = useRef<HTMLDivElement>(null);
-  const dayScrollRef = useRef<HTMLDivElement>(null);
-
-  // 和暦変換関数
+  // 和暦変換
   const toWareki = (year: number): string => {
     if (year >= 2019) return `令和${year - 2018}`;
     if (year >= 1989) return `平成${year - 1988}`;
@@ -59,44 +56,30 @@ function AssetSurveyIntegratedContent() {
     return `明治${year - 1867}`;
   };
 
-  // 年の選択肢（1950年〜現在+1年）
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const years: string[] = [];
-    for (let y = currentYear + 1; y >= 1950; y--) {
-      years.push(y.toString());
-    }
+    for (let y = currentYear + 1; y >= 1950; y--) years.push(y.toString());
     return years;
   }, []);
 
-  // 月の選択肢（未選択可）
   const monthOptions = useMemo(() => {
     const months: string[] = [];
-    for (let m = 1; m <= 12; m++) {
-      months.push(m.toString());
-    }
+    for (let m = 1; m <= 12; m++) months.push(m.toString());
     return months;
   }, []);
 
-  // 日の選択肢（未選択可、選択された年月に応じて変動）
   const dayOptions = useMemo(() => {
     const days: string[] = [];
     const year = tempYear ? parseInt(tempYear, 10) : null;
     const month = tempMonth ? parseInt(tempMonth, 10) : null;
-    if (!year || !month) {
-      for (let d = 1; d <= 31; d++) {
-        days.push(d.toString());
-      }
-    } else {
-      const daysInMonth = new Date(year, month, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        days.push(d.toString());
-      }
-    }
+    const max = year && month ? new Date(year, month, 0).getDate() : 31;
+    for (let d = 1; d <= max; d++) days.push(d.toString());
     return days;
   }, [tempYear, tempMonth]);
 
-  // モーダルを開く際に現在の値をセット
+  const ITEM_HEIGHT = 44;
+
   const openDatePicker = () => {
     setTempYear(purchaseYear);
     setTempMonth(purchaseMonth);
@@ -104,7 +87,6 @@ function AssetSurveyIntegratedContent() {
     setShowDatePicker(true);
   };
 
-  // モーダルでの選択を確定
   const confirmDatePicker = () => {
     setPurchaseYear(tempYear);
     setPurchaseMonth(tempMonth);
@@ -112,1133 +94,407 @@ function AssetSurveyIntegratedContent() {
     setShowDatePicker(false);
   };
 
-  // モーダルをキャンセル
-  const cancelDatePicker = () => {
-    setShowDatePicker(false);
-  };
-
-  // 日付表示用のフォーマット
-  const formatDisplayDate = () => {
-    if (!purchaseYear) return '選択してください';
-    let display = `${purchaseYear}（${toWareki(parseInt(purchaseYear, 10))}）年`;
-    if (purchaseMonth) {
-      display += ` ${purchaseMonth}月`;
-      if (purchaseDay) {
-        display += ` ${purchaseDay}日`;
-      }
-    }
-    return display;
-  };
-
-  // ドラムロール内の項目の高さ
-  const ITEM_HEIGHT = 44;
-
-  // スクロール位置を選択値に基づいて設定
   useEffect(() => {
     if (showDatePicker) {
       setTimeout(() => {
         if (yearScrollRef.current) {
-          const index = tempYear ? yearOptions.indexOf(tempYear) + 1 : 0; // +1 for 未選択
+          const index = tempYear ? yearOptions.indexOf(tempYear) + 1 : 0;
           yearScrollRef.current.scrollTop = index * ITEM_HEIGHT;
         }
         if (monthScrollRef.current) {
-          const index = tempMonth ? monthOptions.indexOf(tempMonth) + 1 : 0; // +1 for --
+          const index = tempMonth ? monthOptions.indexOf(tempMonth) + 1 : 0;
           monthScrollRef.current.scrollTop = index * ITEM_HEIGHT;
         }
         if (dayScrollRef.current) {
-          const index = tempDay ? dayOptions.indexOf(tempDay) + 1 : 0; // +1 for --
+          const index = tempDay ? dayOptions.indexOf(tempDay) + 1 : 0;
           dayScrollRef.current.scrollTop = index * ITEM_HEIGHT;
         }
       }, 100);
     }
   }, [showDatePicker]);
 
-  // スクロール終了時に中央の項目を選択
-  const handleYearScroll = () => {
-    if (!yearScrollRef.current) return;
-    const scrollTop = yearScrollRef.current.scrollTop;
-    const index = Math.round(scrollTop / ITEM_HEIGHT);
-    if (index === 0) {
-      setTempYear('');
-    } else if (index > 0 && index <= yearOptions.length) {
-      setTempYear(yearOptions[index - 1]);
+  const handleScrollSelect = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    options: string[],
+    setter: (v: string) => void
+  ) => {
+    if (!ref.current) return;
+    const index = Math.round(ref.current.scrollTop / ITEM_HEIGHT);
+    setter(index === 0 ? '' : (options[index - 1] ?? ''));
+  };
+
+  const formatDisplayDate = () => {
+    if (!purchaseYear) return '選択してください';
+    let display = `${purchaseYear}（${toWareki(parseInt(purchaseYear, 10))}）年`;
+    if (purchaseMonth) {
+      display += ` ${purchaseMonth}月`;
+      if (purchaseDay) display += ` ${purchaseDay}日`;
     }
+    return display;
   };
 
-  const handleMonthScroll = () => {
-    if (!monthScrollRef.current) return;
-    const scrollTop = monthScrollRef.current.scrollTop;
-    const index = Math.round(scrollTop / ITEM_HEIGHT);
-    if (index === 0) {
-      setTempMonth('');
-    } else if (index > 0 && index <= monthOptions.length) {
-      setTempMonth(monthOptions[index - 1]);
-    }
-  };
+  // マスタデータから選択肢を生成
+  const largeClassOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean))), [assetMasters]);
+  const mediumClassOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.mediumClass).filter(Boolean))), [assetMasters]);
+  const itemOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.item).filter(Boolean))), [assetMasters]);
+  const makerOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.maker).filter(Boolean))), [assetMasters]);
+  const modelOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.model).filter(Boolean))), [assetMasters]);
 
-  const handleDayScroll = () => {
-    if (!dayScrollRef.current) return;
-    const scrollTop = dayScrollRef.current.scrollTop;
-    const index = Math.round(scrollTop / ITEM_HEIGHT);
-    if (index === 0) {
-      setTempDay('');
-    } else if (index > 0 && index <= dayOptions.length) {
-      setTempDay(dayOptions[index - 1]);
-    }
-  };
+  const handleBack = () => router.push('/survey-location');
+  const handleShowHistory = () => router.push('/history');
+  const handleQRScan = () => { setQrScanned(true); alert('QRコードを読み取りました'); };
+  const handlePhotoCapture = () => { setPhotoTaken(true); alert('写真を撮影しました'); };
+  const handleAssetRegistration = () => alert('商品を登録しました');
 
-  const largeClassOptions = useMemo(() => {
-    const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean)));
-    return uniqueClasses;
-  }, [assetMasters]);
-
-  const mediumClassOptions = useMemo(() => {
-    const uniqueClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass).filter(Boolean)));
-    return uniqueClasses;
-  }, [assetMasters]);
-
-  const itemOptions = useMemo(() => {
-    const uniqueItems = Array.from(new Set(assetMasters.map(a => a.item).filter(Boolean)));
-    return uniqueItems;
-  }, [assetMasters]);
-
-  const makerOptions = useMemo(() => {
-    const uniqueMakers = Array.from(new Set(assetMasters.map(a => a.maker).filter(Boolean)));
-    return uniqueMakers;
-  }, [assetMasters]);
-
-  const modelOptions = useMemo(() => {
-    const uniqueModels = Array.from(new Set(assetMasters.map(a => a.model).filter(Boolean)));
-    return uniqueModels;
-  }, [assetMasters]);
-
-  const handleBack = () => {
-    router.push('/survey-location');
-  };
-
-  const handleShowHistory = () => {
-    router.push('/history');
-  };
-
-  const handleQRScan = () => {
-    setQrScanned(true);
-    alert('QRコードを読み取りました');
-  };
-
-  const handlePhotoCapture = () => {
-    setPhotoTaken(true);
-    alert('写真を撮影しました');
-  };
-
-  const handleEndQRScan = () => {
-    alert('終了QRコードを読み取りました');
-  };
-
-  const handleAssetRegistration = () => {
-    alert('商品を登録しました');
-  };
+  const inputClass = 'w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors';
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
-    }}>
-      {/* Sticky Header */}
-      <div style={{
-        backgroundColor: '#1976d2',
-        color: 'white',
-        padding: isMobile ? '12px 16px' : '16px 24px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-      }}>
-        <div style={{
-          display: 'flex',
-          gap: isMobile ? '12px' : '24px',
-          maxWidth: '1200px',
-          margin: '0 auto',
-          flexDirection: isMobile ? 'column' : 'row'
-        }}>
-          <div style={{ flex: 1 }}>
-            <label style={{
-              fontSize: '12px',
-              display: 'block',
-              marginBottom: '4px',
-              fontWeight: '600'
-            }}>
-              QRコード
-            </label>
-            <input
-              type="text"
-              placeholder="QRコードを入力"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
-            />
+    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+      {/* ヘッダー */}
+      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3 sticky top-0 z-50">
+        <div className="flex items-center justify-between max-w-[800px] mx-auto">
+          <button
+            onClick={handleBack}
+            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            aria-label="戻る"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <span className="text-sm font-bold text-[#1f2937] text-balance">HEALTHCARE 医療機器管理システム</span>
+          <button
+            onClick={handleHomeClick}
+            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            aria-label="閉じる"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {/* QRコード + 室名（sticky） */}
+      <div className="sticky top-[53px] z-40 bg-white border-b border-[#e5e7eb] px-4 py-3">
+        <div className="max-w-[800px] mx-auto grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-[#1f2937] mb-1.5">QRコード</label>
+            <input type="text" placeholder="入力してください" className={inputClass} />
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{
-              fontSize: '12px',
-              display: 'block',
-              marginBottom: '4px',
-              fontWeight: '600'
-            }}>
-              室名
-            </label>
-            <input
-              type="text"
-              placeholder="室名を入力または検索"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '14px',
-                boxSizing: 'border-box'
-              }}
-            />
+          <div>
+            <label className="block text-sm text-[#1f2937] mb-1.5">室名</label>
+            <input type="text" placeholder="入力してください" className={inputClass} />
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '16px' : '24px',
-        maxWidth: '1200px',
-        width: '100%',
-        margin: '0 auto',
-        boxSizing: 'border-box'
-      }}>
-        {/* Bulk Registration Mode */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '14px', fontWeight: '600', color: '#2c3e50' }}>
-              登録モード
-            </label>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="checkbox"
-              id="bulkMode"
-              checked={bulkMode}
-              onChange={(e) => setBulkMode(e.target.checked)}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-            />
-            <label htmlFor="bulkMode" style={{ fontSize: '14px', color: '#2c3e50', cursor: 'pointer' }}>
-              一括登録モード
-            </label>
-          </div>
-          <div style={{ fontSize: '12px', color: '#5a6c7d', marginTop: '4px', marginLeft: '26px' }}>
-            同じ機器を複数個登録する場合にチェック
-          </div>
-        </div>
+      {/* メインコンテンツ */}
+      <div className="flex-1 pb-32">
+        <div className="max-w-[800px] mx-auto px-3 py-4 sm:px-6">
 
-        {/* QR Display */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '14px', fontWeight: '600', color: '#2c3e50', marginBottom: '12px' }}>
-            読み取ったQRコード
-          </div>
-          <div style={{
-            border: '2px dashed #ccc',
-            borderRadius: '8px',
-            padding: '40px',
-            textAlign: 'center',
-            backgroundColor: qrScanned ? '#e8f5e9' : '#f9f9f9'
-          }}>
-            <div style={{ fontSize: '40px', marginBottom: '8px' }}>📷</div>
-            <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
-              {qrScanned ? 'QRコード読み取り済み' : 'QRコードを読み取ってください'}
+          {/* カード2: メインフォーム */}
+          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] mt-3">
+            {/* 登録モード */}
+            <div className="p-4">
+              <h2 className="text-sm font-bold text-[#1f2937] mb-2">登録モード</h2>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={bulkMode}
+                  onChange={(e) => setBulkMode(e.target.checked)}
+                  className="size-[18px] accent-[#27ae60] cursor-pointer"
+                />
+                <span className="text-sm text-[#1f2937]">一括登録モード</span>
+              </label>
+              <p className="text-xs text-[#9ca3af] mt-1 ml-[26px]">同じ機器を複数個登録する場合にチェック</p>
             </div>
-          </div>
-        </div>
 
-        {/* Blue Bar */}
-        <div style={{
-          height: '4px',
-          backgroundColor: '#1976d2',
-          margin: '24px 0',
-          borderRadius: '2px'
-        }} />
+            <div className="border-t border-[#e5e7eb]" />
 
-        {/* Asset Info */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: '16px',
-            marginBottom: '16px'
-          }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                資産番号
-              </label>
-              <input
-                type="text"
-                placeholder="資産番号を入力"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                備品番号
-              </label>
-              <input
-                type="text"
-                placeholder="備品番号を入力"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                シリアルNo.
-              </label>
-              <input
-                type="text"
-                placeholder="シリアルNo.を入力"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                購入年月日
-              </label>
-              <div
-                onClick={openDatePicker}
-                style={{
-                  padding: '10px 12px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  background: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  minHeight: '42px',
-                  color: purchaseYear ? '#2c3e50' : '#999'
-                }}
-              >
-                <span>{formatDisplayDate()}</span>
-                <span style={{ color: '#999', fontSize: '18px' }}>▼</span>
+            {/* 読み取ったQRコード */}
+            <div className="p-4">
+              <h2 className="text-sm font-bold text-[#1f2937] mb-3">読み取ったQRコード</h2>
+              <div className={`border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center ${qrScanned ? 'border-[#27ae60] bg-[#f0fdf4]' : 'border-[#d1d5db] bg-[#f9fafb]'}`}>
+                <QRCodePlaceholder size={32} color={qrScanned ? '#27ae60' : '#9ca3af'} />
+                <p className={`text-sm mt-2 ${qrScanned ? 'text-[#27ae60]' : 'text-[#9ca3af]'}`}>
+                  {qrScanned ? 'QRコード読み取り済み' : 'QRコードを読んでください'}
+                </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Photo Display */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '14px', fontWeight: '600', color: '#2c3e50', marginBottom: '12px' }}>
-            写真
-          </div>
-          <div style={{
-            border: '2px dashed #ccc',
-            borderRadius: '8px',
-            padding: '40px',
-            textAlign: 'center',
-            backgroundColor: photoTaken ? '#e8f5e9' : '#f9f9f9'
-          }}>
-            <div style={{ fontSize: '40px', marginBottom: '8px' }}>📷</div>
-            <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
-              {photoTaken ? '写真撮影済み' : '写真を撮影してください'}
+            <div className="border-t border-[#e5e7eb]" />
+
+            {/* 資産番号・備品番号・シリアルNo + 購入年月日 */}
+            <div className="p-4">
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div>
+                  <label className="block text-sm text-[#1f2937] mb-1.5">資産番号</label>
+                  <input type="text" placeholder="入力してください" className={inputClass} />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#1f2937] mb-1.5">備品番号</label>
+                  <input type="text" placeholder="入力してください" className={inputClass} />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#1f2937] mb-1.5">シリアルNo.</label>
+                  <input type="text" placeholder="入力してください" className={inputClass} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-[#1f2937] mb-1.5">購入年月日</label>
+                <button
+                  type="button"
+                  onClick={openDatePicker}
+                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md bg-white text-left flex items-center justify-between cursor-pointer hover:border-[#27ae60] transition-colors"
+                >
+                  <span className={purchaseYear ? 'text-[#1f2937]' : 'text-[#9ca3af]'}>{formatDisplayDate()}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-[#e5e7eb]" />
+
+            {/* 写真 */}
+            <div className="p-4">
+              <h2 className="text-sm font-bold text-[#1f2937] mb-3">写真</h2>
+              <div className={`border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center ${photoTaken ? 'border-[#27ae60] bg-[#f0fdf4]' : 'border-[#d1d5db] bg-[#f9fafb]'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={photoTaken ? '#27ae60' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <p className={`text-sm mt-2 ${photoTaken ? 'text-[#27ae60]' : 'text-[#9ca3af]'}`}>
+                  {photoTaken ? '写真撮影済み' : '写真をアップしてください'}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-[#e5e7eb]" />
+
+            {/* 分類情報 */}
+            <div className="p-4">
+              <h2 className="text-sm font-bold text-[#1f2937] mb-4">分類情報</h2>
+
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <SearchableSelect label="大分類" value={largeClass} onChange={setLargeClass} options={['', ...largeClassOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="中分類" value={mediumClass} onChange={setMediumClass} options={['', ...mediumClassOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="品目" value={item} onChange={setItem} options={['', ...itemOptions]} placeholder="選択してください" isMobile={isMobile} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <SearchableSelect label="メーカー" value={maker} onChange={setMaker} options={['', ...makerOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="型式" value={model} onChange={setModel} options={['', ...modelOptions]} placeholder="選択してください" isMobile={isMobile} />
+              </div>
+
+              <h2 className="text-sm font-bold text-[#1f2937] mb-4 mt-2">サイズ情報</h2>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm text-[#1f2937] mb-1.5">W (幅)</label>
+                  <input type="text" placeholder="0mm" className={inputClass} />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#1f2937] mb-1.5">D (奥行)</label>
+                  <input type="text" placeholder="0mm" className={inputClass} />
+                </div>
+                <div>
+                  <label className="block text-sm text-[#1f2937] mb-1.5">H (高さ)</label>
+                  <input type="text" placeholder="0mm" className={inputClass} />
+                </div>
+              </div>
+              <p className="text-xs text-[#9ca3af] mt-2">単位: mm</p>
+            </div>
+
+            <div className="border-t border-[#e5e7eb]" />
+
+            {/* 備考 */}
+            <div className="p-4">
+              <label className="block text-sm text-[#1f2937] mb-1.5">備考</label>
+              <input type="text" placeholder="入力してください" className={inputClass} />
             </div>
           </div>
-        </div>
 
-        {/* Blue Bar */}
-        <div style={{
-          height: '4px',
-          backgroundColor: '#1976d2',
-          margin: '24px 0',
-          borderRadius: '2px'
-        }} />
-
-        {/* Classification */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50', marginBottom: '16px' }}>
-            分類情報
-          </h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: '16px',
-            marginBottom: '16px'
-          }}>
-            <SearchableSelect
-              label="大分類"
-              value={largeClass}
-              onChange={setLargeClass}
-              options={['', ...largeClassOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-            <SearchableSelect
-              label="中分類"
-              value={mediumClass}
-              onChange={setMediumClass}
-              options={['', ...mediumClassOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-            <SearchableSelect
-              label="品目"
-              value={item}
-              onChange={setItem}
-              options={['', ...itemOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: '16px'
-          }}>
-            <SearchableSelect
-              label="メーカー"
-              value={maker}
-              onChange={setMaker}
-              options={['', ...makerOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-            <SearchableSelect
-              label="型式"
-              value={model}
-              onChange={setModel}
-              options={['', ...modelOptions]}
-              placeholder="選択してください"
-              isMobile={isMobile}
-            />
-          </div>
-        </div>
-
-        {/* Size */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2c3e50', marginBottom: '16px' }}>
-            サイズ情報
-          </h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-            gap: '16px'
-          }}>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                W (幅)
-              </label>
-              <input
-                type="number"
-                placeholder="0"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                D (奥行)
-              </label>
-              <input
-                type="number"
-                placeholder="0"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                H (高さ)
-              </label>
-              <input
-                type="number"
-                placeholder="0"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          </div>
-          <div style={{ fontSize: '12px', color: '#5a6c7d', marginTop: '8px' }}>
-            単位: mm
-          </div>
-        </div>
-
-        {/* Remarks */}
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          padding: isMobile ? '16px' : '20px',
-          marginBottom: '16px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-            備考
-          </label>
-          <textarea
-            placeholder="備考を入力してください"
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-              resize: 'vertical'
-            }}
-          />
-        </div>
-
-        {/* End Seal Section (Bulk Mode) */}
-        {bulkMode && (
-          <>
-            <div style={{
-              height: '4px',
-              backgroundColor: '#1976d2',
-              margin: '24px 0',
-              borderRadius: '2px'
-            }} />
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '8px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: '16px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexDirection: isMobile ? 'column' : 'row' }}>
-                <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
-                  <label style={{ fontSize: '12px', color: '#5a6c7d', display: 'block', marginBottom: '4px' }}>
-                    終了QRコード
-                  </label>
+          {/* 一括登録モード: 終了QR */}
+          {bulkMode && (
+            <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] mt-3 p-4">
+              <div className="flex items-end gap-3 flex-wrap">
+                <div className="flex-1 min-w-[160px]">
+                  <label className="block text-sm text-[#1f2937] mb-1.5">終了QRコード</label>
                   <input
                     type="text"
                     placeholder="終了QRコードを入力"
                     readOnly
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      backgroundColor: '#f5f5f5',
-                      boxSizing: 'border-box'
-                    }}
+                    className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md bg-[#f9fafb] outline-none"
                   />
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
-                    一括登録の終了QRコード
-                  </div>
+                  <p className="text-xs text-[#9ca3af] mt-1">一括登録の終了QRコード</p>
                 </div>
                 <button
-                  onClick={handleEndQRScan}
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#ff9800',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    width: isMobile ? '100%' : 'auto',
-                    justifyContent: 'center'
-                  }}
+                  onClick={() => alert('終了QRコードを読み取りました')}
+                  className="px-4 py-2.5 text-sm font-bold text-white bg-[#f59e0b] border-0 rounded-md cursor-pointer hover:bg-[#d97706] transition-colors min-h-[44px]"
                 >
-                  <span style={{ fontSize: '18px' }}>📷</span>
-                  <span>終了QR読取</span>
+                  終了QR読取
                 </button>
               </div>
             </div>
-          </>
-        )}
-      </main>
+          )}
+        </div>
+      </div>
 
-      {/* Footer */}
-      <footer style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #ddd',
-        padding: isMobile ? '8px' : '10px',
-        display: 'flex',
-        justifyContent: 'space-around',
-        flexWrap: 'wrap',
-        boxShadow: '0 -2px 4px rgba(0,0,0,0.1)',
-        zIndex: 100
-      }}>
-        <button
-          onClick={handleHomeClick}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: isMobile ? '5px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? '60px' : '70px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            width: isMobile ? '35px' : '40px',
-            height: isMobile ? '35px' : '40px',
-            borderRadius: '50%',
-            background: '#ecf0f1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            🏠
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>メイン画面</span>
-        </button>
+      {/* ボトムナビバー */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e7eb] z-50">
+        <div className="max-w-[800px] mx-auto flex justify-around pt-2 pb-1">
+          <button
+            onClick={handleShowHistory}
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#6b7280] hover:text-[#1f2937] transition-colors"
+            aria-label="履歴表示"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span className="text-[11px]">履歴表示</span>
+          </button>
 
-        <button
-          onClick={handleBack}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: isMobile ? '5px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? '60px' : '70px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            width: isMobile ? '35px' : '40px',
-            height: isMobile ? '35px' : '40px',
-            borderRadius: '50%',
-            background: '#ecf0f1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{
-              width: 0,
-              height: 0,
-              borderTop: '6px solid transparent',
-              borderBottom: '6px solid transparent',
-              borderRight: '10px solid #34495e'
-            }}></div>
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>調査場所選択に戻る</span>
-        </button>
+          <button
+            onClick={handleQRScan}
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#6b7280] hover:text-[#1f2937] transition-colors"
+            aria-label="QR読取"
+          >
+            <QRCodePlaceholder size={22} color="currentColor" />
+            <span className="text-[11px]">QR読取</span>
+          </button>
 
-        <button
-          onClick={handleShowHistory}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: isMobile ? '5px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? '60px' : '70px'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            width: isMobile ? '35px' : '40px',
-            height: isMobile ? '35px' : '40px',
-            borderRadius: '50%',
-            background: '#ecf0f1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            📋
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#2c3e50' }}>履歴表示</span>
-        </button>
+          <button
+            onClick={handlePhotoCapture}
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#6b7280] hover:text-[#1f2937] transition-colors"
+            aria-label="写真撮影"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span className="text-[11px]">写真撮影</span>
+          </button>
 
-        <button
-          onClick={handleQRScan}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: isMobile ? '5px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? '60px' : '70px',
-            color: '#e74c3c'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#fadbd8';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            width: isMobile ? '35px' : '40px',
-            height: isMobile ? '35px' : '40px',
-            borderRadius: '50%',
-            background: '#fadbd8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            📷
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#e74c3c' }}>QR読取</span>
-        </button>
-
-        <button
-          onClick={handlePhotoCapture}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: isMobile ? '5px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? '60px' : '70px',
-            color: '#e74c3c'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#fadbd8';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            width: isMobile ? '35px' : '40px',
-            height: isMobile ? '35px' : '40px',
-            borderRadius: '50%',
-            background: '#fadbd8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            📷
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#e74c3c' }}>写真撮影</span>
-        </button>
-
-        <button
-          onClick={handleAssetRegistration}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: isMobile ? '5px' : '8px',
-            borderRadius: '8px',
-            transition: 'background 0.3s',
-            minWidth: isMobile ? '60px' : '70px',
-            color: '#27ae60'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#d5f4e6';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none';
-          }}
-        >
-          <div style={{
-            width: isMobile ? '35px' : '40px',
-            height: isMobile ? '35px' : '40px',
-            borderRadius: '50%',
-            background: '#d5f4e6',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '20px'
-          }}>
-            ✓
-          </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#27ae60' }}>商品登録</span>
-        </button>
-      </footer>
+          <button
+            onClick={handleAssetRegistration}
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#27ae60] transition-colors"
+            aria-label="商品登録"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span className="text-[11px] font-bold">商品登録</span>
+          </button>
+        </div>
+        <div className="text-center text-[10px] text-[#9ca3af] pb-2">
+          &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
+        </div>
+      </nav>
 
       {/* 日付ピッカーモーダル */}
       {showDatePicker && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={cancelDatePicker}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]"
+          onClick={() => setShowDatePicker(false)}
         >
           <div
-            style={{
-              background: 'white',
-              borderRadius: '16px',
-              width: '90%',
-              maxWidth: '400px',
-              padding: '0',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
-            }}
+            className="bg-white rounded-2xl w-[90%] max-w-[400px] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* ヘッダー */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 20px',
-              borderBottom: '1px solid #eee'
-            }}>
+            <div className="flex justify-between items-center px-5 py-4 border-b border-[#e5e7eb]">
               <button
-                onClick={cancelDatePicker}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '16px',
-                  color: '#999',
-                  cursor: 'pointer',
-                  padding: '4px 8px'
-                }}
+                onClick={() => setShowDatePicker(false)}
+                className="bg-transparent border-0 text-base text-[#9ca3af] cursor-pointer px-2 py-1"
               >
                 キャンセル
               </button>
-              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>
-                購入年月日
-              </span>
+              <span className="text-base font-bold text-[#1f2937]">購入年月日</span>
               <button
                 onClick={confirmDatePicker}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '16px',
-                  color: '#1976d2',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  padding: '4px 8px'
-                }}
+                className="bg-transparent border-0 text-base text-[#27ae60] font-bold cursor-pointer px-2 py-1"
               >
                 完了
               </button>
             </div>
 
             {/* ラベル行 */}
-            <div style={{
-              display: 'flex',
-              padding: '8px 10px',
-              borderBottom: '1px solid #eee',
-              background: '#fafafa'
-            }}>
-              <div style={{ flex: 2, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>年</div>
-              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>月</div>
-              <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>日</div>
+            <div className="flex px-2.5 py-2 border-b border-[#e5e7eb] bg-[#fafafa]">
+              <div className="flex-[2] text-center text-[13px] font-bold text-[#6b7280]">年</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">月</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">日</div>
             </div>
 
-            {/* ドラムロール部分 */}
-            <div style={{
-              display: 'flex',
-              height: '200px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
+            {/* ドラムロール */}
+            <div className="flex h-[200px] relative overflow-hidden">
               {/* 選択インジケーター */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '10px',
-                right: '10px',
-                height: `${ITEM_HEIGHT}px`,
-                transform: 'translateY(-50%)',
-                background: '#f0f7ff',
-                borderRadius: '8px',
-                pointerEvents: 'none',
-                zIndex: 1
-              }} />
+              <div
+                className="absolute left-2.5 right-2.5 bg-[#f0fdf4] rounded-lg pointer-events-none z-[1]"
+                style={{ top: '50%', height: ITEM_HEIGHT, transform: 'translateY(-50%)' }}
+              />
 
-              {/* 年ドラムロール */}
-              <div style={{ flex: 2, position: 'relative' }}>
+              {/* 年 */}
+              <div className="flex-[2] relative">
                 <div
                   ref={yearScrollRef}
-                  onScroll={handleYearScroll}
-                  style={{
-                    height: '100%',
-                    overflowY: 'auto',
-                    scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
-                  }}
+                  onScroll={() => handleScrollSelect(yearScrollRef, yearOptions, setTempYear)}
+                  className="h-full overflow-y-auto"
+                  style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch', paddingTop: (200 - ITEM_HEIGHT) / 2, paddingBottom: (200 - ITEM_HEIGHT) / 2 }}
                 >
-                  <div
-                    style={{
-                      height: `${ITEM_HEIGHT}px`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      scrollSnapAlign: 'center',
-                      fontSize: '16px',
-                      color: !tempYear ? '#1976d2' : '#999',
-                      fontWeight: !tempYear ? 'bold' : 'normal',
-                      position: 'relative',
-                      zIndex: 2
-                    }}
-                  >
+                  <div className="h-[44px] flex items-center justify-center text-base relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempYear ? '#27ae60' : '#9ca3af', fontWeight: !tempYear ? 'bold' : 'normal' }}>
                     未選択
                   </div>
-                  {yearOptions.map(year => (
-                    <div
-                      key={year}
-                      style={{
-                        height: `${ITEM_HEIGHT}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        scrollSnapAlign: 'center',
-                        fontSize: '16px',
-                        color: tempYear === year ? '#1976d2' : '#2c3e50',
-                        fontWeight: tempYear === year ? 'bold' : 'normal',
-                        position: 'relative',
-                        zIndex: 2
-                      }}
-                    >
-                      {year}（{toWareki(parseInt(year, 10))}）
+                  {yearOptions.map(y => (
+                    <div key={y} className="h-[44px] flex items-center justify-center text-base relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempYear === y ? '#27ae60' : '#1f2937', fontWeight: tempYear === y ? 'bold' : 'normal' }}>
+                      {y}（{toWareki(parseInt(y, 10))}）
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* 月ドラムロール */}
-              <div style={{ flex: 1, position: 'relative' }}>
+              {/* 月 */}
+              <div className="flex-1 relative">
                 <div
                   ref={monthScrollRef}
-                  onScroll={handleMonthScroll}
-                  style={{
-                    height: '100%',
-                    overflowY: 'auto',
-                    scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
-                  }}
+                  onScroll={() => handleScrollSelect(monthScrollRef, monthOptions, setTempMonth)}
+                  className="h-full overflow-y-auto"
+                  style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch', paddingTop: (200 - ITEM_HEIGHT) / 2, paddingBottom: (200 - ITEM_HEIGHT) / 2 }}
                 >
-                  <div
-                    style={{
-                      height: `${ITEM_HEIGHT}px`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      scrollSnapAlign: 'center',
-                      fontSize: '18px',
-                      color: !tempMonth ? '#1976d2' : '#999',
-                      fontWeight: !tempMonth ? 'bold' : 'normal',
-                      position: 'relative',
-                      zIndex: 2
-                    }}
-                  >
+                  <div className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempMonth ? '#27ae60' : '#9ca3af', fontWeight: !tempMonth ? 'bold' : 'normal' }}>
                     --
                   </div>
-                  {monthOptions.map(month => (
-                    <div
-                      key={month}
-                      style={{
-                        height: `${ITEM_HEIGHT}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        scrollSnapAlign: 'center',
-                        fontSize: '18px',
-                        color: tempMonth === month ? '#1976d2' : '#2c3e50',
-                        fontWeight: tempMonth === month ? 'bold' : 'normal',
-                        position: 'relative',
-                        zIndex: 2
-                      }}
-                    >
-                      {month}
+                  {monthOptions.map(m => (
+                    <div key={m} className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempMonth === m ? '#27ae60' : '#1f2937', fontWeight: tempMonth === m ? 'bold' : 'normal' }}>
+                      {m}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* 日ドラムロール */}
-              <div style={{ flex: 1, position: 'relative' }}>
+              {/* 日 */}
+              <div className="flex-1 relative">
                 <div
                   ref={dayScrollRef}
-                  onScroll={handleDayScroll}
-                  style={{
-                    height: '100%',
-                    overflowY: 'auto',
-                    scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch',
-                    paddingTop: `${(200 - ITEM_HEIGHT) / 2}px`,
-                    paddingBottom: `${(200 - ITEM_HEIGHT) / 2}px`
-                  }}
+                  onScroll={() => handleScrollSelect(dayScrollRef, dayOptions, setTempDay)}
+                  className="h-full overflow-y-auto"
+                  style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch', paddingTop: (200 - ITEM_HEIGHT) / 2, paddingBottom: (200 - ITEM_HEIGHT) / 2 }}
                 >
-                  <div
-                    style={{
-                      height: `${ITEM_HEIGHT}px`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      scrollSnapAlign: 'center',
-                      fontSize: '18px',
-                      color: !tempDay ? '#1976d2' : '#999',
-                      fontWeight: !tempDay ? 'bold' : 'normal',
-                      position: 'relative',
-                      zIndex: 2
-                    }}
-                  >
+                  <div className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempDay ? '#27ae60' : '#9ca3af', fontWeight: !tempDay ? 'bold' : 'normal' }}>
                     --
                   </div>
-                  {dayOptions.map(day => (
-                    <div
-                      key={day}
-                      style={{
-                        height: `${ITEM_HEIGHT}px`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        scrollSnapAlign: 'center',
-                        fontSize: '18px',
-                        color: tempDay === day ? '#1976d2' : '#2c3e50',
-                        fontWeight: tempDay === day ? 'bold' : 'normal',
-                        position: 'relative',
-                        zIndex: 2
-                      }}
-                    >
-                      {day}
+                  {dayOptions.map(d => (
+                    <div key={d} className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempDay === d ? '#27ae60' : '#1f2937', fontWeight: tempDay === d ? 'bold' : 'normal' }}>
+                      {d}
                     </div>
                   ))}
                 </div>
@@ -1246,27 +502,15 @@ function AssetSurveyIntegratedContent() {
             </div>
 
             {/* クリアボタン */}
-            <div style={{ padding: '12px 20px', borderTop: '1px solid #eee' }}>
+            <div className="px-5 py-3 border-t border-[#e5e7eb]">
               <button
                 onClick={() => {
-                  setTempYear('');
-                  setTempMonth('');
-                  setTempDay('');
-                  // スクロール位置もリセット
+                  setTempYear(''); setTempMonth(''); setTempDay('');
                   if (yearScrollRef.current) yearScrollRef.current.scrollTop = 0;
                   if (monthScrollRef.current) monthScrollRef.current.scrollTop = 0;
                   if (dayScrollRef.current) dayScrollRef.current.scrollTop = 0;
                 }}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: '#f5f5f5',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: '#666',
-                  cursor: 'pointer'
-                }}
+                className="w-full py-3 bg-[#f3f4f6] border-0 rounded-lg text-sm text-[#6b7280] cursor-pointer hover:bg-[#e5e7eb] transition-colors"
               >
                 クリア
               </button>
