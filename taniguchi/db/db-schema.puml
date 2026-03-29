@@ -1688,6 +1688,8 @@ package "インポート・マッチング" {
     候補型式ID / suggested_model_id : bigint
     類似度スコア / suggested_score : decimal(5,3)
     確定済みフラグ / is_confirmed : boolean
+    確定者ユーザーID / confirmed_by_user_id : bigint
+    確定日時 / confirmed_at : timestamp
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
@@ -1703,6 +1705,9 @@ package "インポート・マッチング" {
     の各階層で、マスタ候補採用と
     自由記述が混在する
     ケースを扱うため。
+    is_confirmed=true の場合は
+    confirmed_by_user_id / confirmed_at を保持し、
+    未確定行のみ編集対象とする。
   end note
 
   entity "asset_data_matching_sessions" as asset_data_matching_sessions {
@@ -1963,6 +1968,7 @@ users ||--o{ asset_survey_sessions : ""
 users ||--o{ asset_survey_records : ""
 users ||--o{ asset_survey_photos : "VIEW元"
 users ||--o{ asset_import_jobs : ""
+users ||--o{ asset_import_rows : ""
 users ||--o{ asset_import_survey_mappings : ""
 users ||--o{ asset_survey_integration_sessions : ""
 users ||--o{ asset_survey_integration_results : ""
