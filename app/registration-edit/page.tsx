@@ -534,7 +534,7 @@ export default function RegistrationEditPage() {
     return assetMasters.some(master => master[masterField as keyof typeof master] === value);
   };
 
-  // フリー入力セルのスタイル
+  // フリー入力セルのスタイル（動的な背景色のため inline style を維持）
   const getFreeInputCellStyle = (field: 'largeClass' | 'mediumClass' | 'item' | 'manufacturer' | 'model', value: string, masterId: string, baseStyle: React.CSSProperties): React.CSSProperties => {
     const isFreeInput = !isInMaster(field, value, masterId);
     return {
@@ -831,25 +831,16 @@ export default function RegistrationEditPage() {
 
   if (isMobile) {
     return (
-      <div style={{ padding: '16px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-        <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }}>
+      <div className="p-4 bg-[#f9fafb] min-h-dvh">
+        <div className="mb-4 text-center text-lg font-bold text-[#1f2937]">
           現有品調査内容修正
         </div>
-        <div style={{ color: '#d32f2f', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
+        <div className="text-red-600 mb-4 text-sm text-center">
           この画面はデスクトップ表示に最適化されています
         </div>
         <button
           onClick={handleBack}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
+          className="w-full py-3 bg-[#27ae60] text-white border-none rounded-lg cursor-pointer text-base"
         >
           メイン画面に戻る
         </button>
@@ -858,64 +849,29 @@ export default function RegistrationEditPage() {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100dvh',
-      backgroundColor: '#f5f5f5',
-      overflow: 'hidden'
-    }}>
+    <div className="flex flex-col h-dvh bg-[#f9fafb] overflow-hidden">
       {/* Header */}
-      <header style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            backgroundColor: '#1976d2',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontWeight: 'bold'
-          }}>
+      <header className="bg-white border-b border-[#e5e7eb] px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="bg-[#27ae60] text-white px-2 py-1 rounded font-bold text-sm">
             SHIP
           </div>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
+          <h1 className="text-xl font-bold text-[#1f2937] m-0 text-balance">
             現有品調査内容修正
           </h1>
         </div>
         <button
           onClick={handleBack}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
+          className="px-4 py-2 bg-white border border-[#e5e7eb] rounded cursor-pointer text-sm text-[#6b7280] hover:bg-[#f9fafb]"
         >
           メイン画面に戻る
         </button>
       </header>
 
       {/* Filter Header */}
-      <div style={{
-        backgroundColor: '#ffffff',
-        padding: '16px 24px',
-        borderBottom: '1px solid #e0e0e0'
-      }}>
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          flexWrap: 'wrap',
-          alignItems: 'flex-end'
-        }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+      <div className="bg-white px-6 py-4 border-b border-[#e5e7eb]">
+        <div className="flex gap-3 flex-wrap items-end">
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="棟"
               value={filters.building}
@@ -926,7 +882,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '100px' }}>
+          <div className="flex-1 min-w-[100px]">
             <SearchableSelect
               label="階"
               value={filters.floor}
@@ -937,7 +893,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="部門"
               value={filters.department}
@@ -948,7 +904,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="部署"
               value={filters.section}
@@ -959,7 +915,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="担当者"
               value={filters.surveyor}
@@ -970,7 +926,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="Category"
               value={filters.category}
@@ -981,7 +937,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '150px' }}>
+          <div className="flex-1 min-w-[150px]">
             <SearchableSelect
               label="大分類"
               value={filters.largeClass}
@@ -992,7 +948,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '150px' }}>
+          <div className="flex-1 min-w-[150px]">
             <SearchableSelect
               label="中分類"
               value={filters.mediumClass}
@@ -1005,15 +961,7 @@ export default function RegistrationEditPage() {
 
           <button
             onClick={handleClearFilters}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#ffffff',
-              color: '#666',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
+            className="px-4 py-2 bg-[#1f2937] text-white border-none rounded cursor-pointer text-sm hover:bg-[#374151]"
           >
             クリア
           </button>
@@ -1022,92 +970,43 @@ export default function RegistrationEditPage() {
 
       {/* Linking Bar */}
       {linkingParent && (
-        <div style={{
-          backgroundColor: '#e8f5e9',
-          borderBottom: '2px solid #66bb6a',
-          padding: '0'
-        }}>
+        <div className="bg-[#e8f5e9] border-b-2 border-[#66bb6a]">
           {/* ヘッダー行 */}
-          <div style={{
-            padding: '10px 24px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: '#c8e6c9'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{
-                backgroundColor: '#2e7d32',
-                color: 'white',
-                padding: '2px 10px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '600'
-              }}>紐付け登録モード</span>
-              <span style={{ fontWeight: '600', color: '#1b5e20', fontSize: '14px' }}>
+          <div className="px-6 py-2.5 flex justify-between items-center bg-[#c8e6c9]">
+            <div className="flex items-center gap-3">
+              <span className="bg-[#2e7d32] text-white px-2.5 py-0.5 rounded text-xs font-semibold">紐付け登録モード</span>
+              <span className="font-semibold text-[#1b5e20] text-sm">
                 本体: {linkingParent.item}
-                <span style={{ color: '#555', fontWeight: '400', marginLeft: '8px' }}>({linkingParent.sealNo})</span>
+                <span className="text-[#6b7280] font-normal ml-2">({linkingParent.sealNo})</span>
               </span>
             </div>
             <button
               onClick={handleExitLinking}
-              style={{
-                padding: '6px 16px',
-                backgroundColor: '#ffffff',
-                color: '#555',
-                border: '1px solid #bdbdbd',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '13px'
-              }}
+              className="px-4 py-1.5 bg-white text-[#6b7280] border border-[#e5e7eb] rounded cursor-pointer text-[13px]"
             >
               モードを終了
             </button>
           </div>
           {/* 操作ガイド行 */}
-          <div style={{
-            padding: '10px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            flexWrap: 'wrap'
-          }}>
+          <div className="px-6 py-2.5 flex items-center gap-4 flex-wrap">
             {selectedRows.size === 0 ? (
-              <span style={{ color: '#2e7d32', fontSize: '13px' }}>
+              <span className="text-[#2e7d32] text-[13px]">
                 子にしたいレコードのチェックボックスを選択してください
               </span>
             ) : (
               <>
-                <span style={{ color: '#1b5e20', fontSize: '13px', fontWeight: '600' }}>
+                <span className="text-[#1b5e20] text-[13px] font-semibold">
                   {selectedRows.size}件選択中 — 種別を選んで紐付け:
                 </span>
                 <button
                   onClick={handleLinkAsDetail}
-                  style={{
-                    padding: '8px 20px',
-                    backgroundColor: '#e65100',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '600'
-                  }}
+                  className="px-5 py-2 bg-[#e65100] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
                 >
                   明細として紐付ける
                 </button>
                 <button
                   onClick={handleLinkAsAccessory}
-                  style={{
-                    padding: '8px 20px',
-                    backgroundColor: '#7b1fa2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '600'
-                  }}
+                  className="px-5 py-2 bg-[#7b1fa2] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
                 >
                   付属品として紐付ける
                 </button>
@@ -1118,20 +1017,9 @@ export default function RegistrationEditPage() {
       )}
 
       {/* Table */}
-      <div style={{ flex: 1, minHeight: 0, padding: '24px' }}>
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          overflow: 'auto',
-          height: '100%'
-        }}>
-          <table style={{
-            width: '100%',
-            borderCollapse: 'separate',
-            borderSpacing: 0,
-            fontSize: '13px'
-          }}>
+      <div className="flex-1 min-h-0 p-6">
+        <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] overflow-auto h-full">
+          <table className="w-full border-separate border-spacing-0 text-[13px]">
             <thead>
               <tr>
                 {/* --- 通常カラム（sticky top のみ） --- */}
@@ -1163,57 +1051,17 @@ export default function RegistrationEditPage() {
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    style={{
-                      padding: '12px 8px',
-                      borderBottom: '2px solid #e0e0e0',
-                      whiteSpace: 'nowrap',
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                      position: 'sticky',
-                      top: 0,
-                      zIndex: 2,
-                      backgroundColor: '#f5f5f5'
-                    }}
+                    className="px-2 py-3 border-b-2 border-[#e5e7eb] whitespace-nowrap cursor-pointer select-none sticky top-0 z-[2] bg-[#f9fafb] text-left text-[#1f2937] font-semibold text-xs"
                   >
                     {col.label}{getSortIcon(col.key)}
                   </th>
                 ))}
                 {/* 写真（ソートなし、sticky top のみ） */}
-                <th style={{
-                  padding: '12px 8px',
-                  borderBottom: '2px solid #e0e0e0',
-                  whiteSpace: 'nowrap',
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 2,
-                  backgroundColor: '#f5f5f5'
-                }}>写真</th>
+                <th className="px-2 py-3 border-b-2 border-[#e5e7eb] whitespace-nowrap sticky top-0 z-[2] bg-[#f9fafb] text-left text-[#1f2937] font-semibold text-xs">写真</th>
                 {/* --- 操作（sticky top + right） --- */}
-                <th style={{
-                  padding: '12px 8px',
-                  borderBottom: '2px solid #e0e0e0',
-                  whiteSpace: 'nowrap',
-                  position: 'sticky',
-                  top: 0,
-                  right: 48,
-                  zIndex: 3,
-                  backgroundColor: '#f5f5f5',
-                  boxShadow: '-2px 0 4px rgba(0,0,0,0.06)'
-                }}>操作</th>
+                <th className="px-2 py-3 border-b-2 border-[#e5e7eb] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#f9fafb] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#1f2937] font-semibold text-xs">操作</th>
                 {/* --- チェックボックス（sticky top + right） --- */}
-                <th style={{
-                  padding: '12px 8px',
-                  borderBottom: '2px solid #e0e0e0',
-                  textAlign: 'center',
-                  whiteSpace: 'nowrap',
-                  position: 'sticky',
-                  top: 0,
-                  right: 0,
-                  zIndex: 3,
-                  backgroundColor: '#f5f5f5',
-                  width: 48,
-                  minWidth: 48
-                }}>
+                <th className="px-2 py-3 border-b-2 border-[#e5e7eb] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#f9fafb] w-12 min-w-[48px]">
                   <input
                     type="checkbox"
                     checked={selectedAll}
@@ -1231,49 +1079,49 @@ export default function RegistrationEditPage() {
                 return (
                 <tr key={row.id} style={{ backgroundColor: rowBgColor }}>
                   {/* ① QRコード */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
-                    {isChild && <span style={{ color: '#9e9e9e', marginRight: '4px' }}>└</span>}
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                    {isChild && <span className="text-[#9e9e9e] mr-1">└</span>}
                     {row.sealNo}
                   </td>
                   {/* ② 階 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.floor}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.floor}</td>
                   {/* ③ 部門 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.department}</td>
                   {/* ④ 部署 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.section}</td>
                   {/* ⑤ 室名 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.roomName}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.roomName}</td>
                   {/* ⑥ Category */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.category}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.category}</td>
                   {/* ⑥ 大分類 */}
-                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.largeClass || ''}
                         onChange={(e) => setEditingData({ ...editingData, largeClass: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.largeClass}
                   </td>
                   {/* ⑥ 中分類 */}
-                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.mediumClass || ''}
                         onChange={(e) => setEditingData({ ...editingData, mediumClass: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.mediumClass}
                   </td>
                   {/* 明細区分 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.detailType}
                         onChange={(e) => setEditingData({ ...editingData, detailType: e.target.value as RegistrationData['detailType'] })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '12px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded text-xs"
                       >
                         <option value="">未設定</option>
                         <option value="本体">本体</option>
@@ -1282,15 +1130,14 @@ export default function RegistrationEditPage() {
                       </select>
                     ) : (
                       row.detailType ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            backgroundColor: row.detailType === '本体' ? '#e3f2fd' : row.detailType === '明細' ? '#fff3e0' : '#f3e5f5',
-                            color: row.detailType === '本体' ? '#1565c0' : row.detailType === '明細' ? '#e65100' : '#7b1fa2'
-                          }}>
+                        <div className="flex items-center gap-1">
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                            row.detailType === '本体'
+                              ? 'bg-[#e3f2fd] text-[#1565c0]'
+                              : row.detailType === '明細'
+                                ? 'bg-[#fff3e0] text-[#e65100]'
+                                : 'bg-[#f3e5f5] text-[#7b1fa2]'
+                          }`}>
                             {row.detailType}
                           </span>
                           {/* 子行: インライン解除ボタン */}
@@ -1298,160 +1145,145 @@ export default function RegistrationEditPage() {
                             <button
                               onClick={() => handleUnlinkSingle(row.id)}
                               aria-label={`${row.item}の紐付けを解除`}
-                              style={{
-                                width: '18px',
-                                height: '18px',
-                                padding: 0,
-                                border: '1px solid #bdbdbd',
-                                borderRadius: '4px',
-                                backgroundColor: '#fafafa',
-                                color: '#888',
-                                fontSize: '11px',
-                                lineHeight: '16px',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0
-                              }}
+                              className="w-[18px] h-[18px] p-0 border border-[#e5e7eb] rounded bg-[#f9fafb] text-[#6b7280] text-[11px] leading-4 cursor-pointer inline-flex items-center justify-center shrink-0"
                             >
                               ✕
                             </button>
                           )}
                         </div>
                       ) : (
-                        <span style={{ color: '#bbb', fontSize: '11px' }}>ー</span>
+                        <span className="text-[#e5e7eb] text-[11px]">ー</span>
                       )
                     )}
                   </td>
                   {/* ⑥ 個体管理品目 */}
-                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.item || ''}
                         onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.item}
                   </td>
                   {/* ⑦ メーカー */}
-                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.manufacturer || ''}
                         onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.manufacturer}
                   </td>
                   {/* ⑧ 型式 */}
-                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.model || ''}
                         onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.model}
                   </td>
                   {/* ⑩ W */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.width || ''}
                         onChange={(e) => setEditingData({ ...editingData, width: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.width}
                   </td>
                   {/* ⑩ D */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.depth || ''}
                         onChange={(e) => setEditingData({ ...editingData, depth: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.depth}
                   </td>
                   {/* ⑩ H */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.height || ''}
                         onChange={(e) => setEditingData({ ...editingData, height: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.height}
                   </td>
                   {/* ⑪ 資産番号 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.assetNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, assetNo: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.assetNo}
                   </td>
                   {/* ⑫ ME番号 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.equipmentNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, equipmentNo: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.equipmentNo}
                   </td>
                   {/* ⑬ シリアルNo */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.serialNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, serialNo: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.serialNo}
                   </td>
                   {/* ⑭ 購入年月日 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="date"
                         value={editingData.purchaseDate || ''}
                         onChange={(e) => setEditingData({ ...editingData, purchaseDate: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.purchaseDate}
                   </td>
                   {/* ⑭ 備考 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.remarks || ''}
                         onChange={(e) => setEditingData({ ...editingData, remarks: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       />
                     ) : row.remarks}
                   </td>
                   {/* ⑮ リース・借用 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.lease}
                         onChange={(e) => setEditingData({ ...editingData, lease: e.target.value })}
-                        style={{ width: '100%', padding: '4px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        className="w-full p-1 border border-[#e5e7eb] rounded"
                       >
                         <option value="あり">あり</option>
                         <option value="なし">なし</option>
@@ -1459,76 +1291,40 @@ export default function RegistrationEditPage() {
                     ) : row.lease}
                   </td>
                   {/* ⑯ 調査日付 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.surveyDate}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.surveyDate}</td>
                   {/* ⑰ 担当者 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.surveyor}</td>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.surveyor}</td>
                   {/* 写真 */}
-                  <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>
+                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap">
                     <button
                       onClick={() => handlePhotoClick(row)}
-                      style={{
-                        padding: '4px 8px',
-                        fontSize: '12px',
-                        backgroundColor: '#e3f2fd',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
+                      className="px-2 py-1 text-xs bg-[#e3f2fd] text-[#1565c0] border-none rounded cursor-pointer"
                     >
                       {row.photoCount}枚
                     </button>
                   </td>
-                  <td style={{
-                    padding: '8px',
-                    borderBottom: '1px solid #e0e0e0',
-                    whiteSpace: 'nowrap',
-                    position: 'sticky',
-                    right: 48,
-                    zIndex: 1,
-                    backgroundColor: rowBgColor,
-                    boxShadow: '-2px 0 4px rgba(0,0,0,0.06)'
-                  }}>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <td
+                    className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)]"
+                    style={{ backgroundColor: rowBgColor }}
+                  >
+                    <div className="flex gap-1 flex-wrap">
                       {editingRow === row.id ? (
                         <>
                           <button
                             onClick={handleOpenAssetMaster}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              backgroundColor: '#27ae60',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap'
-                            }}
+                            className="px-2 py-1 text-xs bg-[#27ae60] text-white border-none rounded cursor-pointer whitespace-nowrap"
                           >
                             資産マスタを別ウィンドウで開く
                           </button>
                           <button
                             onClick={handleSave}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              backgroundColor: '#c8e6c9',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
+                            className="px-2 py-1 text-xs bg-[#c8e6c9] text-[#1f2937] border-none rounded cursor-pointer"
                           >
                             保存
                           </button>
                           <button
                             onClick={handleCancel}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              backgroundColor: '#ffcdd2',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
+                            className="px-2 py-1 text-xs bg-[#ffcdd2] text-[#1f2937] border-none rounded cursor-pointer"
                           >
                             キャンセル
                           </button>
@@ -1537,29 +1333,18 @@ export default function RegistrationEditPage() {
                         <>
                           <button
                             onClick={() => handleEdit(row.id)}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              backgroundColor: '#e3f2fd',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer'
-                            }}
+                            className="px-2 py-1 text-xs bg-[#e3f2fd] text-[#1565c0] border-none rounded cursor-pointer"
                           >
                             編集
                           </button>
                           <button
                             onClick={() => handleConfirm(row.id)}
                             disabled={!row.masterId}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '12px',
-                              backgroundColor: row.masterId ? '#c8e6c9' : '#f5f5f5',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: row.masterId ? 'pointer' : 'not-allowed',
-                              opacity: row.masterId ? 1 : 0.5
-                            }}
+                            className={`px-2 py-1 text-xs border-none rounded ${
+                              row.masterId
+                                ? 'bg-[#27ae60] text-white cursor-pointer opacity-100'
+                                : 'bg-[#f9fafb] text-[#6b7280] cursor-not-allowed opacity-50'
+                            }`}
                           >
                             確定
                           </button>
@@ -1567,31 +1352,18 @@ export default function RegistrationEditPage() {
                           {!isChild && (
                             <button
                               onClick={() => handleSetParent(row.id)}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '12px',
-                                backgroundColor: row.detailType === '本体' ? '#1565c0' : 'transparent',
-                                color: row.detailType === '本体' ? 'white' : '#1565c0',
-                                border: row.detailType === '本体' ? 'none' : '1px solid #90caf9',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: '600',
-                                whiteSpace: 'nowrap'
-                              }}
+                              className={`px-2 py-1 text-xs rounded cursor-pointer font-semibold whitespace-nowrap ${
+                                row.detailType === '本体'
+                                  ? 'bg-[#1565c0] text-white border-none'
+                                  : 'bg-transparent text-[#1565c0] border border-[#90caf9]'
+                              }`}
                             >
                               {row.detailType === '本体' ? '明細を追加' : '本体に設定'}
                             </button>
                           )}
                           {/* 子行: 親レコードへの参照 */}
                           {isChild && parentRow && (
-                            <span style={{
-                              fontSize: '11px',
-                              color: '#1565c0',
-                              whiteSpace: 'nowrap',
-                              backgroundColor: '#e3f2fd',
-                              padding: '2px 6px',
-                              borderRadius: '4px'
-                            }}>
+                            <span className="text-[11px] text-[#1565c0] whitespace-nowrap bg-[#e3f2fd] px-1.5 py-0.5 rounded">
                               親: {parentRow.sealNo}
                             </span>
                           )}
@@ -1600,17 +1372,10 @@ export default function RegistrationEditPage() {
                     </div>
                   </td>
                   {/* チェックボックス */}
-                  <td style={{
-                    padding: '8px',
-                    borderBottom: '1px solid #e0e0e0',
-                    textAlign: 'center',
-                    position: 'sticky',
-                    right: 0,
-                    zIndex: 1,
-                    backgroundColor: rowBgColor,
-                    width: 48,
-                    minWidth: 48
-                  }}>
+                  <td
+                    className="px-2 py-2 border-b border-[#e5e7eb] text-center sticky right-0 z-[1] w-12 min-w-[48px]"
+                    style={{ backgroundColor: rowBgColor }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedRows.has(row.id)}
@@ -1627,26 +1392,10 @@ export default function RegistrationEditPage() {
       </div>
 
       {/* Footer */}
-      <footer style={{
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #e0e0e0',
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '16px'
-      }}>
+      <footer className="bg-white border-t border-[#e5e7eb] px-6 py-4 flex justify-center gap-4">
         <button
           onClick={handleBulkConfirm}
-          style={{
-            padding: '12px 32px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: '600'
-          }}
+          className="px-8 py-3 bg-[#27ae60] text-white border-none rounded-lg cursor-pointer text-base font-semibold hover:bg-[#219a52]"
         >
           一括確定
         </button>
@@ -1654,73 +1403,44 @@ export default function RegistrationEditPage() {
 
       {/* Photo Modal */}
       {isPhotoModalOpen && selectedRowForPhoto && (
-        <div style={{
-          position: 'fixed',
-          top: modalPosition.y,
-          left: modalPosition.x,
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '0',
-          width: '600px',
-          maxHeight: '80vh',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 1000
-        }}>
+        <div
+          className="fixed bg-white rounded-xl w-[600px] max-h-[80vh] shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col z-[1000]"
+          style={{ top: modalPosition.y, left: modalPosition.x }}
+        >
           <div
             onMouseDown={handleMouseDown}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '16px 24px',
-              borderBottom: '1px solid #e0e0e0',
-              cursor: isDragging ? 'grabbing' : 'grab',
-              userSelect: 'none',
-              backgroundColor: '#f5f5f5',
-              borderRadius: '12px 12px 0 0'
-            }}
+            className={`flex justify-between items-center px-6 py-4 border-b border-[#e5e7eb] select-none bg-[#f9fafb] rounded-t-xl ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           >
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>📷 写真一覧</h2>
+            <h2 className="m-0 text-lg font-bold text-[#1f2937]">📷 写真一覧</h2>
             <button
               onClick={handlePhotoModalClose}
               onMouseDown={(e) => e.stopPropagation()}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
+              className="px-3 py-1.5 bg-white border border-[#e5e7eb] rounded cursor-pointer text-sm text-[#6b7280]"
             >
               ✕
             </button>
           </div>
 
-          <div style={{ padding: '20px', overflow: 'auto', flex: 1 }}>
+          <div className="p-5 overflow-auto flex-1">
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            <div className="grid grid-cols-2 gap-3">
               {selectedRowForPhoto.photos.map((photo) => (
                 <div
                   key={photo.id}
-                  style={{
-                    border: selectedPhoto === photo.id ? '3px solid #1976d2' : '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
+                    selectedPhoto === photo.id
+                      ? 'border-[3px] border-[#1565c0]'
+                      : 'border border-[#e5e7eb]'
+                  }`}
                   onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
                 >
                   <img
                     src={photo.url}
                     alt={photo.filename}
-                    style={{ width: '100%', height: '120px', objectFit: 'cover' }}
+                    className="w-full h-[120px] object-cover"
                   />
-                  <div style={{ padding: '8px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>{photo.filename}</div>
+                  <div className="p-2">
+                    <div className="text-xs font-bold mb-1 text-[#1f2937]">{photo.filename}</div>
                     {selectedPhoto === photo.id && (
                       <button
                         onClick={(e) => {
@@ -1729,16 +1449,7 @@ export default function RegistrationEditPage() {
                             handlePhotoDelete(photo.id);
                           }
                         }}
-                        style={{
-                          width: '100%',
-                          padding: '4px 8px',
-                          backgroundColor: '#f44336',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
+                        className="w-full px-2 py-1 bg-red-600 text-white border-none rounded cursor-pointer text-xs"
                       >
                         削除
                       </button>
@@ -1749,12 +1460,12 @@ export default function RegistrationEditPage() {
             </div>
 
             {selectedPhoto && (
-              <div style={{ marginTop: '20px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px' }}>拡大表示</h3>
+              <div className="mt-5">
+                <h3 className="text-base font-bold mb-3 text-[#1f2937]">拡大表示</h3>
                 <img
                   src={selectedRowForPhoto.photos.find(p => p.id === selectedPhoto)?.url}
                   alt="拡大写真"
-                  style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  className="w-full max-h-[300px] object-contain border border-[#e5e7eb] rounded-lg"
                 />
               </div>
             )}

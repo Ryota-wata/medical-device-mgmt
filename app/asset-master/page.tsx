@@ -101,61 +101,28 @@ function AssetMasterContent() {
     return assetMasters.find(asset => asset.id === selectedAssetId) || null;
   }, [assetMasters, selectedAssetId]);
 
-  // 選択した資産を親ウィンドウに渡す（スコープ別）
-  type ConfirmScope = 'all' | 'toMaker' | 'toItem';
-
-  const handleConfirmSelection = (scope: ConfirmScope) => {
+  // 選択した資産を親ウィンドウに渡す（全カラム送信）
+  const handleConfirmSelection = () => {
     if (!selectedAsset) {
       alert('資産を選択してください');
       return;
     }
 
-    // スコープに応じて送信するデータを選択
-    let assetData: Partial<AssetMaster>;
+    const assetData = {
+      id: selectedAsset.id,
+      category: selectedAsset.category,
+      largeClass: selectedAsset.largeClass,
+      mediumClass: selectedAsset.mediumClass,
+      item: selectedAsset.item,
+      maker: selectedAsset.maker,
+      model: selectedAsset.model
+    };
 
-    switch (scope) {
-      case 'toItem':
-        // 品目まで確定: Category, 大分類, 中分類, 個体管理品目
-        assetData = {
-          id: selectedAsset.id,
-          category: selectedAsset.category,
-          largeClass: selectedAsset.largeClass,
-          mediumClass: selectedAsset.mediumClass,
-          item: selectedAsset.item
-        };
-        break;
-      case 'toMaker':
-        // メーカーまで確定: Category, 大分類, 中分類, 個体管理品目, メーカー
-        assetData = {
-          id: selectedAsset.id,
-          category: selectedAsset.category,
-          largeClass: selectedAsset.largeClass,
-          mediumClass: selectedAsset.mediumClass,
-          item: selectedAsset.item,
-          maker: selectedAsset.maker
-        };
-        break;
-      case 'all':
-      default:
-        // 全て確定: 全カラム
-        assetData = {
-          id: selectedAsset.id,
-          category: selectedAsset.category,
-          largeClass: selectedAsset.largeClass,
-          mediumClass: selectedAsset.mediumClass,
-          item: selectedAsset.item,
-          maker: selectedAsset.maker,
-          model: selectedAsset.model
-        };
-        break;
-    }
-
-    // 親ウィンドウに選択した資産を渡す
     if (window.opener && !window.opener.closed) {
       window.opener.postMessage({
         type: 'ASSET_SELECTED',
         assets: [assetData],
-        scope: scope
+        scope: 'all'
       }, window.location.origin);
       window.close();
     } else {
@@ -192,39 +159,20 @@ function AssetMasterContent() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f5f5f5',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
+    <div className="min-h-dvh bg-[#f9fafb] flex flex-col">
       {/* ヘッダー */}
-      <div style={{
-        background: '#2c3e50',
-        color: 'white',
-        padding: isMobile ? '12px' : '16px 20px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <h1 style={{
-          fontSize: isMobile ? '18px' : '20px',
-          fontWeight: 'bold',
-          margin: 0
-        }}>
+      <div className="bg-[#f9fafb] border-b border-[#e5e7eb] px-5 py-3 flex items-center gap-3 shadow-sm">
+        <span className="text-[#6b7280] text-lg cursor-pointer select-none">&lt;</span>
+        <h1 className="text-lg md:text-xl font-bold text-[#1f2937] m-0 text-balance">
           資産マスタ選択
         </h1>
       </div>
 
       {/* フィルターヘッダー */}
-      <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
+      <div className="bg-white mx-4 mt-4 rounded-lg border border-[#e5e7eb] p-4">
         {/* 全体検索 */}
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{
-            display: 'block',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            color: '#2c3e50',
-            marginBottom: '4px'
-          }}>
+        <div className="mb-3">
+          <label className="block text-xs font-bold text-[#1f2937] mb-1">
             全体検索
           </label>
           <input
@@ -232,19 +180,12 @@ function AssetMasterContent() {
             value={filters.globalSearch || ''}
             onChange={(e) => setFilters({...filters, globalSearch: e.target.value})}
             placeholder="キーワードを入力（全カラムから曖昧検索）"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid #ddd',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box'
-            }}
+            className="w-full px-3 py-2.5 border border-[#e5e7eb] rounded-lg text-sm text-[#1f2937] placeholder:text-[#6b7280] focus:outline-none focus:ring-2 focus:ring-[#27ae60]/30 focus:border-[#27ae60] box-border"
           />
         </div>
         {/* 個別フィルター */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+        <div className="flex gap-3 flex-wrap items-end">
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="Category"
               value={filters.category}
@@ -254,7 +195,7 @@ function AssetMasterContent() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="大分類"
               value={filters.largeClass}
@@ -264,7 +205,7 @@ function AssetMasterContent() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="中分類"
               value={filters.mediumClass}
@@ -274,7 +215,7 @@ function AssetMasterContent() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="個体管理品目"
               value={filters.item}
@@ -284,7 +225,7 @@ function AssetMasterContent() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="メーカー"
               value={filters.maker}
@@ -294,7 +235,7 @@ function AssetMasterContent() {
               isMobile={isMobile}
             />
           </div>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div className="flex-1 min-w-[120px]">
             <SearchableSelect
               label="型式"
               value={filters.model}
@@ -314,16 +255,7 @@ function AssetMasterContent() {
               maker: '',
               model: ''
             })}
-            style={{
-              padding: '8px 16px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '13px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
+            className="px-4 py-2 bg-[#1f2937] text-white border-none rounded-lg text-[13px] cursor-pointer whitespace-nowrap hover:bg-[#374151] transition-colors"
           >
             クリア
           </button>
@@ -331,34 +263,19 @@ function AssetMasterContent() {
       </div>
 
       {/* アクションバー */}
-      <div style={{
-        background: 'white',
-        padding: '16px 20px',
-        borderBottom: '1px solid #dee2e6',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px'
-      }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className="bg-white mx-4 mt-3 rounded-lg border border-[#e5e7eb] px-4 py-3 flex justify-between items-center flex-wrap gap-3">
+        <div className="flex gap-2 flex-wrap">
           {isSimpleMode ? (
             // シンプルモード: 選択ボタンのみ
             <>
               <button
                 onClick={handleSimpleSelection}
                 disabled={!selectedAssetId}
-                style={{
-                  padding: isMobile ? '8px 12px' : '10px 20px',
-                  background: !selectedAssetId ? '#bdc3c7' : '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  fontWeight: 'bold',
-                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s'
-                }}
+                className={`px-3 py-2 md:px-5 md:py-2.5 text-white border-none rounded-lg text-xs md:text-sm font-bold transition-colors ${
+                  !selectedAssetId
+                    ? 'bg-[#bdc3c7] cursor-not-allowed'
+                    : 'bg-[#27ae60] cursor-pointer'
+                }`}
                 onMouseEnter={(e) => {
                   if (selectedAssetId) {
                     e.currentTarget.style.background = '#229954';
@@ -374,17 +291,7 @@ function AssetMasterContent() {
               </button>
               <button
                 onClick={() => window.close()}
-                style={{
-                  padding: isMobile ? '8px 12px' : '10px 20px',
-                  background: '#95a5a6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
+                className="px-3 py-2 md:px-5 md:py-2.5 bg-[#95a5a6] text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#7f8c8d';
                 }}
@@ -396,22 +303,16 @@ function AssetMasterContent() {
               </button>
             </>
           ) : (
-            // 通常モード: 全て確定、メーカーまで確定、品目まで確定
+            // 通常モード: 確定 + キャンセル
             <>
               <button
-                onClick={() => handleConfirmSelection('all')}
+                onClick={handleConfirmSelection}
                 disabled={!selectedAssetId}
-                style={{
-                  padding: isMobile ? '8px 12px' : '10px 16px',
-                  background: !selectedAssetId ? '#bdc3c7' : '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  fontWeight: 'bold',
-                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s'
-                }}
+                className={`px-3 py-2 md:px-5 md:py-2.5 text-white border-none rounded-lg text-xs md:text-sm font-bold transition-colors ${
+                  !selectedAssetId
+                    ? 'bg-[#bdc3c7] cursor-not-allowed'
+                    : 'bg-[#27ae60] cursor-pointer'
+                }`}
                 onMouseEnter={(e) => {
                   if (selectedAssetId) {
                     e.currentTarget.style.background = '#229954';
@@ -423,75 +324,11 @@ function AssetMasterContent() {
                   }
                 }}
               >
-                全て確定
-              </button>
-              <button
-                onClick={() => handleConfirmSelection('toMaker')}
-                disabled={!selectedAssetId}
-                style={{
-                  padding: isMobile ? '8px 12px' : '10px 16px',
-                  background: !selectedAssetId ? '#bdc3c7' : '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  fontWeight: 'bold',
-                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedAssetId) {
-                    e.currentTarget.style.background = '#2980b9';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedAssetId) {
-                    e.currentTarget.style.background = '#3498db';
-                  }
-                }}
-              >
-                メーカーまで確定
-              </button>
-              <button
-                onClick={() => handleConfirmSelection('toItem')}
-                disabled={!selectedAssetId}
-                style={{
-                  padding: isMobile ? '8px 12px' : '10px 16px',
-                  background: !selectedAssetId ? '#bdc3c7' : '#9b59b6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  fontWeight: 'bold',
-                  cursor: !selectedAssetId ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedAssetId) {
-                    e.currentTarget.style.background = '#8e44ad';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedAssetId) {
-                    e.currentTarget.style.background = '#9b59b6';
-                  }
-                }}
-              >
-                品目まで確定
+                確定
               </button>
               <button
                 onClick={() => window.close()}
-                style={{
-                  padding: isMobile ? '8px 12px' : '10px 16px',
-                  background: '#95a5a6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '12px' : '14px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s'
-                }}
+                className="px-3 py-2 md:px-5 md:py-2.5 bg-[#95a5a6] text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#7f8c8d';
                 }}
@@ -507,103 +344,33 @@ function AssetMasterContent() {
       </div>
 
       {/* 資産テーブル */}
-      <div style={{
-        flex: 1,
-        background: 'white',
-        margin: '20px',
-        borderRadius: '8px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <div style={{
-          flex: 1,
-          overflowX: 'auto',
-          overflowY: 'auto'
-        }}>
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: isMobile ? '12px' : '14px'
-          }}>
-            <thead style={{
-              background: '#34495e',
-              color: 'white',
-              position: 'sticky',
-              top: 0,
-              zIndex: 10
-            }}>
+      <div className="flex-1 bg-white mx-4 mt-3 mb-4 rounded-lg border border-[#e5e7eb] overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-x-auto overflow-y-auto">
+          <table className="w-full border-collapse text-xs md:text-sm">
+            <thead className="bg-[#f9fafb] sticky top-0 z-10">
               <tr>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  width: '50px',
-                  borderRight: '1px solid rgba(255,255,255,0.1)'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-center font-semibold text-[#6b7280] text-xs w-[50px] border-b border-[#e5e7eb]">
                   選択
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '60px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[60px]">
                   No.
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '100px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[100px]">
                   Category
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '150px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[150px]">
                   大分類
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '150px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[150px]">
                   中分類
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '200px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[200px]">
                   個体管理品目
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  borderRight: '1px solid rgba(255,255,255,0.1)',
-                  minWidth: '150px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[150px]">
                   メーカー
                 </th>
-                <th style={{
-                  padding: isMobile ? '10px 8px' : '12px',
-                  textAlign: 'left',
-                  fontWeight: 'bold',
-                  minWidth: '150px'
-                }}>
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#6b7280] text-xs border-b border-[#e5e7eb] min-w-[150px]">
                   型式
                 </th>
               </tr>
@@ -612,13 +379,11 @@ function AssetMasterContent() {
               {filteredAssets.map((asset, index) => (
                 <tr
                   key={asset.id}
-                  style={{
-                    background: selectedAssetId === asset.id
-                      ? '#d5f4e6'
-                      : index % 2 === 0 ? 'white' : '#f8f9fa',
-                    borderBottom: '1px solid #ecf0f1',
-                    cursor: 'pointer'
-                  }}
+                  className={`border-b border-[#e5e7eb] cursor-pointer transition-colors ${
+                    selectedAssetId === asset.id
+                      ? 'bg-[#d5f4e6]'
+                      : index % 2 === 0 ? 'bg-white' : 'bg-[#f9fafb]'
+                  }`}
                   onClick={() => setSelectedAssetId(asset.id)}
                   onMouseEnter={(e) => {
                     if (selectedAssetId !== asset.id) {
@@ -627,16 +392,12 @@ function AssetMasterContent() {
                   }}
                   onMouseLeave={(e) => {
                     if (selectedAssetId !== asset.id) {
-                      e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#f8f9fa';
+                      e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#f9fafb';
                     }
                   }}
                 >
                   <td
-                    style={{
-                      padding: isMobile ? '10px 8px' : '12px',
-                      textAlign: 'center',
-                      borderRight: '1px solid #ecf0f1'
-                    }}
+                    className="px-2 py-2.5 md:px-3 md:py-3 text-center"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
@@ -645,55 +406,28 @@ function AssetMasterContent() {
                       checked={selectedAssetId === asset.id}
                       onChange={() => setSelectedAssetId(asset.id)}
                       onClick={(e) => e.stopPropagation()}
-                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      className="cursor-pointer w-4 h-4 accent-[#27ae60]"
                     />
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937] tabular-nums">
                     {index + 1}
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937]">
                     {asset.category}
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937]">
                     {asset.largeClass}
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937]">
                     {asset.mediumClass}
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937]">
                     {asset.item}
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50',
-                    borderRight: '1px solid #ecf0f1'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937]">
                     {asset.maker}
                   </td>
-                  <td style={{
-                    padding: isMobile ? '10px 8px' : '12px',
-                    color: '#2c3e50'
-                  }}>
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#1f2937]">
                     {asset.model}
                   </td>
                 </tr>
@@ -703,12 +437,7 @@ function AssetMasterContent() {
         </div>
 
         {filteredAssets.length === 0 && (
-          <div style={{
-            padding: '40px',
-            textAlign: 'center',
-            color: '#7f8c8d',
-            fontSize: isMobile ? '14px' : '16px'
-          }}>
+          <div className="py-10 text-center text-[#6b7280] text-sm md:text-base">
             該当する資産がありません
           </div>
         )}

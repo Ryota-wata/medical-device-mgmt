@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useCallback, useEffect } from 'react';
-import { useResponsive } from '@/lib/hooks/useResponsive';
 
 type FileType = 'fixed-asset' | 'me-ledger';
 
@@ -22,7 +21,6 @@ interface MatchingProgress {
 
 export default function AssetImportPage() {
   const router = useRouter();
-  const { isMobile, isTablet } = useResponsive();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileInfo, setFileInfo] = useState<{ name: string; size: string; rows: string } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -171,76 +169,51 @@ export default function AssetImportPage() {
   const hasMELedgerFile = uploadedFiles.some(f => f.type === 'me-ledger');
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f6f8', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-dvh bg-[#f9fafb] flex flex-col">
       {/* Header */}
-      <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
-        padding: isMobile ? '16px 20px' : isTablet ? '20px 24px' : '24px 32px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-      }}>
-        <h1 style={{ fontSize: isMobile ? '18px' : isTablet ? '22px' : '26px', fontWeight: 700, margin: 0 }}>
-          台帳取込
-        </h1>
+      <header className="bg-[#f5f5f5] border-b border-[#e5e7eb] px-5 py-4 md:px-6 md:py-5 lg:px-8 lg:py-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/main')}
+            className="text-[#6b7280] hover:text-[#1f2937] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="戻る"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-[#1f2937] text-balance">
+            台帳取込
+          </h1>
+        </div>
       </header>
 
       {/* Main Content */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '20px' : isTablet ? '32px' : '48px',
-        maxWidth: '1000px',
-        margin: '0 auto',
-        width: '100%',
-        boxSizing: 'border-box'
-      }}>
-        <div style={{ background: 'white', borderRadius: '12px', padding: isMobile ? '24px' : isTablet ? '32px' : '40px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+      <main className="flex-1 px-5 py-5 md:px-8 md:py-8 lg:px-12 lg:py-12 w-full max-w-[1000px] mx-auto box-border">
+        <div className="bg-white rounded-xl p-6 md:p-8 lg:p-10 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
 
           {/* Matching Progress - if there's ongoing matching */}
           {matchingProgress && (
-            <div style={{
-              background: '#e3f2fd',
-              border: '1px solid #2196f3',
-              borderRadius: '8px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: isMobile ? '24px' : '32px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: '#1976d2', margin: 0 }}>
+            <div className="bg-[#e3f2fd] border border-[#2196f3] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-[15px] md:text-base font-bold text-[#1976d2]">
                   📊 突き合わせ作業が途中です
                 </h3>
                 <button
                   onClick={handleResumeMatching}
-                  style={{
-                    padding: '8px 20px',
-                    background: '#2196f3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: isMobile ? '13px' : '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className="px-5 py-2 bg-[#2196f3] text-white border-none rounded-md text-[13px] md:text-sm font-semibold cursor-pointer hover:bg-[#1976d2] transition-colors min-h-[44px]"
                 >
                   作業を再開する
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: isMobile ? '13px' : '14px', color: '#1565c0' }}>
+              <div className="flex flex-col gap-2 text-[13px] md:text-sm text-[#1565c0]">
                 <div>全体: {matchingProgress.totalRows} 件</div>
                 <div>完了: {matchingProgress.completedRows} 件 / 未処理: {matchingProgress.pendingRows} 件</div>
-                <div style={{
-                  width: '100%',
-                  height: '8px',
-                  backgroundColor: '#bbdefb',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  marginTop: '8px'
-                }}>
-                  <div style={{
-                    width: `${(matchingProgress.completedRows / matchingProgress.totalRows) * 100}%`,
-                    height: '100%',
-                    backgroundColor: '#1976d2',
-                    transition: 'width 0.3s'
-                  }} />
+                <div className="w-full h-2 bg-[#bbdefb] rounded mt-2 overflow-hidden">
+                  <div
+                    className="h-full bg-[#1976d2] transition-[width] duration-300"
+                    style={{ width: `${(matchingProgress.completedRows / matchingProgress.totalRows) * 100}%` }}
+                  />
                 </div>
               </div>
             </div>
@@ -248,49 +221,27 @@ export default function AssetImportPage() {
 
           {/* Uploaded Files Status */}
           {uploadedFiles.length > 0 && (
-            <div style={{
-              background: '#f1f8e9',
-              border: '1px solid #8bc34a',
-              borderRadius: '8px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: isMobile ? '24px' : '32px'
-            }}>
-              <h3 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: '#558b2f', marginBottom: '12px' }}>
+            <div className="bg-[#f1f8e9] border border-[#8bc34a] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+              <h3 className="text-[15px] md:text-base font-bold text-[#558b2f] mb-3">
                 ✓ アップロード済みファイル
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex flex-col gap-3">
                 {uploadedFiles.map((file, index) => (
-                  <div key={index} style={{
-                    background: 'white',
-                    border: '1px solid #c5e1a5',
-                    borderRadius: '6px',
-                    padding: '12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', marginBottom: '4px' }}>
+                  <div key={index} className="bg-white border border-[#c5e1a5] rounded-md p-3 flex justify-between items-center">
+                    <div className="flex-1">
+                      <div className="text-[13px] md:text-sm font-semibold text-[#1f2937] mb-1">
                         {getFileTypeLabel(file.type)}
                       </div>
-                      <div style={{ fontSize: isMobile ? '12px' : '13px', color: '#7f8c8d' }}>
+                      <div className="text-xs md:text-[13px] text-[#6b7280]">
                         {file.name} ({file.size} / {file.rows})
                       </div>
-                      <div style={{ fontSize: isMobile ? '11px' : '12px', color: '#95a5a6', marginTop: '4px' }}>
+                      <div className="text-[11px] md:text-xs text-[#9ca3af] mt-1">
                         アップロード日時: {file.uploadedAt}
                       </div>
                     </div>
                     <button
                       onClick={() => handleRemoveUploadedFile(index)}
-                      style={{
-                        background: '#e74c3c',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        cursor: 'pointer'
-                      }}
+                      className="bg-[#e74c3c] text-white border-none rounded px-3 py-1.5 text-xs cursor-pointer hover:bg-[#c0392b] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                     >
                       削除
                     </button>
@@ -301,58 +252,44 @@ export default function AssetImportPage() {
           )}
 
           {/* Instruction */}
-          <div style={{ marginBottom: isMobile ? '24px' : '32px' }}>
-            <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 700, color: '#2c3e50', marginBottom: '12px' }}>
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-lg md:text-xl font-bold text-[#1f2937] mb-3 text-balance">
               {uploadedFiles.length === 0 ? 'Excelファイルをアップロードしてください' : '追加のファイルをアップロード'}
             </h2>
-            <p style={{ fontSize: isMobile ? '14px' : '15px', color: '#7f8c8d', lineHeight: 1.6 }}>
+            <p className="text-sm md:text-[15px] text-[#6b7280] leading-relaxed text-pretty">
               固定資産管理台帳またはその他台帳のExcelファイル（.xlsx, .xls）またはCSVファイル（.csv）をアップロードできます。
             </p>
           </div>
 
           {/* File Type Selection */}
-          <div style={{ marginBottom: isMobile ? '24px' : '32px' }}>
-            <h3 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: '#2c3e50', marginBottom: '12px' }}>
+          <div className="mb-6 md:mb-8">
+            <h3 className="text-[15px] md:text-base font-bold text-[#1f2937] mb-3">
               アップロードするファイルの種類を選択
             </h3>
-            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '14px' : '15px',
-                color: '#2c3e50'
-              }}>
+            <div className="flex gap-6 flex-wrap">
+              <label className="flex items-center gap-2 cursor-pointer text-sm md:text-[15px] text-[#1f2937]">
                 <input
                   type="radio"
                   name="fileType"
                   value="fixed-asset"
                   checked={selectedFileType === 'fixed-asset'}
                   onChange={(e) => setSelectedFileType(e.target.value as FileType)}
-                  style={{ cursor: 'pointer' }}
+                  className="cursor-pointer accent-[#27ae60]"
                 />
                 <span>固定資産管理台帳</span>
-                {hasFixedAssetFile && <span style={{ color: '#4caf50', fontSize: '12px' }}>✓ 済</span>}
+                {hasFixedAssetFile && <span className="text-[#4caf50] text-xs">✓ 済</span>}
               </label>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                fontSize: isMobile ? '14px' : '15px',
-                color: '#2c3e50'
-              }}>
+              <label className="flex items-center gap-2 cursor-pointer text-sm md:text-[15px] text-[#1f2937]">
                 <input
                   type="radio"
                   name="fileType"
                   value="me-ledger"
                   checked={selectedFileType === 'me-ledger'}
                   onChange={(e) => setSelectedFileType(e.target.value as FileType)}
-                  style={{ cursor: 'pointer' }}
+                  className="cursor-pointer accent-[#27ae60]"
                 />
                 <span>その他台帳</span>
-                {hasMELedgerFile && <span style={{ color: '#4caf50', fontSize: '12px' }}>✓ 済</span>}
+                {hasMELedgerFile && <span className="text-[#4caf50] text-xs">✓ 済</span>}
               </label>
             </div>
           </div>
@@ -362,110 +299,80 @@ export default function AssetImportPage() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            style={{
-              border: `2px dashed ${isDragOver ? '#27ae60' : '#d0d0d0'}`,
-              borderRadius: '12px',
-              padding: isMobile ? '40px 20px' : isTablet ? '60px 40px' : '80px 40px',
-              textAlign: 'center',
-              background: isDragOver ? '#f0f8f4' : '#fafbfc',
-              transition: 'all 0.3s',
-              marginBottom: isMobile ? '24px' : '32px'
-            }}
+            className={`border-2 border-dashed rounded-xl text-center transition-all duration-300 mb-6 md:mb-8 px-5 py-10 md:px-10 md:py-16 lg:px-10 lg:py-20 ${
+              isDragOver
+                ? 'border-[#27ae60] bg-[#f0f8f4]'
+                : 'border-[#e5e7eb] bg-[#f9fafb]'
+            }`}
           >
-            <div style={{ fontSize: isMobile ? '48px' : '64px', marginBottom: '16px' }}>📁</div>
-            <p style={{ fontSize: isMobile ? '15px' : '17px', fontWeight: 600, color: '#2c3e50', marginBottom: '8px' }}>
+            {/* Upload SVG icon */}
+            <div className="mb-4 flex justify-center">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="text-[#6b7280] md:w-16 md:h-16">
+                <path d="M16 32L24 24L32 32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M24 24V42" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M40.28 36.28A10 10 0 0 0 36 18H33.48A16 16 0 1 0 8 30.78" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 32L24 24L32 32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <p className="text-[15px] md:text-[17px] font-semibold text-[#1f2937] mb-2">
               ここにファイルをドラッグ&ドロップ
             </p>
-            <p style={{ fontSize: isMobile ? '13px' : '14px', color: '#95a5a6', marginBottom: '20px' }}>または</p>
+            <p className="text-[13px] md:text-sm text-[#9ca3af] mb-5">または</p>
             <input
               type="file"
               id="fileInput"
               accept=".xlsx,.xls,.csv"
-              style={{ display: 'none' }}
+              className="hidden"
               onChange={handleFileSelect}
             />
             <button
               onClick={() => document.getElementById('fileInput')?.click()}
-              style={{
-                padding: isMobile ? '12px 28px' : '14px 32px',
-                background: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: isMobile ? '14px' : '15px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                marginBottom: '16px'
-              }}
+              className="px-7 py-3 md:px-8 md:py-3.5 bg-[#27ae60] text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer hover:bg-[#229954] transition-colors mb-4 min-h-[44px]"
             >
               ファイルを選択
             </button>
-            <p style={{ fontSize: isMobile ? '12px' : '13px', color: '#95a5a6' }}>
+            <p className="text-xs md:text-[13px] text-[#9ca3af]">
               対応形式: .xlsx, .xls, .csv （最大サイズ: 10MB）
             </p>
           </div>
 
           {/* File Info */}
           {fileInfo && (
-            <div style={{
-              background: '#f8f9fa',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: isMobile ? '16px' : '20px',
-              marginBottom: isMobile ? '24px' : '32px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: '#2c3e50', margin: 0 }}>
+            <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-[15px] md:text-base font-bold text-[#1f2937]">
                   選択済みファイル
                 </h3>
                 <button
                   onClick={removeFile}
-                  style={{
-                    background: '#e74c3c',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '28px',
-                    height: '28px',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
+                  className="bg-[#e74c3c] text-white border-none rounded-full w-7 h-7 text-lg cursor-pointer flex items-center justify-center hover:bg-[#c0392b] transition-colors min-w-[44px] min-h-[44px]"
                 >
                   ×
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#7f8c8d', fontWeight: 600 }}>ファイル名:</span>
-                  <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#2c3e50' }}>{fileInfo.name}</span>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-[13px] md:text-sm text-[#6b7280] font-semibold">ファイル名:</span>
+                  <span className="text-[13px] md:text-sm text-[#1f2937]">{fileInfo.name}</span>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#7f8c8d', fontWeight: 600 }}>ファイルサイズ:</span>
-                  <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#2c3e50' }}>{fileInfo.size}</span>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-[13px] md:text-sm text-[#6b7280] font-semibold">ファイルサイズ:</span>
+                  <span className="text-[13px] md:text-sm text-[#1f2937]">{fileInfo.size}</span>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#7f8c8d', fontWeight: 600 }}>データ件数:</span>
-                  <span style={{ fontSize: isMobile ? '13px' : '14px', color: '#2c3e50' }}>{fileInfo.rows}</span>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-[13px] md:text-sm text-[#6b7280] font-semibold">データ件数:</span>
+                  <span className="text-[13px] md:text-sm text-[#1f2937]">{fileInfo.rows}</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Notice */}
-          <div style={{
-            background: '#fff9e6',
-            border: '1px solid #ffd966',
-            borderRadius: '8px',
-            padding: isMobile ? '16px' : '20px',
-            marginBottom: isMobile ? '24px' : '32px'
-          }}>
-            <h3 style={{ fontSize: isMobile ? '14px' : '15px', fontWeight: 700, color: '#d68910', marginBottom: '12px' }}>
+          <div className="bg-[#fff9e6] border border-[#ffd966] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+            <h3 className="text-sm md:text-[15px] font-bold text-[#d68910] mb-3">
               📌 アップロード時の注意事項
             </h3>
-            <ul style={{ fontSize: isMobile ? '13px' : '14px', color: '#7f8c8d', lineHeight: 1.8, paddingLeft: '20px', margin: 0 }}>
+            <ul className="text-[13px] md:text-sm text-[#6b7280] leading-[1.8] pl-5 m-0">
               <li>Excelファイルの1行目はヘッダー行として認識されます</li>
               <li>データは2行目から読み込まれます</li>
               <li>空白行は自動的にスキップされます</li>
@@ -474,29 +381,10 @@ export default function AssetImportPage() {
           </div>
 
           {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            flexDirection: isMobile ? 'column' : 'row',
-            justifyContent: 'space-between'
-          }}>
+          <div className="flex gap-4 flex-col md:flex-row justify-between">
             <button
               onClick={() => router.push('/main')}
-              style={{
-                flex: isMobile ? 'none' : 1,
-                padding: '14px 24px',
-                background: '#95a5a6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: isMobile ? '14px' : '15px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
+              className="md:flex-1 px-6 py-3.5 bg-[#e5e7eb] text-[#1f2937] border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#d1d5db] transition-colors min-h-[44px]"
             >
               <span>←</span>
               <span>メイン画面に戻る</span>
@@ -504,21 +392,7 @@ export default function AssetImportPage() {
             {selectedFile && fileInfo ? (
               <button
                 onClick={handleUploadAndProceed}
-                style={{
-                  flex: isMobile ? 'none' : 1,
-                  padding: '14px 24px',
-                  background: '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: isMobile ? '14px' : '15px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
+                className="md:flex-1 px-6 py-3.5 bg-white text-[#27ae60] border-2 border-[#27ae60] rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#f0f8f4] transition-colors min-h-[44px]"
               >
                 <span>アップロードして突き合わせへ</span>
                 <span>→</span>
@@ -526,21 +400,7 @@ export default function AssetImportPage() {
             ) : uploadedFiles.length > 0 ? (
               <button
                 onClick={handleResumeMatching}
-                style={{
-                  flex: isMobile ? 'none' : 1,
-                  padding: '14px 24px',
-                  background: '#2196f3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: isMobile ? '14px' : '15px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
+                className="md:flex-1 px-6 py-3.5 bg-[#2196f3] text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#1976d2] transition-colors min-h-[44px]"
               >
                 <span>突き合わせ画面へ</span>
                 <span>→</span>
@@ -548,21 +408,7 @@ export default function AssetImportPage() {
             ) : (
               <button
                 onClick={() => router.push('/asset-matching')}
-                style={{
-                  flex: isMobile ? 'none' : 1,
-                  padding: '14px 24px',
-                  background: '#27ae60',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: isMobile ? '14px' : '15px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
+                className="md:flex-1 px-6 py-3.5 bg-white text-[#27ae60] border-2 border-[#27ae60] rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#f0f8f4] transition-colors min-h-[44px]"
               >
                 <span>次へ</span>
                 <span>→</span>

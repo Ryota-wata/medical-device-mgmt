@@ -278,47 +278,22 @@ export default function AssetMatchingPage() {
 
   if (isMobile) {
     return (
-      <div style={{ padding: '16px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-        <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }}>
+      <div className="p-4 bg-[#f5f5f5] min-h-dvh">
+        <div className="mb-4 text-center text-lg font-bold">
           資産台帳とマスタの突き合わせ
         </div>
-        <div style={{ color: '#d32f2f', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
+        <div className="text-[#d32f2f] mb-4 text-sm text-center">
           この画面はデスクトップ表示に最適化されています
         </div>
         <button
           onClick={handleBack}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
+          className="w-full py-3 bg-[#1976d2] text-white border-none rounded-lg cursor-pointer text-base"
         >
           戻る
         </button>
       </div>
     );
   }
-
-  const thBase: React.CSSProperties = {
-    padding: '8px 6px',
-    borderBottom: '2px solid #e0e0e0',
-    whiteSpace: 'nowrap',
-    fontSize: '11px'
-  };
-
-  const tdBase: React.CSSProperties = {
-    padding: '8px',
-    borderBottom: '1px solid #e0e0e0',
-    whiteSpace: 'nowrap'
-  };
-
-  const linkedBg = '#e8f5e9';
-  const aiBg = '#fff8e1';
 
   // 固定列の累積left位置（px）: チェックボックス(36) + No.(40) + 台帳データ6列
   const stickyLeft = {
@@ -331,65 +306,54 @@ export default function AssetMatchingPage() {
     model: 556,
     qty: 676,
   };
-  const stickyBorder = '2px solid #bdbdbd';
+
+  const thBase = 'py-2 px-1.5 border-b-2 border-[#e0e0e0] whitespace-nowrap text-[11px]';
+  const tdBase = 'p-2 border-b border-[#e0e0e0] whitespace-nowrap';
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
-    }}>
-      {/* Header */}
-      <header style={{
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px'
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          maxWidth: '1800px',
-          margin: '0 auto'
-        }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
-            資産台帳とマスタの突き合わせ
-          </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>全体:</span>
-            <span style={{ fontSize: '14px', color: '#2c3e50' }}>{totalCount}件</span>
-            <span style={{ color: '#ccc' }}>|</span>
-            <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>残り:</span>
-            <span style={{ fontSize: '14px', color: '#ff9800', fontWeight: '600' }}>{remainingCount}件</span>
-            <span style={{ color: '#ccc' }}>|</span>
-            <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>完了:</span>
-            <span style={{ fontSize: '14px', color: '#4caf50', fontWeight: '600' }}>{totalCount - remainingCount}件</span>
+    <div className="flex flex-col min-h-dvh bg-[#f5f5f5]">
+      {/* Header - Pattern B */}
+      <header className="bg-[#f5f5f5] border-b border-[#e5e7eb] px-6 py-4">
+        <div className="flex justify-between items-center max-w-[1800px] mx-auto">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-[#1f2937] bg-white border border-[#e5e7eb] rounded-lg cursor-pointer hover:bg-[#f9fafb] transition-colors"
+              aria-label="戻る"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              戻る
+            </button>
+            <h1 className="text-2xl font-bold text-[#1f2937] m-0 text-balance">
+              資産台帳とマスタの突き合わせ
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-[#6b7280] font-semibold">残：</span>
+              <span className="text-[#e65100] font-semibold">{remainingCount}件</span>
+              <span className="text-[#d1d5db]">|</span>
+              <span className="text-[#6b7280] font-semibold">完：</span>
+              <span className="text-[#27ae60] font-semibold">{totalCount - remainingCount}件</span>
+              <span className="text-[#9ca3af]">/ {totalCount}件</span>
+            </div>
+            <button
+              onClick={completeMatching}
+              className="px-5 py-2.5 bg-white text-[#27ae60] border border-[#27ae60] rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#f0fdf4]"
+            >
+              突き合わせ完了
+            </button>
           </div>
         </div>
       </header>
 
       {/* Filter Bar */}
-      <div style={{
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '12px 24px'
-      }}>
-        <div style={{
-          maxWidth: '1800px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            display: 'flex',
-            gap: '10px',
-            flex: 1,
-            alignItems: 'flex-end'
-          }}>
-            <div style={{ flex: '0 0 130px' }}>
+      <div className="bg-white border-b border-[#e5e7eb] px-6 py-3">
+        <div className="max-w-[1800px] mx-auto flex justify-between items-center gap-3">
+          <div className="flex gap-2.5 flex-1 items-end">
+            <div className="flex-[0_0_130px]">
               <SearchableSelect
                 label="共通部門"
                 value={filters.department}
@@ -400,7 +364,7 @@ export default function AssetMatchingPage() {
                 dropdownMinWidth="200px"
               />
             </div>
-            <div style={{ flex: '0 0 140px' }}>
+            <div className="flex-[0_0_140px]">
               <SearchableSelect
                 label="共通部署"
                 value={filters.section}
@@ -412,7 +376,7 @@ export default function AssetMatchingPage() {
                 dropdownMinWidth="250px"
               />
             </div>
-            <div style={{ flex: '0 0 120px' }}>
+            <div className="flex-[0_0_120px]">
               <SearchableSelect
                 label="Category"
                 value={filters.category}
@@ -423,7 +387,7 @@ export default function AssetMatchingPage() {
                 dropdownMinWidth="200px"
               />
             </div>
-            <div style={{ flex: '0 0 150px' }}>
+            <div className="flex-[0_0_150px]">
               <SearchableSelect
                 label="大分類"
                 value={filters.majorCategory}
@@ -434,7 +398,7 @@ export default function AssetMatchingPage() {
                 dropdownMinWidth="300px"
               />
             </div>
-            <div style={{ flex: '0 0 150px' }}>
+            <div className="flex-[0_0_150px]">
               <SearchableSelect
                 label="中分類"
                 value={filters.middleCategory}
@@ -445,7 +409,7 @@ export default function AssetMatchingPage() {
                 dropdownMinWidth="300px"
               />
             </div>
-            <div style={{ flex: '0 0 150px' }}>
+            <div className="flex-[0_0_150px]">
               <SearchableSelect
                 label="品目"
                 value={filters.item}
@@ -458,35 +422,13 @@ export default function AssetMatchingPage() {
             </div>
             <button
               onClick={resetFilters}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#95a5a6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: '600',
-                whiteSpace: 'nowrap',
-                height: '38px'
-              }}
+              className="px-4 py-2 bg-[#374151] text-white border-none rounded cursor-pointer text-[13px] font-semibold whitespace-nowrap h-[38px] hover:bg-[#1f2937]"
             >
               リセット
             </button>
             <button
               onClick={() => exportAssetMatchingToExcel(filteredData)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#2e7d32',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: '600',
-                whiteSpace: 'nowrap',
-                height: '38px'
-              }}
+              className="px-4 py-2 bg-[#27ae60] text-white border-none rounded cursor-pointer text-[13px] font-semibold whitespace-nowrap h-[38px] hover:bg-[#219a52]"
             >
               Excel出力
             </button>
@@ -495,108 +437,148 @@ export default function AssetMatchingPage() {
       </div>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: '24px' }}>
-        <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <main className="flex-1 p-6">
+        <div className="max-w-[1800px] mx-auto">
+          <div className="flex gap-3 mb-4">
             <button
               onClick={bulkConfirmSelected}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#4caf50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
+              className="px-5 py-2.5 bg-[#27ae60] text-white border-none rounded cursor-pointer text-sm font-semibold flex items-center gap-2 hover:bg-[#219a52]"
             >
-              <span>✓</span> 選択項目を一括確定
+              <span>&#10003;</span> 選択項目を一括確定
             </button>
             <button
               onClick={handleOpenAssetMaster}
               disabled={editingRow === null}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: editingRow !== null ? '#1976d2' : '#b0bec5',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: editingRow !== null ? 'pointer' : 'not-allowed',
-                fontSize: '14px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                opacity: editingRow !== null ? 1 : 0.7
-              }}
+              className={`px-5 py-2.5 text-white border-none rounded text-sm font-semibold flex items-center gap-2 ${
+                editingRow !== null
+                  ? 'bg-[#1976d2] cursor-pointer opacity-100 hover:bg-[#1565c0]'
+                  : 'bg-[#b0bec5] cursor-not-allowed opacity-70'
+              }`}
             >
               資産マスタを別ウィンドウで開く
             </button>
           </div>
 
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            overflow: 'auto'
-          }}>
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '12px'
-            }}>
+          <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.1)] overflow-auto">
+            <table className="w-full border-collapse text-xs">
               <thead>
                 {/* 1段目: グループヘッダー */}
-                <tr style={{ backgroundColor: '#f5f5f5' }}>
-                  <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', textAlign: 'center', position: 'sticky', left: stickyLeft.checkbox, backgroundColor: '#f5f5f5', zIndex: 4 }}>
+                <tr className="bg-[#f9fafb]">
+                  <th
+                    rowSpan={2}
+                    className="p-2 border-b-2 border-[#e5e7eb] text-center sticky z-[4] bg-[#f9fafb]"
+                    style={{ left: stickyLeft.checkbox }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedAll}
                       onChange={(e) => toggleSelectAll(e.target.checked)}
                     />
                   </th>
-                  <th rowSpan={2} style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', position: 'sticky', left: stickyLeft.no, backgroundColor: '#f5f5f5', zIndex: 4 }}>No.</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', fontWeight: '600', position: 'sticky', left: stickyLeft.department, zIndex: 4 }}>台帳データ</th>
-                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.section, zIndex: 4 }}></th>
-                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.itemName, zIndex: 4 }}></th>
-                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.maker, zIndex: 4 }}></th>
-                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.model, zIndex: 4 }}></th>
-                  <th style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e3f2fd', position: 'sticky', left: stickyLeft.qty, zIndex: 4, borderRight: stickyBorder }}></th>
-                  <th colSpan={7} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#fff3e0', fontWeight: '600' }}>AI判定（推薦）</th>
-                  <th colSpan={6} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', backgroundColor: '#e8f5e9', fontWeight: '600' }}>SHIP資産マスタ紐づけ</th>
-                  <th colSpan={2} style={{ padding: '12px 8px', borderBottom: '1px solid #e0e0e0', position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 4 }}>操作</th>
+                  <th
+                    rowSpan={2}
+                    className="p-2 border-b-2 border-[#e5e7eb] whitespace-nowrap sticky z-[4] bg-[#f9fafb]"
+                    style={{ left: stickyLeft.no }}
+                  >
+                    No.
+                  </th>
+                  <th
+                    className="p-2 border-b border-[#e5e7eb] bg-[#e3f2fd] font-semibold sticky z-[4]"
+                    style={{ left: stickyLeft.department }}
+                  >
+                    台帳データ
+                  </th>
+                  <th
+                    className="p-2 border-b border-[#e5e7eb] bg-[#e3f2fd] sticky z-[4]"
+                    style={{ left: stickyLeft.section }}
+                  ></th>
+                  <th
+                    className="p-2 border-b border-[#e5e7eb] bg-[#e3f2fd] sticky z-[4]"
+                    style={{ left: stickyLeft.itemName }}
+                  ></th>
+                  <th
+                    className="p-2 border-b border-[#e5e7eb] bg-[#e3f2fd] sticky z-[4]"
+                    style={{ left: stickyLeft.maker }}
+                  ></th>
+                  <th
+                    className="p-2 border-b border-[#e5e7eb] bg-[#e3f2fd] sticky z-[4]"
+                    style={{ left: stickyLeft.model }}
+                  ></th>
+                  <th
+                    className="p-2 border-b border-[#e5e7eb] bg-[#e3f2fd] sticky z-[4] border-r-2 border-r-[#bdbdbd]"
+                    style={{ left: stickyLeft.qty }}
+                  ></th>
+                  <th colSpan={7} className="p-2 border-b border-[#e5e7eb] bg-[#fff3e0] font-semibold">
+                    AI判定（推薦）
+                  </th>
+                  <th colSpan={6} className="p-2 border-b border-[#e5e7eb] bg-[#e8f5e9] font-semibold">
+                    SHIP資産マスタ紐づけ
+                  </th>
+                  <th colSpan={2} className="p-2 border-b border-[#e5e7eb] sticky right-0 bg-[#f9fafb] z-[4]">
+                    操作
+                  </th>
                 </tr>
                 {/* 2段目: 個別カラムヘッダー */}
-                <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <tr className="bg-[#f9fafb]">
                   {/* 台帳データ（sticky） */}
-                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.department, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '90px' }}>共通部門</th>
-                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.section, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '110px' }}>共通部署</th>
-                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.itemName, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '150px' }}>品目名(原)</th>
-                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.maker, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '130px' }}>メーカー名(原)</th>
-                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.model, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '120px' }}>型式(原)</th>
-                  <th style={{ ...thBase, position: 'sticky', left: stickyLeft.qty, backgroundColor: '#e3f2fd', zIndex: 3, minWidth: '50px', borderRight: stickyBorder }}>数量</th>
+                  <th
+                    className={`${thBase} sticky z-[3] bg-[#e3f2fd] min-w-[90px]`}
+                    style={{ left: stickyLeft.department }}
+                  >
+                    共通部門
+                  </th>
+                  <th
+                    className={`${thBase} sticky z-[3] bg-[#e3f2fd] min-w-[110px]`}
+                    style={{ left: stickyLeft.section }}
+                  >
+                    共通部署
+                  </th>
+                  <th
+                    className={`${thBase} sticky z-[3] bg-[#e3f2fd] min-w-[150px]`}
+                    style={{ left: stickyLeft.itemName }}
+                  >
+                    品目名(原)
+                  </th>
+                  <th
+                    className={`${thBase} sticky z-[3] bg-[#e3f2fd] min-w-[130px]`}
+                    style={{ left: stickyLeft.maker }}
+                  >
+                    メーカー名(原)
+                  </th>
+                  <th
+                    className={`${thBase} sticky z-[3] bg-[#e3f2fd] min-w-[120px]`}
+                    style={{ left: stickyLeft.model }}
+                  >
+                    型式(原)
+                  </th>
+                  <th
+                    className={`${thBase} sticky z-[3] bg-[#e3f2fd] min-w-[50px] border-r-2 border-r-[#bdbdbd]`}
+                    style={{ left: stickyLeft.qty }}
+                  >
+                    数量
+                  </th>
                   {/* AI判定（推薦） */}
-                  <th style={{ ...thBase, textAlign: 'center' }}>採用</th>
-                  <th style={thBase}>category</th>
-                  <th style={{ ...thBase, minWidth: '120px' }}>大分類</th>
-                  <th style={{ ...thBase, minWidth: '120px' }}>中分類</th>
-                  <th style={{ ...thBase, minWidth: '150px' }}>品目</th>
-                  <th style={thBase}>メーカー名</th>
-                  <th style={thBase}>型式</th>
+                  <th className={`${thBase} text-center`}>採用</th>
+                  <th className={thBase}>category</th>
+                  <th className={`${thBase} min-w-[120px]`}>大分類</th>
+                  <th className={`${thBase} min-w-[120px]`}>中分類</th>
+                  <th className={`${thBase} min-w-[150px]`}>品目</th>
+                  <th className={thBase}>メーカー名</th>
+                  <th className={thBase}>型式</th>
                   {/* SHIP資産マスタ紐づけ */}
-                  <th style={thBase}>category</th>
-                  <th style={{ ...thBase, minWidth: '120px' }}>大分類</th>
-                  <th style={{ ...thBase, minWidth: '120px' }}>中分類</th>
-                  <th style={{ ...thBase, minWidth: '150px' }}>品目</th>
-                  <th style={thBase}>メーカー名</th>
-                  <th style={thBase}>型式</th>
+                  <th className={thBase}>category</th>
+                  <th className={`${thBase} min-w-[120px]`}>大分類</th>
+                  <th className={`${thBase} min-w-[120px]`}>中分類</th>
+                  <th className={`${thBase} min-w-[150px]`}>品目</th>
+                  <th className={thBase}>メーカー名</th>
+                  <th className={thBase}>型式</th>
                   {/* 操作 */}
-                  <th style={{ ...thBase, position: 'sticky', right: 60, backgroundColor: '#f5f5f5', zIndex: 2, minWidth: '60px', textAlign: 'center' }}>編集</th>
-                  <th style={{ ...thBase, position: 'sticky', right: 0, backgroundColor: '#f5f5f5', zIndex: 2, minWidth: '60px', textAlign: 'center' }}>確定</th>
+                  <th className={`${thBase} sticky right-[60px] bg-[#f9fafb] z-[2] min-w-[60px] text-center`}>
+                    編集
+                  </th>
+                  <th className={`${thBase} sticky right-0 bg-[#f9fafb] z-[2] min-w-[60px] text-center`}>
+                    確定
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -606,52 +588,83 @@ export default function AssetMatchingPage() {
 
                   return (
                     <React.Fragment key={row.id}>
-                      <tr style={{ backgroundColor: 'white' }}>
+                      <tr className="bg-white">
                         {/* チェックボックス（sticky） */}
-                        <td style={{ ...tdBase, textAlign: 'center', position: 'sticky', left: stickyLeft.checkbox, backgroundColor: 'white', zIndex: 2 }}>
+                        <td
+                          className={`${tdBase} text-center sticky z-[2] bg-white`}
+                          style={{ left: stickyLeft.checkbox }}
+                        >
                           <input
                             type="checkbox"
                             checked={selectedRows.has(row.id)}
                             onChange={() => toggleRowSelection(row.id)}
                           />
                         </td>
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.no, backgroundColor: 'white', zIndex: 2 }}>{index + 1}</td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-white`}
+                          style={{ left: stickyLeft.no }}
+                        >
+                          {index + 1}
+                        </td>
 
                         {/* 台帳データ（読み取り専用・sticky） */}
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.department, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.department}</td>
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.section, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.section}</td>
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.itemName, backgroundColor: '#f0f7ff', zIndex: 2, minWidth: '150px' }}>{row.originalItemName}</td>
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.maker, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.manufacturer}</td>
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.model, backgroundColor: '#f0f7ff', zIndex: 2 }}>{row.model}</td>
-                        <td style={{ ...tdBase, position: 'sticky', left: stickyLeft.qty, backgroundColor: '#f0f7ff', zIndex: 2, borderRight: stickyBorder }}>{row.quantityUnit}</td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          style={{ left: stickyLeft.department }}
+                        >
+                          {row.department}
+                        </td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          style={{ left: stickyLeft.section }}
+                        >
+                          {row.section}
+                        </td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff] min-w-[150px]`}
+                          style={{ left: stickyLeft.itemName }}
+                        >
+                          {row.originalItemName}
+                        </td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          style={{ left: stickyLeft.maker }}
+                        >
+                          {row.manufacturer}
+                        </td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          style={{ left: stickyLeft.model }}
+                        >
+                          {row.model}
+                        </td>
+                        <td
+                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff] border-r-2 border-r-[#bdbdbd]`}
+                          style={{ left: stickyLeft.qty }}
+                        >
+                          {row.quantityUnit}
+                        </td>
 
                         {/* AI判定（推薦）（読み取り専用 + 採用ボタン） */}
-                        <td style={{ ...tdBase, backgroundColor: aiBg, textAlign: 'center' }}>
+                        <td className={`${tdBase} bg-[#fff8e1] text-center`}>
                           <button
                             onClick={() => handleApplyAIRecommendation(row.id)}
-                            style={{
-                              padding: '4px 8px',
-                              fontSize: '11px',
-                              backgroundColor: row.aiApplied ? '#f44336' : '#ff9800',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap'
-                            }}
+                            className={`px-2 py-1 text-[11px] text-white border-none rounded cursor-pointer whitespace-nowrap ${
+                              row.aiApplied ? 'bg-[#f44336] hover:bg-[#d32f2f]' : 'bg-[#ff9800] hover:bg-[#f57c00]'
+                            }`}
                           >
                             {row.aiApplied ? '解除' : '採用'}
                           </button>
                         </td>
-                        <td style={{ ...tdBase, backgroundColor: aiBg }}>{row.aiRecommendation.category}</td>
-                        <td style={{ ...tdBase, backgroundColor: aiBg, minWidth: '120px' }}>{row.aiRecommendation.major}</td>
-                        <td style={{ ...tdBase, backgroundColor: aiBg, minWidth: '120px' }}>{row.aiRecommendation.middle}</td>
-                        <td style={{ ...tdBase, backgroundColor: aiBg, minWidth: '150px' }}>{row.aiRecommendation.item}</td>
-                        <td style={{ ...tdBase, backgroundColor: aiBg }}>{row.aiRecommendation.manufacturer}</td>
-                        <td style={{ ...tdBase, backgroundColor: aiBg }}>{row.aiRecommendation.model}</td>
+                        <td className={`${tdBase} bg-[#fff8e1]`}>{row.aiRecommendation.category}</td>
+                        <td className={`${tdBase} bg-[#fff8e1] min-w-[120px]`}>{row.aiRecommendation.major}</td>
+                        <td className={`${tdBase} bg-[#fff8e1] min-w-[120px]`}>{row.aiRecommendation.middle}</td>
+                        <td className={`${tdBase} bg-[#fff8e1] min-w-[150px]`}>{row.aiRecommendation.item}</td>
+                        <td className={`${tdBase} bg-[#fff8e1]`}>{row.aiRecommendation.manufacturer}</td>
+                        <td className={`${tdBase} bg-[#fff8e1]`}>{row.aiRecommendation.model}</td>
 
                         {/* SHIP資産マスタ紐づけ（編集対象） */}
-                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg }}>
+                        <td className={`${tdBase} ${isEditing ? 'bg-[#fffde7]' : 'bg-[#e8f5e9]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -666,7 +679,7 @@ export default function AssetMatchingPage() {
                             displayLinked.category
                           )}
                         </td>
-                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg, minWidth: '120px' }}>
+                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#fffde7]' : 'bg-[#e8f5e9]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -681,7 +694,7 @@ export default function AssetMatchingPage() {
                             displayLinked.majorCategory
                           )}
                         </td>
-                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg, minWidth: '120px' }}>
+                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#fffde7]' : 'bg-[#e8f5e9]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -696,7 +709,7 @@ export default function AssetMatchingPage() {
                             displayLinked.middleCategory
                           )}
                         </td>
-                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg, minWidth: '150px' }}>
+                        <td className={`${tdBase} min-w-[150px] ${isEditing ? 'bg-[#fffde7]' : 'bg-[#e8f5e9]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -711,7 +724,7 @@ export default function AssetMatchingPage() {
                             displayLinked.item
                           )}
                         </td>
-                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg }}>
+                        <td className={`${tdBase} ${isEditing ? 'bg-[#fffde7]' : 'bg-[#e8f5e9]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -726,7 +739,7 @@ export default function AssetMatchingPage() {
                             displayLinked.manufacturer
                           )}
                         </td>
-                        <td style={{ ...tdBase, backgroundColor: isEditing ? '#fffde7' : linkedBg }}>
+                        <td className={`${tdBase} ${isEditing ? 'bg-[#fffde7]' : 'bg-[#e8f5e9]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -743,71 +756,35 @@ export default function AssetMatchingPage() {
                         </td>
 
                         {/* 操作 */}
-                        <td style={{ ...tdBase, position: 'sticky', right: 60, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
+                        <td className={`${tdBase} sticky right-[60px] bg-white z-[1] min-w-[60px] text-center`}>
                           {isEditing ? (
                             <button
                               onClick={() => toggleEditMode(row.id)}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '12px',
-                                backgroundColor: '#f5f5f5',
-                                border: '1px solid #ccc',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap'
-                              }}
+                              className="px-2 py-1 text-xs bg-[#f5f5f5] border border-[#ccc] rounded cursor-pointer whitespace-nowrap hover:bg-[#e0e0e0]"
                             >
                               キャンセル
                             </button>
                           ) : (
                             <button
                               onClick={() => toggleEditMode(row.id)}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '12px',
-                                backgroundColor: '#e3f2fd',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap'
-                              }}
+                              className="px-2 py-1 text-xs bg-[#e3f2fd] border-none rounded cursor-pointer whitespace-nowrap hover:bg-[#bbdefb]"
                             >
                               編集
                             </button>
                           )}
                         </td>
-                        <td style={{ ...tdBase, position: 'sticky', right: 0, backgroundColor: 'white', zIndex: 1, minWidth: '60px', textAlign: 'center' }}>
+                        <td className={`${tdBase} sticky right-0 bg-white z-[1] min-w-[60px] text-center`}>
                           {isEditing ? (
                             <button
                               onClick={saveEdit}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '12px',
-                                backgroundColor: '#1976d2',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap',
-                                fontWeight: '600'
-                              }}
+                              className="px-2 py-1 text-xs bg-[#1976d2] text-white border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#1565c0]"
                             >
                               保存
                             </button>
                           ) : (
                             <button
                               onClick={() => confirmRow(row.id)}
-                              style={{
-                                padding: '4px 8px',
-                                fontSize: '12px',
-                                backgroundColor: '#c8e6c9',
-                                color: '#2e7d32',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                whiteSpace: 'nowrap',
-                                fontWeight: '600'
-                              }}
+                              className="px-2 py-1 text-xs bg-[#c8e6c9] text-[#2e7d32] border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#a5d6a7]"
                             >
                               確定
                             </button>
@@ -821,158 +798,35 @@ export default function AssetMatchingPage() {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '16px',
-            marginTop: '16px'
-          }}>
-            <button style={{
-              padding: '8px 16px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}>
-              ← 前へ
-            </button>
-            <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
-              1 - {filteredData.length} / {filteredData.length}
-            </span>
-            <button style={{
-              padding: '8px 16px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}>
-              次へ →
-            </button>
-          </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer style={{
-        backgroundColor: '#ffffff',
-        borderTop: '1px solid #e0e0e0',
-        padding: '16px 24px',
-        position: 'sticky',
-        bottom: 0
-      }}>
-        <div style={{
-          maxWidth: '1800px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between'
-        }}>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: '12px 32px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            ← 戻る
-          </button>
-          <button
-            onClick={completeMatching}
-            style={{
-              padding: '12px 32px',
-              backgroundColor: '#1976d2',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: '600'
-            }}
-          >
-            突き合わせ完了
-          </button>
-        </div>
-      </footer>
-
       {/* 一時保存確認モーダル */}
       {showLeaveConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '32px',
-            maxWidth: '480px',
-            width: '90%',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-          }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '18px', color: '#2c3e50' }}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-xl p-8 max-w-[480px] w-[90%] shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+            <h3 className="m-0 mb-4 text-lg text-[#1f2937] text-balance">
               作業内容の一時保存
             </h3>
-            <p style={{ margin: '0 0 24px', fontSize: '14px', color: '#5a6c7d', lineHeight: '1.6' }}>
+            <p className="m-0 mb-6 text-sm text-[#6b7280] leading-relaxed text-pretty">
               突き合わせ作業の途中です。作業内容を一時保存してメイン画面に戻りますか？
             </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowLeaveConfirm(false)}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #ccc',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  color: '#5a6c7d'
-                }}
+                className="px-6 py-2.5 bg-white border border-[#e5e7eb] rounded-lg cursor-pointer text-sm text-[#6b7280] hover:bg-[#f9fafb]"
               >
                 作業を続ける
               </button>
               <button
                 onClick={handleLeaveWithoutSave}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e57373',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  color: '#d32f2f'
-                }}
+                className="px-6 py-2.5 bg-white border border-[#e57373] rounded-lg cursor-pointer text-sm text-[#d32f2f] hover:bg-[#fef2f2]"
               >
                 保存せず戻る
               </button>
               <button
                 onClick={handleLeaveWithSave}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#1976d2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}
+                className="px-6 py-2.5 bg-[#1976d2] text-white border-none rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#1565c0]"
               >
                 一時保存して戻る
               </button>
