@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -59,7 +59,14 @@ function HospitalFacilityMasterContent() {
 
   // authStoreから選択中施設を取得
   const selectedFacilityFromAuth = useAuthStore().selectedFacility;
-  const [selectedFacilityName, setSelectedFacilityName] = useState<string>(selectedFacilityFromAuth || '');
+  const [selectedFacilityName, setSelectedFacilityName] = useState<string>('');
+
+  // persist hydration対応: auth storeの値が遅延ロードされるため監視
+  useEffect(() => {
+    if (selectedFacilityFromAuth) {
+      setSelectedFacilityName(selectedFacilityFromAuth);
+    }
+  }, [selectedFacilityFromAuth]);
 
   // 施設マスタから施設名オプションを生成
   const facilityOptions = masterFacilities.map(f => f.facilityName);
@@ -241,9 +248,9 @@ function HospitalFacilityMasterContent() {
     textAlign: 'left' as const,
     fontSize: isTab ? '12px' : '13px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#1f2937',
     whiteSpace: 'nowrap' as const,
-    background: '#f8f9fa',
+    background: '#f9fafb',
   });
 
   const thStyleNew = (isTab: boolean) => ({
@@ -277,7 +284,7 @@ function HospitalFacilityMasterContent() {
     width: '100%',
     minWidth: '60px',
     padding: '6px 8px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #d1d5db',
     borderRadius: '4px',
     fontSize: '13px',
     boxSizing: 'border-box' as const,
@@ -336,7 +343,7 @@ function HospitalFacilityMasterContent() {
         disabled={editingId !== null}
         style={{
           padding: '5px 10px',
-          background: editingId !== null ? '#bdc3c7' : '#3498db',
+          background: editingId !== null ? '#9ca3af' : '#374151',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
@@ -352,7 +359,7 @@ function HospitalFacilityMasterContent() {
         disabled={editingId !== null}
         style={{
           padding: '5px 10px',
-          background: editingId !== null ? '#bdc3c7' : '#e74c3c',
+          background: editingId !== null ? '#9ca3af' : '#e74c3c',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
@@ -444,11 +451,11 @@ function HospitalFacilityMasterContent() {
   // ── 表示行レンダー（テーブル: 15列 + 操作） ──
   const renderDisplayRow = (facility: HospitalFacilityMaster, index: number) => {
     const isEven = index % 2 === 0;
-    const rowBg = isEven ? 'white' : '#fafafa';
+    const rowBg = isEven ? 'white' : '#f9fafb';
     const newBg = isEven ? '#faf8fc' : '#f5f0ff';
     const hospBg = isEven ? '#f1f8e9' : '#e8f5e9';
     return (
-      <tr key={facility.id} style={{ borderBottom: '1px solid #f0f0f0', background: rowBg }}>
+      <tr key={facility.id} style={{ borderBottom: '1px solid #e5e7eb', background: rowBg }}>
         {/* 共通マスタ (4列) */}
         <td style={tdBase(isTablet)}>{facility.oldShipDivision}</td>
         <td style={tdBase(isTablet)}>{facility.oldShipDepartment}</td>
@@ -475,14 +482,14 @@ function HospitalFacilityMasterContent() {
 
   // ── モバイル: 編集カード ──
   const renderMobileEditCard = (key: string) => {
-    const selectLabelStyle = { fontSize: '12px', color: '#546e7a', marginBottom: '4px' };
-    const inputLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#2c3e50', marginBottom: '4px' };
+    const selectLabelStyle = { fontSize: '12px', color: '#6b7280', marginBottom: '4px' };
+    const inputLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#1f2937', marginBottom: '4px' };
     const purpleLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#8e44ad', marginBottom: '4px' };
     const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#2e7d32', marginBottom: '4px' };
     return (
       <div key={key} style={{ background: '#fffde7', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', border: '2px solid #f9a825' }}>
         {/* 共通マスタ */}
-        <div style={{ fontWeight: 600, color: '#546e7a', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #e0e0e0', fontSize: '14px' }}>共通マスタ</div>
+        <div style={{ fontWeight: 600, color: '#6b7280', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #e0e0e0', fontSize: '14px' }}>共通マスタ</div>
         <div style={{ marginBottom: '8px' }}>
           <div style={selectLabelStyle}>SHIP部門</div>
           <SearchableSelect value={editForm.oldShipDivision} onChange={(v) => updateField('oldShipDivision', v)} options={['', ...divisionOptions]} placeholder="選択" isMobile />
@@ -538,7 +545,7 @@ function HospitalFacilityMasterContent() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
         {/* 共通マスタ */}
         <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '6px' }}>
-          <div style={{ fontWeight: 600, color: '#546e7a', marginBottom: '6px' }}>共通マスタ</div>
+          <div style={{ fontWeight: 600, color: '#6b7280', marginBottom: '6px' }}>共通マスタ</div>
           <div style={{ marginBottom: '4px' }}><span style={{ color: '#95a5a6', fontSize: '12px' }}>部門/部署: </span>{facility.oldShipDivision} / {facility.oldShipDepartment}</div>
           <div><span style={{ color: '#95a5a6', fontSize: '12px' }}>諸室区分: </span>{facility.oldShipRoomCategory} / {facility.shipRoomCategory2}</div>
         </div>
@@ -557,21 +564,20 @@ function HospitalFacilityMasterContent() {
         </div>
       </div>
       <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-        <button onClick={() => handleStartEdit(facility)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#bdc3c7' : '#3498db', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>編集</button>
-        <button onClick={() => handleDelete(facility.id)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#bdc3c7' : '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>削除</button>
+        <button onClick={() => handleStartEdit(facility)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#9ca3af' : '#374151', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>編集</button>
+        <button onClick={() => handleDelete(facility.id)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#9ca3af' : '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>削除</button>
       </div>
     </div>
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f9fafb' }}>
       {/* Header */}
       <header
         style={{
-          background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-          color: 'white',
+          background: '#ffffff',
+          borderBottom: '1px solid #e5e7eb',
           padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -580,24 +586,21 @@ function HospitalFacilityMasterContent() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ background: 'linear-gradient(135deg, #8e44ad, #9b59b6)', padding: isMobile ? '6px 10px' : '8px 12px', borderRadius: '6px', fontSize: isMobile ? '12px' : '14px', fontWeight: 700, letterSpacing: '1px' }}>施設</div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>個別部署マスタ</h1>
-          </div>
+          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>個別部署マスタ</h1>
           {selectedFacilityName && (
-            <div style={{ background: '#34495e', color: '#ffffff', padding: isMobile ? '4px 12px' : '6px 16px', borderRadius: '20px', fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}>
+            <div style={{ background: '#f3f4f6', color: '#6b7280', padding: isMobile ? '4px 12px' : '6px 16px', borderRadius: '20px', fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}>
               {selectedFacilityName} - {filteredFacilities.length}件
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {selectedFacilityName && (
             <>
               <button
                 onClick={handleExport}
                 style={{
                   padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: '#2980b9',
+                  background: '#374151',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -613,7 +616,7 @@ function HospitalFacilityMasterContent() {
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: '#8e44ad',
+                  background: '#374151',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -637,7 +640,7 @@ function HospitalFacilityMasterContent() {
                 disabled={editingId !== null}
                 style={{
                   padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: editingId !== null ? '#7f8c8d' : '#8e44ad',
+                  background: editingId !== null ? '#9ca3af' : '#27ae60',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -651,7 +654,7 @@ function HospitalFacilityMasterContent() {
               </button>
             </>
           )}
-          <button onClick={handleBack} style={{ padding: isMobile ? '8px 16px' : '10px 20px', background: '#7f8c8d', color: 'white', border: 'none', borderRadius: '6px', fontSize: isMobile ? '13px' : '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <button onClick={handleBack} style={{ padding: isMobile ? '8px 16px' : '10px 20px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', fontSize: isMobile ? '13px' : '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
             メイン画面に戻る
           </button>
         </div>
@@ -659,7 +662,7 @@ function HospitalFacilityMasterContent() {
 
       {/* Facility Selection */}
       {!selectedFacilityFromAuth && (
-        <div style={{ background: 'white', padding: isMobile ? '12px 16px' : '16px 24px', borderBottom: '2px solid #e0e0e0' }}>
+        <div style={{ background: 'white', padding: isMobile ? '12px 16px' : '16px 24px', borderBottom: '1px solid #e5e7eb' }}>
           <SearchableSelect
             label="施設を選択"
             value={selectedFacilityName}
@@ -673,16 +676,16 @@ function HospitalFacilityMasterContent() {
 
       {/* Filter Header */}
       {selectedFacilityName && (
-        <div style={{ background: 'white', padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px', borderBottom: '2px solid #e0e0e0', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? '12px' : '16px' }}>
-          <div><label style={filterLabelStyle('#546e7a')}>共通マスタ - 部門</label><input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" style={filterInputStyle('#b0bec5')} /></div>
-          <div><label style={filterLabelStyle('#546e7a')}>共通マスタ - 部署</label><input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" style={filterInputStyle('#b0bec5')} /></div>
+        <div style={{ background: 'white', padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? '12px' : '16px' }}>
+          <div><label style={filterLabelStyle('#6b7280')}>共通マスタ - 部門</label><input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" style={filterInputStyle('#d1d5db')} /></div>
+          <div><label style={filterLabelStyle('#6b7280')}>共通マスタ - 部署</label><input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" style={filterInputStyle('#d1d5db')} /></div>
         </div>
       )}
 
       {/* Main Content */}
       <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflowY: 'auto' }}>
         {!selectedFacilityName ? (
-          <div style={{ background: 'white', borderRadius: '8px', padding: isMobile ? '40px 20px' : '60px 40px', textAlign: 'center', color: '#7f8c8d', fontSize: isMobile ? '14px' : '16px' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: isMobile ? '40px 20px' : '60px 40px', textAlign: 'center', color: '#6b7280', fontSize: isMobile ? '14px' : '16px' }}>
             施設を選択してください
           </div>
         ) : isMobile ? (
@@ -703,7 +706,7 @@ function HospitalFacilityMasterContent() {
                 <thead>
                   {/* Row 1: グループヘッダー */}
                   <tr>
-                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#546e7a', background: '#e8e8e8', borderBottom: '1px solid #dee2e6', borderRight: '2px solid #dee2e6' }}>
+                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#6b7280', background: '#f3f4f6', borderBottom: '1px solid #dee2e6', borderRight: '2px solid #dee2e6' }}>
                       共通マスタ
                     </th>
                     <th colSpan={7} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#2e7d32', background: '#e8f5e9', borderBottom: '1px solid #dee2e6', borderRight: '2px solid #dee2e6' }}>
@@ -712,7 +715,7 @@ function HospitalFacilityMasterContent() {
                     <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8e44ad', background: '#ede7f6', borderBottom: '1px solid #dee2e6', borderRight: '2px solid #dee2e6' }}>
                       新（リモデルのみ）
                     </th>
-                    <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>操作</th>
+                    <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#f9fafb', borderBottom: '2px solid #dee2e6' }}>操作</th>
                   </tr>
                   {/* Row 2: カラム名 */}
                   <tr style={{ borderBottom: '2px solid #dee2e6' }}>
@@ -752,11 +755,15 @@ function HospitalFacilityMasterContent() {
         )}
 
         {selectedFacilityName && filteredFacilities.length === 0 && editingId !== 'new' && (
-          <div style={{ background: 'white', borderRadius: '8px', padding: isMobile ? '40px 20px' : '60px 40px', textAlign: 'center', color: '#7f8c8d', fontSize: isMobile ? '14px' : '16px' }}>
+          <div style={{ background: 'white', borderRadius: '8px', padding: isMobile ? '40px 20px' : '60px 40px', textAlign: 'center', color: '#6b7280', fontSize: isMobile ? '14px' : '16px' }}>
             検索条件に一致する施設マスタがありません
           </div>
         )}
       </main>
+
+      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+        &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
+      </footer>
 
       {/* インポートプレビューモーダル */}
       <ExcelImportPreviewModal

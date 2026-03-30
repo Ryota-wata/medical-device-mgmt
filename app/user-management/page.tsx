@@ -19,7 +19,7 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
   hospital_sys_admin: { bg: '#27ae60', text: 'white' },
   hospital_office: { bg: '#2ecc71', text: 'white' },
   hospital_dept_head: { bg: '#1abc9c', text: 'white' },
-  hospital_me: { bg: '#3498db', text: 'white' },
+  hospital_me: { bg: '#374151', text: 'white' },
   hospital_doctor_nurse: { bg: '#2980b9', text: 'white' },
   rimo_hospital: { bg: '#e67e22', text: 'white' },
   estimate_staff: { bg: '#d35400', text: 'white' },
@@ -353,7 +353,7 @@ export default function UserManagementPage() {
               top: 0,
             }}
           >
-            <h2 style={{ margin: 0, fontSize: '18px', color: '#2c3e50' }}>
+            <h2 style={{ margin: 0, fontSize: '18px', color: '#1f2937' }}>
               {isEdit ? 'ユーザー編集' : 'ユーザー新規作成'}
             </h2>
           </div>
@@ -361,7 +361,7 @@ export default function UserManagementPage() {
           <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* ユーザー名 */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 ユーザー名 <span style={{ color: '#e74c3c' }}>*</span>
               </label>
               <input
@@ -381,7 +381,7 @@ export default function UserManagementPage() {
 
             {/* メールアドレス */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 メールアドレス <span style={{ color: '#e74c3c' }}>*</span>
               </label>
               <input
@@ -402,7 +402,7 @@ export default function UserManagementPage() {
 
             {/* ロール */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 ロール
               </label>
               <select
@@ -438,7 +438,7 @@ export default function UserManagementPage() {
             {/* 所属施設（病院側ロールのみ） */}
             {!isShipRoleSelected && (
               <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                   所属施設 <span style={{ color: '#e74c3c' }}>*</span>
                 </label>
                 <SearchableSelect
@@ -459,7 +459,7 @@ export default function UserManagementPage() {
 
             {/* 所属部署 */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 所属部署
               </label>
               <input
@@ -481,7 +481,7 @@ export default function UserManagementPage() {
 
             {/* 役職 */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 役職
               </label>
               <input
@@ -503,7 +503,7 @@ export default function UserManagementPage() {
 
             {/* 担当者 */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 担当者
               </label>
               <input
@@ -524,7 +524,7 @@ export default function UserManagementPage() {
 
             {/* 連絡先 */}
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#2c3e50', fontSize: '13px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1f2937', fontSize: '13px' }}>
                 連絡先
               </label>
               <input
@@ -556,7 +556,7 @@ export default function UserManagementPage() {
                 margin: '0 0 12px 0',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#2c3e50',
+                color: '#1f2937',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -607,10 +607,10 @@ export default function UserManagementPage() {
                             gap: '6px',
                             padding: '6px 10px',
                             background: '#e8f4fd',
-                            border: '1px solid #3498db',
+                            border: '1px solid #e5e7eb',
                             borderRadius: '16px',
                             fontSize: '13px',
-                            color: '#2c3e50',
+                            color: '#1f2937',
                           }}
                         >
                           <span>{facility}</span>
@@ -685,7 +685,7 @@ export default function UserManagementPage() {
                                 border: '1px solid #e67e22',
                                 borderRadius: '16px',
                                 fontSize: '13px',
-                                color: '#2c3e50',
+                                color: '#1f2937',
                               }}
                             >
                               <span>{facility}</span>
@@ -794,8 +794,8 @@ export default function UserManagementPage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         display: 'flex',
@@ -808,6 +808,7 @@ export default function UserManagementPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
               background: 'linear-gradient(135deg, #27ae60, #229954)',
+              color: 'white',
               padding: isMobile ? '6px 10px' : '8px 12px',
               borderRadius: '6px',
               fontSize: isMobile ? '12px' : '14px',
@@ -816,13 +817,13 @@ export default function UserManagementPage() {
             }}>
               SHIP
             </div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
+            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0, color: '#1f2937' }}>
               ユーザー管理
             </h1>
           </div>
           <div style={{
-            background: '#34495e',
-            color: '#ffffff',
+            background: '#f3f4f6',
+            color: '#6b7280',
             padding: isMobile ? '4px 12px' : '6px 16px',
             borderRadius: '20px',
             fontSize: isMobile ? '12px' : '14px',
@@ -889,7 +890,7 @@ export default function UserManagementPage() {
         gap: isMobile ? '12px' : '16px',
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             ユーザー名
           </label>
           <input
@@ -908,7 +909,7 @@ export default function UserManagementPage() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             部署
           </label>
           <SearchableSelect
@@ -920,7 +921,7 @@ export default function UserManagementPage() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             ロール
           </label>
           <select
@@ -962,7 +963,7 @@ export default function UserManagementPage() {
                 }}>
                   <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50' }}>
+                      <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937' }}>
                         {user.contactPerson || user.username}
                       </div>
                       <span style={{
@@ -992,7 +993,7 @@ export default function UserManagementPage() {
                       style={{
                         flex: 1,
                         padding: '8px',
-                        background: '#3498db',
+                        background: '#374151',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -1031,14 +1032,14 @@ export default function UserManagementPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
                 <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>所属部署</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>役職</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>担当者</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>連絡先</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メールアドレス</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>ロール</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>アクセス可能施設</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>所属部署</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>役職</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>担当者</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>連絡先</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>メールアドレス</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>ロール</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>アクセス可能施設</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1046,11 +1047,11 @@ export default function UserManagementPage() {
                     const roleColor = ROLE_COLORS[user.role];
                     return (
                       <tr key={user.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', fontWeight: 500 }}>{user.department || '-'}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.position || '-'}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.contactPerson || user.username}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', fontVariantNumeric: 'tabular-nums' }}>{user.phone || '-'}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{user.email}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', fontWeight: 500 }}>{user.department || '-'}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{user.position || '-'}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{user.contactPerson || user.username}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', fontVariantNumeric: 'tabular-nums' }}>{user.phone || '-'}</td>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{user.email}</td>
                         <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center' }}>
                           <span style={{
                             display: 'inline-block',
@@ -1079,7 +1080,7 @@ export default function UserManagementPage() {
                               onClick={() => handleEdit(user)}
                               style={{
                                 padding: '6px 12px',
-                                background: '#3498db',
+                                background: '#374151',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',

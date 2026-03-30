@@ -150,7 +150,7 @@ function ShipAssetMasterContent() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f9fafb' }}>
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
@@ -187,10 +187,9 @@ function ShipAssetMasterContent() {
 
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -198,24 +197,12 @@ function ShipAssetMasterContent() {
         gap: isMobile ? '12px' : '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #27ae60, #229954)',
-              padding: isMobile ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px'
-            }}>
-              SHIP
-            </div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-              SHIP資産マスタ
-            </h1>
-          </div>
+          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>
+            SHIP資産マスタ
+          </h1>
           <div style={{
-            background: '#34495e',
-            color: '#ffffff',
+            background: '#f3f4f6',
+            color: '#6b7280',
             padding: isMobile ? '4px 12px' : '6px 16px',
             borderRadius: '20px',
             fontSize: isMobile ? '12px' : '14px',
@@ -224,12 +211,12 @@ function ShipAssetMasterContent() {
             {filteredAssets.length}件
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={handleExport}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#2980b9',
+              background: '#374151',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -245,7 +232,7 @@ function ShipAssetMasterContent() {
             onClick={() => fileInputRef.current?.click()}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#8e44ad',
+              background: '#374151',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -284,8 +271,8 @@ function ShipAssetMasterContent() {
             onClick={handleBack}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#7f8c8d',
-              color: 'white',
+              background: '#e5e7eb',
+              color: '#374151',
               border: 'none',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
@@ -303,13 +290,13 @@ function ShipAssetMasterContent() {
       <div style={{
         background: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
-        borderBottom: '2px solid #e0e0e0',
+        borderBottom: '1px solid #e5e7eb',
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
         gap: isMobile ? '12px' : '16px'
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             Category
           </label>
           <input
@@ -320,14 +307,14 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             大分類
           </label>
           <input
@@ -338,14 +325,14 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             中分類
           </label>
           <input
@@ -356,14 +343,14 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             品目
           </label>
           <input
@@ -374,14 +361,14 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             メーカー
           </label>
           <input
@@ -392,7 +379,7 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -412,25 +399,25 @@ function ShipAssetMasterContent() {
                 padding: '16px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50', marginBottom: '4px' }}>
+                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>
                     {asset.item}
                   </div>
-                  <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>
                     {asset.category} / {asset.largeClass}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#7f8c8d' }}>類別コード:</span> {asset.classificationCode}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>類別名称:</span> {asset.classificationName}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>一般的名称:</span> {asset.generalName}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>JMDNコード:</span> {asset.jmdnCode}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>販売名:</span> {asset.tradeName}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>製造販売業者等:</span> {asset.manufacturer}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>資産マスタID:</span> {asset.assetMasterId}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>中分類:</span> {asset.mediumClass}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>メーカー:</span> {asset.maker}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>型式:</span> {asset.model}</div>
+                  <div><span style={{ color: '#6b7280' }}>類別コード:</span> {asset.classificationCode}</div>
+                  <div><span style={{ color: '#6b7280' }}>類別名称:</span> {asset.classificationName}</div>
+                  <div><span style={{ color: '#6b7280' }}>一般的名称:</span> {asset.generalName}</div>
+                  <div><span style={{ color: '#6b7280' }}>JMDNコード:</span> {asset.jmdnCode}</div>
+                  <div><span style={{ color: '#6b7280' }}>販売名:</span> {asset.tradeName}</div>
+                  <div><span style={{ color: '#6b7280' }}>製造販売業者等:</span> {asset.manufacturer}</div>
+                  <div><span style={{ color: '#6b7280' }}>資産マスタID:</span> {asset.assetMasterId}</div>
+                  <div><span style={{ color: '#6b7280' }}>中分類:</span> {asset.mediumClass}</div>
+                  <div><span style={{ color: '#6b7280' }}>メーカー:</span> {asset.maker}</div>
+                  <div><span style={{ color: '#6b7280' }}>型式:</span> {asset.model}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
@@ -438,7 +425,7 @@ function ShipAssetMasterContent() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#3498db',
+                      background: '#374151',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -474,27 +461,27 @@ function ShipAssetMasterContent() {
           <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>類別コード</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>類別名称</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>JMDN中分類名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>一般的名称</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>JMDNコード</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>販売名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>製造販売業者等</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>添付文書</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>資産マスタID</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>Category</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>大分類</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>中分類</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>品目</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>メーカー</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>型式</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>添付文書Document</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>カタログDocument</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>その他Document</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>類別コード</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>類別名称</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>JMDN中分類名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>一般的名称</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>JMDNコード</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>販売名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>製造販売業者等</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>添付文書</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>資産マスタID</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>Category</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>大分類</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>中分類</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>品目</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>メーカー</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>型式</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>添付文書Document</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>カタログDocument</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>その他Document</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -503,8 +490,8 @@ function ShipAssetMasterContent() {
                       key={asset.id}
                       onClick={isSelectMode ? () => handleSelect(asset) : undefined}
                       style={{
-                        borderBottom: '1px solid #f0f0f0',
-                        background: index % 2 === 0 ? 'white' : '#fafafa',
+                        borderBottom: '1px solid #e5e7eb',
+                        background: index % 2 === 0 ? 'white' : '#f9fafb',
                         cursor: isSelectMode ? 'pointer' : 'default',
                         transition: 'background 0.2s',
                       }}
@@ -515,28 +502,28 @@ function ShipAssetMasterContent() {
                       }}
                       onMouseLeave={(e) => {
                         if (isSelectMode) {
-                          e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#fafafa';
+                          e.currentTarget.style.background = index % 2 === 0 ? 'white' : '#f9fafb';
                         }
                       }}
                     >
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.classificationCode}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.classificationName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.jmdnSubCategory}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.generalName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.jmdnCode}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.tradeName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.manufacturer}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.packageInsert}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.assetMasterId}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.category}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.largeClass}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.mediumClass}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.item}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.maker}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{asset.model}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.packageInsertDocument}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.catalogDocument}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{asset.otherDocument}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.classificationCode}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.classificationName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.jmdnSubCategory}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.generalName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.jmdnCode}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.tradeName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.manufacturer}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.packageInsert}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.assetMasterId}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.category}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.largeClass}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.mediumClass}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{asset.item}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{asset.maker}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{asset.model}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.packageInsertDocument}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.catalogDocument}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{asset.otherDocument}</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {isSelectMode ? (
                           <button
@@ -563,7 +550,7 @@ function ShipAssetMasterContent() {
                               onClick={() => handleEdit(asset)}
                               style={{
                                 padding: '6px 12px',
-                                background: '#3498db',
+                                background: '#374151',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -606,13 +593,17 @@ function ShipAssetMasterContent() {
             borderRadius: '8px',
             padding: isMobile ? '40px 20px' : '60px 40px',
             textAlign: 'center',
-            color: '#7f8c8d',
+            color: '#6b7280',
             fontSize: isMobile ? '14px' : '16px'
           }}>
             検索条件に一致する資産マスタがありません
           </div>
         )}
       </main>
+
+      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+        &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
+      </footer>
 
       {/* 新規作成モーダル */}
       <AssetFormModal

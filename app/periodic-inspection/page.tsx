@@ -288,9 +288,9 @@ function PeriodicInspectionContent() {
               padding: '12px 16px',
               marginBottom: '20px',
               fontSize: '13px',
-              color: '#2c3e50',
+              color: '#1f2937',
             }}>
-              <div style={{ fontWeight: 600, marginBottom: '8px', color: '#3498db' }}>点検対象機器</div>
+              <div style={{ fontWeight: 600, marginBottom: '8px', color: '#27ae60' }}>点検対象機器</div>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <span><span style={{ color: '#7f8c8d' }}>QRコード:</span> {task.assetId}</span>
                 <span><span style={{ color: '#7f8c8d' }}>品目:</span> {task.assetName}</span>
@@ -332,7 +332,7 @@ function PeriodicInspectionContent() {
                 fontSize: '15px',
                 fontWeight: 600,
                 color: '#ffffff',
-                backgroundColor: isCameraActive ? '#e74c3c' : '#3498db',
+                backgroundColor: isCameraActive ? '#e74c3c' : '#27ae60',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -706,7 +706,7 @@ function PeriodicInspectionContent() {
               disabled={isExporting}
               style={{
                 width: '100%',
-                backgroundColor: '#3498db',
+                backgroundColor: '#27ae60',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -751,7 +751,7 @@ function PeriodicInspectionContent() {
               style={{
                 flex: 1,
                 backgroundColor: '#ecf0f1',
-                color: '#2c3e50',
+                color: '#1f2937',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '14px 16px',
@@ -769,7 +769,7 @@ function PeriodicInspectionContent() {
                 aria-label="完了"
                 style={{
                   flex: 1,
-                  backgroundColor: '#2c3e50',
+                  backgroundColor: '#374151',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -848,12 +848,12 @@ function PeriodicInspectionContent() {
               <div style={{
                 width: 0,
                 height: 0,
-                borderRight: '8px solid #34495e',
+                borderRight: '8px solid #374151',
                 borderTop: '5px solid transparent',
                 borderBottom: '5px solid transparent'
               }}></div>
             </div>
-            <span style={{ fontSize: '11px', color: '#2c3e50' }}>
+            <span style={{ fontSize: '11px', color: '#1f2937' }}>
               {step === 'inspection' ? 'QR読取に戻る' : '戻る'}
             </span>
           </button>
@@ -901,7 +901,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
   },
   infoValue: {
-    color: '#2c3e50',
+    color: '#1f2937',
     fontWeight: 500,
   },
   input: {
@@ -937,7 +937,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 8px',
     textAlign: 'left' as const,
     fontWeight: 500,
-    color: '#2c3e50',
+    color: '#1f2937',
     borderBottom: '1px solid #ddd',
   },
   td: {

@@ -341,7 +341,7 @@ function PurchaseManagementContent() {
           <div style={{
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #dee2e6',
+            border: '1px solid #e5e7eb',
             overflow: 'hidden',
           }}>
             <div style={{
@@ -414,13 +414,13 @@ function PurchaseManagementContent() {
                           <tr
                             key={app.id}
                             style={{
-                              borderBottom: '1px solid #dee2e6',
+                              borderBottom: '1px solid #e5e7eb',
                               background: selectedApplicationIds.has(app.id) ? '#e3f2fd' : 'transparent',
                               cursor: 'pointer',
                             }}
                             onClick={() => handleViewApplicationDetail(app)}
                           >
-                            <td style={{ padding: '8px 6px', borderBottom: '1px solid #dee2e6' }} onClick={(e) => e.stopPropagation()}>
+                            <td style={{ padding: '8px 6px', borderBottom: '1px solid #e5e7eb' }} onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 checked={selectedApplicationIds.has(app.id)}
@@ -428,9 +428,9 @@ function PurchaseManagementContent() {
                               />
                             </td>
                             {/* 申請情報: 申請日, 申請No/種別 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#3498db', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#27ae60', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                               <span style={{
                                 ...typeStyle,
                                 padding: '2px 8px',
@@ -444,34 +444,34 @@ function PurchaseManagementContent() {
                               </span>
                             </td>
                             {/* 設置情報: 部門名, 部署名, 室名 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.department}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937' }}>{app.department}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
                             {/* 品目名 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50', fontSize: '12px' }}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937', fontSize: '12px' }}>
                               {app.assets.map(a => a.name).join(', ')}
                             </td>
                             {/* 院内担当情報: 所属部署, 氏名, 連絡先 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.applicantName}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>-</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937' }}>{app.applicantName}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>-</td>
                             {/* コメント */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>
                               {app.comment || '-'}
                             </td>
                             {/* 申請内容ボタン */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => handleViewApplicationDetail(app)}
                                 style={{
                                   padding: '6px 12px',
                                   background: 'white',
-                                  border: '1px solid #dee2e6',
+                                  border: '1px solid #e5e7eb',
                                   borderRadius: '4px',
                                   fontSize: '12px',
                                   cursor: 'pointer',
                                   whiteSpace: 'nowrap',
-                                  color: '#2c3e50',
+                                  color: '#1f2937',
                                 }}
                               >
                                 申請内容
@@ -487,7 +487,7 @@ function PurchaseManagementContent() {
                 {/* アクションバー */}
                 <div style={{
                   padding: '12px 16px',
-                  borderTop: '1px solid #dee2e6',
+                  borderTop: '1px solid #e5e7eb',
                   background: '#f8f9fa',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -524,14 +524,14 @@ function PurchaseManagementContent() {
             flex: 1,
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #dee2e6',
+            border: '1px solid #e5e7eb',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#3498db',
+              background: '#27ae60',
               color: 'white',
               display: 'flex',
               justifyContent: 'space-between',
@@ -542,7 +542,7 @@ function PurchaseManagementContent() {
 
             {/* ステップタブ */}
             <div style={{
-              borderBottom: '2px solid #dee2e6',
+              borderBottom: '2px solid #e5e7eb',
               display: 'flex',
               background: '#fafafa',
               overflowX: 'auto',
@@ -558,9 +558,9 @@ function PurchaseManagementContent() {
                     onClick={() => setActiveStep(tab.key)}
                     style={{
                       padding: '10px 16px',
-                      background: isActive ? '#3498db' : 'transparent',
+                      background: isActive ? '#27ae60' : 'transparent',
                       border: 'none',
-                      borderBottom: isActive ? '2px solid #3498db' : '2px solid transparent',
+                      borderBottom: isActive ? '2px solid #27ae60' : '2px solid transparent',
                       cursor: 'pointer',
                       fontSize: '12px',
                       fontWeight: isActive ? 'bold' : 'normal',

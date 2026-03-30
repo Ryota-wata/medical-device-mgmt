@@ -321,7 +321,7 @@ export default function MELedgerWindowPage() {
           flexWrap: 'wrap'
         }}>
           <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>ME管理台帳:</span>
-          <span style={{ fontSize: '14px', color: '#2c3e50' }}>
+          <span style={{ fontSize: '14px', color: '#1f2937' }}>
             全{stats.total}件 |
             <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
             <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
@@ -358,7 +358,7 @@ export default function MELedgerWindowPage() {
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#1976d2', fontWeight: '600' }}>
+          <span style={{ fontSize: '14px', color: '#27ae60', fontWeight: '600' }}>
             一致検索（現有品との照合）:
           </span>
           {['category', 'assetNo', 'item', 'manufacturer'].map((type) => (
@@ -367,9 +367,9 @@ export default function MELedgerWindowPage() {
               onClick={() => handleMatchFilterClick(type as MatchFilterType)}
               style={{
                 padding: '6px 16px',
-                backgroundColor: matchFilter === type ? '#1976d2' : '#ffffff',
-                color: matchFilter === type ? '#ffffff' : '#1976d2',
-                border: '1px solid #1976d2',
+                backgroundColor: matchFilter === type ? '#27ae60' : '#ffffff',
+                color: matchFilter === type ? '#ffffff' : '#27ae60',
+                border: '1px solid #27ae60',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '13px',
@@ -497,7 +497,7 @@ export default function MELedgerWindowPage() {
               marginBottom: '12px',
               gap: '12px'
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
                 ME管理台帳リスト（対応中）
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

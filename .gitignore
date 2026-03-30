@@ -60,3 +60,4 @@ next-env.d.ts
 /taniguchi/work/**
 !/taniguchi/work/
 !/taniguchi/work/README.md
+.claude/worktrees/

@@ -312,7 +312,7 @@ export default function RegistrationConfirmPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '8px 16px',
-            background: '#4a6fa5',
+            background: '#374151',
             color: 'white',
           }}>
             <span style={{ fontSize: '12px', fontWeight: 'bold' }}>登録明細確認</span>
@@ -328,7 +328,7 @@ export default function RegistrationConfirmPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                <tr style={{ background: '#4a6fa5', color: 'white' }}>
+                <tr style={{ background: '#374151', color: 'white' }}>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>明細区分</th>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '50px', fontSize: '11px', fontWeight: 'bold' }}>SEQ</th>
                   <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>大分類</th>

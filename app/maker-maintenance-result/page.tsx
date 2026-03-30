@@ -215,7 +215,7 @@ export default function MakerMaintenanceResultPage() {
           flexWrap: 'wrap',
           fontSize: '14px',
           fontWeight: 600,
-          color: '#2c3e50',
+          color: '#1f2937',
         }}>
           <span>{task.inspectionGroupName || '保守・点検グループ名'}</span>
           <span style={{ color: '#aaa' }}>|</span>
@@ -350,7 +350,7 @@ export default function MakerMaintenanceResultPage() {
                   borderBottom: '1px solid #ddd',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#2c3e50',
+                  color: '#1f2937',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -410,7 +410,7 @@ export default function MakerMaintenanceResultPage() {
                   background: '#f8f9fa',
                   borderBottom: '1px solid #ddd',
                 }}>
-                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
+                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1f2937' }}>
                     発生費用
                   </h4>
                   <button
@@ -533,7 +533,7 @@ export default function MakerMaintenanceResultPage() {
                         <span style={{
                           fontSize: '16px',
                           fontWeight: 'bold',
-                          color: '#2c3e50',
+                          color: '#1f2937',
                           fontVariantNumeric: 'tabular-nums',
                         }}>
                           {totalCost.toLocaleString()} 円
@@ -673,7 +673,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'block',
     fontSize: '13px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#1f2937',
     marginBottom: '6px',
   },
   input: {

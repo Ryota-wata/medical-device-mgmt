@@ -6,7 +6,7 @@ import { Header } from '@/components/layouts/Header';
 
 /** カラートークン */
 const COLORS = {
-  primary: '#4a6fa5',
+  primary: '#27ae60',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
   textPrimary: '#1f2937',
@@ -859,7 +859,7 @@ function DisposalTaskContent() {
                         }}
                         style={{
                           padding: '6px 8px',
-                          background: previewVendorIndex === index ? '#2c3e50' : '#6c757d',
+                          background: previewVendorIndex === index ? '#374151' : '#6c757d',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',

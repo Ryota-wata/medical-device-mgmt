@@ -1,0 +1,9 @@
+1:"$Sreact.fragment"
+2:I[47257,["/medical-device-mgmt/_next/static/chunks/bcce71c2b5c181a2.js"],"ClientPageRoot"]
+3:I[35655,["/medical-device-mgmt/_next/static/chunks/be849aca9f10778b.js","/medical-device-mgmt/_next/static/chunks/cacaf8ee119b8e26.js","/medical-device-mgmt/_next/static/chunks/e1bf6b9084a8cdcd.js","/medical-device-mgmt/_next/static/chunks/379c0c7a23614b8b.js"],"default"]
+6:I[97367,["/medical-device-mgmt/_next/static/chunks/bcce71c2b5c181a2.js"],"OutletBoundary"]
+7:"$Sreact.suspense"
+0:{"buildId":"TNPycT6y0Ugynp_uRPDLq","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/medical-device-mgmt/_next/static/chunks/cacaf8ee119b8e26.js","async":true}],["$","script","script-1",{"src":"/medical-device-mgmt/_next/static/chunks/e1bf6b9084a8cdcd.js","async":true}],["$","script","script-2",{"src":"/medical-device-mgmt/_next/static/chunks/379c0c7a23614b8b.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+4:{}
+5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
+8:null

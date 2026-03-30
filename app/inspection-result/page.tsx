@@ -243,7 +243,7 @@ function InspectionResultContent() {
           <button
             onClick={() => router.push('/main')}
             style={{
-              backgroundColor: '#2c3e50',
+              backgroundColor: '#374151',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -497,7 +497,7 @@ function InspectionResultContent() {
             style={{
               flex: isMobile ? 'none' : '1',
               maxWidth: isMobile ? 'none' : '200px',
-              backgroundColor: '#3498db',
+              backgroundColor: '#27ae60',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -549,7 +549,7 @@ function InspectionResultContent() {
             style={{
               flex: isMobile ? 'none' : '1',
               maxWidth: isMobile ? 'none' : '200px',
-              backgroundColor: resultData?.overallResult === '修理申請' ? '#e74c3c' : '#2c3e50',
+              backgroundColor: resultData?.overallResult === '修理申請' ? '#e74c3c' : '#374151',
               color: 'white',
               border: 'none',
               borderRadius: '8px',

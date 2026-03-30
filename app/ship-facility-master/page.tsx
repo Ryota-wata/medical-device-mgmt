@@ -154,13 +154,12 @@ export default function ShipFacilityMasterPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f9fafb' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -168,24 +167,12 @@ export default function ShipFacilityMasterPage() {
         gap: isMobile ? '12px' : '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #27ae60, #229954)',
-              padding: isMobile ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px'
-            }}>
-              SHIP
-            </div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-              SHIP施設マスタ
-            </h1>
-          </div>
+          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>
+            SHIP施設マスタ
+          </h1>
           <div style={{
-            background: '#34495e',
-            color: '#ffffff',
+            background: '#f3f4f6',
+            color: '#6b7280',
             padding: isMobile ? '4px 12px' : '6px 16px',
             borderRadius: '20px',
             fontSize: isMobile ? '12px' : '14px',
@@ -194,12 +181,12 @@ export default function ShipFacilityMasterPage() {
             {filteredFacilities.length}件
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={() => exportFacilitiesToExcel(filteredFacilities)}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#3498db',
+              background: '#374151',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -231,8 +218,8 @@ export default function ShipFacilityMasterPage() {
             onClick={handleBack}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#7f8c8d',
-              color: 'white',
+              background: '#e5e7eb',
+              color: '#374151',
               border: 'none',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
@@ -250,13 +237,13 @@ export default function ShipFacilityMasterPage() {
       <div style={{
         background: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
-        borderBottom: '2px solid #e0e0e0',
+        borderBottom: '1px solid #e5e7eb',
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: isMobile ? '12px' : '16px'
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             都道府県
           </label>
           <input
@@ -267,14 +254,14 @@ export default function ShipFacilityMasterPage() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             設立母体
           </label>
           <input
@@ -285,14 +272,14 @@ export default function ShipFacilityMasterPage() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             施設コード
           </label>
           <input
@@ -303,14 +290,14 @@ export default function ShipFacilityMasterPage() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             施設名
           </label>
           <input
@@ -321,7 +308,7 @@ export default function ShipFacilityMasterPage() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -341,18 +328,18 @@ export default function ShipFacilityMasterPage() {
                 padding: '16px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50', marginBottom: '4px' }}>
+                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>
                     {facility.facilityName}
                   </div>
-                  <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
+                  <div style={{ fontSize: '13px', color: '#6b7280' }}>
                     {facility.facilityCode}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#7f8c8d' }}>都道府県:</span> {facility.prefecture}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>設立母体:</span> {facility.foundingBody}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>病床数:</span> {facility.bedCount}床</div>
+                  <div><span style={{ color: '#6b7280' }}>都道府県:</span> {facility.prefecture}</div>
+                  <div><span style={{ color: '#6b7280' }}>設立母体:</span> {facility.foundingBody}</div>
+                  <div><span style={{ color: '#6b7280' }}>病床数:</span> {facility.bedCount}床</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
@@ -360,7 +347,7 @@ export default function ShipFacilityMasterPage() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#3498db',
+                      background: '#374151',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -396,31 +383,31 @@ export default function ShipFacilityMasterPage() {
           <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>都道府県</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>設立母体</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>施設コード</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50' }}>施設名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'right', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>病床数</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>都道府県</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>設立母体</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>施設コード</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>施設名</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'right', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>病床数</th>
+                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredFacilities.map((facility, index) => (
-                    <tr key={facility.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.prefecture}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.foundingBody}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', whiteSpace: 'nowrap' }}>{facility.facilityCode}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50' }}>{facility.facilityName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#2c3e50', textAlign: 'right', whiteSpace: 'nowrap' }}>{facility.bedCount}床</td>
+                    <tr key={facility.id} style={{ borderBottom: '1px solid #e5e7eb', background: index % 2 === 0 ? 'white' : '#f9fafb' }}>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{facility.prefecture}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{facility.foundingBody}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{facility.facilityCode}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{facility.facilityName}</td>
+                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', textAlign: 'right', whiteSpace: 'nowrap' }}>{facility.bedCount}床</td>
                       <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                           <button
                             onClick={() => handleEdit(facility)}
                             style={{
                               padding: '6px 12px',
-                              background: '#3498db',
+                              background: '#374151',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -462,7 +449,7 @@ export default function ShipFacilityMasterPage() {
             borderRadius: '8px',
             padding: isMobile ? '40px 20px' : '60px 40px',
             textAlign: 'center',
-            color: '#7f8c8d',
+            color: '#6b7280',
             fontSize: isMobile ? '14px' : '16px'
           }}>
             検索条件に一致する施設マスタがありません
@@ -494,6 +481,10 @@ export default function ShipFacilityMasterPage() {
         onSubmit={handleEditSubmit}
         isMobile={isMobile}
       />
+
+      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+        &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
+      </footer>
     </div>
   );
 }

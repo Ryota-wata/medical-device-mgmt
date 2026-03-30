@@ -6,366 +6,188 @@ allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 
 # 画面設計書自動生成スキル
 
-画面モックファイル（page.tsx等）を解析し、スクリーンショット付きの画面設計書Excelを自動生成するスキルです。
+画面モックのソースコード（page.tsx等）を解析し、Playwright自動撮影 + Excel一括生成で画面設計書を作成する。
 
-## 出力物
+## データフロー
 
-| No | 出力物 | 内容 |
-|----|--------|------|
-| 1 | スクリーンショット | Puppeteerで画面キャプチャ（PNG）- PC/タブレット/スマホ |
-| 2 | 要素一覧MD | 全UI要素の一覧（中間ファイル） |
-| 3 | 要素位置MD | 各デバイスでの要素位置座標 |
-| 4 | 画面設計書Excel | スクショ+No.マーカー / 要素一覧 |
+```
+[Phase A: Claude Code によるソースコード解析]
+  page.tsx + permissions.ts → elements/{画面名}_elements.md (12カラム)
+                                        ↓
+[Phase B: Playwright 自動撮影 + 位置抽出]  ← 完全自動
+  node capture_design_screenshots.mjs --screen "{画面名}"
+       ├── screenshots/{画面名}_{デバイス}.png
+       └── positions/{画面名}_positions.json
+                                        ↓
+[Phase C: Excel 一括生成]  ← 完全自動
+  python3 generate_all_v2.py --screen "{画面名}"
+       → 画面設計書.xlsx
+```
 
 ## 出力先
 
 ```
 /Users/watanaberyouta/Desktop/画面設計書/
-├── 画面設計書.xlsx          # 全画面統合ファイル
+├── 画面設計書.xlsx              # 全画面統合ファイル
+├── screen_configs.json          # 全画面撮影設定マスタ
 ├── screenshots/
 │   ├── {画面名}_PC.png
 │   ├── {画面名}_タブレット.png
 │   └── {画面名}_スマホ.png
 ├── elements/
-│   └── {画面名}_elements.md
+│   └── {画面名}_elements.md     # 12カラム要素一覧
 └── positions/
-    └── {画面名}_positions.md
-```
-
-## Excelファイル構成
-
-```
-画面設計書.xlsx
-├── 目次           # 全画面一覧（ユーザー作成済み）
-├── No.画像        # 1-30の番号マーカー画像
-├── ログイン画面   # PC/タブレット/スマホのスクショ + 要素一覧
-├── メニュー画面
-└── ...
+    └── {画面名}_positions.json  # 自動抽出された座標
 ```
 
 ## 対応フロー
 
-### Step 1: 目次から対象画面の情報取得
-
-Excelの目次シートから画面情報を確認する。
-
-```python
-# 目次カラム構成
-| 機能 | No | 画面名 | 使用目的 | 使用者 | 使用端末 | モックURL |
-```
-
-**使用端末の種類:**
-- PC: 1920x1080
-- タブレット: 768x1024
-- スマホ: 375x812
-
-### Step 2: 対象画面のソースコード確認
-
-ユーザー指定の画面モックファイルを読み込み、UI要素を特定する。
+### Step 1: screen_configs.json から対象画面情報を取得
 
 ```bash
-# 例：ログイン画面
-Read: app/login/page.tsx
+Read: /Users/watanaberyouta/Desktop/画面設計書/screen_configs.json
 ```
 
-### Step 3: スクリーンショット取得（デバイス別）
-
-使用端末に合わせて複数サイズのスクリーンショットを取得する。
-
-```bash
-# PC版
-node /Users/watanaberyouta/Desktop/medical-device-mgmt/.claude/skills/screen-design-doc-generator/capture_screenshot.js \
-  --url "https://ryota-wata.github.io/medical-device-mgmt/login" \
-  --output "/Users/watanaberyouta/Desktop/画面設計書/screenshots/ログイン画面_PC.png" \
-  --width 1920 \
-  --height 1080 \
-  --wait 2000
-
-# タブレット版
-node ... --width 768 --height 1024 --output "...ログイン画面_タブレット.png"
-
-# スマホ版
-node ... --width 375 --height 812 --output "...ログイン画面_スマホ.png"
+各画面の設定:
+```json
+{
+  "id": "login",
+  "name": "ログイン画面",
+  "path": "/login",
+  "devices": ["PC", "タブレット", "スマホ"],
+  "needsLogin": false,
+  "optimalRole": null,
+  "fullPage": false,
+  "modals": []
+}
 ```
 
-**オプション:**
-| オプション | 説明 | デフォルト |
-|------------|------|------------|
-| --url | 完全なURL | 必須 |
-| --output | 出力ファイルパス | 必須 |
-| --width | ビューポート幅 | 1400 |
-| --height | ビューポート高さ | 900 |
-| --wait | 読み込み待機時間(ms) | 1000 |
+**デバイスサイズ:**
+| デバイス | 幅 | 高さ |
+|----------|-----|------|
+| PC | 1920 | 1080 |
+| タブレット | 768 | 1024 |
+| スマホ | 375 | 812 |
 
-### Step 4: 要素一覧MD作成
+### Step 2: ソースコード解析 → elements.md 生成（新12カラム）
 
-ソースコードからUI要素を抽出し、採番する。
+対象画面の page.tsx を読み込み、以下を解析して要素一覧MDを作成する。
 
-`/Users/watanaberyouta/Desktop/画面設計書/elements/{画面名}_elements.md` に保存。
+1. **UI要素の特定**: JSXから全要素を抽出
+2. **データ型・桁数の推定**: input属性・Zodスキーマから判定（[ELEMENT_COLUMNS.md](ELEMENT_COLUMNS.md) 参照）
+3. **バリデーション・エラーメッセージの抽出**: zodスキーマ、フォームerrors、toast.error等
+4. **権限情報の取得**: `lib/utils/permissions.ts` の PERMISSION_MATRIX から判定
+5. **セレクタヒントの付与**: 備考欄に `selector: {CSSセレクタ}` を記載
 
-**フォーマット:**
+**出力**: `/Users/watanaberyouta/Desktop/画面設計書/elements/{画面名}_elements.md`
+
+**12カラムフォーマット:**
 ```markdown
 # {画面名} 要素一覧
 
 ## 要素一覧
 
-| No | 要素名 | 要素種別 | 必須 | 機能説明 | 初期値 | バリデーション | 備考 |
-|----|--------|----------|------|----------|--------|----------------|------|
-| 1 | ロゴ | 画像 | - | 「SHIP」ロゴを表示 | SHIP | - | - |
-| 2 | 画面タイトル | ラベル | - | 「医療機器管理システム」を表示 | - | - | - |
+| No | 要素名 | 要素種別 | データ型 | 桁数 | 必須 | 操作仕様 | 初期値 | バリデーション | エラーメッセージ | 権限 | 備考 |
+|----|--------|----------|----------|------|------|----------|--------|----------------|------------------|------|------|
+| 1 | ロゴ | 画像 | -- | -- | - | （表示のみ）SHIPロゴを表示 | - | - | -- | 全ロール | selector: img[alt="SHIP"] |
+| 2 | メールアドレス | テキスト入力 | email | 最大256文字 | ○ | 入力→リアルタイムバリデーション | - | メール形式チェック | 有効なメールアドレスを入力してください | 全ロール | selector: input[type="email"] |
 ```
 
-### Step 5: 要素位置MD作成（スクリーンショット確認必須）
+**カラム詳細:**
+| カラム | 説明 | 判定ルール |
+|--------|------|-----------|
+| データ型 | string/number/date/boolean/email/enum/file/-- | [ELEMENT_COLUMNS.md](ELEMENT_COLUMNS.md) 参照 |
+| 桁数 | 最大文字数等 | maxLength/max属性 or ビジネスロジック推定 |
+| 操作仕様 | `{トリガー}→{動作/遷移先}` | JSXイベントハンドラから |
+| エラーメッセージ | バリデーション失敗時のテキスト | zodスキーマ/errors/toast |
+| 権限 | ロール別制御 | PERMISSION_MATRIX |
+| 備考 | セレクタヒント | `selector: {CSSセレクタ}` |
 
-**重要**: スクリーンショットをReadツールで読み込み、実際の画像を見て各要素の位置を特定する。
+**要素種別**: [ELEMENT_TYPES.md](ELEMENT_TYPES.md) 参照
+
+**モーダル要素の採番**: `M` プレフィックス付き（M1, M2, ...）
+
+### Step 3: Playwright撮影（自動）
 
 ```bash
-# スクリーンショットを読み込んで要素位置を確認
+# ローカルサーバーが起動済みであること（http://localhost:3000）
+cd /Users/watanaberyouta/workspace/medical-device-mgmt
+
+# 特定画面の撮影
+node /Users/watanaberyouta/workspace/medical-device-mgmt/.claude/skills/screen-design-doc-generator/capture_design_screenshots.mjs --screen "{画面名}"
+
+# 全画面撮影
+node /Users/watanaberyouta/workspace/medical-device-mgmt/.claude/skills/screen-design-doc-generator/capture_design_screenshots.mjs
+```
+
+**出力:**
+- `screenshots/{画面名}_PC.png`, `{画面名}_タブレット.png`, `{画面名}_スマホ.png`
+- `screenshots/{画面名}_{モーダル名}_PC.png` 等（モーダルがある場合）
+- `positions/{画面名}_positions.json`（セレクタヒントがある場合、自動抽出）
+
+**認証フロー:**
+- `needsLogin: false` → 未認証状態で撮影（ログイン画面等）
+- `optimalRole: "admin@ship.com"` → SHIP全施設管理者でログイン→施設選択
+- `optimalRole: "hospital-admin@hospital.com"` → 病院管理者でログイン→自動リダイレクト
+- パスワード: 全ロール "あ"
+
+### Step 4: 位置確認（半自動）
+
+スクリーンショットをReadで読み込み、positions.jsonの座標が正しいか確認する。
+
+```bash
+# SSを読み込んで確認
 Read: /Users/watanaberyouta/Desktop/画面設計書/screenshots/{画面名}_PC.png
-Read: /Users/watanaberyouta/Desktop/画面設計書/screenshots/{画面名}_タブレット.png
-Read: /Users/watanaberyouta/Desktop/画面設計書/screenshots/{画面名}_スマホ.png
+
+# 位置データ確認
+Read: /Users/watanaberyouta/Desktop/画面設計書/positions/{画面名}_positions.json
 ```
 
-**位置特定のポイント:**
-- 各要素の左上または中央付近の座標を特定
-- 元画像のピクセル座標で指定（スケール前）
-- ラベルは左端、入力フィールドやボタンは中央付近を指定
-
-`/Users/watanaberyouta/Desktop/画面設計書/positions/{画面名}_positions.md` に保存。
-
-**フォーマット:**
-```markdown
-# {画面名} 要素位置定義
-
-## PC (1920x1080)
-
-| No | デバイス | X | Y |
-|----|----------|-----|-----|
-| 1 | PC | 50 | 50 |
-| 2 | PC | 740 | 185 |
-| 3 | PC | 935 | 230 |
-
-## タブレット (768x1024)
-
-| No | デバイス | X | Y |
-|----|----------|-----|-----|
-| 1 | タブレット | 30 | 30 |
-| 2 | タブレット | 160 | 175 |
-| 3 | タブレット | 360 | 220 |
-
-## スマホ (375x812)
-
-| No | デバイス | X | Y |
-|----|----------|-----|-----|
-| 1 | スマホ | 15 | 15 |
-| 2 | スマホ | 35 | 135 |
-| 3 | スマホ | 165 | 175 |
+**セレクタヒントがない場合**: 手動でpositions.jsonを作成する。
+```json
+{
+  "PC": {
+    "1": {"x": 50, "y": 50, "width": 100, "height": 30},
+    "2": {"x": 740, "y": 185, "width": 440, "height": 40}
+  },
+  "タブレット": {
+    "1": {"x": 30, "y": 30, "width": 80, "height": 24}
+  },
+  "スマホ": {
+    "1": {"x": 15, "y": 15, "width": 60, "height": 20}
+  }
+}
 ```
 
-**座標の目安（画面中央にカードがある場合）:**
-| デバイス | 画面幅 | カード中央X | カード左端X |
-|----------|--------|-------------|-------------|
-| PC | 1920 | ~960 | ~740 |
-| タブレット | 768 | ~384 | ~160 |
-| スマホ | 375 | ~187 | ~35 |
-
-### Step 6: Excel設計書シート生成
-
-```python
-import sys
-sys.path.insert(0, '/Users/watanaberyouta/Desktop/medical-device-mgmt/.claude/skills/screen-design-doc-generator')
-
-from openpyxl import load_workbook
-from generate_excel import create_multi_device_sheet, parse_elements_md
-
-# 既存のExcelファイルを読み込み
-wb = load_workbook("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
-
-# 既存シートがあれば削除
-if "ログイン画面" in wb.sheetnames:
-    del wb["ログイン画面"]
-
-# 要素一覧を読み込み
-elements = parse_elements_md("/Users/watanaberyouta/Desktop/画面設計書/elements/ログイン画面_elements.md")
-
-# シート作成（複数デバイス対応）
-create_multi_device_sheet(
-    wb,
-    "ログイン画面",
-    elements,
-    "/Users/watanaberyouta/Desktop/画面設計書/screenshots",
-    devices=['PC', 'タブレット', 'スマホ'],
-    positions_dir="/Users/watanaberyouta/Desktop/画面設計書/positions"
-)
-
-# 保存
-wb.save("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
-```
-
-## モーダル対応
-
-画面内で開くモーダルも設計書に含める場合の手順。
-
-### モーダル対応 Step 1: モーダルスクリーンショット取得
-
-ボタンクリック → モーダル表示 → キャプチャの流れ。
+### Step 5: Excel生成（自動）
 
 ```bash
-# 編集リストモーダルのキャプチャ（PC）
-node /Users/watanaberyouta/Desktop/medical-device-mgmt/.claude/skills/screen-design-doc-generator/capture_screenshot.js \
-  --url "http://localhost:3000/main" \
-  --output "/Users/watanaberyouta/Desktop/画面設計書/screenshots/メイン画面_編集リストモーダル_PC.png" \
-  --width 1920 \
-  --height 1080 \
-  --click "button:has-text('編集リスト')" \
-  --wait-for ".fixed.inset-0" \
-  --wait 2000
+cd /Users/watanaberyouta/Desktop/画面設計書
+
+# 特定画面のみ生成
+python3 generate_all_v2.py --screen "{画面名}"
+
+# 全画面生成
+python3 generate_all_v2.py
+
+# 左右分割レイアウト
+python3 generate_all_v2.py --layout side-by-side
 ```
 
-**モーダル用オプション:**
-| オプション | 説明 | 例 |
-|------------|------|-----|
-| --click | クリックするボタンのセレクタ | `button:has-text('編集リスト')` |
-| --wait-for | モーダル表示を待つセレクタ | `.fixed.inset-0` |
-| --click-wait | クリック後の追加待機時間(ms) | `500` |
-
-### モーダル対応 Step 2: モーダル要素一覧MD作成
-
-モーダル要素は `M` プレフィックス付きの番号で採番する。
-
-**フォーマット:**
-```markdown
-# メイン画面 要素一覧
-
-## 通常画面要素
-
-| No | 要素名 | 要素種別 | 必須 | 機能説明 | 初期値 | バリデーション | 備考 |
-|----|--------|----------|------|----------|--------|----------------|------|
-| 1 | 背景 | 背景 | - | グレー背景を表示 | - | - | - |
-| 2 | ヘッダー | コンテナ | - | ... | - | - | - |
-...
-
-## 編集リストモーダル要素
-
-| No | 要素名 | 要素種別 | 必須 | 機能説明 | 初期値 | バリデーション | 備考 |
-|----|--------|----------|------|----------|--------|----------------|------|
-| M1 | モーダル背景 | モーダル | - | オーバーレイ背景 | - | - | クリックで閉じる |
-| M2 | モーダルタイトル | ラベル | - | 「編集リスト」を表示 | - | - | - |
-| M3 | 閉じるボタン | ボタン | - | モーダルを閉じる | - | - | × |
-...
-```
-
-### モーダル対応 Step 3: モーダル位置MD作成
-
-モーダル専用の位置定義ファイルを作成。
-
-ファイル名: `{画面名}_{モーダル名}_positions.md`
-
-```markdown
-# メイン画面_編集リストモーダル 要素位置定義
-
-## PC (1920x1080)
-
-| No | デバイス | X | Y |
-|----|----------|-----|-----|
-| 1 | PC | 660 | 200 |
-| 2 | PC | 680 | 220 |
-| 3 | PC | 1230 | 220 |
-...
-```
-
-### モーダル対応 Step 4: Excel生成（別シート方式・推奨）
-
-モーダルは親画面とは別シートで作成する。シート名は `{画面名}_{モーダル名}` とする。
-
-```python
-import sys
-sys.path.insert(0, '/Users/watanaberyouta/Desktop/medical-device-mgmt/.claude/skills/screen-design-doc-generator')
-
-from openpyxl import load_workbook
-from generate_excel import create_multi_device_sheet, parse_elements_md
-
-wb = load_workbook("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
-
-# 要素一覧をパース
-all_elements = parse_elements_md("/path/to/メイン画面_elements.md")
-
-# 通常画面要素（M プレフィックスなし）
-base_elements = [e for e in all_elements if not e.get('no', '').startswith('M')]
-
-# モーダル要素（M プレフィックスあり）
-modal_elements = [e for e in all_elements if e.get('no', '').startswith('M') and not e.get('no', '').startswith('M2')]
-
-# 1. 通常画面シート
-create_multi_device_sheet(wb, "メイン画面", base_elements, screenshots_dir, ...)
-
-# 2. モーダルシート（別シート）
-create_multi_device_sheet(wb, "メイン画面_編集リストモーダル", modal_elements, screenshots_dir, ...)
-
-wb.save("/Users/watanaberyouta/Desktop/画面設計書/画面設計書.xlsx")
-```
-
-### Excelレイアウト（モーダル別シート方式）
-
+**Excelファイル構成:**
 ```
 画面設計書.xlsx
-├── 目次
-├── No.画像
-├── メイン画面                      ← 通常画面（左:スクショ、右:要素一覧）
-├── メイン画面_編集リストモーダル    ← モーダル別シート
-├── メイン画面_マスタ管理モーダル    ← モーダル別シート
+├── 目次              # 全画面一覧
+├── No.画像           # 1-30の番号マーカー画像
+├── ログイン画面      # PC/タブレット/スマホのスクショ + 12カラム要素一覧
+├── メニュー画面      # ベース画面 + モーダルセクション
 └── ...
 ```
 
-**各シートのレイアウト（従来通り）:**
-- 左側: PC/タブレット/スマホのスクリーンショット（番号マーカー付き）
-- 右側: 要素一覧テーブル
-
-### Step 7: 完了報告
-
-```
-## ログイン画面 設計書作成完了
-
-### スクリーンショット
-| デバイス | サイズ |
-|----------|--------|
-| PC | 1920x1080 -> 960x540 |
-| タブレット | 768x1024 -> 460x614 |
-| スマホ | 375x812 -> 262x568 |
-
-### 要素数
-12要素（全てにNo.マーカー配置済み）
-```
-
-## 使用例
-
-### 基本的な使い方
-
-```
-ログイン画面の設計書を作成して
-```
-
-### 特定のファイルを指定
-
-```
-app/login/page.tsxの画面設計書を作成して
-```
-
-## Excel設計書レイアウト
-
-### シート: 目次
-
-| 機能 | No | 画面名 | 使用目的 | 使用者 | 使用端末 | モックURL |
-
-### シート: No.画像
-
-1-30の赤い丸型番号マーカー画像。位置調整が必要な場合にコピー＆ペーストで使用。
-
-### シート: {画面名}
-
-**レイアウト:**
-- 左側: スクリーンショット（PC/タブレット/スマホを縦に配置、番号マーカー付き）
-- 右側: 要素一覧テーブル
+**シートレイアウト（stacked, デフォルト）:**
+1. スクリーンショット（PC/タブレット/スマホ、番号マーカー付き）を縦に配置
+2. その下に要素一覧テーブル（12カラム）
+3. モーダルがある場合、さらに下にモーダルセクション（緑ヘッダー）
 
 **スクリーンショットのスケール:**
 | デバイス | スケール |
@@ -374,58 +196,55 @@ app/login/page.tsxの画面設計書を作成して
 | タブレット | 60% |
 | スマホ | 70% |
 
-**要素一覧カラム:**
-| No | 要素名 | 要素種別 | 必須 | 機能説明 | 初期値 | バリデーション | 備考 |
+### Step 6: 完了報告
 
-## 要素種別一覧
+```
+## {画面名} 設計書作成完了
 
-| 種別 | 説明 |
-|------|------|
-| ラベル | 静的テキスト |
-| ボタン | クリック可能なボタン |
-| プルダウン | セレクトボックス |
-| タブ | タブ切り替え |
-| テーブル | データ一覧 |
-| テキスト入力 | 入力フィールド |
-| パスワード入力 | パスワードフィールド |
-| チェックボックス | チェック選択 |
-| モーダル | ダイアログ |
-| リンク | クリック可能なテキストリンク |
-| 画像 | 画像・アイコン |
-| 背景 | 背景要素 |
-| コンテナ | グループ化要素 |
-| メッセージ | エラー・通知メッセージ |
+### スクリーンショット
+| デバイス | 元サイズ | 表示サイズ |
+|----------|----------|------------|
+| PC | 1920x1080 | 960x540 |
+| タブレット | 768x1024 | 460x614 |
+| スマホ | 375x812 | 262x568 |
 
-## 注意事項
+### 要素数
+{N}要素（12カラム v2形式）
 
-1. **モックURL**
-   - GitHub Pages: `https://ryota-wata.github.io/medical-device-mgmt/...`
-   - ローカル: `http://localhost:3000/...`
+### 位置データ
+{自動抽出 or 手動} / {N}要素分
+```
 
-2. **依存パッケージ**
-   ```bash
-   npm install puppeteer
-   pip install openpyxl Pillow
-   ```
+## 使用例
 
-3. **番号マーカーの配置（重要）**
-   - **必ずスクリーンショットをReadで読み込んでから位置を決定**
-   - positions.mdで定義した座標に自動配置
-   - Excelのスケール: PC=50%, タブレット=60%, スマホ=70%
-   - 位置がずれている場合はpositions.mdの座標を調整して再生成
+```
+ログイン画面の設計書を作成して
+```
 
-4. **デバイス別スクリーンショット**
-   - 目次の「使用端末」カラムに合わせて取得
-   - PC/タブレット/スマホの3種類対応
+```
+app/login/page.tsxの画面設計書を作成して
+```
 
-5. **位置調整のイテレーション**
-   - Excelを確認してズレがあれば:
-     1. positions.mdの座標を修正
-     2. Pythonスクリプトで再生成
-     3. 確認を繰り返す
+```
+全画面の画面設計書を一括生成して
+```
+
+## 依存パッケージ
+
+```bash
+# Playwright（撮影）
+npm install playwright
+npx playwright install chromium
+
+# Python（Excel生成）
+pip install openpyxl Pillow
+```
 
 ## 関連ファイル
 
-- [ELEMENT_TYPES.md](ELEMENT_TYPES.md) - 要素種別の詳細定義
-- [generate_excel.py](generate_excel.py) - Excel生成スクリプト
-- [capture_screenshot.js](capture_screenshot.js) - スクリーンショット取得スクリプト
+- [ELEMENT_COLUMNS.md](ELEMENT_COLUMNS.md) - 12カラム判定ルール
+- [ELEMENT_TYPES.md](ELEMENT_TYPES.md) - 要素種別定義
+- [generate_excel_v2.py](generate_excel_v2.py) - Excel生成スクリプト（12カラム対応）
+- [capture_design_screenshots.mjs](capture_design_screenshots.mjs) - Playwright撮影スクリプト
+- `/Users/watanaberyouta/Desktop/画面設計書/screen_configs.json` - 全画面撮影設定
+- `/Users/watanaberyouta/Desktop/画面設計書/generate_all_v2.py` - 一括生成スクリプト

@@ -324,7 +324,7 @@ export default function CategoryRegistrationPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 16px',
-            background: '#4a6fa5',
+            background: '#374151',
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -346,15 +346,15 @@ export default function CategoryRegistrationPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                 <thead style={{ position: 'sticky', top: 0 }}>
                   <tr>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '40px' }}>No.</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80' }}>品名（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '100px' }}>メーカー</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '120px' }}>型式（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '50px' }}>数量</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '40px' }}>No.</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#374151', color: 'white', border: '1px solid #374151' }}>品名（見積名称）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#374151', color: 'white', border: '1px solid #374151', width: '100px' }}>メーカー</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#374151', color: 'white', border: '1px solid #374151', width: '120px' }}>型式（見積名称）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '50px' }}>数量</th>
                     <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f39c12', color: 'white', border: '1px solid #e08e0b', width: '160px', fontWeight: 'bold' }}>category</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#2c3e50', color: 'white', border: '1px solid #1a252f', width: '200px', fontWeight: 'bold' }}>明細区分</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '80px' }}>ステータス</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#4a6fa5', color: 'white', border: '1px solid #3d5a80', width: '80px' }}>アクション</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#1f2937', color: 'white', border: '1px solid #1f2937', width: '200px', fontWeight: 'bold' }}>明細区分</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '80px' }}>ステータス</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '80px' }}>アクション</th>
                   </tr>
                 </thead>
                 <tbody>

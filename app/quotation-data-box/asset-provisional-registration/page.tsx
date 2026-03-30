@@ -17,15 +17,15 @@ import { OrderItem } from '@/lib/types';
 // カラートークン（survey-location / asset-survey-integrated 準拠）
 // ============================================================
 const C = {
-  headerBg: '#1976d2',
+  headerBg: '#374151',
   bg: '#f5f5f5',
   card: '#ffffff',
-  textDark: '#2c3e50',
+  textDark: '#1f2937',
   textMuted: '#5a6c7d',
   border: '#ccc',
   borderLight: '#ddd',
   borderLighter: '#eee',
-  divider: '#1976d2',
+  divider: '#27ae60',
   green: '#27ae60',
   greenLight: '#d5f4e6',
   greenBg: '#e8f5e9',
@@ -42,7 +42,7 @@ const C = {
 // PC モード用カラートークン（order-registration / inspection-registration 準拠）
 // ============================================================
 const COLORS = {
-  primary: '#4a6fa5',
+  primary: '#27ae60',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
   textOnAccent: '#1f2937',

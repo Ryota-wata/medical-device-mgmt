@@ -156,7 +156,7 @@ export default function ShipDepartmentMasterPage() {
   const filterStyle = {
     width: '100%',
     padding: isMobile ? '8px' : '10px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #d1d5db',
     borderRadius: '6px',
     fontSize: isMobile ? '13px' : '14px',
   };
@@ -166,18 +166,18 @@ export default function ShipDepartmentMasterPage() {
     textAlign: 'left' as const,
     fontSize: isTablet ? '13px' : '14px',
     fontWeight: 600 as const,
-    color: '#2c3e50',
+    color: '#1f2937',
   };
 
   const tdStyle = {
     padding: isTablet ? '12px' : '14px',
     fontSize: isTablet ? '13px' : '14px',
-    color: '#2c3e50',
+    color: '#1f2937',
   };
 
   const editBtnStyle = {
     padding: '6px 12px',
-    background: '#3498db',
+    background: '#374151',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -214,17 +214,17 @@ export default function ShipDepartmentMasterPage() {
         background: 'white', borderRadius: '12px', padding: '24px',
         width: isMobile ? '90%' : '500px', maxHeight: '80vh', overflowY: 'auto',
       }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#2c3e50' }}>{title}</h2>
+        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#1f2937' }}>{title}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {fields.map((f) => (
             <div key={f.label}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>{f.label}</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>{f.label}</label>
               <input
                 type="text"
                 value={f.value}
                 onChange={(e) => f.onChange(e.target.value)}
                 placeholder={f.placeholder}
-                style={{ width: '100%', padding: '10px', border: '1px solid #d0d0d0', borderRadius: '6px', fontSize: '14px' }}
+                style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
               />
             </div>
           ))}
@@ -232,7 +232,7 @@ export default function ShipDepartmentMasterPage() {
         <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
-            style={{ padding: '10px 20px', background: '#7f8c8d', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+            style={{ padding: '10px 20px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
           >
             キャンセル
           </button>
@@ -250,7 +250,7 @@ export default function ShipDepartmentMasterPage() {
   // --- 左テーブル: 部署マスタ レンダリング ---
   const renderDeptTable = () => (
     <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-      <div style={sectionHeaderStyle('#2c3e50')}>
+      <div style={sectionHeaderStyle('#374151')}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h2 style={{ margin: 0, fontSize: isMobile ? '15px' : '16px', fontWeight: 600, color: 'white' }}>部署マスタ</h2>
           <span style={badgeStyle}>{filteredDepartments.length}件</span>
@@ -263,11 +263,11 @@ export default function ShipDepartmentMasterPage() {
       {/* フィルター */}
       <div style={{ padding: isMobile ? '12px 16px' : '16px 20px', borderBottom: '1px solid #e0e0e0', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>部門</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>部門</label>
           <input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" style={filterStyle} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>部署</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>部署</label>
           <input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" style={filterStyle} />
         </div>
       </div>
@@ -276,9 +276,9 @@ export default function ShipDepartmentMasterPage() {
       {isMobile ? (
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredDepartments.map((dept) => (
-            <div key={dept.id} style={{ background: '#fafafa', borderRadius: '8px', padding: '16px', border: '1px solid #f0f0f0' }}>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50', marginBottom: '4px' }}>{dept.department}</div>
-              <div style={{ fontSize: '13px', color: '#7f8c8d', marginBottom: '12px' }}>{dept.division}</div>
+            <div key={dept.id} style={{ background: '#fafafa', borderRadius: '8px', padding: '16px', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>{dept.department}</div>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>{dept.division}</div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => handleEditDept(dept)} style={{ ...editBtnStyle, flex: 1, padding: '8px' }}>編集</button>
                 <button onClick={() => handleDeleteDept(dept.id)} style={{ ...deleteBtnStyle, flex: 1, padding: '8px' }}>削除</button>
@@ -289,7 +289,7 @@ export default function ShipDepartmentMasterPage() {
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+            <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
               <tr>
                 <th style={thStyle}>部門</th>
                 <th style={thStyle}>部署</th>
@@ -298,7 +298,7 @@ export default function ShipDepartmentMasterPage() {
             </thead>
             <tbody>
               {filteredDepartments.map((dept, index) => (
-                <tr key={dept.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                <tr key={dept.id} style={{ borderBottom: '1px solid #e5e7eb', background: index % 2 === 0 ? 'white' : '#f9fafb' }}>
                   <td style={tdStyle}>{dept.division}</td>
                   <td style={tdStyle}>{dept.department}</td>
                   <td style={{ ...tdStyle, textAlign: 'center', whiteSpace: 'nowrap' }}>
@@ -315,7 +315,7 @@ export default function ShipDepartmentMasterPage() {
       )}
 
       {filteredDepartments.length === 0 && (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#7f8c8d', fontSize: '14px' }}>
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
           検索条件に一致する部署マスタがありません
         </div>
       )}
@@ -325,7 +325,7 @@ export default function ShipDepartmentMasterPage() {
   // --- 右テーブル: 諸室区分マスタ レンダリング ---
   const renderRoomTable = () => (
     <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-      <div style={sectionHeaderStyle('#8e44ad')}>
+      <div style={sectionHeaderStyle('#374151')}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h2 style={{ margin: 0, fontSize: isMobile ? '15px' : '16px', fontWeight: 600, color: 'white' }}>諸室区分マスタ</h2>
           <span style={badgeStyle}>{filteredRoomCategories.length}件</span>
@@ -338,11 +338,11 @@ export default function ShipDepartmentMasterPage() {
       {/* フィルター */}
       <div style={{ padding: isMobile ? '12px 16px' : '16px 20px', borderBottom: '1px solid #e0e0e0', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#8e44ad' }}>諸室区分①</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>諸室区分①</label>
           <input type="text" value={filterRoomCategory1} onChange={(e) => setFilterRoomCategory1(e.target.value)} placeholder="手術室" style={filterStyle} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#8e44ad' }}>諸室区分②</label>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>諸室区分②</label>
           <input type="text" value={filterRoomCategory2} onChange={(e) => setFilterRoomCategory2(e.target.value)} placeholder="オペ室1" style={filterStyle} />
         </div>
       </div>
@@ -351,9 +351,9 @@ export default function ShipDepartmentMasterPage() {
       {isMobile ? (
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filteredRoomCategories.map((rc) => (
-            <div key={rc.id} style={{ background: '#faf8fc', borderRadius: '8px', padding: '16px', border: '1px solid #e8daef' }}>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: '#8e44ad', marginBottom: '4px' }}>{rc.roomCategory1}</div>
-              <div style={{ fontSize: '13px', color: '#7f8c8d', marginBottom: '12px' }}>{rc.roomCategory2}</div>
+            <div key={rc.id} style={{ background: '#f9fafb', borderRadius: '8px', padding: '16px', border: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>{rc.roomCategory1}</div>
+              <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>{rc.roomCategory2}</div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => handleEditRoom(rc)} style={{ ...editBtnStyle, flex: 1, padding: '8px' }}>編集</button>
                 <button onClick={() => handleDeleteRoom(rc.id)} style={{ ...deleteBtnStyle, flex: 1, padding: '8px' }}>削除</button>
@@ -364,16 +364,16 @@ export default function ShipDepartmentMasterPage() {
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#f5f0ff', borderBottom: '2px solid #d7bde2' }}>
+            <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
               <tr>
-                <th style={{ ...thStyle, color: '#8e44ad' }}>諸室区分①</th>
-                <th style={{ ...thStyle, color: '#8e44ad' }}>諸室区分②</th>
-                <th style={{ ...thStyle, textAlign: 'center', whiteSpace: 'nowrap', color: '#8e44ad' }}>操作</th>
+                <th style={{ ...thStyle, color: '#1f2937' }}>諸室区分①</th>
+                <th style={{ ...thStyle, color: '#1f2937' }}>諸室区分②</th>
+                <th style={{ ...thStyle, textAlign: 'center', whiteSpace: 'nowrap', color: '#1f2937' }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {filteredRoomCategories.map((rc, index) => (
-                <tr key={rc.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#faf8fc' }}>
+                <tr key={rc.id} style={{ borderBottom: '1px solid #e5e7eb', background: index % 2 === 0 ? 'white' : '#f9fafb' }}>
                   <td style={tdStyle}>{rc.roomCategory1}</td>
                   <td style={tdStyle}>{rc.roomCategory2}</td>
                   <td style={{ ...tdStyle, textAlign: 'center', whiteSpace: 'nowrap' }}>
@@ -390,7 +390,7 @@ export default function ShipDepartmentMasterPage() {
       )}
 
       {filteredRoomCategories.length === 0 && (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#7f8c8d', fontSize: '14px' }}>
+        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
           検索条件に一致する諸室区分マスタがありません
         </div>
       )}
@@ -398,13 +398,12 @@ export default function ShipDepartmentMasterPage() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f9fafb' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -412,28 +411,16 @@ export default function ShipDepartmentMasterPage() {
         gap: isMobile ? '12px' : '16px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #27ae60, #229954)',
-              padding: isMobile ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px',
-            }}>
-              SHIP
-            </div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-              SHIP部署マスタ
-            </h1>
-          </div>
+          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>
+            SHIP部署マスタ
+          </h1>
         </div>
         <button
           onClick={handleBack}
           style={{
             padding: isMobile ? '8px 16px' : '10px 20px',
-            background: '#7f8c8d',
-            color: 'white',
+            background: '#e5e7eb',
+            color: '#374151',
             border: 'none',
             borderRadius: '6px',
             fontSize: isMobile ? '13px' : '14px',
@@ -459,6 +446,10 @@ export default function ShipDepartmentMasterPage() {
         </div>
       </main>
 
+      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+        &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
+      </footer>
+
       {/* 部署マスタ: 新規作成モーダル */}
       {showNewDeptModal && renderModal(
         '新規部署マスタ作成',
@@ -482,7 +473,7 @@ export default function ShipDepartmentMasterPage() {
         handleEditDeptSubmit,
         () => { setShowEditDeptModal(false); setSelectedDepartment(null); },
         '更新',
-        '#3498db',
+        '#374151',
       )}
 
       {/* 諸室区分マスタ: 新規作成モーダル */}
@@ -508,7 +499,7 @@ export default function ShipDepartmentMasterPage() {
         handleEditRoomSubmit,
         () => { setShowEditRoomModal(false); setSelectedRoomCategory(null); },
         '更新',
-        '#3498db',
+        '#374151',
       )}
     </div>
   );

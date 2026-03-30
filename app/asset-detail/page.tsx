@@ -115,7 +115,7 @@ function AssetDetailContent() {
       <header
         className="text-white flex justify-between items-center"
         style={{
-          background: '#2c3e50',
+          background: '#374151',
           padding: '12px 20px'
         }}
       >
@@ -167,10 +167,10 @@ function AssetDetailContent() {
           )}
 
           <button
-            style={{ padding: '8px 16px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+            style={{ padding: '8px 16px', background: '#374151', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
             onClick={() => router.push(backConfig.href)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#2c3e50'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#34495e'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#1f2937'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#374151'; }}
           >
             {backConfig.label}
           </button>
@@ -414,7 +414,7 @@ function AssetDetailContent() {
         <div style={{ flex: '1', minWidth: '400px' }}>
           <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: '8px', padding: '20px', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>登録ドキュメント</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>登録ドキュメント</h3>
               {isEditMode && (
                 <button
                   style={{ padding: '6px 12px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
@@ -442,7 +442,7 @@ function AssetDetailContent() {
                 >
                   <span style={{ fontSize: '24px', marginRight: '12px' }}>📄</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#2c3e50' }}>{doc}</div>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>{doc}</div>
                     <div style={{ fontSize: '12px', color: '#5a6c7d' }}>2025-01-15 登録</div>
                   </div>
                 </div>
@@ -452,7 +452,7 @@ function AssetDetailContent() {
             {/* ドキュメントビューアー */}
             <div style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '20px', textAlign: 'center', background: '#f8f9fa' }}>
               <div style={{ fontSize: '48px', marginBottom: '15px' }}>📄</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '10px' }}>契約書.pdf</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>契約書.pdf</div>
               <p style={{ fontSize: '13px', color: '#5a6c7d' }}>
                 ※ 実際のシステムでは、選択したドキュメントがここに表示されます
               </p>
@@ -517,7 +517,7 @@ function DetailField({ label, value, field, isEditMode, onChange, type = 'text' 
             style={inputStyle}
           />
         ) : (
-          <div style={{ color: '#2c3e50', fontSize: '13px' }}>{typeof displayValue === 'number' ? String(displayValue) : displayValue}</div>
+          <div style={{ color: '#1f2937', fontSize: '13px' }}>{typeof displayValue === 'number' ? String(displayValue) : displayValue}</div>
         )}
       </div>
     </>

@@ -196,10 +196,26 @@ async function figmaGet(path, retries = 5) {
     });
 
     if (res.status === 429) {
-      const wait = attempt * 60;
+      const retryAfter = res.headers.get('Retry-After');
+      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
+
+      // 10分超の長期制限 → 新トークン発行を促して即終了
+      if (retrySeconds > 600) {
+        throw new Error(
+          `Figma API: 長期レート制限中（残り約${Math.ceil(retrySeconds / 3600)}時間）\n` +
+          '  → 新しい Personal Access Token を発行して .env.figma を更新してください\n' +
+          '  → https://www.figma.com/developers/api#access-tokens'
+        );
+      }
+
+      const wait = retrySeconds > 0 ? retrySeconds + 5 : attempt * 30;
       console.log(`  ⏳ レート制限 (429)。${wait}秒待機中... (${attempt}/${retries})`);
       await new Promise(r => setTimeout(r, wait * 1000));
       continue;
+    }
+
+    if (res.status === 403) {
+      throw new Error('Figma API 403: トークンが無効または権限不足です。.env.figma の FIGMA_TOKEN を確認してください。');
     }
 
     if (!res.ok) {
@@ -208,7 +224,44 @@ async function figmaGet(path, retries = 5) {
     }
     return res.json();
   }
-  throw new Error('Figma API: レート制限が解除されません。10分以上待ってから再実行してください。');
+  throw new Error('Figma API: レート制限が解除されません。\n  → .env.figma の FIGMA_TOKEN が有効か確認してください（https://www.figma.com/developers/api#access-tokens）');
+}
+
+/** トークン有効性チェック（軽量） */
+async function validateToken() {
+  try {
+    const res = await fetch(`${API_BASE}/me`, {
+      headers: { 'X-Figma-Token': FIGMA_TOKEN }
+    });
+    if (res.status === 403) {
+      const body = await res.json().catch(() => ({}));
+      if (body.err && body.err.includes('scope')) {
+        // スコープ限定トークン → /me は使えないが有効
+        console.log(`✅ トークン検出（スコープ限定: file_content:read）\n`);
+        return;
+      }
+      console.error('❌ FIGMA_TOKEN が無効です。新しいトークンを取得してください:');
+      console.error('   https://www.figma.com/developers/api#access-tokens\n');
+      process.exit(1);
+    }
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('Retry-After');
+      if (retryAfter && parseInt(retryAfter, 10) > 600) {
+        console.error(`❌ トークンに長期レート制限中 (残り約${Math.ceil(parseInt(retryAfter, 10) / 3600)}時間)`);
+        console.error('   → 新しいトークンを発行してください\n');
+        process.exit(1);
+      }
+      console.log('⚠️  /me でもレート制限。30秒待機...');
+      await new Promise(r => setTimeout(r, 30000));
+      return;
+    }
+    if (res.ok) {
+      const me = await res.json();
+      console.log(`✅ トークン有効 (${me.handle || me.email || 'OK'})\n`);
+    }
+  } catch (err) {
+    console.log(`⚠️  トークン検証スキップ: ${err.message}`);
+  }
 }
 
 /**
@@ -272,9 +325,13 @@ function saveHashes(hashes) {
 // ────────────────────────────────────────────
 
 async function main() {
-  // depth 未指定で全ノードを取得（Figma APIデフォルト: 全階層）
+  // トークン有効性を先に確認
+  await validateToken();
+
+  // depth=4 で Document→Page→Section→Frame 階層のみ取得
+  // (depth 未指定だと全レイヤー詳細を返すため巨大になり 429 の原因になる)
   console.log('📡 Figma ファイル構造を取得中...\n');
-  const file = await figmaGet(`/files/${FIGMA_FILE_KEY}`);
+  const file = await figmaGet(`/files/${FIGMA_FILE_KEY}?depth=4`);
 
   // 再帰的にセクションを探索（ネストされたセクション内のセクションも検出）
   function collectSections(node, pageName, result) {

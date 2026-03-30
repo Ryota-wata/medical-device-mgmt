@@ -412,7 +412,7 @@ export default function AssetSearchResultPage() {
                       bottom: 0,
                       width: '4px',
                       cursor: 'col-resize',
-                      background: resizingColumn === 'checkbox' ? '#3498db' : 'transparent',
+                      background: resizingColumn === 'checkbox' ? '#27ae60' : 'transparent',
                       transition: 'background 0.2s',
                     }}
                     onMouseEnter={(e) => {
@@ -468,7 +468,7 @@ export default function AssetSearchResultPage() {
                       padding: '8px 8px',
                       textAlign: 'left',
                       fontWeight: 'bold',
-                      color: '#2c3e50',
+                      color: '#1f2937',
                       width: `${columnWidths[col.key]}px`,
                       position: 'relative',
                       whiteSpace: 'nowrap',
@@ -488,7 +488,7 @@ export default function AssetSearchResultPage() {
                         bottom: 0,
                         width: '4px',
                         cursor: 'col-resize',
-                        background: resizingColumn === col.key ? '#3498db' : 'transparent',
+                        background: resizingColumn === col.key ? '#27ae60' : 'transparent',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => {
@@ -532,7 +532,7 @@ export default function AssetSearchResultPage() {
                     />
                   </td>
                   {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                    <td key={col.key} style={{ padding: '12px 8px', color: '#2c3e50', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <td key={col.key} style={{ padding: '12px 8px', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {getCellValue(asset, col.key)}
                     </td>
                   ))}
@@ -569,9 +569,9 @@ export default function AssetSearchResultPage() {
                     checked={selectedItems.has(asset.no)}
                     onChange={() => handleSelectItem(asset.no)}
                   />
-                  <strong style={{ color: '#2c3e50' }}>No. {asset.no}</strong>
+                  <strong style={{ color: '#1f2937' }}>No. {asset.no}</strong>
                 </div>
-                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#2c3e50' }}>{asset.name}</h3>
+                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1f2937' }}>{asset.name}</h3>
                 <div style={{ fontSize: '13px', color: '#5a6c7d', lineHeight: '1.6' }}>
                   <div>施設: {asset.facility}</div>
                   <div>場所: {asset.building} {asset.floor}</div>

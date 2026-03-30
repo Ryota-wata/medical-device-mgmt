@@ -391,7 +391,7 @@ export default function LedgerWindowPage() {
           maxWidth: '1600px',
           margin: '0 auto'
         }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2c3e50', margin: 0 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
             固定資産台帳（対応中）
           </h1>
           <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
@@ -415,7 +415,7 @@ export default function LedgerWindowPage() {
           flexWrap: 'wrap'
         }}>
           <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>資産台帳:</span>
-          <span style={{ fontSize: '14px', color: '#2c3e50' }}>
+          <span style={{ fontSize: '14px', color: '#1f2937' }}>
             全{stats.total}件 |
             <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
             <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
@@ -452,16 +452,16 @@ export default function LedgerWindowPage() {
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#1976d2', fontWeight: '600' }}>
+          <span style={{ fontSize: '14px', color: '#27ae60', fontWeight: '600' }}>
             一致検索（現有品との照合）:
           </span>
           <button
             onClick={() => handleMatchFilterClick('category')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'category' ? '#1976d2' : '#ffffff',
-              color: matchFilter === 'category' ? '#ffffff' : '#1976d2',
-              border: '1px solid #1976d2',
+              backgroundColor: matchFilter === 'category' ? '#27ae60' : '#ffffff',
+              color: matchFilter === 'category' ? '#ffffff' : '#27ae60',
+              border: '1px solid #27ae60',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -475,9 +475,9 @@ export default function LedgerWindowPage() {
             onClick={() => handleMatchFilterClick('assetNo')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'assetNo' ? '#1976d2' : '#ffffff',
-              color: matchFilter === 'assetNo' ? '#ffffff' : '#1976d2',
-              border: '1px solid #1976d2',
+              backgroundColor: matchFilter === 'assetNo' ? '#27ae60' : '#ffffff',
+              color: matchFilter === 'assetNo' ? '#ffffff' : '#27ae60',
+              border: '1px solid #27ae60',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -491,9 +491,9 @@ export default function LedgerWindowPage() {
             onClick={() => handleMatchFilterClick('item')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'item' ? '#1976d2' : '#ffffff',
-              color: matchFilter === 'item' ? '#ffffff' : '#1976d2',
-              border: '1px solid #1976d2',
+              backgroundColor: matchFilter === 'item' ? '#27ae60' : '#ffffff',
+              color: matchFilter === 'item' ? '#ffffff' : '#27ae60',
+              border: '1px solid #27ae60',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -507,9 +507,9 @@ export default function LedgerWindowPage() {
             onClick={() => handleMatchFilterClick('manufacturer')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'manufacturer' ? '#1976d2' : '#ffffff',
-              color: matchFilter === 'manufacturer' ? '#ffffff' : '#1976d2',
-              border: '1px solid #1976d2',
+              backgroundColor: matchFilter === 'manufacturer' ? '#27ae60' : '#ffffff',
+              color: matchFilter === 'manufacturer' ? '#ffffff' : '#27ae60',
+              border: '1px solid #27ae60',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -537,7 +537,7 @@ export default function LedgerWindowPage() {
             </button>
           )}
           {matchFilter !== 'none' && (
-            <span style={{ fontSize: '13px', color: '#1976d2', marginLeft: '8px' }}>
+            <span style={{ fontSize: '13px', color: '#27ae60', marginLeft: '8px' }}>
               ※ 未突合の現有品と{matchFilter === 'category' ? 'カテゴリ' : matchFilter === 'assetNo' ? '資産番号' : matchFilter === 'item' ? '品目' : 'メーカー'}が一致するレコードを表示中
             </span>
           )}
@@ -696,7 +696,7 @@ export default function LedgerWindowPage() {
               marginBottom: '12px',
               gap: '12px'
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#2c3e50', margin: 0 }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
                 固定資産台帳リスト（対応中）
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -738,7 +738,7 @@ export default function LedgerWindowPage() {
               <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
                 表示: {matchFilteredData.length}件 / 対応中全体: {unmatchedData.length}件
                 {matchFilter !== 'none' && (
-                  <span style={{ color: '#1976d2', marginLeft: '8px' }}>
+                  <span style={{ color: '#27ae60', marginLeft: '8px' }}>
                     （一致検索適用中）
                   </span>
                 )}
@@ -833,7 +833,7 @@ export default function LedgerWindowPage() {
             borderRadius: '8px',
             padding: '16px',
             fontSize: '14px',
-            color: '#1976d2'
+            color: '#27ae60'
           }}>
             <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>使用方法</h3>
             <ul style={{ margin: 0, paddingLeft: '20px' }}>

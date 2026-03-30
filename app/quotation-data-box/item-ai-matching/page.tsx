@@ -387,7 +387,7 @@ export default function ItemAiMatchingPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 16px',
-            background: '#4a6fa5',
+            background: '#374151',
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -441,9 +441,9 @@ export default function ItemAiMatchingPage() {
                   <th colSpan={5} style={{
                     padding: '6px',
                     textAlign: 'center',
-                    borderBottom: '2px solid #3498db',
+                    borderBottom: '2px solid #27ae60',
                     fontWeight: 'bold',
-                    color: '#3498db',
+                    color: '#27ae60',
                     background: '#e8f4fc',
                     fontSize: '11px'
                   }}>
@@ -522,7 +522,7 @@ export default function ItemAiMatchingPage() {
                             <span style={{
                               display: 'inline-block',
                               padding: '3px 6px',
-                              background: confirmedInfo?.status === 'asset_master_selected' ? '#1976d2' : '#27ae60',
+                              background: confirmedInfo?.status === 'asset_master_selected' ? '#27ae60' : '#27ae60',
                               color: 'white',
                               borderRadius: '3px',
                               fontSize: '8px',

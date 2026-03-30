@@ -398,17 +398,17 @@ function RepairRequestsContent() {
                           </td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>
-                            <span style={{ color: '#3498db', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
+                            <span style={{ color: '#27ae60', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.department}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.department}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontFamily: 'monospace', color: '#3498db', fontSize: '12px' }}>{app.qrCode}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.itemName}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontFamily: 'monospace', color: '#27ae60', fontSize: '12px' }}>{app.qrCode}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.itemName}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.maker}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.model}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#2c3e50' }}>{app.applicantName}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.applicantName}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>
                             {app.applicantContact}
                           </td>
@@ -423,7 +423,7 @@ function RepairRequestsContent() {
                                 fontSize: '12px',
                                 cursor: 'pointer',
                                 whiteSpace: 'nowrap',
-                                color: '#2c3e50',
+                                color: '#1f2937',
                               }}
                             >
                               申請内容
@@ -577,7 +577,7 @@ function RepairRequestsContent() {
       {showDetailModal && selectedApplication && (() => {
         const modalThStyle: React.CSSProperties = {
           padding: '10px 16px', background: '#f9fafb', border: '1px solid #dee2e6',
-          fontWeight: 600, fontSize: 13, color: '#2c3e50', textAlign: 'left', whiteSpace: 'nowrap', width: '120px',
+          fontWeight: 600, fontSize: 13, color: '#1f2937', textAlign: 'left', whiteSpace: 'nowrap', width: '120px',
         };
         const modalTdStyle: React.CSSProperties = {
           padding: '10px 16px', border: '1px solid #dee2e6', fontSize: 13, color: '#374151',
@@ -586,7 +586,7 @@ function RepairRequestsContent() {
           borderRadius: 8, padding: '20px 24px', marginBottom: 16,
         };
         const sectionTitleStyle: React.CSSProperties = {
-          fontSize: 14, fontWeight: 700, color: '#2c3e50', marginBottom: 12,
+          fontSize: 14, fontWeight: 700, color: '#1f2937', marginBottom: 12,
           borderBottom: '2px solid #d1d5db', paddingBottom: 6,
         };
         return (

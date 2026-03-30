@@ -89,25 +89,24 @@ function VendorMasterContent() {
     textAlign: align,
     fontSize: isTablet ? '13px' : '14px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#1f2937',
     whiteSpace: 'nowrap',
   });
 
   const tdStyle = (): React.CSSProperties => ({
     padding: isTablet ? '12px' : '14px',
     fontSize: isTablet ? '13px' : '14px',
-    color: '#2c3e50',
+    color: '#1f2937',
     whiteSpace: 'nowrap',
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f9fafb' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
-        color: 'white',
+        background: '#ffffff',
+        borderBottom: '1px solid #e5e7eb',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -115,24 +114,12 @@ function VendorMasterContent() {
         gap: isMobile ? '12px' : '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #9b59b6, #8e44ad)',
-              padding: isMobile ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px'
-            }}>
-              業者
-            </div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-              業者マスタ
-            </h1>
-          </div>
+          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>
+            業者マスタ
+          </h1>
           <div style={{
-            background: '#34495e',
-            color: '#ffffff',
+            background: '#f3f4f6',
+            color: '#6b7280',
             padding: isMobile ? '4px 12px' : '6px 16px',
             borderRadius: '20px',
             fontSize: isMobile ? '12px' : '14px',
@@ -141,7 +128,7 @@ function VendorMasterContent() {
             {filteredVendors.length}件
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={() => setShowNewModal(true)}
             style={{
@@ -162,8 +149,8 @@ function VendorMasterContent() {
             onClick={handleBack}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#7f8c8d',
-              color: 'white',
+              background: '#e5e7eb',
+              color: '#374151',
               border: 'none',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
@@ -181,13 +168,13 @@ function VendorMasterContent() {
       <div style={{
         background: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
-        borderBottom: '2px solid #e0e0e0',
+        borderBottom: '1px solid #e5e7eb',
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(180px, 1fr))',
         gap: isMobile ? '12px' : '16px'
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             施設名
           </label>
           <SearchableSelect
@@ -199,7 +186,7 @@ function VendorMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             業者名
           </label>
           <input
@@ -210,7 +197,7 @@ function VendorMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
               boxSizing: 'border-box'
@@ -218,7 +205,7 @@ function VendorMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#2c3e50' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
             キーワード検索
           </label>
           <input
@@ -229,7 +216,7 @@ function VendorMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
               boxSizing: 'border-box'
@@ -250,23 +237,23 @@ function VendorMasterContent() {
                 padding: '16px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#2c3e50', marginBottom: '4px' }}>
+                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>
                     {vendor.vendorName}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                  <div style={{ fontSize: '12px', color: '#6b7280' }}>
                     {vendor.invoiceNumber}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#7f8c8d' }}>担当施設:</span> {vendor.facilityName}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>住所:</span> {vendor.address}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>役職:</span> {vendor.position}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>役割:</span> {vendor.role}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>氏名:</span> {vendor.contactPerson}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>連絡先:</span> {vendor.phone}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>メール:</span> {vendor.email}</div>
-                  <div><span style={{ color: '#7f8c8d' }}>担当フラグ:</span> {vendor.isPrimaryContact ? '○' : 'ー'}</div>
+                  <div><span style={{ color: '#6b7280' }}>担当施設:</span> {vendor.facilityName}</div>
+                  <div><span style={{ color: '#6b7280' }}>住所:</span> {vendor.address}</div>
+                  <div><span style={{ color: '#6b7280' }}>役職:</span> {vendor.position}</div>
+                  <div><span style={{ color: '#6b7280' }}>役割:</span> {vendor.role}</div>
+                  <div><span style={{ color: '#6b7280' }}>氏名:</span> {vendor.contactPerson}</div>
+                  <div><span style={{ color: '#6b7280' }}>連絡先:</span> {vendor.phone}</div>
+                  <div><span style={{ color: '#6b7280' }}>メール:</span> {vendor.email}</div>
+                  <div><span style={{ color: '#6b7280' }}>担当フラグ:</span> {vendor.isPrimaryContact ? '○' : 'ー'}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
@@ -274,7 +261,7 @@ function VendorMasterContent() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#3498db',
+                      background: '#374151',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -310,7 +297,7 @@ function VendorMasterContent() {
           <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+                <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
                   <tr>
                     <th style={thStyle()}>担当施設名</th>
                     <th style={thStyle()}>インボイス登録番号</th>
@@ -330,8 +317,8 @@ function VendorMasterContent() {
                     <tr
                       key={vendor.id}
                       style={{
-                        borderBottom: '1px solid #f0f0f0',
-                        background: index % 2 === 0 ? 'white' : '#fafafa',
+                        borderBottom: '1px solid #e5e7eb',
+                        background: index % 2 === 0 ? 'white' : '#f9fafb',
                       }}
                     >
                       <td style={tdStyle()}>{vendor.facilityName}</td>
@@ -350,7 +337,7 @@ function VendorMasterContent() {
                             onClick={() => handleEdit(vendor)}
                             style={{
                               padding: '6px 12px',
-                              background: '#3498db',
+                              background: '#374151',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -392,7 +379,7 @@ function VendorMasterContent() {
             borderRadius: '8px',
             padding: isMobile ? '40px 20px' : '60px 40px',
             textAlign: 'center',
-            color: '#7f8c8d',
+            color: '#6b7280',
             fontSize: isMobile ? '14px' : '16px'
           }}>
             <div style={{ marginBottom: '16px' }}>
@@ -416,6 +403,10 @@ function VendorMasterContent() {
           </div>
         )}
       </main>
+
+      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+        &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
+      </footer>
 
       {/* 新規作成モーダル */}
       <VendorFormModal

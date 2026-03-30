@@ -9,7 +9,7 @@ import { useIndividualStore } from '@/lib/stores/individualStore';
 
 /** カラートークン */
 const COLORS = {
-  primary: '#4a6fa5',
+  primary: '#27ae60',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
   textOnAccent: '#1f2937',
