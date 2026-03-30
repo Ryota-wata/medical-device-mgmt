@@ -1,0 +1,708 @@
+﻿{
+    "DryRun":  false,
+    "WorkbookInputPath":  "C:\\Projects\\mock\\medical-device-mgmt\\taniguchi\\db\\データベース定義書.xlsx",
+    "WorkbookOutputPath":  "C:\\Projects\\mock\\medical-device-mgmt\\taniguchi\\db\\データベース定義書.xlsx",
+    "PumlPath":  "C:\\Projects\\mock\\medical-device-mgmt\\taniguchi\\db\\db-schema.puml",
+    "SvgPath":  "C:\\Projects\\mock\\medical-device-mgmt\\taniguchi\\db\\db-schema.svg",
+    "TableCount":  96,
+    "NewSchemaTables":  [
+
+                        ],
+    "ObsoleteWorkbookTables":  [
+
+                               ],
+    "ReviewItemCount":  59,
+    "ReviewItems":  [
+                        {
+                            "Table":  "user_accessible_facilities",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "facility_asset_view_groups",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "facility_asset_view_group_members",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "facility_locations",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "ship_departments",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "ship_room_categories",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "facility_location_remodels",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "qr_print_jobs",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "qr_print_job_items",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "edit_lists",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "edit_list_facilities",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "edit_list_items",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "edit_list_item_attachments",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "application_status_definitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "application_status_transitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "application_approval_steps",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "application_approval_step_assignees",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "application_documents",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "application_task_steps",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "purchase_application_details",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "borrowing_application_details",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "borrowing_application_purposes",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "borrowing_cost_burdens",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "transfer_application_details",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "disposal_application_details",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "repair_request_details",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "rfq_status_definitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "rfq_status_transitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "rfq_vendors",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "quotation_item_application_links",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "orders",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "order_items",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "maintenance_contracts",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "maintenance_contract_status_definitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "maintenance_contract_status_transitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "maintenance_contract_assets",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "inspection_menus",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "inspection_menu_items",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "inspection_tasks",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "inspection_task_status_definitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "inspection_task_status_transitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "inspection_results",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "lending_devices",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "lending_device_status_definitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "lending_device_status_transitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "lending_transactions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "lending_transaction_status_definitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "lending_transaction_status_transitions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "vendors",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "purchase_applications",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "repair_requests",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_survey_photos",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_data_matching_sessions",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_data_matching_session_lists",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_data_matching_items",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_data_matching_item_sources",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_survey_integration_session_targets",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_survey_integration_result_records",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        },
+                        {
+                            "Table":  "asset_survey_integration_result_documents",
+                            "Type":  "table",
+                            "Reason":  "Logical table name or summary could not be derived from the PlantUML schema."
+                        }
+                    ],
+    "SheetNameMap":  [
+                         {
+                             "Table":  "roles",
+                             "Sheet":  "roles"
+                         },
+                         {
+                             "Table":  "users",
+                             "Sheet":  "users"
+                         },
+                         {
+                             "Table":  "role_permissions",
+                             "Sheet":  "role_permissions"
+                         },
+                         {
+                             "Table":  "role_facility_scopes",
+                             "Sheet":  "role_facility_scopes"
+                         },
+                         {
+                             "Table":  "user_remember_tokens",
+                             "Sheet":  "user_remember_tokens"
+                         },
+                         {
+                             "Table":  "password_reset_tokens",
+                             "Sheet":  "password_reset_tokens"
+                         },
+                         {
+                             "Table":  "user_accessible_facilities",
+                             "Sheet":  "user_accessible_facilities"
+                         },
+                         {
+                             "Table":  "establishments",
+                             "Sheet":  "establishments"
+                         },
+                         {
+                             "Table":  "facilities",
+                             "Sheet":  "facilities"
+                         },
+                         {
+                             "Table":  "facility_asset_view_groups",
+                             "Sheet":  "facility_asset_view_groups"
+                         },
+                         {
+                             "Table":  "facility_asset_view_group_members",
+                             "Sheet":  "facility_asset_view_group_membe"
+                         },
+                         {
+                             "Table":  "facility_locations",
+                             "Sheet":  "facility_locations"
+                         },
+                         {
+                             "Table":  "ship_departments",
+                             "Sheet":  "ship_departments"
+                         },
+                         {
+                             "Table":  "ship_room_categories",
+                             "Sheet":  "ship_room_categories"
+                         },
+                         {
+                             "Table":  "facility_location_remodels",
+                             "Sheet":  "facility_location_remodels"
+                         },
+                         {
+                             "Table":  "asset_categories",
+                             "Sheet":  "asset_categories"
+                         },
+                         {
+                             "Table":  "asset_large_classes",
+                             "Sheet":  "asset_large_classes"
+                         },
+                         {
+                             "Table":  "asset_medium_classes",
+                             "Sheet":  "asset_medium_classes"
+                         },
+                         {
+                             "Table":  "asset_items",
+                             "Sheet":  "asset_items"
+                         },
+                         {
+                             "Table":  "manufacturers",
+                             "Sheet":  "manufacturers"
+                         },
+                         {
+                             "Table":  "models",
+                             "Sheet":  "models"
+                         },
+                         {
+                             "Table":  "jmdn_classifications",
+                             "Sheet":  "jmdn_classifications"
+                         },
+                         {
+                             "Table":  "jmdn_registered_items",
+                             "Sheet":  "jmdn_registered_items"
+                         },
+                         {
+                             "Table":  "model_jmdn_mappings",
+                             "Sheet":  "model_jmdn_mappings"
+                         },
+                         {
+                             "Table":  "asset_ledgers",
+                             "Sheet":  "asset_ledgers"
+                         },
+                         {
+                             "Table":  "asset_documents",
+                             "Sheet":  "asset_documents"
+                         },
+                         {
+                             "Table":  "asset_photos",
+                             "Sheet":  "asset_photos"
+                         },
+                         {
+                             "Table":  "qr_codes",
+                             "Sheet":  "qr_codes"
+                         },
+                         {
+                             "Table":  "qr_print_jobs",
+                             "Sheet":  "qr_print_jobs"
+                         },
+                         {
+                             "Table":  "qr_print_job_items",
+                             "Sheet":  "qr_print_job_items"
+                         },
+                         {
+                             "Table":  "edit_lists",
+                             "Sheet":  "edit_lists"
+                         },
+                         {
+                             "Table":  "edit_list_facilities",
+                             "Sheet":  "edit_list_facilities"
+                         },
+                         {
+                             "Table":  "edit_list_items",
+                             "Sheet":  "edit_list_items"
+                         },
+                         {
+                             "Table":  "edit_list_item_attachments",
+                             "Sheet":  "edit_list_item_attachments"
+                         },
+                         {
+                             "Table":  "applications",
+                             "Sheet":  "applications"
+                         },
+                         {
+                             "Table":  "application_assets",
+                             "Sheet":  "application_assets"
+                         },
+                         {
+                             "Table":  "application_status_histories",
+                             "Sheet":  "application_status_histories"
+                         },
+                         {
+                             "Table":  "application_status_definitions",
+                             "Sheet":  "application_status_definitions"
+                         },
+                         {
+                             "Table":  "application_status_transitions",
+                             "Sheet":  "application_status_transitions"
+                         },
+                         {
+                             "Table":  "application_approval_steps",
+                             "Sheet":  "application_approval_steps"
+                         },
+                         {
+                             "Table":  "application_approval_step_assignees",
+                             "Sheet":  "application_approval_step_assig"
+                         },
+                         {
+                             "Table":  "application_documents",
+                             "Sheet":  "application_documents"
+                         },
+                         {
+                             "Table":  "application_task_steps",
+                             "Sheet":  "application_task_steps"
+                         },
+                         {
+                             "Table":  "purchase_application_details",
+                             "Sheet":  "purchase_application_details"
+                         },
+                         {
+                             "Table":  "borrowing_application_details",
+                             "Sheet":  "borrowing_application_details"
+                         },
+                         {
+                             "Table":  "borrowing_application_purposes",
+                             "Sheet":  "borrowing_application_purposes"
+                         },
+                         {
+                             "Table":  "borrowing_cost_burdens",
+                             "Sheet":  "borrowing_cost_burdens"
+                         },
+                         {
+                             "Table":  "transfer_application_details",
+                             "Sheet":  "transfer_application_details"
+                         },
+                         {
+                             "Table":  "disposal_application_details",
+                             "Sheet":  "disposal_application_details"
+                         },
+                         {
+                             "Table":  "repair_request_details",
+                             "Sheet":  "repair_request_details"
+                         },
+                         {
+                             "Table":  "rfq_status_definitions",
+                             "Sheet":  "rfq_status_definitions"
+                         },
+                         {
+                             "Table":  "rfq_status_transitions",
+                             "Sheet":  "rfq_status_transitions"
+                         },
+                         {
+                             "Table":  "rfqs",
+                             "Sheet":  "rfqs"
+                         },
+                         {
+                             "Table":  "rfq_applications",
+                             "Sheet":  "rfq_applications"
+                         },
+                         {
+                             "Table":  "rfq_vendors",
+                             "Sheet":  "rfq_vendors"
+                         },
+                         {
+                             "Table":  "quotations",
+                             "Sheet":  "quotations"
+                         },
+                         {
+                             "Table":  "quotation_items",
+                             "Sheet":  "quotation_items"
+                         },
+                         {
+                             "Table":  "quotation_item_application_links",
+                             "Sheet":  "quotation_item_application_link"
+                         },
+                         {
+                             "Table":  "orders",
+                             "Sheet":  "orders"
+                         },
+                         {
+                             "Table":  "order_items",
+                             "Sheet":  "order_items"
+                         },
+                         {
+                             "Table":  "maintenance_contracts",
+                             "Sheet":  "maintenance_contracts"
+                         },
+                         {
+                             "Table":  "maintenance_contract_status_definitions",
+                             "Sheet":  "maintenance_contract_status_def"
+                         },
+                         {
+                             "Table":  "maintenance_contract_status_transitions",
+                             "Sheet":  "maintenance_contract_status_tra"
+                         },
+                         {
+                             "Table":  "maintenance_contract_assets",
+                             "Sheet":  "maintenance_contract_assets"
+                         },
+                         {
+                             "Table":  "inspection_menus",
+                             "Sheet":  "inspection_menus"
+                         },
+                         {
+                             "Table":  "inspection_menu_items",
+                             "Sheet":  "inspection_menu_items"
+                         },
+                         {
+                             "Table":  "inspection_tasks",
+                             "Sheet":  "inspection_tasks"
+                         },
+                         {
+                             "Table":  "inspection_task_status_definitions",
+                             "Sheet":  "inspection_task_status_definiti"
+                         },
+                         {
+                             "Table":  "inspection_task_status_transitions",
+                             "Sheet":  "inspection_task_status_transiti"
+                         },
+                         {
+                             "Table":  "inspection_results",
+                             "Sheet":  "inspection_results"
+                         },
+                         {
+                             "Table":  "lending_devices",
+                             "Sheet":  "lending_devices"
+                         },
+                         {
+                             "Table":  "lending_device_status_definitions",
+                             "Sheet":  "lending_device_status_definitio"
+                         },
+                         {
+                             "Table":  "lending_device_status_transitions",
+                             "Sheet":  "lending_device_status_transitio"
+                         },
+                         {
+                             "Table":  "lending_transactions",
+                             "Sheet":  "lending_transactions"
+                         },
+                         {
+                             "Table":  "lending_transaction_status_definitions",
+                             "Sheet":  "lending_transaction_status_defi"
+                         },
+                         {
+                             "Table":  "lending_transaction_status_transitions",
+                             "Sheet":  "lending_transaction_status_tran"
+                         },
+                         {
+                             "Table":  "vendors",
+                             "Sheet":  "vendors"
+                         },
+                         {
+                             "Table":  "purchase_applications",
+                             "Sheet":  "purchase_applications"
+                         },
+                         {
+                             "Table":  "repair_requests",
+                             "Sheet":  "repair_requests"
+                         },
+                         {
+                             "Table":  "asset_survey_sessions",
+                             "Sheet":  "asset_survey_sessions"
+                         },
+                         {
+                             "Table":  "asset_survey_records",
+                             "Sheet":  "asset_survey_records"
+                         },
+                         {
+                             "Table":  "asset_survey_photos",
+                             "Sheet":  "asset_survey_photos"
+                         },
+                         {
+                             "Table":  "user_search_conditions",
+                             "Sheet":  "user_search_conditions"
+                         },
+                         {
+                             "Table":  "user_column_settings",
+                             "Sheet":  "user_column_settings"
+                         },
+                         {
+                             "Table":  "asset_import_jobs",
+                             "Sheet":  "asset_import_jobs"
+                         },
+                         {
+                             "Table":  "asset_import_rows",
+                             "Sheet":  "asset_import_rows"
+                         },
+                         {
+                             "Table":  "asset_data_matching_sessions",
+                             "Sheet":  "asset_data_matching_sessions"
+                         },
+                         {
+                             "Table":  "asset_data_matching_session_lists",
+                             "Sheet":  "asset_data_matching_session_lis"
+                         },
+                         {
+                             "Table":  "asset_data_matching_items",
+                             "Sheet":  "asset_data_matching_items"
+                         },
+                         {
+                             "Table":  "asset_data_matching_item_sources",
+                             "Sheet":  "asset_data_matching_item_source"
+                         },
+                         {
+                             "Table":  "asset_import_survey_mappings",
+                             "Sheet":  "asset_import_survey_mappings"
+                         },
+                         {
+                             "Table":  "asset_survey_integration_sessions",
+                             "Sheet":  "asset_survey_integration_sessio"
+                         },
+                         {
+                             "Table":  "asset_survey_integration_session_targets",
+                             "Sheet":  "asset_survey_integration_sess~2"
+                         },
+                         {
+                             "Table":  "asset_survey_integration_results",
+                             "Sheet":  "asset_survey_integration_result"
+                         },
+                         {
+                             "Table":  "asset_survey_integration_result_records",
+                             "Sheet":  "asset_survey_integration_resu~2"
+                         },
+                         {
+                             "Table":  "asset_survey_integration_result_documents",
+                             "Sheet":  "asset_survey_integration_resu~3"
+                         }
+                     ],
+    "ForeignKeyWarnings":  [
+
+                           ],
+    "ErDiagram":  {
+                      "Updated":  true,
+                      "Reason":  "Updated ER図 from current db-schema.svg.",
+                      "SvgPath":  "C:\\Projects\\mock\\medical-device-mgmt\\taniguchi\\db\\db-schema.svg",
+                      "SvgRefreshed":  false
+                  },
+    "KeepObsoleteSheets":  false
+}
