@@ -26,29 +26,33 @@ export function SearchableSelect({
   dropdownMinWidth = '200px'
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(value || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [filteredOptions, setFilteredOptions] = useState(options);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setSearchQuery(value || '');
-  }, [value]);
-
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = options.filter((option) =>
-        option.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredOptions(filtered);
+    if (isSearching) {
+      if (searchQuery) {
+        const filtered = options.filter((option) =>
+          option.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setFilteredOptions(filtered);
+      } else {
+        setFilteredOptions(options);
+      }
     } else {
       setFilteredOptions(options);
     }
-  }, [searchQuery, options]);
+  }, [searchQuery, options, isSearching]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setIsSearching(false);
+        setSearchQuery('');
       }
     };
 
@@ -59,21 +63,24 @@ export function SearchableSelect({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchQuery(newValue);
-    onChange(newValue);
+    setIsSearching(true);
     setIsOpen(true);
   };
 
   const handleOptionClick = (option: string) => {
-    setSearchQuery(option);
     onChange(option);
     if (onSelect) {
       onSelect(option);
     }
     setIsOpen(false);
+    setIsSearching(false);
+    setSearchQuery('');
   };
 
   const handleFocus = () => {
     setIsOpen(true);
+    setIsSearching(true);
+    setSearchQuery('');
   };
 
   return (
@@ -91,11 +98,12 @@ export function SearchableSelect({
       )}
       <div style={{ position: 'relative' }}>
         <input
+          ref={inputRef}
           type="text"
-          value={searchQuery ?? ''}
+          value={isSearching ? searchQuery : (value || '')}
           onChange={handleInputChange}
           onFocus={handleFocus}
-          placeholder={placeholder}
+          placeholder={isSearching && value ? value : placeholder}
           disabled={disabled}
           style={{
             width: '100%',

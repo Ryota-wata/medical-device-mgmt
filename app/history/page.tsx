@@ -82,7 +82,7 @@ function HistoryContent() {
   };
 
   const handleBack = () => {
-    router.push('/survey-location');
+    router.push('/asset-survey-integrated');
   };
 
   const handlePerPageChange = (value: number) => {

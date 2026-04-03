@@ -7,6 +7,7 @@ import { useMasterStore, useAuthStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { QRCodePlaceholder } from '@/components/ui/QRCodePlaceholder';
+import { updateFieldWithParents } from '@/lib/utils/asset-hierarchy';
 
 function AssetSurveyIntegratedContent() {
   const router = useRouter();
@@ -133,12 +134,87 @@ function AssetSurveyIntegratedContent() {
     return display;
   };
 
-  // マスタデータから選択肢を生成
+  // マスタデータから選択肢を生成（親選択に連動してフィルタ）
   const largeClassOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean))), [assetMasters]);
-  const mediumClassOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.mediumClass).filter(Boolean))), [assetMasters]);
-  const itemOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.item).filter(Boolean))), [assetMasters]);
-  const makerOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.maker).filter(Boolean))), [assetMasters]);
-  const modelOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.model).filter(Boolean))), [assetMasters]);
+  const mediumClassOptions = useMemo(() => {
+    const source = largeClass ? assetMasters.filter(a => a.largeClass === largeClass) : assetMasters;
+    return Array.from(new Set(source.map(a => a.mediumClass).filter(Boolean)));
+  }, [assetMasters, largeClass]);
+  const itemOptions = useMemo(() => {
+    let source = assetMasters;
+    if (largeClass) source = source.filter(a => a.largeClass === largeClass);
+    if (mediumClass) source = source.filter(a => a.mediumClass === mediumClass);
+    return Array.from(new Set(source.map(a => a.item).filter(Boolean)));
+  }, [assetMasters, largeClass, mediumClass]);
+  const makerOptions = useMemo(() => {
+    let source = assetMasters;
+    if (largeClass) source = source.filter(a => a.largeClass === largeClass);
+    if (mediumClass) source = source.filter(a => a.mediumClass === mediumClass);
+    if (item) source = source.filter(a => a.item === item);
+    return Array.from(new Set(source.map(a => a.maker).filter(Boolean)));
+  }, [assetMasters, largeClass, mediumClass, item]);
+  const modelOptions = useMemo(() => {
+    let source = assetMasters;
+    if (largeClass) source = source.filter(a => a.largeClass === largeClass);
+    if (mediumClass) source = source.filter(a => a.mediumClass === mediumClass);
+    if (item) source = source.filter(a => a.item === item);
+    if (maker) source = source.filter(a => a.maker === maker);
+    return Array.from(new Set(source.map(a => a.model).filter(Boolean)));
+  }, [assetMasters, largeClass, mediumClass, item, maker]);
+
+  // 分類フィールド変更ハンドラ（子→親自動反映 + 親変更時の子クリア）
+  const handleClassFieldChange = (field: 'largeClass' | 'mediumClass' | 'item' | 'maker' | 'model', value: string) => {
+    const fieldMap = {
+      largeClass: 'majorCategory' as const,
+      mediumClass: 'middleCategory' as const,
+      item: 'item' as const,
+      maker: 'manufacturer' as const,
+      model: 'model' as const,
+    };
+    const currentData = {
+      majorCategory: largeClass,
+      middleCategory: mediumClass,
+      item,
+      manufacturer: maker,
+      model,
+    };
+
+    const updates = updateFieldWithParents(fieldMap[field], value, currentData, assetMasters);
+
+    // 子→親の自動反映を適用
+    if (updates.majorCategory !== undefined) setLargeClass(updates.majorCategory);
+    if (updates.middleCategory !== undefined) setMediumClass(updates.middleCategory);
+    if (updates.item !== undefined) setItem(updates.item);
+    if (updates.manufacturer !== undefined) setMaker(updates.manufacturer);
+    if (updates.model !== undefined) setModel(updates.model);
+
+    // 親変更時: 無効な子をクリア
+    if (field === 'largeClass') {
+      const validMasters = value ? assetMasters.filter(a => a.largeClass === value) : assetMasters;
+      if (mediumClass && !validMasters.some(a => a.mediumClass === mediumClass)) setMediumClass('');
+      if (item && !validMasters.some(a => a.item === item)) setItem('');
+      if (maker && !validMasters.some(a => a.maker === maker)) setMaker('');
+      if (model && !validMasters.some(a => a.model === model)) setModel('');
+    } else if (field === 'mediumClass') {
+      const validMasters = value
+        ? assetMasters.filter(a => a.mediumClass === value && (!largeClass || a.largeClass === largeClass))
+        : assetMasters;
+      if (item && !validMasters.some(a => a.item === item)) setItem('');
+      if (maker && !validMasters.some(a => a.maker === maker)) setMaker('');
+      if (model && !validMasters.some(a => a.model === model)) setModel('');
+    } else if (field === 'item') {
+      const validMasters = value
+        ? assetMasters.filter(a => a.item === value && (!largeClass || a.largeClass === largeClass) && (!mediumClass || a.mediumClass === mediumClass))
+        : assetMasters;
+      if (maker && !validMasters.some(a => a.maker === maker)) setMaker('');
+      if (model && !validMasters.some(a => a.model === model)) setModel('');
+    } else if (field === 'maker') {
+      const validMasters = value
+        ? assetMasters.filter(a => a.maker === value && (!largeClass || a.largeClass === largeClass) && (!mediumClass || a.mediumClass === mediumClass) && (!item || a.item === item))
+        : assetMasters;
+      if (model && !validMasters.some(a => a.model === model)) setModel('');
+    }
+  };
 
   const handleBack = () => router.push('/survey-location');
   const handleShowHistory = () => router.push('/history');
@@ -191,7 +267,7 @@ function AssetSurveyIntegratedContent() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className="flex-1 pb-32">
+      <div className="flex-1 overflow-y-auto pb-32">
         <div className="max-w-[800px] mx-auto px-3 py-4 sm:px-6">
 
           {/* カード2: メインフォーム */}
@@ -285,14 +361,14 @@ function AssetSurveyIntegratedContent() {
               <h2 className="text-sm font-bold text-[#1f2937] mb-4">分類情報</h2>
 
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <SearchableSelect label="大分類" value={largeClass} onChange={setLargeClass} options={['', ...largeClassOptions]} placeholder="選択してください" isMobile={isMobile} />
-                <SearchableSelect label="中分類" value={mediumClass} onChange={setMediumClass} options={['', ...mediumClassOptions]} placeholder="選択してください" isMobile={isMobile} />
-                <SearchableSelect label="品目" value={item} onChange={setItem} options={['', ...itemOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="大分類" value={largeClass} onChange={(v) => handleClassFieldChange('largeClass', v)} options={['', ...largeClassOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="中分類" value={mediumClass} onChange={(v) => handleClassFieldChange('mediumClass', v)} options={['', ...mediumClassOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="品目" value={item} onChange={(v) => handleClassFieldChange('item', v)} options={['', ...itemOptions]} placeholder="選択してください" isMobile={isMobile} />
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <SearchableSelect label="メーカー" value={maker} onChange={setMaker} options={['', ...makerOptions]} placeholder="選択してください" isMobile={isMobile} />
-                <SearchableSelect label="型式" value={model} onChange={setModel} options={['', ...modelOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="メーカー" value={maker} onChange={(v) => handleClassFieldChange('maker', v)} options={['', ...makerOptions]} placeholder="選択してください" isMobile={isMobile} />
+                <SearchableSelect label="型式" value={model} onChange={(v) => handleClassFieldChange('model', v)} options={['', ...modelOptions]} placeholder="選択してください" isMobile={isMobile} />
               </div>
 
               <h2 className="text-sm font-bold text-[#1f2937] mb-4 mt-2">サイズ情報</h2>

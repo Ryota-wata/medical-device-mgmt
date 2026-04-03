@@ -72,6 +72,17 @@ function SurveyLocationContent() {
     }
   };
 
+  const handleSectionChange = (value: string) => {
+    setSection(value);
+    // 部署選択時、対応する部門を自動設定
+    if (value && !department) {
+      const match = facilityMasterData.find(f => f.oldShipDepartment === value);
+      if (match?.oldShipDivision) {
+        setDepartment(match.oldShipDivision);
+      }
+    }
+  };
+
   const handleBack = () => {
     router.push('/offline-prep');
   };
@@ -155,7 +166,7 @@ function SurveyLocationContent() {
             <SearchableSelect
               label="部署"
               value={section}
-              onChange={setSection}
+              onChange={handleSectionChange}
               options={['', ...sectionOptions]}
               placeholder="選択してください"
               isMobile={isMobile}
