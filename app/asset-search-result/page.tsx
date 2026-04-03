@@ -12,6 +12,7 @@ import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationMod
 import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationModal';
 import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
 import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
+import { InspectionRegistrationModal } from '@/app/quotation-data-box/components/InspectionRegistrationModal';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -65,6 +66,9 @@ export default function AssetSearchResultPage() {
 
   // 増設申請モーダル関連の状態
   const [isAdditionModalOpen, setIsAdditionModalOpen] = useState(false);
+
+  // 点検管理登録モーダル関連の状態
+  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
 
   // 原本資産データ（useAssetStore から取得）
   const storeAssets = assets;
@@ -242,6 +246,22 @@ export default function AssetSearchResultPage() {
           >
             廃棄申請
           </button>
+
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.3)', margin: '0 4px' }} />
+
+          <button
+            style={getButtonStyle(isAnySelected)}
+            onClick={() => {
+              if (selectedItems.size === 0) {
+                alert('点検管理登録する資産を選択してください');
+                return;
+              }
+              setIsInspectionModalOpen(true);
+            }}
+            title={isAnySelected ? '' : '資産を選択してください'}
+          >
+            点検管理登録
+          </button>
         </div>
         {/* 選択状態表示 */}
         <div style={{
@@ -267,12 +287,12 @@ export default function AssetSearchResultPage() {
           )}
           {selectedItems.size === 1 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 更新・増設・移動・廃棄申請が可能です
+              ✓ 更新・増設・移動・廃棄申請 / 点検管理登録が可能です
             </span>
           )}
           {selectedItems.size > 1 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 移動・廃棄申請が可能です
+              ✓ 移動・廃棄申請 / 点検管理登録が可能です
             </span>
           )}
         </div>
@@ -645,6 +665,16 @@ export default function AssetSearchResultPage() {
         onSuccess={() => {
           setSelectedItems(new Set());
         }}
+      />
+
+      {/* 点検管理登録モーダル */}
+      <InspectionRegistrationModal
+        isOpen={isInspectionModalOpen}
+        onClose={() => {
+          setIsInspectionModalOpen(false);
+          setSelectedItems(new Set());
+        }}
+        preSelectedAssets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
       />
     </div>
   );

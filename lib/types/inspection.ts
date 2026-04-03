@@ -101,9 +101,6 @@ export interface InspectionTask {
     after?: string;                 // 使用後メニューID
   };
 
-  // 法令点検
-  hasLegalInspection: boolean;
-
   // メーカー保守（メーカー保守の場合）
   vendorName?: string;
   maintenanceContractId?: string;
@@ -198,7 +195,6 @@ export interface InspectionTaskFormData {
     during?: string;
     after?: string;
   };
-  hasLegalInspection: boolean;
   vendorName?: string;
   nextInspectionDate: string;
 }

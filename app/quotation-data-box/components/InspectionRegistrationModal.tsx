@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useInspectionStore, useAssetStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
@@ -19,17 +19,22 @@ interface AssetSearchFilter {
 interface InspectionRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  preSelectedAssets?: Asset[];
 }
 
 export function InspectionRegistrationModal({
   isOpen,
   onClose,
+  preSelectedAssets,
 }: InspectionRegistrationModalProps) {
   const { assets } = useAssetStore();
   const { menus, addTask, tasks } = useInspectionStore();
 
+  // preSelectedAssetsがある場合はStep2から開始
+  const initialStep = preSelectedAssets && preSelectedAssets.length > 0 ? 'register' : 'search';
+
   // 画面ステップ（'search' | 'register'）
-  const [step, setStep] = useState<'search' | 'register'>('search');
+  const [step, setStep] = useState<'search' | 'register'>(initialStep);
 
   // 検索フィルター
   const [assetSearchFilter, setAssetSearchFilter] = useState<AssetSearchFilter>({
@@ -48,7 +53,20 @@ export function InspectionRegistrationModal({
 
   // 選択した資産
   const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(new Set());
-  const [selectedAssets, setSelectedAssets] = useState<Asset[]>([]);
+  const [selectedAssets, setSelectedAssets] = useState<Asset[]>(preSelectedAssets || []);
+
+  // isOpen/preSelectedAssets変更時にステートをリセット
+  useEffect(() => {
+    if (isOpen) {
+      if (preSelectedAssets && preSelectedAssets.length > 0) {
+        setStep('register');
+        setSelectedAssets(preSelectedAssets);
+        setSelectedAssetIds(new Set(preSelectedAssets.map(a => a.qrCode)));
+      } else {
+        setStep('search');
+      }
+    }
+  }, [isOpen, preSelectedAssets]);
 
   // 点検種別選択
   const [inspectionTypes, setInspectionTypes] = useState({
@@ -65,8 +83,14 @@ export function InspectionRegistrationModal({
     after: '',
   });
 
-  // 法定点検
-  const [hasLegalInspection, setHasLegalInspection] = useState(false);
+  // 点検グループ
+  const [inspectionGroupName, setInspectionGroupName] = useState('');
+  const [isNewGroup, setIsNewGroup] = useState(false);
+
+  // 既存グループ名の一覧
+  const existingGroupNames = useMemo(() => {
+    return [...new Set(tasks.map(t => t.inspectionGroupName).filter(Boolean))] as string[];
+  }, [tasks]);
 
   // 点検開始日
   const [startDate, setStartDate] = useState('');
@@ -152,7 +176,8 @@ export function InspectionRegistrationModal({
     const matchingMenus = menus.filter(
       (m) =>
         m.largeClass === firstAsset.largeClass &&
-        m.mediumClass === firstAsset.mediumClass
+        m.mediumClass === firstAsset.mediumClass &&
+        m.item === firstAsset.item
     );
 
     return {
@@ -254,13 +279,18 @@ export function InspectionRegistrationModal({
     setStep('register');
   };
 
-  // 検索画面に戻る
+  // 検索画面に戻る（原本リストから来た場合はモーダルを閉じる）
   const backToSearch = () => {
+    if (preSelectedAssets && preSelectedAssets.length > 0) {
+      handleClose();
+      return;
+    }
     setStep('search');
     setInspectionTypes({ periodic: false, daily: false, spot: false });
     setSelectedPeriodicMenuId('');
     setSelectedDailyMenuIds({ before: '', during: '', after: '' });
-    setHasLegalInspection(false);
+    setInspectionGroupName('');
+    setIsNewGroup(false);
     setStartDate('');
   };
 
@@ -288,7 +318,6 @@ export function InspectionRegistrationModal({
           during: selectedDailyMenuIds.during || undefined,
           after: selectedDailyMenuIds.after || undefined,
         },
-        hasLegalInspection,
         nextInspectionDate: startDate,
       };
 
@@ -302,6 +331,7 @@ export function InspectionRegistrationModal({
         managementDepartment: asset.department || '',
         installedDepartment: asset.section || '',
         purchaseDate: '',
+        inspectionGroupName: inspectionGroupName || undefined,
       };
 
       addTask(formData, assetInfo);
@@ -322,7 +352,8 @@ export function InspectionRegistrationModal({
     setInspectionTypes({ periodic: false, daily: false, spot: false });
     setSelectedPeriodicMenuId('');
     setSelectedDailyMenuIds({ before: '', during: '', after: '' });
-    setHasLegalInspection(false);
+    setInspectionGroupName('');
+    setIsNewGroup(false);
     setStartDate('');
     onClose();
   };
@@ -658,31 +689,65 @@ export function InspectionRegistrationModal({
                 </div>
               )}
 
-              {/* 法定点検 */}
+              {/* 点検グループ */}
               <div style={styles.section}>
-                <label style={styles.sectionTitle}>法定点検</label>
-                <div style={styles.radioGroup}>
-                  <label style={styles.radioLabel}>
+                <label style={styles.sectionTitle}>点検グループ</label>
+                {!isNewGroup ? (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      style={{ ...styles.select, flex: 1 }}
+                      value={inspectionGroupName}
+                      onChange={(e) => setInspectionGroupName(e.target.value)}
+                    >
+                      <option value="">グループを選択</option>
+                      {existingGroupNames.map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => { setIsNewGroup(true); setInspectionGroupName(''); }}
+                      style={{
+                        padding: '8px 14px',
+                        fontSize: '13px',
+                        background: '#27ae60',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      新規作成
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input
-                      type="radio"
-                      name="legal"
-                      checked={hasLegalInspection}
-                      onChange={() => setHasLegalInspection(true)}
-                      style={styles.radio}
+                      type="text"
+                      style={{ ...styles.dateInput, flex: 1 }}
+                      value={inspectionGroupName}
+                      onChange={(e) => setInspectionGroupName(e.target.value)}
+                      placeholder="新しいグループ名を入力"
                     />
-                    <span>あり</span>
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="legal"
-                      checked={!hasLegalInspection}
-                      onChange={() => setHasLegalInspection(false)}
-                      style={styles.radio}
-                    />
-                    <span>なし</span>
-                  </label>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => { setIsNewGroup(false); setInspectionGroupName(''); }}
+                      style={{
+                        padding: '8px 14px',
+                        fontSize: '13px',
+                        background: '#6c757d',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      既存から選択
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 点検開始日 */}

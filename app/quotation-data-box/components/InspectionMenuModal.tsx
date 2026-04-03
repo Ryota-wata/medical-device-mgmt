@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { useMasterStore, useInspectionStore } from '@/lib/stores';
+import { useAssetStore, useInspectionStore } from '@/lib/stores';
 import {
   InspectionMenuFormData,
   InspectionMenuType,
@@ -35,7 +35,7 @@ export function InspectionMenuModal({
   onClose,
   editMenu,
 }: InspectionMenuModalProps) {
-  const { assets } = useMasterStore();
+  const { assets } = useAssetStore();
   const { addMenu, updateMenu, menus } = useInspectionStore();
 
   // assetsからユニークな値を抽出

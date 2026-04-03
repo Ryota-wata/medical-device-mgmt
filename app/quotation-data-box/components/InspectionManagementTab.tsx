@@ -306,7 +306,6 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
       {/* ボタンバー */}
       <div style={{ padding: '10px 16px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
         <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#9b59b6')}>点検メニュー登録</button>
-        <button onClick={() => setIsRegistrationModalOpen(true)} style={btnStyle('#27ae60')}>点検管理登録</button>
         <button onClick={handleExportSchedule} style={btnStyle('#3498db')}>点検予定表の出力</button>
       </div>
 
