@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useMaintenanceContractStore } from '@/lib/stores';
 
 // 契約種別
 type ContractType = '保守契約' | '定期点検' | 'スポット契約' | '借用契約' | 'その他';
@@ -27,6 +28,7 @@ interface MaintenanceContract {
   warrantyEndDate: string;
   comment: string;
   currentStep: MaintenanceStep;
+  reviewStartDate?: string;
 }
 
 // 個体管理品目データ型
@@ -714,7 +716,13 @@ const ContractGroupDetailModal = ({
 
 export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = () => {
   const router = useRouter();
-  const [contracts, setContracts] = useState<MaintenanceContract[]>(MOCK_CONTRACTS);
+  const { contracts: storeContracts, updateContract: storeUpdateContract, contractAssets: storeContractAssets, setContractAssets: storeSetContractAssets } = useMaintenanceContractStore();
+  const [contracts, setContracts] = useState<MaintenanceContract[]>([]);
+
+  // ストアのデータをローカルstateに同期
+  React.useEffect(() => {
+    setContracts(storeContracts as MaintenanceContract[]);
+  }, [storeContracts]);
 
   // フリーコメント編集用
   const [showCommentModal, setShowCommentModal] = useState(false);
@@ -724,7 +732,12 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   // 契約グループ詳細モーダル
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailContract, setDetailContract] = useState<MaintenanceContract | null>(null);
-  const [groupAssets, setGroupAssets] = useState<Record<string, ContractGroupAsset[]>>({ ...MOCK_GROUP_ASSETS });
+  const mergedAssets = useMemo(() => ({ ...MOCK_GROUP_ASSETS, ...storeContractAssets }), [storeContractAssets]);
+  const [groupAssets, setGroupAssets] = useState<Record<string, ContractGroupAsset[]>>(mergedAssets);
+
+  React.useEffect(() => {
+    setGroupAssets({ ...MOCK_GROUP_ASSETS, ...storeContractAssets });
+  }, [storeContractAssets]);
 
   // ソート状態
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -833,21 +846,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         <span style={{ fontSize: '13px', color: '#333' }}>
           <strong>{sortedContracts.length}件</strong>表示
         </span>
-        <button
-          onClick={() => alert('保守契約登録（未実装）')}
-          style={{
-            padding: '8px 16px',
-            background: '#2c3e50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: 600,
-          }}
-        >
-          保守契約登録
-        </button>
       </div>
 
       {/* テーブル */}
@@ -859,11 +857,10 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>契約情報</th>
               <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>業者情報</th>
               <th
-                colSpan={2}
-                style={{ ...thGroupStyle, textAlign: 'center', background: '#ffcc80', color: '#333', borderColor: '#ef6c00', cursor: 'pointer' }}
-                onClick={handleSortToggle}
+                rowSpan={2}
+                style={{ ...thGroupStyle, textAlign: 'center', background: '#ffcc80', color: '#333', borderColor: '#ef6c00' }}
               >
-                契約検討開始{getSortArrow()}
+                契約検討開始
               </th>
               <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#ef5350', color: 'white', borderColor: '#c62828' }}>操作</th>
             </tr>
@@ -880,16 +877,12 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約業者</th>
               <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>担当者</th>
               <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>連絡先</th>
-              <th style={{ ...thSubStyle, background: '#ffe0b2', color: '#333', borderColor: '#ef6c00' }}>ステータス</th>
-              <th style={{ ...thSubStyle, background: '#ffe0b2', color: '#333', borderColor: '#ef6c00' }}>期限</th>
               <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>登録</th>
               <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>フリーコメント</th>
             </tr>
           </thead>
           <tbody>
             {sortedContracts.map((contract, index) => {
-              const status = calcStatus(contract);
-              const deadline = calcDeadlineDisplay(contract);
               return (
                 <tr
                   key={contract.id}
@@ -912,27 +905,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   <td style={tdStyle}>{contract.contractorName || '-'}</td>
                   <td style={tdStyle}>{contract.contractorPerson || '-'}</td>
                   <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums">{contract.contractorPhone || '-'}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <span style={{
-                      padding: '3px 10px',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: status.fontWeight === 'bold' ? 'bold' : 'normal',
-                      color: status.color,
-                      background: status.label === '保証期限切れ' ? '#ffebee' : status.label === '-' ? 'transparent' : '#fff8e1',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {status.label}
-                    </span>
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <span style={{
-                      fontSize: '12px',
-                      color: deadline.color,
-                      fontWeight: deadline.label.includes('超過') ? 'bold' : 'normal',
-                    }} className="tabular-nums">
-                      {deadline.label}
-                    </span>
+                  <td style={tdStyle} className="tabular-nums">
+                    {contract.reviewStartDate || '-'}
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     {(() => {

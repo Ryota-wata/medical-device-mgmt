@@ -20,3 +20,4 @@ export * from './repairRequestStore';
 export * from './permissionOverrideStore';
 export * from './userPermissionOverrideStore';
 export * from './facilityGroupStore';
+export * from './maintenanceContractStore';

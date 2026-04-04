@@ -1,21 +1,25 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { useAssetStore, useMasterStore } from '@/lib/stores';
+import { useAssetStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
 
 interface MaintenanceContractRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onRegister: (data: MaintenanceContractFormData) => void;
+  preSelectedAssets?: Asset[];
 }
 
+export type ContractType = '保守契約' | '定期点検' | 'スポット契約' | '借用契約' | 'その他';
+
 export interface MaintenanceContractFormData {
-  managementDepartment: string;
-  maintenanceType: 'メーカー保守' | 'スポット点検';
-  hasLegalInspection: boolean;
   contractGroupName: string;
+  contractType: ContractType;
+  otherContractName: string;
+  reviewStartDate: string;
+  comment: string;
   selectedAssets: Asset[];
 }
 
@@ -33,12 +37,25 @@ export function MaintenanceContractRegistrationModal({
   isOpen,
   onClose,
   onRegister,
+  preSelectedAssets,
 }: MaintenanceContractRegistrationModalProps) {
   const { assets } = useAssetStore();
-  const { departments } = useMasterStore();
 
   // ステップ管理: 1=資産選択, 2=契約情報入力
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2>(preSelectedAssets && preSelectedAssets.length > 0 ? 2 : 1);
+
+  // isOpen/preSelectedAssets変更時にステートをリセット
+  useEffect(() => {
+    if (isOpen) {
+      if (preSelectedAssets && preSelectedAssets.length > 0) {
+        setStep(2);
+        setSelectedAssetIds(new Set(preSelectedAssets.map(a => a.qrCode)));
+        setSearchResults(preSelectedAssets);
+      } else {
+        setStep(1);
+      }
+    }
+  }, [isOpen, preSelectedAssets]);
 
   // 資産検索
   const [assetSearchFilter, setAssetSearchFilter] = useState<AssetSearchFilter>({
@@ -55,13 +72,11 @@ export function MaintenanceContractRegistrationModal({
   const [hasSearched, setHasSearched] = useState(false);
 
   // 契約情報
-  const [managementDepartment, setManagementDepartment] = useState('');
-  const [maintenanceType, setMaintenanceType] = useState<'メーカー保守' | 'スポット点検'>('メーカー保守');
-  const [hasLegalInspection, setHasLegalInspection] = useState(false);
   const [contractGroupName, setContractGroupName] = useState('');
-
-  // マスタデータ
-  const departmentNames = useMemo(() => [...new Set(departments.map((d) => d.department))], [departments]);
+  const [contractType, setContractType] = useState<ContractType>('保守契約');
+  const [otherContractName, setOtherContractName] = useState('');
+  const [reviewStartDate, setReviewStartDate] = useState('');
+  const [comment, setComment] = useState('');
   const buildings = useMemo(() => [...new Set(assets.map((a) => a.building))], [assets]);
   const floors = useMemo(() => {
     if (!assetSearchFilter.building) return [...new Set(assets.map((a) => a.floor))];
@@ -120,20 +135,17 @@ export function MaintenanceContractRegistrationModal({
   };
 
   const handleRegister = () => {
-    if (!managementDepartment) {
-      alert('管理部署を選択してください');
-      return;
-    }
     if (!contractGroupName) {
-      alert('契約グループ名称を入力してください');
+      alert('契約グループ名を入力してください');
       return;
     }
     const selectedAssets = searchResults.filter((a) => selectedAssetIds.has(a.qrCode));
     onRegister({
-      managementDepartment,
-      maintenanceType,
-      hasLegalInspection,
       contractGroupName,
+      contractType,
+      otherContractName: contractType === 'その他' ? otherContractName : '',
+      reviewStartDate,
+      comment,
       selectedAssets,
     });
     handleClose();
@@ -145,10 +157,11 @@ export function MaintenanceContractRegistrationModal({
     setSearchResults([]);
     setSelectedAssetIds(new Set());
     setHasSearched(false);
-    setManagementDepartment('');
-    setMaintenanceType('メーカー保守');
-    setHasLegalInspection(false);
     setContractGroupName('');
+    setContractType('保守契約');
+    setOtherContractName('');
+    setReviewStartDate('');
+    setComment('');
     onClose();
   };
 
@@ -278,12 +291,13 @@ export function MaintenanceContractRegistrationModal({
       display: 'flex',
       alignItems: 'center',
       gap: '16px',
-      marginBottom: '16px',
     },
     formLabel: {
       width: '120px',
       fontSize: '14px',
-      fontWeight: 500,
+      fontWeight: 600,
+      color: '#2c3e50',
+      whiteSpace: 'nowrap' as const,
     },
     radioGroup: {
       display: 'flex',
@@ -444,86 +458,118 @@ export function MaintenanceContractRegistrationModal({
               )}
             </>
           ) : (
-            <>
-              {/* 契約情報入力 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* 契約グループ名 */}
               <div style={styles.formRow}>
-                <label style={styles.formLabel}>管理部署</label>
-                <SearchableSelect
-                  options={departmentNames}
-                  value={managementDepartment}
-                  onChange={setManagementDepartment}
-                  placeholder="選択してください"
+                <label style={styles.formLabel}>契約グループ名</label>
+                <input
+                  type="text"
+                  style={{ ...styles.input, flex: 1 }}
+                  value={contractGroupName}
+                  onChange={(e) => setContractGroupName(e.target.value)}
+                  placeholder="例）MRI保守契約 一式"
                 />
               </div>
 
+              {/* 契約種別 */}
               <div style={styles.formRow}>
-                <label style={styles.formLabel}>保守・点検種別</label>
-                <div style={styles.radioGroup}>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="maintenanceType"
-                      checked={maintenanceType === 'メーカー保守'}
-                      onChange={() => setMaintenanceType('メーカー保守')}
-                    />
-                    メーカー保守
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="maintenanceType"
-                      checked={maintenanceType === 'スポット点検'}
-                      onChange={() => setMaintenanceType('スポット点検')}
-                    />
-                    スポット点検
-                  </label>
+                <label style={styles.formLabel}>契約種別</label>
+                <div style={{ ...styles.radioGroup, flexWrap: 'wrap' }}>
+                  {(['保守契約', '定期点検', 'スポット契約', '借用契約', 'その他'] as ContractType[]).map((type) => (
+                    <label key={type} style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="contractType"
+                        checked={contractType === type}
+                        onChange={() => setContractType(type)}
+                      />
+                      {type}
+                    </label>
+                  ))}
                 </div>
               </div>
 
-              <div style={styles.formRow}>
-                <label style={styles.formLabel}>法令点検</label>
-                <div style={styles.radioGroup}>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="legalInspection"
-                      checked={hasLegalInspection}
-                      onChange={() => setHasLegalInspection(true)}
-                    />
-                    有
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="legalInspection"
-                      checked={!hasLegalInspection}
-                      onChange={() => setHasLegalInspection(false)}
-                    />
-                    無
-                  </label>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '12px', color: '#27ae60' }}>
-                  メーカー保守・スポット点検
-                </div>
-                <div style={styles.formRow}>
-                  <label style={styles.formLabel}>契約グループ名称</label>
+              {/* その他の契約名称 */}
+              {contractType === 'その他' && (
+                <div style={{ ...styles.formRow, paddingLeft: '136px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>その他の契約名称</label>
                   <input
                     type="text"
-                    style={styles.input}
-                    value={contractGroupName}
-                    onChange={(e) => setContractGroupName(e.target.value)}
-                    placeholder="例: MRI保守契約"
+                    style={{ ...styles.input, flex: 1 }}
+                    value={otherContractName}
+                    onChange={(e) => setOtherContractName(e.target.value)}
+                    placeholder="例）VPP契約"
                   />
                 </div>
+              )}
+
+              {/* 契約検討開始 */}
+              <div>
+                <div style={styles.formRow}>
+                  <label style={styles.formLabel}>契約検討開始</label>
+                  <input
+                    type="month"
+                    style={{ ...styles.input, flex: 1 }}
+                    value={reviewStartDate}
+                    onChange={(e) => setReviewStartDate(e.target.value)}
+                    placeholder="例）yyyy/mm"
+                  />
+                </div>
+                <p style={{ fontSize: '12px', color: '#95a5a6', marginTop: '4px', marginLeft: '136px' }}>
+                  ※新規導入機器の保証期間終了前など任意で保守等の検討開始時期を登録できます
+                </p>
               </div>
 
-              <div style={{ marginTop: '16px', fontSize: '14px', color: '#7f8c8d' }}>
-                選択中の資産: {selectedAssetIds.size}件
+              {/* コメント */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={styles.formLabel}>コメント</label>
+                <textarea
+                  style={{
+                    padding: '12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    minHeight: '100px',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                  }}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="保守契約に関するメモを入力"
+                />
               </div>
-            </>
+
+              {/* 選択中の資産一覧 */}
+              <div>
+                <label style={styles.formLabel}>対象資産（{selectedAssetIds.size}件）</label>
+                <div style={{ ...styles.tableContainer, maxHeight: '180px', marginTop: '8px' }}>
+                  <table style={styles.table}>
+                    <thead>
+                      <tr>
+                        <th style={styles.th}>QRコード</th>
+                        <th style={styles.th}>品目</th>
+                        <th style={styles.th}>メーカー</th>
+                        <th style={styles.th}>型式</th>
+                        <th style={styles.th}>部門</th>
+                        <th style={styles.th}>部署</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {searchResults.filter(a => selectedAssetIds.has(a.qrCode)).map((asset, index) => (
+                        <tr key={`${asset.qrCode}-${index}`}>
+                          <td style={styles.td}>{asset.qrCode}</td>
+                          <td style={styles.td}>{asset.item}</td>
+                          <td style={styles.td}>{asset.maker}</td>
+                          <td style={styles.td}>{asset.model}</td>
+                          <td style={styles.td}>{asset.department}</td>
+                          <td style={styles.td}>{asset.section}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -535,7 +581,13 @@ export function MaintenanceContractRegistrationModal({
             </>
           ) : (
             <>
-              <button style={styles.cancelButton} onClick={() => setStep(1)}>戻る</button>
+              <button style={styles.cancelButton} onClick={() => {
+                if (preSelectedAssets && preSelectedAssets.length > 0) {
+                  handleClose();
+                } else {
+                  setStep(1);
+                }
+              }}>戻る</button>
               <button style={styles.primaryButton} onClick={handleRegister}>
                 保守管理タスクリストに追加する
               </button>

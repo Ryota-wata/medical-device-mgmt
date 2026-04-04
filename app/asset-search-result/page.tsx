@@ -13,6 +13,8 @@ import { PurchaseApplicationModal } from '@/components/ui/PurchaseApplicationMod
 import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
 import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
 import { InspectionRegistrationModal } from '@/app/quotation-data-box/components/InspectionRegistrationModal';
+import { MaintenanceContractRegistrationModal } from '@/app/quotation-data-box/components/MaintenanceContractRegistrationModal';
+import { useMaintenanceContractStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -47,6 +49,7 @@ export default function AssetSearchResultPage() {
   const router = useRouter();
   const { assets } = useAssetStore();
   const { addApplication } = useApplicationStore();
+  const { addContract } = useMaintenanceContractStore();
   const { isMobile } = useResponsive();
   const [currentView, setCurrentView] = useState<'list' | 'card'>('list');
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -69,6 +72,9 @@ export default function AssetSearchResultPage() {
 
   // 点検管理登録モーダル関連の状態
   const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+
+  // 保守契約登録モーダル関連の状態
+  const [isMaintenanceContractModalOpen, setIsMaintenanceContractModalOpen] = useState(false);
 
   // 原本資産データ（useAssetStore から取得）
   const storeAssets = assets;
@@ -262,6 +268,19 @@ export default function AssetSearchResultPage() {
           >
             点検管理登録
           </button>
+          <button
+            style={getButtonStyle(isAnySelected)}
+            onClick={() => {
+              if (selectedItems.size === 0) {
+                alert('保守契約登録する資産を選択してください');
+                return;
+              }
+              setIsMaintenanceContractModalOpen(true);
+            }}
+            title={isAnySelected ? '' : '資産を選択してください'}
+          >
+            保守契約登録
+          </button>
         </div>
         {/* 選択状態表示 */}
         <div style={{
@@ -287,12 +306,12 @@ export default function AssetSearchResultPage() {
           )}
           {selectedItems.size === 1 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 更新・増設・移動・廃棄申請 / 点検管理登録が可能です
+              ✓ 更新・増設・移動・廃棄申請 / 点検管理・保守契約登録が可能です
             </span>
           )}
           {selectedItems.size > 1 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 移動・廃棄申請 / 点検管理登録が可能です
+              ✓ 移動・廃棄申請 / 点検管理・保守契約登録が可能です
             </span>
           )}
         </div>
@@ -665,6 +684,20 @@ export default function AssetSearchResultPage() {
         onSuccess={() => {
           setSelectedItems(new Set());
         }}
+      />
+
+      {/* 保守契約登録モーダル */}
+      <MaintenanceContractRegistrationModal
+        isOpen={isMaintenanceContractModalOpen}
+        onClose={() => {
+          setIsMaintenanceContractModalOpen(false);
+          setSelectedItems(new Set());
+        }}
+        onRegister={(data) => {
+          addContract(data);
+          alert(`保守契約「${data.contractGroupName}」を登録しました`);
+        }}
+        preSelectedAssets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
       />
 
       {/* 点検管理登録モーダル */}
