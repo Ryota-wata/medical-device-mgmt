@@ -492,23 +492,27 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                             minWidth: '120px',
                           }}>
                             <button
-                              onClick={() => handleStartInspection(task)}
-                              style={dropdownItemStyle('#27ae60')}
-                            >
-                              点検実施
-                            </button>
-                            <button
                               onClick={() => handleOpenDateModal(task)}
                               style={dropdownItemStyle('#3498db')}
                             >
                               日程調整
                             </button>
-                            <button
-                              onClick={() => handleResultRegistration(task)}
-                              style={dropdownItemStyle('#8e44ad')}
-                            >
-                              結果登録
-                            </button>
+                            {task.inspectionType !== 'メーカー保守' && (
+                              <button
+                                onClick={() => handleStartInspection(task)}
+                                style={dropdownItemStyle('#27ae60')}
+                              >
+                                点検実施
+                              </button>
+                            )}
+                            {task.inspectionType === 'メーカー保守' && (
+                              <button
+                                onClick={() => handleResultRegistration(task)}
+                                style={dropdownItemStyle('#8e44ad')}
+                              >
+                                結果登録
+                              </button>
+                            )}
                             <button
                               onClick={() => handleSkipInspection(task)}
                               style={dropdownItemStyle('#7f8c8d')}
