@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMaintenanceContractStore } from '@/lib/stores';
+import { ContractReviewModal } from './ContractReviewModal';
 
 // 契約種別
 type ContractType = '保守契約' | '定期点検' | 'スポット契約' | '借用契約' | 'その他';
@@ -325,6 +326,7 @@ const ContractGroupDetailModal = ({
 }) => {
   const [localAssets, setLocalAssets] = useState<ContractGroupAsset[]>(assets);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   // assets が変わったら同期
   React.useEffect(() => {
@@ -339,7 +341,19 @@ const ContractGroupDetailModal = ({
 
   const handleSaveRow = (assetId: number) => {
     setEditingId(null);
-    // localAssets は既に更新済み
+    setNewAssetIds(prev => { const next = new Set(prev); next.delete(assetId); return next; });
+  };
+
+  // 新規追加した資産IDを追跡（キャンセル時に行削除するため）
+  const [newAssetIds, setNewAssetIds] = useState<Set<number>>(new Set());
+
+  const handleCancelEdit = (assetId: number) => {
+    if (newAssetIds.has(assetId)) {
+      // 新規追加行はキャンセルで行ごと削除
+      setLocalAssets(prev => prev.filter(a => a.id !== assetId));
+      setNewAssetIds(prev => { const next = new Set(prev); next.delete(assetId); return next; });
+    }
+    setEditingId(null);
   };
 
   // 資産追加
@@ -367,6 +381,7 @@ const ContractGroupDetailModal = ({
       comment: '',
     };
     setLocalAssets(prev => [...prev, newAsset]);
+    setNewAssetIds(prev => new Set(prev).add(newAsset.id));
     setEditingId(newAsset.id);
   };
 
@@ -630,21 +645,37 @@ const ContractGroupDetailModal = ({
                   {/* 操作 */}
                   <td style={{ ...mTd, textAlign: 'center' }}>
                     {isEditing ? (
-                      <button
-                        onClick={() => handleSaveRow(asset.id)}
-                        style={{
-                          padding: '4px 10px',
-                          background: '#27ae60',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          fontSize: '11px',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        保存
-                      </button>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => handleSaveRow(asset.id)}
+                          style={{
+                            padding: '4px 10px',
+                            background: '#27ae60',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          保存
+                        </button>
+                        <button
+                          onClick={() => handleCancelEdit(asset.id)}
+                          style={{
+                            padding: '4px 10px',
+                            background: '#95a5a6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '3px',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                          }}
+                        >
+                          取消
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => setEditingId(asset.id)}
@@ -674,14 +705,14 @@ const ContractGroupDetailModal = ({
           padding: '12px 20px',
           borderTop: '1px solid #eee',
           display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '8px',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}>
           <button
-            onClick={handleRegister}
+            onClick={() => setShowReviewModal(true)}
             style={{
               padding: '10px 20px',
-              background: '#27ae60',
+              background: '#c0392b',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -690,26 +721,94 @@ const ContractGroupDetailModal = ({
               fontWeight: 600,
             }}
           >
-            点検管理リストに登録
+            契約内容見直し
           </button>
-          <button
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              background: '#999',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 600,
-            }}
-          >
-            閉じる
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleRegister}
+              style={{
+                padding: '10px 20px',
+                background: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}
+            >
+              点検管理リストに登録
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '10px 20px',
+                background: '#999',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}
+            >
+              閉じる
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* 契約内容見直しモーダル */}
+      <ContractReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        contract={{
+          id: contract.id,
+          contractGroupName: contract.contractGroupName,
+          managementDepartment: '',
+          installationDepartment: '',
+          maintenanceType: contract.contractType,
+          acceptanceDate: '',
+          contractStartDate: contract.contractStartDate,
+          contractEndDate: contract.contractEndDate,
+          contractorName: contract.contractorName,
+          contractorPerson: contract.contractorPerson,
+          contractorEmail: '',
+          contractorPhone: contract.contractorPhone,
+          contractAmount: contract.contractAmount,
+          status: '',
+          warrantyEndDate: contract.warrantyEndDate,
+          deadlineDays: null,
+          comment: contract.comment,
+          category: '',
+          largeClass: '',
+          mediumClass: '',
+          item: '',
+          maker: '',
+          hasRemoteMaintenance: false,
+          assets: localAssets.map(a => ({
+            qrLabel: a.qrLabel,
+            managementDepartment: a.managementDept,
+            installationDepartment: a.installDept,
+            item: a.itemName,
+            maker: a.maker,
+            model: a.model,
+            maintenanceType: a.inspectionType || '',
+            acceptanceDate: '',
+            contractStartDate: a.warrantyStart,
+            contractEndDate: a.warrantyEnd,
+            inspectionCountPerYear: a.inspectionCycle ? Math.round(12 / Number(a.inspectionCycle)) : 0,
+            partsExemption: a.partsExemption ? '有' : '無',
+            onCall: a.onCall,
+            hasRemote: a.remote,
+            comment: a.comment,
+          })),
+        }}
+        onSubmit={(contractId, result) => {
+          alert(`契約「${contract.contractGroupName}」の見直しを登録しました\n除外資産: ${result.removedAssetQrLabels.length}件\n見直し後金額: ¥${result.newContractAmount.toLocaleString()}`);
+          setShowReviewModal(false);
+        }}
+      />
     </div>
   );
 };
