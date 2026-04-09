@@ -333,7 +333,7 @@ function PurchaseManagementContent() {
 
       {/* メインコンテンツ */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden', gap: '16px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflowY: 'auto', gap: '16px' }}>
           {/* サブタブ */}
           <SubTabNavigation activeTab="purchaseManagement" />
 

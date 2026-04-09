@@ -104,7 +104,7 @@ function QuotationManagementContent() {
         hideMenu={true}
       />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflowY: 'auto' }}>
         {/* タブ */}
         <div style={{
           background: 'white',

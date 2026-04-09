@@ -306,7 +306,7 @@ function DailyInspectionContent() {
   // ========== QRスキャンステップ（Figma再現） ==========
   if (step === 'qr-scan') {
     return (
-      <div className="flex flex-col bg-[#f9fafb]">
+      <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
         <PageHeader showClose />
 
         {/* メインコンテンツ */}
@@ -431,7 +431,7 @@ function DailyInspectionContent() {
   // ========== 点検実施ステップ ==========
   if (step === 'inspection') {
     return (
-      <div className="flex flex-col bg-[#f9fafb]">
+      <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
         <PageHeader />
 
         <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
@@ -623,7 +623,7 @@ function DailyInspectionContent() {
   // ========== 確認ステップ ==========
 
   return (
-    <div className="flex flex-col bg-[#f9fafb]">
+    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
       <PageHeader />
 
       <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">

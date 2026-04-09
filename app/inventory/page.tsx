@@ -530,7 +530,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f5f6fa' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f6fa' }}>
       <Header
         title="棚卸し"
         resultCount={filteredItems.length}
