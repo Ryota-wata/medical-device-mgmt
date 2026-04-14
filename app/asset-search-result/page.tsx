@@ -14,6 +14,7 @@ import { UpdateApplicationModal } from '@/components/ui/UpdateApplicationModal';
 import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationModal';
 import { InspectionRegistrationModal } from '@/app/quotation-data-box/components/InspectionRegistrationModal';
 import { MaintenanceContractRegistrationModal } from '@/app/quotation-data-box/components/MaintenanceContractRegistrationModal';
+import { LendingRegistrationModal } from '@/app/quotation-data-box/components/LendingRegistrationModal';
 import { useMaintenanceContractStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
@@ -75,6 +76,9 @@ export default function AssetSearchResultPage() {
 
   // 保守契約登録モーダル関連の状態
   const [isMaintenanceContractModalOpen, setIsMaintenanceContractModalOpen] = useState(false);
+
+  // 貸出登録モーダル関連の状態
+  const [isLendingModalOpen, setIsLendingModalOpen] = useState(false);
 
   // 原本資産データ（useAssetStore から取得）
   const storeAssets = assets;
@@ -280,6 +284,19 @@ export default function AssetSearchResultPage() {
             title={isAnySelected ? '' : '資産を選択してください'}
           >
             保守契約登録
+          </button>
+          <button
+            style={getButtonStyle(isAnySelected)}
+            onClick={() => {
+              if (selectedItems.size === 0) {
+                alert('貸出登録する資産を選択してください');
+                return;
+              }
+              setIsLendingModalOpen(true);
+            }}
+            title={isAnySelected ? '' : '資産を選択してください'}
+          >
+            貸出登録
           </button>
         </div>
         {/* 選択状態表示 */}
@@ -705,6 +722,16 @@ export default function AssetSearchResultPage() {
         isOpen={isInspectionModalOpen}
         onClose={() => {
           setIsInspectionModalOpen(false);
+          setSelectedItems(new Set());
+        }}
+        preSelectedAssets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
+      />
+
+      {/* 貸出登録モーダル */}
+      <LendingRegistrationModal
+        isOpen={isLendingModalOpen}
+        onClose={() => {
+          setIsLendingModalOpen(false);
           setSelectedItems(new Set());
         }}
         preSelectedAssets={filteredAssets.filter(asset => selectedItems.has(asset.no))}

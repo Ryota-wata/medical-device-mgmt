@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useLendingStore } from '@/lib/stores';
 
 // ステータス型
 type LendingStatus = '待機中' | '貸出可' | '貸出中' | '使用中' | '使用済' | '返却済' | '使用不可';
@@ -260,7 +261,12 @@ const tdStyle: React.CSSProperties = {
 };
 
 export const LendingManagementTab: React.FC = () => {
-  const [devices, setDevices] = useState<LendingDevice[]>(MOCK_LENDING_DEVICES);
+  const { devices: storeDevices, updateDevice: storeUpdateDevice, removeDevice: storeRemoveDevice } = useLendingStore();
+  const [devices, setDevices] = useState<LendingDevice[]>([]);
+
+  React.useEffect(() => {
+    setDevices(storeDevices as LendingDevice[]);
+  }, [storeDevices]);
   const [filter, setFilter] = useState<LendingFilter>({
     lendingGroupName: '',
     itemName: '',

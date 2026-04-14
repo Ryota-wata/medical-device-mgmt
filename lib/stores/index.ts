@@ -21,3 +21,4 @@ export * from './permissionOverrideStore';
 export * from './userPermissionOverrideStore';
 export * from './facilityGroupStore';
 export * from './maintenanceContractStore';
+export * from './lendingStore';
