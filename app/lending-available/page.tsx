@@ -3,90 +3,68 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-
-// 貸出種別と対象機種の型
-interface LendingCategory {
-  id: string;
-  name: string;
-  devices: LendingDevice[];
-}
-
-interface LendingDevice {
-  id: string;
-  name: string;
-  availableCount: number;
-}
-
-// モックデータ
-const MOCK_CATEGORIES: LendingCategory[] = [
-  {
-    id: 'pump',
-    name: 'ポンプ関連',
-    devices: [
-      { id: 'infusion-pump', name: '輸液ポンプ', availableCount: 5 },
-      { id: 'syringe-pump', name: 'シリンジポンプ', availableCount: 3 },
-      { id: 'pca-pump', name: 'PCAポンプ', availableCount: 4 },
-    ],
-  },
-  {
-    id: 'transport',
-    name: '搬入搬出',
-    devices: [
-      { id: 'stretcher', name: 'ストレッチャー', availableCount: 6 },
-      { id: 'wheelchair', name: '車椅子', availableCount: 8 },
-    ],
-  },
-  {
-    id: 'monitor',
-    name: 'モニター関連',
-    devices: [
-      { id: 'bedside-monitor', name: 'ベッドサイドモニター', availableCount: 4 },
-      { id: 'ecg', name: '心電計', availableCount: 6 },
-      { id: 'spo2', name: 'パルスオキシメーター', availableCount: 15 },
-    ],
-  },
-  {
-    id: 'life-support',
-    name: '生命維持関連装置',
-    devices: [
-      { id: 'ventilator', name: '人工呼吸器', availableCount: 2 },
-      { id: 'defibrillator', name: '除細動器', availableCount: 3 },
-    ],
-  },
-];
+import { useLendingStore } from '@/lib/stores';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function LendingAvailablePage() {
   const router = useRouter();
   const { isMobile } = useResponsive();
+  const { devices } = useLendingStore();
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('pump');
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('infusion-pump');
+  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedDevice, setSelectedDevice] = useState('');
 
-  // 選択されたカテゴリ
-  const selectedCategory = useMemo(() => {
-    return MOCK_CATEGORIES.find(c => c.id === selectedCategoryId);
-  }, [selectedCategoryId]);
+  // 貸出グループ名の一覧（重複排除）
+  const groupNames = useMemo(() => {
+    return [...new Set(devices.map(d => d.lendingGroupName).filter(Boolean))];
+  }, [devices]);
 
-  // 選択された機器
-  const selectedDevice = useMemo(() => {
-    return selectedCategory?.devices.find(d => d.id === selectedDeviceId);
-  }, [selectedCategory, selectedDeviceId]);
+  // 選択グループ内の機種名一覧（重複排除）
+  const deviceNames = useMemo(() => {
+    if (!selectedGroup) return [];
+    return [...new Set(
+      devices
+        .filter(d => d.lendingGroupName === selectedGroup)
+        .map(d => d.itemName)
+        .filter(Boolean)
+    )];
+  }, [devices, selectedGroup]);
 
-  // カテゴリの貸出可能合計
-  const categoryTotal = useMemo(() => {
-    if (!selectedCategory) return 0;
-    return selectedCategory.devices.reduce((sum, d) => sum + d.availableCount, 0);
-  }, [selectedCategory]);
+  // 選択グループ内の機種別台数集計
+  const deviceCounts = useMemo(() => {
+    if (!selectedGroup) return [];
+    const grouped = devices
+      .filter(d => d.lendingGroupName === selectedGroup)
+      .reduce<Record<string, { total: number; available: number }>>((acc, d) => {
+        if (!acc[d.itemName]) {
+          acc[d.itemName] = { total: 0, available: 0 };
+        }
+        acc[d.itemName].total += 1;
+        if (d.status === '貸出可' || d.status === '待機中') {
+          acc[d.itemName].available += 1;
+        }
+        return acc;
+      }, {});
+    return Object.entries(grouped).map(([name, counts]) => ({
+      name,
+      ...counts,
+    }));
+  }, [devices, selectedGroup]);
 
-  // カテゴリ変更時
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    const cat = MOCK_CATEGORIES.find(c => c.id === categoryId);
-    if (cat && cat.devices.length > 0) {
-      setSelectedDeviceId(cat.devices[0].id);
-    } else {
-      setSelectedDeviceId('');
-    }
+  // 選択機種の台数
+  const selectedDeviceCounts = useMemo(() => {
+    return deviceCounts.find(d => d.name === selectedDevice);
+  }, [deviceCounts, selectedDevice]);
+
+  // グループ全体の貸出可能合計
+  const groupAvailableTotal = useMemo(() => {
+    return deviceCounts.reduce((sum, d) => sum + d.available, 0);
+  }, [deviceCounts]);
+
+  // グループ変更時：機種選択をクリア
+  const handleGroupChange = (value: string) => {
+    setSelectedGroup(value);
+    setSelectedDevice('');
   };
 
   return (
@@ -106,82 +84,70 @@ export default function LendingAvailablePage() {
       {/* メインコンテンツ */}
       <div className="flex-1 w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
         <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-          {/* 貸出種別名 */}
+          {/* 貸出グループ */}
           <div className="pb-6 border-b border-[#e5e7eb]">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出種別名</h2>
-            <div className="flex flex-wrap gap-x-5 gap-y-2">
-              {MOCK_CATEGORIES.map(category => (
-                <label
-                  key={category.id}
-                  className="flex items-center gap-2 cursor-pointer min-h-[44px]"
-                >
-                  <input
-                    type="radio"
-                    name="lending-category"
-                    value={category.id}
-                    checked={selectedCategoryId === category.id}
-                    onChange={() => handleCategoryChange(category.id)}
-                    className="size-4 accent-[#27ae60] cursor-pointer"
-                  />
-                  <span className={`text-sm ${selectedCategoryId === category.id ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
-                    {category.name}
-                  </span>
-                </label>
-              ))}
+            <div style={{ maxWidth: '320px' }}>
+              <SearchableSelect
+                label="貸出グループ"
+                value={selectedGroup}
+                onChange={handleGroupChange}
+                options={groupNames}
+                placeholder="グループを選択"
+                isMobile={isMobile}
+              />
             </div>
           </div>
 
           {/* 貸出可能対象機種 */}
           <div className="py-6 border-b border-[#e5e7eb]">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出可能対象機種</h2>
-            {selectedCategory ? (
-              <div className="flex flex-wrap gap-x-5 gap-y-2">
-                {selectedCategory.devices.map(device => (
-                  <label
-                    key={device.id}
-                    className="flex items-center gap-2 cursor-pointer min-h-[44px]"
-                  >
-                    <input
-                      type="radio"
-                      name="lending-device"
-                      value={device.id}
-                      checked={selectedDeviceId === device.id}
-                      onChange={() => setSelectedDeviceId(device.id)}
-                      className="size-4 accent-[#27ae60] cursor-pointer"
-                    />
-                    <span className={`text-sm ${selectedDeviceId === device.id ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
-                      {device.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-[#9ca3af]">貸出種別名を選択してください</p>
-            )}
+            <div style={{ maxWidth: '320px' }}>
+              <SearchableSelect
+                label="貸出可能対象機種"
+                value={selectedDevice}
+                onChange={setSelectedDevice}
+                options={deviceNames}
+                placeholder={selectedGroup ? '機種を選択' : 'グループを先に選択してください'}
+                disabled={!selectedGroup}
+                isMobile={isMobile}
+              />
+            </div>
           </div>
 
           {/* 貸出可能合計 */}
           <div className="pt-6 pb-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出可能合計</h2>
-            {selectedDevice ? (
+            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出可能状況</h2>
+            {selectedGroup && deviceCounts.length > 0 ? (
               <div>
-                <p className="text-sm font-bold text-[#27ae60] mb-3">{selectedDevice.name}</p>
+                {selectedDevice && selectedDeviceCounts ? (
+                  <p className="text-sm font-bold text-[#27ae60] mb-3">
+                    {selectedDevice}：貸出可能 {selectedDeviceCounts.available} 台 / 全 {selectedDeviceCounts.total} 台
+                  </p>
+                ) : null}
                 <div className="flex flex-col mb-4">
-                  {selectedCategory?.devices.map(device => (
-                    <div key={device.id} className="flex items-baseline justify-between gap-2 py-2 border-b border-[#e5e7eb] min-w-[140px]">
+                  {deviceCounts.map(device => (
+                    <div
+                      key={device.name}
+                      className={`flex items-baseline justify-between gap-2 py-2 border-b border-[#e5e7eb] min-w-[140px] ${
+                        selectedDevice === device.name ? 'bg-[#f0fdf4]' : ''
+                      }`}
+                    >
                       <span className="text-sm text-[#4b5563]">{device.name}</span>
-                      <span className="text-sm font-semibold text-[#1f2937] tabular-nums">{device.availableCount} 台</span>
+                      <span className="text-sm font-semibold text-[#1f2937] tabular-nums">
+                        {device.available} / {device.total} 台
+                      </span>
                     </div>
                   ))}
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-[#1f2937]">合計</span>
-                  <span className="text-2xl font-bold text-[#27ae60] tabular-nums">{categoryTotal}</span>
+                  <span className="text-sm font-bold text-[#1f2937]">貸出可能合計</span>
+                  <span className="text-2xl font-bold text-[#27ae60] tabular-nums">{groupAvailableTotal}</span>
                   <span className="text-sm text-[#4b5563]">台</span>
                 </div>
               </div>
+            ) : selectedGroup ? (
+              <p className="text-sm text-[#9ca3af]">このグループに登録された機器はありません</p>
             ) : (
-              <p className="text-sm text-red-500">選択した条件に在庫がありません</p>
+              <p className="text-sm text-[#9ca3af]">貸出グループを選択すると、機器の貸出可能状況が表示されます</p>
             )}
           </div>
 
