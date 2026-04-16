@@ -8,13 +8,32 @@ skinparam packageStyle rectangle
 
 ' 認証・ユーザー系
 package "認証・ユーザー" {
-  entity "roles" as roles {
-    * ロールID / role_id : bigint
+  entity "feature_catalogs" as feature_catalogs {
+    * 機能コード / feature_code : varchar
     --
-    ロールコード / role_code : varchar
-    ロール名 / role_name : varchar
-    ユーザー種別 / user_type : varchar
-    施設スコープ種別 / scope_type : varchar
+    機能名 / feature_name : varchar
+    大分類コード / category_code : varchar
+    メニューグループコード / menu_group_code : varchar
+    機能種別 / feature_kind : varchar
+    利用文脈 / usage_context : varchar
+    設定スコープ / config_scope : varchar
+    表示順 / sort_order : int
+    有効フラグ / is_active : boolean
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  entity "column_catalogs" as column_catalogs {
+    * カラムコード / column_code : varchar
+    --
+    カラム名 / column_name : varchar
+    関連機能コード / related_feature_code : varchar
+    カラム分類コード / column_group_code : varchar
+    利用文脈 / usage_context : varchar
+    表示順 / sort_order : int
+    有効フラグ / is_active : boolean
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
   }
 
   entity "users" as users {
@@ -23,48 +42,93 @@ package "認証・ユーザー" {
     メールアドレス（ログインID） / email_address : varchar
     パスワードハッシュ / password_hash : varchar
     氏名 / name : varchar
-    ロールID / role_id : bigint
     設立母体ID / establishment_id : bigint
     施設ID / facility_id : bigint
+    アカウント種別 / account_type : varchar
     所属部門 / department_name : varchar
     所属部署 / section_name : varchar
     役職 / position_name : varchar
     連絡担当者名 / contact_person_name : varchar
     電話番号 / phone_number : varchar
     アカウント有効フラグ / is_active : boolean
+    アカウントロック日時 / locked_at : timestamp
+    ロック理由 / lock_reason : varchar
     最終ログイン日時 / last_login_at : timestamp
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
   }
 
-  entity "role_permissions" as role_permissions {
-    * ロールID / role_id : bigint
-    * 機能コード / feature_code : varchar
+  entity "user_facility_assignments" as user_facility_assignments {
+    * ユーザー施設割当ID / user_facility_assignment_id : bigint
     --
-    権限レベル / permission_level : char(1)
+    ユーザーID / user_id : bigint
+    施設ID / facility_id : bigint
+    割当種別 / assignment_type : varchar
+    既定選択フラグ / is_default : boolean
+    有効フラグ / is_active : boolean
+    適用開始日 / valid_from : date
+    適用終了日 / valid_to : date
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
 
-  entity "role_facility_scopes" as role_facility_scopes {
-    * ロール施設スコープID / role_facility_scope_id : bigint
-    --
-    ロールID / role_id : bigint
-    付与元設立母体ID / source_establishment_id : bigint
-    閲覧許可施設ID / target_facility_id : bigint
-    許可フラグ / is_allowed : boolean
-    作成日時 / created_at : timestamp
-    更新日時 / updated_at : timestamp
-  }
-
-  note right of role_facility_scopes
-    SHIP/SHRC側ユーザーの
-    作業対象施設スコープ用。
-    病院ユーザーの他施設資産閲覧は
-    本テーブルではなく
-    施設資産閲覧グループで制御する。
+  note right of user_facility_assignments
+    直接割り当てられた
+    作業対象施設のみを保持する。
+    他施設閲覧グループ経由で見える施設は
+    本テーブルへ展開しない。
   end note
+
+  entity "facility_feature_settings" as facility_feature_settings {
+    * 施設機能設定ID / facility_feature_setting_id : bigint
+    --
+    施設ID / facility_id : bigint
+    機能コード / feature_code : varchar
+    有効フラグ / is_enabled : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  entity "facility_column_settings" as facility_column_settings {
+    * 施設カラム設定ID / facility_column_setting_id : bigint
+    --
+    施設ID / facility_id : bigint
+    カラムコード / column_code : varchar
+    有効フラグ / is_enabled : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  entity "user_facility_feature_settings" as user_facility_feature_settings {
+    * ユーザー施設機能設定ID / user_facility_feature_setting_id : bigint
+    --
+    ユーザー施設割当ID / user_facility_assignment_id : bigint
+    機能コード / feature_code : varchar
+    有効フラグ / is_enabled : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  entity "user_facility_column_settings" as user_facility_column_settings {
+    * ユーザー施設カラム設定ID / user_facility_column_setting_id : bigint
+    --
+    ユーザー施設割当ID / user_facility_assignment_id : bigint
+    カラムコード / column_code : varchar
+    有効フラグ / is_enabled : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
 
   entity "user_remember_tokens" as user_remember_tokens {
     * トークンID / token_id : bigint
@@ -72,7 +136,7 @@ package "認証・ユーザー" {
     ユーザーID / user_id : bigint
     記憶トークン / token : varchar
     有効期限 / expires_at : timestamp
-    最終利用日時 / last_used_at : timestamp
+    最終ログイン状態復元日時 / last_used_at : timestamp
     作成日時 / created_at : timestamp
   }
 
@@ -86,24 +150,6 @@ package "認証・ユーザー" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
-
-  entity "user_accessible_facilities" as user_accessible_facilities {
-    * ユーザー閲覧施設ID / user_accessible_facility_id : bigint
-    --
-    ユーザーID / user_id : bigint
-    施設ID / facility_id : bigint
-    アクセス種別 / access_type : varchar
-    作成日時 / created_at : timestamp
-    更新日時 / updated_at : timestamp
-  }
-
-  note right of user_accessible_facilities
-    SHIP/SHRC側ユーザーや
-    個別付与対象ユーザーの
-    作業対象施設用。
-    病院ユーザーの他施設資産閲覧は
-    本テーブルへ展開しない。
-  end note
 }
 
 ' 施設・ロケーション系
@@ -132,29 +178,59 @@ package "施設・ロケーション" {
     削除日時 / deleted_at : timestamp
   }
 
-  entity "facility_asset_view_groups" as facility_asset_view_groups {
-    * 施設資産閲覧グループID / facility_asset_view_group_id : bigint
+  entity "facility_collaboration_groups" as facility_collaboration_groups {
+    * 施設協業グループID / facility_collaboration_group_id : bigint
     --
     グループ名 / group_name : varchar
     有効フラグ / is_active : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
 
-  entity "facility_asset_view_group_members" as facility_asset_view_group_members {
-    * 施設資産閲覧グループ所属ID / facility_asset_view_group_member_id : bigint
+  entity "facility_collaboration_group_facilities" as facility_collaboration_group_facilities {
+    * 施設協業グループ所属施設ID / facility_collaboration_group_facility_id : bigint
     --
-    施設資産閲覧グループID / facility_asset_view_group_id : bigint
+    施設協業グループID / facility_collaboration_group_id : bigint
     施設ID / facility_id : bigint
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
 
-  note right of facility_asset_view_groups
-    病院ユーザーの他施設資産閲覧専用。
-    同一グループに含まれる施設の
-    資産閲覧のみ許可し、
-    施設切替・申請・編集には使わない。
+  entity "facility_external_view_settings" as facility_external_view_settings {
+    * 他施設公開データ設定ID / facility_external_view_setting_id : bigint
+    --
+    公開元施設ID / provider_facility_id : bigint
+    機能コード / feature_code : varchar
+    有効フラグ / is_enabled : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  entity "facility_external_column_settings" as facility_external_column_settings {
+    * 他施設公開カラム設定ID / facility_external_column_setting_id : bigint
+    --
+    公開元施設ID / provider_facility_id : bigint
+    カラムコード / column_code : varchar
+    有効フラグ / is_enabled : boolean
+    作成者ユーザーID / created_by : bigint
+    更新者ユーザーID / updated_by : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of facility_collaboration_groups
+    任意の施設グループで
+    他施設閲覧候補を定義する。
+    実際に何を見せるかは
+    facility_external_view_settings /
+    facility_external_column_settings
+    で制御する。
   end note
 
   entity "facility_locations" as facility_locations {
@@ -774,7 +850,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     並列グループ番号 / parallel_group_no : int
     承認単位種別 / approval_unit_type : varchar
     承認単位キー / approval_unit_key : varchar
-    承認ロールID / approver_role_id : bigint
+    承認機能コード / approver_feature_code : varchar
     承認者ユーザーID / approver_user_id : bigint
     代理元ユーザーID / delegated_from_user_id : bigint
     割当状態 / assignment_status : varchar
@@ -1628,7 +1704,9 @@ package "インポート・マッチング" {
     施設ID / facility_id : bigint
     取込種別 / import_type : varchar
     ファイル名 / file_name : varchar
+    ファイルパス / file_path : varchar
     ステータス / status : varchar
+    エラーメッセージ / error_message : varchar
     開始日時 / started_at : timestamp
     終了日時 / finished_at : timestamp
     実行ユーザーID / created_by_user_id : bigint
@@ -1642,6 +1720,8 @@ package "インポート・マッチング" {
     READY_FOR_MATCHING = 突き合わせ待ち
     MATCHING_COMPLETED = 突き合わせ完了
     FAILED = 初期取込失敗
+    file_path = 再取込用元ファイルの保持先
+    error_message = FAILED時の利用者向け失敗理由
     未完了ジョブは施設ごとに1件まで
     同一施設内では別ユーザーが引継ぎ可能
   end note
@@ -1655,6 +1735,8 @@ package "インポート・マッチング" {
     固定資産番号（取込） / parsed_ledger_no : varchar
     管理機器番号（取込） / parsed_management_device_no : varchar
     資産名（取込） / parsed_asset_name : varchar
+    メーカー名（取込） / parsed_manufacturer_name : varchar
+    型式名（取込） / parsed_model_name : varchar
     部門名（取込） / parsed_department_name : varchar
     部署名（取込） / parsed_section_name : varchar
     諸室名称（取込） / parsed_room_name : varchar
@@ -1708,6 +1790,10 @@ package "インポート・マッチング" {
     is_confirmed=true の場合は
     confirmed_by_user_id / confirmed_at を保持し、
     未確定行のみ編集対象とする。
+    一覧の直接表示対象は
+    parsed_department_name / parsed_section_name /
+    parsed_asset_name / parsed_manufacturer_name /
+    parsed_model_name / parsed_quantity / parsed_unit。
   end note
 
   entity "asset_data_matching_sessions" as asset_data_matching_sessions {
@@ -1916,7 +2002,7 @@ package "インポート・マッチング" {
 
 ' レイアウト補助
 ' パッケージ単位の大まかな段組み
-roles -[hidden]right-> establishments
+users -[hidden]right-> establishments
 establishments -[hidden]right-> asset_categories
 
 asset_ledgers -[hidden]right-> qr_codes
@@ -1933,21 +2019,31 @@ asset_survey_sessions -[hidden]right-> user_search_conditions
 user_search_conditions -[hidden]right-> asset_import_jobs
 
 ' 上下方向の整列
-roles -[hidden]down-> asset_ledgers
+users -[hidden]down-> asset_ledgers
 asset_ledgers -[hidden]down-> applications
 applications -[hidden]down-> asset_survey_sessions
 
 ' リレーション定義
 
 ' 認証・ユーザー
-roles ||--o{ users : ""
-roles ||--o{ role_permissions : ""
-roles ||--o{ role_facility_scopes : ""
+feature_catalogs ||--o{ column_catalogs : "related_feature_code"
+feature_catalogs ||--o{ facility_feature_settings : ""
+feature_catalogs ||--o{ user_facility_feature_settings : ""
+feature_catalogs ||--o{ facility_external_view_settings : ""
+column_catalogs ||--o{ facility_column_settings : ""
+column_catalogs ||--o{ user_facility_column_settings : ""
+column_catalogs ||--o{ facility_external_column_settings : ""
 establishments ||--o{ users : ""
 facilities ||--o{ users : ""
+users ||--o{ user_facility_assignments : ""
+user_facility_assignments ||--o{ user_facility_feature_settings : ""
+user_facility_assignments ||--o{ user_facility_column_settings : ""
 users ||--o{ user_remember_tokens : ""
 users ||--o{ password_reset_tokens : ""
-users ||--o{ user_accessible_facilities : ""
+users ||--o{ facility_feature_settings : ""
+users ||--o{ facility_column_settings : ""
+users ||--o{ user_facility_feature_settings : ""
+users ||--o{ user_facility_column_settings : ""
 users ||--o{ user_search_conditions : ""
 users ||--o{ user_column_settings : ""
 users ||--o{ qr_codes : ""
@@ -1978,11 +2074,14 @@ users ||--o{ edit_list_item_attachments : "VIEW元"
 
 ' 施設・ロケーション
 establishments ||--o{ facilities : ""
-establishments ||--o{ role_facility_scopes : "source_establishment_id"
-facility_asset_view_groups ||--o{ facility_asset_view_group_members : ""
+facility_collaboration_groups ||--o{ facility_collaboration_group_facilities : ""
 facilities ||--o{ facility_locations : ""
-facilities ||--o{ facility_asset_view_group_members : ""
-facilities ||--o{ user_accessible_facilities : ""
+facilities ||--o{ user_facility_assignments : ""
+facilities ||--o{ facility_feature_settings : ""
+facilities ||--o{ facility_column_settings : ""
+facilities ||--o{ facility_collaboration_group_facilities : ""
+facilities ||--o{ facility_external_view_settings : "provider_facility_id"
+facilities ||--o{ facility_external_column_settings : "provider_facility_id"
 facilities ||--o{ asset_ledgers : ""
 facilities ||--o{ qr_codes : ""
 facilities ||--o{ qr_print_jobs : ""
@@ -1996,7 +2095,6 @@ facilities ||--o{ asset_survey_records : ""
 facilities ||--o{ asset_survey_integration_sessions : ""
 facilities ||--o{ asset_survey_integration_session_targets : ""
 facilities ||--o{ asset_survey_integration_results : ""
-facilities ||--o{ role_facility_scopes : "target_facility_id"
 facilities ||--o{ edit_lists : ""
 facilities ||--o{ edit_list_facilities : ""
 facilities ||--o{ edit_list_items : ""
@@ -2096,7 +2194,7 @@ applications ||--o{ rfq_applications : ""
 applications ||--o{ maintenance_contracts : ""
 applications ||--o{ purchase_applications : "VIEW元"
 applications ||--o{ repair_requests : "VIEW元"
-roles ||--o{ application_approval_step_assignees : ""
+feature_catalogs ||--o{ application_approval_step_assignees : "approver_feature_code"
 
 application_approval_steps ||--o{ application_approval_step_assignees : ""
 
