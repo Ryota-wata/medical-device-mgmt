@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_SHIP部署マスタ.docx'
   ScreenLabel = 'SHIP部署マスタ'
-  CoverDateText = '2026年3月13日'
-  RevisionDateText = '2026/3/13'
+  CoverDateText = '2026年4月18日'
+  RevisionDateText = '2026/4/18'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -56,17 +56,23 @@
       '通信方式: HTTPS',
       'データ形式: JSON',
       '文字コード: UTF-8',
-      '日時形式: ISO 8601（例: `2026-03-12T00:00:00Z`）',
+      '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
       '画面要件上ページングは定義しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '機能コードは `ship_department_master` を用いる。画面閲覧系は `R` 以上、登録/更新/削除は `F` を必要とする。現行権限マトリクスでは `admin=F`、`consultant=R` である。' },
-    @{ Type = 'Table'; Headers = @('処理', '必要レベル', '想定ロール', '説明'); Rows = @(
-      @('部署マスタ一覧取得 / 諸室区分マスタ一覧取得', 'R以上', 'admin, consultant', '閲覧系の処理'),
-      @('部署マスタ新規作成 / 更新 / 削除', 'F', 'admin', '部署マスタ管理処理'),
-      @('諸室区分マスタ新規作成 / 更新 / 削除', 'F', 'admin', '諸室区分マスタ管理処理')
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列に対応する `ship_dept_master_list` と `ship_dept_master_edit` を用いる。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
+      @('部署マスタ一覧取得 / 諸室区分マスタ一覧取得', '`ship_dept_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '画面表示と一覧参照系の処理'),
+      @('部署マスタ新規作成 / 更新 / 削除', '`ship_dept_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '部署マスタ変更系の処理'),
+      @('諸室区分マスタ新規作成 / 更新 / 削除', '`ship_dept_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '諸室区分マスタ変更系の処理')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
+    @{ Type = 'Bullets'; Items = @(
+      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      'SHIP部署マスタと SHIP諸室区分マスタの返却対象は共通マスタ全件とし、個票データ閲覧で用いる他施設公開設定は適用しない',
+      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -111,10 +117,11 @@
           @('departmentName', 'query', 'string', '-', '部署名の部分一致条件')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `R` 以上であること',
-          '現行権限マトリクス上の想定ロールは `admin` と `consultant` である'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
+          '`ship_departments` を `sort_order ASC, ship_department_id ASC` で取得する',
           '部門名と部署名は AND 条件で絞り込む',
           '文字列検索は部分一致を基本とする',
           '画面要件上ページングは定義しない'
@@ -140,7 +147,7 @@
           @('200', '取得成功', 'ShipDepartmentListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '閲覧権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_list` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -157,8 +164,8 @@
           @('departmentName', 'string', '✓', '部署名')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `F` であること',
-          '現行権限マトリクス上、変更系APIは `admin` のみ実行可能とする'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '`ship_departments` に新規レコードを追加する',
@@ -186,7 +193,7 @@
           @('201', '登録成功', 'ShipDepartmentResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('409', '部門/部署の組み合わせが重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -209,7 +216,8 @@
           @('departmentName', 'string', '✓', '更新後の部署名')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `F` であること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '指定IDの `ship_departments` を更新する',
@@ -236,7 +244,7 @@
           @('200', '更新成功', 'ShipDepartmentResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象マスタが存在しない', 'ErrorResponse'),
           @('409', '部門/部署の組み合わせが重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -254,7 +262,8 @@
           @('shipDepartmentId', 'path', 'int64', '✓', '削除対象のSHIP部署ID')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `F` であること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象レコードを物理削除する想定とする',
@@ -267,7 +276,7 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象マスタが存在しない', 'ErrorResponse'),
           @('409', '関連データから参照中で削除不可', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -286,9 +295,11 @@
           @('roomCategory2', 'query', 'string', '-', '諸室区分②の部分一致条件')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `R` 以上であること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
+          '`ship_room_categories` を `sort_order ASC, ship_room_category_id ASC` で取得する',
           '諸室区分①と諸室区分②は AND 条件で絞り込む',
           '文字列検索は部分一致を基本とする',
           '画面要件上ページングは定義しない'
@@ -314,7 +325,7 @@
           @('200', '取得成功', 'ShipRoomCategoryListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '閲覧権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_list` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -331,7 +342,8 @@
           @('roomCategory2', 'string', '✓', '諸室区分②')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `F` であること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '`ship_room_categories` に新規レコードを追加する',
@@ -359,7 +371,7 @@
           @('201', '登録成功', 'ShipRoomCategoryResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('409', '諸室区分①/②の組み合わせが重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -382,7 +394,8 @@
           @('roomCategory2', 'string', '✓', '更新後の諸室区分②')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `F` であること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '指定IDの `ship_room_categories` を更新する',
@@ -409,7 +422,7 @@
           @('200', '更新成功', 'ShipRoomCategoryResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象マスタが存在しない', 'ErrorResponse'),
           @('409', '諸室区分①/②の組み合わせが重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -427,7 +440,8 @@
           @('shipRoomCategoryId', 'path', 'int64', '✓', '削除対象のSHIP諸室区分ID')
         )
         PermissionLines = @(
-          '機能権限: `ship_department_master` が `F` であること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `ship_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象レコードを物理削除する想定とする',
@@ -440,7 +454,7 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `ship_dept_master_edit` なし', 'ErrorResponse'),
           @('404', '対象マスタが存在しない', 'ErrorResponse'),
           @('409', '関連データから参照中で削除不可', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -450,10 +464,11 @@
 
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
-    @{ Type = 'Table'; Headers = @('処理', '機能権限コード', '必要レベル', '説明'); Rows = @(
-      @('部署マスタ一覧取得 / 諸室区分マスタ一覧取得', 'ship_department_master', 'R以上', '閲覧系API'),
-      @('部署マスタ新規作成 / 更新 / 削除', 'ship_department_master', 'F', '部署マスタ変更系API'),
-      @('諸室区分マスタ新規作成 / 更新 / 削除', 'ship_department_master', 'F', '諸室区分マスタ変更系API')
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
+      @('部署マスタ一覧取得', '`ship_dept_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `ship_dept_master_list` を持つこと', '部署マスタ一覧と表示件数を参照する'),
+      @('諸室区分マスタ一覧取得', '`ship_dept_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `ship_dept_master_list` を持つこと', '諸室区分マスタ一覧と表示件数を参照する'),
+      @('部署マスタ新規作成 / 更新 / 削除', '`ship_dept_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `ship_dept_master_edit` を持つこと', '部署マスタ変更系API'),
+      @('諸室区分マスタ新規作成 / 更新 / 削除', '`ship_dept_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `ship_dept_master_edit` を持つこと', '諸室区分マスタ変更系API')
     ) },
     @{ Type = 'Heading2'; Text = '一意性ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -467,19 +482,20 @@
       '`ship_room_categories` も同様に `facility_locations` または `facility_location_remodels` から参照されている場合、削除不可とする',
       '参照中削除は 409 (`MASTER_IN_USE`) を返却する想定とする'
     ) },
-    @{ Type = 'Heading2'; Text = '未確定事項' },
+    @{ Type = 'Heading2'; Text = '実装前提' },
     @{ Type = 'Bullets'; Items = @(
-      '現行モック画面は `consultant` に対して新規作成・編集・削除ボタンを出し分けていないが、権限マトリクスでは `consultant=R` のため、API では変更系を拒否する前提とした',
-      'モックの型定義・状態管理は `DEPT001` / `ROOM001` の文字列IDと `status` を用いる一方、DB設計は bigint の内部キー、`sort_order`、`is_active` を持つため、フロントと API の項目対応は要調整である',
-      '現行画面には `sort_order` と `is_active` の編集UIが存在しないため、登録時の既定値・保守運用は要確認である',
-      '削除時の参照整合性ルールは画面要件に明記がないため、本設計では FK 整合を優先して 409 拒否とした'
+      '画面の表示制御は `/auth/context` の `ship_dept_master_list` / `ship_dept_master_edit` を参照して行い、一覧表示、編集ボタン、新規作成ボタン、削除ボタンを同じ `feature_code` で出し分ける',
+      'モックの状態管理は `DEPT001` / `ROOM001` の文字列IDを用いるが、API と DB の正本キーは bigint の内部IDとする',
+      '`sort_order` と `is_active` は現行画面の入力項目に含めず、登録時は DB 既定値を採用する',
+      '削除は論理削除ではなく物理削除とし、参照整合性を満たす場合のみ実行する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '入力不正、必須不足、形式不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('FORBIDDEN', '403', '必要権限不足'),
+      @('AUTH_403_SHIP_DEPT_MASTER_LIST_DENIED', '403', '作業対象施設に対する実効 `ship_dept_master_list` がない'),
+      @('AUTH_403_SHIP_DEPT_MASTER_EDIT_DENIED', '403', '作業対象施設に対する実効 `ship_dept_master_edit` がない'),
       @('SHIP_DEPARTMENT_NOT_FOUND', '404', '対象のSHIP部署マスタが存在しない'),
       @('SHIP_ROOM_CATEGORY_NOT_FOUND', '404', '対象のSHIP諸室区分マスタが存在しない'),
       @('SHIP_DEPARTMENT_DUPLICATE', '409', '部門名/部署名の組み合わせが重複している'),

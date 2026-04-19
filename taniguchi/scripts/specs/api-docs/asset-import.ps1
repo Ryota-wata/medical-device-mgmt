@@ -27,11 +27,12 @@ $endpointSpecs = @(
       @('ignoreFailedJobId', 'query', 'int64', '-', 'FAILED 画面からアップロード画面へ戻る際に、今回の自動再開判定から除外するジョブID')
     )
     PermissionLines = @(
-      '認証済みセッションであること',
-      '選択施設が確定している場合は `user_facility_assignments` に対象施設への有効割当があること',
-      '選択施設が確定している場合は `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
+      '認可条件: 選択施設が確定している場合は、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: 選択施設が確定している場合は、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
     )
     ProcessingLines = @(
+      '選択施設が確定している場合は、`facilityId` 省略時に Bearer トークン上の作業対象施設IDを採用し、指定時はそれと一致することを検証する',
+      '選択施設が確定している場合は、対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '選択施設が未確定の場合は施設判定を行わず、施設選択が必要であることを返す',
       '選択施設が確定している場合は施設単位で前回ジョブ（`PROCESSING` / `READY_FOR_MATCHING` / `FAILED`）の有無を判定する',
       '`ignoreFailedJobId` が指定された場合は、同一 `FAILED` ジョブに対する今回の自動再開判定を抑止する',
@@ -88,8 +89,8 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetImportContextResponse'),
       @('400', 'facilityId 不正など入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '閲覧権限なし', 'ErrorResponse'),
-      @('404', '対象施設が存在しない', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -107,13 +108,16 @@ $endpointSpecs = @(
       @('file', 'formData', 'binary', '✓', 'アップロードファイル（`.xlsx` / `.xls` / `.csv`、10MB 以下）')
     )
     PermissionLines = @(
-      '認可条件: `user_facility_assignments` に対象施設への有効割当があること',
-      '認可条件: `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
     )
     ProcessingLines = @(
+      '`facilityId` 省略時に Bearer トークン上の作業対象施設IDを採用し、指定時はそれと一致することを検証する',
+      '対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '拡張子とファイルサイズを検証し、不正時は 400 を返却する',
       '未完了ジョブが同一施設に存在する場合は新規作成不可とする',
       '`asset_import_jobs` を `PROCESSING` で作成し、ファイルを行単位に分解して `asset_import_rows` を作成する',
+      '`selected_*_id` / `suggested_*_id` に使う参照マスタは、存在し、かつ削除済みでないことを前提に保存する',
       '各行について資産マスタ/JMDNマスタとの類似度計算を行い、最良候補の `suggested_*_name` / `suggested_*_id` と `suggested_score` を保存する',
       '初期取込完了後に `asset_import_jobs.status` を `READY_FOR_MATCHING` へ更新する',
       '処理時間が長い場合に備え、本APIは 202 Accepted でジョブを返却し、完了判定は状態照会APIで行う前提とする'
@@ -130,8 +134,8 @@ $endpointSpecs = @(
       @('202', '受付成功（処理中）', 'AssetImportJobAcceptedResponse'),
       @('400', '形式不正、サイズ超過、必須不足', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '更新権限なし', 'ErrorResponse'),
-      @('404', '対象施設が存在しない', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
       @('409', '同一施設に未完了ジョブが存在する', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -148,9 +152,11 @@ $endpointSpecs = @(
       @('assetImportJobId', 'path', 'int64', '✓', '資産インポートジョブID')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること',
-      '対象施設のスコープ内ジョブのみ参照可能とする'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
+    )
+    ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する'
     )
     ResponseTitle = 'レスポンス（200：AssetImportJobStatusResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -171,7 +177,7 @@ $endpointSpecs = @(
     StatusRows = @(
       @('200', '取得成功', 'AssetImportJobStatusResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '閲覧権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -188,11 +194,11 @@ $endpointSpecs = @(
       @('assetImportJobId', 'path', 'int64', '✓', '再取込元の FAILED ジョブID')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること',
-      '対象施設のスコープ内ジョブのみ再取込可能とする'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `FAILED` であることを検証する',
       '`asset_import_jobs.file_path` に保持した元ファイルを再利用し、新しい `asset_import_jobs` を `PROCESSING` で作成する',
       '元の FAILED ジョブとその失敗情報は監査用に保持する',
@@ -210,7 +216,7 @@ $endpointSpecs = @(
     StatusRows = @(
       @('202', '受付成功（処理中）', 'AssetImportJobRetryAcceptedResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '更新権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'FAILED 以外の状態、または再取込不可状態', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -228,10 +234,11 @@ $endpointSpecs = @(
       @('assetImportJobId', 'path', 'int64', '✓', '削除対象ジョブID')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '削除対象は `READY_FOR_MATCHING` / `FAILED` のジョブに限定し、`PROCESSING` / `MATCHING_COMPLETED` は 409 とする',
       'ジョブ本体、取込行、保持している元ファイルを一括削除する',
       '突き合わせ途中のデータも削除されるため、確認ダイアログの後に実行する'
@@ -243,7 +250,7 @@ $endpointSpecs = @(
     StatusRows = @(
       @('204', '削除成功', '-'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '更新権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', '削除不可状態である', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -262,11 +269,11 @@ $endpointSpecs = @(
       @('facilityId', 'query', 'int64', '条件付き', '前回ジョブを施設単位で解決する場合の施設ID')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること',
-      '対象施設のスコープ内ジョブのみ参照可能とする'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブ解決後、その `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '再開対象ジョブが施設単位で 1 件である前提で、`assetImportJobId` 未指定時は施設から `PROCESSING` / `READY_FOR_MATCHING` / `FAILED` の前回ジョブを解決する',
       '全体/残り/完了件数を `asset_import_rows` から集計する',
       '`PROCESSING` / `FAILED` の場合でも `job.status` と `failureReason` を返し、画面状態切替の正本とする',
@@ -302,7 +309,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetMatchingContextResponse'),
       @('400', 'ジョブ指定不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '閲覧権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -326,10 +333,11 @@ $endpointSpecs = @(
       @('includeConfirmed', 'query', 'boolean', '-', 'true の場合は確定済み行も返却する。省略時は false')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを前提とし、それ以外の状態では 409 を返却する',
       '部門/部署/Category/大分類/中分類/品目は AND 条件で絞り込む',
       '既定では未確定行のみ返却し、`includeConfirmed=true` の場合のみ確定済み行を含める',
@@ -386,7 +394,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetMatchingRowListResponse'),
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '閲覧権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上、一覧取得不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -414,6 +422,7 @@ $endpointSpecs = @(
       '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      'Bearer トークン上の作業対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '候補は指定した階層に応じたマスタテーブルから取得する',
       '親階層が指定された場合は整合する子候補だけを返却する',
       '検索条件は部分一致を基本とする'
@@ -438,7 +447,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetMatchingMasterOptionResponse'),
       @('400', 'field 不正など入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '閲覧権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -471,10 +480,11 @@ $endpointSpecs = @(
       @('isConfirmed', 'boolean', '-', 'true の場合は当該行を確定済みに更新する')
     )
     PermissionLines = @(
-      '認可条件: 対象行が属するジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象行が属するジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      '対象行が属するジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象行が属するジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
       '編集対象は未確定行のみとし、未確定行の保存競合は最終保存勝ちとする',
       '`selected_*_name` は画面表示用文字列として保存し、マスタ選択時は対応する `selected_*_id` も保存する。自由記述時は `selected_*_id` を null とする',
@@ -503,7 +513,7 @@ $endpointSpecs = @(
       @('200', '更新成功', 'AssetMatchingRowResponse'),
       @('400', '入力不正、親子不整合', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '更新権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象行が存在しない', 'ErrorResponse'),
       @('409', '対象行が確定済み、またはジョブ状態上更新不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -522,10 +532,11 @@ $endpointSpecs = @(
       @('assetImportRowIds', 'int64[]', '✓', '確定対象の行ID一覧')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
       '指定行の `is_confirmed` を true へ更新し、`confirmed_by_user_id` / `confirmed_at` を保存する',
       '対象は未確定行のみとし、他ユーザーが先に確定済みの行が含まれる場合は一括失敗として競合行IDを `details` で返却する',
@@ -541,7 +552,7 @@ $endpointSpecs = @(
       @('200', '確定成功', 'AssetMatchingBulkConfirmResponse'),
       @('400', '入力不正、確定不可行を含む', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '更新権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブまたは対象行が存在しない', 'ErrorResponse'),
       @('409', '対象行の一部または全部が確定済み、またはジョブ状態上更新不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -566,10 +577,11 @@ $endpointSpecs = @(
       @('includeConfirmed', 'query', 'boolean', '-', '確定済み行を含めるか')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを前提とし、それ以外の状態では 409 を返却する',
       '現在の絞り込み条件に一致する取込結果を Excel として返却する'
     )
@@ -591,7 +603,7 @@ $endpointSpecs = @(
       @('200', '出力成功', 'binary'),
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '閲覧権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上、出力不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -609,10 +621,11 @@ $endpointSpecs = @(
       @('assetImportJobId', 'int64', '✓', '対象ジョブID')
     )
     PermissionLines = @(
-      '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-      '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
     )
     ProcessingLines = @(
+      '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であり、未確定件数（`remainingRows`）が 0 件であることを検証する',
       '未確定行が 1 件でも残っている場合は `JOB_STATUS_INVALID` を返し、完了させない',
       '条件を満たした場合のみ対象ジョブを `MATCHING_COMPLETED` へ更新する',
@@ -629,7 +642,7 @@ $endpointSpecs = @(
       @('200', '完了成功', 'AssetMatchingCompleteResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '更新権限なし', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上完了不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -641,8 +654,8 @@ $endpointSpecs = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_資産台帳取込.docx'
   ScreenLabel = '資産台帳取込'
-  CoverDateText = '2026年4月16日'
-  RevisionDateText = '2026/04/16'
+  CoverDateText = '2026年4月18日'
+  RevisionDateText = '2026/4/18'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -677,7 +690,7 @@ $endpointSpecs = @(
       '通信方式: HTTPS',
       'データ形式: JSON（アップロードAPIと Excel 出力APIを除く）',
       '文字コード: UTF-8',
-      '日時形式: ISO 8601（例: `2026-03-12T00:00:00Z`）',
+      '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
       '論理削除済みの `asset_import_rows` は一覧・集計・出力対象外とする'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
@@ -687,6 +700,13 @@ $endpointSpecs = @(
     @{ Type = 'Table'; Headers = @('処理', '必要な実効 feature_code', '判定に使う主な情報', '説明'); Rows = @(
       @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象施設への有効割当と実効機能の両方が必要'),
       @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / 突き合わせ完了', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象ジョブまたは Bearer トークン上の作業対象施設に対して再判定する')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
+    @{ Type = 'Bullets'; Items = @(
+      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '`/asset-import` 系 API は、対象施設または対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
+      '`/asset-matching` 系 API は、対象ジョブまたは対象行が属する `facility_id` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
+      '資産台帳取込・マスタ突き合わせは自施設業務として扱い、協業グループや他施設公開設定は適用しない'
     ) },
     @{ Type = 'Heading2'; Text = 'ファイル入出力仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -711,12 +731,18 @@ $endpointSpecs = @(
     @{ Type = 'EndpointBlocks'; Items = $endpointSpecs },
 
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
+    @{ Type = 'Heading2'; Text = '必要権限' },
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
+      @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', 'Bearer トークン上の作業対象施設に対して実効 `asset_ledger_import` を持つこと', '資産台帳取込を実行する'),
+      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / 突き合わせ完了', '`survey_ledger_matching`', 'Bearer トークン上の作業対象施設に対して実効 `survey_ledger_matching` を持つこと', '資産台帳突き合わせを実行する')
+    ) },
     @{ Type = 'Heading2'; Text = '施設単位運用ルール' },
     @{ Type = 'Bullets'; Items = @(
       '未完了ジョブ（`PROCESSING` / `READY_FOR_MATCHING`）は施設ごとに 1 件までとする',
       '同一施設内では `created_by_user_id` に関係なく別ユーザーが続き作業を引き継げる前提とする',
+      '対象施設または対象ジョブの `facility_id` は Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設でなければならない',
       '各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `feature_code` を都度再判定する',
-      'API の正本キーは `facilityId` だが、現行モックは施設名称ベースで状態を持つため、フロント実装は別途調整が必要である'
+      '資産台帳取込・マスタ突き合わせは自施設業務として扱い、協業グループや他施設公開設定は適用しない'
     ) },
     @{ Type = 'Heading2'; Text = '突き合わせ保存ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -741,6 +767,7 @@ $endpointSpecs = @(
     ) },
     @{ Type = 'Heading2'; Text = 'クライアント連携ルール' },
     @{ Type = 'Bullets'; Items = @(
+      '画面表示制御は `/auth/context` の `asset_ledger_import` / `survey_ledger_matching` を参照して行い、取込画面導線・アップロード・削除は `asset_ledger_import`、突き合わせ画面導線・編集・確定・出力・完了は `survey_ledger_matching` で出し分ける',
       '`uploadedFiles` は施設単位のアップロード済みジョブ一覧を表す。複数エントリは複数ジョブの履歴であり、アップロードAPI自体は 1 リクエスト = 1 ファイルで扱う',
       'クライアント内部の fileType は `fixed-asset -> FIXED_ASSET`、`me-ledger -> OTHER_LEDGER` へ変換して API へ送信し、応答受信時は逆変換する',
       '`/asset-matching/rows` は現行画面で表示する列だけを返却する。固定資産番号/管理機器番号/諸室名称/Category/検収日は `asset_import_rows` / `raw_data_json` に保持し、監査・後続利用時に参照する'
@@ -753,8 +780,9 @@ $endpointSpecs = @(
       @('FILE_SIZE_EXCEEDED', '400', 'ファイルサイズが 10MB を超えている'),
       @('FACILITY_SELECTION_REQUIRED', '400', '施設未選択で実行した'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('FORBIDDEN', '403', '必要権限不足または施設スコープ外'),
-      @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない'),
+      @('AUTH_403_ASSET_LEDGER_IMPORT_DENIED', '403', '作業対象施設に対する実効 `asset_ledger_import` がない、または対象施設不一致'),
+      @('AUTH_403_SURVEY_LEDGER_MATCHING_DENIED', '403', '作業対象施設に対する実効 `survey_ledger_matching` がない、または対象施設不一致'),
+      @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('ASSET_IMPORT_JOB_NOT_FOUND', '404', '対象ジョブが存在しない'),
       @('ASSET_IMPORT_ROW_NOT_FOUND', '404', '対象行が存在しない'),
       @('UNFINISHED_JOB_ALREADY_EXISTS', '409', '同一施設に未完了ジョブが存在する'),

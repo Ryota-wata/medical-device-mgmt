@@ -126,7 +126,7 @@
   - 認証認可の ToDo、病院ユーザー認可、SHRCユーザー認可、`role_permissions` / `role_facility_scopes` / `user_accessible_facilities` 前提の記載を見直す必要がある。
 - [db-schema.puml](/C:/Projects/mock/medical-device-mgmt/taniguchi/db/db-schema.puml)
   - `roles` / `role_permissions` / `role_facility_scopes` / `users.role_id` を認可正本とする構成を見直す必要がある。
-- [API設計書_認証／認可_正本ベース.docx](/C:/Projects/mock/medical-device-mgmt/taniguchi/api/Fix/API設計書_認証／認可_正本ベース.docx)
+- [API設計書_認証／認可.docx](/C:/Projects/mock/medical-device-mgmt/taniguchi/api/Fix/API設計書_認証／認可.docx)
   - `/auth/me`、`/authorization/check`、権限モデル説明を再設計する必要がある。
 
 ### 補助資料の位置づけ変更

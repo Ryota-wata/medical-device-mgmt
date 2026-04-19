@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_業者マスタ.docx'
   ScreenLabel = '業者マスタ'
-  CoverDateText = '2026年3月13日'
-  RevisionDateText = '2026/3/13'
+  CoverDateText = '2026年4月18日'
+  RevisionDateText = '2026/4/18'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -56,16 +56,23 @@
       '通信方式: HTTPS',
       'データ形式: JSON',
       '文字コード: UTF-8',
-      '日時形式: ISO 8601（例: `2026-03-13T00:00:00Z`）',
+      '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
       '画面要件上ページングは定義しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '業者マスタの専用機能コードは現行権限マトリクスに未定義である。現時点では、`SHIPシステム管理者`、`SHIPコンサル担当者`、`SHRC業務担当者`、`SHRC見積登録担当者` が本画面を利用可能とする前提で記載する。SHRC ロールの施設スコープ適用方法は認証認可の未確定事項として別途最終化する。' },
-    @{ Type = 'Table'; Headers = @('処理', '必要権限', '想定ロール', '説明'); Rows = @(
-      @('業者一覧取得', '業者マスタ利用権限', 'SHIPシステム管理者 / SHIPコンサル担当者 / SHRC業務担当者 / SHRC見積登録担当者', '一覧参照と絞り込み'),
-      @('業者新規作成 / 更新 / 削除', '業者マスタ利用権限', 'SHIPシステム管理者 / SHIPコンサル担当者 / SHRC業務担当者 / SHRC見積登録担当者', '業者マスタ管理処理')
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列に対応する `vendor_master_list` と `vendor_master_edit` を用いる。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
+      @('業者一覧取得', '`vendor_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照と絞り込み'),
+      @('業者新規作成 / 更新 / 削除', '`vendor_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '業者マスタ管理処理')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
+    @{ Type = 'Bullets'; Items = @(
+      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '業者一覧の返却対象は未削除施設に紐づく未削除業者全件とし、個票データ閲覧で用いる他施設公開設定は適用しない',
+      'リクエストボディの `facilityId` は業者データの所属先を表す業務項目であり、認可判定の正本には使わない',
+      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -108,11 +115,11 @@
           @('keyword', 'query', 'string', '-', 'インボイス登録番号、住所、役職、役割、氏名、連絡先、メールの横断検索')
         )
         PermissionLines = @(
-          '利用ロール: `SHIPシステム管理者`、`SHIPコンサル担当者`、`SHRC業務担当者`、`SHRC見積登録担当者`',
-          '専用 feature_code は未定義のため、詳細な権限コードは認証認可の最終確定時に差し替える'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_list` が有効であること'
         )
         ProcessingLines = @(
-          '`vendors.deleted_at IS NULL` のみを対象にする',
+          '`vendors.deleted_at IS NULL` かつ `facilities.deleted_at IS NULL` のみを対象にする',
           '`facilities` を参照して担当施設名を解決する',
           '担当施設名・業者名・キーワードは AND 条件で絞り込む',
           '画面要件上ページングは定義しない'
@@ -147,7 +154,7 @@
           @('200', '取得成功', 'VendorListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '閲覧権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `vendor_master_list` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -172,10 +179,11 @@
           @('isPrimaryContact', 'boolean', '-', '主担当フラグ。未指定時は `false`')
         )
         PermissionLines = @(
-          '利用ロール: `SHIPシステム管理者`、`SHIPコンサル担当者`、`SHRC業務担当者`、`SHRC見積登録担当者`'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
         )
         ProcessingLines = @(
-          '`facilities` に存在する施設IDであることを検証する',
+          '`facilities.deleted_at IS NULL` の未削除施設IDであることを検証する',
           '`vendors` に新規レコードを追加し、`created_at` と `updated_at` を現在時刻で設定する',
           '`deleted_at` は `NULL`、`is_primary_contact` は未指定時 `false` とする'
         )
@@ -208,7 +216,7 @@
           @('201', '登録成功', 'VendorResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
           @('404', '担当施設が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -239,11 +247,12 @@
           @('isPrimaryContact', 'boolean', '-', '主担当フラグ')
         )
         PermissionLines = @(
-          '利用ロール: `SHIPシステム管理者`、`SHIPコンサル担当者`、`SHRC業務担当者`、`SHRC見積登録担当者`'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象の `vendors` が `deleted_at IS NULL` で存在することを確認する',
-          '`facilities` に存在する施設IDであることを検証する',
+          '`facilities.deleted_at IS NULL` の未削除施設IDであることを検証する',
           '指定IDの `vendors` を更新し、`updated_at` を現在時刻に更新する'
         )
         ResponseTitle = 'レスポンス（200：VendorResponse）'
@@ -275,7 +284,7 @@
           @('200', '更新成功', 'VendorResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
           @('404', '対象業者または担当施設が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -292,7 +301,8 @@
           @('vendorId', 'path', 'int64', '✓', '削除対象の業者ID')
         )
         PermissionLines = @(
-          '利用ロール: `SHIPシステム管理者`、`SHIPコンサル担当者`、`SHRC業務担当者`、`SHRC見積登録担当者`'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象の `vendors` が `deleted_at IS NULL` で存在することを確認する',
@@ -306,7 +316,7 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '更新権限なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
           @('404', '対象業者が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -315,30 +325,32 @@
 
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
-    @{ Type = 'Table'; Headers = @('処理', '必要権限', '説明'); Rows = @(
-      @('業者一覧取得', '業者マスタ利用権限', '`SHIPシステム管理者` / `SHIPコンサル担当者` / `SHRC業務担当者` / `SHRC見積登録担当者` が利用可能とする前提'),
-      @('業者新規作成 / 更新 / 削除', '業者マスタ利用権限', '上記利用ロールが同画面内の登録・更新・削除を実行できる前提')
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
+      @('業者一覧取得', '`vendor_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `vendor_master_list` を持つこと', '業者一覧と件数を参照する'),
+      @('業者新規作成 / 更新 / 削除', '`vendor_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `vendor_master_edit` を持つこと', '業者マスタの変更系処理')
     ) },
     @{ Type = 'Heading2'; Text = 'データ整合ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '`facility_id` は `facilities` の施設IDを参照する',
-      '一覧取得は `deleted_at IS NULL` のみを返却する',
+      '`facility_id` は `facilities.deleted_at IS NULL` の未削除施設IDを参照する',
+      '一覧取得は `vendors.deleted_at IS NULL` かつ `facilities.deleted_at IS NULL` のみを返却する',
       '削除は論理削除とし、参照元テーブルの履歴は保持する',
       '論理削除済み業者は、新規の見積・修理・保守候補には表示しない前提とする'
     ) },
-    @{ Type = 'Heading2'; Text = '未確定事項' },
+    @{ Type = 'Heading2'; Text = '実装前提' },
     @{ Type = 'Bullets'; Items = @(
-      '現行権限マトリクスに業者マスタ専用 feature_code が未定義のため、API設計上は利用ロールを明示して記載している',
-      'SHRC ロールの権限を担当施設全体へ一律適用するか、施設単位で差分制御するかは認証認可の未確定事項として別途最終化する'
+      '画面の表示制御は `/auth/context` の `vendor_master_list` / `vendor_master_edit` を参照して行い、一覧表示、新規作成ボタン、編集ボタン、削除ボタンを同じ `feature_code` で出し分ける',
+      '担当施設候補は既存の施設マスタ取得APIから取得し、本 API 群では候補一覧を返さない',
+      '業者データはマスタ管理の対象として全施設分を扱うが、他施設閲覧機能ではなくマスタ管理機能として認可する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '入力不正、必須不足、形式不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('FORBIDDEN', '403', '必要権限不足'),
+      @('AUTH_403_VENDOR_MASTER_LIST_DENIED', '403', '作業対象施設に対する実効 `vendor_master_list` がない'),
+      @('AUTH_403_VENDOR_MASTER_EDIT_DENIED', '403', '作業対象施設に対する実効 `vendor_master_edit` がない'),
       @('VENDOR_NOT_FOUND', '404', '対象の業者が存在しない'),
-      @('FACILITY_NOT_FOUND', '404', '指定した担当施設が存在しない'),
+      @('FACILITY_NOT_FOUND', '404', '指定した担当施設が存在しない、または削除済み'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
@@ -351,7 +363,6 @@
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(
-      '専用の権限コードが追加された場合は、本API群の権限定義を差し替える',
       '共通業者マスタ運用へ変更する場合は `facility_id` の必須性と画面入力項目を再整理する',
       '検索件数が増加した場合はページングや並び順指定の追加を検討する'
     ) }

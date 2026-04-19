@@ -1,8 +1,8 @@
 # 認証認可 機能カタログ・カラムカタログ整理メモ（たたき台）
 
 本メモは、クライアントから提示された機能一覧をもとに、認証認可で扱う「機能カタログ」と「カラムカタログ」を正規化するためのたたき台である。  
-全体方針は [authz-feature-catalog-direction.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/docs/authz-feature-catalog-direction.md) を参照する。  
-本メモを受けたテーブル案は [authz-table-proposal.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/docs/authz-table-proposal.md) を参照する。
+現在の正本は [authz-fix-summary.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/docs/authz-fix-summary.md) であり、権限管理単位は `ロール整理.xlsx` の `権限管理単位一覧` シート A列粒度を `Fix` として採用している。  
+全体方針は [authz-feature-catalog-direction.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/docs/authz-feature-catalog-direction.md) を参照し、本メモを受けたテーブル案は [authz-table-proposal.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/docs/authz-table-proposal.md) を参照する。
 
 ## 整理ルール
 
@@ -10,7 +10,7 @@
 - 既存モックに同等の `FeatureId` があるものは、原則としてそのコードを再利用する。
 - クライアント記載の `メニュー（表示）` は、現時点ではグループ見出しとして扱い、`menu_group_code` で整理する。独立した `menu_*` コードは付与しない。
 - `ロール権限付与` という表現は、現方針では `施設で提供されている機能のうち、そのユーザーに許可する機能の付与` と読み替える。
-- 分割要否が未確定のものは、本メモでは粗めに残し、`未確定事項` に記載する。
+- 本メモに残る粗い束ね方は historical な検討記録であり、Fix 後の採用単位は `authz-fix-summary.md` を参照する。
 
 ## 機能カタログ
 
@@ -126,10 +126,10 @@
 - ただし、既存モックはロール前提で `PermissionLevel` を持っているため、今後は `コード再利用 / 権限制御モデル再設計` の切り分けが必要である。
 - `user_management` の説明に残っている `ロール権限付与` は、認可方針変更に合わせて UI 文言・説明文の見直しが必要である。
 
-## 未確定事項
+## Fix 後の扱い
 
-- `inventory_office`、`inspection_management`、`lending_management` などに含まれる `Excel出力` `予定表出力` `エクスポート` を独立コードへ分割するか。
-- `remodel_edit_list` と `normal_edit_list` に含まれる `申請登録` `見積G` `分析作業` を分割するか。
+- 権限管理単位の正本は `ロール整理.xlsx` の `権限管理単位一覧` シート A列とする。
+- Fix 後の `feature_code` / `column_code` 一覧は `authz-fix-summary.md` を参照する。
 
 ## 次の整理候補
 

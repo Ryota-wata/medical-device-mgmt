@@ -1,9 +1,9 @@
 ﻿@{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_認証／認可_正本ベース.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_認証／認可.docx'
   ScreenLabel = '認証／認可'
-  CoverDateText = '2026年4月16日'
-  RevisionDateText = '2026/4/16'
+  CoverDateText = '2026年4月17日'
+  RevisionDateText = '2026/4/17'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -18,6 +18,7 @@
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '本 API 群は、認証基盤、施設選択導線、ホーム/各業務画面の表示制御を支える横断 API である。ログイン後は `GET /auth/me` で担当施設一覧を取得し、必要に応じて `GET /auth/context?actingFacilityId=...` を呼び出して実効 `feature_code` / `column_code` を取得する。' },
     @{ Type = 'Paragraph'; Text = '認可正本はロールではなく、`feature_catalogs` / `column_catalogs` / `user_facility_assignments` / 施設別設定 / ユーザー施設別設定 / 他施設公開設定を参照して判断する。' },
+    @{ Type = 'Paragraph'; Text = '権限管理画面の管理単位は `taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列を正本とし、1つの管理単位に対して1つの `feature_code` または `column_code` を割り当てる。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('担当施設', '`user_facility_assignments` に直接登録された、ユーザーが作業対象として選択できる施設'),
@@ -52,7 +53,7 @@
       @('user_remember_tokens', 'current device のログイン状態保持トークンの発行・更新・失効', 'token_id, user_id, token, expires_at, last_used_at'),
       @('password_reset_tokens', 'パスワード再設定トークンの発行・使用済み管理', 'token_id, user_id, token, expires_at, used_at'),
       @('user_facility_assignments', '担当施設一覧、既定施設、施設アクセス可否判定', 'user_facility_assignment_id, user_id, facility_id, is_default, is_active, valid_from, valid_to'),
-      @('facilities', '担当施設名称、契約状態、公開元施設判定', 'facility_id, facility_name, system_contract_status'),
+      @('facilities', '担当施設名称、契約状態、公開元施設判定、論理削除状態確認', 'facility_id, facility_name, system_contract_status, deleted_at'),
       @('feature_catalogs', '認可対象機能の正本、承認用 feature を含むコード体系', 'feature_code, feature_name, usage_context, config_scope'),
       @('column_catalogs', '認可対象カラムの正本', 'column_code, column_name, related_feature_code'),
       @('facility_feature_settings', '施設単位の提供機能判定', 'facility_id, feature_code, is_enabled'),
@@ -65,6 +66,7 @@
       @('facility_external_column_settings', '公開元施設の他施設向け公開カラム設定', 'provider_facility_id, column_code, is_enabled')
     ) },
     @{ Type = 'Paragraph'; Text = 'リフレッシュトークン、remember token による current device の再認証、およびセッション失効の詳細実装は認証基盤側責務とし、DB 正本としては上記テーブルを参照する。remember token は平文保存せずハッシュ化して保持し、クライアント側は `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する前提とする。' },
+    @{ Type = 'Paragraph'; Text = '`facilities.deleted_at` が設定された施設は、担当施設一覧、施設選択、認可判定、業務 API の対象外とする。一方で `user_facility_assignments` や各種 `*_feature_settings` / `*_column_settings` は削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する。' },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
@@ -75,12 +77,13 @@
       '日時形式: ISO 8601（例: `2026-04-13T00:00:00Z`）',
       '認証済み API は Bearer トークンを `Authorization` ヘッダーに付与する',
       '`rememberMe=true` の場合は current device 用の remember token を `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する',
+      '`facilities.deleted_at IS NOT NULL` の施設は `/auth/me`、`/auth/context`、`/authorization/check`、各業務 API の対象外とする',
       '画面表示制御用の `GET /auth/context` は UX 用キャッシュであり、業務 API の認可判定を代替しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後は Bearer トークンを用いて `GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用トークンも発行し、再訪時は認証基盤側でセッション再開を試みる。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。' },
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し（事務）` や `DataLINK / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。' },
     @{ Type = 'Table'; Headers = @('対象', '判定に使う主な情報', '説明'); Rows = @(
       @('ログイン関連', '`users`, `user_remember_tokens`, `password_reset_tokens`', '認証とトークン管理を扱う。施設別権限は判定しない'),
       @('作業対象施設決定', '`user_facility_assignments`, `facilities`', '担当施設一覧と既定施設を決定する'),
@@ -221,7 +224,8 @@
         ProcessingLines = @(
           '認証済みユーザーの `users` を取得する',
           '`user_facility_assignments` から有効な担当施設一覧を取得する',
-          '`facilities` を JOIN して施設名称、契約状態を付与する',
+          '`facilities` を JOIN し、`deleted_at IS NULL` の施設だけを `assignedFacilities` へ含める',
+          '施設名称、契約状態を付与し、削除済み施設を既定担当に持つ場合は `defaultFacilityId` へ返さない',
           '協業グループ経由で見える施設は `assignedFacilities` へ含めない'
         )
         ResponseTitle = 'レスポンス（200：AuthMeResponse）'
@@ -271,10 +275,12 @@
         PermissionLines = @(
           '認証済みセッションであること',
           '認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること',
-          '指定 `actingFacilityId` が `user_facility_assignments` 上の有効な担当施設であること'
+          '指定 `actingFacilityId` が `user_facility_assignments` 上の有効な担当施設であること',
+          '指定 `actingFacilityId` に対応する `facilities.deleted_at IS NULL` であること'
         )
         ProcessingLines = @(
           '`user_facility_assignments` で対象施設への割当を確認する',
+          '`facilities.deleted_at IS NULL` の未削除施設であることを確認し、削除済みなら 404 とする',
           '`facilities.system_contract_status` を確認し、作業対象施設が `ACTIVE` の場合のみ外部閲覧系の `feature_code` / `column_code` を返却候補に含める',
           '`facility_feature_settings` と `user_facility_feature_settings` の両方が `is_enabled=true` の `feature_code` を実効機能として返す',
           '`facility_column_settings` と `user_facility_column_settings` の両方が `is_enabled=true` で、かつ `related_feature_code` が有効な `column_code` を実効カラムとして返す',
@@ -294,7 +300,7 @@
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '担当施設外の施設指定', 'ErrorResponse'),
-          @('404', '施設が存在しない', 'ErrorResponse'),
+          @('404', '施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -377,13 +383,14 @@
         PermissionLines = @(
           '認証済みセッションであること',
           '認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること',
-          '指定 `actingFacilityId` が担当施設であること'
+          '指定 `actingFacilityId` が担当施設であること',
+          '指定 `actingFacilityId` に対応する施設が未削除であること'
         )
         ProcessingLines = @(
           '判定対象ユーザーは Bearer トークンから解決し、リクエストボディで `userId` は受け取らない',
           '自施設判定では `user_facility_assignments`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する',
           'カラム判定では `facility_column_settings`、`user_facility_column_settings`、`column_catalogs.related_feature_code` を用いて可否を評価する',
-          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、閲覧者側施設と公開元施設の両方が `system_contract_status=''ACTIVE''` であること、協業グループ所属、`facility_external_view_settings`、`facility_external_column_settings` を追加で評価する',
+          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、協業グループ所属、`facility_external_view_settings`、`facility_external_column_settings` を追加で評価する',
           '本 API は補助判定用であり、各業務 API 側でも同条件を再判定する'
         )
         ResponseTitle = 'レスポンス（200：AuthorizationCheckResponse）'
@@ -410,6 +417,7 @@
     @{ Type = 'Bullets'; Items = @(
       '`auth_login` と `facility_select` は `SYSTEM_FIXED` のため、施設・ユーザー設定で ON/OFF しない',
       '`/auth/me` は担当施設一覧のみを返し、協業グループ経由で見える施設は返さない',
+      '`/auth/me` と `/auth/context` は `facilities.deleted_at IS NULL` の未削除施設だけを対象にする',
       '`/auth/context` は選択施設に対する実効 `feature_code` / `column_code` を返す',
       '他施設閲覧は、閲覧者側の `other_*` 権限と公開元施設側の公開設定の両方が有効な場合のみ許可する',
       '`column_code` は、関連 `feature_code` が有効な場合のみ成立する'
@@ -425,6 +433,7 @@
     @{ Type = 'Bullets'; Items = @(
       '`GET /auth/context` は画面表示制御のための一括取得 API とし、個別権限確認 API の多重呼び出しを避ける',
       '一方で、業務 API は `GET /auth/context` の結果を信頼して認可判定を省略しない',
+      '施設論理削除時は関連認可設定を削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する',
       '認証・認可仕様の正本は `機能要件.md` と `db-schema.puml` を優先し、本設計書はそれに追従して改訂する'
     ) }
   )

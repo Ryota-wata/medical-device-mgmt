@@ -503,5 +503,5 @@
   - 認証認可の ToDo、ユーザー管理、施設選択、ホーム表示制御、他施設閲覧の説明を本テーブル案へ合わせて修正する。
 - [db-schema.puml](/C:/Projects/mock/medical-device-mgmt/taniguchi/db/db-schema.puml)
   - 上記の新設テーブルと既存テーブルの役割変更を反映する。
-- [API設計書_認証／認可_正本ベース.docx](/C:/Projects/mock/medical-device-mgmt/taniguchi/api/Fix/API設計書_認証／認可_正本ベース.docx)
+- [API設計書_認証／認可.docx](/C:/Projects/mock/medical-device-mgmt/taniguchi/api/Fix/API設計書_認証／認可.docx)
   - `/auth/me` と `/authorization/check` のレスポンス・判定仕様を書き換える。

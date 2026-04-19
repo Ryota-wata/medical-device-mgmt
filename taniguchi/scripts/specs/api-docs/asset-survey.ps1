@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_現有品調査.docx'
   ScreenLabel = '現有品調査'
-  CoverDateText = '2026年3月14日'
-  RevisionDateText = '2026/3/14'
+  CoverDateText = '2026年4月18日'
+  RevisionDateText = '2026/4/18'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -65,23 +65,23 @@
       '通信方式: HTTPS',
       'データ形式: JSON',
       '文字コード: UTF-8',
-      '日時形式: ISO 8601（例: `2026-03-14T00:00:00Z`）',
+      '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
       '写真本文は `base64` 文字列で受け取り、バックエンド保存時にオブジェクトストレージへ書き込む'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '専用 feature_code は現時点で未定義のため、調査実施または調査結果修正を許可された利用者が選択施設に対して実行できる前提で記載する。施設アクセス可否は認証認可で返される作業対象施設と契約状態で判定する。' },
-    @{ Type = 'Table'; Headers = @('処理', '必要権限', '説明'); Rows = @(
-      @('マスタパッケージ取得', '調査実施権限 + 対象施設アクセス可', '選択施設のロケーション・分類マスタをダウンロードする'),
-      @('調査結果アップロード', '調査実施権限 + 対象施設アクセス可', '端末に保持した調査結果をバックエンドへ送信する'),
-      @('調査登録内容修正の一覧/更新/確定', '調査修正権限 + 対象施設アクセス可', '未確定データの一覧表示、修正、写真削除、確定を行う')
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列に対応する `existing_survey` と `survey_data_edit` を用いる。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
+      @('マスタパッケージ取得 / 調査結果アップロード', '`existing_survey`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '現有品調査の準備・送信を行う'),
+      @('調査登録内容修正の一覧 / 写真参照 / 更新 / 写真削除 / 確定', '`survey_data_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '送信後データの修正系処理を行う')
     ) },
-    @{ Type = 'Heading2'; Text = '施設スコープ仕様' },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各APIは `facilityId` または対象レコードの施設IDを基準に、認証済みユーザーが当該施設を作業対象施設として扱えるかを検証する',
-      '施設アクセス不可の場合は 403 を返却する',
-      'マスタパッケージに含める `facility_locations` は指定施設の未削除レコードのみに限定する'
+      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '`/offline-prep` 系 API は、指定 `facilityId` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
+      '`/registration-edit` 系 API は、対象レコードの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
+      '現有品調査は自施設業務として扱い、協業グループや他施設公開設定は適用しない'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Heading3'; Text = '基本エラーレスポンス（ErrorResponse）' },
@@ -120,12 +120,13 @@
           @('facilityId', 'query', 'int64', '✓', 'マスタ取得対象の施設ID')
         )
         PermissionLines = @(
-          '調査実施を許可された利用者であること',
-          '指定 `facilityId` が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `existing_survey` が有効であること'
         )
         ProcessingLines = @(
+          '`facilityId` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
           '`facilities` から対象施設の基本情報を取得する',
-          '`facility_locations` から対象施設の未削除ロケーションを取得する',
+          '`facility_locations.deleted_at IS NULL` の未削除ロケーションのみを取得する',
           '`asset_categories` / `asset_large_classes` / `asset_medium_classes` / `asset_items` / `manufacturers` / `models` の未削除マスタを取得する',
           '取得結果をオフライン利用しやすいマスタパッケージ形式で返却する'
         )
@@ -168,8 +169,8 @@
           @('200', '取得成功', 'OfflinePrepMasterDownloadResponse'),
           @('400', '不正な施設指定', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
-          @('404', '施設が存在しない', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `existing_survey` なし、または対象施設不一致', 'ErrorResponse'),
+          @('404', '施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -241,11 +242,13 @@
           }
         )
         PermissionLines = @(
-          '調査実施を許可された利用者であること',
-          '指定 `facilityId` が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `existing_survey` が有効であること'
         )
         ProcessingLines = @(
+          '`facilityId` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
           '`asset_survey_sessions` に1件作成し、1回の送信単位をセッションとして記録する。`created_by_user_id` には認証ユーザーIDを設定する',
+          '`records[].facilityLocationId`、`categoryId`、`largeClassId`、`mediumClassId`、`assetItemId`、`manufacturerId`、`modelId` が指定された場合は、いずれも未削除の参照先であることを検証する',
           '`records` の各要素を `asset_survey_records` へ保存し、各レコードの `facility_id` にはトップレベルの `facilityId` を設定する',
           '各レコードの `surveyor_user_id` には認証ユーザーIDを設定する',
           '`clientRecordKey` / `parentClientRecordKey` を用いて、親子関係を `parent_asset_survey_record_id` へ解決する',
@@ -267,8 +270,8 @@
           @('201', 'アップロード成功', 'OfflineSurveyUploadResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
-          @('404', '施設または参照マスタが存在しない', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `existing_survey` なし、または対象施設不一致', 'ErrorResponse'),
+          @('404', '施設または参照マスタが存在しない、または削除済み', 'ErrorResponse'),
           @('422', '親子紐づけや分類階層の整合が取れない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -293,11 +296,12 @@
           @('mediumClassId', 'query', 'int64', '-', '中分類フィルタ')
         )
         PermissionLines = @(
-          '調査修正を許可された利用者であること',
-          '指定 `facilityId` が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_data_edit` が有効であること'
         )
         ProcessingLines = @(
-          '`asset_survey_records.survey_status=''DRAFT''` の未確定レコードのみを対象にする',
+          '`facilityId` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
+          '`asset_survey_records.deleted_at IS NULL` かつ `asset_survey_records.survey_status=''DRAFT''` の未確定レコードのみを対象にする',
           '選択施設内の `DRAFT` レコードは、作成者・調査担当者に関係なく一覧対象とし、同一施設内では別ユーザーが続き作業を引き継げる前提で返却する',
           '`users` を結合して調査担当者名を解決する',
           '`application_documents` を集計して写真枚数を算出する',
@@ -355,7 +359,7 @@
           @('200', '取得成功', 'RegistrationEditRecordListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `survey_data_edit` なし、または対象施設不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -371,10 +375,12 @@
           @('recordId', 'path', 'int64', '✓', '調査レコードID')
         )
         PermissionLines = @(
-          '調査修正を許可された利用者であること',
-          '対象レコードの施設が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_data_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象 `asset_survey_records` が `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
+          '対象レコードの `facilities.deleted_at IS NULL` を検証する',
           '`asset_survey_photos` VIEW から対象レコードの写真を取得する',
           '代表写真フラグと撮影日時をあわせて返却する'
         )
@@ -400,7 +406,7 @@
         StatusRows = @(
           @('200', '取得成功', 'RegistrationEditPhotoListResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `survey_data_edit` なし、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象レコードが存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -449,11 +455,14 @@
           @('remarks', 'string', '-', '備考')
         )
         PermissionLines = @(
-          '調査修正を許可された利用者であること',
-          '対象レコードの施設が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_data_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象 `asset_survey_records` が `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
+          '対象レコードの `facilities.deleted_at IS NULL` を検証する',
           '対象レコードが `survey_status=''DRAFT''` であることを確認する',
+          '`facilityLocationId` や各分類マスタIDが指定された場合は、いずれも未削除の参照先であることを検証する',
           '分類マスタIDは「親は子を兼ねる」前提で整合性を検証する',
           '自由記述のまま保存する場合は表示値を保持し、未確定のマスタIDは `NULL` のままとする',
           '本体/明細/付属品の紐付け更新時は `detail_type` と `parent_asset_survey_record_id` を更新する',
@@ -468,7 +477,7 @@
           @('200', '更新成功', 'RegistrationEditRecordResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `survey_data_edit` なし、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象レコードが存在しない', 'ErrorResponse'),
           @('409', '既に確定済みのため更新不可', 'ErrorResponse'),
           @('422', '分類階層または親子関係の整合が取れない', 'ErrorResponse'),
@@ -489,10 +498,12 @@
           @('nextPrimaryPhotoId', 'query', 'int64', '-', '代表写真削除時にフロントエンドが選択した次代表写真ID')
         )
         PermissionLines = @(
-          '調査修正を許可された利用者であること',
-          '対象レコードの施設が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_data_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象 `asset_survey_records` が `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
+          '対象写真が同一レコード配下の未削除 `application_documents` であることを検証する',
           '`application_documents.deleted_at` を更新して論理削除する',
           '削除対象が代表写真で、他に写真が残る場合は、フロントエンドが指定した `nextPrimaryPhotoId` に `is_primary=true` を付け替える',
           '`nextPrimaryPhotoId` が指定された場合は、同一 `asset_survey_record_id` に属する未削除写真であることを検証する',
@@ -507,7 +518,7 @@
         StatusRows = @(
           @('200', '削除成功', 'RegistrationEditPhotoDeleteResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `survey_data_edit` なし、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象写真が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -524,10 +535,12 @@
           @('recordIds', 'int64[]', '✓', '確定対象の調査レコードID一覧')
         )
         PermissionLines = @(
-          '調査修正を許可された利用者であること',
-          '対象レコードの施設が作業対象施設として許可されていること'
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_data_edit` が有効であること'
         )
         ProcessingLines = @(
+          '指定 `recordIds` の対象 `asset_survey_records` がすべて `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
+          '対象レコードの `facilities.deleted_at IS NULL` を検証する',
           '対象レコードが `survey_status=''DRAFT''` であることを確認する',
           '確定条件として `category_id` / `large_class_id` / `medium_class_id` / `asset_item_id` が設定されていることを検証する',
           '`manufacturer_id` / `model_id` は未設定でも許可する',
@@ -544,7 +557,7 @@
           @('200', '確定成功', 'RegistrationEditConfirmResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `survey_data_edit` なし、または対象施設不一致', 'ErrorResponse'),
           @('409', '確定条件未達のレコードが含まれる', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -552,26 +565,40 @@
     ) },
 
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
+    @{ Type = 'Heading2'; Text = '必要権限' },
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
+      @('マスタパッケージ取得 / 調査結果アップロード', '`existing_survey`', 'Bearer トークン上の作業対象施設に対して実効 `existing_survey` を持つこと', '現有品調査の準備・送信を行う'),
+      @('調査登録内容修正の一覧 / 写真参照 / 更新 / 写真削除 / 確定', '`survey_data_edit`', 'Bearer トークン上の作業対象施設に対して実効 `survey_data_edit` を持つこと', '送信後データの修正系処理を行う')
+    ) },
+    @{ Type = 'Heading2'; Text = 'データ整合ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '現有品調査は自施設業務として扱い、協業グループや他施設公開設定は適用しない',
+      '`/offline-prep` の `facilityId` は Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設でなければならない',
+      '`/registration-edit` の対象レコードは `asset_survey_records.deleted_at IS NULL` かつ `facility_id` が Bearer トークン上の作業対象施設IDと一致するものだけを扱う',
+      '調査登録内容修正では、表示値スナップショットとマスタIDの両方を保持する前提で更新する',
+      '接続状態表示、未送信件数、端末内一時保存の削除はクライアント側責務とし、本 API では管理しない'
+    ) },
+    @{ Type = 'Heading2'; Text = '実装前提' },
     @{ Type = 'Bullets'; Items = @(
       'API対象は `/offline-prep` と `/registration-edit` とし、`/survey-location` / `/asset-survey` / `/history` はPWAのフロントエンド実装として扱う',
-      '接続状態表示、未送信件数、端末内一時保存の削除はクライアント側責務とし、本APIでは管理しない',
-      'アップロード成功後に端末データを削除するかどうかはクライアント側で制御する',
-      '調査登録内容修正では、表示値スナップショットとマスタIDの両方を保持する前提で更新する'
+      '画面表示制御は `/auth/context` の `existing_survey` / `survey_data_edit` を参照して行い、`existing_survey` は `/offline-prep` と PWA 導線、`survey_data_edit` は `/registration-edit` の一覧・編集・写真削除・確定ボタンを出し分ける',
+      'アップロード成功後に端末データを削除するかどうかはクライアント側で制御する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
-      @('AUTH_401', '401', '未認証'),
-      @('AUTH_403_FACILITY_SCOPE', '403', '指定施設へのアクセス権限がない'),
+      @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
+      @('AUTH_403_EXISTING_SURVEY_DENIED', '403', '作業対象施設に対する実効 `existing_survey` がない、または対象施設不一致'),
+      @('AUTH_403_SURVEY_DATA_EDIT_DENIED', '403', '作業対象施設に対する実効 `survey_data_edit` がない、または対象施設不一致'),
       @('OFFLINE_PREP_400_INVALID_INPUT', '400', '入力形式または必須項目が不正'),
-      @('OFFLINE_PREP_404_FACILITY_NOT_FOUND', '404', '対象施設が存在しない'),
-      @('OFFLINE_PREP_404_MASTER_NOT_FOUND', '404', '参照マスタが存在しない'),
+      @('OFFLINE_PREP_404_FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
+      @('OFFLINE_PREP_404_MASTER_NOT_FOUND', '404', '参照マスタが存在しない、または削除済み'),
       @('OFFLINE_PREP_422_RECORD_RELATION_INVALID', '422', '親子関係または分類階層の整合が取れない'),
       @('REG_EDIT_404_RECORD_NOT_FOUND', '404', '対象調査レコードが存在しない'),
       @('REG_EDIT_404_PHOTO_NOT_FOUND', '404', '対象写真が存在しない'),
       @('REG_EDIT_409_ALREADY_CONFIRMED', '409', '既に確定済みのため更新できない'),
       @('REG_EDIT_409_CONFIRM_CONDITION_FAILED', '409', '確定条件を満たしていない'),
-      @('REG_EDIT_500_INTERNAL', '500', 'サーバー内部エラー')
+      @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
     @{ Type = 'Heading1'; Text = '第8章 運用・保守方針' },

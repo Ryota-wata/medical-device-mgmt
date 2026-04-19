@@ -390,18 +390,66 @@ package "資産マスタ・分類" {
     JMDN分類ID / jmdn_classification_id : bigint
     販売名 / product_name : varchar
     製造販売業者等 / manufacturer_name : varchar
+    添付文書ファイル名 / attachment_file_name : varchar
     添付文書URL / attachment_url : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+  note right of jmdn_registered_items
+    - attachment_file_name と attachment_url は同時設定または同時未設定
+    - 同一分類配下で販売名 / 製造販売業者等 / attachment_file_name / attachment_url の重複を禁止する
+  end note
 
-  entity "model_jmdn_mappings" as model_jmdn_mappings {
-    * 型式ID / model_id : bigint
-    * JMDN登録品目ID / jmdn_registered_item_id : bigint
+  entity "ship_asset_masters" as ship_asset_masters {
+    * SHIP資産マスタID / ship_asset_master_id : bigint
     --
+    カテゴリID / category_id : bigint
+    大分類ID / large_class_id : bigint
+    中分類ID / medium_class_id : bigint
+    品目ID / asset_item_id : bigint
+    メーカーID / manufacturer_id : bigint
+    型式ID / model_id : bigint
+    JMDN登録品目ID / jmdn_registered_item_id : bigint
+    有効フラグ / is_active : boolean
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+  note right of ship_asset_masters
+    - ship_asset_master_id を画面上の資産マスタIDとして利用する
+    - Category〜型式の組み合わせ重複を禁止する
+    - jmdn_registered_item_id は必須とする
+    - model_id を設定する場合は manufacturer_id を必須とする
+  end note
+
+  entity "ship_asset_master_custom_columns" as ship_asset_master_custom_columns {
+    * SHIP資産マスタ任意カラムID / ship_asset_master_custom_column_id : bigint
+    --
+    カラムキー / column_key : varchar(64)
+    カラム名 / column_name : varchar(200)
+    表示順 / sort_order : int
+    有効フラグ / is_active : boolean
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+  note right of ship_asset_master_custom_columns
+    - column_key はシステム生成の不変キー
+    - 有効列同士の column_name 重複を禁止する
+    - is_active=false の列は新規入力候補から除外する
+  end note
+
+  entity "ship_asset_master_custom_values" as ship_asset_master_custom_values {
+    * SHIP資産マスタ任意カラム値ID / ship_asset_master_custom_value_id : bigint
+    --
+    SHIP資産マスタID / ship_asset_master_id : bigint
+    SHIP資産マスタ任意カラムID / ship_asset_master_custom_column_id : bigint
+    値 / value_text : varchar(1000)
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+  note right of ship_asset_master_custom_values
+    - (ship_asset_master_id, ship_asset_master_custom_column_id) を一意とする
+    - 値未設定は NULL または空文字を許容する
+  end note
 }
 
 ' 資産台帳・ドキュメント・写真
@@ -411,6 +459,7 @@ package "資産台帳" {
     --
     施設ID / facility_id : bigint
     施設ロケーションID / facility_location_id : bigint
+    SHIP資産マスタID / ship_asset_master_id : bigint
     カテゴリID / category_id : bigint
     品目ID / asset_item_id : bigint
     メーカーID / manufacturer_id : bigint
@@ -611,6 +660,7 @@ package "編集リスト" {
     参照資産台帳ID / source_asset_ledger_id : bigint
     参照申請ID / source_application_id : bigint
     参照申請明細ID / source_application_asset_id : bigint
+    SHIP資産マスタID / ship_asset_master_id : bigint
     コピー元施設ID / source_facility_id : bigint
     原本コピー日時 / copied_from_ledger_at : timestamp
     QRコード / qr_code_value : varchar
@@ -699,6 +749,21 @@ package "編集リスト" {
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
   }
+
+  entity "edit_list_item_custom_values" as edit_list_item_custom_values {
+    * 編集リスト任意カラム値ID / edit_list_item_custom_value_id : bigint
+    --
+    編集リスト明細ID / edit_list_item_id : bigint
+    SHIP資産マスタ任意カラムID / ship_asset_master_custom_column_id : bigint
+    値 / value_text : varchar(1000)
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+  note right of edit_list_item_custom_values
+    - Data Link / 資産マスタ選択時の値コピーを保持する
+    - 親 SHIP資産マスタ更新には自動追従しない
+    - (edit_list_item_id, ship_asset_master_custom_column_id) を一意とする
+  end note
 }
 
 ' 申請・ワークフロー・見積・契約・点検・貸出
@@ -1688,7 +1753,7 @@ package "個人設定" {
     --
     ユーザーID / user_id : bigint
     画面ID / screen_id : varchar
-    カラムキー / column_key : varchar
+    カラムキー / column_key : varchar(100)
     表示フラグ / is_visible : boolean
     表示順 / sort_order : int
     作成日時 / created_at : timestamp
@@ -2114,8 +2179,15 @@ asset_categories ||--o{ asset_large_classes : ""
 asset_large_classes ||--o{ asset_medium_classes : ""
 asset_medium_classes ||--o{ asset_items : ""
 jmdn_classifications ||--o{ jmdn_registered_items : ""
-jmdn_registered_items ||--o{ model_jmdn_mappings : ""
-models ||--o{ model_jmdn_mappings : ""
+jmdn_registered_items ||--o{ ship_asset_masters : ""
+asset_categories ||--o{ ship_asset_masters : ""
+asset_large_classes ||--o{ ship_asset_masters : ""
+asset_medium_classes ||--o{ ship_asset_masters : ""
+asset_items ||--o{ ship_asset_masters : ""
+manufacturers ||--o{ ship_asset_masters : ""
+models ||--o{ ship_asset_masters : ""
+ship_asset_masters ||--o{ ship_asset_master_custom_values : ""
+ship_asset_master_custom_columns ||--o{ ship_asset_master_custom_values : ""
 
 asset_categories ||--o{ asset_ledgers : ""
 asset_categories ||--o{ asset_survey_records : ""
@@ -2128,12 +2200,14 @@ manufacturers ||--o{ models : ""
 asset_items ||--o{ asset_ledgers : ""
 manufacturers ||--o{ asset_ledgers : ""
 models ||--o{ asset_ledgers : ""
+ship_asset_masters ||--o{ asset_ledgers : ""
 asset_items ||--o{ application_assets : ""
 manufacturers ||--o{ application_assets : ""
 models ||--o{ application_assets : ""
 asset_items ||--o{ edit_list_items : ""
 manufacturers ||--o{ edit_list_items : ""
 models ||--o{ edit_list_items : ""
+ship_asset_masters ||--o{ edit_list_items : ""
 asset_items ||--o{ asset_survey_records : ""
 manufacturers ||--o{ asset_survey_records : ""
 models ||--o{ asset_survey_records : ""
@@ -2169,6 +2243,8 @@ qr_codes ||--o{ qr_print_job_items : ""
 edit_lists ||--o{ edit_list_facilities : ""
 edit_lists ||--o{ edit_list_items : ""
 edit_list_items ||--o{ edit_list_item_attachments : "VIEW元"
+edit_list_items ||--o{ edit_list_item_custom_values : ""
+ship_asset_master_custom_columns ||--o{ edit_list_item_custom_values : ""
 edit_lists ||--o{ applications : ""
 edit_lists ||--o{ rfqs : "edit_list_id"
 edit_lists ||--o{ rfq_applications : "edit_list_id"

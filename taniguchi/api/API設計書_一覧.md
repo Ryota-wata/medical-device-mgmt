@@ -1,8 +1,8 @@
 ﻿# API設計書 一覧
 
-最終更新: 2026-04-16
+最終更新: 2026-04-20
 
-ステータス件数: `Fix 8件` / `作成済み 0件` / `未着手 16件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
+ステータス件数: `Fix 9件` / `作成済み 0件` / `未着手 15件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
 
 本一覧は、[機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) の画面一覧をもとに、API設計書の作成対象を機能単位で管理するための台帳である。  
 既存ファイルの羅列ではなく、「どの機能を、どの設計書で管理するか」を正として扱う。
@@ -18,7 +18,7 @@
 ## 認証/認可・初期選択
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 認証／認可 | `Fix/API設計書_認証／認可_正本ベース.docx` | 1. `/login`、2. `/password-reset`、3. `/facility-select`、4. `/main` | `Fix` | 正本要件・DB設計・APIレビュー反映済み |
+| 1 | 認証／認可 | `Fix/API設計書_認証／認可.docx` | 1. `/login`、2. `/password-reset`、3. `/facility-select`、4. `/main` | `Fix` | 正本要件・DB設計・APIレビュー反映済み。`ロール整理.xlsx` の `権限管理単位一覧` A列粒度へ追従済み |
 | 2 | 作業対象施設選択 | 個別ファイルなし | 3. `/facility-select` | `不要` | 認証認可API設計書に統合管理。`/auth/me` の `assignedFacilities` / `defaultFacilityId` と `/auth/context` を利用する |
 
 ## ホーム/メニュー
@@ -29,13 +29,13 @@
 ## QR/ラベル発行
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 4 | QR発行・ラベル印刷 | `Fix/API設計書_QR発行・ラベル印刷.docx` | 5. `/qr-issue`、6. `/qr-print` | `Fix` | QR発行から印刷までを1本で扱う想定。要件・DB設計レビュー済み。 |
+| 4 | QR発行・ラベル印刷 | `Fix/API設計書_QR発行・ラベル印刷.docx` | 5. `/qr-issue`、6. `/qr-print` | `Fix` | QR発行から印刷までを `qr_issue` 1単位で扱う方針で確定。要件・DB設計・最新認証認可レビュー反映済み。 |
 
 ## 現有品調査・資産台帳取込・突合
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 5 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱う。 |
-| 6 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 正本要件・DB設計・APIレビュー反映済み |
+| 5 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱い、正本要件・DB設計・最新認証認可レビュー反映済み。 |
+| 6 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 | 7 | データ突合 | 未作成 | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `未着手` | データ統合・原本確定を別途定義予定 |
 
 ## 資産検索・台帳・棚卸
@@ -47,12 +47,12 @@
 ## マスタ管理
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 10 | SHIP資産マスタ | 未作成 | 17. `/ship-asset-master`、30. `/asset-master` | `未着手` | 資産マスタ選択ポップアップ含む |
-| 11 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 正本要件・DB設計との整合確認済み |
-| 12 | 個別部署マスタ | `Fix/API設計書_個別部署マスタ.docx` | 19. `/hospital-facility-master` | `Fix` | 正本要件・DB設計との整合確認済み |
-| 13 | SHIP部署マスタ | `Fix/API設計書_SHIP部署マスタ.docx` | 20. `/ship-department-master` | `Fix` | 正本要件・DB設計との整合確認済み |
+| 10 | SHIP資産マスタ | `Fix/API設計書_SHIP資産マスタ.docx` | 17. `/ship-asset-master`、30. `/asset-master` | `Fix` | 資産マスタ選択ポップアップ含む。添付文書の安定表示、インポート必須列の明確化、資産マスタIDの `ship_asset_master_id` 統一まで反映済み |
+| 11 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
+| 12 | 個別部署マスタ | `Fix/API設計書_個別部署マスタ.docx` | 19. `/hospital-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
+| 13 | SHIP部署マスタ | `Fix/API設計書_SHIP部署マスタ.docx` | 20. `/ship-department-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 | 14 | SHIPユーザー管理 | 未作成 | 21. `/user-management` | `未着手` | 別途定義予定 |
-| 15 | 業者マスタ | `Fix/API設計書_業者マスタ.docx` | 63. `/vendor-master` | `Fix` | 画面要件・DB設計との整合確認済み |
+| 15 | 業者マスタ | `Fix/API設計書_業者マスタ.docx` | 63. `/vendor-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 
 ## 申請・見積・RFQ
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |

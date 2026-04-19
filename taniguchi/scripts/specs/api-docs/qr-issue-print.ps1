@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_QR発行・ラベル印刷.docx'
   ScreenLabel = 'QR発行・ラベル印刷'
-  CoverDateText = '2026年3月16日'
-  RevisionDateText = '2026/3/16'
+  CoverDateText = '2026年4月17日'
+  RevisionDateText = '2026/4/17'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -66,17 +66,18 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '専用 feature_code の最終定義は未確定だが、本API設計書では QR発行権限または QR印刷権限を持つ利用者が、選択施設に対して実行できる前提で記載する。テンプレート定義本体とプリンタ候補取得はアプリ内固定/ローカルモジュール前提のため、本APIの権限制御対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列の `QRコード発行` に対応する `qr_issue` を用いる。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート定義本体とプリンタ候補取得はアプリ内固定/ローカルモジュール前提のため、本APIの権限制御対象外とする。' },
     @{ Type = 'Table'; Headers = @('処理', '必要権限', '説明'); Rows = @(
-      @('プレビュー生成', 'QR発行権限 + 対象施設アクセス可', '新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
-      @('印刷ジョブ作成', 'QR印刷権限 + 対象施設アクセス可', '印刷画面用ジョブと明細を作成する'),
-      @('印刷ジョブ取得', 'QR印刷権限 + 対象施設アクセス可', '印刷プレビュー画面の表示情報を取得する'),
-      @('印刷実行', 'QR印刷権限 + 対象施設アクセス可', '印刷開始と `qr_codes` / 印刷結果の確定を行う')
+      @('プレビュー生成', '対象施設に対する実効 `qr_issue`', '新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
+      @('印刷ジョブ作成', '対象施設に対する実効 `qr_issue`', '印刷画面用ジョブを作成する'),
+      @('印刷ジョブ取得', '対象ジョブ施設に対する実効 `qr_issue`', '印刷プレビュー画面の表示情報を取得する'),
+      @('印刷実行', '対象ジョブ施設に対する実効 `qr_issue`', '印刷開始と `qr_codes` / 印刷結果の確定を行う')
     ) },
     @{ Type = 'Heading2'; Text = '施設スコープ仕様' },
     @{ Type = 'Bullets'; Items = @(
-      '各APIは `facilityId` または対象ジョブの施設IDを基準に、認証済みユーザーが当該施設を作業対象施設として扱えるかを検証する',
-      '施設アクセス不可の場合は 403 を返却する',
+      '各 API は `facilityId` または対象ジョブの `facility_id` を基準に、認証済みユーザーが当該施設を作業対象施設として扱えるかを検証する',
+      '各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `qr_issue` を都度再判定する',
+      '対象施設に対する `user_facility_assignments` の有効割当、`facility_feature_settings(feature_code=''qr_issue'')`、`user_facility_feature_settings(feature_code=''qr_issue'')` のいずれかを満たさない場合は 403 を返却する',
       '`qr_identifier` の一意性判定および採番は施設単位で行う'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
@@ -131,8 +132,8 @@
           }
         )
         PermissionLines = @(
-          'QR発行権限を持つ利用者であること',
-          '指定 `facilityId` が作業対象施設として許可されていること'
+          '認可条件: `user_facility_assignments` に対象施設への有効割当があること',
+          '認可条件: `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
         )
         ProcessingLines = @(
           '入力値の必須・桁数・形式を検証する',
@@ -172,7 +173,7 @@
           @('200', '生成成功', 'QrIssuePreviewResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '対象施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
           @('404', '施設または再発行起点QRが存在しない', 'ErrorResponse'),
           @('409', '再発行対象に欠番がある', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -206,8 +207,8 @@
           }
         )
         PermissionLines = @(
-          'QR印刷権限を持つ利用者であること',
-          '指定 `facilityId` が作業対象施設として許可されていること'
+          '認可条件: `user_facility_assignments` に対象施設への有効割当があること',
+          '認可条件: `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
         )
         ProcessingLines = @(
           '`qr_print_jobs` に1件作成し、`requested_by_user_id` には認証ユーザーIDを設定する',
@@ -227,7 +228,7 @@
           @('201', '作成成功', 'QrPrintJobCreateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '対象施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
           @('409', 'ジョブ対象一覧の整合が取れない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -244,8 +245,8 @@
           @('qrPrintJobId', 'path', 'int64', '✓', '印刷ジョブID')
         )
         PermissionLines = @(
-          'QR印刷権限を持つ利用者であること',
-          '対象ジョブの施設が作業対象施設として許可されていること'
+          '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
         )
         ProcessingLines = @(
           '`qr_print_jobs` と、作成済みの `qr_print_job_items` を取得する',
@@ -282,7 +283,7 @@
         StatusRows = @(
           @('200', '取得成功', 'QrPrintJobResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '対象ジョブ施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
           @('404', '対象ジョブが存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -317,8 +318,8 @@
           }
         )
         PermissionLines = @(
-          'QR印刷権限を持つ利用者であること',
-          '対象ジョブの施設が作業対象施設として許可されていること'
+          '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
         )
         ProcessingLines = @(
           '`qr_print_jobs.status` を `IN_PROGRESS` へ更新し、`started_at` を設定する',
@@ -341,7 +342,7 @@
           @('200', '実行完了', 'QrPrintExecuteResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設へのアクセス不可', 'ErrorResponse'),
+          @('403', '対象ジョブ施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
           @('404', '対象ジョブが存在しない', 'ErrorResponse'),
           @('409', '採番競合または再発行対象不整合', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -361,7 +362,7 @@
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('AUTH_401', '401', '未認証'),
-      @('AUTH_403_FACILITY_SCOPE', '403', '指定施設へのアクセス権限がない'),
+      @('AUTH_403_QR_ISSUE_DENIED', '403', '対象施設に対する実効 `qr_issue` がない'),
       @('QR_400_INVALID_INPUT', '400', '入力形式または必須項目が不正'),
       @('QR_404_FACILITY_NOT_FOUND', '404', '対象施設が存在しない'),
       @('QR_404_QR_NOT_FOUND', '404', '再発行対象またはジョブ対象QRが存在しない'),
