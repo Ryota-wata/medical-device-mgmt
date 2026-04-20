@@ -110,31 +110,17 @@ function AssetDetailContent() {
   const hasPhotos = photos.length > 0;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'white' }}>
+    <div className="min-h-dvh flex flex-col bg-[#f9fafb]">
       {/* ヘッダー */}
-      <header
-        className="text-white flex justify-between items-center"
-        style={{
-          background: '#374151',
-          padding: '12px 20px'
-        }}
-      >
+      <header className="bg-white border-b border-[#e5e7eb] flex justify-between items-center px-5 py-3">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div
-              className="flex items-center justify-center text-white font-bold text-sm"
-              style={{
-                width: '40px',
-                height: '40px',
-                background: '#27ae60',
-                borderRadius: '8px'
-              }}
-            >
+            <div className="flex items-center justify-center text-white font-bold text-sm w-10 h-10 bg-[#27ae60] rounded-lg">
               SHIP
             </div>
-            <div className="text-base font-bold">資産リスト</div>
+            <div className="text-base font-bold text-[#1f2937]">資産リスト</div>
           </div>
-          <span className="text-sm" style={{ color: '#ecf0f1' }}>1件</span>
+          <span className="text-sm text-[#4b5563]">1件</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -142,7 +128,7 @@ function AssetDetailContent() {
             <>
               {!isEditMode ? (
                 <button
-                  style={{ padding: '8px 16px', background: '#9b59b6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                  className="px-4 py-2 bg-[#9b59b6] text-white border-none rounded-md cursor-pointer text-sm hover:bg-[#8e44ad]"
                   onClick={() => setIsEditMode(true)}
                 >
                   編集
@@ -150,13 +136,13 @@ function AssetDetailContent() {
               ) : (
                 <>
                   <button
-                    style={{ padding: '8px 16px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                    className="px-4 py-2 bg-[#27ae60] text-white border-none rounded-md cursor-pointer text-sm hover:bg-[#219a52]"
                     onClick={() => { alert('保存'); setIsEditMode(false); }}
                   >
                     保存
                   </button>
                   <button
-                    style={{ padding: '8px 16px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                    className="px-4 py-2 bg-[#95a5a6] text-white border-none rounded-md cursor-pointer text-sm hover:bg-[#7f8c8d]"
                     onClick={() => setIsEditMode(false)}
                   >
                     キャンセル
@@ -167,10 +153,8 @@ function AssetDetailContent() {
           )}
 
           <button
-            style={{ padding: '8px 16px', background: '#374151', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+            className="px-4 py-2 bg-[#374151] text-white border-none rounded-md cursor-pointer text-sm hover:bg-[#1f2937]"
             onClick={() => router.push(backConfig.href)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#1f2937'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#374151'; }}
           >
             {backConfig.label}
           </button>
@@ -178,24 +162,16 @@ function AssetDetailContent() {
       </header>
 
       {/* メインコンテンツ */}
-      <div style={{ display: 'flex', flex: 1, gap: '20px', padding: '20px', overflow: 'auto' }}>
+      <div className="flex flex-1 gap-5 p-5 overflow-auto">
         {/* 左側: 写真と基本情報 */}
-        <div style={{ flex: '1', minWidth: '400px' }}>
+        <div className="flex-1 min-w-[400px]">
           {/* 写真表示エリア */}
-          <div style={{ marginBottom: '20px', background: '#f8f9fa', borderRadius: '8px', padding: '20px' }}>
+          <div className="mb-5 bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-5">
             {isEditMode && (
-              <div style={{ marginBottom: '15px' }}>
+              <div className="mb-4">
                 <label
                   htmlFor="photo-upload"
-                  style={{
-                    display: 'inline-block',
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
+                  className="inline-block px-4 py-2 bg-[#27ae60] text-white rounded-md cursor-pointer text-sm hover:bg-[#219a52]"
                 >
                   📷 写真を追加
                 </label>
@@ -205,55 +181,29 @@ function AssetDetailContent() {
                   accept="image/*"
                   multiple
                   onChange={handlePhotoUpload}
-                  style={{ display: 'none' }}
+                  className="hidden"
                 />
               </div>
             )}
-            <div style={{ position: 'relative', marginBottom: '15px' }}>
+            <div className="relative mb-4">
               {hasPhotos ? (
                 <>
                   <button
                     onClick={() => setCurrentPhotoIndex(Math.max(0, currentPhotoIndex - 1))}
                     disabled={currentPhotoIndex === 0}
-                    style={{
-                      position: 'absolute',
-                      left: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(0,0,0,0.5)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      cursor: currentPhotoIndex === 0 ? 'not-allowed' : 'pointer',
-                      fontSize: '24px',
-                      zIndex: 10
-                    }}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-black/50 text-white border-none rounded-full w-10 h-10 text-2xl z-10 disabled:cursor-not-allowed cursor-pointer"
                   >
                     ‹
                   </button>
                   <img
                     src={photos[currentPhotoIndex]}
                     alt="資産写真"
-                    style={{ width: '100%', height: '300px', objectFit: 'cover', borderRadius: '8px' }}
+                    className="w-full h-[300px] object-cover rounded-lg"
                   />
                   {isEditMode && (
                     <button
                       onClick={() => handlePhotoDelete(currentPhotoIndex)}
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: '#e74c3c',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        zIndex: 10,
-                      }}
+                      className="absolute top-2.5 right-2.5 bg-[#e74c3c] text-white border-none rounded-md px-3 py-2 cursor-pointer text-sm z-10 hover:bg-[#c0392b]"
                     >
                       🗑️ 削除
                     </button>
@@ -261,53 +211,16 @@ function AssetDetailContent() {
                   <button
                     onClick={() => setCurrentPhotoIndex(Math.min(photos.length - 1, currentPhotoIndex + 1))}
                     disabled={currentPhotoIndex === photos.length - 1}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(0,0,0,0.5)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      cursor: currentPhotoIndex === photos.length - 1 ? 'not-allowed' : 'pointer',
-                      fontSize: '24px',
-                      zIndex: 10
-                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-black/50 text-white border-none rounded-full w-10 h-10 text-2xl z-10 disabled:cursor-not-allowed cursor-pointer"
                   >
                     ›
                   </button>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '10px',
-                      right: '10px',
-                      background: 'rgba(0,0,0,0.7)',
-                      color: 'white',
-                      padding: '5px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px'
-                    }}
-                  >
+                  <div className="absolute bottom-2.5 right-2.5 bg-black/70 text-white px-2.5 py-1 rounded text-xs">
                     {currentPhotoIndex + 1} / {photos.length}
                   </div>
                 </>
               ) : (
-                <div
-                  style={{
-                    width: '100%',
-                    height: '300px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#e0e0e0',
-                    borderRadius: '8px',
-                    color: '#666',
-                    fontSize: '16px',
-                  }}
-                >
+                <div className="w-full h-[300px] flex items-center justify-center bg-[#e0e0e0] rounded-lg text-[#666] text-base">
                   写真なし
                 </div>
               )}
@@ -315,20 +228,17 @@ function AssetDetailContent() {
 
             {/* サムネイル */}
             {hasPhotos && (
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div className="flex gap-2.5 justify-center flex-wrap">
                 {photos.map((photo, index) => (
                   <img
                     key={index}
                     src={photo}
                     alt={`サムネイル${index + 1}`}
-                    style={{
-                      width: '60px',
-                      height: '60px',
-                      objectFit: 'cover',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      border: index === currentPhotoIndex ? '3px solid #27ae60' : '1px solid #ddd'
-                    }}
+                    className={`w-[60px] h-[60px] object-cover rounded cursor-pointer ${
+                      index === currentPhotoIndex
+                        ? 'border-[3px] border-[#27ae60]'
+                        : 'border border-[#ddd]'
+                    }`}
                     onClick={() => setCurrentPhotoIndex(index)}
                   />
                 ))}
@@ -337,15 +247,15 @@ function AssetDetailContent() {
           </div>
 
           {/* 資産情報（8グループ構成） */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="flex flex-col gap-4">
 
             {/* 基本情報 */}
-            <DetailSection title="基本情報" color="#495057" bg="#f8f9fa">
+            <DetailSection title="基本情報">
               <DetailField label="施設名" value={asset.facility} field="facility" isEditMode={isEditMode} onChange={handleFieldChange} />
             </DetailSection>
 
             {/* 共通マスタ */}
-            <DetailSection title="共通マスタ" color="#2e7d32" bg="#e8f5e9">
+            <DetailSection title="共通マスタ">
               <DetailField label="部門名" value={asset.shipDivision} field="shipDivision" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="部署名" value={asset.shipDepartment} field="shipDepartment" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="諸室区分①" value={asset.roomClass1} field="roomClass1" isEditMode={isEditMode} onChange={handleFieldChange} />
@@ -353,7 +263,7 @@ function AssetDetailContent() {
             </DetailSection>
 
             {/* 設置情報 */}
-            <DetailSection title="設置情報" color="#1565c0" bg="#e3f2fd">
+            <DetailSection title="設置情報">
               <DetailField label="部門ID" value={asset.divisionId} field="divisionId" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="部署ID" value={asset.departmentId} field="departmentId" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="諸室ID" value={asset.roomId} field="roomId" isEditMode={isEditMode} onChange={handleFieldChange} />
@@ -366,7 +276,7 @@ function AssetDetailContent() {
             </DetailSection>
 
             {/* 識別情報 */}
-            <DetailSection title="識別情報" color="#e65100" bg="#fff3e0">
+            <DetailSection title="識別情報">
               <DetailField label="QRコード" value={asset.qrCode} field="qrCode" isEditMode={false} onChange={handleFieldChange} />
               <DetailField label="台帳番号" value={asset.assetNo} field="assetNo" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="管理部署" value={asset.managementDept} field="managementDept" isEditMode={isEditMode} onChange={handleFieldChange} />
@@ -376,7 +286,7 @@ function AssetDetailContent() {
             </DetailSection>
 
             {/* 資産分類 */}
-            <DetailSection title="資産分類" color="#7b1fa2" bg="#f3e5f5">
+            <DetailSection title="資産分類">
               <DetailField label="資産マスタID" value={asset.assetMasterId} field="assetMasterId" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="Category" value={asset.category} field="category" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="大分類" value={asset.largeClass} field="largeClass" isEditMode={isEditMode} onChange={handleFieldChange} />
@@ -386,7 +296,7 @@ function AssetDetailContent() {
             </DetailSection>
 
             {/* 機器仕様 */}
-            <DetailSection title="機器仕様" color="#00838f" bg="#e0f7fa">
+            <DetailSection title="機器仕様">
               <DetailField label="個体管理名称" value={asset.name} field="name" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="メーカー名" value={asset.maker} field="maker" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="型式" value={asset.model} field="model" isEditMode={isEditMode} onChange={handleFieldChange} />
@@ -396,14 +306,14 @@ function AssetDetailContent() {
             </DetailSection>
 
             {/* 取得情報 */}
-            <DetailSection title="取得情報" color="#c62828" bg="#fce4ec">
+            <DetailSection title="取得情報">
               <DetailField label="購入年月日" value={asset.purchaseDate} field="purchaseDate" isEditMode={isEditMode} onChange={handleFieldChange} type="date" />
               <DetailField label="リース" value={asset.lease} field="lease" isEditMode={isEditMode} onChange={handleFieldChange} />
               <DetailField label="貸出品" value={asset.rental} field="rental" isEditMode={isEditMode} onChange={handleFieldChange} />
             </DetailSection>
 
             {/* その他 */}
-            <DetailSection title="その他" color="#616161" bg="#f5f5f5">
+            <DetailSection title="その他">
               <DetailField label="備考" value={asset.remarks} field="remarks" isEditMode={isEditMode} onChange={handleFieldChange} />
             </DetailSection>
 
@@ -411,13 +321,13 @@ function AssetDetailContent() {
         </div>
 
         {/* 右側: ドキュメント閲覧 */}
-        <div style={{ flex: '1', minWidth: '400px' }}>
-          <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: '8px', padding: '20px', height: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>登録ドキュメント</h3>
+        <div className="flex-1 min-w-[400px]">
+          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-5 h-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-bold text-[#1f2937]">登録ドキュメント</h3>
               {isEditMode && (
                 <button
-                  style={{ padding: '6px 12px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                  className="px-3 py-1.5 bg-[#27ae60] text-white border-none rounded-md cursor-pointer text-[13px] hover:bg-[#219a52]"
                   onClick={() => alert('ドキュメント追加')}
                 >
                   ➕ ドキュメント追加
@@ -426,34 +336,28 @@ function AssetDetailContent() {
             </div>
 
             {/* ドキュメントリスト */}
-            <div style={{ marginBottom: '20px' }}>
+            <div className="mb-5">
               {['契約書.pdf', '納品書.pdf', '検収書.pdf'].map((doc, index) => (
                 <div
                   key={index}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '12px',
-                    marginBottom: '8px',
-                    background: index === 0 ? '#e3f2fd' : '#f8f9fa',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
+                  className={`flex items-center p-3 mb-2 rounded cursor-pointer ${
+                    index === 0 ? 'bg-[#e3f2fd]' : 'bg-[#f8f9fa]'
+                  }`}
                 >
-                  <span style={{ fontSize: '24px', marginRight: '12px' }}>📄</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#1f2937' }}>{doc}</div>
-                    <div style={{ fontSize: '12px', color: '#5a6c7d' }}>2025-01-15 登録</div>
+                  <span className="text-2xl mr-3">📄</span>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-[#1f2937]">{doc}</div>
+                    <div className="text-xs text-[#4b5563]">2025-01-15 登録</div>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* ドキュメントビューアー */}
-            <div style={{ border: '1px solid #dee2e6', borderRadius: '8px', padding: '20px', textAlign: 'center', background: '#f8f9fa' }}>
-              <div style={{ fontSize: '48px', marginBottom: '15px' }}>📄</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>契約書.pdf</div>
-              <p style={{ fontSize: '13px', color: '#5a6c7d' }}>
+            <div className="border border-[#e5e7eb] rounded-lg p-5 text-center bg-[#f8f9fa]">
+              <div className="text-5xl mb-4">📄</div>
+              <div className="text-base font-bold text-[#1f2937] mb-2.5">契約書.pdf</div>
+              <p className="text-[13px] text-[#4b5563]">
                 ※ 実際のシステムでは、選択したドキュメントがここに表示されます
               </p>
             </div>
@@ -477,13 +381,13 @@ function AssetDetailContent() {
 
 
 // セクションヘッダー付きグループ
-function DetailSection({ title, color, bg, children }: { title: string; color: string; bg: string; children: React.ReactNode }) {
+function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: '8px', overflow: 'hidden' }}>
-      <div style={{ background: bg, padding: '8px 16px', borderBottom: '1px solid #dee2e6' }}>
-        <span style={{ fontSize: '14px', fontWeight: 'bold', color }}>{title}</span>
+    <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] overflow-hidden">
+      <div className="bg-[#f9fafb] px-4 py-2 border-b border-[#e0e0e0]">
+        <span className="text-sm font-bold text-[#2c3e50]">{title}</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0', fontSize: '14px' }}>
+      <div className="grid grid-cols-[140px_1fr] text-sm">
         {children}
       </div>
     </div>
@@ -500,12 +404,11 @@ function DetailField({ label, value, field, isEditMode, onChange, type = 'text' 
   type?: 'text' | 'number' | 'date';
 }) {
   const displayValue = value ?? '-';
-  const inputStyle = { padding: '4px 8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', width: '100%', boxSizing: 'border-box' as const };
 
   return (
     <>
-      <div style={{ color: '#5a6c7d', fontWeight: 'bold', padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: '13px' }}>{label}</div>
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0' }}>
+      <div className="text-sm font-semibold text-[#2c3e50] px-3 py-2 border-b border-[#f0f0f0]">{label}</div>
+      <div className="px-3 py-2 border-b border-[#f0f0f0]">
         {isEditMode ? (
           <input
             type={type}
@@ -514,10 +417,10 @@ function DetailField({ label, value, field, isEditMode, onChange, type = 'text' 
               const val = type === 'number' ? (parseInt(e.target.value) || 0) : e.target.value;
               onChange(field as keyof Asset, val);
             }}
-            style={inputStyle}
+            className="w-full px-3 py-2.5 border border-[#ddd] rounded text-sm box-border"
           />
         ) : (
-          <div style={{ color: '#1f2937', fontSize: '13px' }}>{typeof displayValue === 'number' ? String(displayValue) : displayValue}</div>
+          <div className="text-sm text-[#4b5563]">{typeof displayValue === 'number' ? String(displayValue) : displayValue}</div>
         )}
       </div>
     </>
