@@ -605,6 +605,7 @@ package "QRコード" {
     テンプレートキー / template_key : varchar
     プリンタ名 / printer_name : varchar
     クライアント要求ID / client_request_id : varchar
+    要求比較用ハッシュ / request_payload_hash : char
     実行者ユーザーID / requested_by_user_id : bigint
     依頼日時 / requested_at : timestamp
     開始日時 / started_at : timestamp
@@ -620,6 +621,10 @@ package "QRコード" {
 
   note right of qr_print_jobs
     UNIQUE(requested_by_user_id, facility_id, client_request_id)
+    request_payload_hash stores
+    the normalized print-start
+    request payload hash used for
+    idempotent replay comparison.
     started_at is recorded when
     print-start acceptance completes
     and the client can hand off to
@@ -644,6 +649,18 @@ package "QRコード" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of qr_print_job_items
+    PRINTED requires printed_at and
+    no error_message.
+    FAILED requires error_message and
+    no printed_at.
+    CANCELED allows optional
+    error_message and no printed_at.
+    qrContentUrl is not persisted and
+    is derived from base URL,
+    facility_id, and qr_identifier.
+  end note
 }
 
 ' 編集リスト

@@ -36,7 +36,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 5 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱い、正本要件・DB設計・最新認証認可レビュー反映済み。 |
 | 6 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
-| 7 | データ突合 | `参考_作業用/API設計書_データ突合_20260422_221725.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `参考/作業用` | 差し戻しAPI、論理統合、pagination、監査出力、`representativeItemId` 明示、`creation_type` / `item_status` と未確認追加行の invalidation ルール、`item_sources` / `item_list_results` の active key 一意制約強化、`decisionNote` の判定履歴正本化、`PENDING/COMPLETED` の ACTIVE 判定基準統一、`mark-unconfirmed` のメーカー/型式 snapshot 明示、`qr_resolution_status` と `ORIGINAL_QR_BINDING_CONFLICT` の構造化競合明細まで反映した再修正版 draft 生成済み。内容確認後に `作成済み` / `Fix` を判断 |
+| 7 | データ突合 | `参考_作業用/API設計書_データ突合_20260423_045653.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `参考/作業用` | `source_order` に基づく現在処理対象リストの順序制御、`ACTIVE` 判定履歴を `source_order ASC` で再適用する共通 snapshot 再構築、後続リストに `ACTIVE` 判定が残る場合の差し戻し禁止、`CONFIRM_ORIGINAL` の `confirmed_by_user_id` / `confirmed_at` 保存、`keyword` 検索対象の明確化まで反映した再修正版 draft 生成済み。内容確認後に `作成済み` / `Fix` を判断 |
 
 ## 資産検索・台帳・棚卸
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |

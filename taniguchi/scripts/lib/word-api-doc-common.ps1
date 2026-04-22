@@ -740,8 +740,14 @@ function New-ApiWordDocumentFromSpec {
       $doc.TablesOfContents.Item(1).Update() | Out-Null
     }
     $doc.Fields.Update() | Out-Null
-    Apply-ApiDocFormatting -Document $doc
     $doc.Save()
+    try {
+      Apply-ApiDocFormatting -Document $doc
+      $doc.Save()
+    }
+    catch {
+      Write-Warning ("Apply-ApiDocFormatting failed. Saved document without final formatting pass. {0}" -f $_.Exception.Message)
+    }
   }
   finally {
     if ($doc) {

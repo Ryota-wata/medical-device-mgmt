@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_QR発行・ラベル印刷.docx'
   ScreenLabel = 'QR発行・ラベル印刷'
-  CoverDateText = '2026年4月22日'
-  RevisionDateText = '2026/4/22'
+  CoverDateText = '2026年4月23日'
+  RevisionDateText = '2026/4/23'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -67,7 +67,8 @@
       '日時形式: ISO 8601（例: `2026-04-22T10:30:00+09:00`）',
       'プレビューの QRシンボル自体は base64 PNG 文字列または同等の表示用データを返却する',
       '印刷用の最終確定データは印刷ジョブ開始受付 API のレスポンスを正本とし、クライアントはそれをローカル印刷モジュールへ渡す',
-      'QRシンボルへ埋め込む遷移用URLは、アプリ設定ベースURLに `facilityId` と `qrIdentifier` の両方をクエリとして付与した形式を用いる'
+      'QRシンボルへ埋め込む遷移用URLは、アプリ設定ベースURLに `facilityId` と `qrIdentifier` の両方をクエリとして付与した形式を用いる',
+      '`qrContentUrl` は `facilityId` / `qrIdentifier` / アプリ設定ベースURLから決定的に生成する派生値であり、DBへは保存しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
@@ -218,13 +219,14 @@
           '認可条件: `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
         )
         ProcessingLines = @(
-          '入力値、`clientRequestId` の形式、`printOrder` 重複、件数整合を検証する',
-          '同一ユーザー・同一施設・同一 `clientRequestId` の再送は冪等に扱う。完全一致する既存開始受付がある場合はそのジョブを返し、内容が異なる場合は 409 を返す',
-          '`qr_print_jobs` に1件作成し、`client_request_id`、`requested_by_user_id`、`requested_at`、`started_at`、`status=''IN_PROGRESS''` を設定する。`started_at` は印刷開始受付完了時刻とする',
+          '入力値、`clientRequestId` の形式、`printOrder` 重複、件数整合を検証し、比較用に開始受付ペイロードを正規化する',
+          '正規化ルールは、`items` を `printOrder` 昇順で並べ、未指定と `null` は同値として扱う対象項目を統一し、比較対象を `facilityId` / `issueMode` / `templateKey` / `printerName` / `freeEntryText` / `items[*].printOrder` / `items[*].qrIdentifier` / `items[*].existingQrCodeId` とする',
+          '正規化済み開始受付ペイロードから `requestPayloadHash` を生成する。同一ユーザー・同一施設・同一 `clientRequestId` の再送は冪等に扱い、既存 `request_payload_hash` と一致する場合は既存ジョブを返し、不一致の場合は 409 を返す',
+          '`qr_print_jobs` に1件作成し、`client_request_id`、`request_payload_hash`、`requested_by_user_id`、`requested_at`、`started_at`、`status=''IN_PROGRESS''` を設定する。`started_at` は印刷開始受付完了時刻とする',
           '新規発行時は `(facility_id, qr_identifier)` と `(facility_id, code_prefix, code_branch, code_serial)` の重複を再検証したうえで `qr_codes` を作成し、`issued_by_user_id` / `issued_at` / `print_status=''PRINTING''` / `last_print_job_id` を設定する',
           '再発行時は既存 `qr_codes` を再取得し、存在確認と `existingQrCodeId` / `qrIdentifier` の整合を検証したうえで、`label_template_key` / `free_entry_text` / `issued_by_user_id` / `issued_at` / `print_status=''PRINTING''` / `last_print_job_id` を更新する',
           '`qr_print_job_items` を全件 `WAITING` で作成し、各明細に確定した `qr_code_id`、`print_order` を紐づける',
-          '印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する'
+          '印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する。`qrContentUrl` は保存値ではなく、確定した `facilityId` / `qrIdentifier` から生成する'
         )
         ResponseTitle = 'レスポンス（201：QrPrintJobCreateResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -277,6 +279,7 @@
         ProcessingLines = @(
           '`qr_print_jobs` と `qr_print_job_items` を取得する',
           '印刷対象の `qrIdentifier`、表示順、現在ステータス、エラーメッセージを返却する',
+          '`qrContentUrl` は保存値ではなく、ジョブの `facilityId`、各明細の `qrIdentifier`、アプリ設定ベースURLから組み立てて返却する',
           'テンプレート表示名とシールサイズ表示は `templateKey` に対応するアプリ内固定定義から補完する',
           'ジョブ全体の成功/失敗件数、開始/終了時刻、失敗段階、エラー概要を返却する'
         )
@@ -350,8 +353,17 @@
             Rows = @(
               @('qrPrintJobItemId', 'int64', '✓', '印刷ジョブ明細ID'),
               @('status', 'string', '✓', 'PRINTED / FAILED / CANCELED'),
-              @('errorMessage', 'string', '-', '失敗時エラー'),
-              @('printedAt', 'datetime', '-', '端末側印刷時刻')
+              @('errorMessage', 'string', '-', 'FAILED 時は必須。CANCELED 時は任意。PRINTED 時は未指定'),
+              @('printedAt', 'datetime', '-', 'PRINTED 時は必須。FAILED / CANCELED 時は未指定')
+            )
+          },
+          @{
+            Title = 'status別入力規則'
+            Headers = @('明細status', 'printedAt', 'errorMessage', '説明')
+            Rows = @(
+              @('PRINTED', '必須', '未指定', '実際に印刷完了した明細'),
+              @('FAILED', '未指定', '必須', '印刷失敗した明細'),
+              @('CANCELED', '未指定', '任意', '利用者取消または端末都合で未印刷終了した明細')
             )
           }
         )
@@ -362,12 +374,13 @@
         ProcessingLines = @(
           '対象ジョブと明細を取得し、ジョブ内明細件数と `resultItems` 件数の一致を検証する',
           '各 `resultItems` を `qrPrintJobItemId` で突合し、対象外明細や重複明細が含まれる場合はエラーとする',
+          '各 `resultItems` について `status` と `printedAt` / `errorMessage` の組み合わせを検証し、`PRINTED` では `printedAt` 必須・`errorMessage` 未指定、`FAILED` では `printedAt` 未指定・`errorMessage` 必須、`CANCELED` では `printedAt` 未指定とする',
           'ローカル印刷モジュール初期化失敗や印刷要求開始失敗など、物理印刷前に失敗した場合でも、本 API を呼び出して対象全件を `FAILED` として終端させる',
           'ジョブがすでに終端ステータスの場合、同一結果の再送は冪等に受理し、矛盾する更新要求は 409 とする',
           '印刷成功時は対応する `qr_print_job_items.status=''PRINTED''` / `printed_at` を更新し、対応する `qr_codes.print_status=''PRINTED''` / `printed_at` を更新する',
           '印刷失敗またはキャンセル時は対応する `qr_print_job_items.status` / `error_message` を更新し、対応する `qr_codes.print_status` を `FAILED` または `CANCELED` へ更新する。失敗時は過去の最終成功 `printed_at` を上書きしない',
           '`jobErrorStage` / `jobErrorSummary` が指定された場合は `qr_print_jobs.error_stage` / `error_summary` へ反映し、未指定時は明細エラーから要約を補完する',
-          'ジョブ全体の成功/失敗件数を集計し、`qr_print_jobs.status`、`success_count`、`failure_count`、`finished_at` を更新する'
+          'ジョブ全体の成功/失敗件数を集計し、全件 `PRINTED` の場合は `COMPLETED`、全件 `CANCELED` の場合は `CANCELED`、`PRINTED` を1件以上含みかつ `FAILED` または `CANCELED` を1件以上含む場合は `PARTIAL_FAILED`、それ以外で `FAILED` を1件以上含む場合は `FAILED` として `qr_print_jobs.status`、`success_count`、`failure_count`、`finished_at` を更新する'
         )
         ResponseTitle = 'レスポンス（200：QrPrintResultResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -398,13 +411,15 @@
       'プリンタ候補は端末上のローカル印刷モジュールが返す前提とし、サーバーAPIでは管理しない',
       'プレビュー生成時点では `qr_codes` / `qr_print_jobs` / `qr_print_job_items` を永続化しない',
       '新規発行時の最終採番確定と `qr_codes` 保存は `POST /qr-print/jobs` の印刷開始受付時に行う',
-      '`POST /qr-print/jobs` は `clientRequestId` を用いて冪等に扱い、同一操作の再送では新規ジョブを二重作成しない',
+      '`POST /qr-print/jobs` は `clientRequestId` を用いて冪等に扱い、同一操作の再送では正規化済み開始受付ペイロードの `requestPayloadHash` 一致時のみ既存ジョブを返し、不一致時は 409 とする',
       '`qr_print_job_items` は `POST /qr-print/jobs` の印刷開始受付時に全件作成する',
       '印刷開始受付完了時点で `qr_codes.print_status` は `PRINTING` へ遷移し、`qr_print_jobs.started_at` には印刷開始受付完了時刻を記録する',
       '印刷結果反映 API は `qr_codes` の新規作成や採番を行わず、印刷状態と集計結果の更新のみを行う',
       'ローカル印刷モジュール初期化失敗など物理印刷前の失敗でも、結果反映 API へ全件 `FAILED` を送ってジョブを終端させる',
       '再発行では新しい QR識別子を採番せず、既存 `qr_identifier` を再利用する',
-      '同一ジョブへの同一結果再送は冪等に受理し、矛盾する結果更新は 409 とする'
+      '同一ジョブへの同一結果再送は冪等に受理し、矛盾する結果更新は 409 とする',
+      'ジョブ終端ステータスは、全件 `PRINTED` の場合のみ `COMPLETED`、全件 `CANCELED` の場合のみ `CANCELED`、`PRINTED` を1件以上含む混在時は `PARTIAL_FAILED`、それ以外で `FAILED` を含む場合は `FAILED` とする',
+      '`qrContentUrl` は派生値として都度生成し、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` には保存しない。URL生成ルール変更時は本機能の影響調査対象とする'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
