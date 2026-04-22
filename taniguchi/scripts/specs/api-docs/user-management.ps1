@@ -76,12 +76,17 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = 'ユーザー管理の feature_code は、`user_list_view`、`user_edit`、`user_facility_assignment_edit` を正本とする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。PII を含む基本情報詳細は `user_edit` を前提とし、一覧権限だけでは返却しない。' },
-    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '説明'); Rows = @(
-      @('画面コンテキスト取得 / 一覧取得', '`user_list_view`', '一覧参照と新規作成導線表示の前提'),
-      @('ユーザー基本情報取得 / ユーザー基本情報更新 / 初回設定案内再送 / 削除', '`user_edit`', 'PII を含む基本情報参照と基本情報変更系'),
-      @('ユーザー担当施設詳細取得 / 施設候補取得 / 担当施設更新', '`user_facility_assignment_edit`', '担当施設と施設別権限設定の参照・変更系'),
-      @('ユーザー新規作成', '`user_edit` と `user_facility_assignment_edit`', '新規ユーザーは基本情報と担当施設設定を同時に持つ前提で作成する')
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。PII を含む基本情報詳細は `user_edit` を前提とし、一覧権限だけでは返却しない。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
+      @('ユーザー / 一覧', '`user_list_view`', '画面コンテキスト取得、一覧取得'),
+      @('ユーザー / 新規作成・編集', '`user_edit`', 'ユーザー基本情報取得、ユーザー基本情報更新、初回設定案内再送、削除、ユーザー新規作成の基本情報側'),
+      @('担当施設 / 編集', '`user_facility_assignment_edit`', 'ユーザー担当施設詳細取得、施設候補取得、担当施設更新、ユーザー新規作成の担当施設設定側')
+    ) },
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
+      @('画面コンテキスト取得 / 一覧取得', '`user_list_view`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照と新規作成導線表示の前提'),
+      @('ユーザー基本情報取得 / ユーザー基本情報更新 / 初回設定案内再送 / 削除', '`user_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'PII を含む基本情報参照と基本情報変更系'),
+      @('ユーザー担当施設詳細取得 / 施設候補取得 / 担当施設更新', '`user_facility_assignment_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '担当施設と施設別権限設定の参照・変更系'),
+      @('ユーザー新規作成', '`user_edit` と `user_facility_assignment_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '新規ユーザーは基本情報と担当施設設定を同時に持つ前提で作成する')
     ) },
     @{ Type = 'Heading2'; Text = 'トランザクションと競合制御' },
     @{ Type = 'Bullets'; Items = @(

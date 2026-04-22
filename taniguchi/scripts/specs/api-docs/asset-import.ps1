@@ -696,7 +696,11 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。資産台帳取込は `asset_ledger_import`、突き合わせは `survey_ledger_matching` を用いる。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
+      @('資産台帳取込登録', '`asset_ledger_import`', '取込画面コンテキスト取得、ジョブ状態取得、ファイルアップロード、ジョブ再取込、ジョブ削除'),
+      @('現調台帳突合せ', '`survey_ledger_matching`', '突き合わせ画面コンテキスト取得、一覧取得、候補取得、行更新、一括確定、Excel出力、突き合わせ完了')
+    ) },
     @{ Type = 'Table'; Headers = @('処理', '必要な実効 feature_code', '判定に使う主な情報', '説明'); Rows = @(
       @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象施設への有効割当と実効機能の両方が必要'),
       @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / 突き合わせ完了', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象ジョブまたは Bearer トークン上の作業対象施設に対して再判定する')

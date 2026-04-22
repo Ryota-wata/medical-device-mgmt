@@ -71,7 +71,11 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列に対応する `existing_survey` と `survey_data_edit` を用いる。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
+      @('現有品調査', '`existing_survey`', 'マスタパッケージ取得、調査結果アップロード'),
+      @('現調データ修正', '`survey_data_edit`', '送信後データ一覧、写真参照、更新、写真削除、確定')
+    ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
       @('マスタパッケージ取得 / 調査結果アップロード', '`existing_survey`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '現有品調査の準備・送信を行う'),
       @('調査登録内容修正の一覧 / 写真参照 / 更新 / 写真削除 / 確定', '`survey_data_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '送信後データの修正系処理を行う')

@@ -73,7 +73,10 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列の `QRコード発行` に対応する `qr_issue` を用いる。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート定義本体とプリンタ候補取得はアプリ内固定/ローカルモジュール前提のため、本APIの権限制御対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート定義本体とプリンタ候補取得はアプリ内固定/ローカルモジュール前提のため、本APIの権限制御対象外とする。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
+      @('QRコード発行', '`qr_issue`', 'プレビュー生成、印刷ジョブ開始受付、印刷ジョブ取得、印刷結果反映')
+    ) },
     @{ Type = 'Table'; Headers = @('処理', '必要権限', '説明'); Rows = @(
       @('プレビュー生成', '対象施設に対する実効 `qr_issue`', '新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
       @('印刷ジョブ開始受付', '対象施設に対する実効 `qr_issue`', '印刷開始受付と `qr_codes` / `qr_print_job_items` の確定を行う'),

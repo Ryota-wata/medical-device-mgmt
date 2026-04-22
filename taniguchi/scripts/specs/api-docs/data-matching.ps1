@@ -21,6 +21,10 @@ $cursorPaginationParameterRows = @(
   @('pageSize', 'query', 'int32', '-', '取得件数。`1-500`、既定値 `100`')
 )
 
+$listLockVersionParameterRows = @(
+  @('lockVersion', 'query', 'int64', '-', '一覧取得中の snapshot 固定に用いる session lock version。初回要求では省略可')
+)
+
 $mutationIdempotencyHeaderRows = @(
   @('Idempotency-Key', 'header', 'string', '✓', '更新系 API の冪等性キー。同一 `sessionId` + 実行ユーザー + API パスで一意に扱う')
 )
@@ -98,7 +102,8 @@ $endpointSpecs = @(
         Rows = @(
           @('sessionId', 'int64', '✓', 'データ突合セッションID'),
           @('sessionStatus', 'string', '✓', 'セッション状態。`IN_PROGRESS` / `CONFIRMED`'),
-          @('sessionUpdatedAt', 'datetime', '✓', '競合検知に用いる `asset_data_matching_sessions.updated_at`'),
+          @('lockVersion', 'int64', '✓', '更新競合検知と一覧 snapshot 固定に用いる `asset_data_matching_sessions.lock_version`'),
+          @('sessionUpdatedAt', 'datetime', '✓', 'セッション最終更新日時'),
           @('createdByUserId', 'int64', '✓', 'セッション作成者ユーザーID'),
           @('createdAt', 'datetime', '✓', 'セッション作成日時'),
           @('confirmedAt', 'datetime', '-', '原本確定日時。`CONFIRMED` 時のみ設定'),
@@ -185,7 +190,7 @@ $endpointSpecs = @(
       '基底調査レコードごとに `asset_data_matching_items` を作成し、`creation_type=''SURVEY_BASE''`、`item_status=''ACTIVE''` を設定する。元レコードは `asset_data_matching_item_sources` に `source_type=''SURVEY_RECORD''` として登録し、`active_survey_record_key` を設定して有効統合リスト行の代表元重複を禁止する',
       '初期生成時の `qr_identifier` / `qr_resolution_status` は基底調査レコードの `asset_survey_records.qr_identifier` から設定し、QRありなら `RESOLVED`、QRなしなら `NONE` とする',
       '新規作成は 1 トランザクションで実行し、施設単位の `IN_PROGRESS` 一意制約で同時開始競合を吸収する',
-      '新規作成時は `currentMergedSummary.sourceListLabels` に基底調査リストのみを設定し、`asset_data_matching_sessions.updated_at` を以後の競合検知トークンとして返却する'
+      '新規作成時は `currentMergedSummary.sourceListLabels` に基底調査リストのみを設定し、`asset_data_matching_sessions.lock_version=0` と `updated_at` を返却する。以後の競合検知は `lockVersion`、`updated_at` は監査用の最終更新日時として扱う'
     )
     ResponseTitle = 'レスポンス（200 / 201：DataMatchingSessionStartResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -193,7 +198,8 @@ $endpointSpecs = @(
       @('sessionId', 'int64', '✓', 'データ突合セッションID'),
       @('createdNew', 'boolean', '✓', '新規作成時は true、既存再開時は false'),
       @('sessionStatus', 'string', '✓', 'セッション状態。通常は `IN_PROGRESS`'),
-      @('sessionUpdatedAt', 'datetime', '✓', '競合検知に用いる `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '更新競合検知と一覧 snapshot 固定に用いる `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', 'セッション最終更新日時'),
       @('mergedItemCount', 'int32', '✓', '`merged_into_item_id IS NULL AND item_status=''ACTIVE''` の現在有効な統合リスト件数'),
       @('sourceListLabels', 'string[]', '✓', '統合済みリスト表示名'),
       @('targetLists', 'DataMatchingTargetList[]', '✓', '確定した統合対象一覧'),
@@ -236,23 +242,25 @@ $endpointSpecs = @(
       @('sessionId', 'path', 'int64', '✓', 'データ突合セッションID'),
       @('sessionListId', 'query', 'int64', '✓', '現在突合中の統合対象リストID'),
       @('tab', 'query', 'string', '-', '取得対象タブ。`PENDING` / `COMPLETED`。既定値は `PENDING`')
-    ) + $commonFilterParameterRows + $cursorPaginationParameterRows
+    ) + $commonFilterParameterRows + $listLockVersionParameterRows + $cursorPaginationParameterRows
     PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象 `sessionId` が Bearer トークン上の作業対象施設と同一施設に属する `IN_PROGRESS` セッションであることを検証する',
       '`sessionListId` が当該セッション配下の `source_type=''IMPORT_JOB''` であり、`merge_status=''PENDING''` または `''COMPLETED''` であることを検証する',
+      '初回要求で `lockVersion` 省略時は現在の `asset_data_matching_sessions.lock_version` を当該一覧の snapshot version として採用する。指定時は `cursor` に埋め込まれた `lockVersion` と一致し、かつ `session_status=''IN_PROGRESS''` の間は現在の `lock_version` と一致することを検証する。不一致時は 409 (`LIST_SNAPSHOT_EXPIRED`) を返却する',
       '`asset_data_matching_items` のうち `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の有効行を対象に、`asset_data_matching_item_list_results.result_status=''ACTIVE''` を `sessionListId` で突合し、選択中リストに対する `matchingStatus`・`decisionNote`・完了済み判定・進捗件数を算出する',
       '`tab=''PENDING''` では `result_status=''ACTIVE''` の判定結果が存在しない統合リスト行のみ、`tab=''COMPLETED''` では当該リストに対する有効判定結果行が存在する統合リスト行のみを返却する',
       '共通フィルタは `department_name` / `section_name` と各種マスタID列に対して適用する',
       '一致検索は選択中リストの未完了台帳行と比較し、カテゴリ / 資産番号 / 大分類 / 品目 / メーカーの一致候補のみを残す',
-      '`cursor` 指定時は既定ソート順の続き位置から取得し、`pageSize` 件を上限に返却する',
+      '`cursor` 指定時は既定ソート順と `lockVersion` を固定した snapshot の続き位置から取得し、`pageSize` 件を上限に返却する',
       '返却順は `department_name ASC, section_name ASC, asset_item_name ASC, asset_data_matching_item_id ASC` を既定とする'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingMergedItemListResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
     ResponseRows = @(
       @('sessionId', 'int64', '✓', 'データ突合セッションID'),
-      @('sessionUpdatedAt', 'datetime', '✓', '競合検知に用いる `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '今回返却した一覧 snapshot の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', 'セッション最終更新日時'),
       @('currentList', 'CurrentListSummary', '✓', '現在突合中リストの要約'),
       @('progress', 'MatchingProgressSummary', '✓', '進捗件数 / 進捗率'),
       @('totalCount', 'int32', '✓', '条件一致した有効統合リスト総件数'),
@@ -317,7 +325,7 @@ $endpointSpecs = @(
       @('401', '未認証', 'ErrorResponse'),
       @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
-      @('409', 'セッションが `CONFIRMED` など取得不可状態である', 'ErrorResponse'),
+      @('409', 'セッションが `CONFIRMED` など取得不可状態である、または一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -332,14 +340,15 @@ $endpointSpecs = @(
     ParametersRows = @(
       @('sessionId', 'path', 'int64', '✓', 'データ突合セッションID'),
       @('sessionListId', 'query', 'int64', '✓', '現在突合中の固定資産台帳リストID')
-    ) + $commonFilterParameterRows + $cursorPaginationParameterRows
+    ) + $commonFilterParameterRows + $listLockVersionParameterRows + $cursorPaginationParameterRows
     PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象セッションと `sessionListId` の施設整合を検証し、対象 list が固定資産台帳系の整形済みリストであることを検証する',
+      '初回要求で `lockVersion` 省略時は現在の `asset_data_matching_sessions.lock_version` を当該一覧の snapshot version として採用する。指定時は `cursor` に埋め込まれた `lockVersion` と一致し、かつ `session_status=''IN_PROGRESS''` の間は現在の `lock_version` と一致することを検証する。不一致時は 409 (`LIST_SNAPSHOT_EXPIRED`) を返却する',
       '対象 `asset_import_job_id` 配下の `asset_import_rows` から、`asset_data_matching_item_list_results.result_status=''ACTIVE''` に未登録の行のみを `items` として返却する',
       '`matchedCount` は当該 `sessionListId` の有効 `asset_data_matching_item_list_results.asset_import_row_id` 件数、`pendingCount` は未処理行数として算出する',
       '共通フィルタおよび一致検索条件は上パネルと同じ条件を適用し、下パネル候補を同期表示する',
-      '`cursor` 指定時は既定ソート順の続き位置から取得し、`pageSize` 件を上限に返却する',
+      '`cursor` 指定時は既定ソート順と `lockVersion` を固定した snapshot の続き位置から取得し、`pageSize` 件を上限に返却する',
       '返却順は `parsed_ledger_no ASC, asset_import_row_id ASC` を既定とする'
     )
     ResponseTitle = 'レスポンス（200：FixedAssetLedgerItemListResponse）'
@@ -347,7 +356,8 @@ $endpointSpecs = @(
     ResponseRows = @(
       @('sessionId', 'int64', '✓', 'データ突合セッションID'),
       @('sessionListId', 'int64', '✓', '統合対象リストID'),
-      @('sessionUpdatedAt', 'datetime', '✓', '競合検知に用いる `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '今回返却した一覧 snapshot の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', 'セッション最終更新日時'),
       @('totalCount', 'int32', '✓', '対象リスト総件数'),
       @('pendingCount', 'int32', '✓', '対応中件数'),
       @('matchedCount', 'int32', '✓', '突合済件数'),
@@ -383,7 +393,7 @@ $endpointSpecs = @(
       @('401', '未認証', 'ErrorResponse'),
       @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
-      @('409', '固定資産台帳以外のリストを指定した', 'ErrorResponse'),
+      @('409', '固定資産台帳以外のリストを指定した、または一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -398,14 +408,15 @@ $endpointSpecs = @(
     ParametersRows = @(
       @('sessionId', 'path', 'int64', '✓', 'データ突合セッションID'),
       @('sessionListId', 'query', 'int64', '✓', '現在突合中のME管理台帳リストID')
-    ) + $commonFilterParameterRows + $cursorPaginationParameterRows
+    ) + $commonFilterParameterRows + $listLockVersionParameterRows + $cursorPaginationParameterRows
     PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象セッションと `sessionListId` の施設整合を検証し、対象 list がME管理台帳系の整形済みリストであることを検証する',
+      '初回要求で `lockVersion` 省略時は現在の `asset_data_matching_sessions.lock_version` を当該一覧の snapshot version として採用する。指定時は `cursor` に埋め込まれた `lockVersion` と一致し、かつ `session_status=''IN_PROGRESS''` の間は現在の `lock_version` と一致することを検証する。不一致時は 409 (`LIST_SNAPSHOT_EXPIRED`) を返却する',
       '対象 `asset_import_job_id` 配下の `asset_import_rows` から、`asset_data_matching_item_list_results.result_status=''ACTIVE''` に未登録のME台帳行のみを `items` として返却する',
       '`matchedCount` は当該 `sessionListId` の有効 `asset_data_matching_item_list_results.asset_import_row_id` 件数、`pendingCount` は未処理行数として算出する',
       '共通フィルタおよび一致検索条件は上パネルと同じ条件を適用し、ME台帳候補を同期表示する',
-      '`cursor` 指定時は既定ソート順の続き位置から取得し、`pageSize` 件を上限に返却する',
+      '`cursor` 指定時は既定ソート順と `lockVersion` を固定した snapshot の続き位置から取得し、`pageSize` 件を上限に返却する',
       '返却順は `parsed_management_device_no ASC, asset_import_row_id ASC` を既定とする'
     )
     ResponseTitle = 'レスポンス（200：MELedgerItemListResponse）'
@@ -413,7 +424,8 @@ $endpointSpecs = @(
     ResponseRows = @(
       @('sessionId', 'int64', '✓', 'データ突合セッションID'),
       @('sessionListId', 'int64', '✓', '統合対象リストID'),
-      @('sessionUpdatedAt', 'datetime', '✓', '競合検知に用いる `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '今回返却した一覧 snapshot の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', 'セッション最終更新日時'),
       @('totalCount', 'int32', '✓', '対象リスト総件数'),
       @('pendingCount', 'int32', '✓', '対応中件数'),
       @('matchedCount', 'int32', '✓', '突合済件数'),
@@ -448,7 +460,7 @@ $endpointSpecs = @(
       @('401', '未認証', 'ErrorResponse'),
       @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
-      @('409', 'ME管理台帳以外のリストを指定した', 'ErrorResponse'),
+      @('409', 'ME管理台帳以外のリストを指定した、または一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -466,7 +478,7 @@ $endpointSpecs = @(
     RequestTitle = 'リクエストボディ'
     RequestHeaders = @('フィールド', '型', '必須', '説明')
     RequestRows = @(
-      @('sessionUpdatedAt', 'string(datetime)', '✓', '取得時点の `asset_data_matching_sessions.updated_at`。競合検知に用いる'),
+      @('lockVersion', 'int64', '✓', '取得時点の `asset_data_matching_sessions.lock_version`。競合検知に用いる'),
       @('sessionListId', 'int64', '✓', '現在突合中の統合対象リストID'),
       @('mergedItemIds', 'int64[]', '✓', '統合対象とする上パネル行ID一覧。1件以上'),
       @('representativeItemId', 'int64', '✓', '`mergedItemIds` に含まれる代表統合リスト行ID'),
@@ -478,7 +490,7 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象セッションが `IN_PROGRESS` であり、`sessionListId` が未完了の統合対象リストであることを検証する',
       '`sessionListId` が `source_type=''IMPORT_JOB'' AND merge_status=''PENDING''` のうち `source_order` 最小の現在処理対象リストであることを検証し、異なる場合は 409 (`SESSION_LIST_SEQUENCE_INVALID`) を返却する',
-      '`sessionUpdatedAt` と `asset_data_matching_sessions.updated_at` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
+      '要求 `lockVersion` と `asset_data_matching_sessions.lock_version` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
       '`Idempotency-Key` の再送時は、同一 `sessionId` + 実行ユーザー + API パス + 同一 payload であれば初回応答を再返却し、異なる payload なら 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '`asset_data_matching_sessions` / `asset_data_matching_session_lists` / 対象 `asset_data_matching_items` / 対象 `asset_import_rows` を 1 トランザクション内で排他取得する',
       '`mergedItemIds` はすべて同一セッション配下の `merged_into_item_id IS NULL AND item_status=''ACTIVE''` な有効行であり、かつ当該リストに対する `asset_data_matching_item_list_results.result_status=''ACTIVE''` が未作成であることを検証する',
@@ -494,7 +506,7 @@ $endpointSpecs = @(
       '同サービスは current list の台帳行を原本直前 snapshot へ反映する際、分類 ID / 名称は `selected_* -> suggested_* -> 既存 snapshot`、`asset_name` は `parsed_asset_name -> 既存 asset_name -> asset_item_name`、`unit` は `parsed_unit -> 既存 unit` の優先順で更新する。`detail_type` と `parent_asset_data_matching_item_id` は `representativeItemId` の既存値を保持する',
       '同サービスは `matching_status` を要求 `matchingStatus` に更新し、`asset_data_matching_item_sources` / `source_summary` を再計算する。`source_type=''IMPORT_ROW''` は `ledgerItemId`、`source_type=''SURVEY_RECORD''` は代表行と論理統合対象行に紐づく調査レコードの和集合とし、`active_import_row_key` / `active_survey_record_key` を同一トランザクションで再設定する。一意制約違反時は 409 (`MATCH_RULE_VIOLATION`) を返却する',
       '同サービスは再集約後の `SURVEY_RECORD` 集合に含まれる `asset_survey_records.qr_identifier` の非NULL distinct 値から、`qr_identifier` / `qr_resolution_status` を再計算する。0 件なら `NONE`、1 件ならその値を採用して `RESOLVED`、2 件以上なら `qr_identifier=NULL` / `CONFLICT` とする',
-      '更新成功時は `asset_data_matching_sessions.updated_at` を更新し、新しい `sessionUpdatedAt` を返却する'
+      '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingRegisterMatchResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -504,7 +516,8 @@ $endpointSpecs = @(
       @('representativeImportRowId', 'int64', '✓', '現在代表台帳行として紐づけた資産インポート行ID'),
       @('matchingStatus', 'string', '✓', '登録後の突合状況'),
       @('sourceSummary', 'string', '-', '更新後の統合元サマリ'),
-      @('sessionUpdatedAt', 'datetime', '✓', '更新後の `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '更新後の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', '更新後のセッション最終更新日時'),
       @('completedAt', 'datetime', '✓', '登録日時')
     )
     StatusRows = @(
@@ -531,7 +544,7 @@ $endpointSpecs = @(
     RequestTitle = 'リクエストボディ'
     RequestHeaders = @('フィールド', '型', '必須', '説明')
     RequestRows = @(
-      @('sessionUpdatedAt', 'string(datetime)', '✓', '取得時点の `asset_data_matching_sessions.updated_at`。競合検知に用いる'),
+      @('lockVersion', 'int64', '✓', '取得時点の `asset_data_matching_sessions.lock_version`。競合検知に用いる'),
       @('sessionListId', 'int64', '✓', '現在突合中の統合対象リストID'),
       @('mergedItemIds', 'int64[]', '✓', '未登録として確定する統合リスト行ID一覧'),
       @('decisionNote', 'string', '-', '当該リスト判定メモ')
@@ -540,13 +553,13 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象セッションが `IN_PROGRESS` であり、`sessionListId` が未完了の統合対象リストであることを検証する',
       '`sessionListId` が `source_type=''IMPORT_JOB'' AND merge_status=''PENDING''` のうち `source_order` 最小の現在処理対象リストであることを検証し、異なる場合は 409 (`SESSION_LIST_SEQUENCE_INVALID`) を返却する',
-      '`sessionUpdatedAt` と `asset_data_matching_sessions.updated_at` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
+      '要求 `lockVersion` と `asset_data_matching_sessions.lock_version` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
       '`Idempotency-Key` の再送時は、同一 payload であれば初回応答を再返却し、異なる payload なら 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '`asset_data_matching_sessions` / `asset_data_matching_session_lists` / 対象 `asset_data_matching_items` を 1 トランザクション内で排他取得する',
       '`mergedItemIds` はすべて同一セッション配下の `merged_into_item_id IS NULL AND item_status=''ACTIVE''` な有効行であり、かつ当該リストに対する `asset_data_matching_item_list_results.result_status=''ACTIVE''` が未作成であることを検証する',
       '選択行ごとに `asset_data_matching_item_list_results` を `matching_status=''UNREGISTERED''`、`result_status=''ACTIVE''`、`asset_import_row_id=NULL` で作成し、`decision_note` を保存する',
       '更新した判定履歴を入力として、共通 snapshot 再構築サービスが対象 item を `asset_data_matching_session_lists.source_order ASC` の `result_status=''ACTIVE''` 判定履歴順に再計算する。current list は `IMPORT_ROW` を持たない `UNREGISTERED` 判定として扱い、`matching_status` / `asset_data_matching_item_sources` / `source_summary` / `qr_identifier` / `qr_resolution_status` を同一トランザクションで再更新する',
-      '更新成功時は `asset_data_matching_sessions.updated_at` を更新し、新しい `sessionUpdatedAt` を返却する',
+      '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する',
       '新たな `asset_ledgers` は作成せず、原本確定時まで統合リスト行として保持する'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingMarkUnregisteredResponse）'
@@ -554,7 +567,8 @@ $endpointSpecs = @(
     ResponseRows = @(
       @('updatedItemIds', 'int64[]', '✓', '更新した統合リスト行ID一覧'),
       @('matchingStatus', 'string', '✓', '登録後の突合状況。常に `UNREGISTERED`'),
-      @('sessionUpdatedAt', 'datetime', '✓', '更新後の `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '更新後の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', '更新後のセッション最終更新日時'),
       @('completedAt', 'datetime', '✓', '登録日時')
     )
     StatusRows = @(
@@ -581,7 +595,7 @@ $endpointSpecs = @(
     RequestTitle = 'リクエストボディ'
     RequestHeaders = @('フィールド', '型', '必須', '説明')
     RequestRows = @(
-      @('sessionUpdatedAt', 'string(datetime)', '✓', '取得時点の `asset_data_matching_sessions.updated_at`。競合検知に用いる'),
+      @('lockVersion', 'int64', '✓', '取得時点の `asset_data_matching_sessions.lock_version`。競合検知に用いる'),
       @('sessionListId', 'int64', '✓', '現在突合中の統合対象リストID'),
       @('ledgerItemIds', 'int64[]', '✓', '未確認として確定する資産インポート行ID一覧'),
       @('decisionNote', 'string', '-', '当該リスト判定メモ')
@@ -590,7 +604,7 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象セッションが `IN_PROGRESS` であり、`sessionListId` が未完了の統合対象リストであることを検証する',
       '`sessionListId` が `source_type=''IMPORT_JOB'' AND merge_status=''PENDING''` のうち `source_order` 最小の現在処理対象リストであることを検証し、異なる場合は 409 (`SESSION_LIST_SEQUENCE_INVALID`) を返却する',
-      '`sessionUpdatedAt` と `asset_data_matching_sessions.updated_at` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
+      '要求 `lockVersion` と `asset_data_matching_sessions.lock_version` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
       '`Idempotency-Key` の再送時は、同一 payload であれば初回応答を再返却し、異なる payload なら 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '`asset_data_matching_sessions` / `asset_data_matching_session_lists` / 対象 `asset_import_rows` を 1 トランザクション内で排他取得する',
       '`ledgerItemIds` はすべて当該リスト配下の未処理 `asset_import_rows` であり、同一 `sessionListId` の有効 `asset_data_matching_item_list_results` で未消費であることを検証する',
@@ -598,7 +612,7 @@ $endpointSpecs = @(
       '新規統合リスト行の `creation_type` を `UNCONFIRMED_IMPORT`、`item_status` を `ACTIVE`、`matching_status` を `UNCONFIRMED`、`detail_type` を `MAIN`、`qr_identifier` を NULL、`qr_resolution_status` を `NONE`、`parent_asset_data_matching_item_id` / `merged_into_item_id` / `merged_by_session_list_id` を NULL とし、元レコードは `asset_data_matching_item_sources` に `source_type=''IMPORT_ROW''` で紐づける。`active_import_row_key` は後続の共通 snapshot 再構築サービスが設定し、一意制約違反時は 409 (`MATCH_RULE_VIOLATION`) を返却する',
       '同時に `asset_data_matching_item_list_results` を `matching_status=''UNCONFIRMED''`、`result_status=''ACTIVE''` で作成し、`asset_import_row_id` に消費した台帳行IDと `decision_note` を保存する',
       '作成した item と判定履歴を入力として、共通 snapshot 再構築サービスが対象 item を `asset_data_matching_session_lists.source_order ASC` の `result_status=''ACTIVE''` 判定履歴順に正規化し、`matching_status` / `source_summary` / `active_import_row_key` を確定する',
-      '更新成功時は `asset_data_matching_sessions.updated_at` を更新し、新しい `sessionUpdatedAt` を返却する'
+      '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingMarkUnconfirmedResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -606,7 +620,8 @@ $endpointSpecs = @(
       @('createdItemIds', 'int64[]', '✓', '新規作成した統合リスト行ID一覧'),
       @('matchingStatus', 'string', '✓', '登録後の突合状況。常に `UNCONFIRMED`'),
       @('createdCount', 'int32', '✓', '作成件数'),
-      @('sessionUpdatedAt', 'datetime', '✓', '更新後の `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '更新後の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', '更新後のセッション最終更新日時'),
       @('completedAt', 'datetime', '✓', '登録日時')
     )
     StatusRows = @(
@@ -633,7 +648,7 @@ $endpointSpecs = @(
     RequestTitle = 'リクエストボディ'
     RequestHeaders = @('フィールド', '型', '必須', '説明')
     RequestRows = @(
-      @('sessionUpdatedAt', 'string(datetime)', '✓', '取得時点の `asset_data_matching_sessions.updated_at`。競合検知に用いる'),
+      @('lockVersion', 'int64', '✓', '取得時点の `asset_data_matching_sessions.lock_version`。競合検知に用いる'),
       @('sessionListId', 'int64', '✓', '差し戻し対象の統合対象リストID'),
       @('assetDataMatchingItemIds', 'int64[]', '✓', '差し戻す代表統合リスト行ID一覧。1件以上'),
       @('revertNote', 'string', '-', '差し戻し理由メモ')
@@ -641,7 +656,7 @@ $endpointSpecs = @(
     PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象セッションが `IN_PROGRESS` であり、`sessionListId` が当該セッション配下の対象リストであることを検証する',
-      '`sessionUpdatedAt` と `asset_data_matching_sessions.updated_at` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
+      '要求 `lockVersion` と `asset_data_matching_sessions.lock_version` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
       '`Idempotency-Key` の再送時は、同一 payload であれば初回応答を再返却し、異なる payload なら 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '`asset_data_matching_sessions` / `asset_data_matching_session_lists` / 対象 `asset_data_matching_items` / 有効 `asset_data_matching_item_list_results` を 1 トランザクション内で排他取得する',
       '`assetDataMatchingItemIds` はすべて `merged_into_item_id IS NULL AND item_status=''ACTIVE''` な有効統合リスト行であり、当該 `sessionListId` に対する `result_status=''ACTIVE''` 判定結果が存在することを検証する。存在しない場合は 404 (`DATA_MATCHING_DECISION_RESULT_NOT_FOUND`) を返却する',
@@ -652,7 +667,7 @@ $endpointSpecs = @(
       '再計算後の `SURVEY_RECORD` 集合に含まれる `asset_survey_records.qr_identifier` の非NULL distinct 値から、`qr_identifier` / `qr_resolution_status` も再計算する。0 件なら `NONE`、1 件ならその値を採用して `RESOLVED`、2 件以上なら `qr_identifier=NULL` / `CONFLICT` とする',
       '`creation_type=''UNCONFIRMED_IMPORT''` の行について、差し戻し後に `result_status=''ACTIVE''` 判定履歴が0件となる場合は `item_status=''INVALIDATED''` に更新し、以後の上パネル一覧 / 原本候補一覧 / 原本確定対象から除外する',
       '対象 `sessionListId` が `merge_status=''COMPLETED''` の場合は `PENDING` へ戻し、`completed_at` を NULL として再作業可能にする',
-      '更新成功時は `asset_data_matching_sessions.updated_at` を更新し、新しい `sessionUpdatedAt` を返却する'
+      '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingRevertDecisionResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -662,7 +677,8 @@ $endpointSpecs = @(
       @('restoredMergedItemIds', 'int64[]', '✓', '論理統合状態から復元した統合リスト行ID一覧'),
       @('releasedLedgerItemIds', 'int64[]', '✓', '未消費状態へ戻した資産インポート行ID一覧'),
       @('reopenedList', 'boolean', '✓', '対象リストを `PENDING` へ再オープンした場合は true'),
-      @('sessionUpdatedAt', 'datetime', '✓', '更新後の `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '更新後の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', '更新後のセッション最終更新日時'),
       @('completedAt', 'datetime', '✓', '差し戻し日時')
     )
     StatusRows = @(
@@ -689,7 +705,7 @@ $endpointSpecs = @(
     RequestTitle = 'リクエストボディ'
     RequestHeaders = @('フィールド', '型', '必須', '説明')
     RequestRows = @(
-      @('sessionUpdatedAt', 'string(datetime)', '✓', '取得時点の `asset_data_matching_sessions.updated_at`。競合検知に用いる'),
+      @('lockVersion', 'int64', '✓', '取得時点の `asset_data_matching_sessions.lock_version`。競合検知に用いる'),
       @('completionType', 'string', '✓', '実行種別。`COMPLETE_LIST` / `CONFIRM_ORIGINAL`'),
       @('sessionListId', 'int64', '条件付き', '`COMPLETE_LIST` 時に必須。完了対象の統合対象リストID'),
       @('skipRemaining', 'boolean', '-', '`CONFIRM_ORIGINAL` 時に、未完了リストを `SKIPPED` として途中確定する場合は true')
@@ -697,7 +713,7 @@ $endpointSpecs = @(
     PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象セッションが `IN_PROGRESS` であり、Bearer トークン上の作業対象施設と一致することを検証する',
-      '`sessionUpdatedAt` と `asset_data_matching_sessions.updated_at` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
+      '要求 `lockVersion` と `asset_data_matching_sessions.lock_version` を比較し、不一致時は 409 (`SESSION_CONFLICT`) を返却する',
       '`Idempotency-Key` の再送時は、同一 payload であれば初回応答を再返却し、異なる payload なら 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '`asset_data_matching_sessions` と対象 `asset_data_matching_session_lists` を 1 トランザクション内で排他取得する',
       '`completionType=''COMPLETE_LIST''` の場合は、`sessionListId` が当該セッション配下の未完了リストであり、かつ `source_type=''IMPORT_JOB'' AND merge_status=''PENDING''` のうち `source_order` 最小の現在処理対象リストであることを検証し、異なる場合は 409 (`SESSION_LIST_SEQUENCE_INVALID`) を返却する。当該リストに対する `asset_data_matching_item_list_results.result_status=''ACTIVE''` 未作成の有効統合リスト行（`merged_into_item_id IS NULL AND item_status=''ACTIVE''`）と未処理台帳行が 0 件であることもあわせて検証する',
@@ -706,11 +722,11 @@ $endpointSpecs = @(
       '原本確定時は、現在の `asset_data_matching_items` のうち `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の有効行について `category_id`、`large_class_name`、`medium_class_name`、`asset_item_name`、`asset_name`、`quantity` の必須項目が全件で解決済みであることを検証し、不足があれば 409 (`ORIGINAL_LEDGER_SNAPSHOT_INCOMPLETE`) を返却する',
       '原本確定時は、`qr_resolution_status=''CONFLICT''` の有効行（`item_status=''ACTIVE''`）が存在しないことを検証する。存在する場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に `conflictType=''UNRESOLVED''` を返す',
       '原本確定時は、`qr_resolution_status=''RESOLVED''` かつ `qr_identifier IS NOT NULL` の有効行（`item_status=''ACTIVE''`）について同一セッション内で重複がないことを検証し、`(facility_id, qr_identifier)` で `qr_codes` を排他取得する。未発行、論理削除済み、別資産へ紐付済み、または施設不整合がある場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に競合行ごとの詳細を返す',
-      '原本確定時は `parent_asset_data_matching_item_id` を考慮した親優先順で `asset_ledgers` を作成し、`parent_asset_ledger_id` へ変換する',
-      '`qr_identifier` が設定された行は、対応する `qr_codes.asset_ledger_id` に今回作成した `asset_ledgers.asset_ledger_id` を設定し、更新は原本生成と同一トランザクションで完了させる',
+      '原本確定時は `parent_asset_data_matching_item_id` を考慮した親優先順で `asset_ledgers` を作成し、`parent_asset_ledger_id` へ変換する。同時に対応する `asset_data_matching_items.created_asset_ledger_id` へ採番済み `asset_ledger_id` を保存し、結果確認画面や資産カルテ遷移の追跡キーとして保持する',
+      '`qr_identifier` が設定された行は、対応する `qr_codes.asset_ledger_id` に今回作成した `asset_ledgers.asset_ledger_id` を設定し、更新は原本生成、`created_asset_ledger_id` 保存と同一トランザクションで完了させる',
       '生成値の具体的なマッピングは第6章の `asset_data_matching_items -> asset_ledgers` ルールに従う',
       '原本生成と QR 紐付け更新の完了後に、実行ユーザーを `asset_data_matching_sessions.confirmed_by_user_id`、サーバ時刻を `confirmed_at` へ保存した上でセッションを `CONFIRMED` に更新する',
-      '更新成功時は `asset_data_matching_sessions.updated_at` を更新し、新しい `sessionUpdatedAt` を返却する',
+      '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する',
       '`CONFIRMED` となったセッションは read-only とし、以後の一覧更新・突合登録・再確定は受け付けない'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingCompleteResponse）'
@@ -718,7 +734,8 @@ $endpointSpecs = @(
     ResponseRows = @(
       @('sessionId', 'int64', '✓', 'データ突合セッションID'),
       @('sessionStatus', 'string', '✓', '更新後セッション状態。`IN_PROGRESS` / `CONFIRMED`'),
-      @('sessionUpdatedAt', 'datetime', '✓', '更新後の `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '更新後の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', '更新後のセッション最終更新日時'),
       @('completedSessionListId', 'int64|null', '✓', '`COMPLETE_LIST` 時に完了した統合対象リストID'),
       @('nextPendingSessionListId', 'int64|null', '✓', '次に選択可能な未完了リストID。存在しない場合は null'),
       @('createdLedgerCount', 'int32', '✓', '原本確定時に生成した `asset_ledgers` 件数'),
@@ -759,15 +776,16 @@ $endpointSpecs = @(
     ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
     ParametersRows = @(
       @('sessionId', 'path', 'int64', '✓', 'データ突合セッションID')
-    ) + $cursorPaginationParameterRows
+    ) + $listLockVersionParameterRows + $cursorPaginationParameterRows
     PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象セッションが Bearer トークン上の作業対象施設に属することを検証する',
+      '初回要求で `lockVersion` 省略時は現在の `asset_data_matching_sessions.lock_version` を当該一覧の snapshot version として採用する。指定時は `cursor` に埋め込まれた `lockVersion` と一致し、かつ `session_status=''IN_PROGRESS''` の間は現在の `lock_version` と一致することを検証する。不一致時は 409 (`LIST_SNAPSHOT_EXPIRED`) を返却する',
       '`asset_data_matching_items` のうち `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の有効行を現在の原本候補一覧として取得し、`source_summary`、現在代表台帳行、統合済み調査レコード一覧、原本直前スナップショット項目、原本確定必須項目の充足可否、`qrResolutionStatus`、`qrBindingCheckStatus`、`blockingReasons` を返却する',
-      '各統合リスト行について、`asset_data_matching_item_sources` から現在代表元の `sourceDetails`、`asset_data_matching_item_list_results` から対象リストごとの `listResults` を `source_order ASC` で返却する。`sourceDetails` の `SURVEY_RECORD` には元調査レコードごとの `qrIdentifier` を含め、`listResults` には `result_status=''ACTIVE''` / `''REVERTED''` の両方を含める',
+      '各統合リスト行について、`asset_data_matching_item_sources` から現在代表元の `sourceDetails`、`asset_data_matching_item_list_results` から対象リストごとの `listResults` を `source_order ASC` で返却する。`sourceDetails` の `SURVEY_RECORD` には元調査レコードごとの `qrIdentifier` を含め、`listResults` には `result_status=''ACTIVE''` / `''REVERTED''` の両方を含める。`created_asset_ledger_id` が設定済みの場合は `assetLedgerId` として返却する',
       'セッションが `CONFIRMED` の場合も、当該セッション確定時点の統合結果として同じ形式で返却する',
       '`canConfirmOriginal` は全件が原本確定必須項目と QR 解決・紐付け可否の両方を満たす場合のみ true とし、阻害件数を `unreadyItemCount` と `qrBlockingItemCount` で返却する',
-      '`cursor` 指定時は既定ソート順の続き位置から取得し、`pageSize` 件を上限に返却する',
+      '`cursor` 指定時は既定ソート順と `lockVersion` を固定した snapshot の続き位置から取得し、`pageSize` 件を上限に返却する',
       '返却順は `department_name ASC, section_name ASC, asset_item_name ASC, asset_data_matching_item_id ASC` を既定とする'
     )
     ResponseTitle = 'レスポンス（200：DataMatchingResultResponse）'
@@ -775,7 +793,8 @@ $endpointSpecs = @(
     ResponseRows = @(
       @('sessionId', 'int64', '✓', 'データ突合セッションID'),
       @('sessionStatus', 'string', '✓', 'セッション状態'),
-      @('sessionUpdatedAt', 'datetime', '✓', '競合検知に用いる `asset_data_matching_sessions.updated_at`'),
+      @('lockVersion', 'int64', '✓', '今回返却した一覧 snapshot の `asset_data_matching_sessions.lock_version`'),
+      @('sessionUpdatedAt', 'datetime', '✓', 'セッション最終更新日時'),
       @('mergedItemCount', 'int32', '✓', '`merged_into_item_id IS NULL AND item_status=''ACTIVE''` の統合結果件数'),
       @('remainingListCount', 'int32', '✓', '未完了リスト件数'),
       @('skippedLists', 'SkippedListSummary[]', '✓', '途中確定で `SKIPPED` としたリスト一覧'),
@@ -803,6 +822,7 @@ $endpointSpecs = @(
         Headers = @('フィールド', '型', '必須', '説明')
         Rows = @(
           @('assetDataMatchingItemId', 'int64', '✓', '統合リスト行ID'),
+          @('assetLedgerId', 'int64|null', '✓', '原本確定後に作成された `asset_ledgers.asset_ledger_id`。未確定セッションでは null'),
           @('matchingStatus', 'string|null', '✓', '原本直前スナップショット上の最新確定判定結果'),
           @('representativeImportRowId', 'int64|null', '✓', '現在代表台帳行として採用されている資産インポート行ID'),
           @('surveySourceRecordIds', 'int64[]', '✓', '現在統合済みの現有品調査レコードID一覧'),
@@ -873,6 +893,7 @@ $endpointSpecs = @(
       @('401', '未認証', 'ErrorResponse'),
       @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションが存在しない', 'ErrorResponse'),
+      @('409', '一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   }
@@ -882,8 +903,8 @@ $endpointSpecs = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\参考_作業用\API設計書_データ突合.docx'
   ScreenLabel = 'データ突合'
-  CoverDateText = '2026年4月20日'
-  RevisionDateText = '2026/4/20'
+  CoverDateText = '2026年4月23日'
+  RevisionDateText = '2026/4/23'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -932,9 +953,9 @@ $endpointSpecs = @(
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
-      @('asset_data_matching_sessions', 'セッション開始 / 再開 / 原本確定', 'asset_data_matching_session_id, facility_id, session_status, created_by_user_id, confirmed_by_user_id, confirmed_at'),
+      @('asset_data_matching_sessions', 'セッション開始 / 再開 / 原本確定', 'asset_data_matching_session_id, facility_id, session_status, lock_version, created_by_user_id, confirmed_by_user_id, confirmed_at'),
       @('asset_data_matching_session_lists', '統合対象リスト確定、完了状態管理', 'asset_data_matching_session_list_id, asset_import_job_id, source_label, source_order, merge_status, completed_at'),
-      @('asset_data_matching_items', '統合リスト一覧取得、原本直前スナップショット更新、論理統合保持、原本確定時の元データ', 'asset_data_matching_item_id, creation_type, item_status, matching_status, qr_identifier, qr_resolution_status, facility_location_id, asset_no, equipment_no, asset_name, department_name, section_name, room_name, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, detail_type, parent_asset_data_matching_item_id, merged_into_item_id, merged_by_session_list_id, quantity, unit, purchased_on, source_summary'),
+      @('asset_data_matching_items', '統合リスト一覧取得、原本直前スナップショット更新、論理統合保持、原本確定時の元データ', 'asset_data_matching_item_id, creation_type, item_status, matching_status, qr_identifier, qr_resolution_status, created_asset_ledger_id, facility_location_id, asset_no, equipment_no, asset_name, department_name, section_name, room_name, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, detail_type, parent_asset_data_matching_item_id, merged_into_item_id, merged_by_session_list_id, quantity, unit, purchased_on, source_summary'),
       @('asset_data_matching_item_sources', '現在代表元レコード紐付けと再集約、および有効代表元の一意制御', 'asset_data_matching_item_source_id, asset_data_matching_item_id, source_type, asset_survey_record_id, asset_import_row_id, source_label, source_relation_type, active_import_row_key, active_survey_record_key'),
       @('asset_data_matching_item_list_results', '統合対象リストごとの判定結果、進捗、台帳行消費判定の正本', 'asset_data_matching_item_list_result_id, asset_data_matching_session_list_id, asset_data_matching_item_id, asset_import_row_id, matching_status, result_status, decision_note, decided_by_user_id, decided_at, reverted_by_user_id, reverted_at'),
       @('asset_survey_sessions / asset_survey_records', '基底現有品調査の選定と統合リスト初期生成', 'asset_survey_session_id, asset_survey_record_id, qr_identifier, department_name, section_name, room_name, asset_item_id'),
@@ -958,7 +979,8 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = '一覧ページング仕様' },
     @{ Type = 'Bullets'; Items = @(
       '一覧系 API の既定 `pageSize` は `100`、最大 `500` とする',
-      '`cursor` は既定ソート順の最終行キーを符号化した continuation token とし、クライアントは `nextCursor` が返る間だけ続きを取得する',
+      '`cursor` は既定ソート順の最終行キーと `lockVersion` を符号化した continuation token とし、クライアントは `nextCursor` が返る間だけ続きを取得する',
+      '更新可能な `IN_PROGRESS` セッションでは、初回一覧取得時点の `lockVersion` を一覧 snapshot version として固定し、2ページ目以降は同じ `lockVersion` を付与する。不一致時は 409 (`LIST_SNAPSHOT_EXPIRED`) を返却する',
       '`totalCount` は条件一致総件数または対象リスト総件数、`returnedCount` は今回返却した件数を表す',
       'レビューや帳票で全件が必要な場合も、UI 用一覧 API ではなく別途 export / バッチ導線を設ける方針とする'
     ) },
@@ -987,7 +1009,8 @@ $endpointSpecs = @(
     ) },
     @{ Type = 'Heading2'; Text = '更新競合 / 冪等性仕様' },
     @{ Type = 'Bullets'; Items = @(
-      '競合検知トークンは `asset_data_matching_sessions.updated_at` を用いる。更新系 API は `sessionUpdatedAt` を受け取り、取得時点の値と一致しない場合は 409 (`SESSION_CONFLICT`) を返却する',
+      '競合検知トークンは `asset_data_matching_sessions.lock_version` を用いる。更新系 API は `lockVersion` を受け取り、取得時点の値と一致しない場合は 409 (`SESSION_CONFLICT`) を返却する',
+      '更新系 API 成功時は `asset_data_matching_sessions.lock_version` を +1 し、その値をレスポンスへ返却する。`updated_at` は監査用の最終更新日時として保持する',
       '`POST /data-matching/sessions/{sessionId}/matches`、`mark-unregistered`、`mark-unconfirmed`、`revert-decision`、`complete` は `Idempotency-Key` ヘッダーを必須とし、同一 `sessionId` + 実行ユーザー + API パス + 同一 payload の再送は初回応答を再返却する',
       '同一 `Idempotency-Key` に対して payload が異なる場合は 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '更新系 API は `asset_data_matching_sessions`、対象 `asset_data_matching_session_lists`、対象 `asset_data_matching_items` / `asset_data_matching_item_sources` / `asset_import_rows` / `asset_data_matching_item_list_results` を1トランザクションで更新し、失敗時は部分反映しない',
@@ -1001,6 +1024,7 @@ $endpointSpecs = @(
       '`asset_data_matching_items.creation_type` / `item_status` は統合リスト行の生成起点と有効状態を表し、上パネル一覧 / 原本候補一覧 / 原本確定では `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の行のみを対象とする',
       '`asset_data_matching_items.matching_status` は最新確定判定の代表値を保持する denormalized snapshot とし、更新系 API は判定履歴または論理統合状態保存後に共通 snapshot 再構築サービスを呼び出し、`result_status=''ACTIVE''` の判定履歴を `source_order ASC` で再適用して同一トランザクションで更新する',
       '`asset_data_matching_items.qr_identifier` / `qr_resolution_status` は `SURVEY_RECORD` 集合の QR 代表値を保持する denormalized snapshot とし、共通 snapshot 再構築サービスが非NULL distinct QR を集約して 0 件なら `NONE`、1 件ならその値を採用して `RESOLVED`、2 件以上なら `qr_identifier=NULL` / `CONFLICT` とする',
+      '`asset_data_matching_items.created_asset_ledger_id` は原本確定後に作成された `asset_ledgers.asset_ledger_id` を保持する監査・遷移用キーであり、`GET /result` で返却して確定後の資産カルテ参照に利用する',
       '`asset_data_matching_item_sources` は現在代表元の provenance を保持し、`source_type=''IMPORT_ROW''` は現在代表台帳行、`source_type=''SURVEY_RECORD''` は統合済み現有品調査レコード集合を表す。`active_import_row_key` / `active_survey_record_key` は共通 snapshot 再構築サービスが同一トランザクション内に更新し、同一セッション内の有効代表元重複を一意制約で禁止する',
       '`asset_data_matching_items.source_summary` は画面表示用のサマリ列であり、完了判定や重複消費判定には用いない'
     ) },
@@ -1164,7 +1188,8 @@ $endpointSpecs = @(
       @('DATA_MATCHING_DECISION_RESULT_NOT_FOUND', '404', '差し戻し対象の有効判定結果が存在しない'),
       @('DATA_MATCHING_LEDGER_ITEM_NOT_FOUND', '404', '対象台帳行が存在しない'),
       @('BASE_SURVEY_SESSION_NOT_FOUND', '404', '基底に使える現有品調査セッションが存在しない'),
-      @('SESSION_CONFLICT', '409', '`sessionUpdatedAt` と現在の `asset_data_matching_sessions.updated_at` が一致しない'),
+      @('SESSION_CONFLICT', '409', '要求 `lockVersion` と現在の `asset_data_matching_sessions.lock_version` が一致しない'),
+      @('LIST_SNAPSHOT_EXPIRED', '409', '一覧取得に指定した `lockVersion` が現在の session snapshot と一致しない'),
       @('SESSION_STATUS_INVALID', '409', 'セッション状態上、要求処理を実行できない'),
       @('SESSION_LIST_TYPE_MISMATCH', '409', '指定した session list と API の期待リスト種別が一致しない'),
       @('SESSION_LIST_SEQUENCE_INVALID', '409', '指定した session list が現在処理対象の最小 `source_order` `PENDING` リストではない'),

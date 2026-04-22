@@ -66,7 +66,11 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列に対応する `facility_master_list` と `facility_master_edit` を用いる。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。施設を論理削除しても関連認可設定は保持するが、削除済み施設は `/auth/me`、`/auth/context`、業務 API の対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。施設を論理削除しても関連認可設定は保持するが、削除済み施設は `/auth/me`、`/auth/context`、業務 API の対象外とする。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
+      @('施設マスタ / 一覧', '`facility_master_list`', '一覧表示、設立母体候補取得、エクスポート'),
+      @('施設マスタ / 新規作成・編集', '`facility_master_edit`', '新規作成、更新、削除')
+    ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
       @('一覧表示 / 設立母体候補取得 / エクスポート', '`facility_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照系の処理'),
       @('新規作成 / 更新 / 削除', '`facility_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '施設マスタ管理処理')

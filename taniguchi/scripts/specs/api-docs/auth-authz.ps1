@@ -18,7 +18,7 @@
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '本 API 群は、認証基盤、施設選択導線、ホーム/各業務画面の表示制御を支える横断 API である。ログイン後は `GET /auth/me` で担当施設一覧を取得し、必要に応じて `GET /auth/context?actingFacilityId=...` を呼び出して実効 `feature_code` / `column_code` を取得する。' },
     @{ Type = 'Paragraph'; Text = '認可正本はロールではなく、`feature_catalogs` / `column_catalogs` / `user_facility_assignments` / 施設別設定 / ユーザー施設別設定 / 他施設公開設定を参照して判断する。' },
-    @{ Type = 'Paragraph'; Text = '権限管理画面の管理単位は `taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列を正本とし、1つの管理単位に対して1つの `feature_code` または `column_code` を割り当てる。' },
+    @{ Type = 'Paragraph'; Text = '権限管理で扱う `feature_code` / `column_code` は `feature_catalogs` / `column_catalogs` に登録したコードを正本とし、本API群で固定的に使用するコードと判定ルールは本設計書内で定義する。1つの管理単位に対して1つの `feature_code` または `column_code` を割り当てる。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('担当施設', '`user_facility_assignments` に直接登録された、ユーザーが作業対象として選択できる施設'),
@@ -85,6 +85,11 @@
     @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後は Bearer トークンを用いて `GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用トークンも発行し、再訪時は認証基盤側でセッション再開を試みる。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
     @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し（事務）` や `DataLINK / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', '種別', 'コード', '対象処理'); Rows = @(
+      @('ログイン・パスワード再設定（固定導線）', 'feature_code', '`auth_login`', '`POST /auth/login`、`POST /auth/password/forgot`、`POST /auth/password/reset` の固定導線を扱う。`config_scope=''SYSTEM_FIXED''` として固定扱いにする'),
+      @('施設選択（固定導線）', 'feature_code', '`facility_select`', '`GET /auth/me` の担当施設選択導線と `GET /auth/context` の `actingFacilityId` 確定に用いる。`config_scope=''SYSTEM_FIXED''` として固定扱いにする')
+    ) },
+    @{ Type = 'Paragraph'; Text = '上記以外の業務 `feature_code` / `column_code` は各業務 API 設計書で採用単位を定義し、本 API 群の `/auth/context` と `/authorization/check` では `feature_catalogs` / `column_catalogs` に登録されたコードを汎用的に評価する。' },
     @{ Type = 'Table'; Headers = @('対象', '判定に使う主な情報', '説明'); Rows = @(
       @('ログイン関連', '`users`, `user_remember_tokens`, `password_reset_tokens`', '認証とトークン管理を扱う。施設別権限は判定しない'),
       @('作業対象施設決定', '`user_facility_assignments`, `facilities`', '担当施設一覧と既定施設を決定する'),

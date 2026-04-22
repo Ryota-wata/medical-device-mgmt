@@ -1935,6 +1935,7 @@ package "インポート・マッチング" {
     --
     施設ID / facility_id : bigint
     セッション状態 / session_status : varchar
+    排他制御版 / lock_version : bigint
     作成者ユーザーID / created_by_user_id : bigint
     確定者ユーザーID / confirmed_by_user_id : bigint
     確定日時 / confirmed_at : timestamp
@@ -1986,6 +1987,7 @@ package "インポート・マッチング" {
     現在突合状況 / matching_status : varchar
     QR識別子 / qr_identifier : varchar
     QR解決状態 / qr_resolution_status : varchar
+    作成資産台帳ID / created_asset_ledger_id : bigint
     資産番号 / asset_no : varchar
     ME番号 / equipment_no : varchar
     資産名 / asset_name : varchar
@@ -2054,6 +2056,11 @@ package "インポート・マッチング" {
     採用済み QR 候補。
     `qr_resolution_status` は
     NONE / RESOLVED / CONFLICT。
+    `created_asset_ledger_id` は
+    原本確定時に作成した
+    `asset_ledgers.asset_ledger_id`
+    を保持する監査 /
+    画面遷移キー。
     更新系 API は
     判定履歴または
     論理統合状態を保存後
@@ -2212,6 +2219,16 @@ package "インポート・マッチング" {
     `asset_data_matching_item_sources`
     `asset_data_matching_item_list_results`
     を正本として扱う。
+    `lock_version` は
+    更新競合検知と
+    一覧 snapshot 固定に使う
+    正本版番号。
+    更新系 API 成功時に
+    +1 される。
+    `IN_PROGRESS` 中の一覧は
+    初回取得時点の
+    `lock_version` を固定し、
+    不一致なら再取得する。
   end note
 
   note right of asset_import_survey_mappings
@@ -2603,6 +2620,7 @@ asset_medium_classes ||--o{ asset_data_matching_items : ""
 asset_items ||--o{ asset_data_matching_items : ""
 manufacturers ||--o{ asset_data_matching_items : ""
 models ||--o{ asset_data_matching_items : ""
+asset_ledgers ||--o{ asset_data_matching_items : "created_asset_ledger_id"
 asset_import_jobs ||--o{ asset_import_survey_mappings : ""
 asset_import_rows ||--o{ asset_import_survey_mappings : ""
 
