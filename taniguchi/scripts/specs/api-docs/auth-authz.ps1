@@ -51,7 +51,7 @@
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('users', '認証、ユーザー基本情報、アカウント状態、最終ログイン更新', 'user_id, email_address, password_hash, name, account_type, is_active, locked_at, last_login_at'),
       @('user_remember_tokens', 'current device のログイン状態保持トークンの発行・更新・失効', 'token_id, user_id, token, expires_at, last_used_at'),
-      @('password_reset_tokens', 'パスワード再設定トークンの発行・使用済み管理', 'token_id, user_id, token, expires_at, used_at'),
+      @('password_reset_tokens', 'パスワード再設定トークンの発行・使用済み管理、管理者起点の初回設定案内送信時の内部利用', 'token_id, user_id, token, expires_at, used_at'),
       @('user_facility_assignments', '担当施設一覧、既定施設、施設アクセス可否判定', 'user_facility_assignment_id, user_id, facility_id, is_default, is_active, valid_from, valid_to'),
       @('facilities', '担当施設名称、契約状態、公開元施設判定、論理削除状態確認', 'facility_id, facility_name, system_contract_status, deleted_at'),
       @('feature_catalogs', '認可対象機能の正本、承認用 feature を含むコード体系', 'feature_code, feature_name, usage_context, config_scope'),
@@ -66,6 +66,7 @@
       @('facility_external_column_settings', '公開元施設の他施設向け公開カラム設定', 'provider_facility_id, column_code, is_enabled')
     ) },
     @{ Type = 'Paragraph'; Text = 'リフレッシュトークン、remember token による current device の再認証、およびセッション失効の詳細実装は認証基盤側責務とし、DB 正本としては上記テーブルを参照する。remember token は平文保存せずハッシュ化して保持し、クライアント側は `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する前提とする。' },
+    @{ Type = 'Paragraph'; Text = '管理者がユーザー管理画面から初回設定案内を送信・再送する場合も、公開契約はユーザー管理 API 側に置き、旧トークン無効化・新規トークン発行・メール送信は認証基盤内部処理として本 API 群と同じ責務で扱う。' },
     @{ Type = 'Paragraph'; Text = '`facilities.deleted_at` が設定された施設は、担当施設一覧、施設選択、認可判定、業務 API の対象外とする。一方で `user_facility_assignments` や各種 `*_feature_settings` / `*_column_settings` は削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する。' },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -320,6 +321,7 @@
           '`users` に該当ユーザーが存在し、再設定対象として扱える場合は `password_reset_tokens` を発行する',
           '再設定トークンは平文のまま保持せず、ハッシュ化した値を保存する',
           '同一ユーザーの未使用トークンが残っている場合は旧トークンを無効化してから新規トークンを発行する',
+          '管理者起点の初回設定案内再送でも、同一のトークン発行・旧トークン無効化ロジックを内部利用してよい',
           '存在有無や有効性にかかわらず、画面上では共通応答を返す',
           'メール送信は非同期ジョブまたはメール基盤側責務としてよい'
         )

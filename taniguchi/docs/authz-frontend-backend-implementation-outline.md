@@ -57,7 +57,7 @@
 
 - 各ページでは表示前に必要機能を確認する
 - 例:
-  - ユーザー管理画面は `user_management`
+  - ユーザー管理画面は `user_list_view` を前提とし、編集操作ごとに `user_edit` / `user_facility_assignment_edit` を追加判定する
   - QRコード発行画面は `qr_issue`
   - 他施設資産一覧画面は `other_asset_list`
 - 無効な場合は、トップ画面へ戻すか 403 相当の案内画面を出す
@@ -147,7 +147,7 @@
 - すべての業務 API は、フロントエンド表示制御とは独立して毎回認可判定を行う
 - 例:
   - 資産一覧 API は `own_asset_list` または `other_asset_list` を判定する
-  - ユーザー管理 API は `user_management` を判定する
+  - ユーザー管理 API は `user_list_view` / `user_edit` / `user_facility_assignment_edit` を処理単位で判定する
   - QRコード発行 API は `qr_issue` を判定する
 - 他施設閲覧の場合は次をすべて確認する
   - `actingFacilityId` が担当施設である

@@ -2,7 +2,7 @@
 
 最終更新: 2026-04-20
 
-ステータス件数: `Fix 9件` / `作成済み 0件` / `未着手 15件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
+ステータス件数: `Fix 9件` / `作成済み 1件` / `未着手 13件` / `不要 4件` / `旧版 1件` / `参考/作業用 3件`
 
 本一覧は、[機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) の画面一覧をもとに、API設計書の作成対象を機能単位で管理するための台帳である。  
 既存ファイルの羅列ではなく、「どの機能を、どの設計書で管理するか」を正として扱う。
@@ -36,12 +36,12 @@
 | --- | --- | --- | --- | --- | --- |
 | 5 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱い、正本要件・DB設計・最新認証認可レビュー反映済み。 |
 | 6 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
-| 7 | データ突合 | 未作成 | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `未着手` | データ統合・原本確定を別途定義予定 |
+| 7 | データ突合 | `参考_作業用/API設計書_データ突合_20260422_221725.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `参考/作業用` | 差し戻しAPI、論理統合、pagination、監査出力、`representativeItemId` 明示、`creation_type` / `item_status` と未確認追加行の invalidation ルール、`item_sources` / `item_list_results` の active key 一意制約強化、`decisionNote` の判定履歴正本化、`PENDING/COMPLETED` の ACTIVE 判定基準統一、`mark-unconfirmed` のメーカー/型式 snapshot 明示、`qr_resolution_status` と `ORIGINAL_QR_BINDING_CONFLICT` の構造化競合明細まで反映した再修正版 draft 生成済み。内容確認後に `作成済み` / `Fix` を判断 |
 
 ## 資産検索・台帳・棚卸
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 8 | 資産検索・資産詳細 | 未作成 | 15. `/asset-search-result`、16. `/asset-detail` | `未着手` | 資産検索結果と資産詳細を1本で扱う想定 |
+| 8 | 資産検索・資産詳細 | `参考_作業用/API設計書_資産検索・資産詳細_20260420_182112.docx` | 15. `/asset-search-result`、16. `/asset-detail` | `作成済み` | bookmark 永続化、管理部署正本、QR直接遷移解決、履歴API、classificationMode、cursor pagination を反映した再修正版 draft |
 | 9 | 棚卸し | 未作成 | 38. `/inventory` | `未着手` | 独立機能として別途定義予定 |
 
 ## マスタ管理
@@ -51,7 +51,7 @@
 | 11 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 | 12 | 個別部署マスタ | `Fix/API設計書_個別部署マスタ.docx` | 19. `/hospital-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 | 13 | SHIP部署マスタ | `Fix/API設計書_SHIP部署マスタ.docx` | 20. `/ship-department-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
-| 14 | SHIPユーザー管理 | 未作成 | 21. `/user-management` | `未着手` | 別途定義予定 |
+| 14 | ユーザー管理 | `Fix/API設計書_ユーザー管理.docx` | 21. `/user-management` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 | 15 | 業者マスタ | `Fix/API設計書_業者マスタ.docx` | 63. `/vendor-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 
 ## 申請・見積・RFQ

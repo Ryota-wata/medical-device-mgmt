@@ -478,6 +478,7 @@ package "資産台帳" {
     設置場所 / installation_location : varchar
     資産番号 / asset_no : varchar
     管理機器番号 / management_no : varchar
+    管理部署 / management_department_name : varchar
     ME番号 / equipment_no : varchar
     シリアル番号 / serial_no : varchar
     明細区分 / detail_type : varchar
@@ -588,6 +589,9 @@ package "QRコード" {
     code_serial is assigned as max + 1 per
     (facility_id, code_prefix, code_branch)
     in a server-side transaction
+    data matching confirm resolves
+    (facility_id, qr_identifier) and updates
+    qr_codes.asset_ledger_id in same tx
     label_template_key refers to
     frontend-fixed Tepra Creator templates
     latest print operator is resolved via
@@ -600,6 +604,7 @@ package "QRコード" {
     施設ID / facility_id : bigint
     テンプレートキー / template_key : varchar
     プリンタ名 / printer_name : varchar
+    クライアント要求ID / client_request_id : varchar
     実行者ユーザーID / requested_by_user_id : bigint
     依頼日時 / requested_at : timestamp
     開始日時 / started_at : timestamp
@@ -607,10 +612,25 @@ package "QRコード" {
     ステータス / status : varchar
     成功件数 / success_count : int
     失敗件数 / failure_count : int
+    エラー段階 / error_stage : varchar
     エラー概要 / error_summary : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of qr_print_jobs
+    UNIQUE(requested_by_user_id, facility_id, client_request_id)
+    started_at is recorded when
+    print-start acceptance completes
+    and the client can hand off to
+    the local print module.
+    error_stage stores where the
+    local print flow failed, e.g.
+    LOCAL_MODULE_INIT /
+    PRINTER_INIT /
+    PRINT_REQUEST /
+    PRINT_EXECUTION
+  end note
 
   entity "qr_print_job_items" as qr_print_job_items {
     * 印刷ジョブ明細ID / qr_print_job_item_id : bigint
@@ -1759,6 +1779,38 @@ package "個人設定" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  entity "user_column_setting_presets" as user_column_setting_presets {
+    * ユーザーカラム設定プリセットID / user_column_setting_preset_id : bigint
+    --
+    ユーザーID / user_id : bigint
+    画面ID / screen_id : varchar
+    プリセット名 / preset_name : varchar
+    既定フラグ / is_default : boolean
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
+  }
+
+  note right of user_column_setting_presets
+    UNIQUE(user_id, screen_id, preset_name)
+    screen_id ごとに is_default=true は 0..1 件
+  end note
+
+  entity "user_column_setting_preset_items" as user_column_setting_preset_items {
+    * ユーザーカラム設定プリセット明細ID / user_column_setting_preset_item_id : bigint
+    --
+    ユーザーカラム設定プリセットID / user_column_setting_preset_id : bigint
+    カラムキー / column_key : varchar(100)
+    表示フラグ / is_visible : boolean
+    表示順 / sort_order : int
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of user_column_setting_preset_items
+    UNIQUE(user_column_setting_preset_id, column_key)
+  end note
 }
 
 ' インポート・マッチング・統合
@@ -1888,16 +1940,38 @@ package "インポート・マッチング" {
     作成日時 / created_at : timestamp
   }
 
+  note right of asset_data_matching_session_lists
+    `source_order=0` は
+    SURVEY_BASE。
+    現在処理対象リストは
+    `source_type='IMPORT_JOB'`
+    かつ `merge_status='PENDING'`
+    のうち `source_order`
+    最小の 1 件。
+    判定登録系 API と
+    `COMPLETE_LIST` は
+    当該 list のみ許可。
+    差し戻しは
+    後続 `source_order` に
+    `ACTIVE` 判定履歴が
+    残らない場合のみ許可。
+    後ろから順にのみ戻す。
+  end note
+
   entity "asset_data_matching_items" as asset_data_matching_items {
     * 統合リスト行ID / asset_data_matching_item_id : bigint
     --
     データ統合セッションID / asset_data_matching_session_id : bigint
     施設ID / facility_id : bigint
+    生成起点 / creation_type : varchar
+    行状態 / item_status : varchar
+    施設ロケーションID / facility_location_id : bigint
     現在突合状況 / matching_status : varchar
-    判断メモ / decision_note : varchar
     QR識別子 / qr_identifier : varchar
+    QR解決状態 / qr_resolution_status : varchar
     資産番号 / asset_no : varchar
     ME番号 / equipment_no : varchar
+    資産名 / asset_name : varchar
     共通部門名 / department_name : varchar
     共通部署名 / section_name : varchar
     室名 / room_name : varchar
@@ -1914,7 +1988,12 @@ package "インポート・マッチング" {
     メーカー名 / manufacturer_name : varchar
     型式名 / model_name : varchar
     シリアル番号 / serial_no : varchar
+    明細区分 / detail_type : varchar
+    親統合リスト行ID / parent_asset_data_matching_item_id : bigint
+    論理統合先行ID / merged_into_item_id : bigint
+    論理統合発生リストID / merged_by_session_list_id : bigint
     数量 / quantity : int
+    単位 / unit : varchar
     購入日 / purchased_on : date
     統合元サマリ / source_summary : varchar
     作成日時 / created_at : timestamp
@@ -1934,10 +2013,43 @@ package "インポート・マッチング" {
     資産インポート行ID / asset_import_row_id : bigint
     元リスト表示名 / source_label : varchar
     元反映区分 / source_relation_type : varchar
+    有効資産インポート行キー / active_import_row_key : bigint
+    有効調査レコードキー / active_survey_record_key : bigint
     作成日時 / created_at : timestamp
   }
 
   note right of asset_data_matching_items
+    本テーブルは原本確定直前の
+    スナップショット正本。
+    `creation_type` は
+    SURVEY_BASE /
+    UNCONFIRMED_IMPORT。
+    `item_status` は
+    ACTIVE / INVALIDATED。
+    `matching_status` は
+    共通 snapshot
+    再構築サービスが
+    `result_status='ACTIVE'`
+    判定履歴を
+    `source_order ASC` で
+    再適用した代表値。
+    `qr_identifier` は
+    採用済み QR 候補。
+    `qr_resolution_status` は
+    NONE / RESOLVED / CONFLICT。
+    更新系 API は
+    判定履歴または
+    論理統合状態を保存後
+    親 item / source /
+    `source_summary` / QR
+    snapshot を
+    同一 transaction で
+    再構築する。
+    survey record 集合の
+    non-null distinct QR が
+    0件なら NONE、
+    1件なら RESOLVED、
+    2件以上なら CONFLICT。
     原本リスト1行は
     現有品調査のみ
     台帳のみ
@@ -1945,15 +2057,110 @@ package "インポート・マッチング" {
     のいずれでも成立可。
     台帳n + 現有品調査1
     および n:n は許容しない。
+    台帳反映時の分類優先順位は
+    `selected_*`
+    `suggested_*`
+    既存 snapshot。
+    判定メモの正本は
+    `asset_data_matching_item_list_results`
+    に保持する。
+    `merged_into_item_id IS NULL`
+    かつ `item_status='ACTIVE'`
+    の行のみが有効行。
+    判定履歴または子参照を持つ行は
+    再集約しない。
+    再集約時も物理削除せず
+    論理統合として保持する。
+    `UNCONFIRMED_IMPORT` 行は
+    差し戻し後に有効判定が
+    残らなければ INVALIDATED。
+    原本確定は
+    必須項目充足に加えて
+    `qr_resolution_status <> 'CONFLICT'`
+    と QR bind ready を要求。
+    `source_summary` は画面表示用で
+    進捗判定の正本ではない。
   end note
 
   note right of asset_data_matching_item_sources
     1つの統合リスト行に紐づく
-    `IMPORT_ROW` は最大1件。
+    `IMPORT_ROW` は現在代表台帳行として
+    最大1件。
     `SURVEY_RECORD` は複数件可。
+    survey record 側の QR 集合から
+    親 item の `qr_identifier` /
+    `qr_resolution_status` を再計算する。
     同一 session 内で
     同一 import row / survey record は
+    有効統合リスト行に対して
     1つの統合リスト行にのみ紐づける。
+    `active_import_row_key` /
+    `active_survey_record_key` は
+    アプリケーションサービスが
+    `result_status='ACTIVE'`
+    判定履歴を
+    `source_order ASC` で
+    再適用し
+    親 item の有効状態に合わせて
+    同一トランザクションで更新する。
+    同一 session 内では
+    それぞれ一意制約で
+    重複紐づけを禁止する。
+    論理統合済み履歴行では
+    差し戻し復元のため
+    重複保持を許容する。
+    本テーブルは対象リストごとの
+    判定履歴ではなく
+    現在代表元を保持する。
+  end note
+
+  entity "asset_data_matching_item_list_results" as asset_data_matching_item_list_results {
+    * 対象リスト判定結果ID / asset_data_matching_item_list_result_id : bigint
+    --
+    データ統合セッションID / asset_data_matching_session_id : bigint
+    統合対象リストID / asset_data_matching_session_list_id : bigint
+    統合リスト行ID / asset_data_matching_item_id : bigint
+    施設ID / facility_id : bigint
+    資産インポート行ID / asset_import_row_id : bigint
+    判定結果 / matching_status : varchar
+    結果状態 / result_status : varchar
+    判断メモ / decision_note : varchar
+    判定者ユーザーID / decided_by_user_id : bigint
+    判定日時 / decided_at : timestamp
+    取消メモ / revert_note : varchar
+    取消者ユーザーID / reverted_by_user_id : bigint
+    取消日時 / reverted_at : timestamp
+    有効統合リスト行キー / active_item_key : bigint [generated]
+    有効資産インポート行キー / active_import_row_key : bigint [generated]
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of asset_data_matching_item_list_results
+    現在リストに対する
+    `対応中` / `対応済み`
+    進捗件数
+    台帳行消費判定
+    の正本。
+    `result_status='ACTIVE'`
+    の行だけを有効判定として扱う。
+    現在 snapshot 再構築の
+    入力正本でもある。
+    判定メモの正本は
+    `decision_note` とする。
+    UNIQUE(session_list_id,
+    active_item_key) で
+    二重判定を禁止する。
+    UNIQUE(session_list_id,
+    active_import_row_key) で
+    同一 import row の
+    二重消費を禁止する。
+    同一 list 内で
+    同一 import row の
+    二重消費を禁止する。
+    差し戻し時は
+    `REVERTED` に更新して
+    履歴として保持する。
   end note
 
   entity "asset_import_survey_mappings" as asset_import_survey_mappings {
@@ -1986,6 +2193,7 @@ package "インポート・マッチング" {
     `asset_data_matching_session_lists`
     `asset_data_matching_items`
     `asset_data_matching_item_sources`
+    `asset_data_matching_item_list_results`
     を正本として扱う。
   end note
 
@@ -2111,6 +2319,8 @@ users ||--o{ user_facility_feature_settings : ""
 users ||--o{ user_facility_column_settings : ""
 users ||--o{ user_search_conditions : ""
 users ||--o{ user_column_settings : ""
+users ||--o{ user_column_setting_presets : ""
+user_column_setting_presets ||--o{ user_column_setting_preset_items : ""
 users ||--o{ qr_codes : ""
 users ||--o{ qr_print_jobs : ""
 users ||--o{ asset_ledgers : ""
@@ -2347,18 +2557,29 @@ asset_import_jobs ||--o{ asset_import_rows : ""
 asset_data_matching_sessions ||--o{ asset_data_matching_session_lists : ""
 asset_data_matching_sessions ||--o{ asset_data_matching_items : ""
 asset_data_matching_sessions ||--o{ asset_data_matching_item_sources : ""
+asset_data_matching_sessions ||--o{ asset_data_matching_item_list_results : ""
+asset_data_matching_session_lists ||--o{ asset_data_matching_item_list_results : ""
 asset_data_matching_items ||--o{ asset_data_matching_item_sources : ""
+asset_data_matching_items ||--o{ asset_data_matching_item_list_results : ""
+asset_data_matching_items ||--o{ asset_data_matching_items : "parent_asset_data_matching_item_id"
+asset_data_matching_items ||--o{ asset_data_matching_items : "merged_into_item_id"
+asset_data_matching_session_lists ||--o{ asset_data_matching_items : "merged_by_session_list_id"
 asset_import_jobs ||--o{ asset_data_matching_session_lists : ""
 asset_import_jobs ||--o{ asset_data_matching_item_sources : ""
 asset_survey_sessions ||--o{ asset_data_matching_session_lists : ""
 asset_survey_sessions ||--o{ asset_data_matching_item_sources : ""
 asset_survey_records ||--o{ asset_data_matching_item_sources : ""
 asset_import_rows ||--o{ asset_data_matching_item_sources : ""
+asset_import_rows ||--o{ asset_data_matching_item_list_results : ""
 facilities ||--o{ asset_data_matching_sessions : ""
 facilities ||--o{ asset_data_matching_session_lists : ""
 facilities ||--o{ asset_data_matching_items : ""
 facilities ||--o{ asset_data_matching_item_sources : ""
+facilities ||--o{ asset_data_matching_item_list_results : ""
 users ||--o{ asset_data_matching_sessions : ""
+users ||--o{ asset_data_matching_item_list_results : ""
+users ||--o{ asset_data_matching_item_list_results : "reverted_by_user_id"
+facility_locations ||--o{ asset_data_matching_items : ""
 asset_categories ||--o{ asset_data_matching_items : ""
 asset_large_classes ||--o{ asset_data_matching_items : ""
 asset_medium_classes ||--o{ asset_data_matching_items : ""
