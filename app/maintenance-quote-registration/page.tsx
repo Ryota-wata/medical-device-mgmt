@@ -1381,42 +1381,6 @@ function MaintenanceQuoteRegistrationContent() {
                     </div>
                   </td>
                 </tr>
-                {/* 勘定科目 */}
-                <tr>
-                  <td style={thCellStyle(COLORS.step4)}>勘定科目</td>
-                  <td style={tdCellStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '13px' }}>
-                        <input
-                          type="radio"
-                          name="accountType"
-                          checked={formData.accountType === '○○○○○○○'}
-                          onChange={() => updateFormData({ accountType: '○○○○○○○' })}
-                          disabled={!isStepEnabled(4)}
-                        />
-                        ○○○○○○○
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '13px' }}>
-                        <input
-                          type="radio"
-                          name="accountType"
-                          checked={formData.accountType === 'その他'}
-                          onChange={() => updateFormData({ accountType: 'その他' })}
-                          disabled={!isStepEnabled(4)}
-                        />
-                        その他（
-                        <input
-                          type="text"
-                          value={formData.accountOther}
-                          onChange={(e) => updateFormData({ accountOther: e.target.value })}
-                          disabled={!isStepEnabled(4)}
-                          style={{ ...inputStyle, width: '150px' }}
-                        />
-                        ）
-                      </label>
-                    </div>
-                  </td>
-                </tr>
               </tbody>
             </table>
 

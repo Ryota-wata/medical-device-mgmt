@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { FacilityMaster, AssetMaster, DepartmentMaster, RoomCategoryMaster, VendorMaster } from '@/lib/types/master';
 import { initialAssetMasters } from '@/lib/data/initialAssetMasters';
+import { customerDepartments, customerRoomCategories } from '@/lib/data/customer';
 
 interface MasterStore {
   facilities: FacilityMaster[];
@@ -824,8 +825,8 @@ const initialRoomCategories: RoomCategoryMaster[] = [
 export const useMasterStore = create<MasterStore>((set, get) => ({
   facilities: initialFacilities,
   assets: initialAssets,
-  departments: initialDepartments,
-  roomCategories: initialRoomCategories,
+  departments: customerDepartments,
+  roomCategories: customerRoomCategories,
   vendors: initialVendors,
 
   // Facility actions

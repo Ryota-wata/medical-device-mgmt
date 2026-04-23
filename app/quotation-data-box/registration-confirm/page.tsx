@@ -6,261 +6,166 @@ import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { QuotationItemType } from '@/lib/types/quotation';
+import { customerStep6Items, customerStep4Items } from '@/lib/data/customer';
 
-// 明細区分の型（STEP 5 と同一）
 type DetailClassification = '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';
 
-// 基本情報の型（STEP1で登録した内容）
+const classMap: Record<string, DetailClassification> = {
+  '代表明細': '明細代表', '親': '親明細', '子': '子明細', '孫': '孫明細',
+  'その他': 'その他', '文字列': 'その他', '値引き': '値引き',
+};
+
+// 基本情報
 interface BasicInfo {
-  // 前画面からの入力データ（固定）
-  quotationPhase: string;       // 見積フェーズ
-  rfqNo: string;                // 見積依頼No.
-  rfqGroupName: string;         // 見積依頼G名称
-  facilityName: string;         // 宛先（施設名）
-  vendorName: string;           // 業者・メーカー（業者名）
-  contact: string;              // 連絡先
-  mail: string;                 // mail
-  // OCR読み取り結果データ
-  quotationDate: string;        // 見積日付
-  invoiceNo: string;            // 事業者登録番号（インボイス）
-  deliveryPeriod: string;       // 納期
-  validityPeriod: string;       // 見積有効期限
+  quotationPhase: string; rfqNo: string; rfqGroupName: string; facilityName: string;
+  vendorName: string; contact: string; mail: string;
+  quotationDate: string; invoiceNo: string; deliveryPeriod: string; validityPeriod: string;
 }
-
-// 登録明細データの型
-interface RegistrationDetail {
-  id: string;
-  // 見積情報
-  originalSeq: number;
-  itemName: string;
-  model: string;
-  manufacturer: string;
-  quantity: number | null;
-  // 明細区分・グループ
-  detailClassification: DetailClassification;
-  groupNo: string;              // 親子No.
-  // 個体登録及び金額按分（前画面からの情報）
-  majorCategory: string;        // 大分類
-  middleCategory: string;       // 中分類
-  assetName: string;            // 個体管理品目
-  assetManufacturer: string;    // メーカー（AI判定後）
-  assetModel: string;           // 型式（AI判定後）
-  seqId: string;                // SEQ_ID
-  unit: string;                 // 単位
-  allocatedAmount: number | null; // 按分金額
-  // 設置場所（編集可能）
-  department: string;           // 設置部門
-  section: string;              // 設置部署
-  roomName: string;             // 設置室名
-  managingSection: string;      // 管理部署
-}
-
-// テスト用基本情報（STEP1で登録した内容）
 const testBasicInfo: BasicInfo = {
-  // 前画面からの入力データ
-  quotationPhase: '定価',
-  rfqNo: 'RFQ-20250119-0001',
-  rfqGroupName: '2025年度放射線科機器更新',
-  facilityName: '医療法人○○会 ○○病院',
-  vendorName: 'GEヘルスケア・ジャパン',
-  contact: '03-1234-5678',
-  mail: 'info@example.com',
-  // OCR読み取り結果データ
-  quotationDate: '2026/01/15',
-  invoiceNo: 'T1234567890123',
-  deliveryPeriod: '2026/03/31',
-  validityPeriod: '2026/02/28',
+  quotationPhase: '定価', rfqNo: 'RFQ-20250119-0001', rfqGroupName: '2025年度放射線科機器更新',
+  facilityName: '医療法人○○会 ○○病院', vendorName: 'GEヘルスケア・ジャパン',
+  contact: '03-1234-5678', mail: 'info@example.com',
+  quotationDate: '2026/01/15', invoiceNo: 'T1234567890123',
+  deliveryPeriod: '2026/03/31', validityPeriod: '2026/02/28',
 };
 
-// テスト用登録明細データ
-const testRegistrationDetails: RegistrationDetail[] = [
-  // 明細代表（非表示）
-  { id: '1', originalSeq: 1, itemName: '具象眼科用ユニット', model: 'さららEFUS01', manufacturer: '第一医科', quantity: 4, detailClassification: '明細代表', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '具象眼科用ユニット', assetManufacturer: '第一医科', assetModel: 'さららEFUS01', seqId: '', unit: '台', allocatedAmount: 6600000, department: '', section: '', roomName: '', managingSection: '' },
-  // その他（非表示）
-  { id: '2', originalSeq: 2, itemName: '仕様', model: '', manufacturer: '第一医科', quantity: null, detailClassification: 'その他', groupNo: '', majorCategory: '', middleCategory: '', assetName: '仕様', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  // 親明細: 眼科用ユニット さらら × 4台（groupNo: 1）
-  { id: '3-1', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '1', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '3-2', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '2', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '3-3', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '3', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '3-4', originalSeq: 3, itemName: '具象眼科用ユニット', model: 'さらら', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '眼科用ユニット さらら', assetManufacturer: '第一医科', assetModel: 'EFUS01', seqId: '4', unit: '台', allocatedAmount: 1650000, department: '', section: '', roomName: '', managingSection: '' },
-  // 子明細: groupNo: 1 の付属品
-  { id: '4', originalSeq: 4, itemName: 'ホース付きスプレー2本', model: '', manufacturer: '第一', quantity: null, detailClassification: '子明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ホース付きスプレー2本', assetManufacturer: '第一', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '5', originalSeq: 5, itemName: '吸引清掃式　ロック枠掛付', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '吸引清掃式　ロック枠掛付', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '6', originalSeq: 6, itemName: '通気清掃式　ロック枠掛付', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '1', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '通気清掃式　ロック枠掛付', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  // 親明細: ツインボール（groupNo: 2）
-  { id: '7', originalSeq: 7, itemName: 'ツインボール', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '親明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール（眼科用）', assetManufacturer: '第一医科', assetModel: '', seqId: '5', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  // 子明細: groupNo: 2 の付属品
-  { id: '8', originalSeq: 8, itemName: '照明灯あり', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '照明灯あり', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '9', originalSeq: 9, itemName: '吸引便ディスポ', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '吸引便ディスポ', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '10', originalSeq: 10, itemName: 'キャスターあり', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'キャスターあり', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '11', originalSeq: 11, itemName: '天板フラット', model: '', manufacturer: '第一医科', quantity: null, detailClassification: '子明細', groupNo: '2', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: '天板フラット', assetManufacturer: '第一医科', assetModel: '', seqId: '', unit: '台', allocatedAmount: null, department: '', section: '', roomName: '', managingSection: '' },
-  // 親明細: ツインボール用棚 × 4台（groupNo: 3）
-  { id: '12-1', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '6', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '12-2', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '7', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '12-3', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '8', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
-  { id: '12-4', originalSeq: 12, itemName: 'さらら用ツインボール用棚　壁付タイプ', model: '', manufacturer: '第一医科', quantity: 4, detailClassification: '親明細', groupNo: '3', majorCategory: '01医療機器', middleCategory: '眼科用機器', assetName: 'ツインボール用棚 壁付', assetManufacturer: '第一医科', assetModel: '壁付タイプ', seqId: '9', unit: '台', allocatedAmount: 162000, department: '', section: '', roomName: '', managingSection: '' },
-];
+// 行データ
+interface Row {
+  id: string;
+  rowNo: number;
+  category: string;
+  detailClassification: DetailClassification;
+  itemName: string;
+  manufacturer: string;
+  model: string;
+  quantity: number;
+  unit: string;
+  seqId: string;
+  listPriceTotal: number;
+  purchasePriceTotal: number;
+  department: string;
+  section: string;
+  roomName: string;
+  managingSection: string;
+  isFirstOfGroup: boolean;
+  groupRowCount: number;
+}
 
-// 明細区分からQuotationItemTypeへの変換
-const detailClassificationToItemType = (classification: DetailClassification): QuotationItemType => {
-  const mapping: Record<string, QuotationItemType> = {
-    '明細代表': 'B_明細代表',
-    '親明細': 'C_個体管理品目',
-    '子明細': 'D_付属品',
-    'その他': 'E_その他役務',
-    '値引き': 'F_値引き',
-  };
-  return mapping[classification] || 'C_個体管理品目';
-};
+function buildRows(): Row[] {
+  const rows: Row[] = [];
+  let seqCounter = 1;
+  for (const item of customerStep6Items) {
+    const cls = (classMap[item.itemType] || '') as DetailClassification;
+    const isParent = cls === '親明細';
+    const step4Item = customerStep4Items.find(s4 => s4.rowNo === item.rowNo);
+    const expandCount = isParent ? (step4Item?.quantity || item.quantity || 1) : 1;
 
-// 明細区分の短縮表示
-const classificationLabel = (classification: DetailClassification): string => {
-  if (classification === '親明細') return '親';
-  if (classification === '子明細') return '子';
-  return '';
+    for (let i = 0; i < expandCount; i++) {
+      rows.push({
+        id: `r-${item.rowNo}-${i}`,
+        rowNo: item.rowNo,
+        category: item.category || '',
+        detailClassification: cls,
+        itemName: item.itemName,
+        manufacturer: item.manufacturer,
+        model: item.model,
+        quantity: isParent ? 1 : (item.quantity || 1),
+        unit: item.unit || '台',
+        seqId: isParent ? String(seqCounter++) : (cls === '子明細' || cls === '孫明細') ? '-' : '',
+        listPriceTotal: item.listPriceTotal || 0,
+        purchasePriceTotal: item.purchasePriceTotal || 0,
+        department: item.department || '',
+        section: item.section || '',
+        roomName: item.roomName || '',
+        managingSection: item.managementDepartment || '',
+        isFirstOfGroup: i === 0,
+        groupRowCount: expandCount,
+      });
+    }
+  }
+  return rows;
+}
+
+const detailClassificationToItemType = (c: DetailClassification): QuotationItemType => {
+  const m: Record<string, QuotationItemType> = { '明細代表': 'B_明細代表', '親明細': 'C_個体管理品目', '子明細': 'D_付属品', 'その他': 'E_その他役務', '値引き': 'F_値引き' };
+  return m[c] || 'C_個体管理品目';
 };
 
 export default function RegistrationConfirmPage() {
   const router = useRouter();
   const { addQuotationGroup, addQuotationItems, generateReceivedQuotationNo } = useQuotationStore();
-
-  // 基本情報
   const [basicInfo] = useState<BasicInfo>(testBasicInfo);
+  const [rows, setRows] = useState<Row[]>(buildRows);
+  const [showOnlyIndividual, setShowOnlyIndividual] = useState(false);
 
-  // 登録明細データ（設置場所の編集のため useState で管理）
-  const [details, setDetails] = useState<RegistrationDetail[]>(testRegistrationDetails);
+  const displayRows = useMemo(() => {
+    if (showOnlyIndividual) return rows.filter(r => r.detailClassification === '親明細' || r.detailClassification === '子明細');
+    return rows;
+  }, [rows, showOnlyIndividual]);
 
-  // 表示対象（親明細・子明細のみ）をグループ化表示
-  const displayDetails = useMemo(() => {
-    const visible = details.filter(
-      (d) => d.detailClassification === '親明細' || d.detailClassification === '子明細'
-    );
-    // groupNo 順 → 親明細 → 子明細 の順でソート
-    return visible.sort((a, b) => {
-      const groupA = parseInt(a.groupNo) || 999;
-      const groupB = parseInt(b.groupNo) || 999;
-      if (groupA !== groupB) return groupA - groupB;
-      // 同一グループ内: 親明細を先に
-      if (a.detailClassification === '親明細' && b.detailClassification === '子明細') return -1;
-      if (a.detailClassification === '子明細' && b.detailClassification === '親明細') return 1;
-      // 同一区分内: seqId or originalSeq 順
-      const seqA = parseInt(a.seqId) || a.originalSeq;
-      const seqB = parseInt(b.seqId) || b.originalSeq;
-      return seqA - seqB;
-    });
-  }, [details]);
-
-  // 合計金額（税抜）— 表示対象レコードの allocatedAmount 合計
   const totalAmount = useMemo(() => {
-    return displayDetails.reduce((sum, detail) => sum + (detail.allocatedAmount || 0), 0);
-  }, [displayDetails]);
+    const seen = new Set<number>();
+    let total = 0;
+    for (const r of rows) {
+      if (r.isFirstOfGroup && !seen.has(r.rowNo)) { seen.add(r.rowNo); total += r.purchasePriceTotal; }
+    }
+    return total;
+  }, [rows]);
 
-  // 設置場所の入力ハンドラ
   const handleLocationChange = (id: string, field: 'department' | 'section' | 'roomName' | 'managingSection', value: string) => {
-    setDetails((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
-    );
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
   };
 
-  // 戻るボタン
-  const handleBack = () => {
-    router.push('/quotation-data-box/price-allocation');
-  };
-
-  // 登録ボタン
   const handleRegister = () => {
     if (confirm('見積情報をDatabaseに登録します。よろしいですか？')) {
-      // 見積番号を生成
       const quotationNo = generateReceivedQuotationNo();
-
-      // 見積グループ（ヘッダー情報）を登録
       const groupId = addQuotationGroup({
-        receivedQuotationNo: quotationNo,
-        rfqNo: basicInfo.rfqNo,
-        vendorName: basicInfo.vendorName,
-        vendorContact: basicInfo.contact,
-        vendorEmail: basicInfo.mail,
-        quotationDate: basicInfo.quotationDate,
-        validityPeriod: 1,
-        deliveryPeriod: 3,
-        phase: basicInfo.quotationPhase === '定価' ? '定価見積' : '確定見積',
-        totalAmount: totalAmount,
+        receivedQuotationNo: quotationNo, rfqNo: basicInfo.rfqNo, vendorName: basicInfo.vendorName,
+        vendorContact: basicInfo.contact, vendorEmail: basicInfo.mail, quotationDate: basicInfo.quotationDate,
+        validityPeriod: 1, deliveryPeriod: 3, phase: basicInfo.quotationPhase === '定価' ? '定価見積' : '確定見積',
+        totalAmount,
       });
-
-      // 見積明細を登録（全件送信）
-      const itemsToAdd = details.map((detail) => ({
-        quotationGroupId: groupId,
-        receivedQuotationNo: quotationNo,
-        rowNo: detail.originalSeq,
-        originalItemName: detail.itemName,
-        originalManufacturer: detail.manufacturer,
-        originalModel: detail.model,
-        originalQuantity: detail.quantity || 1,
-        itemType: detailClassificationToItemType(detail.detailClassification),
-        category: detail.majorCategory,
-        largeClass: detail.majorCategory,
-        middleClass: detail.middleCategory,
-        itemName: detail.assetName,
-        manufacturer: detail.assetManufacturer,
-        model: detail.assetModel,
-        aiQuantity: 1,
-        rfqNo: basicInfo.rfqNo,
-        unit: detail.unit,
-        allocListPriceTotal: detail.allocatedAmount || undefined,
-        seqId: detail.seqId || undefined,
-        parentSeqId: detail.groupNo || undefined,
-        linkedApplicationIds: [],
+      const itemsToAdd = rows.map(r => ({
+        quotationGroupId: groupId, receivedQuotationNo: quotationNo, rowNo: r.rowNo,
+        originalItemName: r.itemName, originalManufacturer: r.manufacturer, originalModel: r.model,
+        originalQuantity: r.quantity, itemType: detailClassificationToItemType(r.detailClassification),
+        category: r.category, itemName: r.itemName, manufacturer: r.manufacturer, model: r.model,
+        aiQuantity: 1, unit: r.unit, seqId: r.seqId || undefined, linkedApplicationIds: [],
       }));
-
       addQuotationItems(itemsToAdd);
-
       alert(`登録が完了しました（見積番号: ${quotationNo}）`);
       router.push('/quotation-data-box/purchase-management');
     }
   };
 
+  const fmtNum = (n: number) => n ? n.toLocaleString() : '';
+  const classColor = (cls: DetailClassification) => {
+    if (cls === '親明細') return '#e74c3c';
+    if (cls === '子明細') return '#2196f3';
+    if (cls === '孫明細') return '#9c27b0';
+    if (cls === '明細代表') return '#666';
+    return '#888';
+  };
+
+  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #dee2e6', fontSize: '10px', whiteSpace: 'nowrap' };
+  const tdBase: React.CSSProperties = { padding: '4px 5px', fontSize: '10px', verticalAlign: 'top' };
+  const borderR: React.CSSProperties = { borderRight: '1px solid #ccc' };
+  const inputStyle: React.CSSProperties = { width: '100%', fontSize: '10px', padding: '3px 4px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' as const };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
-      <Header
-        title="見積登録（購入）登録確認へ"
-        stepBadge="STEP 6"
-        hideMenu={true}
-        showBackButton={false}
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+      <Header title="見積登録（購入）登録確認へ" stepBadge="STEP 6" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={6} />
 
-      {/* ページ全体スクロール */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {/* 確認メッセージ */}
-        <div style={{
-          padding: '12px 16px',
-          background: '#fff3cd',
-          border: '1px solid #ffc107',
-          borderRadius: '4px',
-          marginBottom: '16px',
-          fontSize: '13px',
-          color: '#856404',
-          fontWeight: 'bold'
-        }}>
+        <div style={{ padding: '12px 16px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#856404', fontWeight: 'bold' }}>
           下記の内容で見積Databaseへ登録を実施します。
         </div>
 
-        {/* 基本情報セクション（STEP1で登録した内容） */}
-        <div style={{
-          background: 'white',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          marginBottom: '16px',
-        }}>
-          <div style={{
-            padding: '8px 16px',
-            background: '#6c757d',
-            color: 'white',
-            fontSize: '12px',
-            fontWeight: 'bold',
-          }}>
-            基本情報
-          </div>
+        {/* 基本情報 */}
+        <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
+          <div style={{ padding: '8px 16px', background: '#6c757d', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>基本情報</div>
           <div style={{ padding: '12px 16px' }}>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
               <tbody>
@@ -299,136 +204,92 @@ export default function RegistrationConfirmPage() {
           </div>
         </div>
 
-        {/* 登録明細確認セクション */}
-        <div style={{
-          background: 'white',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          marginBottom: '16px',
-        }}>
-          {/* セクションヘッダー */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 16px',
-            background: '#374151',
-            color: 'white',
-          }}>
-            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>登録明細確認</span>
-            <span style={{ fontSize: '12px' }}>
-              合計金額（税抜）:
-              <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px', fontVariantNumeric: 'tabular-nums' }}>
+        {/* 登録明細確認 */}
+        <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
+          {/* 上部バー */}
+          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #ddd' }}>
+            <button onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
+              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#27ae60' : '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer' }}>
+              個体管理品目のみ表示
+            </button>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
                 ¥{totalAmount.toLocaleString()}
-              </span>
-            </span>
+              </div>
+            </div>
           </div>
 
-          {/* 明細テーブル */}
+          {/* テーブル */}
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1400px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                <tr style={{ background: '#374151', color: 'white' }}>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '60px', fontSize: '11px', fontWeight: 'bold' }}>明細区分</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '50px', fontSize: '11px', fontWeight: 'bold' }}>SEQ</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>大分類</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>中分類</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', fontSize: '11px', fontWeight: 'bold' }}>個体管理品目</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>メーカー</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>型式</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '80px', fontSize: '11px', fontWeight: 'bold' }}>数量／単位</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #3d5a80', width: '120px', fontSize: '11px', fontWeight: 'bold' }}>案分金額（税別）</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>部門</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>部署</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>室名</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #3d5a80', width: '100px', fontSize: '11px', fontWeight: 'bold' }}>管理部署</th>
+                <tr>
+                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❸</th>
+                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❹ 個体管理品目</th>
+                  <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❺ 個体登録／金額案分</th>
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>STEP❻ 設置情報</th>
+                </tr>
+                <tr style={{ background: '#f8f9fa' }}>
+                  <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>No</th>
+                  <th style={{ ...thBase, width: '90px' }}>カテゴリ</th>
+                  <th style={{ ...thBase, width: '55px', textAlign: 'center', ...borderR }}>明細区分</th>
+                  <th style={{ ...thBase, whiteSpace: 'nowrap' }}>個体管理品目</th>
+                  <th style={{ ...thBase, width: '80px' }}>メーカー</th>
+                  <th style={{ ...thBase, width: '100px', ...borderR }}>型式（見積名称）</th>
+                  <th style={{ ...thBase, width: '35px', textAlign: 'center' }}>数量</th>
+                  <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>単位</th>
+                  <th style={{ ...thBase, width: '35px', textAlign: 'center' }}>親子<br />関</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>定価金額</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right', ...borderR }}>購入金額<br />(税別)</th>
+                  <th style={{ ...thBase, width: '100px', background: '#faf5fc' }}>部門</th>
+                  <th style={{ ...thBase, width: '100px', background: '#faf5fc' }}>部署</th>
+                  <th style={{ ...thBase, width: '100px', background: '#faf5fc' }}>室名</th>
+                  <th style={{ ...thBase, width: '100px', background: '#faf5fc' }}>管理部署</th>
                 </tr>
               </thead>
               <tbody>
-                {displayDetails.map((detail) => {
-                  const isParent = detail.detailClassification === '親明細';
-                  const rowBg = isParent ? '#e8f5e9' : '#fffde7';
+                {displayRows.map((row) => {
+                  const showOriginal = row.isFirstOfGroup;
+                  const span = row.groupRowCount;
+                  const clsLabel = row.detailClassification.replace('明細', '');
 
                   return (
-                    <tr key={detail.id} style={{ borderBottom: '1px solid #ddd', background: rowBg }}>
-                      {/* 明細区分 */}
-                      <td style={{
-                        padding: '8px 6px',
-                        textAlign: 'center',
-                        background: isParent ? '#4caf50' : '#ffc107',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: '12px'
-                      }}>
-                        {classificationLabel(detail.detailClassification)}
+                    <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
+                      {showOriginal && (
+                        <>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{row.rowNo}</td>
+                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #ddd' }}>{row.category}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #ddd', ...borderR }}>
+                            {row.detailClassification && (
+                              <span style={{ padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', color: 'white', background: classColor(row.detailClassification) }}>{clsLabel}</span>
+                            )}
+                          </td>
+                        </>
+                      )}
+                      <td style={{ ...tdBase, whiteSpace: 'nowrap' }}>{row.itemName}</td>
+                      <td style={{ ...tdBase, color: '#555' }}>{row.manufacturer}</td>
+                      <td style={{ ...tdBase, color: '#555', ...borderR }}>{row.model}</td>
+                      <td style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity || '-'}</td>
+                      <td style={{ ...tdBase, textAlign: 'center' }}>{row.unit}</td>
+                      <td style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.seqId}</td>
+                      {showOriginal && (
+                        <>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.listPriceTotal)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #ddd', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
+                        </>
+                      )}
+                      <td style={{ ...tdBase, background: '#fdfaff' }}>
+                        <input type="text" value={row.department} onChange={e => handleLocationChange(row.id, 'department', e.target.value)} style={inputStyle} />
                       </td>
-                      {/* SEQ */}
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px', fontWeight: isParent ? 'bold' : 'normal', fontVariantNumeric: 'tabular-nums' }}>
-                        {detail.seqId || '-'}
+                      <td style={{ ...tdBase, background: '#fdfaff' }}>
+                        <input type="text" value={row.section} onChange={e => handleLocationChange(row.id, 'section', e.target.value)} style={inputStyle} />
                       </td>
-                      {/* 大分類 */}
-                      <td style={{ padding: '8px 6px', fontSize: '11px' }}>
-                        {detail.majorCategory || '-'}
+                      <td style={{ ...tdBase, background: '#fdfaff' }}>
+                        <input type="text" value={row.roomName} onChange={e => handleLocationChange(row.id, 'roomName', e.target.value)} style={inputStyle} />
                       </td>
-                      {/* 中分類 */}
-                      <td style={{ padding: '8px 6px', fontSize: '11px' }}>
-                        {detail.middleCategory || '-'}
-                      </td>
-                      {/* 個体管理品目 */}
-                      <td style={{ padding: '8px 6px', fontWeight: 'bold', fontSize: '12px' }}>
-                        {detail.assetName}
-                      </td>
-                      {/* メーカー */}
-                      <td style={{ padding: '8px 6px', fontSize: '11px' }}>
-                        {detail.assetManufacturer || '-'}
-                      </td>
-                      {/* 型式 */}
-                      <td style={{ padding: '8px 6px', fontSize: '11px' }}>
-                        {detail.assetModel || '-'}
-                      </td>
-                      {/* 数量／単位 */}
-                      <td style={{ padding: '8px 6px', textAlign: 'center', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
-                        1 / {detail.unit}
-                      </td>
-                      {/* 案分金額（税別） */}
-                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 'bold', fontSize: '12px', color: '#c62828', fontVariantNumeric: 'tabular-nums' }}>
-                        {detail.allocatedAmount ? `¥${detail.allocatedAmount.toLocaleString()}` : '-'}
-                      </td>
-                      {/* 部門 */}
-                      <td style={{ padding: '4px' }}>
-                        <input
-                          type="text"
-                          value={detail.department}
-                          onChange={(e) => handleLocationChange(detail.id, 'department', e.target.value)}
-                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
-                        />
-                      </td>
-                      {/* 部署 */}
-                      <td style={{ padding: '4px' }}>
-                        <input
-                          type="text"
-                          value={detail.section}
-                          onChange={(e) => handleLocationChange(detail.id, 'section', e.target.value)}
-                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
-                        />
-                      </td>
-                      {/* 室名 */}
-                      <td style={{ padding: '4px' }}>
-                        <input
-                          type="text"
-                          value={detail.roomName}
-                          onChange={(e) => handleLocationChange(detail.id, 'roomName', e.target.value)}
-                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
-                        />
-                      </td>
-                      {/* 管理部署 */}
-                      <td style={{ padding: '4px' }}>
-                        <input
-                          type="text"
-                          value={detail.managingSection}
-                          onChange={(e) => handleLocationChange(detail.id, 'managingSection', e.target.value)}
-                          style={{ width: '100%', fontSize: '11px', padding: '4px 6px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' }}
-                        />
+                      <td style={{ ...tdBase, background: '#fdfaff' }}>
+                        <input type="text" value={row.managingSection} onChange={e => handleLocationChange(row.id, 'managingSection', e.target.value)} style={inputStyle} />
                       </td>
                     </tr>
                   );
@@ -440,34 +301,12 @@ export default function RegistrationConfirmPage() {
 
         {/* フッターボタン */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: '12px 28px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-          >
+          <button onClick={() => router.push('/quotation-data-box/price-allocation')}
+            style={{ padding: '12px 28px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             一つ前のSTEPに戻る
           </button>
-          <button
-            onClick={handleRegister}
-            style={{
-              padding: '12px 28px',
-              background: '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
-          >
+          <button onClick={handleRegister}
+            style={{ padding: '12px 28px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             見積情報Databaseに登録
           </button>
         </div>

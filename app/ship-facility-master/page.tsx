@@ -164,7 +164,10 @@ export default function ShipFacilityMasterPage() {
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: isMobile ? '12px' : '16px'
+        gap: isMobile ? '12px' : '16px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
           <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>

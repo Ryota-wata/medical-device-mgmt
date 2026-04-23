@@ -321,7 +321,7 @@ export default function PermissionManagementPage() {
   return (
     <div className="min-h-dvh flex flex-col bg-slate-100">
       {/* ヘッダー */}
-      <header className="bg-slate-700 text-white px-5 py-4 flex justify-between items-center flex-wrap gap-4">
+      <header className="bg-slate-700 text-white px-5 py-4 flex justify-between items-center flex-wrap gap-4 sticky top-0 z-20">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}

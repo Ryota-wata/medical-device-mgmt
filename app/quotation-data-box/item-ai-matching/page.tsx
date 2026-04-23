@@ -51,160 +51,42 @@ interface DetailItem {
   model: string;              // 型式（見積名称）
   quantity: number | null;    // 数量
   detailClassification: DetailClassification; // 明細区分（STEP3から引継ぎ）
+  category: string;           // カテゴリ（STEP3から引継ぎ）
   aiJudgment: AIJudgmentResult | null; // AI判定結果
 }
 
-// テスト用明細データ（STEP3から引き継いだデータ + AI判定結果）
-const testDetailItems: DetailItem[] = [
-  {
-    id: 1,
-    rowNo: 1,
-    itemName: '具象眼科用ユニット',
-    manufacturer: '第一医科',
-    model: 'さららEFUS01',
-    quantity: 4,
-    detailClassification: '明細代表',
-    aiJudgment: {
-      category: '有形資産',
-      majorCategory: '医療用機器備品',
-      middleCategory: '眼科用機器',
-      assetName: '眼科用ユニット さらら',
-      manufacturer: '第一医科株式会社',
-      model: 'EFUS01',
-    },
-  },
-  {
-    id: 2,
-    rowNo: 2,
-    itemName: '仕様',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: 'その他',
-    aiJudgment: null,
-  },
-  {
-    id: 3,
-    rowNo: 3,
-    itemName: '具象眼科用ユニット',
-    manufacturer: '第一医科',
-    model: 'さらら',
-    quantity: 4,
-    detailClassification: '親明細',
-    aiJudgment: {
-      category: '有形資産',
-      majorCategory: '医療用機器備品',
-      middleCategory: '眼科用機器',
-      assetName: '眼科用ユニット さらら',
-      manufacturer: '第一医科株式会社',
-      model: 'さらら',
-    },
-  },
-  {
-    id: 4,
-    rowNo: 4,
-    itemName: 'ホース付きスプレー2本',
-    manufacturer: '第一',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 5,
-    rowNo: 5,
-    itemName: '吸引清掃式　ロック枠掛付',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 6,
-    rowNo: 6,
-    itemName: '通気清掃式　ロック枠掛付',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 7,
-    rowNo: 7,
-    itemName: 'ツインボール',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '親明細',
-    aiJudgment: {
-      category: '有形資産',
-      majorCategory: '医療用機器備品',
-      middleCategory: '眼科用機器',
-      assetName: 'ツインボール（眼科用）',
-      manufacturer: '第一医科株式会社',
-      model: 'TB-100',
-    },
-  },
-  {
-    id: 8,
-    rowNo: 8,
-    itemName: '照明灯あり',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 9,
-    rowNo: 9,
-    itemName: '吸引便ディスポ',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 10,
-    rowNo: 10,
-    itemName: 'キャスターあり',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 11,
-    rowNo: 11,
-    itemName: '天板フラット',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    detailClassification: '子明細',
-    aiJudgment: null,
-  },
-  {
-    id: 12,
-    rowNo: 12,
-    itemName: 'さらら用ツインボール用棚　壁付タイプ',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: 4,
-    detailClassification: '親明細',
-    aiJudgment: {
-      category: '有形資産',
-      majorCategory: '医療用機器備品',
-      middleCategory: '眼科用機器',
-      assetName: 'ツインボール用棚 壁付',
-      manufacturer: '第一医科株式会社',
-      model: 'TBS-W01',
-    },
-  },
-];
+import { customerStep4Items } from '@/lib/data/customer';
+
+// 明細区分マッピング
+const step4ClassMap: Record<string, DetailClassification> = {
+  '代表明細': '明細代表', '親': '親明細', '子': '子明細', '孫': '孫明細',
+  'その他': 'その他', '文字列': 'その他', '値引き': '値引き',
+};
+
+// 顧客サンプルデータから変換（再取り込み: node docs/customer-sample-data/convert.mjs）
+// 親明細・明細代表にはAI判定結果を設定、子・孫・その他にはnull
+const testDetailItems: DetailItem[] = customerStep4Items.map((item, i) => {
+  const classification = step4ClassMap[item.itemType] || '' as DetailClassification;
+  const hasAI = classification === '親明細' || classification === '明細代表';
+  return {
+    id: i + 1,
+    rowNo: item.rowNo,
+    itemName: item.originalItemName,
+    manufacturer: item.originalManufacturer,
+    model: item.originalModel,
+    quantity: item.quantity || null,
+    detailClassification: classification,
+    category: item.category || '',
+    aiJudgment: hasAI && item.itemName ? {
+      category: item.category || '',
+      majorCategory: item.largeClass || '',
+      middleCategory: item.middleClass || '',
+      assetName: item.itemName,
+      manufacturer: item.manufacturer || item.originalManufacturer,
+      model: item.model || item.originalModel,
+    } : null,
+  };
+});
 
 export default function ItemAiMatchingPage() {
   const router = useRouter();
@@ -218,12 +100,21 @@ export default function ItemAiMatchingPage() {
   // 選択中の行（資産マスタ選択待ち）
   const [selectingRow, setSelectingRow] = useState<number | null>(null);
 
-  // 親明細・子明細のみをフィルタ（個体管理品目）
+  // 個体管理品目のみ表示フィルタ
+  const [showOnlyIndividual, setShowOnlyIndividual] = useState(false);
+
+  // 個体管理品目（親明細・子明細）
   const individualItems = useMemo(() => {
     return detailItems.filter(
       item => item.detailClassification === '親明細' || item.detailClassification === '子明細'
     );
   }, [detailItems]);
+
+  // 表示対象
+  const displayItems = useMemo(() => {
+    if (showOnlyIndividual) return individualItems;
+    return detailItems;
+  }, [detailItems, individualItems, showOnlyIndividual]);
 
   // 確定状態を取得
   const getConfirmedInfo = (id: number): ConfirmedState | null => {
@@ -406,19 +297,23 @@ export default function ItemAiMatchingPage() {
             </div>
           </div>
 
-          {/* 進捗状況 */}
+          {/* 進捗状況 + フィルタ */}
           <div style={{ padding: '12px 16px', display: 'flex', gap: '16px', alignItems: 'center', borderBottom: '1px solid #ddd' }}>
-            <div style={{
-              padding: '6px 14px',
-              background: '#e8f5e9',
-              border: '1px solid #a5d6a7',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: '#2e7d32',
-            }}>
-              個体管理品目: {individualItems.length}件
-            </div>
+            <button
+              onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
+              style={{
+                padding: '6px 14px',
+                background: showOnlyIndividual ? '#27ae60' : '#e8f5e9',
+                border: '1px solid #a5d6a7',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: showOnlyIndividual ? 'white' : '#2e7d32',
+                cursor: 'pointer',
+              }}
+            >
+              個体管理品目のみ表示
+            </button>
             <div style={{
               padding: '6px 14px',
               background: confirmedCount === individualItems.length ? '#c8e6c9' : '#fff3e0',
@@ -434,167 +329,132 @@ export default function ItemAiMatchingPage() {
 
           {/* 明細テーブル */}
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1100px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '1400px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                 {/* 2段ヘッダー */}
                 <tr>
                   <th colSpan={5} style={{
-                    padding: '6px',
-                    textAlign: 'center',
-                    borderBottom: '2px solid #27ae60',
-                    fontWeight: 'bold',
-                    color: '#27ae60',
-                    background: '#e8f4fc',
-                    fontSize: '11px'
+                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #333',
+                    fontWeight: 'bold', background: '#e8f4fc', fontSize: '11px'
                   }}>
-                    元明細（原本情報）
+                    商品情報（原本情報）
                   </th>
-                  <th style={{ padding: '6px', background: '#f8f9fa', width: '25px' }}>⇒</th>
-                  <th colSpan={6} style={{
-                    padding: '6px',
-                    textAlign: 'center',
-                    borderBottom: '2px solid #9c27b0',
-                    fontWeight: 'bold',
-                    color: '#9c27b0',
-                    background: '#f3e5f5',
-                    fontSize: '11px'
+                  <th colSpan={2} style={{
+                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #333',
+                    borderRight: '1px solid #ccc',
+                    fontWeight: 'bold', background: '#e8f4fc', fontSize: '11px'
                   }}>
-                    個体品目のAI判定
+                    STEP❸
                   </th>
-                  <th style={{ padding: '6px', background: '#f8f9fa', width: '200px', fontSize: '11px' }}>操作</th>
+                  <th colSpan={7} style={{
+                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0',
+                    fontWeight: 'bold', color: '#9c27b0', background: '#f3e5f5', fontSize: '11px'
+                  }}>
+                    STEP❹ 個体管理品目登録
+                  </th>
                 </tr>
                 <tr style={{ background: '#f8f9fa' }}>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px', fontSize: '9px' }}>No</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px' }}>品名</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px' }}>型式</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '40px', fontSize: '9px' }}>数量</th>
-                  <th style={{ padding: '5px', background: '#fafafa' }}></th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>category</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '90px', fontSize: '9px', background: '#faf5fc' }}>大分類</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px', background: '#faf5fc' }}>中分類</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px', background: '#faf5fc' }}>個体管理品目</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px', background: '#faf5fc' }}>型式</th>
-                  <th style={{ padding: '5px', borderBottom: '1px solid #dee2e6' }}></th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px' }}>No</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', minWidth: '140px' }}>品名（見積名称）</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px' }}>メーカー</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '100px' }}>型式（見積名称）</th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '40px' }}>数量</th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '60px' }}>明細区分</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #ccc', width: '90px' }}>カテゴリ</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '130px', background: '#faf5fc' }}>大分類</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '90px', background: '#faf5fc' }}>中分類</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', minWidth: '140px', background: '#faf5fc' }}>個体管理品目</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px', background: '#faf5fc' }}>メーカー</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '100px', background: '#faf5fc' }}>型式</th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '180px', background: '#faf5fc' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
-                {individualItems.map((item) => {
+                {displayItems.map((item) => {
                   const confirmedInfo = getConfirmedInfo(item.id);
                   const rowIsConfirmed = confirmedInfo !== null;
                   const isSelectingThisRow = selectingRow === item.id;
                   const aiJudgment = item.aiJudgment;
                   const displayData = confirmedInfo?.assetInfo || aiJudgment;
+                  const isIndividual = item.detailClassification === '親明細' || item.detailClassification === '子明細';
+                  const classColor = item.detailClassification === '親明細' ? '#e74c3c'
+                    : item.detailClassification === '子明細' ? '#2196f3'
+                    : item.detailClassification === '孫明細' ? '#9c27b0'
+                    : '#666';
 
                   return (
                     <tr key={item.id} style={{
                       borderBottom: '1px solid #ddd',
                       background: isSelectingThisRow ? '#fff3e0' : rowIsConfirmed ? '#e8f5e9' : 'transparent',
                     }}>
-                      <td style={{ padding: '5px', textAlign: 'center' }}>{item.rowNo}</td>
-                      <td style={{ padding: '5px', fontWeight: 'bold' }} title={item.itemName}>{item.itemName}</td>
-                      <td style={{ padding: '5px', color: '#555' }}>{item.manufacturer || '-'}</td>
-                      <td style={{ padding: '5px', color: '#555' }}>{item.model || '-'}</td>
-                      <td style={{ padding: '5px', textAlign: 'center' }}>{item.quantity ?? '-'}</td>
-                      <td style={{ padding: '5px', textAlign: 'center', background: '#fafafa' }}>⇒</td>
-                      <td style={{ padding: '5px', background: rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px' }}>
-                        {displayData && 'category' in displayData ? displayData.category : '-'}
+                      <td style={{ padding: '5px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.rowNo}</td>
+                      <td style={{ padding: '5px' }} title={item.itemName}>{item.itemName}</td>
+                      <td style={{ padding: '5px', color: '#555' }}>{item.manufacturer || ''}</td>
+                      <td style={{ padding: '5px', color: '#555' }}>{item.model || ''}</td>
+                      <td style={{ padding: '5px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.quantity ?? '-'}</td>
+                      <td style={{ padding: '5px', textAlign: 'center' }}>
+                        {item.detailClassification && (
+                          <span style={{
+                            padding: '2px 6px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold',
+                            color: 'white', background: classColor,
+                          }}>
+                            {item.detailClassification.replace('明細', '')}
+                          </span>
+                        )}
                       </td>
-                      <td style={{ padding: '5px', background: rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px' }}>
-                        {displayData && 'majorCategory' in displayData ? displayData.majorCategory : '-'}
+                      <td style={{ padding: '5px', fontSize: '10px', borderRight: '1px solid #ccc' }}>
+                        {item.category || ''}
                       </td>
-                      <td style={{ padding: '5px', background: rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontSize: '9px' }}>
-                        {displayData && 'middleCategory' in displayData ? displayData.middleCategory : '-'}
+                      {/* STEP4 columns */}
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
+                        {displayData?.majorCategory || ''}
                       </td>
-                      <td style={{ padding: '5px', background: rowIsConfirmed ? '#c8e6c9' : '#fdfaff', fontWeight: 'bold' }}>
-                        {displayData?.assetName || '-'}
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
+                        {displayData?.middleCategory || ''}
                       </td>
-                      <td style={{ padding: '5px', background: rowIsConfirmed ? '#c8e6c9' : '#fdfaff', color: '#555', fontSize: '9px' }}>
-                        {displayData?.manufacturer || '-'}
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', fontWeight: isIndividual ? 'bold' : 'normal' }}>
+                        {displayData?.assetName || item.itemName || ''}
                       </td>
-                      <td style={{ padding: '5px', background: rowIsConfirmed ? '#c8e6c9' : '#fdfaff', color: '#555', fontSize: '9px' }}>
-                        {displayData?.model || '-'}
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
+                        {displayData?.manufacturer || ''}
+                      </td>
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
+                        {displayData?.model || ''}
                       </td>
                       <td style={{ padding: '5px', textAlign: 'center' }}>
-                        {rowIsConfirmed ? (
-                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', alignItems: 'center' }}>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '3px 6px',
-                              background: confirmedInfo?.status === 'asset_master_selected' ? '#27ae60' : '#27ae60',
-                              color: 'white',
-                              borderRadius: '3px',
-                              fontSize: '8px',
-                              fontWeight: 'bold',
-                            }}>
-                              {confirmedInfo?.status === 'asset_master_selected' ? '紐付済' : 'AI適用'}
+                        {isIndividual ? (
+                          rowIsConfirmed ? (
+                            <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <span style={{ padding: '2px 5px', background: '#ff9800', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                                {confirmedInfo?.status === 'asset_master_selected' ? 'AI適用' : 'AI適用'}
+                              </span>
+                              <span style={{ padding: '2px 5px', background: '#27ae60', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                                資産マスタ
+                              </span>
+                              <span style={{ padding: '2px 5px', background: '#2196f3', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                                紐付済
+                              </span>
+                              <span style={{ padding: '2px 5px', background: '#e74c3c', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleUnconfirm(item.id)}>
+                                解除
+                              </span>
+                            </div>
+                          ) : isSelectingThisRow ? (
+                            <span style={{ padding: '3px 8px', background: '#ff9800', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                              選択中...
                             </span>
-                            <button
-                              onClick={() => handleUnconfirm(item.id)}
-                              style={{
-                                padding: '3px 5px',
-                                background: '#e74c3c',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '3px',
-                                cursor: 'pointer',
-                                fontSize: '8px',
-                                fontWeight: 'bold',
-                              }}
-                            >
-                              解除
-                            </button>
-                          </div>
-                        ) : isSelectingThisRow ? (
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '3px 8px',
-                            background: '#ff9800',
-                            color: 'white',
-                            borderRadius: '3px',
-                            fontSize: '8px',
-                            fontWeight: 'bold',
-                          }}>
-                            選択中...
-                          </span>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            {aiJudgment && (
-                              <button
-                                onClick={() => handleApplyAI(item.id, aiJudgment)}
-                                style={{
-                                  padding: '3px 5px',
-                                  background: '#ff9800',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '3px',
-                                  cursor: 'pointer',
-                                  fontSize: '8px',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                AI適用
+                          ) : (
+                            <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                              {aiJudgment && (
+                                <button onClick={() => handleApplyAI(item.id, aiJudgment)} style={{ padding: '2px 5px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>
+                                  AI適用
+                                </button>
+                              )}
+                              <button onClick={() => handleOpenAssetMaster(item.id)} style={{ padding: '2px 5px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                                資産マスタ
                               </button>
-                            )}
-                            <button
-                              onClick={() => handleOpenAssetMaster(item.id)}
-                              style={{
-                                padding: '3px 5px',
-                                background: '#27ae60',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '3px',
-                                cursor: 'pointer',
-                                fontSize: '8px',
-                                fontWeight: 'bold',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              資産マスタ
-                            </button>
-                          </div>
-                        )}
+                            </div>
+                          )
+                        ) : null}
                       </td>
                     </tr>
                   );
@@ -602,12 +462,6 @@ export default function ItemAiMatchingPage() {
               </tbody>
             </table>
           </div>
-
-          {individualItems.length === 0 && (
-            <div style={{ padding: '20px', textAlign: 'center', background: '#f5f5f5', color: '#666' }}>
-              個体管理品目がありません。次のステップへ進んでください。
-            </div>
-          )}
 
         </div>
 

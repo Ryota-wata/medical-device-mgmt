@@ -1,0 +1,10 @@
+// Auto-generated barrel — do not edit manually
+// Re-generate: node docs/customer-sample-data/convert.mjs
+export { customerDepartments, customerRoomCategories } from './departments';
+export { customerSurveyData, customerLedgerData } from './matching';
+export { customerStep2Items } from './step2-ocr';
+export { customerStep3Items } from './step3-category';
+export { customerStep4Items } from './step4-asset-master';
+export { customerStep5Items } from './step5-individual';
+export { customerStep6Items } from './step6-confirm';
+export { customerQuotationSamples } from './quotation-sample';

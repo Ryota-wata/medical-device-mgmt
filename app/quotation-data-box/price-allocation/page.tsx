@@ -4,557 +4,302 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
+import { customerStep5Items, customerStep4Items } from '@/lib/data/customer';
 
-// 明細区分の型（STEP3/4と統一）
-type DetailClassification =
-  | '明細代表'
-  | '内訳代表'
-  | '親明細'
-  | '子明細'
-  | '孫明細'
-  | 'その他'
-  | '値引き'
-  | '';
-
-// 単位の選択肢（台をデフォルト）
+// 明細区分の型
+type DetailClassification = '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';
 const UNIT_OPTIONS = ['台', '個', '本', '枚', '組', 'セット', '式'];
 
-// ---------------------------------------------------------------------------
-// 元明細データの型（STEP2 原本 + STEP3 分類 + STEP4 確定情報）
-// ---------------------------------------------------------------------------
-interface OriginalItem {
-  id: number;
-  rowNo: number;
-  itemName: string;
-  manufacturer: string;
-  model: string;
-  quantity: number | null;
-  unitPrice: number | null;
-  totalPrice: number | null;
-  category: string;
-  detailClassification: DetailClassification;
-  // STEP4 確定情報（親明細/子明細のみ）
-  confirmedAssetName?: string;
-  confirmedManufacturer?: string;
-  confirmedModel?: string;
-  confirmedMajorCategory?: string;
-  confirmedMiddleCategory?: string;
-}
-
-// ---------------------------------------------------------------------------
-// 個体登録データの型
-// ---------------------------------------------------------------------------
-interface IndividualRecord {
-  id: string;
-  originalItemId: number;
-  seqId: string;
-  assetName: string;
-  unit: string;
-  listUnitPrice: number | null;
-  allocatedUnitPrice: number | null;
-  allocatedAmount: number | null;
-  groupNo: string;
-  category: string;
-  detailClassification: DetailClassification;
-  // STEP4 資産マスタ確定情報
-  majorCategory: string;
-  middleCategory: string;
-  assetManufacturer: string;
-  assetModel: string;
-}
-
-// ---------------------------------------------------------------------------
-// テスト用元明細データ（全12件 — STEP2→3→4 通過済み）
-// ---------------------------------------------------------------------------
-const testOriginalItems: OriginalItem[] = [
-  {
-    id: 1, rowNo: 1,
-    itemName: '具象眼科用ユニット', manufacturer: '第一医科', model: 'さららEFUS01',
-    quantity: 4, unitPrice: 3300000, totalPrice: 13200000,
-    category: '01', detailClassification: '明細代表',
-  },
-  {
-    id: 2, rowNo: 2,
-    itemName: '仕様', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: 'その他',
-  },
-  {
-    id: 3, rowNo: 3,
-    itemName: '具象眼科用ユニット', manufacturer: '第一医科', model: 'さらら',
-    quantity: 4, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '親明細',
-    confirmedAssetName: '眼科用ユニット さらら',
-    confirmedManufacturer: '第一医科株式会社',
-    confirmedModel: 'EFUS01',
-    confirmedMajorCategory: '医療用機器備品',
-    confirmedMiddleCategory: '眼科用機器',
-  },
-  {
-    id: 4, rowNo: 4,
-    itemName: 'ホース付きスプレー2本', manufacturer: '第一', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 5, rowNo: 5,
-    itemName: '吸引清掃式　ロック枠掛付', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 6, rowNo: 6,
-    itemName: '通気清掃式　ロック枠掛付', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 7, rowNo: 7,
-    itemName: 'ツインボール', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '親明細',
-    confirmedAssetName: 'ツインボール（眼科用）',
-    confirmedManufacturer: '第一医科株式会社',
-    confirmedModel: 'TB-100',
-    confirmedMajorCategory: '医療用機器備品',
-    confirmedMiddleCategory: '眼科用機器',
-  },
-  {
-    id: 8, rowNo: 8,
-    itemName: '照明灯あり', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 9, rowNo: 9,
-    itemName: '吸引便ディスポ', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 10, rowNo: 10,
-    itemName: 'キャスターあり', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 11, rowNo: 11,
-    itemName: '天板フラット', manufacturer: '第一医科', model: '',
-    quantity: null, unitPrice: null, totalPrice: null,
-    category: '01', detailClassification: '子明細',
-  },
-  {
-    id: 12, rowNo: 12,
-    itemName: 'さらら用ツインボール用棚　壁付タイプ', manufacturer: '第一医科', model: '',
-    quantity: 4, unitPrice: 162000, totalPrice: 648000,
-    category: '01', detailClassification: '親明細',
-    confirmedAssetName: 'ツインボール用棚 壁付',
-    confirmedManufacturer: '第一医科株式会社',
-    confirmedModel: 'TBS-W01',
-    confirmedMajorCategory: '医療用機器備品',
-    confirmedMiddleCategory: '眼科用機器',
-  },
-];
-
-// ---------------------------------------------------------------------------
-// 表示フィルタ
-// ---------------------------------------------------------------------------
-const isDisplayTarget = (item: OriginalItem): boolean => {
-  if (item.category === '01') {
-    return item.detailClassification === '親明細' || item.detailClassification === '子明細';
-  }
-  return true;
+// 明細区分マッピング
+const classMap: Record<string, DetailClassification> = {
+  '代表明細': '明細代表', '親': '親明細', '子': '子明細', '孫': '孫明細',
+  'その他': 'その他', '文字列': 'その他', '値引き': '値引き',
 };
 
-// ---------------------------------------------------------------------------
-// 全レコード生成（STEP6 に渡すため全件。表示は別途フィルタ）
-// ---------------------------------------------------------------------------
-const generateInitialRecords = (): IndividualRecord[] => {
-  const records: IndividualRecord[] = [];
+// --- 行データ型（親明細は数量分展開される） ---
+interface Row {
+  id: string;
+  rowNo: number;              // 元No
+  category: string;           // STEP3: カテゴリ
+  detailClassification: DetailClassification; // STEP3: 明細区分
+  itemName: string;           // STEP4: 個体管理品目
+  manufacturer: string;       // STEP4: メーカー
+  model: string;              // STEP4: 型式(見積名称)
+  quantity: number;           // STEP4: 数量（展開後は1）
+  // 価格情報（原本）
+  listPriceUnit: number;      // 定価単価
+  listPriceTotal: number;     // 定価金額
+  purchasePriceUnit: number;  // 購入単価(税別)
+  purchasePriceTotal: number; // 購入金額(税別)
+  // STEP5
+  unit: string;
+  seqId: string;              // 親子関係
+  allocationCategory: string; // 価格案分区分: 対象 / -
+  differenceAllocation: string; // 差額金額を案分
+  allocListPrice: number;     // 定価金額（案分後）
+  allocPurchasePrice: number; // 購入金額(税別)（案分後）
+  taxCategory: string;        // 税区分
+  allocPurchaseTaxIncl: number; // 購入金額(税込)
+  isFirstOfGroup: boolean;    // 同一rowNoの最初の行か
+  groupRowCount: number;      // 同一rowNoの行数
+}
+
+// --- 顧客データから行を生成 ---
+// STEP4のquantityを使って親明細を数量分展開
+function buildRows(): Row[] {
+  const rows: Row[] = [];
   let seqCounter = 1;
-  let groupCounter = 0;
-  let currentGroupNo = '';
 
-  testOriginalItems.forEach((item) => {
-    const recordCount = item.quantity ?? 1;
+  for (const item of customerStep5Items) {
+    const cls = (classMap[item.itemType] || item.itemType || '') as DetailClassification;
+    const isParent = cls === '親明細';
+    // 親明細の展開数量はSTEP4データから取得（STEP5では1になっている）
+    const step4Item = customerStep4Items.find(s4 => s4.rowNo === item.rowNo);
+    const expandCount = isParent ? (step4Item?.quantity || item.quantity || 1) : 1;
 
-    if (item.detailClassification === '親明細') {
-      groupCounter++;
-      currentGroupNo = String(groupCounter);
-    }
-
-    for (let i = 1; i <= recordCount; i++) {
-      let seqId = '';
-      if (item.detailClassification === '親明細') {
-        seqId = String(seqCounter);
-        seqCounter++;
-      }
-
-      const isParentOrChild =
-        item.detailClassification === '親明細' || item.detailClassification === '子明細';
-
-      records.push({
-        id: `item-${item.id}-${i}`,
-        originalItemId: item.id,
-        seqId,
-        assetName: item.confirmedAssetName || item.itemName,
-        unit: '台',
-        listUnitPrice: item.unitPrice,
-        allocatedUnitPrice: null,
-        allocatedAmount: null,
-        groupNo: isParentOrChild ? currentGroupNo : '',
-        category: item.category,
-        detailClassification: item.detailClassification,
-        majorCategory: item.confirmedMajorCategory || '',
-        middleCategory: item.confirmedMiddleCategory || '',
-        assetManufacturer: item.confirmedManufacturer || item.manufacturer,
-        assetModel: item.confirmedModel || item.model,
+    for (let i = 0; i < expandCount; i++) {
+      rows.push({
+        id: `r-${item.rowNo}-${i}`,
+        rowNo: item.rowNo,
+        category: item.category || '',
+        detailClassification: cls,
+        itemName: item.itemName,
+        manufacturer: item.manufacturer,
+        model: item.model,
+        quantity: isParent ? 1 : (item.quantity || 1),
+        listPriceUnit: item.listPriceUnit || 0,
+        listPriceTotal: item.listPriceTotal || 0,
+        purchasePriceUnit: item.purchasePriceUnit || 0,
+        purchasePriceTotal: item.purchasePriceTotal || 0,
+        unit: item.unit || '台',
+        seqId: isParent ? String(seqCounter++) : (cls === '子明細' || cls === '孫明細') ? '-' : '',
+        allocationCategory: item.allocationCategory || '対象',
+        differenceAllocation: item.differenceAllocation || '',
+        allocListPrice: 0,
+        allocPurchasePrice: 0,
+        taxCategory: item.taxCategory || '課税',
+        allocPurchaseTaxIncl: 0,
+        isFirstOfGroup: i === 0,
+        groupRowCount: expandCount,
       });
     }
-  });
+  }
+  return rows;
+}
 
-  return records;
-};
+// --- 金額計算 ---
+function calcTotals(rows: Row[]) {
+  // 元明細ベース（rowNoでユニーク）で集計
+  const seen = new Set<number>();
+  let total = 0;
+  let allocationTarget = 0;
+  let allocationExcluded = 0;
 
-// ---------------------------------------------------------------------------
-// メインコンポーネント
-// ---------------------------------------------------------------------------
+  for (const r of rows) {
+    if (r.isFirstOfGroup && !seen.has(r.rowNo)) {
+      seen.add(r.rowNo);
+      total += r.purchasePriceTotal;
+      if (r.allocationCategory === '対象') {
+        allocationTarget += r.purchasePriceTotal;
+      } else {
+        allocationExcluded += r.purchasePriceTotal;
+      }
+    }
+  }
+  return { total, allocationTarget, allocationExcluded, difference: 0 };
+}
+
 export default function PriceAllocationPage() {
   const router = useRouter();
+  const [rows, setRows] = useState<Row[]>(buildRows);
+  const [showOnlyIndividual, setShowOnlyIndividual] = useState(false);
 
-  const [individualRecords, setIndividualRecords] = useState<IndividualRecord[]>(
-    generateInitialRecords(),
-  );
+  const displayRows = useMemo(() => {
+    if (showOnlyIndividual) {
+      return rows.filter(r => r.detailClassification === '親明細' || r.detailClassification === '子明細');
+    }
+    return rows;
+  }, [rows, showOnlyIndividual]);
 
-  // テーブルに表示するレコード
-  const displayRecords = useMemo(() => {
-    return individualRecords.filter((r) => {
-      const orig = testOriginalItems.find((o) => o.id === r.originalItemId);
-      return orig ? isDisplayTarget(orig) : false;
-    });
-  }, [individualRecords]);
+  const totals = useMemo(() => calcTotals(rows), [rows]);
 
-  const displayOriginalItems = useMemo(
-    () => testOriginalItems.filter(isDisplayTarget),
-    [],
-  );
-
-  const quotationTotal = useMemo(
-    () => testOriginalItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0),
-    [],
-  );
-
-  // -----------------------------------------------------------------------
-  // ハンドラー
-  // -----------------------------------------------------------------------
-  const handleUnitChange = useCallback((recordId: string, value: string) => {
-    setIndividualRecords((prev) =>
-      prev.map((r) => (r.id === recordId ? { ...r, unit: value } : r)),
-    );
+  const handleFieldChange = useCallback((id: string, field: keyof Row, value: string | number) => {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
   }, []);
 
-  const handleAllocatedAmountChange = useCallback((recordId: string, value: number | null) => {
-    setIndividualRecords((prev) =>
-      prev.map((r) => (r.id === recordId ? { ...r, allocatedAmount: value } : r)),
-    );
-  }, []);
+  const fmtNum = (n: number) => n ? n.toLocaleString() : '';
 
-  const handleGroupNoChange = useCallback((recordId: string, groupNo: string) => {
-    setIndividualRecords((prev) =>
-      prev.map((r) => (r.id === recordId ? { ...r, groupNo } : r)),
-    );
-  }, []);
+  const classColor = (cls: DetailClassification) => {
+    if (cls === '親明細') return '#e74c3c';
+    if (cls === '子明細') return '#2196f3';
+    if (cls === '孫明細') return '#9c27b0';
+    if (cls === '明細代表') return '#666';
+    if (cls === 'その他') return '#888';
+    return '#666';
+  };
 
-  const handleAddRecord = useCallback(
-    (originalItemId: number) => {
-      const originalItem = testOriginalItems.find((item) => item.id === originalItemId);
-      if (!originalItem) return;
-      const newId = `new-${Date.now()}`;
-
-      let newSeqId = '';
-      if (originalItem.detailClassification === '親明細') {
-        const maxSeq = individualRecords
-          .filter((r) => r.detailClassification === '親明細' && r.seqId !== '')
-          .map((r) => parseInt(r.seqId, 10))
-          .filter((n) => !isNaN(n))
-          .reduce((max, n) => Math.max(max, n), 0);
-        newSeqId = String(maxSeq + 1);
-      }
-
-      const sameOriginal = individualRecords.find((r) => r.originalItemId === originalItemId);
-      const newGroupNo = sameOriginal?.groupNo || '';
-
-      setIndividualRecords((prev) => [
-        ...prev,
-        {
-          id: newId,
-          originalItemId,
-          seqId: newSeqId,
-          assetName: originalItem.confirmedAssetName || originalItem.itemName,
-          unit: '台',
-          listUnitPrice: originalItem.unitPrice,
-          allocatedUnitPrice: null,
-          allocatedAmount: null,
-          groupNo: newGroupNo,
-          category: originalItem.category,
-          detailClassification: originalItem.detailClassification,
-          majorCategory: originalItem.confirmedMajorCategory || '',
-          middleCategory: originalItem.confirmedMiddleCategory || '',
-          assetManufacturer: originalItem.confirmedManufacturer || originalItem.manufacturer,
-          assetModel: originalItem.confirmedModel || originalItem.model,
-        },
-      ]);
-    },
-    [individualRecords],
-  );
-
-  const handleDeleteRecord = useCallback((recordId: string) => {
-    setIndividualRecords((prev) => prev.filter((r) => r.id !== recordId));
-  }, []);
-
-  const handleBack = () => router.push('/quotation-data-box/item-ai-matching');
-  const handleRegister = () => router.push('/quotation-data-box/registration-confirm');
-
-  // -----------------------------------------------------------------------
-  // JSX
-  // -----------------------------------------------------------------------
-  const rightCellBg = '#fef5f7';
+  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #dee2e6', fontSize: '10px', whiteSpace: 'nowrap' };
+  const tdBase: React.CSSProperties = { padding: '4px 5px', fontSize: '10px', verticalAlign: 'top' };
+  const borderR: React.CSSProperties = { borderRight: '1px solid #ccc' };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
-      <Header
-        title="見積登録（購入）個体登録及び金額按分"
-        stepBadge="STEP 5"
-        hideMenu={true}
-        showBackButton={false}
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+      <Header title="見積登録（購入）個体登録及び金額按分" stepBadge="STEP 5" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={5} />
 
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {/* メインコンテンツ */}
-        <div
-          style={{
-            background: 'white',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            marginBottom: '16px',
-          }}
-        >
-          {/* セクションヘッダー */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 16px',
-              background: '#4a6fa5',
-              color: 'white',
-              flexWrap: 'wrap',
-              gap: '8px',
-            }}
-          >
-            <span style={{ fontSize: '14px', fontWeight: 'bold' }}>個体登録及び金額按分</span>
-            <span style={{ fontSize: '11px' }}>
-              見積合計（税抜）:
-              <span style={{ fontWeight: 'bold', fontSize: '14px', marginLeft: '4px', fontVariantNumeric: 'tabular-nums' }}>
-                ¥{quotationTotal.toLocaleString()}
-              </span>
-            </span>
-          </div>
+        <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
 
-          {/* 明細テーブル */}
-          <div style={{ overflowX: 'auto' }}>
-            <table
+          {/* 上部バー: フィルタ + 金額サマリ */}
+          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #ddd' }}>
+            <button
+              onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '10px',
-                minWidth: '1200px',
+                padding: '6px 14px', background: showOnlyIndividual ? '#27ae60' : '#e8f5e9',
+                border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
+                color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer',
               }}
             >
+              個体管理品目のみ表示
+            </button>
+
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
+                  {totals.total.toLocaleString()}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
+                <div>案分対象 <strong style={{ color: '#1565c0' }}>{totals.allocationTarget.toLocaleString()}</strong></div>
+                <div>案分除外 <strong style={{ color: '#1565c0' }}>{totals.allocationExcluded.toLocaleString()}</strong></div>
+                <div>差額 <strong style={{ color: totals.difference !== 0 ? '#e74c3c' : '#333' }}>{totals.difference.toLocaleString()}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          {/* テーブル */}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1500px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                {/* 1段目ヘッダー */}
                 <tr>
-                  <th
-                    colSpan={7}
-                    style={{
-                      padding: '6px',
-                      textAlign: 'center',
-                      borderBottom: '2px solid #3498db',
-                      fontWeight: 'bold',
-                      color: '#3498db',
-                      background: '#e8f4fc',
-                      fontSize: '11px',
-                    }}
-                  >
-                    元明細（原本情報）
+                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
+                    STEP❸
                   </th>
-                  <th style={{ padding: '6px', background: '#f8f9fa', width: '25px' }} />
-                  <th
-                    colSpan={7}
-                    style={{
-                      padding: '6px',
-                      textAlign: 'center',
-                      borderBottom: '2px solid #e91e63',
-                      fontWeight: 'bold',
-                      color: '#e91e63',
-                      background: '#fce4ec',
-                      fontSize: '11px',
-                    }}
-                  >
-                    個体登録及び金額按分
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
+                    STEP❹ 個体管理品目登録
                   </th>
-                  <th style={{ padding: '6px', background: '#f8f9fa', width: '50px', fontSize: '11px' }}>
-                    操作
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
+                    価格情報（原本情報）
+                  </th>
+                  <th colSpan={8} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>
+                    STEP❺ 個体登録／金額案分
                   </th>
                 </tr>
+                {/* 2段目ヘッダー */}
                 <tr style={{ background: '#f8f9fa' }}>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px', fontSize: '9px' }}>No</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px' }}>品名</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '70px', fontSize: '9px' }}>型式</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '35px', fontSize: '9px' }}>数量</th>
-                  <th style={{ padding: '5px', textAlign: 'right', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px' }}>単価</th>
-                  <th style={{ padding: '5px', textAlign: 'right', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px' }}>金額</th>
-                  <th style={{ padding: '5px', background: '#fafafa' }} />
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '50px', fontSize: '9px', background: rightCellBg }}>SEQ_ID</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontSize: '9px', background: rightCellBg }}>個体品目</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '55px', fontSize: '9px', background: rightCellBg }}>単位</th>
-                  <th style={{ padding: '5px', textAlign: 'right', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px', background: rightCellBg }}>定価単価</th>
-                  <th style={{ padding: '5px', textAlign: 'right', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px', background: rightCellBg }}>按分単価</th>
-                  <th style={{ padding: '5px', textAlign: 'right', borderBottom: '1px solid #dee2e6', width: '80px', fontSize: '9px', background: rightCellBg }}>按分金額</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '60px', fontSize: '9px', background: rightCellBg }}>親子No.</th>
-                  <th style={{ padding: '5px', borderBottom: '1px solid #dee2e6' }} />
+                  {/* STEP3 */}
+                  <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>No</th>
+                  <th style={{ ...thBase, width: '90px' }}>カテゴリ</th>
+                  <th style={{ ...thBase, width: '55px', textAlign: 'center', ...borderR }}>明細区分</th>
+                  {/* STEP4 */}
+                  <th style={{ ...thBase, whiteSpace: 'nowrap' }}>個体管理品目</th>
+                  <th style={{ ...thBase, width: '80px' }}>メーカー</th>
+                  <th style={{ ...thBase, width: '100px' }}>型式（見積名称）</th>
+                  <th style={{ ...thBase, width: '35px', textAlign: 'center', ...borderR }}>数量</th>
+                  {/* 価格情報（原本） */}
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>定価単価</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>定価金額</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>購入単価<br />(税別)</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right', ...borderR }}>購入金額<br />(税別)</th>
+                  {/* STEP5 */}
+                  <th style={{ ...thBase, width: '40px', textAlign: 'center', background: '#faf5fc' }}>単位</th>
+                  <th style={{ ...thBase, width: '35px', textAlign: 'center', background: '#faf5fc' }}>親子<br />関</th>
+                  <th style={{ ...thBase, width: '50px', textAlign: 'center', background: '#faf5fc' }}>価格案分<br />区分</th>
+                  <th style={{ ...thBase, width: '70px', textAlign: 'center', background: '#fce4ec', color: '#c62828', fontWeight: 'bold' }}>差額金額<br />を案分</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>定価金額</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>購入金額<br />(税別)</th>
+                  <th style={{ ...thBase, width: '45px', textAlign: 'center', background: '#faf5fc' }}>税区分</th>
+                  <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>購入金額<br />(税込)</th>
                 </tr>
               </thead>
               <tbody>
-                {displayRecords.map((record) => {
-                  const originalItem = displayOriginalItems.find(
-                    (item) => item.id === record.originalItemId,
-                  );
-                  const isFirstOfOriginal =
-                    displayRecords.findIndex((r) => r.originalItemId === record.originalItemId) ===
-                    displayRecords.indexOf(record);
-                  const recordsOfSameOriginal = displayRecords.filter(
-                    (r) => r.originalItemId === record.originalItemId,
-                  );
-
-                  const leftCellBase: React.CSSProperties = {
-                    padding: '5px',
-                    borderRight: '1px solid #ddd',
-                    verticalAlign: 'top',
-                  };
+                {displayRows.map((row) => {
+                  const showOriginal = row.isFirstOfGroup;
+                  const span = row.groupRowCount;
+                  const clsLabel = row.detailClassification.replace('明細', '');
 
                   return (
-                    <tr
-                      key={record.id}
-                      style={{ borderBottom: '1px solid #eee', background: 'white' }}
-                    >
-                      {isFirstOfOriginal ? (
+                    <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
+                      {/* STEP3 (rowSpanで結合) */}
+                      {showOriginal && (
                         <>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, textAlign: 'center' }}>
-                            {originalItem?.rowNo || '-'}
-                          </td>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, fontWeight: 'bold' }}>
-                            {originalItem?.itemName || '-'}
-                          </td>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, color: '#555' }}>
-                            {originalItem?.manufacturer || '-'}
-                          </td>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, color: '#555' }}>
-                            {originalItem?.model || '-'}
-                          </td>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, textAlign: 'center' }}>
-                            {originalItem?.quantity ?? '-'}
-                          </td>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, textAlign: 'right' }}>
-                            {originalItem?.unitPrice?.toLocaleString() || '-'}
-                          </td>
-                          <td rowSpan={recordsOfSameOriginal.length} style={{ ...leftCellBase, textAlign: 'right', fontWeight: 'bold' }}>
-                            {originalItem?.totalPrice?.toLocaleString() || '-'}
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{row.rowNo}</td>
+                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #ddd' }}>{row.category}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #ddd', ...borderR }}>
+                            {row.detailClassification && (
+                              <span style={{ padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', color: 'white', background: classColor(row.detailClassification) }}>
+                                {clsLabel}
+                              </span>
+                            )}
                           </td>
                         </>
-                      ) : null}
-
-                      <td style={{ padding: '5px', textAlign: 'center', background: '#fafafa' }}>⇒</td>
-
-                      <td style={{ padding: '5px', textAlign: 'center', background: rightCellBg }}>
-                        <input
-                          type="text"
-                          value={record.seqId}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setIndividualRecords((prev) =>
-                              prev.map((r) => (r.id === record.id ? { ...r, seqId: v } : r)),
-                            );
-                          }}
-                          style={{ width: '40px', padding: '2px 4px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'center' }}
-                        />
-                      </td>
-                      <td style={{ padding: '5px', background: rightCellBg, fontWeight: 'bold' }}>
-                        {record.assetName}
-                      </td>
-                      <td style={{ padding: '5px', textAlign: 'center', background: rightCellBg }}>
-                        <select
-                          value={record.unit}
-                          onChange={(e) => handleUnitChange(record.id, e.target.value)}
-                          style={{ padding: '2px 4px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px' }}
-                        >
-                          <option value="">-</option>
-                          {UNIT_OPTIONS.map((u) => (
-                            <option key={u} value={u}>{u}</option>
-                          ))}
+                      )}
+                      {/* STEP4 */}
+                      <td style={{ ...tdBase, whiteSpace: 'nowrap' }}>{row.itemName}</td>
+                      <td style={{ ...tdBase, color: '#555' }}>{row.manufacturer}</td>
+                      <td style={{ ...tdBase, color: '#555' }}>{row.model}</td>
+                      <td style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', ...borderR }}>{row.quantity || '-'}</td>
+                      {/* 価格情報（原本）— rowSpan */}
+                      {showOriginal && (
+                        <>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.listPriceUnit)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.listPriceTotal)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.purchasePriceUnit)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #ddd', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
+                        </>
+                      )}
+                      {/* STEP5 */}
+                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff' }}>
+                        <select value={row.unit} onChange={e => handleFieldChange(row.id, 'unit', e.target.value)}
+                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', width: '36px' }}>
+                          {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
                       </td>
-                      <td style={{ padding: '5px', textAlign: 'right', background: rightCellBg }}>
-                        {record.listUnitPrice?.toLocaleString() || '-'}
+                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
+                        <input type="text" value={row.seqId} onChange={e => handleFieldChange(row.id, 'seqId', e.target.value)}
+                          style={{ width: '28px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'center' }} />
                       </td>
-                      <td style={{ padding: '5px', textAlign: 'right', background: rightCellBg }}>
-                        <input
-                          type="text"
-                          value={record.allocatedUnitPrice?.toLocaleString() || ''}
-                          onChange={(e) => {
-                            const v = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                            setIndividualRecords((prev) =>
-                              prev.map((r) => (r.id === record.id ? { ...r, allocatedUnitPrice: v } : r)),
-                            );
-                          }}
-                          style={{ width: '70px', padding: '2px 4px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }}
-                        />
+                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff', fontSize: '9px' }}>
+                        <select value={row.allocationCategory} onChange={e => handleFieldChange(row.id, 'allocationCategory', e.target.value)}
+                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', width: '44px' }}>
+                          <option value="対象">対象</option>
+                          <option value="-">-</option>
+                        </select>
                       </td>
-                      <td style={{ padding: '5px', textAlign: 'right', background: rightCellBg }}>
-                        <input
-                          type="text"
-                          value={record.allocatedAmount?.toLocaleString() || ''}
-                          onChange={(e) => {
-                            const v = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
-                            handleAllocatedAmountChange(record.id, v);
-                          }}
-                          style={{ width: '70px', padding: '2px 4px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right', fontWeight: 'bold' }}
-                        />
+                      <td style={{ ...tdBase, textAlign: 'right', background: '#fce4ec' }}>
+                        <input type="text" value={row.differenceAllocation} onChange={e => handleFieldChange(row.id, 'differenceAllocation', e.target.value)}
+                          style={{ width: '60px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }} />
                       </td>
-                      <td style={{ padding: '5px', textAlign: 'center', background: rightCellBg }}>
-                        <input
-                          type="text"
-                          value={record.groupNo}
-                          onChange={(e) => handleGroupNoChange(record.id, e.target.value)}
-                          style={{ width: '40px', padding: '2px 4px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'center' }}
-                        />
+                      <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
+                        <input type="text" value={fmtNum(row.allocListPrice)} onChange={e => handleFieldChange(row.id, 'allocListPrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
+                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }} />
                       </td>
-                      <td style={{ padding: '5px', textAlign: 'center' }}>
-                        <button
-                          onClick={() => handleDeleteRecord(record.id)}
-                          style={{
-                            padding: '2px 6px',
-                            background: '#e74c3c',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '2px',
-                            cursor: 'pointer',
-                            fontSize: '8px',
-                          }}
-                        >
-                          削除
-                        </button>
+                      <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
+                        <input type="text" value={fmtNum(row.allocPurchasePrice)} onChange={e => handleFieldChange(row.id, 'allocPurchasePrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
+                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }} />
+                      </td>
+                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff' }}>
+                        <select value={row.taxCategory} onChange={e => handleFieldChange(row.id, 'taxCategory', e.target.value)}
+                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', width: '42px' }}>
+                          <option value="課税">課税</option>
+                          <option value="非課税">非課税</option>
+                        </select>
+                      </td>
+                      <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold' }}>
+                        <input type="text" value={fmtNum(row.allocPurchaseTaxIncl)} onChange={e => handleFieldChange(row.id, 'allocPurchaseTaxIncl', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
+                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right', fontWeight: 'bold' }} />
                       </td>
                     </tr>
                   );
@@ -566,34 +311,12 @@ export default function PriceAllocationPage() {
 
         {/* フッターボタン */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: '12px 28px',
-              background: '#95a5a6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
-          >
+          <button onClick={() => router.push('/quotation-data-box/item-ai-matching')}
+            style={{ padding: '12px 28px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             一つ前のSTEPに戻る
           </button>
-          <button
-            onClick={handleRegister}
-            style={{
-              padding: '12px 28px',
-              background: '#e74c3c',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
-          >
+          <button onClick={() => router.push('/quotation-data-box/registration-confirm')}
+            style={{ padding: '12px 28px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             登録確認
           </button>
         </div>

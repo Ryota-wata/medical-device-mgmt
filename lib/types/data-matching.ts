@@ -47,6 +47,7 @@ export interface SurveyData {
   id: string;
   qrCode: string;              // QRコード（シール番号）
   assetNo?: string;            // 資産番号（突合後に設定される場合も）
+  meNo?: string;               // ME管理番号
   department: string;          // 部門
   section: string;             // 部署
   roomName?: string;           // 諸室名称
@@ -58,6 +59,7 @@ export interface SurveyData {
   model?: string;              // 型式
   quantity: number;            // 数量
   acquisitionDate?: string;    // 取得年月日
+  sourceList?: string;         // 元リスト名
 
   // 突合情報
   matchingStatus?: MatchingStatus;  // undefined = 未突合
@@ -72,7 +74,9 @@ export interface SurveyData {
  */
 export interface LedgerData {
   id: string;
+  qrCode?: string;             // QRコード
   assetNo: string;             // 資産番号
+  meNo?: string;               // ME管理番号
   department: string;          // 部門
   section: string;             // 部署
   roomName?: string;           // 諸室名称
@@ -83,7 +87,7 @@ export interface LedgerData {
   manufacturer?: string;       // メーカー
   model?: string;              // 型式
   quantity: number;            // 数量
-  acquisitionDate: string;     // 取得年月日
+  acquisitionDate?: string;    // 取得年月日
 
   // 突合情報
   matchingStatus?: MatchingStatus;  // undefined = 未突合

@@ -335,7 +335,7 @@ export default function ShipDepartmentMasterPage() {
   return (
     <div className="flex flex-col h-dvh bg-[#f9fafb]">
       {/* Header */}
-      <header className={`bg-white border-b border-[#e5e7eb] ${isMobile ? 'px-4 py-3' : isTablet ? 'px-5 py-3.5' : 'px-6 py-4'} flex items-center justify-between flex-wrap ${isMobile ? 'gap-3' : 'gap-4'}`}>
+      <header className={`bg-white border-b border-[#e5e7eb] ${isMobile ? 'px-4 py-3' : isTablet ? 'px-5 py-3.5' : 'px-6 py-4'} flex items-center justify-between flex-wrap ${isMobile ? 'gap-3' : 'gap-4'} sticky top-0 z-20`}>
         <div className={`flex items-center ${isMobile ? 'gap-3' : 'gap-4'} flex-1`}>
           <h1 className={`${isMobile ? 'text-base' : isTablet ? 'text-lg' : 'text-xl'} font-bold text-[#1f2937] text-balance`}>
             SHIP部署マスタ

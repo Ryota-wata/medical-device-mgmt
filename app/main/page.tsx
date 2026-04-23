@@ -299,6 +299,10 @@ export default function MainPage() {
     setIsApplicationStatusModalOpen(true);
   };
 
+  const handleEditAnalysis = () => {
+    router.push('/quotation-data-box/remodel-management');
+  };
+
   const handleDeleteEditList = (list: { id: string; name: string }) => {
     setDeleteTargetList(list);
     setDeleteConfirmOpen(true);
@@ -513,7 +517,7 @@ export default function MainPage() {
               </button>
             )}
 
-            {/* 保守・点検 */}
+            {/* 点検 */}
             {isMainButtonVisible('maintenance_inspection') && (
               <button
                 onClick={handleMaintenanceInspection}
@@ -521,11 +525,11 @@ export default function MainPage() {
                   isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
-                保守・点検
+                点検
               </button>
             )}
 
-            {/* 貸出管理/貸出 */}
+            {/* 貸出・返却 */}
             {isMainButtonVisible('lending_management') && (
               <button
                 onClick={isHospitalUser ? () => setIsLendingMenuModalOpen(true) : handleLendingManagement}
@@ -533,9 +537,19 @@ export default function MainPage() {
                   isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
                 }`}
               >
-                {isHospitalUser ? '貸出' : '貸出管理'}
+                貸出・返却
               </button>
             )}
+
+            {/* 編集・分析 */}
+            <button
+              onClick={handleEditAnalysis}
+              className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
+                isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+              }`}
+            >
+              編集・分析
+            </button>
 
             {/* 棚卸し */}
             {isMainButtonVisible('inventory') && (
@@ -694,6 +708,16 @@ export default function MainPage() {
                     className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
                   >
                     SHIP資産マスタ
+                  </button>
+                )}
+
+                {/* 共通部署マスタ */}
+                {canAccess('asset_master_list') && (
+                  <button
+                    onClick={() => { closeMasterModal(); router.push('/ship-department-master'); }}
+                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                  >
+                    共通部署マスタ
                   </button>
                 )}
 

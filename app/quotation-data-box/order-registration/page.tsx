@@ -413,7 +413,7 @@ export default function OrderRegistrationPage() {
                 発注基本登録
               </div>
               <div style={{ padding: '16px' }}>
-                {/* 1行目: 院内決済No. / 発注形態 / 納期 / リース開始日・終了日 / コメント */}
+                {/* 1行目: 院内決済No. / 発注形態 / 納期 / リース開始日・終了日 */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
                   {/* 院内決済No. */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -496,21 +496,6 @@ export default function OrderRegistrationPage() {
                     </div>
                   )}
 
-                  {/* コメント */}
-                  <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                    <textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="コメント"
-                      rows={3}
-                      style={{
-                        ...inputStyle,
-                        width: '240px',
-                        resize: 'vertical',
-                        fontSize: '13px',
-                      }}
-                    />
-                  </div>
                 </div>
 
                 {/* 2行目: 支払条件 / 支払方法 / 支払期日 */}

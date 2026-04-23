@@ -38,165 +38,22 @@ interface DetailItem {
   categoryType?: string;      // フィルター用カテゴリ - 次STEPで使用
 }
 
-// テスト用明細データ
-const testDetailItems: DetailItem[] = [
-  {
-    id: 1,
-    itemName: '具象眼科用ユニット',
-    manufacturer: '第一医科',
-    model: 'さららEFUS01',
-    quantity: 4,
-    listUnitPrice: 3300000,
-    listPrice: 13200000,
-    purchaseUnitPrice: 1650000,
-    purchaseAmount: 6600000,
-    accountingCategory: '医療機器',
-    categoryType: '有形資産',
-  },
-  {
-    id: 2,
-    itemName: '仕様',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 3,
-    itemName: '具象眼科用ユニット',
-    manufacturer: '第一医科',
-    model: 'さらら',
-    quantity: 4,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 4,
-    itemName: 'ホース付きスプレー2本',
-    manufacturer: '第一',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 5,
-    itemName: '吸引清掃式　ロック枠掛付',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 6,
-    itemName: '通気清掃式　ロック枠掛付',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 7,
-    itemName: 'ツインボール',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 8,
-    itemName: '照明灯あり',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 9,
-    itemName: '吸引便ディスポ',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 10,
-    itemName: 'キャスターあり',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 11,
-    itemName: '天板フラット',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    accountingCategory: '',
-    categoryType: '有形資産',
-  },
-  {
-    id: 12,
-    itemName: 'さらら用ツインボール用棚　壁付タイプ',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: 4,
-    listUnitPrice: 162000,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: 648000,
-    accountingCategory: '医療機器',
-    categoryType: '有形資産',
-  },
-];
+import { customerStep2Items } from '@/lib/data/customer';
+
+// 顧客サンプルデータから変換（再取り込み: node docs/customer-sample-data/convert.mjs）
+const testDetailItems: DetailItem[] = customerStep2Items.map((item, i) => ({
+  id: i + 1,
+  itemName: item.itemName,
+  manufacturer: item.manufacturer,
+  model: item.model,
+  quantity: item.quantity || null,
+  listUnitPrice: item.listPriceUnit || null,
+  listPrice: item.listPriceTotal || null,
+  purchaseUnitPrice: item.purchasePriceUnit || null,
+  purchaseAmount: item.purchasePriceTotal || null,
+  accountingCategory: '医療機器' as AccountingCategoryType,
+  categoryType: '有形資産',
+}));
 
 export default function OcrConfirmPage() {
   const router = useRouter();
@@ -221,7 +78,10 @@ export default function OcrConfirmPage() {
   const [detailItems, setDetailItems] = useState<DetailItem[]>(testDetailItems);
 
   // 合計金額（税抜）- 編集可能
-  const [totalAmountInput, setTotalAmountInput] = useState<string>('18,000,000');
+  const [totalAmountInput, setTotalAmountInput] = useState<string>(() => {
+    const total = testDetailItems.reduce((sum, item) => sum + (item.purchaseAmount || 0), 0);
+    return total.toLocaleString();
+  });
 
   // パネル幅の状態（左パネルの幅をパーセントで管理）
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
@@ -648,20 +508,14 @@ export default function OcrConfirmPage() {
             overflow: 'auto',
             background: 'white',
           }}>
-            {/* PDFプレビュー */}
-            <div style={{ minHeight: '100%', position: 'relative', background: '#f5f5f5' }}>
-              <div style={{
-                width: '100%',
-                height: '100%',
-                minHeight: '500px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#999',
-                fontSize: '14px',
-              }}>
-                PDFプレビュー領域
-              </div>
+            {/* 見積書プレビュー */}
+            <div style={{ minHeight: '100%', position: 'relative', background: '#f5f5f5', padding: '8px' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/quotation-sample.png"
+                alt="見積書サンプル"
+                style={{ width: '100%', height: 'auto', border: '1px solid #ddd', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+              />
             </div>
           </div>
         </div>

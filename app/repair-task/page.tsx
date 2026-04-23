@@ -1028,10 +1028,10 @@ function RepairTaskContent() {
           )}
         </Section>
 
-        {/* STEP②: 見積登録・発注 */}
+        {/* STEP②: 見積書登録・発注 */}
         <Section
           step={2}
-          title="STEP2. 見積登録・発注"
+          title="STEP2. 見積書登録・発注"
           accentColor="#27ae60"
           enabled={isStepEnabled(2)}
           completed={2 < activeStep}

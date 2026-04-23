@@ -131,6 +131,7 @@ export default function DataMatchingPage() {
     filteredData: filteredMergedData,
     departmentOptions,
     sectionOptions,
+    categoryOptions,
     majorCategoryOptions,
     middleCategoryOptions,
     itemOptions,
@@ -1026,7 +1027,7 @@ export default function DataMatchingPage() {
         }}>
           <select
             value={filters.department}
-            onChange={(e) => setFilters({ ...filters, department: e.target.value, section: '' })}
+            onChange={(e) => setFilters({ department: e.target.value })}
             style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">共通部門</option>
@@ -1037,7 +1038,7 @@ export default function DataMatchingPage() {
 
           <select
             value={filters.section}
-            onChange={(e) => setFilters({ ...filters, section: e.target.value })}
+            onChange={(e) => setFilters({ section: e.target.value })}
             disabled={!filters.department}
             style={{
               padding: '6px 8px',
@@ -1054,8 +1055,19 @@ export default function DataMatchingPage() {
           </select>
 
           <select
+            value={filters.category}
+            onChange={(e) => setFilters({ category: e.target.value })}
+            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+          >
+            <option value="">カテゴリ</option>
+            {categoryOptions.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+
+          <select
             value={filters.majorCategory}
-            onChange={(e) => setFilters({ ...filters, majorCategory: e.target.value })}
+            onChange={(e) => setFilters({ majorCategory: e.target.value })}
             style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">大分類</option>
@@ -1066,7 +1078,7 @@ export default function DataMatchingPage() {
 
           <select
             value={filters.middleCategory}
-            onChange={(e) => setFilters({ ...filters, middleCategory: e.target.value })}
+            onChange={(e) => setFilters({ middleCategory: e.target.value })}
             style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">中分類</option>
@@ -1077,7 +1089,7 @@ export default function DataMatchingPage() {
 
           <select
             value={filters.item}
-            onChange={(e) => setFilters({ ...filters, item: e.target.value })}
+            onChange={(e) => setFilters({ item: e.target.value })}
             style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">個体管理品目</option>
@@ -1088,7 +1100,7 @@ export default function DataMatchingPage() {
 
           <select
             value={filters.manufacturer}
-            onChange={(e) => setFilters({ ...filters, manufacturer: e.target.value })}
+            onChange={(e) => setFilters({ manufacturer: e.target.value })}
             style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">メーカー</option>
@@ -1099,7 +1111,7 @@ export default function DataMatchingPage() {
 
           <select
             value={filters.model}
-            onChange={(e) => setFilters({ ...filters, model: e.target.value })}
+            onChange={(e) => setFilters({ model: e.target.value })}
             style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">型式</option>
@@ -1317,6 +1329,9 @@ export default function DataMatchingPage() {
                   <th style={thStyle}>共通部門</th>
                   <th style={thStyle}>共通部署</th>
                   <th style={thStyle}>室名</th>
+                  <th style={thStyle}>カテゴリ</th>
+                  <th style={thStyle}>大分類</th>
+                  <th style={thStyle}>中分類</th>
                   <th style={thStyle}>品目</th>
                   <th style={thStyle}>メーカー</th>
                   <th style={thStyle}>型式</th>
@@ -1359,6 +1374,9 @@ export default function DataMatchingPage() {
                     <td style={tdStyle}>{row.department}</td>
                     <td style={tdStyle}>{row.section}</td>
                     <td style={tdStyle}>{row.roomName || '-'}</td>
+                    <td style={tdStyle}>{row.category || '-'}</td>
+                    <td style={tdStyle}>{row.majorCategory || '-'}</td>
+                    <td style={tdStyle}>{row.middleCategory || '-'}</td>
                     <td style={tdStyle}>{row.item}</td>
                     <td style={tdStyle}>{row.manufacturer || '-'}</td>
                     <td style={tdStyle}>{row.model || '-'}</td>
@@ -1368,7 +1386,7 @@ export default function DataMatchingPage() {
                 ))}
                 {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length === 0 && (
                   <tr>
-                    <td colSpan={13} style={{ padding: '24px', textAlign: 'center' }}>
+                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#2e7d32' }}>
                         すべての突合が完了しました
                       </div>
@@ -1393,14 +1411,14 @@ export default function DataMatchingPage() {
                 )}
                 {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length > 0 && (
                   <tr>
-                    <td colSpan={13} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
                       フィルター条件に該当するデータがありません
                     </td>
                   </tr>
                 )}
                 {matchFilteredData.length === 0 && activeTab === 'completed' && (
                   <tr>
-                    <td colSpan={13} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
                       まだ対応済みの項目はありません
                     </td>
                   </tr>
@@ -1504,6 +1522,9 @@ export default function DataMatchingPage() {
                   <th style={thStyle}>共通部門</th>
                   <th style={thStyle}>共通部署</th>
                   <th style={thStyle}>室名</th>
+                  <th style={thStyle}>カテゴリ</th>
+                  <th style={thStyle}>大分類</th>
+                  <th style={thStyle}>中分類</th>
                   <th style={thStyle}>品目</th>
                   <th style={thStyle}>メーカー</th>
                   <th style={thStyle}>型式</th>
@@ -1543,6 +1564,9 @@ export default function DataMatchingPage() {
                     <td style={tdStyle}>{row.department}</td>
                     <td style={tdStyle}>{row.section}</td>
                     <td style={tdStyle}>{row.roomName || '-'}</td>
+                    <td style={tdStyle}>{row.category || '-'}</td>
+                    <td style={tdStyle}>{row.majorCategory || '-'}</td>
+                    <td style={tdStyle}>{row.middleCategory || '-'}</td>
                     <td style={tdStyle}>{row.item}</td>
                     <td style={tdStyle}>{row.manufacturer || '-'}</td>
                     <td style={tdStyle}>{row.model || '-'}</td>
@@ -1552,7 +1576,7 @@ export default function DataMatchingPage() {
                 ))}
                 {ledgerMatchFilteredData.length === 0 && (
                   <tr>
-                    <td colSpan={currentList?.type === 'me-ledger' ? 13 : 12} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                    <td colSpan={currentList?.type === 'me-ledger' ? 16 : 15} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
                       {ledgerUnmatchedCount === 0 ? '全ての台帳レコードの突合が完了しました' : 'フィルター条件に該当するデータがありません'}
                     </td>
                   </tr>
@@ -1628,6 +1652,9 @@ export default function DataMatchingPage() {
                       <th style={thStyle}>共通部門</th>
                       <th style={thStyle}>共通部署</th>
                       <th style={thStyle}>室名</th>
+                      <th style={thStyle}>カテゴリ</th>
+                      <th style={thStyle}>大分類</th>
+                      <th style={thStyle}>中分類</th>
                       <th style={thStyle}>品目</th>
                       <th style={thStyle}>メーカー</th>
                       <th style={thStyle}>数量</th>
@@ -1658,6 +1685,9 @@ export default function DataMatchingPage() {
                         <td style={tdStyle}>{row.department}</td>
                         <td style={tdStyle}>{row.section}</td>
                         <td style={tdStyle}>{row.roomName || '-'}</td>
+                        <td style={tdStyle}>{row.category || '-'}</td>
+                        <td style={tdStyle}>{row.majorCategory || '-'}</td>
+                        <td style={tdStyle}>{row.middleCategory || '-'}</td>
                         <td style={tdStyle}>{row.item}</td>
                         <td style={tdStyle}>{row.manufacturer || '-'}</td>
                         <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.quantity}</td>

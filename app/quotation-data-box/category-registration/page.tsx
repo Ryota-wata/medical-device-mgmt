@@ -64,177 +64,29 @@ interface DetailItem {
   isRegistered: boolean;       // 登録済みかどうか
 }
 
-// テスト用明細データ（AI判定結果を含む）
-const testDetailItems: DetailItem[] = [
-  {
-    id: 1,
-    itemName: '具象眼科用ユニット',
-    manufacturer: '第一医科',
-    model: 'さららEFUS01',
-    quantity: 4,
-    listUnitPrice: 3300000,
-    listPrice: 13200000,
-    purchaseUnitPrice: 1650000,
-    purchaseAmount: 6600000,
-    category: '01',
-    detailClassification: '明細代表',
-    isRegistered: false,
-  },
-  {
-    id: 2,
-    itemName: '仕様',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: 'その他',
-    isRegistered: false,
-  },
-  {
-    id: 3,
-    itemName: '具象眼科用ユニット',
-    manufacturer: '第一医科',
-    model: 'さらら',
-    quantity: 4,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '親明細',
-    isRegistered: false,
-  },
-  {
-    id: 4,
-    itemName: 'ホース付きスプレー2本',
-    manufacturer: '第一',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 5,
-    itemName: '吸引清掃式　ロック枠掛付',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 6,
-    itemName: '通気清掃式　ロック枠掛付',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 7,
-    itemName: 'ツインボール',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '親明細',
-    isRegistered: false,
-  },
-  {
-    id: 8,
-    itemName: '照明灯あり',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 9,
-    itemName: '吸引便ディスポ',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 10,
-    itemName: 'キャスターあり',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 11,
-    itemName: '天板フラット',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: null,
-    listUnitPrice: null,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: null,
-    category: '01',
-    detailClassification: '子明細',
-    isRegistered: false,
-  },
-  {
-    id: 12,
-    itemName: 'さらら用ツインボール用棚　壁付タイプ',
-    manufacturer: '第一医科',
-    model: '',
-    quantity: 4,
-    listUnitPrice: 162000,
-    listPrice: null,
-    purchaseUnitPrice: null,
-    purchaseAmount: 648000,
-    category: '01',
-    detailClassification: '親明細',
-    isRegistered: false,
-  },
-];
+import { customerStep3Items } from '@/lib/data/customer';
+
+// 顧客STEP3→明細区分マッピング
+const classificationMap: Record<string, DetailClassification> = {
+  '代表明細': '明細代表', '親': '親明細', '子': '子明細', '孫': '孫明細',
+  'その他': 'その他', '文字列': 'その他', '値引き': '値引き',
+};
+
+// 顧客サンプルデータから変換（再取り込み: node docs/customer-sample-data/convert.mjs）
+const testDetailItems: DetailItem[] = customerStep3Items.map((item, i) => ({
+  id: i + 1,
+  itemName: item.itemName,
+  manufacturer: item.manufacturer,
+  model: item.model,
+  quantity: item.quantity || null,
+  listUnitPrice: item.listPriceUnit || null,
+  listPrice: item.listPriceTotal || null,
+  purchaseUnitPrice: item.purchasePriceUnit || null,
+  purchaseAmount: item.purchasePriceTotal || null,
+  category: item.category?.match(/^\d+/)?.[0] || '01',
+  detailClassification: classificationMap[item.itemType] || '' as DetailClassification,
+  isRegistered: false,
+}));
 
 export default function CategoryRegistrationPage() {
   const router = useRouter();
@@ -344,17 +196,21 @@ export default function CategoryRegistrationPage() {
           <div style={{ padding: '16px' }}>
             <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                <thead style={{ position: 'sticky', top: 0 }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   <tr>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '40px' }}>No.</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#374151', color: 'white', border: '1px solid #374151' }}>品名（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#374151', color: 'white', border: '1px solid #374151', width: '100px' }}>メーカー</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#374151', color: 'white', border: '1px solid #374151', width: '120px' }}>型式（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '50px' }}>数量</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f39c12', color: 'white', border: '1px solid #e08e0b', width: '160px', fontWeight: 'bold' }}>category</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#1f2937', color: 'white', border: '1px solid #1f2937', width: '200px', fontWeight: 'bold' }}>明細区分</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '80px' }}>ステータス</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#374151', color: 'white', border: '1px solid #374151', width: '80px' }}>アクション</th>
+                    <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', borderRight: '1px solid #ccc' }}>商品情報（原本情報）</th>
+                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>STEP❸ 登録区分登録</th>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '40px' }}>No.</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#f8f9fa', borderBottom: '1px solid #dee2e6' }}>品名（見積名称）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '100px' }}>メーカー</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '120px' }}>型式（見積名称）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #ccc', width: '50px' }}>数量</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '160px', fontWeight: 'bold' }}>カテゴリ</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '200px', fontWeight: 'bold' }}>明細区分</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '80px' }}>ステータス</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '80px' }}>アクション</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -367,7 +223,7 @@ export default function CategoryRegistrationPage() {
                       <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px' }}>{item.manufacturer}</td>
                       <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px' }}>{item.model}</td>
                       <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center', fontSize: '11px' }}>{item.quantity ?? '-'}</td>
-                      <td style={{ padding: '6px', background: '#fff8e1', border: '1px solid #ddd' }}>
+                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #ddd' }}>
                         <select
                           value={item.category}
                           onChange={(e) => handleCategoryChange(index, e.target.value)}
@@ -385,7 +241,7 @@ export default function CategoryRegistrationPage() {
                           ))}
                         </select>
                       </td>
-                      <td style={{ padding: '6px', background: '#fce4ec', border: '1px solid #ddd' }}>
+                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #ddd' }}>
                         <select
                           value={item.detailClassification}
                           onChange={(e) => handleClassificationChange(index, e.target.value as DetailClassification)}

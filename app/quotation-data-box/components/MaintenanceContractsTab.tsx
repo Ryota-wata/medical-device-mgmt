@@ -477,9 +477,6 @@ const ContractGroupDetailModal = ({
           <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { remote: !asset.remote })}>
             {boolDisplay(asset.remote)}
           </td>
-          <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { legalInspection: !asset.legalInspection })}>
-            {boolDisplay(asset.legalInspection)}
-          </td>
           <td style={mTd}>
             <input type="text" value={asset.comment} onChange={(e) => updateAsset(asset.id, { comment: e.target.value })} placeholder="-" style={{ ...cellInput, width: '100px' }} />
           </td>
@@ -502,7 +499,6 @@ const ContractGroupDetailModal = ({
         <td style={mTd}>{asset.exemptionAmount || '-'}</td>
         <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.onCall)}</td>
         <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.remote)}</td>
-        <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.legalInspection)}</td>
         <td style={mTd}>{asset.comment || '-'}</td>
       </>
     );
@@ -602,7 +598,6 @@ const ContractGroupDetailModal = ({
                 <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>免責金額</th>
                 <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>オンコール</th>
                 <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>リモート</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>法定点検</th>
                 <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>コメント</th>
               </tr>
             </thead>
