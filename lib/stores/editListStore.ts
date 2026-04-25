@@ -1,7 +1,81 @@
 import { create } from 'zustand';
-import { EditList, EditListItem, CreateEditListInput } from '@/lib/types';
+import { EditList, EditListItem, CreateEditListInput, Asset } from '@/lib/types';
 import { PurchaseApplication } from '@/lib/types/purchaseApplication';
 import { generateMockAssets } from '@/lib/data/generateMockAssets';
+import { customerEditListItems } from '@/lib/data/customer';
+
+// 顧客サンプルデータをAsset型に変換
+const customerBaseAssets: Asset[] = customerEditListItems.map((item, i) => ({
+  qrCode: item.qrCode || '',
+  no: i + 1,
+  facility: 'サンプル病院',
+  building: item.currentBuilding || '',
+  floor: item.currentFloor || '',
+  department: item.currentDivision || '',
+  section: item.currentDepartment || '',
+  category: item.category || '',
+  largeClass: item.largeClass || '',
+  mediumClass: item.mediumClass || '',
+  item: item.itemName || '',
+  name: item.itemName || '',
+  maker: item.manufacturer || '',
+  model: item.model || '',
+  quantity: item.quantity || 0,
+  width: '', depth: '', height: '',
+  roomName: item.currentRoom || '',
+  commonDivision: item.commonDivision || '',
+  commonDepartment: item.commonDepartment || '',
+  roomCategory1: item.roomCategory1 || '',
+  roomCategory2: item.roomCategory2 || '',
+  divisionId: item.divisionId || '',
+  departmentId: item.departmentId || '',
+  roomId: item.roomId || '',
+  currentBuilding: item.currentBuilding || '',
+  currentFloor: item.currentFloor || '',
+  currentDivision: item.currentDivision || '',
+  currentDepartment: item.currentDepartment || '',
+  currentRoom: item.currentRoom || '',
+  newBuilding: item.newBuilding || '',
+  newFloor: item.newFloor || '',
+  newDivision: item.newDivision || '',
+  newDepartment: item.newDepartment || '',
+  newRoom: item.newRoom || '',
+  serialNo: item.serialNo || '',
+  fixedAssetNo: item.fixedAssetNo || '',
+  meNo: item.meNo || '',
+  assetMasterId: item.assetMasterId || '',
+  itemType: item.itemType || '',
+  parentItem: item.parentItem || '',
+  itemName: item.itemName || '',
+  manufacturer: item.manufacturer || '',
+  unit: item.unit || '',
+  managementDept: item.managementDept || '',
+  deviceType: item.deviceType || '',
+  assetGroupName: item.assetGroupName || '',
+  purpose: item.purpose || '',
+  remarks: item.remarks || '',
+  applicationType: item.applicationType || '',
+  fiscalYear: item.fiscalYear || '',
+  priority: item.priority || '',
+  systemConnection: item.systemConnection || '',
+  systemTarget: item.systemTarget || '',
+  wish1Manufacturer: item.wish1Manufacturer || '',
+  wish1Model: item.wish1Model || '',
+  wish2Manufacturer: item.wish2Manufacturer || '',
+  wish2Model: item.wish2Model || '',
+  wish3Manufacturer: item.wish3Manufacturer || '',
+  wish3Model: item.wish3Model || '',
+  rfqNo: item.rfqNo || '',
+  rfqGroupName: item.rfqGroupName || '',
+  quotationPhase: item.quotationPhase || '',
+  quotationDate: item.quotationDate || '',
+  accountCategory: item.accountCategory || '',
+  listPriceUnit: item.listPriceUnit || 0,
+  listPriceTotal: item.listPriceTotal || 0,
+  quotationPriceUnit: item.quotationPriceUnit || 0,
+  quotationPriceExTax: item.quotationPriceExTax || 0,
+  quotationPriceInTax: item.quotationPriceInTax || 0,
+}));
 
 interface EditListState {
   editLists: EditList[];
@@ -17,25 +91,16 @@ interface EditListState {
   getTotalItemCount: (editListId: string) => number;
 }
 
-// サンプルデータ（原本資産を生成して設定）
+// サンプルデータ（顧客Excelから変換した原本資産を設定）
 const sampleEditLists: EditList[] = [
   {
     id: 'edit-list-001',
-    name: '2025年度リモデル計画',
-    facilities: ['A病院', 'B病院'],
-    baseAssets: generateMockAssets(['A病院', 'B病院']),
+    name: 'サンプル病院 編集分析リスト',
+    facilities: ['サンプル病院'],
+    baseAssets: customerBaseAssets,
     items: [],
     createdAt: '2025-01-10T10:00:00',
     updatedAt: '2025-01-10T10:00:00',
-  },
-  {
-    id: 'edit-list-002',
-    name: 'C病院設備更新',
-    facilities: ['C病院'],
-    baseAssets: generateMockAssets(['C病院']),
-    items: [],
-    createdAt: '2025-01-08T14:30:00',
-    updatedAt: '2025-01-09T09:15:00',
   },
 ];
 

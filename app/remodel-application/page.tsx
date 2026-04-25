@@ -17,6 +17,7 @@ import { REMODEL_COLUMNS, REMODEL_COLUMN_GROUPS, type ColumnDef } from '@/lib/co
 import { RfqGroupModal } from '@/components/remodel/RfqGroupModal';
 import { DataLinkModal } from '@/components/remodel/DataLinkModal';
 import { generateMockAssets, BUILDING_LIST } from '@/lib/data/generateMockAssets';
+import { customerEditListItems } from '@/lib/data/customer';
 
 const ALL_COLUMNS = REMODEL_COLUMNS;
 
@@ -28,7 +29,29 @@ function RemodelApplicationContent() {
   const { individuals, updateIndividual } = useIndividualStore();
   const { getEditListById, addItemsFromApplications, updateRfqInfo, updateBaseAsset, addBaseAssets } = useEditListStore();
   const { addRfqGroup, generateRfqNo, generateDisposalNo, generateTransferNo, rfqGroups } = useRfqGroupStore();
-  const { assets: assetMasters, vendors } = useMasterStore();
+  const { assets: assetMasters, vendors, setAssets } = useMasterStore();
+
+  // 顧客資産マスタの遅延ロード（DataLink紐付けに必要）
+  useEffect(() => {
+    if (assetMasters.length < 10000) {
+      import('@/lib/data/customer/asset-master').then(({ customerAssetMasters }) => {
+        const mapped = customerAssetMasters.map((item, i) => ({
+          ...item,
+          id: item.assetMasterId || `AST-${i}`,
+          manufacturer: item.jmdnManufacturer || '',
+          packageInsertDocument: item.packageInsert || '',
+          specification: '',
+          unitPrice: 0,
+          depreciationYears: parseInt(item.legalServiceLife || '0', 10) || 0,
+          maintenanceCycle: 0,
+          status: 'active' as const,
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: '2025-01-01T00:00:00Z',
+        })) as import('@/lib/types/master').AssetMaster[];
+        setAssets(mapped);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { quotationGroups, quotationItems } = useQuotationStore();
   const { applications: purchaseApplications } = usePurchaseApplicationStore();
   const { isMobile } = useResponsive();
@@ -127,8 +150,92 @@ function RemodelApplicationContent() {
   // 対象施設リスト
   const targetFacilities = editList ? editList.facilities : (facility ? [facility] : []);
 
-  // モックデータ（施設ごとにデータを生成）
-  const [mockAssets, setMockAssets] = useState<Asset[]>(() => generateMockAssets(targetFacilities));
+  // モックデータ（顧客サンプルデータ → 従来モック のフォールバック）
+  const [mockAssets, setMockAssets] = useState<Asset[]>(() => {
+    if (customerEditListItems.length > 0) {
+      return customerEditListItems.map((item, i) => ({
+        qrCode: item.qrCode || '',
+        no: i + 1,
+        facility: facility || 'サンプル病院',
+        building: item.currentBuilding || '',
+        floor: item.currentFloor || '',
+        department: item.currentDivision || '',
+        section: item.currentDepartment || '',
+        category: item.category || '',
+        largeClass: item.largeClass || '',
+        mediumClass: item.mediumClass || '',
+        item: item.itemName || '',
+        name: item.itemName || '',
+        maker: item.manufacturer || '',
+        model: item.model || '',
+        quantity: item.quantity || 0,
+        width: '', depth: '', height: '',
+        roomName: item.currentRoom || '',
+        // 共通部署マスタ
+        commonDivision: item.commonDivision || '',
+        commonDepartment: item.commonDepartment || '',
+        roomCategory1: item.roomCategory1 || '',
+        roomCategory2: item.roomCategory2 || '',
+        // 設置ID
+        divisionId: item.divisionId || '',
+        departmentId: item.departmentId || '',
+        roomId: item.roomId || '',
+        // 設置情報（現）
+        currentBuilding: item.currentBuilding || '',
+        currentFloor: item.currentFloor || '',
+        currentDivision: item.currentDivision || '',
+        currentDepartment: item.currentDepartment || '',
+        currentRoom: item.currentRoom || '',
+        // 設置情報（新）
+        newBuilding: item.newBuilding || '',
+        newFloor: item.newFloor || '',
+        newDivision: item.newDivision || '',
+        newDepartment: item.newDepartment || '',
+        newRoom: item.newRoom || '',
+        // 識別情報
+        serialNo: item.serialNo || '',
+        fixedAssetNo: item.fixedAssetNo || '',
+        meNo: item.meNo || '',
+        assetMasterId: item.assetMasterId || '',
+        // 品目情報
+        itemType: item.itemType || '',
+        parentItem: item.parentItem || '',
+        itemName: item.itemName || '',
+        manufacturer: item.manufacturer || '',
+        unit: item.unit || '',
+        managementDept: item.managementDept || '',
+        deviceType: item.deviceType || '',
+        assetGroupName: item.assetGroupName || '',
+        purpose: item.purpose || '',
+        remarks: item.remarks || '',
+        // 申請情報
+        applicationType: item.applicationType || '',
+        fiscalYear: item.fiscalYear || '',
+        priority: item.priority || '',
+        systemConnection: item.systemConnection || '',
+        systemTarget: item.systemTarget || '',
+        // 要望情報
+        wish1Manufacturer: item.wish1Manufacturer || '',
+        wish1Model: item.wish1Model || '',
+        wish2Manufacturer: item.wish2Manufacturer || '',
+        wish2Model: item.wish2Model || '',
+        wish3Manufacturer: item.wish3Manufacturer || '',
+        wish3Model: item.wish3Model || '',
+        // 見積情報
+        rfqNo: item.rfqNo || '',
+        rfqGroupName: item.rfqGroupName || '',
+        quotationPhase: item.quotationPhase || '',
+        quotationDate: item.quotationDate || '',
+        accountCategory: item.accountCategory || '',
+        listPriceUnit: item.listPriceUnit || 0,
+        listPriceTotal: item.listPriceTotal || 0,
+        quotationPriceUnit: item.quotationPriceUnit || 0,
+        quotationPriceExTax: item.quotationPriceExTax || 0,
+        quotationPriceInTax: item.quotationPriceInTax || 0,
+      } as Asset));
+    }
+    return generateMockAssets(targetFacilities);
+  });
 
   // 表示用データソース：編集リストモード時はbaseAssets + items、従来モードはmockAssets
   const displayAssets: Asset[] = useMemo(() => {
@@ -261,6 +368,7 @@ function RemodelApplicationContent() {
     getColumnUniqueValues,
     toggleColumnFilter,
     clearColumnFilter,
+    selectAllColumnFilter,
     draggedColumn,
     handleDragStart,
     handleDragOver,
@@ -1457,20 +1565,20 @@ function RemodelApplicationContent() {
                               }}
                             >
                               <span style={{ fontSize: '11px', fontWeight: 'bold' }}>絞り込み</span>
-                              <button
-                                onClick={() => clearColumnFilter(col.key)}
-                                style={{
-                                  fontSize: '10px',
-                                  padding: '2px 6px',
-                                  background: '#e74c3c',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '2px',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                クリア
-                              </button>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button
+                                  onClick={() => selectAllColumnFilter(col.key, uniqueValues)}
+                                  style={{ fontSize: '10px', padding: '2px 6px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
+                                >
+                                  全選択
+                                </button>
+                                <button
+                                  onClick={() => clearColumnFilter(col.key)}
+                                  style={{ fontSize: '10px', padding: '2px 6px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
+                                >
+                                  クリア
+                                </button>
+                              </div>
                             </div>
                             {uniqueValues.map((value) => (
                               <label

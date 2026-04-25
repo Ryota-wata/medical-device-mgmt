@@ -434,7 +434,8 @@ const initialFacilities: FacilityMaster[] = [
   },
 ];
 
-// 資産マスタデータ（顧客Excel「資産マスタ」シートから2047件を外部ファイルで読込）
+// 資産マスタデータ — 初期ロードは既存の軽量データのみ
+// 顧客の全件データ(36,365件)はship-asset-masterページで遅延ロードする
 const initialAssets: AssetMaster[] = initialAssetMasters;
 
 // サンプル業者マスタデータ

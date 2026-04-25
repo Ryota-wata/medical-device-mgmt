@@ -116,6 +116,11 @@ export function useColumnFeatures({ columns, assets, baseFilteredAssets }: UseCo
     });
   }, []);
 
+  // カラムフィルターの全選択
+  const selectAllColumnFilter = useCallback((colKey: string, values: string[]) => {
+    setColumnFilters(prev => ({ ...prev, [colKey]: [...values] }));
+  }, []);
+
   // ドラッグ&ドロップハンドラー
   const handleDragStart = useCallback((colKey: string) => {
     setDraggedColumn(colKey);
@@ -160,6 +165,7 @@ export function useColumnFeatures({ columns, assets, baseFilteredAssets }: UseCo
     getColumnUniqueValues,
     toggleColumnFilter,
     clearColumnFilter,
+    selectAllColumnFilter,
     // ドラッグ&ドロップ
     draggedColumn,
     handleDragStart,

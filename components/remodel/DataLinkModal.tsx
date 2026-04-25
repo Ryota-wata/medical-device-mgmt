@@ -47,16 +47,28 @@ const SOURCE_AVAILABLE_KEYS: Record<Exclude<DataSource, '見積DB'>, LinkKey[]> 
 // ============================
 
 const ASSET_MASTER_COLUMNS: SourceColumn[] = [
-  { sourceKey: 'tradeName', label: '販売名', targetKey: 'name', group: '販売情報' },
-  { sourceKey: 'assetMasterId', label: '資産マスタID', targetKey: 'assetMasterId', group: 'SHIP資産マスタ' },
-  { sourceKey: 'category', label: 'Category', targetKey: 'category', group: 'SHIP資産マスタ' },
+  // SHIP資産マスタ
+  { sourceKey: 'category', label: 'カテゴリ', targetKey: 'category', group: 'SHIP資産マスタ' },
   { sourceKey: 'largeClass', label: '大分類', targetKey: 'largeClass', group: 'SHIP資産マスタ' },
   { sourceKey: 'mediumClass', label: '中分類', targetKey: 'mediumClass', group: 'SHIP資産マスタ' },
-  { sourceKey: 'item', label: '品目', targetKey: 'item', group: 'SHIP資産マスタ' },
-  { sourceKey: 'maker', label: 'メーカー名', targetKey: 'maker', group: 'SHIP資産マスタ' },
+  { sourceKey: 'item', label: '品目（個体管理品目名）', targetKey: 'item', group: 'SHIP資産マスタ' },
+  { sourceKey: 'maker', label: 'メーカー（略称）', targetKey: 'maker', group: 'SHIP資産マスタ' },
   { sourceKey: 'model', label: '型式', targetKey: 'model', group: 'SHIP資産マスタ' },
-  { sourceKey: 'unitPrice', label: '単価', targetKey: 'acquisitionCost', group: 'システム管理' },
-  { sourceKey: 'depreciationYears', label: '耐用年数', targetKey: 'legalServiceLife', group: 'システム管理' },
+  { sourceKey: 'tradeName', label: '販売名', targetKey: 'name', group: 'JMDN分類' },
+  { sourceKey: 'manufacturer', label: '製造販売業者等', targetKey: 'manufacturer', group: 'JMDN分類' },
+  // 設備情報
+  { sourceKey: 'width', label: '幅(W)', targetKey: 'width', group: '設備情報' },
+  { sourceKey: 'depth', label: '奥行(D)', targetKey: 'depth', group: '設備情報' },
+  { sourceKey: 'height', label: '高さ(H)', targetKey: 'height', group: '設備情報' },
+  { sourceKey: 'powerConnection', label: '電源接続', targetKey: 'powerConnection', group: '設備情報' },
+  { sourceKey: 'powerType', label: '電源種別', targetKey: 'powerType', group: '設備情報' },
+  { sourceKey: 'powerConsumption', label: '消費電力', targetKey: 'powerConsumption', group: '設備情報' },
+  { sourceKey: 'weight', label: '重量(kg)', targetKey: 'weight', group: '設備情報' },
+  // 資産情報
+  { sourceKey: 'legalServiceLife', label: '耐用年数（法定）', targetKey: 'legalServiceLife', group: '資産情報' },
+  { sourceKey: 'endOfService', label: 'End of service', targetKey: 'endOfService', group: '資産情報' },
+  { sourceKey: 'endOfSupport', label: 'End of support', targetKey: 'endOfSupport', group: '資産情報' },
+  { sourceKey: 'catalogDocument', label: 'カタログ', targetKey: 'catalogDocument', group: '資産情報' },
 ];
 
 const VENDOR_MASTER_COLUMNS: SourceColumn[] = [
@@ -329,6 +341,62 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   }, [activeGroups, activeColumns]);
 
   // ============================
+  // コピープレビュー（紐付け結果のプレビュー表示用）
+  // ============================
+  const copyPreview = useMemo(() => {
+    if (!dataSource || isQuotationMode || !linkKey || checkedColumns.size === 0) return null;
+
+    const columns = COPY_SOURCE_COLUMNS[dataSource as Exclude<DataSource, '見積DB'>];
+    const checkedCols = columns.filter(c => checkedColumns.has(c.sourceKey) && c.targetKey);
+    if (checkedCols.length === 0) return null;
+
+    const rows: { assetNo: number; assetLabel: string; matched: boolean; changes: { label: string; before: string; after: string }[] }[] = [];
+
+    for (const asset of selectedAssets) {
+      let source: Record<string, unknown> | null = null;
+
+      if (dataSource === '資産Master') {
+        const master = assetMasters.find(m => m.assetMasterId === asset.assetMasterId);
+        if (master) source = master as unknown as Record<string, unknown>;
+      } else if (dataSource === '業者Master') {
+        const vendor = vendors.find(v => v.id === asset.rfqVendor || v.vendorName === asset.rfqVendor);
+        if (vendor) source = vendor as unknown as Record<string, unknown>;
+      } else if (dataSource === '原本リスト') {
+        let base: Asset | undefined;
+        if (linkKey === 'QRコード') base = baseAssets.find(b => b.qrCode !== '' && b.qrCode === asset.qrCode);
+        else if (linkKey === '資産Master ID') base = baseAssets.find(b => b.assetMasterId !== undefined && b.assetMasterId !== '' && b.assetMasterId === asset.assetMasterId);
+        if (base) source = base as unknown as Record<string, unknown>;
+      }
+
+      const changes: { label: string; before: string; after: string }[] = [];
+      if (source) {
+        for (const col of checkedCols) {
+          const before = String((asset as unknown as Record<string, unknown>)[col.targetKey!] || '');
+          const after = String(source[col.sourceKey] || '');
+          if (after && after !== before) {
+            changes.push({ label: col.label, before, after });
+          }
+        }
+      }
+
+      rows.push({
+        assetNo: asset.no,
+        assetLabel: `${asset.item || asset.name || ''} / ${asset.maker || ''}`.substring(0, 30),
+        matched: source !== null,
+        changes,
+      });
+    }
+
+    return {
+      matchedCount: rows.filter(r => r.matched).length,
+      unmatchedCount: rows.filter(r => !r.matched).length,
+      changedCount: rows.filter(r => r.changes.length > 0).length,
+      rows: rows.slice(0, 20), // プレビューは最大20行
+      totalRows: rows.length,
+    };
+  }, [dataSource, isQuotationMode, linkKey, checkedColumns, selectedAssets, assetMasters, vendors, baseAssets]);
+
+  // ============================
   // コピー実行（資産/業者/原本）
   // ============================
   const handleCopyExecute = useCallback(() => {
@@ -482,14 +550,17 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 return (
                   <label key={col.sourceKey} style={{
                     display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
-                    minWidth: '33%', cursor: isLinkable ? 'pointer' : 'default',
+                    minWidth: '50%', cursor: isLinkable ? 'pointer' : 'default',
                     opacity: isLinkable ? 1 : 0.4,
-                    background: isChecked ? '#eaf7ed' : 'transparent', borderRadius: 4, fontSize: 13,
+                    background: isChecked ? '#eaf7ed' : 'transparent', borderRadius: 4, fontSize: 12,
                   }}>
                     <input type="checkbox" checked={isChecked} disabled={!isLinkable}
                       onChange={() => handleToggleColumn(col.sourceKey)}
                       style={{ width: 14, height: 14, accentColor: '#27ae60' }} />
-                    {col.label}
+                    <span>{col.label}</span>
+                    {isLinkable && isChecked && col.targetKey && (
+                      <span style={{ color: '#27ae60', fontSize: 11 }}>→ {col.targetKey}</span>
+                    )}
                   </label>
                 );
               })}
@@ -497,6 +568,64 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
           </div>
         );
       })}
+
+      {/* 紐付けプレビュー */}
+      {copyPreview && (
+        <div style={{ marginTop: 16, border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 16px', background: '#f8f9fa', display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, borderBottom: '1px solid #ddd' }}>
+            <span style={{ fontWeight: 700 }}>紐付けプレビュー</span>
+            <span style={{ color: '#27ae60', fontWeight: 600 }}>マッチ: {copyPreview.matchedCount}件</span>
+            <span style={{ color: '#e74c3c', fontWeight: 600 }}>未マッチ: {copyPreview.unmatchedCount}件</span>
+            <span style={{ color: '#2196f3', fontWeight: 600 }}>変更あり: {copyPreview.changedCount}件</span>
+          </div>
+          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+              <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa' }}>
+                <tr>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>No</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>品目 / メーカー</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>状態</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>変更内容</th>
+                </tr>
+              </thead>
+              <tbody>
+                {copyPreview.rows.map(row => (
+                  <tr key={row.assetNo} style={{ borderBottom: '1px solid #eee', background: row.matched ? (row.changes.length > 0 ? '#e8f5e9' : '#fff') : '#fff3e0' }}>
+                    <td style={{ padding: '4px 8px', fontVariantNumeric: 'tabular-nums' }}>{row.assetNo}</td>
+                    <td style={{ padding: '4px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{row.assetLabel}</td>
+                    <td style={{ padding: '4px 8px', textAlign: 'center' }}>
+                      {row.matched ? (
+                        <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, color: 'white', background: row.changes.length > 0 ? '#27ae60' : '#9e9e9e' }}>
+                          {row.changes.length > 0 ? `${row.changes.length}件変更` : 'マッチ(変更なし)'}
+                        </span>
+                      ) : (
+                        <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, color: 'white', background: '#e74c3c' }}>未マッチ</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '4px 8px' }}>
+                      {row.changes.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {row.changes.slice(0, 3).map((c, i) => (
+                            <span key={i} style={{ fontSize: 10, padding: '1px 4px', background: '#e3f2fd', borderRadius: 2 }}>
+                              {c.label}: <span style={{ color: '#999', textDecoration: 'line-through' }}>{c.before || '(空)'}</span> → <span style={{ fontWeight: 600 }}>{c.after}</span>
+                            </span>
+                          ))}
+                          {row.changes.length > 3 && <span style={{ fontSize: 10, color: '#999' }}>+{row.changes.length - 3}</span>}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {copyPreview.totalRows > 20 && (
+              <div style={{ padding: 8, textAlign: 'center', fontSize: 12, color: '#999' }}>
+                ...他 {copyPreview.totalRows - 20}件
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 

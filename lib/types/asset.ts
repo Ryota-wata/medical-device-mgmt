@@ -137,6 +137,8 @@ export interface Asset {
   newDepartment?: string; // 新部門
   newSection?: string; // 新部署
   newRoomName?: string; // 新室名
+  newDivision?: string; // 新部門名（編集リスト用）
+  newRoom?: string; // 新室名（編集リスト用）
 
   // リモデル区分
   purchaseCategory?: '新規' | '更新' | '移設' | '増設' | '廃棄予定';
@@ -144,6 +146,59 @@ export interface Asset {
   updateSourceNo?: number; // 更新元レコードNo.
 
   sourceType?: 'base' | 'added'; // レコードソース（原本 or 追加）
+
+  // ── 編集リスト(リ)用フィールド（Excel○マーク58列対応） ──
+
+  // 共通部署マスタ
+  commonDivision?: string; // 共通部門名
+  commonDepartment?: string; // 共通部署名
+  roomCategory1?: string; // 諸室区分①
+  roomCategory2?: string; // 諸室区分②
+
+  // 設置情報（現）
+  currentBuilding?: string;
+  currentFloor?: string;
+  currentDivision?: string;
+  currentDepartment?: string;
+  currentRoom?: string;
+
+  // 識別情報
+  serialNo?: string; // シリアル番号
+  fixedAssetNo?: string; // 固定資産番号
+  meNo?: string; // ME管理機器番号
+
+  // 品目情報
+  itemType?: string; // 明細区分
+  itemName?: string; // 品目名
+  manufacturer?: string; // メーカー名
+  unit?: string; // 単位
+  deviceType?: string; // 機器種別
+  assetGroupName?: string; // 資産グループ名称
+  purpose?: string; // 使用目的
+
+  // 申請情報
+  applicationType?: string; // 申請種別
+  fiscalYear?: string; // 執行年度
+  systemConnection?: string; // システム接続
+  systemTarget?: string; // システム接続先
+
+  // 要望情報
+  wish1Manufacturer?: string;
+  wish1Model?: string;
+  wish2Manufacturer?: string;
+  wish2Model?: string;
+  wish3Manufacturer?: string;
+  wish3Model?: string;
+
+  // 見積情報
+  quotationPhase?: string;
+  quotationDate?: string;
+  accountCategory?: string; // 会計区分
+  listPriceUnit?: number; // 定価単価
+  listPriceTotal?: number; // 定価金額
+  quotationPriceUnit?: number; // 見積単価
+  quotationPriceExTax?: number; // 見積金額（税別）
+  quotationPriceInTax?: number; // 見積金額（税込）
 }
 
 /**
