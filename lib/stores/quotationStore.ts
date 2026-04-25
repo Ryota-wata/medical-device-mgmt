@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ReceivedQuotationGroup, ReceivedQuotationItem } from '@/lib/types';
+import { customerQuotationDB } from '@/lib/data/customer';
 
 interface QuotationState {
   // 見積グループ（ヘッダー情報）
@@ -398,9 +399,76 @@ const testQuotationItems: ReceivedQuotationItem[] = [
   }
 ];
 
+// 顧客見積DBから QuotationGroups/Items を生成
+const customerGroups: ReceivedQuotationGroup[] = [];
+const customerItems: ReceivedQuotationItem[] = [];
+
+if (customerQuotationDB.length > 0) {
+  // rfqNoでグルーピング
+  const grouped = new Map<string, typeof customerQuotationDB>();
+  for (const item of customerQuotationDB) {
+    const key = item.rfqNo || `auto-${item.facilityName}-${item.vendorName}`;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(item);
+  }
+
+  let groupId = 100; // 既存テストデータのIDと衝突しないよう100から
+  let itemId = 1000;
+
+  for (const [rfqNo, items] of grouped) {
+    const first = items[0];
+    const totalAmount = items.reduce((sum, i) => sum + (i.purchasePriceTotal || 0), 0);
+
+    customerGroups.push({
+      id: groupId,
+      receivedQuotationNo: rfqNo,
+      rfqNo: rfqNo,
+      vendorName: first.vendorName || '',
+      vendorContact: first.vendorContact || '',
+      quotationDate: first.quotationDate || '',
+      phase: (first.quotationPhase as '定価見積' | '概算見積' | '確定見積') || '概算見積',
+      totalAmount,
+      createdAt: '2025-01-01T00:00:00Z',
+      updatedAt: '2025-01-01T00:00:00Z',
+    });
+
+    for (const item of items) {
+      customerItems.push({
+        id: itemId++,
+        quotationGroupId: groupId,
+        receivedQuotationNo: rfqNo,
+        rowNo: item.lineNo || 0,
+        originalItemName: item.itemName || '',
+        originalManufacturer: item.makerName || '',
+        originalModel: item.spec || '',
+        originalQuantity: item.quantity || 1,
+        itemType: 'C_個体管理品目',
+        category: item.category || '',
+        largeClass: item.largeClass || '',
+        middleClass: item.middleClass || '',
+        itemName: item.assetItemName || item.itemName || '',
+        manufacturer: item.assetMaker || item.makerName || '',
+        model: item.assetModel || item.spec || '',
+        aiQuantity: item.assetQuantity || item.quantity || 1,
+        listPriceUnit: item.listPriceUnit || undefined,
+        listPriceTotal: item.listPriceTotal || undefined,
+        purchasePriceUnit: item.purchasePriceUnit || undefined,
+        purchasePriceTotal: item.purchasePriceTotal || undefined,
+        unit: item.assetUnit || '',
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+      });
+    }
+    groupId++;
+  }
+}
+
+const mergedGroups = [...testQuotationGroups, ...customerGroups];
+const mergedItems = [...testQuotationItems, ...customerItems];
+
 export const useQuotationStore = create<QuotationState>((set, get) => ({
-  quotationGroups: testQuotationGroups,
-  quotationItems: testQuotationItems,
+  quotationGroups: mergedGroups,
+  quotationItems: mergedItems,
 
   // グループ操作
   addQuotationGroup: (group) => {

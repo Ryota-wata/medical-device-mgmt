@@ -1,122 +1,124 @@
-import React from 'react';
-import { ReceivedQuotationItem } from '@/lib/types/quotation';
+import React, { useMemo } from 'react';
+import { ReceivedQuotationItem, ReceivedQuotationGroup } from '@/lib/types/quotation';
+import { useQuotationStore } from '@/lib/stores/quotationStore';
 
 interface QuotationsTabProps {
   items: ReceivedQuotationItem[];
 }
 
-// 金額フォーマット
-const formatCurrency = (value?: number) => {
-  if (value === undefined || value === null) return '-';
-  return `¥${value.toLocaleString()}`;
-};
+const fmtNum = (v?: number) => (v ? v.toLocaleString() : '');
+const fmtCur = (v?: number) => (v ? `¥${v.toLocaleString()}` : '');
 
-// 明細区分の短縮表示
-const classificationLabel = (itemType?: string): string => {
-  if (!itemType) return '';
-  if (itemType.startsWith('C')) return '親';
-  if (itemType.startsWith('D')) return '子';
-  return '';
-};
+// 見積DBのカラム定義（AI検証グループ除外）
+const QUOTATION_COLUMNS: { key: string; label: string; align?: 'right' | 'center'; fmt?: 'num' | 'cur' }[] = [
+  // 見積ヘッダー
+  { key: 'receivedQuotationNo', label: '見積依頼No.' },
+  { key: 'rfqGroupName', label: '見積グループ名' },
+  { key: 'vendorName', label: '業者名' },
+  { key: 'vendorContact', label: '担当者名' },
+  { key: 'quotationPhase', label: '見積フェーズ' },
+  { key: 'quotationDate', label: '見積日付' },
+  // STEP② 商品情報
+  { key: 'rowNo', label: '明細行No.', align: 'center' },
+  { key: 'originalItemName', label: '商品名（見積記載）' },
+  { key: 'originalManufacturer', label: 'メーカ名（見積記載）' },
+  { key: 'originalModel', label: '規格（見積記載）' },
+  { key: 'originalQuantity', label: '数量', align: 'center' },
+  // STEP② 価格情報
+  { key: 'listPriceUnit', label: '定価単価', align: 'right', fmt: 'num' },
+  { key: 'listPriceTotal', label: '定価金額', align: 'right', fmt: 'num' },
+  { key: 'purchasePriceUnit', label: '購入単価(税別)', align: 'right', fmt: 'num' },
+  { key: 'purchasePriceTotal', label: '購入金額(税別)', align: 'right', fmt: 'num' },
+  // STEP③
+  { key: 'category', label: 'カテゴリ' },
+  { key: 'itemType', label: '明細区分' },
+  // STEP④
+  { key: 'largeClass', label: '大分類' },
+  { key: 'middleClass', label: '中分類' },
+  { key: 'itemName', label: '個体管理品目' },
+  { key: 'manufacturer', label: 'メーカー' },
+  { key: 'model', label: '型式' },
+  // STEP⑤
+  { key: 'aiQuantity', label: '数量', align: 'center' },
+  { key: 'unit', label: '単位', align: 'center' },
+  { key: 'allocListPriceTotal', label: '購入金額(税込)', align: 'right', fmt: 'cur' },
+];
 
-export const QuotationsTab: React.FC<QuotationsTabProps> = ({
-  items,
-}) => {
-  // 表示対象: 親明細(C)・子明細(D)のみ
-  const displayItems = items.filter(
-    (item) => item.itemType?.startsWith('C') || item.itemType?.startsWith('D')
-  );
+const GROUP_HEADERS = [
+  { label: '見積ヘッダー', span: 6, color: '#495057' },
+  { label: 'STEP② 商品情報', span: 5, color: '#0d6efd' },
+  { label: 'STEP② 価格情報', span: 4, color: '#0d6efd' },
+  { label: 'STEP③', span: 2, color: '#198754' },
+  { label: 'STEP④ 個体管理品目', span: 5, color: '#6f42c1' },
+  { label: 'STEP⑤ 個体登録', span: 3, color: '#e67e22' },
+];
+
+export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
+  const { quotationGroups } = useQuotationStore();
+
+  // グループ情報をアイテムにマージ
+  const enrichedItems = useMemo(() => {
+    return items.map(item => {
+      const group = quotationGroups.find(g => g.id === item.quotationGroupId);
+      return {
+        ...item,
+        vendorName: group?.vendorName || '',
+        vendorContact: group?.vendorContact || '',
+        quotationPhase: group?.phase || '',
+        quotationDate: group?.quotationDate || '',
+        rfqGroupName: group?.rfqNo ? `${group.rfqNo}` : '',
+      };
+    });
+  }, [items, quotationGroups]);
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
-      {/* テーブル */}
-      <div style={{ overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ background: '#f8f9fa' }}>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '60px', fontWeight: 600, whiteSpace: 'nowrap' }}>明細区分</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '50px', fontWeight: 600, whiteSpace: 'nowrap' }}>SEQ</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>大分類</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>中分類</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600, whiteSpace: 'nowrap' }}>個体管理品目</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>メーカー</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>型式</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'center', width: '80px', fontWeight: 600, whiteSpace: 'nowrap' }}>数量／単位</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'right', width: '120px', fontWeight: 600, whiteSpace: 'nowrap' }}>案分金額（税別）</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>部門</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>部署</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>室名</th>
-              <th style={{ padding: '10px 8px', border: '1px solid #ddd', textAlign: 'left', width: '100px', fontWeight: 600, whiteSpace: 'nowrap' }}>管理部署</th>
+    <div style={{ flex: 1, overflow: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+          {/* グループヘッダー */}
+          <tr>
+            {GROUP_HEADERS.map((g, i) => (
+              <th key={i} colSpan={g.span} style={{
+                padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700,
+                color: 'white', background: g.color,
+                borderRight: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap',
+              }}>{g.label}</th>
+            ))}
+          </tr>
+          {/* カラムヘッダー */}
+          <tr>
+            {QUOTATION_COLUMNS.map(col => (
+              <th key={col.key} style={{
+                padding: '4px 6px', textAlign: col.align || 'left', fontSize: '10px', fontWeight: 600,
+                color: 'white', background: '#374151',
+                borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap',
+              }}>{col.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {enrichedItems.map((item, index) => (
+            <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: index % 2 === 0 ? 'white' : '#f9fafb' }}>
+              {QUOTATION_COLUMNS.map(col => {
+                const val = (item as unknown as Record<string, unknown>)[col.key];
+                let display = '';
+                if (col.fmt === 'cur') display = fmtCur(val as number | undefined);
+                else if (col.fmt === 'num') display = fmtNum(val as number | undefined);
+                else display = String(val || '');
+
+                return (
+                  <td key={col.key} style={{
+                    padding: '4px 6px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+                    textAlign: col.align || 'left',
+                  }}>{display}</td>
+                );
+              })}
             </tr>
-          </thead>
-          <tbody>
-            {displayItems.map((item) => {
-              const isParent = item.itemType?.startsWith('C');
-              const rowBg = isParent ? '#e8f5e9' : '#fffde7';
-              const labelBg = isParent ? '#4caf50' : '#ffc107';
+          ))}
+        </tbody>
+      </table>
 
-              return (
-                <tr key={item.id} style={{ background: rowBg }}>
-                  {/* 明細区分 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', background: labelBg, color: 'white', fontWeight: 'bold' }}>
-                    {classificationLabel(item.itemType)}
-                  </td>
-                  {/* SEQ */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: isParent ? 'bold' : 'normal', fontVariantNumeric: 'tabular-nums' }}>
-                    {item.seqId || '-'}
-                  </td>
-                  {/* 大分類 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    {item.largeClass || '-'}
-                  </td>
-                  {/* 中分類 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    {item.middleClass || '-'}
-                  </td>
-                  {/* 個体管理品目 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd', fontWeight: 'bold' }}>
-                    {item.itemName || '-'}
-                  </td>
-                  {/* メーカー */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    {item.manufacturer || '-'}
-                  </td>
-                  {/* 型式 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    {item.model || '-'}
-                  </td>
-                  {/* 数量／単位 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
-                    1 / {item.unit || '-'}
-                  </td>
-                  {/* 案分金額（税別） */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 'bold', color: '#c62828', fontVariantNumeric: 'tabular-nums' }}>
-                    {formatCurrency(item.allocListPriceTotal)}
-                  </td>
-                  {/* 部門 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    -
-                  </td>
-                  {/* 部署 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    -
-                  </td>
-                  {/* 室名 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    -
-                  </td>
-                  {/* 管理部署 */}
-                  <td style={{ padding: '8px', border: '1px solid #ddd' }}>
-                    -
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {displayItems.length === 0 && (
+      {enrichedItems.length === 0 && (
         <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
           <p className="text-pretty">該当する見積明細がありません</p>
           <p style={{ fontSize: '12px', marginTop: '8px' }} className="text-pretty">絞り込み条件を変更してください</p>

@@ -8,6 +8,55 @@ import { FacilityMaster } from '@/lib/types/master';
 import { FacilityFormModal } from '@/components/modals/FacilityFormModal';
 import { exportFacilitiesToExcel } from '@/lib/utils/excel-facility-master';
 
+// Excelフルカラム定義（44列）
+const FACILITY_COLUMNS: { key: string; label: string }[] = [
+  // 基本情報
+  { key: 'facilityCode', label: '医療機関コード' },
+  { key: 'facilityName', label: '施設名' },
+  { key: 'foundingBody', label: '経営主体' },
+  { key: 'prefecture', label: '都道府県' },
+  { key: 'city', label: '市区町村' },
+  { key: 'secondaryMedicalArea', label: '二次医療圏名' },
+  { key: 'rebuildYear', label: '建替年度' },
+  { key: 'buildingArea', label: '建物面積' },
+  // 認定情報
+  { key: 'emergencyCenter', label: '救命救急センター' },
+  { key: 'secondaryEmergency', label: '2次/3次救急' },
+  { key: 'perinatalCenter', label: '周産期母子医療' },
+  { key: 'disasterHospital', label: '災害拠点病院' },
+  { key: 'cancerHospital', label: 'がん診療拠点' },
+  { key: 'regionalSupport', label: '地域医療支援' },
+  // 諸室情報
+  { key: 'erRooms', label: '救急初療室数' },
+  { key: 'centralTreatmentBeds', label: '中央処置ベッド数' },
+  { key: 'chemotherapyBeds', label: '化学療法ベッド数' },
+  { key: 'deliveryRooms', label: '分娩室数' },
+  { key: 'endoscopyRooms', label: '内視鏡室数' },
+  { key: 'dialysisBeds', label: '人工透析ベッド数' },
+  { key: 'operatingRooms', label: '手術室数' },
+  { key: 'bloodCollectionUnits', label: '中央採血台数' },
+  // 病床情報
+  { key: 'totalBeds', label: '総病床数' },
+  { key: 'emergencyWard', label: '救急病棟' },
+  { key: 'eICU', label: 'E-ICU' },
+  { key: 'icu', label: 'ICU' },
+  { key: 'hcu', label: 'HCU' },
+  { key: 'gICU', label: 'G-ICU' },
+  { key: 'ccu', label: 'CCU' },
+  { key: 'scu', label: 'SCU' },
+  { key: 'nicu', label: 'NICU' },
+  { key: 'gcu', label: 'GCU' },
+  { key: 'mficu', label: 'MFICU' },
+  { key: 'generalBeds', label: '一般病床' },
+  { key: 'cleanRoomBeds', label: '無菌病棟' },
+  { key: 'palliativeBeds', label: '緩和ケア' },
+  { key: 'rehabilitationBeds', label: '回復期リハ' },
+  { key: 'communityCareBeds', label: '地域包括ケア' },
+  { key: 'chronicBeds', label: '療養病床' },
+  { key: 'psychiatricBeds', label: '精神病床' },
+  { key: 'infectiousBeds', label: '感染症・結核' },
+];
+
 export default function ShipFacilityMasterPage() {
   const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
@@ -21,82 +70,31 @@ export default function ShipFacilityMasterPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<FacilityMaster | null>(null);
 
-  // サンプルデータを初期化
+  // 顧客施設マスタを遅延ロード
+  const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
-    if (facilities.length === 0) {
-      const sampleFacilities: FacilityMaster[] = [
-        {
-          id: 'FAC021',
-          facilityCode: 'FAC021',
-          facilityName: 'サンプル病院',
-          prefecture: '東京都',
-          foundingBody: '公立',
-          city: '千代田区',
-          address: '丸の内1-1-1',
-          postalCode: '100-0005',
-          phoneNumber: '03-9999-0000',
-          establishedDate: '2010-04-01',
-          facilityType: '総合病院',
-          bedCount: 600,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'F001',
-          facilityCode: 'F001',
-          facilityName: '〇〇〇〇〇〇病院',
-          prefecture: '東京都',
-          foundingBody: '国立',
-          city: '千代田区',
-          address: '千代田1-1-1',
-          postalCode: '100-0001',
-          phoneNumber: '03-1234-5678',
-          establishedDate: '1980-04-01',
-          facilityType: '総合病院',
-          bedCount: 500,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'F002',
-          facilityCode: 'F002',
-          facilityName: '△△△△△△クリニック',
-          prefecture: '神奈川県',
-          foundingBody: '医療法人',
-          city: '横浜市',
-          address: '西区みなとみらい2-2-2',
-          postalCode: '220-0012',
-          phoneNumber: '045-1234-5678',
-          establishedDate: '1995-06-15',
-          facilityType: 'クリニック',
-          bedCount: 50,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'F003',
-          facilityCode: 'F003',
-          facilityName: '□□□□□□医療センター',
-          prefecture: '大阪府',
-          foundingBody: '公立',
-          city: '大阪市',
-          address: '北区梅田3-3-3',
-          postalCode: '530-0001',
-          phoneNumber: '06-1234-5678',
-          establishedDate: '2005-10-01',
-          facilityType: '医療センター',
-          bedCount: 300,
-          status: 'active',
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        }
-      ];
-      setFacilities(sampleFacilities);
+    if (facilities.length < 1000) {
+      setIsLoading(true);
+      import('@/lib/data/customer/facility-master').then(({ customerFacilities }) => {
+        const mapped = customerFacilities.map((item, i) => ({
+          ...item,
+          id: `FAC-${i}`,
+          address: '',
+          postalCode: '',
+          phoneNumber: '',
+          establishedDate: '',
+          facilityType: '',
+          bedCount: parseInt(item.totalBeds || '0', 10) || 0,
+          status: 'active' as const,
+          createdAt: '2025-01-01T00:00:00Z',
+          updatedAt: '2025-01-01T00:00:00Z',
+        })) as FacilityMaster[];
+        setFacilities(mapped);
+        setIsLoading(false);
+      });
     }
-  }, [facilities.length, setFacilities]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   // フィルタリング処理
   const filteredFacilities = facilities.filter((facility) => {
@@ -383,66 +381,45 @@ export default function ShipFacilityMasterPage() {
           </div>
         ) : (
           // テーブル表示 (PC/タブレット)
-          <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ overflowX: 'auto' }}>
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', overflow: 'auto', maxHeight: 'calc(100vh - 220px)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>都道府県</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>設立母体</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>施設コード</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937' }}>施設名</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'right', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>病床数</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#1f2937', whiteSpace: 'nowrap' }}>操作</th>
+                    {([
+                      { label: '基本情報', span: 8, color: '#495057' },
+                      { label: '認定情報', span: 6, color: '#0d6efd' },
+                      { label: '諸室情報', span: 8, color: '#198754' },
+                      { label: '病床情報', span: 19, color: '#6f42c1' },
+                      { label: '', span: 1, color: '#374151' },
+                    ] as const).map((g, i) => (
+                      <th key={i} colSpan={g.span} style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'white', background: g.color, borderRight: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}>{g.label}</th>
+                    ))}
+                  </tr>
+                  <tr>
+                    {FACILITY_COLUMNS.map(col => (
+                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#374151', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>{col.label}</th>
+                    ))}
+                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#374151', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredFacilities.map((facility, index) => (
                     <tr key={facility.id} style={{ borderBottom: '1px solid #e5e7eb', background: index % 2 === 0 ? 'white' : '#f9fafb' }}>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{facility.prefecture}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{facility.foundingBody}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>{facility.facilityCode}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937' }}>{facility.facilityName}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#1f2937', textAlign: 'right', whiteSpace: 'nowrap' }}>{facility.bedCount}床</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            onClick={() => handleEdit(facility)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#374151',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: isTablet ? '12px' : '13px',
-                              fontWeight: 600,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            編集
-                          </button>
-                          <button
-                            onClick={() => handleDelete(facility.id)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#e74c3c',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: isTablet ? '12px' : '13px',
-                              fontWeight: 600,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            削除
-                          </button>
+                      {FACILITY_COLUMNS.map(col => (
+                        <td key={col.key} style={{ padding: '4px 6px', fontSize: '11px', color: '#1f2937', whiteSpace: 'nowrap' }}>
+                          {String((facility as unknown as Record<string, unknown>)[col.key] || '')}
+                        </td>
+                      ))}
+                      <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                          <button onClick={() => handleEdit(facility)} style={{ padding: '3px 8px', background: '#374151', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>
+                          <button onClick={() => handleDelete(facility.id)} style={{ padding: '3px 8px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>削除</button>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
           </div>
         )}
 

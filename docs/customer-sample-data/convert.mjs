@@ -852,7 +852,196 @@ export const customerAssetMasters: CustomerAssetMaster[] = assetMasterJson as Cu
 }
 
 // ─────────────────────────────────────────
-// 11. Index file
+// 11. SHIP施設マスタ
+// ─────────────────────────────────────────
+async function convertFacilityMaster() {
+  const fname = "SHIP施設マスタ.xlsx";
+  const fpath = resolve(SRC, fname);
+  try { await readFile(fpath); } catch { console.log(`⏭ ${fname} not found, skipping`); return; }
+
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.readFile(fpath);
+  const ws = wb.getWorksheet("施設M");
+
+  // Row 2 = カラム名、Row 3以降 = データ
+  const colMap = {
+    1: "no",
+    3: "viewGroup",            // 閲覧/グループ
+    4: "facilityCode",         // 医療機関コード
+    5: "facilityName",         // 施設名
+    6: "foundingBody",         // 経営主体
+    7: "prefecture",           // 都道府県
+    8: "city",                 // 市区町村
+    9: "secondaryMedicalArea", // 二次医療圏名
+    10: "rebuildYear",         // 建替年度
+    11: "buildingArea",        // 建物面積
+    // 認定情報
+    12: "emergencyCenter",     // 救命救急センター
+    13: "secondaryEmergency",  // ２次救急・３次救急
+    14: "perinatalCenter",     // 周産期母子医療センター
+    15: "disasterHospital",    // 災害拠点病院
+    16: "cancerHospital",      // がん診療連携拠点病院
+    17: "regionalSupport",     // 地域医療支援病院
+    // 諸室情報
+    18: "erRooms",             // 救急初療室数
+    19: "centralTreatmentBeds",// 中央処置ベッド数
+    20: "chemotherapyBeds",    // 化学療法ベッド数
+    21: "deliveryRooms",       // 分娩室数
+    22: "endoscopyRooms",      // 内視鏡室数
+    23: "dialysisBeds",        // 人工透析ベッド数
+    24: "operatingRooms",      // 手術室数
+    25: "bloodCollectionUnits", // 中央採血台数
+    // 病床情報
+    26: "totalBeds",           // 総病床数
+    27: "emergencyWard",       // 救急病棟
+    28: "eICU",                // E-ICU
+    29: "icu",                 // ICU
+    30: "hcu",                 // HCU
+    31: "gICU",                // G-ICU
+    32: "ccu",                 // CCU
+    33: "scu",                 // SCU
+    34: "nicu",                // NICU
+    35: "gcu",                 // GCU
+    36: "mficu",               // MFICU
+    37: "generalBeds",         // 一般病床
+    38: "cleanRoomBeds",       // 一般病床(無菌)
+    39: "palliativeBeds",      // 一般病床(緩和ケア)
+    40: "rehabilitationBeds",  // 一般病床(回復期リハ)
+    41: "communityCareBeds",   // 一般病床(地域包括ケア)
+    42: "chronicBeds",         // 療養病床
+    43: "psychiatricBeds",     // 精神病床
+    44: "infectiousBeds",      // 感染症･結核病床
+  };
+
+  const items = [];
+  for (let ri = 3; ri <= ws.rowCount; ri++) {
+    const row = ws.getRow(ri);
+    const name = esc(row.getCell(5).value);
+    if (!name) continue;
+
+    const record = {};
+    for (const [ciStr, key] of Object.entries(colMap)) {
+      const ci = Number(ciStr);
+      record[key] = esc(row.getCell(ci).value);
+    }
+    items.push(record);
+  }
+
+  // FacilityMaster型に合わせてTSファイル出力（件数8千程度なのでTS直書き可）
+  const ts = `// Auto-generated from ${fname} — do not edit manually
+// Re-generate: node docs/customer-sample-data/convert.mjs
+
+export interface CustomerFacility {
+${Object.values(colMap).map(k => `  ${k}: string;`).join("\n")}
+}
+
+/** SHIP施設マスタ (${items.length}件) */
+export const customerFacilities: CustomerFacility[] = ${JSON.stringify(items, null, 0)};
+`;
+  await writeFile(resolve(DEST, "facility-master.ts"), ts, "utf-8");
+  const sizeMB = (ts.length / 1024 / 1024).toFixed(1);
+  console.log(`✔ SHIP施設マスタ → facility-master.ts (${items.length} items, ${sizeMB}MB)`);
+}
+
+// ─────────────────────────────────────────
+// 12. 見積DB
+// ─────────────────────────────────────────
+async function convertQuotationDB() {
+  const fname = "見積DB.xlsx";
+  const fpath = resolve(SRC, fname);
+  try { await readFile(fpath); } catch { console.log(`⏭ ${fname} not found, skipping`); return; }
+
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.readFile(fpath);
+  const ws = wb.getWorksheet("Ph2_見積DB");
+
+  // Row 3 = カラム名、Row 4以降 = データ
+  // 主要カラムのみ抽出
+  const colMap = {
+    1: "count",
+    2: "seqNo",               // 連番
+    3: "contractNo",           // 売上契約番号
+    4: "facilityName",         // 施設名
+    5: "settlementNo",         // 契約稟議No
+    6: "rfqNo",                // 見積依頼No（自動配番）
+    7: "rfqGroupName",         // 見積グループ名
+    9: "vendorName",           // 業者名
+    10: "vendorContact",       // 担当者名
+    11: "vendorPhone",         // 連絡先
+    12: "quotationPhase",      // 見積フェーズ
+    13: "deliveryDate",        // 納期
+    14: "quotationDate",       // 見積日付
+    16: "lineNo",              // 明細行番号
+    17: "itemName",            // 商品名（見積記載）
+    18: "makerName",           // メーカ名（見積記載）
+    19: "spec",                // 規格（見積記載）
+    20: "quantity",            // 数量
+    22: "listPriceUnit",       // 定価単価
+    23: "listPriceTotal",      // 定価金額
+    24: "purchasePriceUnit",   // 購入単価(税別)
+    25: "purchasePriceTotal",  // 購入金額(税別)
+    27: "category",            // カテゴリ
+    28: "detailCategory",      // 明細区分
+    30: "largeClass",          // 大分類
+    31: "middleClass",         // 中分類
+    32: "assetItemName",       // 個体管理品目名
+    33: "assetMaker",          // メーカー（確定後）
+    34: "assetModel",          // 型式（確定後）
+    36: "assetQuantity",       // 数量（確定後）
+    37: "assetUnit",           // 単位
+    38: "parentChild",         // 親子関係
+    39: "allocationCategory",  // 価格案分区分
+    40: "differenceAllocation",// 差額金額を案分
+    41: "allocListPrice",      // 定価金額（案分後）
+    42: "allocPurchasePrice",  // 購入金額（税別・案分後）
+    43: "taxCategory",         // 税区分
+    44: "taxAmount",           // 購入金額（税込）
+    46: "detailClassification",// 明細分類
+  };
+
+  const items = [];
+  for (let ri = 4; ri <= ws.rowCount; ri++) {
+    const row = ws.getRow(ri);
+    const facility = esc(row.getCell(4).value);
+    if (!facility) continue;
+
+    const record = {};
+    for (const [ciStr, key] of Object.entries(colMap)) {
+      const ci = Number(ciStr);
+      const val = row.getCell(ci).value;
+      if (["quantity", "listPriceUnit", "listPriceTotal", "purchasePriceUnit", "purchasePriceTotal", "taxAmount", "assetQuantity", "lineNo", "allocListPrice", "allocPurchasePrice"].includes(key)) {
+        record[key] = num(val);
+      } else if (key === "quotationDate") {
+        record[key] = fmtDate(val);
+      } else {
+        record[key] = esc(val);
+      }
+    }
+    items.push(record);
+  }
+
+  const numFields = ["quantity", "listPriceUnit", "listPriceTotal", "purchasePriceUnit", "purchasePriceTotal", "taxAmount", "assetQuantity", "lineNo", "allocListPrice", "allocPurchasePrice"];
+  const typeFields = Object.values(colMap).map(k =>
+    `  ${k}: ${numFields.includes(k) ? "number" : "string"};`
+  );
+
+  const ts = `// Auto-generated from ${fname} — do not edit manually
+// Re-generate: node docs/customer-sample-data/convert.mjs
+
+export interface QuotationDBItem {
+${typeFields.join("\n")}
+}
+
+/** 見積DB (${items.length}件) */
+export const customerQuotationDB: QuotationDBItem[] = ${JSON.stringify(items, null, 0)};
+`;
+  await writeFile(resolve(DEST, "quotation-db.ts"), ts, "utf-8");
+  const sizeMB = (ts.length / 1024 / 1024).toFixed(1);
+  console.log(`✔ 見積DB → quotation-db.ts (${items.length} items, ${sizeMB}MB)`);
+}
+
+// ─────────────────────────────────────────
+// 13. Index file
 // ─────────────────────────────────────────
 async function writeIndex() {
   const ts = `// Auto-generated barrel — do not edit manually
@@ -868,6 +1057,10 @@ export { customerQuotationSamples } from './quotation-sample';
 export { customerEditListItems } from './edit-list';
 export { customerAssetMasters } from './asset-master';
 export type { CustomerAssetMaster } from './asset-master';
+export { customerFacilities } from './facility-master';
+export type { CustomerFacility } from './facility-master';
+export { customerQuotationDB } from './quotation-db';
+export type { QuotationDBItem } from './quotation-db';
 `;
   await writeFile(resolve(DEST, "index.ts"), ts, "utf-8");
   console.log("✔ index.ts");
@@ -885,5 +1078,7 @@ await convertStep6();
 await convertQuotationSample();
 await convertEditList();
 await convertAssetMaster();
+await convertFacilityMaster();
+await convertQuotationDB();
 await writeIndex();
 console.log("\n✅ All done! Output: lib/data/customer/");
