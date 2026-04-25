@@ -55,7 +55,7 @@ interface DetailItem {
   aiJudgment: AIJudgmentResult | null; // AI判定結果
 }
 
-import { customerStep4Items } from '@/lib/data/customer';
+import { customerStep4Items } from '@/lib/data/customer/step4-asset-master';
 
 // 明細区分マッピング
 const step4ClassMap: Record<string, DetailClassification> = {

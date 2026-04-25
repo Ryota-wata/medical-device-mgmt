@@ -2,9 +2,28 @@ import { create } from 'zustand';
 import { EditList, EditListItem, CreateEditListInput, Asset } from '@/lib/types';
 import { PurchaseApplication } from '@/lib/types/purchaseApplication';
 import { generateMockAssets } from '@/lib/data/generateMockAssets';
-import { customerEditListItems } from '@/lib/data/customer';
+import { customerEditListItems } from '@/lib/data/customer/edit-list';
 
 // 顧客サンプルデータをAsset型に変換
+// 見積DB Linkデモ用: 顧客サンプルの rfqNo はプレースホルダ（"QT●●-●●●●●"）なので
+// 各見積依頼に少数（2-3件）だけrfqNoを割当て、残りは空にする
+// 明細側の方がレコード数が多いケースが多いので編集リスト側は少なく抑える
+const DEMO_RFQ_ASSIGNMENTS: { rfqNo: string; rfqGroupName: string; count: number }[] = [
+  { rfqNo: 'RFQ-20250110-0001', rfqGroupName: '2025年度放射線科機器更新', count: 2 },
+  { rfqNo: 'RFQ-20250113-0003', rfqGroupName: '2025年度検査科・手術室機器更新', count: 3 },
+  { rfqNo: 'QT26-00001', rfqGroupName: '耳鼻科ユニット 一式', count: 2 },
+];
+const isPlaceholderRfq = (s?: string) => !s || s.includes('●');
+// インデックス → 割当（先頭から各RFQに count 件ずつ割当て、それ以降は空）
+const getDemoAssignment = (i: number): { rfqNo: string; rfqGroupName: string } => {
+  let cursor = 0;
+  for (const a of DEMO_RFQ_ASSIGNMENTS) {
+    if (i < cursor + a.count) return { rfqNo: a.rfqNo, rfqGroupName: a.rfqGroupName };
+    cursor += a.count;
+  }
+  return { rfqNo: '', rfqGroupName: '' };
+};
+
 const customerBaseAssets: Asset[] = customerEditListItems.map((item, i) => ({
   qrCode: item.qrCode || '',
   no: i + 1,
@@ -65,8 +84,8 @@ const customerBaseAssets: Asset[] = customerEditListItems.map((item, i) => ({
   wish2Model: item.wish2Model || '',
   wish3Manufacturer: item.wish3Manufacturer || '',
   wish3Model: item.wish3Model || '',
-  rfqNo: item.rfqNo || '',
-  rfqGroupName: item.rfqGroupName || '',
+  rfqNo: isPlaceholderRfq(item.rfqNo) ? getDemoAssignment(i).rfqNo : item.rfqNo,
+  rfqGroupName: isPlaceholderRfq(item.rfqNo) ? getDemoAssignment(i).rfqGroupName : (item.rfqGroupName || ''),
   quotationPhase: item.quotationPhase || '',
   quotationDate: item.quotationDate || '',
   accountCategory: item.accountCategory || '',

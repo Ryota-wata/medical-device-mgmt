@@ -15,9 +15,14 @@ import { useColumnFeatures } from '@/lib/hooks/useColumnFeatures';
 import { Header } from '@/components/layouts/Header';
 import { REMODEL_COLUMNS, REMODEL_COLUMN_GROUPS, type ColumnDef } from '@/lib/constants/assetColumns';
 import { RfqGroupModal } from '@/components/remodel/RfqGroupModal';
-import { DataLinkModal } from '@/components/remodel/DataLinkModal';
+import dynamic from 'next/dynamic';
+// DataLinkModal は 1100行超 + 大きな依存があるため、初回モーダル表示時まで遅延ロード
+const DataLinkModal = dynamic(
+  () => import('@/components/remodel/DataLinkModal').then(m => m.DataLinkModal),
+  { ssr: false }
+);
 import { generateMockAssets, BUILDING_LIST } from '@/lib/data/generateMockAssets';
-import { customerEditListItems } from '@/lib/data/customer';
+import { customerEditListItems } from '@/lib/data/customer/edit-list';
 
 const ALL_COLUMNS = REMODEL_COLUMNS;
 
@@ -86,6 +91,7 @@ function RemodelApplicationContent() {
 
   // Data Linkモーダル関連の状態
   const [isDataLinkModalOpen, setIsDataLinkModalOpen] = useState(false);
+  const [dataLinkMode, setDataLinkMode] = useState<'copy' | 'quotation'>('copy');
 
   // 購入区分の確認ダイアログ
   const [showUpdateConfirm, setShowUpdateConfirm] = useState<{ rowNo: number } | null>(null);
@@ -151,6 +157,21 @@ function RemodelApplicationContent() {
   const targetFacilities = editList ? editList.facilities : (facility ? [facility] : []);
 
   // モックデータ（顧客サンプルデータ → 従来モック のフォールバック）
+  // 見積DB Linkデモ用: 顧客サンプルの rfqNo はプレースホルダ（"QT●●-●●●●●"）なので
+  // 各見積依頼に少数（2-3件）だけrfqNo/groupNameを割当て、残りは空にする
+  const DEMO_RFQ_ASSIGNMENTS: { rfqNo: string; rfqGroupName: string; count: number }[] = [
+    { rfqNo: 'RFQ-20250110-0001', rfqGroupName: '2025年度放射線科機器更新', count: 2 },
+    { rfqNo: 'RFQ-20250113-0003', rfqGroupName: '2025年度検査科・手術室機器更新', count: 3 },
+    { rfqNo: 'QT26-00001', rfqGroupName: '耳鼻科ユニット 一式', count: 2 },
+  ];
+  const getDemoAssignment = (i: number): { rfqNo: string; rfqGroupName: string } => {
+    let cursor = 0;
+    for (const a of DEMO_RFQ_ASSIGNMENTS) {
+      if (i < cursor + a.count) return { rfqNo: a.rfqNo, rfqGroupName: a.rfqGroupName };
+      cursor += a.count;
+    }
+    return { rfqNo: '', rfqGroupName: '' };
+  };
   const [mockAssets, setMockAssets] = useState<Asset[]>(() => {
     if (customerEditListItems.length > 0) {
       return customerEditListItems.map((item, i) => ({
@@ -222,8 +243,9 @@ function RemodelApplicationContent() {
         wish3Manufacturer: item.wish3Manufacturer || '',
         wish3Model: item.wish3Model || '',
         // 見積情報
-        rfqNo: item.rfqNo || '',
-        rfqGroupName: item.rfqGroupName || '',
+        // プレースホルダ（"QT●●-●●●●●" 等）の場合はデモ用rfqNoとgroupNameを割当、それ以外は元の値
+        rfqNo: (item.rfqNo && !item.rfqNo.includes('●')) ? item.rfqNo : getDemoAssignment(i).rfqNo,
+        rfqGroupName: (item.rfqNo && !item.rfqNo.includes('●')) ? (item.rfqGroupName || '') : getDemoAssignment(i).rfqGroupName,
         quotationPhase: item.quotationPhase || '',
         quotationDate: item.quotationDate || '',
         accountCategory: item.accountCategory || '',
@@ -1127,6 +1149,7 @@ function RemodelApplicationContent() {
               alert('紐づけるレコードを選択してください');
               return;
             }
+            setDataLinkMode('copy');
             setIsDataLinkModalOpen(true);
           }}
           style={{
@@ -1147,8 +1170,8 @@ function RemodelApplicationContent() {
         </button>
         <button
           onClick={() => {
-            const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-            window.open(`${basePath}/quotation-data-box`, '_blank', 'width=1200,height=800');
+            setDataLinkMode('quotation');
+            setIsDataLinkModalOpen(true);
           }}
           style={{
             padding: '8px 16px',
@@ -1422,9 +1445,11 @@ function RemodelApplicationContent() {
           </div>
         )}
 
-        {/* 資産テーブル（編集リストモード・従来モード共通） */}
+        {/* 資産テーブル（編集リストモード・従来モード共通）
+            DataLinkモーダル表示中は背後の巨大テーブル（781行×60列超）を非表示にして
+            モーダル内操作（行クリック・紐付け）の再レンダーを軽量化する */}
         {currentView === 'list' && (
-          <table style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px' }}>
+          <table style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px', display: isDataLinkModalOpen ? 'none' : undefined }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 102 }}>
               {/* グループヘッダー行 */}
               <tr>
@@ -2388,7 +2413,7 @@ function RemodelApplicationContent() {
         }}
       />
 
-      {/* Data Linkモーダル */}
+      {/* Data Link / 見積DB Link モーダル */}
       <DataLinkModal
         isOpen={isDataLinkModalOpen}
         onClose={() => setIsDataLinkModalOpen(false)}
@@ -2401,6 +2426,7 @@ function RemodelApplicationContent() {
         rfqGroups={rfqGroups}
         onExecute={handleDataLinkExecute}
         onAddNewAssets={handleDataLinkAddNewAssets}
+        mode={dataLinkMode}
       />
 
       {/* 更新確認ダイアログ */}

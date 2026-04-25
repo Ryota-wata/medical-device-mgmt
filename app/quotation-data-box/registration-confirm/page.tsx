@@ -6,7 +6,8 @@ import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { QuotationItemType } from '@/lib/types/quotation';
-import { customerStep6Items, customerStep4Items } from '@/lib/data/customer';
+import { customerStep6Items } from '@/lib/data/customer/step6-confirm';
+import { customerStep4Items } from '@/lib/data/customer/step4-asset-master';
 
 type DetailClassification = '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';
 

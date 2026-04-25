@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ReceivedQuotationGroup, ReceivedQuotationItem } from '@/lib/types';
-import { customerQuotationDB } from '@/lib/data/customer';
+import { customerQuotationDB } from '@/lib/data/customer/quotation-db';
 
 interface QuotationState {
   // 見積グループ（ヘッダー情報）

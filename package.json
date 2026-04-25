@@ -2,6 +2,10 @@
   "name": "medical-device-mgmt",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": [
+    "*.css",
+    "*.scss"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

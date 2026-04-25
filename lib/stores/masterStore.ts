@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { FacilityMaster, AssetMaster, DepartmentMaster, RoomCategoryMaster, VendorMaster } from '@/lib/types/master';
 import { initialAssetMasters } from '@/lib/data/initialAssetMasters';
-import { customerDepartments, customerRoomCategories } from '@/lib/data/customer';
+import { customerDepartments, customerRoomCategories } from '@/lib/data/customer/departments';
 
 interface MasterStore {
   facilities: FacilityMaster[];

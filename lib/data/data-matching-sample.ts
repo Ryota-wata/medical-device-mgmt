@@ -2,7 +2,7 @@ import { MELedgerData } from '@/lib/types/data-matching';
 
 // 現有品調査・資産台帳データは顧客Excelから生成（再取り込み: node docs/customer-sample-data/convert.mjs）
 // A病院(現) → surveyDataSample, A病院(台) → ledgerDataSample
-export { customerSurveyData as surveyDataSample, customerLedgerData as ledgerDataSample } from '@/lib/data/customer';
+export { customerSurveyData as surveyDataSample, customerLedgerData as ledgerDataSample } from '@/lib/data/customer/matching';
 
 /**
  * ME管理台帳データのサンプル

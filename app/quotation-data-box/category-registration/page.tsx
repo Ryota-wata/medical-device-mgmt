@@ -64,7 +64,7 @@ interface DetailItem {
   isRegistered: boolean;       // 登録済みかどうか
 }
 
-import { customerStep3Items } from '@/lib/data/customer';
+import { customerStep3Items } from '@/lib/data/customer/step3-category';
 
 // 顧客STEP3→明細区分マッピング
 const classificationMap: Record<string, DetailClassification> = {

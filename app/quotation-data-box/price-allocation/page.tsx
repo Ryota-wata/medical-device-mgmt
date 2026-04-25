@@ -4,7 +4,8 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
-import { customerStep5Items, customerStep4Items } from '@/lib/data/customer';
+import { customerStep5Items } from '@/lib/data/customer/step5-individual';
+import { customerStep4Items } from '@/lib/data/customer/step4-asset-master';
 
 // 明細区分の型
 type DetailClassification = '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';

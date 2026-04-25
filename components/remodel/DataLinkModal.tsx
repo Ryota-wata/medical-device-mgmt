@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Asset } from '@/lib/types';
 import { AssetMaster, VendorMaster } from '@/lib/types/master';
-import { ReceivedQuotationGroup, ReceivedQuotationItem } from '@/lib/types/quotation';
+import { ReceivedQuotationGroup, ReceivedQuotationItem, QuotationPhase } from '@/lib/types/quotation';
 import { RfqGroup } from '@/lib/types/rfqGroup';
 
 // ============================
@@ -12,7 +12,7 @@ import { RfqGroup } from '@/lib/types/rfqGroup';
 
 type DataSource = '資産Master' | '業者Master' | '原本リスト' | '見積DB';
 type LinkKey = '資産Master ID' | 'QRコード' | '部署ID' | '事業者ID' | '見積依頼No.';
-type QuotationStep = 1 | 2 | 3; // 1:紐付け 2:追加 3:設定・実行
+type QuotationStep = 1 | 2; // 1:紐付け 2:追加
 
 interface SourceColumn {
   sourceKey: string;
@@ -33,6 +33,11 @@ interface DataLinkModalProps {
   rfqGroups: RfqGroup[];
   onExecute: (updates: Map<number, Partial<Asset>>) => void;
   onAddNewAssets: (newAssets: Asset[]) => void;
+  /**
+   * 'copy': Data Link（資産Master/業者Master/原本リスト）
+   * 'quotation': 見積DB Link（見積DBウィザード固定）
+   */
+  mode?: 'copy' | 'quotation';
 }
 
 
@@ -156,8 +161,25 @@ interface QuotationDisplayRecord {
 const STEPS: { id: QuotationStep; label: string; desc: string }[] = [
   { id: 1, label: '紐付け', desc: '編集リストと見積明細を対応付ける' },
   { id: 2, label: '追加', desc: '余った見積明細を新規行として追加する' },
-  { id: 3, label: '設定・実行', desc: '転記カラムと保護設定を選んで実行' },
 ];
+
+// テーブル共通スタイル（columnを詰めて横スクロールなしで全列表示）
+const editTh: React.CSSProperties = {
+  padding: '5px 6px', textAlign: 'center', borderBottom: '1px solid #cfd8dc',
+  fontSize: 11, fontWeight: 700, color: '#37474f', whiteSpace: 'nowrap',
+};
+const editTd: React.CSSProperties = {
+  padding: '5px 6px', textAlign: 'center', fontSize: 11, color: '#333',
+  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+};
+const quotTh: React.CSSProperties = {
+  padding: '5px 6px', textAlign: 'center', borderBottom: '1px solid #e0e0e0',
+  fontSize: 11, fontWeight: 700, color: '#555', whiteSpace: 'nowrap',
+};
+const quotTd: React.CSSProperties = {
+  padding: '5px 6px', textAlign: 'center', fontSize: 11, color: '#333',
+  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+};
 
 // ============================
 // コンポーネント
@@ -175,6 +197,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   rfqGroups,
   onExecute,
   onAddNewAssets,
+  mode = 'copy',
 }) => {
   const [dataSource, setDataSource] = useState<DataSource | ''>('');
 
@@ -192,6 +215,32 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   const [qCheckedColumns, setQCheckedColumns] = useState<Set<string>>(new Set());
   const [addTargets, setAddTargets] = useState<Set<string>>(new Set());
   const [inheritSourceNo, setInheritSourceNo] = useState<number | null>(null);
+
+  // 見積依頼No / 見積フェーズ 選択
+  const [selectedRfqNo, setSelectedRfqNo] = useState<string>('');
+  const [selectedPhase, setSelectedPhase] = useState<QuotationPhase | ''>('');
+
+  // モーダルを開いたタイミングで mode に応じて初期 dataSource を設定する
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mode === 'quotation') {
+      setDataSource('見積DB');
+    } else {
+      setDataSource('');
+    }
+    setLinkKey('');
+    setCheckedColumns(new Set());
+    setQCheckedColumns(new Set());
+    setPairings(new Map());
+    setActiveLeftNo(null);
+    setQSearch('');
+    setAddTargets(new Set());
+    setInheritSourceNo(null);
+    setQStep(1);
+    setSelectedRfqNo('');
+    setSelectedPhase('');
+    setResult(null);
+  }, [isOpen, mode]);
 
   const handleDataSourceChange = useCallback((source: DataSource | '') => {
     setDataSource(source);
@@ -232,28 +281,78 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   // 見積DB用
   // ============================
 
-  const relatedRfqNos = useMemo(() => {
+  // 利用可能な見積依頼No（受領見積が登録されているもののみ）
+  const availableRfqNos = useMemo(() => {
     const nos = new Set<string>();
-    for (const asset of selectedAssets) {
-      if (asset.rfqNo) nos.add(asset.rfqNo);
+    for (const qg of quotationGroups) {
+      if (qg.rfqNo) nos.add(qg.rfqNo);
     }
-    return nos;
-  }, [selectedAssets]);
+    return Array.from(nos);
+  }, [quotationGroups]);
+
+  // 選択中の見積依頼No に紐づく RfqGroup
+  const selectedRfqGroup = useMemo(() => {
+    return rfqGroups.find(g => g.rfqNo === selectedRfqNo) || null;
+  }, [rfqGroups, selectedRfqNo]);
+
+  // 選択中の見積依頼No に紐づく ReceivedQuotationGroup（フェーズ別）
+  const phasesForRfq = useMemo(() => {
+    if (!selectedRfqNo) return [] as QuotationPhase[];
+    const phases = new Set<QuotationPhase>();
+    for (const qg of quotationGroups) {
+      if (qg.rfqNo === selectedRfqNo) phases.add(qg.phase);
+    }
+    return Array.from(phases);
+  }, [quotationGroups, selectedRfqNo]);
+
+  // 選択中の ReceivedQuotationGroup（rfqNo + phase で一意）
+  const selectedQuotationGroup = useMemo(() => {
+    if (!selectedRfqNo || !selectedPhase) return null;
+    return quotationGroups.find(qg => qg.rfqNo === selectedRfqNo && qg.phase === selectedPhase) || null;
+  }, [quotationGroups, selectedRfqNo, selectedPhase]);
+
+  // 開いた直後・selectedAssets 変化時に既定の RFQ を選択
+  useEffect(() => {
+    if (!isOpen || mode !== 'quotation') return;
+    if (selectedRfqNo) return;
+    // selectedAssets の rfqNo を優先
+    let initialRfq = '';
+    for (const a of selectedAssets) {
+      if (a.rfqNo && availableRfqNos.includes(a.rfqNo)) { initialRfq = a.rfqNo; break; }
+    }
+    // フォールバックは availableRfqNos の先頭
+    if (!initialRfq && availableRfqNos.length > 0) initialRfq = availableRfqNos[0];
+    if (initialRfq) setSelectedRfqNo(initialRfq);
+  }, [isOpen, mode, selectedAssets, availableRfqNos, selectedRfqNo]);
+
+  // フェーズの既定値（rfq 切替時に未選択なら先頭）
+  useEffect(() => {
+    if (!selectedRfqNo) { setSelectedPhase(''); return; }
+    if (selectedPhase && phasesForRfq.includes(selectedPhase)) return;
+    if (phasesForRfq.length > 0) setSelectedPhase(phasesForRfq[0]);
+    else setSelectedPhase('');
+  }, [selectedRfqNo, phasesForRfq, selectedPhase]);
+
+  // RFQ / フェーズ切替時に紐付け状態をクリア
+  useEffect(() => {
+    setPairings(new Map());
+    setActiveLeftNo(null);
+    setAddTargets(new Set());
+    setQStep(1);
+  }, [selectedRfqNo, selectedPhase]);
+
+  // 選択中 RFQ に紐づく編集リスト側の資産（baseAssets から rfqNo 一致で抽出）
+  const linkedAssets = useMemo(() => {
+    if (!selectedRfqNo) return [] as Asset[];
+    return baseAssets.filter(a => a.rfqNo === selectedRfqNo);
+  }, [baseAssets, selectedRfqNo]);
 
   const filteredQuotationRecords: QuotationDisplayRecord[] = useMemo(() => {
-    if (!isQuotationMode) return [];
-    const relevantGroupIds = new Set<number>();
-    for (const qg of quotationGroups) {
-      if (qg.rfqNo && relatedRfqNos.has(qg.rfqNo)) {
-        relevantGroupIds.add(qg.id);
-      }
-    }
-    const items = relevantGroupIds.size > 0
-      ? quotationItems.filter(qi => relevantGroupIds.has(qi.quotationGroupId))
-      : quotationItems;
+    if (!isQuotationMode || !selectedQuotationGroup) return [];
+    const items = quotationItems.filter(qi => qi.quotationGroupId === selectedQuotationGroup.id);
 
     return items.map(qi => {
-      const qg = quotationGroups.find(g => g.id === qi.quotationGroupId);
+      const qg = selectedQuotationGroup;
       const price = qi.allocTaxTotal ?? qi.purchasePriceTotal ?? qi.listPriceTotal;
       return {
         id: String(qi.id),
@@ -271,7 +370,15 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         } as unknown as Record<string, unknown>,
       };
     });
-  }, [isQuotationMode, quotationItems, quotationGroups, relatedRfqNos]);
+  }, [isQuotationMode, quotationItems, selectedQuotationGroup]);
+
+  // 見積データ側 合計金額
+  const quotationTotalAmount = useMemo(() => {
+    return filteredQuotationRecords.reduce((sum, r) => {
+      const price = r.qi.allocTaxTotal ?? r.qi.purchasePriceTotal ?? r.qi.listPriceTotal ?? 0;
+      return sum + price;
+    }, 0);
+  }, [filteredQuotationRecords]);
 
   const searchedQuotationRecords = useMemo(() => {
     if (!qSearch) return filteredQuotationRecords;
@@ -286,6 +393,21 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   const unpairedQuotationRecords = useMemo(() => {
     return filteredQuotationRecords.filter(r => !pairedQIds.has(r.id));
   }, [filteredQuotationRecords, pairedQIds]);
+
+  // 紐付けごとに色とインデックスを付与（左右行で同じ色になり対応関係が見える）
+  const pairColorPalette = ['#c8e6c9', '#ffe0b2', '#e1bee7', '#f8bbd0', '#fff9c4', '#b2dfdb', '#d1c4e9', '#ffccbc'];
+  const pairMeta = useMemo(() => {
+    const colorByAssetNo = new Map<number, { color: string; index: number }>();
+    const colorByQId = new Map<string, { color: string; index: number }>();
+    let idx = 0;
+    for (const [assetNo, qId] of pairings) {
+      const color = pairColorPalette[idx % pairColorPalette.length];
+      colorByAssetNo.set(assetNo, { color, index: idx + 1 });
+      colorByQId.set(qId, { color, index: idx + 1 });
+      idx++;
+    }
+    return { colorByAssetNo, colorByQId };
+  }, [pairings]);
 
   const quotationColumnGroups = useMemo(() => groupColumns(QUOTATION_DB_COLUMNS), []);
   const quotationLinkableKeys = useMemo(() =>
@@ -441,23 +563,24 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   }, [dataSource, isQuotationMode, linkKey, checkedColumns, selectedAssets, assetMasters, vendors, baseAssets, onExecute]);
 
   // ============================
-  // 見積DB実行
+  // 見積DB実行（カラム選択ステップは廃止し、対象カラム全件を自動転記）
   // ============================
   const handleQuotationExecute = useCallback(() => {
     if (pairings.size === 0 && addTargets.size === 0) return;
     setExecuting(true);
     setResult(null);
 
+    // 全リンク可能カラムを自動マッピング
     const fieldMapping = new Map<string, string>();
     for (const col of QUOTATION_DB_COLUMNS) {
-      if (qCheckedColumns.has(col.sourceKey) && col.targetKey) fieldMapping.set(col.sourceKey, col.targetKey);
+      if (col.targetKey) fieldMapping.set(col.sourceKey, col.targetKey);
     }
 
     const updates = new Map<number, Partial<Asset>>();
     let matched = 0;
 
     for (const [assetNo, qId] of pairings) {
-      const asset = selectedAssets.find(a => a.no === assetNo);
+      const asset = linkedAssets.find(a => a.no === assetNo);
       const qRec = filteredQuotationRecords.find(r => r.id === qId);
       if (!asset || !qRec) continue;
       const patch: Partial<Asset> = {};
@@ -472,8 +595,8 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
 
     const newAssets: Asset[] = [];
     if (addTargets.size > 0) {
-      const maxNo = Math.max(...selectedAssets.map(a => a.no), 0);
-      const inheritAsset = inheritSourceNo ? selectedAssets.find(a => a.no === inheritSourceNo) : null;
+      const maxNo = Math.max(...linkedAssets.map(a => a.no), ...baseAssets.map(a => a.no), 0);
+      const inheritAsset = inheritSourceNo ? linkedAssets.find(a => a.no === inheritSourceNo) : null;
       let idx = 0;
       for (const qId of addTargets) {
         const qRec = filteredQuotationRecords.find(r => r.id === qId);
@@ -496,25 +619,20 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
       if (newAssets.length > 0) onAddNewAssets(newAssets);
     }
 
-    setResult({ matched, unmatched: selectedAssets.length - matched, added: newAssets.length });
+    setResult({ matched, unmatched: linkedAssets.length - matched, added: newAssets.length });
     setExecuting(false);
-  }, [pairings, addTargets, qCheckedColumns, selectedAssets, filteredQuotationRecords, onExecute, onAddNewAssets, inheritSourceNo]);
+  }, [pairings, addTargets, linkedAssets, baseAssets, filteredQuotationRecords, onExecute, onAddNewAssets, inheritSourceNo]);
 
   if (!isOpen) return null;
 
   const canCopyExecute = dataSource && !isQuotationMode && linkKey && checkedColumns.size > 0 && !executing;
-  const canQuotationExecute = (pairings.size > 0 || addTargets.size > 0) && qCheckedColumns.size > 0 && !executing;
-
-  // Step2 をスキップするか（未紐付け明細がなければスキップ）
-  const shouldSkipStep2 = unpairedQuotationRecords.length === 0;
+  const canQuotationExecute = (pairings.size > 0 || addTargets.size > 0) && !executing;
 
   const goNext = () => {
-    if (qStep === 1) setQStep(shouldSkipStep2 ? 3 : 2);
-    else if (qStep === 2) setQStep(3);
+    if (qStep === 1) setQStep(2);
   };
   const goBack = () => {
-    if (qStep === 3) setQStep(shouldSkipStep2 ? 1 : 2);
-    else if (qStep === 2) setQStep(1);
+    if (qStep === 2) setQStep(1);
   };
 
   // ============================
@@ -693,22 +811,19 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
       {STEPS.map((step, i) => {
         const isActive = qStep === step.id;
         const isDone = qStep > step.id;
-        const isSkipped = step.id === 2 && shouldSkipStep2;
         return (
           <React.Fragment key={step.id}>
             {i > 0 && <div style={{ flex: 1, height: 2, background: isDone ? '#27ae60' : '#dee2e6', maxWidth: 40 }} />}
             <div
               onClick={() => {
-                if (isSkipped) return;
                 if (isDone || isActive) setQStep(step.id);
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '6px 14px', borderRadius: 8,
-                background: isActive ? '#8e44ad' : isDone ? '#eaf7ed' : isSkipped ? '#f5f5f5' : 'white',
+                background: isActive ? '#8e44ad' : isDone ? '#eaf7ed' : 'white',
                 border: `1px solid ${isActive ? '#8e44ad' : isDone ? '#27ae60' : '#dee2e6'}`,
-                cursor: (isDone || isActive) && !isSkipped ? 'pointer' : 'default',
-                opacity: isSkipped ? 0.5 : 1,
+                cursor: (isDone || isActive) ? 'pointer' : 'default',
               }}
             >
               <div style={{
@@ -721,7 +836,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? 'white' : isDone ? '#27ae60' : '#333' }}>
-                  {step.label}{isSkipped && ' (スキップ)'}
+                  {step.label}
                 </div>
                 <div style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.8)' : '#888' }}>{step.desc}</div>
               </div>
@@ -739,9 +854,9 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
       <div style={{
         background: 'white', borderRadius: 12,
-        width: isQuotationMode ? '95%' : '90%',
-        maxWidth: isQuotationMode ? 1100 : 800,
-        maxHeight: '88vh', display: 'flex', flexDirection: 'column',
+        width: isQuotationMode ? '98%' : '90%',
+        maxWidth: isQuotationMode ? 1800 : 800,
+        maxHeight: '92vh', display: 'flex', flexDirection: 'column',
         boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
       }}>
         {/* ヘッダー */}
@@ -752,7 +867,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Data Link</h2>
-            {!isQuotationMode && (
+            {mode === 'copy' && (
               <select value={dataSource} onChange={(e) => handleDataSourceChange(e.target.value as DataSource | '')} style={{
                 padding: '4px 10px', fontSize: 13, border: '1px solid rgba(255,255,255,0.4)', borderRadius: 4,
                 background: 'rgba(255,255,255,0.15)', color: 'white', fontWeight: 600,
@@ -761,11 +876,10 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 <option value="資産Master" style={{ color: '#333' }}>資産Master</option>
                 <option value="業者Master" style={{ color: '#333' }}>業者Master</option>
                 <option value="原本リスト" style={{ color: '#333' }}>原本リスト</option>
-                <option value="見積DB" style={{ color: '#333' }}>見積DB</option>
               </select>
             )}
-            {isQuotationMode && (
-              <span style={{ fontSize: 13, opacity: 0.9 }}>見積DB &rarr; 編集リスト（{selectedAssets.length}件）</span>
+            {mode === 'quotation' && (
+              <span style={{ fontSize: 13, opacity: 0.9 }}>見積DB &rarr; 編集リスト（{linkedAssets.length}件）</span>
             )}
           </div>
           <button onClick={onClose} aria-label="閉じる" style={{
@@ -774,25 +888,45 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
           }}>&times;</button>
         </div>
 
-        {/* 見積DB: データソース選択帯（見積DBから戻れるように） */}
+        {/* 見積DB: ステップインジケーター + 見積依頼選択帯（mode='quotation' でのみ表示） */}
         {isQuotationMode && (
           <>
-            <div style={{ padding: '8px 24px', background: '#f3e5f5', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}>
-              <span style={{ color: '#666' }}>Data Link:</span>
-              <select value={dataSource} onChange={(e) => handleDataSourceChange(e.target.value as DataSource | '')} style={{
-                padding: '4px 10px', fontSize: 13, border: '1px solid #ce93d8', borderRadius: 4, fontWeight: 600, background: 'white',
+            <div style={{
+              display: 'flex', alignItems: 'stretch', borderBottom: '1px solid #e0e0e0', background: '#f8f9fa',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {renderStepIndicator()}
+              </div>
+              <div style={{
+                display: 'grid', gridTemplateColumns: 'auto 1fr',
+                columnGap: 8, rowGap: 4, padding: '8px 16px',
+                alignItems: 'center', borderLeft: '1px solid #e0e0e0', background: 'white',
+                fontSize: 12, minWidth: 320,
               }}>
-                <option value="">選択してください</option>
-                <option value="資産Master">資産Master</option>
-                <option value="業者Master">業者Master</option>
-                <option value="原本リスト">原本リスト</option>
-                <option value="見積DB">見積DB</option>
-              </select>
-              {relatedRfqNos.size > 0 && (
-                <span style={{ color: '#888' }}>RFQ: {Array.from(relatedRfqNos).join(', ')}</span>
-              )}
+                <label style={{ color: '#555', fontWeight: 600 }}>見積依頼No.</label>
+                <select value={selectedRfqNo} onChange={(e) => setSelectedRfqNo(e.target.value)} style={{
+                  padding: '4px 8px', fontSize: 12, border: '1px solid #ccc', borderRadius: 4, fontWeight: 600,
+                }}>
+                  <option value="">選択してください</option>
+                  {availableRfqNos.map(no => (
+                    <option key={no} value={no}>{no}</option>
+                  ))}
+                </select>
+                <label style={{ color: '#555', fontWeight: 600 }}>見積グループ名</label>
+                <span style={{ fontSize: 12, color: '#333', fontWeight: 600, padding: '4px 0' }}>
+                  {selectedRfqGroup?.groupName || '-'}
+                </span>
+                <label style={{ color: '#555', fontWeight: 600 }}>見積フェーズ</label>
+                <select value={selectedPhase} onChange={(e) => setSelectedPhase(e.target.value as QuotationPhase | '')} style={{
+                  padding: '4px 8px', fontSize: 12, border: '1px solid #ccc', borderRadius: 4, fontWeight: 600,
+                }} disabled={phasesForRfq.length === 0}>
+                  <option value="">選択してください</option>
+                  {phasesForRfq.map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            {renderStepIndicator()}
           </>
         )}
 
@@ -830,110 +964,203 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               {/* Step 1: 紐付け */}
               {qStep === 1 && (
                 <>
-                  <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 4 }}>
-                        編集リストのレコードと見積明細を対応付けてください
-                      </div>
-                      <div style={{ fontSize: 12, color: '#888' }}>
-                        左のレコードをクリック &rarr; 右の見積明細をクリックで紐付けます
-                      </div>
+                  {!selectedRfqNo || !selectedQuotationGroup ? (
+                    <div style={{ padding: 48, textAlign: 'center', color: '#999', fontSize: 14, lineHeight: 1.8 }}>
+                      右上から見積依頼No. と見積フェーズを選択してください
                     </div>
-                    <span style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: pairings.size > 0 ? '#27ae60' : '#999' }}>
-                      {pairings.size} / {selectedAssets.length} 紐付け済み
-                    </span>
-                  </div>
+                  ) : (
+                    <>
+                      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: 13, color: '#555' }}>
+                          編集リストのレコードと見積明細を対応付けてください
+                          <span style={{ marginLeft: 12, fontSize: 11, color: '#888' }}>
+                            左の行をクリック → 右の見積明細をクリックで紐付け
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: pairings.size > 0 ? '#27ae60' : '#999' }}>
+                          {pairings.size} / {linkedAssets.length} 紐付け済み
+                        </span>
+                      </div>
 
-                  <div style={{ display: 'flex', gap: 12, minHeight: 280 }}>
-                    {/* 左: 編集リスト */}
-                    <div style={{ flex: 1, border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ padding: '8px 12px', background: '#e3f2fd', borderBottom: '1px solid #e0e0e0', fontSize: 13, fontWeight: 700, color: '#1565c0' }}>
-                        編集リスト（{selectedAssets.length}件）
-                      </div>
-                      <div style={{ flex: 1, overflow: 'auto' }}>
-                        {selectedAssets.map(asset => {
-                          const isPaired = pairings.has(asset.no);
-                          const isActive = activeLeftNo === asset.no;
-                          const pairedRec = isPaired ? filteredQuotationRecords.find(r => r.id === pairings.get(asset.no)) : null;
-                          const hasHearing = Boolean(asset.newRoomName || asset.newBuilding || asset.comment);
-                          return (
-                            <div key={asset.no} onClick={() => setActiveLeftNo(isActive ? null : asset.no)} style={{
-                              padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer',
-                              background: isActive ? '#bbdefb' : isPaired ? '#e8f5e9' : 'white',
-                            }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>
-                                    No.{asset.no} {asset.item || '-'} / {asset.maker || '-'}
-                                  </div>
-                                  <div style={{ fontSize: 11, color: '#888' }}>{asset.model || '-'}</div>
-                                  {hasHearing && (
-                                    <div style={{ fontSize: 11, color: '#f39c12', marginTop: 2 }}>
-                                      {[asset.newRoomName, asset.newFloor, asset.newBuilding].filter(Boolean).join(' ')}
-                                      {asset.comment && ` / ${asset.comment}`}
-                                    </div>
-                                  )}
-                                </div>
-                                {isPaired && (
-                                  <button onClick={(e) => { e.stopPropagation(); setPairings(prev => { const next = new Map(prev); next.delete(asset.no); return next; }); }}
-                                    aria-label="紐付け解除" style={{
-                                      padding: '2px 8px', fontSize: 11, fontWeight: 700, flexShrink: 0,
-                                      background: '#e74c3c', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer',
-                                    }}>&times;</button>
-                                )}
-                              </div>
-                              {isPaired && pairedRec && (
-                                <div style={{ fontSize: 11, color: '#27ae60', marginTop: 4, paddingLeft: 12, borderLeft: '2px solid #27ae60' }}>
-                                  &rarr; {pairedRec.displayLabel} / {pairedRec.qi.model || '-'} {pairedRec.displayPrice}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* 右: 見積明細 */}
-                    <div style={{ flex: 1, border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ padding: '8px 12px', background: '#fce4ec', borderBottom: '1px solid #e0e0e0', display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#c62828' }}>見積明細（{filteredQuotationRecords.length}件）</span>
-                        <input type="text" placeholder="検索..." value={qSearch} onChange={(e) => setQSearch(e.target.value)}
-                          style={{ flex: 1, padding: '4px 8px', fontSize: 12, border: '1px solid #ddd', borderRadius: 4 }} />
-                      </div>
-                      <div style={{ flex: 1, overflow: 'auto' }}>
-                        {activeLeftNo === null ? (
-                          <div style={{ padding: 32, textAlign: 'center', color: '#999', fontSize: 13, lineHeight: 1.8 }}>
-                            左のレコードを選択すると<br />ここに見積明細が表示されます
+                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(380px, 0.9fr) minmax(680px, 1.6fr)', gap: 8, alignItems: 'start' }}>
+                        {/* 左: 編集リスト テーブル */}
+                        <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ padding: '8px 12px', background: '#e3f2fd', borderBottom: '1px solid #e0e0e0', fontSize: 13, fontWeight: 700, color: '#1565c0' }}>
+                            編集リスト
                           </div>
-                        ) : (
-                          searchedQuotationRecords.map(rec => {
-                            const isPaired = pairedQIds.has(rec.id);
-                            return (
-                              <div key={rec.id} onClick={() => {
-                                if (activeLeftNo === null) return;
-                                setPairings(prev => { const next = new Map(prev); next.set(activeLeftNo, rec.id); return next; });
-                                const nextUnpaired = selectedAssets.find(a => a.no !== activeLeftNo && !pairings.has(a.no));
-                                setActiveLeftNo(nextUnpaired?.no ?? null);
-                              }} style={{
-                                padding: '10px 12px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer',
-                                background: isPaired ? '#f3e5f5' : 'white', opacity: isPaired ? 0.5 : 1,
-                              }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div>
-                                    <div style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>{rec.displayLabel}</div>
-                                    <div style={{ fontSize: 11, color: '#888' }}>{rec.displaySub}</div>
-                                  </div>
-                                  <span style={{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: '#333', flexShrink: 0 }}>
-                                    {rec.displayPrice}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
+                          <div style={{ overflow: 'auto', maxHeight: 480 }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, tableLayout: 'fixed' }}>
+                              <colgroup>
+                                <col style={{ width: 50 }} />
+                                <col style={{ width: 36 }} />
+                                <col style={{ width: 70 }} />
+                                <col style={{ width: 70 }} />
+                                <col />
+                                <col />
+                                <col style={{ width: 44 }} />
+                              </colgroup>
+                              <thead style={{ position: 'sticky', top: 0, background: '#f0f4f8', zIndex: 1 }}>
+                                <tr>
+                                  <th style={editTh}>棟</th>
+                                  <th style={editTh}>階</th>
+                                  <th style={editTh}>部門名</th>
+                                  <th style={editTh}>部署名</th>
+                                  <th style={editTh}>室名</th>
+                                  <th style={{ ...editTh, textAlign: 'left' }}>品目名</th>
+                                  <th style={{ ...editTh, textAlign: 'right' }}>数量</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {linkedAssets.length === 0 ? (
+                                  <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 12 }}>この見積依頼に紐づく資産はありません</td></tr>
+                                ) : (
+                                  linkedAssets.map(asset => {
+                                    const pair = pairMeta.colorByAssetNo.get(asset.no);
+                                    const isPaired = Boolean(pair);
+                                    const isActive = activeLeftNo === asset.no;
+                                    return (
+                                      <tr key={asset.no} onClick={() => setActiveLeftNo(isActive ? null : asset.no)} style={{
+                                        cursor: 'pointer',
+                                        background: isActive ? '#bbdefb' : isPaired ? pair!.color : 'white',
+                                        borderBottom: '1px solid #f0f0f0',
+                                      }}>
+                                        <td style={editTd} title={asset.newBuilding || asset.building || ''}>
+                                          {isPaired && (
+                                            <span style={{ display: 'inline-block', minWidth: 16, padding: '0 4px', marginRight: 4, fontSize: 10, fontWeight: 700, color: '#fff', background: '#37474f', borderRadius: 8, textAlign: 'center' }}>{pair!.index}</span>
+                                          )}
+                                          {asset.newBuilding || asset.building || '-'}
+                                        </td>
+                                        <td style={editTd} title={asset.newFloor || asset.floor || ''}>{asset.newFloor || asset.floor || '-'}</td>
+                                        <td style={editTd} title={asset.newDepartment || asset.department || ''}>{asset.newDepartment || asset.department || '-'}</td>
+                                        <td style={editTd} title={asset.newSection || asset.section || ''}>{asset.newSection || asset.section || '-'}</td>
+                                        <td style={{ ...editTd, color: '#1b5e20', fontWeight: 600 }} title={asset.newRoomName || asset.roomName || ''}>{asset.newRoomName || asset.roomName || '-'}</td>
+                                        <td style={{ ...editTd, textAlign: 'left' }} title={asset.item || ''}>{asset.item || '-'}</td>
+                                        <td style={{ ...editTd, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{asset.quantity ?? 1}</td>
+                                      </tr>
+                                    );
+                                  })
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* 右: 見積データ側 + (新)設置情報 */}
+                        <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0' }}>
+                            <div style={{ flex: 1, padding: '8px 12px', background: '#fce4ec', display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#c62828' }}>見積データ側</span>
+                              <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: '#c62828' }}>
+                                ¥{quotationTotalAmount.toLocaleString()}
+                              </span>
+                            </div>
+                            <div style={{ width: 286, padding: '8px 12px', background: '#e8f5e9', borderLeft: '1px solid #e0e0e0', fontSize: 13, fontWeight: 700, color: '#1b5e20' }}>
+                              （新）設置情報
+                            </div>
+                          </div>
+                          <div style={{ overflow: 'auto', maxHeight: 480 }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, tableLayout: 'fixed' }}>
+                              <colgroup>
+                                <col />
+                                <col style={{ width: 96 }} />
+                                <col style={{ width: 110 }} />
+                                <col style={{ width: 44 }} />
+                                <col style={{ width: 40 }} />
+                                <col style={{ width: 56 }} />
+                                <col style={{ width: 90 }} />
+                                <col style={{ width: 50 }} />
+                                <col style={{ width: 36 }} />
+                                <col style={{ width: 60 }} />
+                                <col style={{ width: 60 }} />
+                                <col style={{ width: 80 }} />
+                              </colgroup>
+                              <thead style={{ position: 'sticky', top: 0, background: '#fafafa', zIndex: 1 }}>
+                                <tr>
+                                  <th style={{ ...quotTh, textAlign: 'left' }}>品目（個体管理品目名）</th>
+                                  <th style={quotTh}>メーカー</th>
+                                  <th style={quotTh}>型式</th>
+                                  <th style={{ ...quotTh, textAlign: 'right' }}>数量</th>
+                                  <th style={quotTh}>単位</th>
+                                  <th style={{ ...quotTh, textAlign: 'right' }}>親子関係</th>
+                                  <th style={{ ...quotTh, textAlign: 'right' }}>購入金額(税別)</th>
+                                  <th style={{ ...quotTh, borderLeft: '2px solid #c8e6c9' }}>棟</th>
+                                  <th style={quotTh}>階</th>
+                                  <th style={quotTh}>部門名</th>
+                                  <th style={quotTh}>部署名</th>
+                                  <th style={quotTh}>室名</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredQuotationRecords.length === 0 ? (
+                                  <tr><td colSpan={12} style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 12 }}>見積明細がありません</td></tr>
+                                ) : (
+                                  filteredQuotationRecords.map(rec => {
+                                    const pair = pairMeta.colorByQId.get(rec.id);
+                                    const pairedAssetNo = Array.from(pairings.entries()).find(([, qid]) => qid === rec.id)?.[0];
+                                    const pairedAsset = pairedAssetNo != null ? linkedAssets.find(a => a.no === pairedAssetNo) : null;
+                                    const isPaired = Boolean(pair);
+                                    const isClickable = activeLeftNo !== null && !isPaired;
+                                    const price = rec.qi.allocTaxTotal ?? rec.qi.purchasePriceTotal ?? rec.qi.listPriceTotal ?? null;
+                                    const rowBg = isPaired ? pair!.color : 'white';
+                                    const installBg = isPaired ? pair!.color : '#fafafa';
+                                    return (
+                                      <tr key={rec.id} onClick={() => {
+                                        if (!isClickable) return;
+                                        setPairings(prev => {
+                                          const next = new Map(prev);
+                                          // 既存の紐付け解除（同じ qId / 同じ assetNo）
+                                          for (const [an, qid] of next) {
+                                            if (qid === rec.id || an === activeLeftNo) next.delete(an);
+                                          }
+                                          next.set(activeLeftNo!, rec.id);
+                                          return next;
+                                        });
+                                        const nextUnpaired = linkedAssets.find(a => a.no !== activeLeftNo && !pairings.has(a.no));
+                                        setActiveLeftNo(nextUnpaired?.no ?? null);
+                                      }} style={{
+                                        cursor: isClickable ? 'pointer' : 'default',
+                                        background: rowBg,
+                                        borderBottom: '1px solid #f0f0f0',
+                                      }}>
+                                        <td style={{ ...quotTd, textAlign: 'left' }} title={rec.qi.itemName || rec.qi.originalItemName || ''}>
+                                          {isPaired && (
+                                            <span style={{ display: 'inline-block', minWidth: 16, padding: '0 4px', marginRight: 4, fontSize: 10, fontWeight: 700, color: '#fff', background: '#37474f', borderRadius: 8, textAlign: 'center' }}>{pair!.index}</span>
+                                          )}
+                                          {rec.qi.itemName || rec.qi.originalItemName || '-'}
+                                          {isPaired && (
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (pairedAssetNo == null) return;
+                                                setPairings(prev => { const next = new Map(prev); next.delete(pairedAssetNo); return next; });
+                                              }}
+                                              aria-label="紐付け解除"
+                                              style={{ marginLeft: 6, padding: '0 5px', fontSize: 10, fontWeight: 700, background: '#e74c3c', color: 'white', border: 'none', borderRadius: 3, cursor: 'pointer' }}
+                                            >×</button>
+                                          )}
+                                        </td>
+                                        <td style={quotTd} title={rec.qi.manufacturer || ''}>{rec.qi.manufacturer || '-'}</td>
+                                        <td style={quotTd} title={rec.qi.model || ''}>{rec.qi.model || '-'}</td>
+                                        <td style={{ ...quotTd, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{rec.qi.aiQuantity ?? rec.qi.originalQuantity ?? '-'}</td>
+                                        <td style={quotTd}>{rec.qi.unit || '-'}</td>
+                                        <td style={{ ...quotTd, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{rec.qi.branchNo ?? ''}</td>
+                                        <td style={{ ...quotTd, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{price != null ? price.toLocaleString() : '-'}</td>
+                                        <td style={{ ...quotTd, borderLeft: '2px solid #c8e6c9', background: installBg }} title={pairedAsset?.newBuilding || pairedAsset?.building || ''}>{pairedAsset?.newBuilding || pairedAsset?.building || ''}</td>
+                                        <td style={{ ...quotTd, background: installBg }} title={pairedAsset?.newFloor || pairedAsset?.floor || ''}>{pairedAsset?.newFloor || pairedAsset?.floor || ''}</td>
+                                        <td style={{ ...quotTd, background: installBg }} title={pairedAsset?.newDepartment || pairedAsset?.department || ''}>{pairedAsset?.newDepartment || pairedAsset?.department || ''}</td>
+                                        <td style={{ ...quotTd, background: installBg }} title={pairedAsset?.newSection || pairedAsset?.section || ''}>{pairedAsset?.newSection || pairedAsset?.section || ''}</td>
+                                        <td style={{ ...quotTd, color: '#1b5e20', fontWeight: 600, background: installBg }} title={pairedAsset?.newRoomName || pairedAsset?.roomName || ''}>{pairedAsset?.newRoomName || pairedAsset?.roomName || ''}</td>
+                                      </tr>
+                                    );
+                                  })
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </>
               )}
 
@@ -950,39 +1177,45 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                   </div>
 
                   <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
-                    {unpairedQuotationRecords.map(rec => {
-                      const isAdding = addTargets.has(rec.id);
-                      return (
-                        <div key={rec.id} style={{
-                          padding: '12px 14px', borderBottom: '1px solid #f0f0f0',
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          background: isAdding ? '#e8f5e9' : 'white',
-                        }}>
-                          <div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{rec.displayLabel}</div>
-                            <div style={{ fontSize: 12, color: '#888' }}>{rec.displaySub} {rec.displayPrice}</div>
-                          </div>
-                          <button onClick={() => {
-                            setAddTargets(prev => { const next = new Set(prev); if (next.has(rec.id)) next.delete(rec.id); else next.add(rec.id); return next; });
-                          }} style={{
-                            padding: '6px 16px', fontSize: 13, fontWeight: 600,
-                            background: isAdding ? '#e74c3c' : '#1565c0',
-                            color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', whiteSpace: 'nowrap',
+                    {unpairedQuotationRecords.length === 0 ? (
+                      <div style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 13 }}>
+                        未紐付けの見積明細はありません
+                      </div>
+                    ) : (
+                      unpairedQuotationRecords.map(rec => {
+                        const isAdding = addTargets.has(rec.id);
+                        return (
+                          <div key={rec.id} style={{
+                            padding: '12px 14px', borderBottom: '1px solid #f0f0f0',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            background: isAdding ? '#e8f5e9' : 'white',
                           }}>
-                            {isAdding ? '取り消す' : '追加する'}
-                          </button>
-                        </div>
-                      );
-                    })}
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{rec.displayLabel}</div>
+                              <div style={{ fontSize: 12, color: '#888' }}>{rec.displaySub} {rec.displayPrice}</div>
+                            </div>
+                            <button onClick={() => {
+                              setAddTargets(prev => { const next = new Set(prev); if (next.has(rec.id)) next.delete(rec.id); else next.add(rec.id); return next; });
+                            }} style={{
+                              padding: '6px 16px', fontSize: 13, fontWeight: 600,
+                              background: isAdding ? '#e74c3c' : '#1565c0',
+                              color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', whiteSpace: 'nowrap',
+                            }}>
+                              {isAdding ? '取り消す' : '追加する'}
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
 
                   {addTargets.size > 0 && (
                     <div style={{ padding: '12px 16px', background: '#fff8e1', border: '1px solid #ffe082', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
-                      <span style={{ color: '#666', flexShrink: 0 }}>ヒアリング情報の引き継ぎ元:</span>
+                      <span style={{ color: '#666', flexShrink: 0 }}>設置情報の引き継ぎ元:</span>
                       <select value={inheritSourceNo ?? ''} onChange={(e) => setInheritSourceNo(e.target.value ? Number(e.target.value) : null)}
                         style={{ padding: '4px 10px', fontSize: 13, border: '1px solid #ddd', borderRadius: 4, flex: 1, maxWidth: 360 }}>
                         <option value="">引き継がない</option>
-                        {selectedAssets.map(a => (
+                        {linkedAssets.map(a => (
                           <option key={a.no} value={a.no}>
                             No.{a.no} {a.item || '-'} {a.newRoomName ? `(${a.newRoomName})` : ''}
                           </option>
@@ -991,54 +1224,6 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                       <span style={{ fontSize: 12, color: '#999' }}>新設置先などをコピーします</span>
                     </div>
                   )}
-                </>
-              )}
-
-              {/* Step 3: 設定・実行 */}
-              {qStep === 3 && (
-                <>
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 4 }}>
-                      転記するカラムと保護設定を確認してください
-                    </div>
-                    <div style={{ fontSize: 12, color: '#888' }}>
-                      選択したカラムの値が見積明細から編集リストにコピーされます。
-                    </div>
-                  </div>
-
-                  {/* サマリ */}
-                  <div style={{
-                    display: 'flex', gap: 12, marginBottom: 16,
-                  }}>
-                    <div style={{ flex: 1, padding: '12px 16px', background: '#e8f5e9', borderRadius: 8, border: '1px solid #c8e6c9' }}>
-                      <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>更新</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#27ae60', fontVariantNumeric: 'tabular-nums' }}>{pairings.size}件</div>
-                    </div>
-                    {addTargets.size > 0 && (
-                      <div style={{ flex: 1, padding: '12px 16px', background: '#e3f2fd', borderRadius: 8, border: '1px solid #bbdefb' }}>
-                        <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>新規追加</div>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: '#1565c0', fontVariantNumeric: 'tabular-nums' }}>{addTargets.size}件</div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 転記カラム選択 */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#333' }}>転記カラム選択</span>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={handleSelectAll} style={{
-                          padding: '4px 10px', fontSize: 12, fontWeight: 600,
-                          background: '#27ae60', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer',
-                        }}>全て選択</button>
-                        <button onClick={handleDeselectAll} style={{
-                          padding: '4px 10px', fontSize: 12, fontWeight: 600,
-                          background: '#f5f5f5', color: '#333', border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer',
-                        }}>全て解除</button>
-                      </div>
-                    </div>
-                    {renderColumnSelector(quotationColumnGroups, qCheckedColumns)}
-                  </div>
                 </>
               )}
             </>
@@ -1085,16 +1270,18 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                   background: 'transparent', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', color: '#666',
                 }}>閉じる</button>
               </div>
-              <div>
-                {qStep < 3 ? (
-                  <button onClick={goNext} disabled={qStep === 1 && pairings.size === 0 && filteredQuotationRecords.length === 0} style={{
+              <div style={{ display: 'flex', gap: 8 }}>
+                {qStep === 1 && (
+                  <button onClick={goNext} disabled={!selectedQuotationGroup} style={{
                     padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                    background: '#8e44ad', color: 'white',
-                    border: 'none', borderRadius: 6, cursor: 'pointer',
+                    background: selectedQuotationGroup ? '#8e44ad' : '#ccc',
+                    color: 'white',
+                    border: 'none', borderRadius: 6, cursor: selectedQuotationGroup ? 'pointer' : 'default',
                   }}>
                     次へ &rarr;
                   </button>
-                ) : (
+                )}
+                {qStep === 2 && (
                   <button onClick={handleQuotationExecute} disabled={!canQuotationExecute} style={{
                     padding: '10px 28px', fontSize: 14, fontWeight: 700,
                     background: canQuotationExecute ? '#f39c12' : '#ccc',

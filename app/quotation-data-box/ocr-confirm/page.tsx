@@ -38,7 +38,7 @@ interface DetailItem {
   categoryType?: string;      // フィルター用カテゴリ - 次STEPで使用
 }
 
-import { customerStep2Items } from '@/lib/data/customer';
+import { customerStep2Items } from '@/lib/data/customer/step2-ocr';
 
 // 顧客サンプルデータから変換（再取り込み: node docs/customer-sample-data/convert.mjs）
 const testDetailItems: DetailItem[] = customerStep2Items.map((item, i) => ({
