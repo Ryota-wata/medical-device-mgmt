@@ -3,12 +3,15 @@
 ## 目的
 - `role_permissions.feature_code` を `permissions` テーブルなしで運用する前提で、権限コードの粒度と命名規則を揃える。
 - 画面ごとの閲覧可否だけでなく、画面内の主要な業務操作ボタンの表示・活性制御にも使える粒度を定める。
-- 本書は認証認可の詳細設計たたき台であり、クライアント確認後に `機能要件.md` 正本へ反映する前提とする。
+- 本書は認証認可の詳細設計たたき台である。現行の正本は `ロール整理.xlsx` の `権限管理単位一覧` シート、`authz-screen-feature-mapping.md`、`authz-feature-column-catalog-draft.md`、および `機能要件.md` へ反映した内容とする。
 
 ## 基本方針
 - `feature_code` は「利用可否を判定したい機能単位」で切る。
 - 原則として、画面表示機能と主要業務操作機能を分けて定義する。
 - 画面内に複数の独立した業務アクションがある場合は、ボタン単位の `feature_code` を追加する。
+- 最新の権限管理単位では、資産一覧の管理部署編集は `management_department_edit` とし、資産カルテの原本編集を表す `original_list_edit` とは独立して判定する。
+- 通常購入管理のSHIPへ一括依頼は `normal_ship_request` とし、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` とは独立して判定する。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+- 貸出・返却の使用中/使用済みフローは `lending_in_use_used` とし、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` とは独立して判定する。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も有効であることを必須とし、`lending_in_use_used` 単独ではメニュー表示・画面遷移・業務 API 実行を許可しない。
 - 単なるフィルタ操作やモーダル開閉、タブ切替などの UI 細部には原則として `feature_code` を切らない。
 - 病院ユーザーの他施設閲覧では `role_permissions` を横展開せず、資産閲覧専用ロジックを優先する。
 
@@ -64,7 +67,12 @@
 
 上記は認証状態や `allowedFacilities`、画面内の表示ボタン制御で扱う前提とし、個別権限コードは原則不要とする。
 
-## 初期一覧案
+## 初期一覧案（旧案・参考）
+
+> 現行採用コードの正本は `authz-feature-column-catalog-draft.md` を参照する。以下は初期検討時の候補であり、最新の `権限管理単位一覧` では名称・粒度を整理済み。
+> 資産一覧・カルテ系の現行採用は `original_list_view`、`original_application`、`management_department_edit`、`inspection_management`、`maintenance_contract`、`original_list_edit`、および `column_code=original_price_column` とする。
+> 通常購入管理系では `normal_ship_request` をSHIPへ一括依頼の独立操作コードとして採用し、`normal_purchase` とは分離する。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+> 貸出・返却系では `lending_in_use_used` を使用中/使用済みフローの独立操作コードとして採用し、`lending_checkout` とは分離する。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も必須であり、施設提供設定・ユーザー施設別設定のどちらでも親 OFF 時の子 ON を拒否する。施設提供設定で ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は当該ユーザーの権限だけを無効化し、既存の使用中/使用済みデータは権限を持つ別ユーザーまたは再付与後の同一ユーザーが後続処理する。
 
 ### 認証/認可・初期選択
 - `login_execute`

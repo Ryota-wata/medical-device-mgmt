@@ -18,7 +18,7 @@
 ## 認証/認可・初期選択
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 1 | 認証／認可 | `Fix/API設計書_認証／認可.docx` | 1. `/login`、2. `/password-reset`、3. `/facility-select`、4. `/main` | `Fix` | 正本要件・DB設計・APIレビュー反映済み。`ロール整理.xlsx` の `権限管理単位一覧` A列粒度へ追従済み |
+| 1 | 認証／認可 | `Fix/API設計書_認証／認可.docx` | 1. `/login`、2. `/password-reset`、3. `/facility-select`、4. `/main` | `Fix` | 正本要件・DB設計・APIレビュー反映済み。`ロール整理.xlsx` の `権限管理単位一覧` A列粒度へ追従済み。`normal_ship_request` / `lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方で判定する。`lending_in_use_used` の実効判定は `lending_checkout` も必須 |
 | 2 | 作業対象施設選択 | 個別ファイルなし | 3. `/facility-select` | `不要` | 認証認可API設計書に統合管理。`/auth/me` の `assignedFacilities` / `defaultFacilityId` と `/auth/context` を利用する |
 
 ## ホーム/メニュー
@@ -29,29 +29,29 @@
 ## QR/ラベル発行
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 4 | QR発行・ラベル印刷 | `Fix/API設計書_QR発行・ラベル印刷.docx` | 5. `/qr-issue`、6. `/qr-print` | `Fix` | QR発行から印刷までを `qr_issue` 1単位で扱う方針で確定。要件・DB設計・最新認証認可レビュー反映済み。 |
+| 4 | QR発行・ラベル印刷 | `Fix/API設計書_QR発行・ラベル印刷.docx` | 5. `/qr-issue`、6. `/qr-print` | `Fix` | QR発行から印刷までを `qr_issue` 1単位で扱う方針で確定。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールで扱い、マスタAPIは設けない。要件・DB設計・最新認証認可レビュー反映済み。 |
 
 ## 現有品調査・資産台帳取込・突合
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
 | 5 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱い、正本要件・DB設計・最新認証認可レビュー反映済み。 |
 | 6 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
-| 7 | データ突合 | `参考_作業用/API設計書_データ突合_20260423_063334.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `参考/作業用` | `lock_version` による更新競合検知と一覧 snapshot 固定、`created_asset_ledger_id` / `assetLedgerId` による原本確定後の追跡、`CONFIRM_ORIGINAL` 時の QR 紐付け同一トランザクション化、改訂日更新まで反映済み。再レビューで重大課題なし、内容としては Fix 移行可 |
+| 7 | データ突合 | `Fix/API設計書_データ突合.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `Fix` | `lock_version` による更新競合検知と一覧 snapshot 固定、`created_asset_ledger_id` / `assetLedgerId` による原本確定後の追跡、`CONFIRM_ORIGINAL` 時の QR 紐付けと現有品調査写真引継ぎの同一トランザクション化、分類マスタの `is_active` 整合修正まで反映済み。再レビューで重大課題なし |
 
 ## 資産検索・台帳・棚卸
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| 8 | 資産検索・資産詳細 | `参考_作業用/API設計書_資産検索・資産詳細_20260420_182112.docx` | 15. `/asset-search-result`、16. `/asset-detail` | `作成済み` | bookmark 永続化、管理部署正本、QR直接遷移解決、履歴API、classificationMode、cursor pagination を反映した再修正版 draft |
+| 8 | 資産一覧・資産詳細 | `Fix/API設計書_資産一覧・資産詳細.docx` | 15. `/asset-search-result`、16. `/asset-detail` | `Fix` | 管理部署編集の独立 `feature_code`、bookmark 永続化、管理部署正本、QR直接遷移解決、履歴API、classificationMode、cursor pagination を反映済み |
 | 9 | 棚卸し | 未作成 | 38. `/inventory` | `未着手` | 独立機能として別途定義予定 |
 
 ## マスタ管理
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
 | 10 | SHIP資産マスタ | `Fix/API設計書_SHIP資産マスタ.docx` | 17. `/ship-asset-master`、30. `/asset-master` | `Fix` | 資産マスタ選択ポップアップ含む。添付文書の安定表示、インポート必須列の明確化、資産マスタIDの `ship_asset_master_id` 統一まで反映済み |
-| 11 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
+| 11 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み。施設提供機能設定で `normal_ship_request` / `lending_in_use_used` など `config_scope='FACILITY_USER'` の施設提供可否を扱う。施設提供設定では `lending_checkout` OFF 時の `lending_in_use_used` ON と、未返却の使用中/使用済データが残る状態での OFF を拒否する |
 | 12 | 個別部署マスタ | `Fix/API設計書_個別部署マスタ.docx` | 19. `/hospital-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 | 13 | SHIP部署マスタ | `Fix/API設計書_SHIP部署マスタ.docx` | 20. `/ship-department-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
-| 14 | ユーザー管理 | `Fix/API設計書_ユーザー管理.docx` | 21. `/user-management` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
+| 14 | ユーザー管理 | `Fix/API設計書_ユーザー管理.docx` | 21. `/user-management` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み。ユーザー別機能設定候補は `config_scope='FACILITY_USER'` のみに限定し、`normal_ship_request` / `lending_in_use_used` も候補に含める。ユーザー側でも `lending_checkout` OFF 時の `lending_in_use_used` ON を拒否する |
 | 15 | 業者マスタ | `Fix/API設計書_業者マスタ.docx` | 63. `/vendor-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
 
 ## 申請・見積・RFQ
@@ -59,15 +59,15 @@
 | --- | --- | --- | --- | --- | --- |
 | 16 | 編集リスト・リモデル申請 | 未作成 | 22. `/remodel-application` | `未着手` | 編集リスト本体と申請明細操作を1本で扱う |
 | 17 | タスク管理トップ | 個別ファイルなし | 23. `/quotation-data-box` | `不要` | 既定サブタブへのリダイレクトのみ。業務APIは各サブタブ側の設計書で管理する |
-| 18 | 購入管理・リモデル管理・RFQ | 未作成 | 51. `/quotation-data-box/purchase-management`、55. `/quotation-data-box/remodel-management`、60. `/quotation-data-box/rfq-process` | `未着手` | 見積依頼グループの進行管理とRFQ作成を1本で扱う |
-| 19 | 見積登録・見積管理 | 未作成 | 24. `/quotation-data-box/ocr-confirm`、29. `/quotation-management`、44. `/quotation-data-box/category-registration`、47. `/quotation-data-box/item-ai-matching`、50. `/quotation-data-box/price-allocation`、54. `/quotation-data-box/registration-confirm`、59. `/quotation-processing` | `未着手` | OCR確認から見積登録、見積明細参照までを1本で扱う |
+| 18 | 購入管理・リモデル管理・RFQ | 未作成 | 51. `/quotation-data-box/purchase-management`、55. `/quotation-data-box/remodel-management`、60. `/quotation-data-box/rfq-process` | `未着手` | 見積依頼グループの進行管理とRFQ作成を1本で扱う。通常購入管理 / SHIP依頼機能は `normal_ship_request` として独立判定し、`config_scope='FACILITY_USER'` で施設提供設定とユーザー施設別設定の両方を必須とする |
+| 19 | 見積登録・見積管理 | 未作成 | 24. `/quotation-data-box/ocr-confirm`、29. `/quotation-management`、44. `/quotation-data-box/category-registration`、47. `/quotation-data-box/item-ai-matching`、50. `/quotation-data-box/price-allocation`、54. `/quotation-data-box/registration-confirm`、59. `/quotation-processing` | `未着手` | Phase1は見積原本参照・手動入力前提でOCR非依存のAPI設計とし、OCR連携は利用SaaS決定後のPhase2で再検討する |
 | 20 | 発注・検収・資産仮登録 | 未作成 | 25. `/quotation-data-box/order-registration`、26. `/quotation-data-box/inspection-registration`、27. `/quotation-data-box/asset-provisional-registration` | `未着手` | 見積登録後の発注・検収・仮登録工程を1本で扱う |
 
 ## 借用・貸出・移動・廃棄
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
 | 21 | 借用管理 | 未作成 | 31. `/borrowing-task`、43. `/quotation-data-box/borrowing-management` | `未着手` | 借用申請一覧から契約・返却タスクまでを1本で扱う |
-| 22 | 貸出管理・貸出返却 | 未作成 | 39. `/lending-available`、40. `/lending-checkout`、48. `/quotation-data-box/lending-management` | `未着手` | 貸出在庫参照、貸出返却、貸出管理設定を1本で扱う |
+| 22 | 貸出管理・貸出返却 | 未作成 | 39. `/lending-available`、40. `/lending-checkout`、48. `/quotation-data-box/lending-management` | `未着手` | 貸出在庫参照、貸出返却、貸出管理設定を1本で扱う。貸出・返却 / 使用中 & 使用済みは `lending_in_use_used` として独立判定するが、実効利用には `lending_checkout` も必須。API設計書作成時は `start-use` / `end-use` / 使用済み状態からの `return` に両方の認可条件を明記する |
 | 23 | 移動・廃棄管理 | 未作成 | 35. `/disposal-task`、58. `/quotation-data-box/transfer-management` | `未着手` | 移動承認と廃棄タスク進行を1本で扱う |
 
 ## 点検・保守

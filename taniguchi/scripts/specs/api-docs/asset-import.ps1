@@ -120,7 +120,45 @@ $endpointSpecs = @(
       '`selected_*_id` / `suggested_*_id` に使う参照マスタは、存在し、かつ削除済みでないことを前提に保存する',
       '各行について資産マスタ/JMDNマスタとの類似度計算を行い、最良候補の `suggested_*_name` / `suggested_*_id` と `suggested_score` を保存する',
       '初期取込完了後に `asset_import_jobs.status` を `READY_FOR_MATCHING` へ更新する',
+      '初期取込処理が失敗した場合は、展開中の `asset_import_rows` をロールバックしたうえで、別トランザクションで `asset_import_jobs.status=FAILED`、`error_message`、`finished_at` を更新する',
       '処理時間が長い場合に備え、本APIは 202 Accepted でジョブを返却し、完了判定は状態照会APIで行う前提とする'
+    )
+    ExtraTables = @(
+      @{
+        Title = '永続化マッピング（受付時）'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_jobs`', '`asset_import_job_id`', '新規採番する', 'レスポンス `assetImportJobId` として返却する'),
+          @('`asset_import_jobs`', '`facility_id`', 'リクエスト `facilityId` を保存する。省略時は Bearer トークン上の作業対象施設IDを保存する', '対象施設は Bearer トークン上の作業対象施設と一致している前提'),
+          @('`asset_import_jobs`', '`import_type`', 'リクエスト `importType` を保存する', '`FIXED_ASSET` / `OTHER_LEDGER`'),
+          @('`asset_import_jobs`', '`file_name`', 'リクエスト `file` の元ファイル名を保存する', '画面表示と再取込参照に利用する'),
+          @('`asset_import_jobs`', '`file_path`', 'サーバー側で保存した元ファイルのストレージキー / URL を保存する', 'DB には参照先のみ保持する'),
+          @('`asset_import_jobs`', '`status` / `error_message` / `started_at` / `finished_at`', '`PROCESSING` / `NULL` / 受付時点の日時 / `NULL` で作成する', '受付直後は初期取込処理中'),
+          @('`asset_import_jobs`', '`created_by_user_id` / `created_at` / `updated_at`', '実行ユーザーIDと受付時点の日時を設定する', '監査・状態遷移管理用'),
+          @('`オブジェクトストレージ（DB外）`', '元ファイル本体', 'リクエスト `file` のバイナリを保存する', 'DB には `asset_import_jobs.file_path` だけを保持する')
+        )
+      },
+      @{
+        Title = '永続化マッピング（初期取込成功時）'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', '`asset_import_row_id` / `asset_import_job_id` / `row_no`', 'データ行ごとに新規採番し、親ジョブIDとヘッダー / 空白行を除いた行順を保存する', '1 取込行 = 1 レコード'),
+          @('`asset_import_rows`', '`raw_data_json`', '元ファイル 1 行分の原文を JSON 化して保存する', '監査・再解析用'),
+          @('`asset_import_rows`', '`parsed_ledger_no` / `parsed_management_device_no` / `parsed_asset_name` / `parsed_manufacturer_name` / `parsed_model_name` / `parsed_department_name` / `parsed_section_name` / `parsed_room_name` / `parsed_category_name` / `parsed_quantity` / `parsed_unit` / `parsed_inspection_date`', '元ファイル各列の値を対応カラムへ保存する', '取込元表示値と監査用スナップショット'),
+          @('`asset_import_rows`', '`suggested_category_name` / `suggested_large_class_name` / `suggested_medium_class_name` / `suggested_asset_item_name` / `suggested_manufacturer_name` / `suggested_model_name` / `suggested_category_id` / `suggested_large_class_id` / `suggested_medium_class_id` / `suggested_asset_item_id` / `suggested_manufacturer_id` / `suggested_model_id` / `suggested_score`', 'AI 推薦ロジックで算出した最良候補の表示値、対応ID、類似度を保存する', '推薦時点のスナップショットを保持する'),
+          @('`asset_import_rows`', '`selected_category_name` / `selected_large_class_name` / `selected_medium_class_name` / `selected_asset_item_name` / `selected_manufacturer_name` / `selected_model_name` / `selected_category_id` / `selected_large_class_id` / `selected_medium_class_id` / `selected_asset_item_id` / `selected_manufacturer_id` / `selected_model_id` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `deleted_at`', '`NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `false` / `NULL` / `NULL` / `NULL` で作成する', '初期取込時点では未選択・未確定・未削除'),
+          @('`asset_import_rows`', '`created_at` / `updated_at`', '初期取込完了時点の日時を設定する', '行監査用'),
+          @('`asset_import_jobs`', '`status` / `error_message` / `finished_at` / `updated_at`', '`READY_FOR_MATCHING` / `NULL` / 初期取込完了時点の日時 / 同日時へ更新する', 'ポーリング結果の正本')
+        )
+      },
+      @{
+        Title = '永続化マッピング（初期取込失敗時）'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', '対象ジョブ分の展開途中行', 'ロールバックして残さない', '部分展開を許可しない'),
+          @('`asset_import_jobs`', '`status` / `error_message` / `finished_at` / `updated_at`', '`FAILED` / 利用者向け失敗理由 / 失敗時点の日時 / 同日時へ更新する', '元ファイルとジョブ履歴は保持する')
+        )
+      }
     )
     ResponseTitle = 'レスポンス（202：AssetImportJobAcceptedResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -202,7 +240,30 @@ $endpointSpecs = @(
       '対象ジョブが `FAILED` であることを検証する',
       '`asset_import_jobs.file_path` に保持した元ファイルを再利用し、新しい `asset_import_jobs` を `PROCESSING` で作成する',
       '元の FAILED ジョブとその失敗情報は監査用に保持する',
+      '再取込の初期取込処理が失敗した場合は、展開中の `asset_import_rows` をロールバックしたうえで、新規ジョブ側だけ `status=FAILED`、`error_message`、`finished_at` を更新する',
       '新規ジョブ作成後の処理内容は通常の `/asset-import/jobs` と同じとする'
+    )
+    ExtraTables = @(
+      @{
+        Title = '永続化マッピング（受付時）'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_jobs`（再取込元 FAILED ジョブ）', '既存行', '変更しない', '失敗履歴として保持する'),
+          @('`asset_import_jobs`（新規ジョブ）', '`asset_import_job_id`', '新規採番する', 'レスポンス `assetImportJobId` として返却する'),
+          @('`asset_import_jobs`（新規ジョブ）', '`facility_id` / `import_type` / `file_name` / `file_path`', '再取込元 FAILED ジョブの値を引き継いで保存する', 'リクエスト `assetImportJobId` は再取込元ジョブ特定にのみ使う'),
+          @('`asset_import_jobs`（新規ジョブ）', '`status` / `error_message` / `started_at` / `finished_at`', '`PROCESSING` / `NULL` / 再取込受付時点の日時 / `NULL` で作成する', '再取込元の失敗情報は引き継がない'),
+          @('`asset_import_jobs`（新規ジョブ）', '`created_by_user_id` / `created_at` / `updated_at`', '実行ユーザーIDと再取込受付時点の日時を設定する', '監査・状態遷移管理用'),
+          @('`オブジェクトストレージ（DB外）`', '再取込元ファイル本体', '再取込元 FAILED ジョブの `file_path` が指す既存ファイルを再利用する', '再アップロードは行わない')
+        )
+      },
+      @{
+        Title = '永続化マッピング（初期取込処理）'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', '新規ジョブ配下の `asset_import_row_id` / `asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `suggested_*` / `suggested_score` / `selected_*` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `created_at` / `updated_at` / `deleted_at`', '元ファイルを再解析し、`POST /asset-import/jobs` の初期取込成功時と同じルールで新規作成する', '再取込元ジョブの `asset_import_rows` は再利用しない'),
+          @('`asset_import_jobs`（新規ジョブ）', '`status` / `error_message` / `finished_at` / `updated_at`', '成功時は `READY_FOR_MATCHING` / `NULL` / 完了時点の日時 / 同日時、失敗時は `FAILED` / 利用者向け失敗理由 / 失敗時点の日時 / 同日時へ更新する', '結果は新規ジョブ側だけに反映する')
+        )
+      }
     )
     ResponseTitle = 'レスポンス（202：AssetImportJobRetryAcceptedResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -242,6 +303,17 @@ $endpointSpecs = @(
       '削除対象は `READY_FOR_MATCHING` / `FAILED` のジョブに限定し、`PROCESSING` / `MATCHING_COMPLETED` は 409 とする',
       'ジョブ本体、取込行、保持している元ファイルを一括削除する',
       '突き合わせ途中のデータも削除されるため、確認ダイアログの後に実行する'
+    )
+    ExtraTables = @(
+      @{
+        Title = '永続化マッピング'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', '対象 `assetImportJobId` に紐づく全行', '物理削除する', '子テーブルを先に削除する'),
+          @('`asset_import_jobs`', '対象 `assetImportJobId` の行', '物理削除する', '`READY_FOR_MATCHING` / `FAILED` の場合のみ実行する'),
+          @('`オブジェクトストレージ（DB外）`', '`asset_import_jobs.file_path` が指す元ファイル', '物理削除する', 'ジョブ削除と同一要求内で後始末する')
+        )
+      }
     )
     ResponseTitle = 'レスポンス（204：No Content）'
     ResponseLines = @(
@@ -488,10 +560,30 @@ $endpointSpecs = @(
       '対象行が属するジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
       '編集対象は未確定行のみとし、未確定行の保存競合は最終保存勝ちとする',
       '`selected_*_name` は画面表示用文字列として保存し、マスタ選択時は対応する `selected_*_id` も保存する。自由記述時は `selected_*_id` を null とする',
+      'マスタ選択時に `selected_*_id` が指定された場合は、当該マスタの正規名称を再解決して `selected_*_name` へ保存し、名称不一致は 400 を返却する',
       '親は子を兼ねる前提で、下位階層IDが指定された場合は必要な親階層IDを自動補完する',
       '上位階層変更時に整合しない下位階層IDはクリアする',
+      'リクエストで未指定の `selected*` 項目は既存値を維持し、明示的に `null` を送った項目だけ対応する `selected_*_name` / `selected_*_id` をクリアする',
       '`isConfirmed=true` の場合は保存後に `is_confirmed` と `confirmed_by_user_id` / `confirmed_at` を更新する',
       '対象行がすでに他ユーザーにより確定済みの場合は競合エラーとする'
+    )
+    ExtraTables = @(
+      @{
+        Title = '永続化マッピング'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', '`selected_category_name` / `selected_category_id`', 'リクエスト `selectedCategoryId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedCategoryId=null` の場合は `selectedCategoryName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '`selected_large_class_name` / `selected_large_class_id`', 'リクエスト `selectedLargeClassId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedLargeClassId=null` の場合は `selectedLargeClassName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '`selected_medium_class_name` / `selected_medium_class_id`', 'リクエスト `selectedMediumClassId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedMediumClassId=null` の場合は `selectedMediumClassName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '`selected_asset_item_name` / `selected_asset_item_id`', 'リクエスト `selectedAssetItemId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedAssetItemId=null` の場合は `selectedAssetItemName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '`selected_manufacturer_name` / `selected_manufacturer_id`', 'リクエスト `selectedManufacturerId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedManufacturerId=null` の場合は `selectedManufacturerName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '`selected_model_name` / `selected_model_id`', 'リクエスト `selectedModelId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedModelId=null` の場合は `selectedModelName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '分類階層整合の補正', '下位階層IDが指定された場合は必要な親階層IDを自動補完し、上位階層変更で不整合になった下位階層IDはクリアする', 'Category / 大分類 / 中分類 / 品目の整合維持'),
+          @('`asset_import_rows`', '`is_confirmed` / `confirmed_by_user_id` / `confirmed_at`', 'リクエスト `isConfirmed=true` の場合だけ `true` / 実行ユーザーID / 更新時点の日時へ更新する', '`isConfirmed` が `false` または未指定の場合は既存の未確定状態を維持する'),
+          @('`asset_import_rows`', '`updated_at`', '更新時点の日時へ更新する', '最終保存勝ちの監査用'),
+          @('`asset_import_rows`', '`asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `suggested_*` / `suggested_score` / `created_at` / `deleted_at`', '変更しない', '取込元データと AI 推薦スナップショットは本 API の対象外')
+        )
+      }
     )
     ResponseTitle = 'レスポンス（200：AssetMatchingRowResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -538,9 +630,23 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
+      '指定した `assetImportRowIds` の全件が対象 `assetImportJobId` に属する未削除行であることを検証し、対象外行を含む場合は 404 を返却する',
       '指定行の `is_confirmed` を true へ更新し、`confirmed_by_user_id` / `confirmed_at` を保存する',
       '対象は未確定行のみとし、他ユーザーが先に確定済みの行が含まれる場合は一括失敗として競合行IDを `details` で返却する',
       '業務必須を満たさない行が含まれる場合も一括失敗とし、どの行が失敗したかを `details` で返却する'
+    )
+    ExtraTables = @(
+      @{
+        Title = '永続化マッピング'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', 'リクエスト `assetImportRowIds[*]` に一致する各行の `is_confirmed`', '`true` へ更新する', '対象ジョブはリクエスト `assetImportJobId` で特定する'),
+          @('`asset_import_rows`', 'リクエスト `assetImportRowIds[*]` に一致する各行の `confirmed_by_user_id` / `confirmed_at`', '実行ユーザーID / 更新時点の日時を保存する', '一括確定監査用'),
+          @('`asset_import_rows`', 'リクエスト `assetImportRowIds[*]` に一致する各行の `updated_at`', '更新時点の日時へ更新する', '確定監査用'),
+          @('`asset_import_rows`', '各行の `selected_*` / `parsed_*` / `suggested_*` / `suggested_score` / `created_at` / `deleted_at`', '変更しない', '確定前に保存済みの選択内容をそのまま確定する'),
+          @('`asset_import_rows`', '対象外行', '変更しない', '競合行または業務必須不足行を含む場合は全件ロールバックする')
+        )
+      }
     )
     ResponseTitle = 'レスポンス（200：AssetMatchingBulkConfirmResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -631,6 +737,18 @@ $endpointSpecs = @(
       '条件を満たした場合のみ対象ジョブを `MATCHING_COMPLETED` へ更新する',
       '完了時に `asset_import_jobs.finished_at` を更新し、`remainingRows=0` を返却する'
     )
+    ExtraTables = @(
+      @{
+        Title = '永続化マッピング'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_jobs`', 'リクエスト `assetImportJobId` に一致する行の `status`', '`MATCHING_COMPLETED` へ更新する', '`READY_FOR_MATCHING` かつ未確定件数 0 件の場合のみ実行する'),
+          @('`asset_import_jobs`', 'リクエスト `assetImportJobId` に一致する行の `finished_at` / `updated_at`', '完了時点の日時へ更新する', '完了監査と最終更新日時'),
+          @('`asset_import_jobs`', '`facility_id` / `import_type` / `file_name` / `file_path` / `error_message` / `started_at` / `created_by_user_id` / `created_at`', '変更しない', 'ジョブ文脈は維持する'),
+          @('`asset_import_rows`', '対象ジョブ配下の全行', '変更しない', '全行確定済みであることを前提にジョブだけを完了状態へ更新する')
+        )
+      }
+    )
     ResponseTitle = 'レスポンス（200：AssetMatchingCompleteResponse）'
     ResponseHeaders = @('フィールド', '型', '必須', '説明')
     ResponseRows = @(
@@ -704,6 +822,14 @@ $endpointSpecs = @(
     @{ Type = 'Table'; Headers = @('処理', '必要な実効 feature_code', '判定に使う主な情報', '説明'); Rows = @(
       @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象施設への有効割当と実効機能の両方が必要'),
       @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / 突き合わせ完了', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象ジョブまたは Bearer トークン上の作業対象施設に対して再判定する')
+    ) },
+    @{ Type = 'Heading2'; Text = '永続化と非同期処理境界' },
+    @{ Type = 'Bullets'; Items = @(
+      '`POST /asset-import/jobs` と `POST /asset-import/jobs/{assetImportJobId}/retry` は、受付時に `asset_import_jobs` を作成したうえで、初期取込処理が `asset_import_rows` 展開と AI 推薦初期化を進める非同期ジョブ受付APIとして扱う',
+      'アップロード元ファイルのバイナリ本体はオブジェクトストレージへ保存し、DB には `asset_import_jobs.file_name` と `file_path` をメタデータとして保持する',
+      '`asset_import_rows` は元ファイルのデータ行を 1 行 = 1 レコードで保持する。初期取込時に `parsed_*`、`suggested_*`、`suggested_score` を保存し、`selected_*` は未選択、`is_confirmed=false`、`confirmed_by_user_id` / `confirmed_at=NULL` で開始する',
+      '`PUT /asset-matching/rows/{assetImportRowId}` と `POST /asset-matching/rows/confirm-bulk` は `asset_import_rows` のみを更新し、`POST /asset-matching/complete` は `asset_import_jobs` のみを更新する。`DELETE /asset-import/jobs/{assetImportJobId}` は `asset_import_jobs` / `asset_import_rows` と元ファイルを一括削除する',
+      '同期更新API（行更新、一括確定、完了、削除）は 1 回の呼び出しを 1 DB トランザクションで完結させる。非同期受付API（取込作成、再取込）は受付トランザクションと初期取込トランザクションを分離し、失敗時は展開途中の `asset_import_rows` を残さない'
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(

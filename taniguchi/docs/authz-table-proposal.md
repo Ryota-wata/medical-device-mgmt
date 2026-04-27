@@ -49,10 +49,11 @@
 - 施設ごとに「その施設の所属・担当ユーザーへ提供する機能」を `facility_feature_settings` と `facility_column_settings` で管理する。
 - ユーザーごとに「その施設で利用可能な機能・カラム」を `user_facility_feature_settings` と `user_facility_column_settings` で管理する。
 - ユーザー設定は、施設設定を超えられない。
+- `config_scope='FACILITY'` の機能はユーザーごとの ON/OFF を持たず、施設設定が ON であれば当該施設に紐づく全ユーザーへ適用する。ただし現行採用コードは固定導線を除いて `FACILITY_USER` に統一するため、通常の業務機能では `FACILITY_USER` を使用する。
 
 ### 2-2. 他施設閲覧
 
-- 閲覧者側は、作業対象施設に対して `other_*` 系の機能・カラムが有効でなければならない。
+- 閲覧者側は、作業対象施設に対して external 向け `feature_code` / `column_code` が有効でなければならない。
 - さらに、閲覧元施設と閲覧先施設が同一の `facility_collaboration_groups` に属し、両施設とも契約中でなければならない。
 - 閲覧先施設は、自施設データを外部施設ユーザーへ公開する設定を `facility_external_view_settings` と `facility_external_column_settings` で持つ。
 - 他施設閲覧は、閲覧者側の権限と、閲覧先施設側の公開設定の両方を満たした場合のみ許可する。
@@ -80,13 +81,13 @@
 
 | 項目 | 物理名 | 型 | 必須 | 備考 |
 | --- | --- | --- | --- | --- |
-| 機能コード | feature_code | varchar(64) | ○ | PK。例: `user_management`, `qr_issue`, `other_asset_list` |
+| 機能コード | feature_code | varchar(64) | ○ | PK。例: `user_list_view`, `qr_issue`, `original_list_view` |
 | 機能名 | feature_name | varchar(200) | ○ | 表示用名称 |
-| 大分類コード | category_code | varchar(50) | ○ | 例: `USER_MGMT`, `AUTH`, `TASK`, `MASTER`, `DATA_VIEW` |
+| 大分類コード | category_code | varchar(50) | ○ | 例: `USER_MGMT`, `AUTH`, `TASK`, `MASTER`, `SURVEY` |
 | メニューグループコード | menu_group_code | varchar(50) | - | 画面側の表示グループ整理用。DB上の別マスタは持たない |
-| 機能種別 | feature_kind | varchar(30) | ○ | 例: `SCREEN`, `ACTION`, `DATA_VIEW`, `AUTH` |
+| 機能種別 | feature_kind | varchar(30) | ○ | 例: `SCREEN`, `ACTION`, `AUTH` |
 | 利用文脈 | usage_context | varchar(20) | ○ | 値: `COMMON`, `OWN`, `EXTERNAL` |
-| 設定スコープ | config_scope | varchar(20) | ○ | 値: `SYSTEM_FIXED`, `FACILITY_USER` |
+| 設定スコープ | config_scope | varchar(20) | ○ | 値: `SYSTEM_FIXED`, `FACILITY`, `FACILITY_USER` |
 | 表示順 | sort_order | int | ○ | 一覧表示順 |
 | 有効フラグ | is_active | boolean | ○ | true=有効 |
 | 作成日時 | created_at | timestamp | ○ |  |
@@ -94,7 +95,8 @@
 
 - 主な使い方:
   - `config_scope='SYSTEM_FIXED'` は認証前提機能やシステム共通機能で、施設・ユーザー設定テーブルへは持たない。
-  - `config_scope='FACILITY_USER'` は施設・ユーザー設定の対象とする。
+  - `config_scope='FACILITY'` は施設設定のみ対象とし、ユーザー施設別設定へは持たない。現行採用コードでは原則使用しない。
+  - `config_scope='FACILITY_USER'` は施設・ユーザー設定の対象とする。`normal_ship_request` / `lending_in_use_used` もこのスコープとする。
   - `usage_context='EXTERNAL'` は、他施設閲覧用の viewer 側機能コードとしても、閲覧先施設の公開設定コードとしても使う。
 
 ### 3-2. `column_catalogs`（カラムカタログ）
@@ -104,7 +106,7 @@
 
 | 項目 | 物理名 | 型 | 必須 | 備考 |
 | --- | --- | --- | --- | --- |
-| カラムコード | column_code | varchar(64) | ○ | PK。例: `original_price_column`, `own_price_column`, `other_price_column`, `ship_column` |
+| カラムコード | column_code | varchar(64) | ○ | PK。例: `original_price_column`, `remodel_ship_column`, `normal_ship_column`, `asset_master_ship_column` |
 | カラム名 | column_name | varchar(200) | ○ | 表示用名称 |
 | 関連機能コード | related_feature_code | varchar(64) | ○ | FK: `feature_catalogs.feature_code` |
 | カラム分類コード | column_group_code | varchar(50) | ○ | 例: `PRICE`, `SHIP_ONLY` |
@@ -115,7 +117,7 @@
 | 更新日時 | updated_at | timestamp | ○ |  |
 
 - 付記:
-  - `original_price_column`、`own_price_column`、`other_price_column` はクライアント整理が分かれているため、文脈別の別コードとして分離維持する。
+  - 最新の `権限管理単位一覧` シートに合わせ、`original_price_column`、`remodel_ship_column`、`normal_ship_column`、`asset_master_ship_column` を別コードとして分離維持する。
 
 ## 4. ユーザー担当施設・施設設定・ユーザー設定
 
@@ -167,8 +169,8 @@
 - 制約:
   - `(facility_id, feature_code)` に一意制約。
 - 付記:
-  - `feature_catalogs.config_scope='FACILITY_USER'` のみ登録対象とする。
-  - `other_*` 系機能も、閲覧者側施設に対する利用機能として本テーブルで管理する。
+  - `feature_catalogs.config_scope in ('FACILITY', 'FACILITY_USER')` を登録対象とする。
+- external 向けに追加する `feature_code` も、閲覧者側施設に対する利用機能として本テーブルで管理する。
 
 ### 4-3. `facility_column_settings`（施設提供カラム）
 
@@ -211,6 +213,7 @@
   - `(user_facility_assignment_id, feature_code)` に一意制約。
 - 付記:
   - `facility_feature_settings` で `is_enabled=true` の機能のみ有効化できる。
+  - `feature_catalogs.config_scope='FACILITY_USER'` のみ登録対象とする。`normal_ship_request` / `lending_in_use_used` も本テーブルへ登録し、ユーザー施設別に ON/OFF できる。
 
 ### 4-5. `user_facility_column_settings`（ユーザー施設別カラム）
 
@@ -279,7 +282,7 @@
 | --- | --- | --- | --- | --- |
 | 他施設公開データ設定ID | facility_external_view_setting_id | bigint | ○ | PK |
 | 公開元施設ID | provider_facility_id | bigint | ○ | FK: `facilities.facility_id` |
-| 機能コード | feature_code | varchar(64) | ○ | FK: `feature_catalogs.feature_code`。`usage_context='EXTERNAL'` の `DATA_VIEW` 系を想定 |
+| 機能コード | feature_code | varchar(64) | ○ | FK: `feature_catalogs.feature_code`。`usage_context='EXTERNAL'` の公開対象コードを想定 |
 | 有効フラグ | is_enabled | boolean | ○ | true=他施設へ公開する |
 | 作成者ユーザーID | created_by | bigint | ○ | FK: `users.user_id` |
 | 更新者ユーザーID | updated_by | bigint | ○ | FK: `users.user_id` |
@@ -289,7 +292,7 @@
 - 制約:
   - `(provider_facility_id, feature_code)` に一意制約。
 - 付記:
-  - 例: `other_asset_list`, `other_estimate`, `other_data_history`
+  - 最新の `権限管理単位一覧` シートには external 専用 `feature_code` が含まれていないため、具体コードは別途追加設計とする。
   - 将来、グループごとに公開可否を変えたい場合は `facility_collaboration_group_id` を追加する。
 
 ### 5-4. `facility_external_column_settings`（他施設向け公開カラム設定）
@@ -311,7 +314,7 @@
 - 制約:
   - `(provider_facility_id, column_code)` に一意制約。
 - 付記:
-  - 例: `other_price_column`
+  - 最新の `権限管理単位一覧` シートには external 専用 `column_code` が含まれていないため、具体コードは別途追加設計とする。
   - `column_catalogs.related_feature_code` に対応する `facility_external_view_settings` が `is_enabled=true` の場合のみ有効化できる。
 
 ## 6. 既存テーブルの扱い
@@ -369,16 +372,16 @@
 前提:
 
 - ユーザーが施設Aを作業対象施設として選択している
-- 見たい機能は `own_asset_list`
+- 見たい機能は `original_list_view`
 
 判定:
 
 1. `user_facility_assignments` に `(user_id, facilityA, is_active=true)` が存在する。
-2. `facility_feature_settings` の `(facilityA, own_asset_list)` が `is_enabled=true` である。
-3. `user_facility_feature_settings` の `(assignment_id, own_asset_list)` が `is_enabled=true` である。
+2. `facility_feature_settings` の `(facilityA, original_list_view)` が `is_enabled=true` である。
+3. `user_facility_feature_settings` の `(assignment_id, original_list_view)` が `is_enabled=true` である。
 4. 価格カラムを見る場合は、さらに
-   - `facility_column_settings` の `(facilityA, own_price_column)` が `is_enabled=true`
-   - `user_facility_column_settings` の `(assignment_id, own_price_column)` が `is_enabled=true`
+   - `facility_column_settings` の `(facilityA, original_price_column)` が `is_enabled=true`
+   - `user_facility_column_settings` の `(assignment_id, original_price_column)` が `is_enabled=true`
 
 ### 7-2. 他施設の資産原本リストを見る場合
 
@@ -386,19 +389,19 @@
 
 - ユーザーが施設Aを作業対象施設として選択している
 - 見たい対象は施設Bの資産原本リスト
-- 見たい機能は `other_asset_list`
+- 最新の `権限管理単位一覧` シートには external 専用 `feature_code` がないため、ここでは `external_view_feature_code` を将来追加時の仮称として用いる
 
 判定:
 
 1. `user_facility_assignments` に `(user_id, facilityA, is_active=true)` が存在する。
-2. `facility_feature_settings` の `(facilityA, other_asset_list)` が `is_enabled=true` である。
-3. `user_facility_feature_settings` の `(assignment_id, other_asset_list)` が `is_enabled=true` である。
+2. `facility_feature_settings` の `(facilityA, external_view_feature_code)` が `is_enabled=true` である。
+3. `user_facility_feature_settings` の `(assignment_id, external_view_feature_code)` が `is_enabled=true` である。
 4. `facilities` の `facilityA.system_contract_status='ACTIVE'` かつ `facilityB.system_contract_status='ACTIVE'` である。
 5. `facility_collaboration_groups` / `facility_collaboration_group_facilities` 上で、施設Aと施設Bが同一有効グループに所属している。
-6. `facility_external_view_settings` の `(facilityB, other_asset_list)` が `is_enabled=true` である。
+6. `facility_external_view_settings` の `(facilityB, external_view_feature_code)` が `is_enabled=true` である。
 7. 価格カラムを見る場合は、さらに
-   - 閲覧者側: `facility_column_settings(facilityA, other_price_column)` と `user_facility_column_settings(assignment_id, other_price_column)` が `true`
-   - 公開元側: `facility_external_column_settings(facilityB, other_price_column)` が `true`
+   - 閲覧者側: `facility_column_settings(facilityA, external_view_column_code)` と `user_facility_column_settings(assignment_id, external_view_column_code)` が `true`
+   - 公開元側: `facility_external_column_settings(facilityB, external_view_column_code)` が `true`
 
 ## 8. APIへの影響
 
@@ -434,6 +437,9 @@
 
 - メニューやボタンの表示可否は、UI専用の別マトリクスではなく、同じ `feature_code` / `column_code` から導出する。
 - 画面側では `can(feature_code)` / `canColumn(column_code)` のようなヘルパーで表示制御を行う。
+- 資産一覧の管理部署編集ボタンと一括保存は `management_department_edit` で判定し、資産カルテの原本編集 `original_list_edit` とは独立させる。
+- 通常購入管理のSHIPへ一括依頼ボタンと実処理は `normal_ship_request` で判定し、購入管理タブ表示や見積依頼行利用の `normal_purchase` とは独立させる。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+- 貸出返却画面の使用中/使用済みモーダル・ボタンと実処理は `lending_in_use_used` で判定し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` とは独立させる。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も有効であることを必須とし、施設提供設定・ユーザー施設別設定のどちらでも `lending_checkout` OFF 時は `lending_in_use_used` を ON にできない。施設提供設定で ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は当該ユーザーの権限だけを無効化し、既存の使用中/使用済みデータは権限を持つ別ユーザーまたは再付与後の同一ユーザーが後続処理する。
 - 「機能を使えないならボタン自体を表示しない」を基本とするが、DOM 改変でボタンが見えても業務APIが 403 を返す前提で設計する。
 
 ### 9-2. 監査・変更履歴の方針
@@ -477,9 +483,10 @@
   - 部分一意制約
     - 有効な担当施設のうち `is_default=true` は 1 ユーザーにつき 1 件まで
 - 更新APIで担保する内容:
-  - `user_facility_feature_settings` は `facility_feature_settings.is_enabled=true` の機能のみ ON にできる
+  - `user_facility_feature_settings` は `feature_catalogs.config_scope='FACILITY_USER'` かつ `facility_feature_settings.is_enabled=true` の機能のみ ON にできる
+  - `lending_in_use_used` をユーザー施設別設定で ON にする場合は、同一担当施設の `lending_checkout` も ON でなければならない
   - `user_facility_column_settings` は `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムのみ ON にできる
-  - `facility_feature_settings` には `feature_catalogs.config_scope='FACILITY_USER'` の機能のみ登録できる
+  - `facility_feature_settings` には `feature_catalogs.config_scope in ('FACILITY', 'FACILITY_USER')` の機能のみ登録できる
   - `facility_column_settings` は `column_catalogs.related_feature_code` に対応する `facility_feature_settings.is_enabled=true` の場合のみ ON にできる
   - `facility_external_view_settings` には `usage_context='EXTERNAL'` の機能のみ登録できる
   - `facility_external_column_settings` には `usage_context='EXTERNAL'` かつ `column_catalogs.related_feature_code` に対応する `facility_external_view_settings.is_enabled=true` のカラムのみ登録できる
@@ -493,7 +500,7 @@
 
 ## 10. 未確定事項
 
-- `inventory_office`、`inspection_management`、`lending_management` などに含まれる出力機能を独立した feature に分割するか。
+- `inventory_complete`、`inspection_management`、`lending_management` などに含まれる出力機能を独立した feature に分割するか。
 - `remodel_edit_list` と `normal_edit_list` に含まれる `申請登録` `見積G` `分析作業` を独立した feature に分割するか。
 - `ON/OFF` のみで足りるか、`出力` `登録` `更新` などを別 feature に分けるか。
 

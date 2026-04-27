@@ -61,6 +61,7 @@
 - 施設単位では「その施設の所属・担当ユーザーへ提供する機能」を管理する。
 - ユーザー単位では「施設で提供されている機能のうち、そのユーザーへ許可する機能」を管理する。
 - ユーザー単位の設定は、施設単位設定を超えないことを前提とする。
+- 現行採用コードは固定導線を除き `config_scope='FACILITY_USER'` に統一し、施設単位設定とユーザー単位設定の両方が ON の場合に実効利用を許可する。
 
 ### 4. 他施設閲覧は公開ポリシーとして別管理する
 
@@ -102,8 +103,18 @@
   - ログイン、パスワード再設定は認証基盤として扱い、施設単位・ユーザー単位の ON/OFF 管理対象には含めない
 - 施設選択
   - 作業対象施設の選択は `user_facility_assignments` で割り当てられた担当施設一覧から行い、`facility_select_all` は認可機能として採用しない
-- 価格カラム
-  - `original_price_column`、`own_price_column`、`other_price_column` はクライアント整理が分かれているため、文脈別に分離維持する
+- 資産一覧の管理部署編集
+  - `資産一覧 / 管理部署編集` は `management_department_edit` として独立管理し、資産カルテの原本編集を表す `original_list_edit` には束ねない
+- 通常購入管理のSHIP依頼
+  - `通常購入管理 / SHIP依頼機能` は `normal_ship_request` として独立管理し、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` には束ねない
+- `normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供機能設定で候補範囲を管理したうえで、ユーザー施設別機能設定でも ON/OFF する
+- 貸出・返却の使用中/使用済みフロー
+  - `貸出・返却 / 使用中 & 使用済み` は `lending_in_use_used` として独立管理し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` には束ねない
+- `lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供機能設定で候補範囲を管理したうえで、ユーザー施設別機能設定でも ON/OFF する
+  - 実効利用には `lending_checkout` も有効であることを必須とし、`lending_in_use_used` 単独ではメニュー表示・画面遷移・使用開始/使用終了 API 実行を許可しない
+- 施設提供設定とユーザー施設別設定では、`lending_checkout` OFF 時に `lending_in_use_used` を ON にできない。施設提供設定で `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は、そのユーザーの利用可否だけを変更し、貸出データ自体は変更しない
+- 表示カラム
+  - `original_price_column`、`remodel_ship_column`、`normal_ship_column`、`asset_master_ship_column` は、`権限管理単位一覧` シート A列の最新粒度に合わせて分離維持する
 - 表示分類
   - `users.account_type` を保持し、認可判定には使わず、表示分類や入力制御用途に限定する
 
@@ -140,7 +151,7 @@
 
 - `ON/OFF` のみで足りるか、`閲覧` `作成` `更新` `出力` を別 feature として分けるか。
 - カラム制御の粒度を、価格系／SHIP系のような種別単位とするか、画面単位・データ項目単位まで分解するか。
-- `inventory_office`、`inspection_management`、`lending_management` などに含まれる出力機能を独立した feature に分けるか。
+- `inventory_complete`、`inspection_management`、`lending_management` などに含まれる出力機能を独立した feature に分けるか。
 - `remodel_edit_list` と `normal_edit_list` に含まれる `申請登録` `見積G` `分析作業` を独立した feature に分けるか。
 
 ## 次に整理する内容

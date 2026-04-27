@@ -59,16 +59,16 @@
 - 例:
   - ユーザー管理画面は `user_list_view` を前提とし、編集操作ごとに `user_edit` / `user_facility_assignment_edit` を追加判定する
   - QRコード発行画面は `qr_issue`
-  - 他施設資産一覧画面は `other_asset_list`
+  - 資産一覧・カルテ画面は `original_list_view`
+  - 棚卸し画面は `inventory`、完了操作は `inventory_complete`
 - 無効な場合は、トップ画面へ戻すか 403 相当の案内画面を出す
 
 ### 2-6. 画面内データ取得
 
 - 業務 API 呼び出し時は、必ず `actingFacilityId` を送る
-- 他施設閲覧時は、さらに `targetFacilityId` を送る
 - 例:
-  - 自施設資産一覧: `GET /assets?actingFacilityId=10`
-  - 他施設資産一覧: `GET /assets?actingFacilityId=10&targetFacilityId=20&scope=external`
+  - 資産一覧: `GET /assets?actingFacilityId=10`
+  - 棚卸し完了: `POST /inventories/complete?actingFacilityId=10`
 - フロントエンドはレスポンスに含まれたデータだけを描画する
 - 価格カラムなどは、画面側で列を出さないことに加え、バックエンドからも返さない前提とする
 
@@ -139,6 +139,7 @@
   - 他施設公開カラム更新 API
 - これらの API は、DB 制約で守れない業務ルールをチェックする
 - 例:
+  - `config_scope='FACILITY_USER'` の機能は施設提供機能更新 API で施設提供可否を管理し、ユーザー施設別機能更新 API でユーザーごとの利用可否を管理する
   - 施設側で OFF の機能をユーザー側だけ ON にできない
   - `usage_context='EXTERNAL'` ではない機能を他施設公開設定へ登録できない
 
@@ -146,22 +147,21 @@
 
 - すべての業務 API は、フロントエンド表示制御とは独立して毎回認可判定を行う
 - 例:
-  - 資産一覧 API は `own_asset_list` または `other_asset_list` を判定する
+  - 資産一覧 API は `original_list_view` を判定する
+  - 資産一覧の管理部署一括更新 API は `original_list_view` と `management_department_edit` を合わせて判定し、`original_list_edit` では代替しない
   - ユーザー管理 API は `user_list_view` / `user_edit` / `user_facility_assignment_edit` を処理単位で判定する
+  - 購入管理タブのSHIPへ一括依頼 API は `normal_ship_request` を判定し、`normal_purchase` だけでは実行できない。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合だけ許可する
+  - 貸出返却画面の使用中/使用済みモーダル・ボタン API は `lending_checkout` と `lending_in_use_used` の両方を判定し、どちらか一方だけでは使用中/使用済みフローを実行できない。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON で、かつ親機能 `lending_checkout` の実効権限も有効な場合だけ許可する。施設提供設定で `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で `lending_in_use_used` を OFF にする場合は当該ユーザーの権限だけを無効化し、既存の使用中/使用済みデータは権限を持つ別ユーザーまたは再付与後の同一ユーザーが後続処理する
   - QRコード発行 API は `qr_issue` を判定する
-- 他施設閲覧の場合は次をすべて確認する
-  - `actingFacilityId` が担当施設である
-  - 閲覧者側施設で `other_*` 系機能が有効である
-  - 閲覧者側ユーザーで `other_*` 系機能が有効である
-  - 閲覧元施設と公開元施設が同じ協業グループに属する
-  - 公開元施設が対象データを公開している
+  - 棚卸し完了 API は `inventory` と `inventory_complete` を合わせて判定する
+- 他施設公開の枠組みはテーブル設計上は維持するが、最新の `権限管理単位一覧` シートには external 専用 `feature_code` / `column_code` が含まれていないため、具体コードの追加は別途設計とする
 
 ### 3-5. レスポンス整形
 
 - 業務 API は、許可されていないデータやカラムをレスポンスに含めない
 - 例:
-  - `other_price_column` が無効なら価格列を返さない
-  - `other_estimate` が無効なら見積関連データを返さない
+  - `original_price_column` が無効なら原本価格列を返さない
+  - `normal_ship_column` または `remodel_ship_column` が無効なら該当の SHIP 列を返さない
 - CSV / Excel 出力も同じルールを適用する
 - これにより、フロントエンドで無理に列を復活させてもデータ自体は取得できない
 
@@ -189,25 +189,21 @@
 6. バックエンドが当該施設における実効 `feature_code` / `column_code` を返す
 7. フロントエンドがそれを使ってメニューとボタンを描画する
 
-### 4-2. 自施設データ閲覧
+### 4-2. 資産一覧・カルテ閲覧
 
-1. フロントエンドが `can('own_asset_list')` を見て画面遷移導線を表示する
+1. フロントエンドが `can('original_list_view')` を見て画面遷移導線を表示する
 2. ユーザーが一覧画面へ遷移する
 3. フロントエンドが `GET /assets?actingFacilityId=...` を呼ぶ
-4. バックエンドが `own_asset_list` と必要な `column_code` を再判定する
+4. バックエンドが `original_list_view` と必要な `column_code` を再判定する
 5. バックエンドが許可されたデータ・カラムのみ返す
 
-### 4-3. 他施設データ閲覧
+### 4-3. 棚卸し完了
 
-1. フロントエンドが `can('other_asset_list')` を見て他施設閲覧導線を表示する
-2. ユーザーが他施設を選ぶ
-3. フロントエンドが `GET /assets?actingFacilityId=...&targetFacilityId=...&scope=external` を呼ぶ
-4. バックエンドが以下を再判定する
-   - 閲覧者側施設・ユーザーに `other_asset_list` があるか
-   - 両施設が同じ協業グループに属するか
-   - 公開元施設が `other_asset_list` を公開しているか
-   - 必要な `other_*_column` を公開しているか
-5. バックエンドが許可された項目だけ返す
+1. フロントエンドが `can('inventory')` を見て棚卸し画面の導線を表示する
+2. ユーザーが棚卸し画面へ遷移する
+3. フロントエンドが `can('inventory_complete')` を見て完了ボタンと Excel 出力ボタンを表示する
+4. ユーザーが完了操作を実行し、`POST /inventories/complete?actingFacilityId=...` を呼ぶ
+5. バックエンドが `inventory` と `inventory_complete` を再判定し、許可された場合だけ完了処理と出力処理を実行する
 
 ## 5. モックの位置づけ
 

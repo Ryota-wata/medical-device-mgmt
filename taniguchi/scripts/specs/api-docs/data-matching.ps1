@@ -693,7 +693,7 @@ $endpointSpecs = @(
   },
   @{
     Title = '突合完了 / 原本確定（/data-matching/sessions/{sessionId}/complete）'
-    Overview = '現在リストとの突合完了、または現在の統合リストを原本リストとして確定する。早期確定時は残りリストを `SKIPPED` として扱い、`asset_ledgers` を生成し、必要な `qr_codes.asset_ledger_id` を確定する。'
+    Overview = '現在リストとの突合完了、または現在の統合リストを原本リストとして確定する。早期確定時は残りリストを `SKIPPED` として扱い、`asset_ledgers` を生成し、現有品調査写真を資産写真として引き継ぎ、必要な `qr_codes.asset_ledger_id` を確定する。'
     Method = 'POST'
     Path = '/data-matching/sessions/{sessionId}/complete'
     Auth = '要（Bearer）'
@@ -723,9 +723,11 @@ $endpointSpecs = @(
       '原本確定時は、`qr_resolution_status=''CONFLICT''` の有効行（`item_status=''ACTIVE''`）が存在しないことを検証する。存在する場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に `conflictType=''UNRESOLVED''` を返す',
       '原本確定時は、`qr_resolution_status=''RESOLVED''` かつ `qr_identifier IS NOT NULL` の有効行（`item_status=''ACTIVE''`）について同一セッション内で重複がないことを検証し、`(facility_id, qr_identifier)` で `qr_codes` を排他取得する。未発行、論理削除済み、別資産へ紐付済み、または施設不整合がある場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に競合行ごとの詳細を返す',
       '原本確定時は `parent_asset_data_matching_item_id` を考慮した親優先順で `asset_ledgers` を作成し、`parent_asset_ledger_id` へ変換する。同時に対応する `asset_data_matching_items.created_asset_ledger_id` へ採番済み `asset_ledger_id` を保存し、結果確認画面や資産カルテ遷移の追跡キーとして保持する',
+      '原本確定時は、各有効統合リスト行の `SURVEY_RECORD` 元レコードに紐づく非削除の調査写真（`application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL`）を取得し、作成した `asset_ledgers.asset_ledger_id` に対する資産写真メタデータとして `application_documents.owner_type=''ASSET_LEDGER''` 行を作成する。元ファイルの `file_path` / `content_hash` / ファイル属性 / 撮影日時 / 撮影者を再利用し、物理ファイルは複製しない',
+      '写真引継ぎでは、元調査写真の `asset_survey_record_id` を引継ぎ先 `application_documents.asset_survey_record_id` に保持して provenance とし、`asset_ledger_id` には今回作成した原本資産IDを設定する。写真が1件以上ある原本資産では、元調査写真の代表写真を優先し、`asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` の順で `is_primary=true` を1件だけ設定する。台帳のみの `UNCONFIRMED_IMPORT` 行では写真引継ぎは行わない',
       '`qr_identifier` が設定された行は、対応する `qr_codes.asset_ledger_id` に今回作成した `asset_ledgers.asset_ledger_id` を設定し、更新は原本生成、`created_asset_ledger_id` 保存と同一トランザクションで完了させる',
-      '生成値の具体的なマッピングは第6章の `asset_data_matching_items -> asset_ledgers` ルールに従う',
-      '原本生成と QR 紐付け更新の完了後に、実行ユーザーを `asset_data_matching_sessions.confirmed_by_user_id`、サーバ時刻を `confirmed_at` へ保存した上でセッションを `CONFIRMED` に更新する',
+      '生成値の具体的なマッピングは第6章の `asset_data_matching_items -> asset_ledgers` ルール、写真引継ぎルール、QR 紐付け更新ルールに従う',
+      '原本生成、写真引継ぎ、QR 紐付け更新の完了後に、実行ユーザーを `asset_data_matching_sessions.confirmed_by_user_id`、サーバ時刻を `confirmed_at` へ保存した上でセッションを `CONFIRMED` に更新する',
       '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する',
       '`CONFIRMED` となったセッションは read-only とし、以後の一覧更新・突合登録・再確定は受け付けない'
     )
@@ -740,6 +742,7 @@ $endpointSpecs = @(
       @('nextPendingSessionListId', 'int64|null', '✓', '次に選択可能な未完了リストID。存在しない場合は null'),
       @('createdLedgerCount', 'int32', '✓', '原本確定時に生成した `asset_ledgers` 件数'),
       @('linkedQrCount', 'int32', '✓', '原本確定時に `qr_codes.asset_ledger_id` を設定した件数'),
+      @('createdPhotoCount', 'int32', '✓', '原本確定時に `application_documents.owner_type=''ASSET_LEDGER''` として作成した資産写真件数'),
       @('skippedListCount', 'int32', '✓', '途中確定により `SKIPPED` へ更新したリスト件数'),
       @('skippedLists', 'SkippedListSummary[]', '✓', '途中確定で `SKIPPED` としたリスト一覧'),
       @('confirmedAt', 'datetime', '-', '原本確定日時')
@@ -781,8 +784,8 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象セッションが Bearer トークン上の作業対象施設に属することを検証する',
       '初回要求で `lockVersion` 省略時は現在の `asset_data_matching_sessions.lock_version` を当該一覧の snapshot version として採用する。指定時は `cursor` に埋め込まれた `lockVersion` と一致し、かつ `session_status=''IN_PROGRESS''` の間は現在の `lock_version` と一致することを検証する。不一致時は 409 (`LIST_SNAPSHOT_EXPIRED`) を返却する',
-      '`asset_data_matching_items` のうち `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の有効行を現在の原本候補一覧として取得し、`source_summary`、現在代表台帳行、統合済み調査レコード一覧、原本直前スナップショット項目、原本確定必須項目の充足可否、`qrResolutionStatus`、`qrBindingCheckStatus`、`blockingReasons` を返却する',
-      '各統合リスト行について、`asset_data_matching_item_sources` から現在代表元の `sourceDetails`、`asset_data_matching_item_list_results` から対象リストごとの `listResults` を `source_order ASC` で返却する。`sourceDetails` の `SURVEY_RECORD` には元調査レコードごとの `qrIdentifier` を含め、`listResults` には `result_status=''ACTIVE''` / `''REVERTED''` の両方を含める。`created_asset_ledger_id` が設定済みの場合は `assetLedgerId` として返却する',
+      '`asset_data_matching_items` のうち `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の有効行を現在の原本候補一覧として取得し、`source_summary`、現在代表台帳行、統合済み調査レコード一覧、原本直前スナップショット項目、原本確定必須項目の充足可否、`qrResolutionStatus`、`qrBindingCheckStatus`、写真引継ぎ候補数、原本確定後の資産写真件数、代表資産写真ID、`blockingReasons` を返却する',
+      '各統合リスト行について、`asset_data_matching_item_sources` から現在代表元の `sourceDetails`、`asset_data_matching_item_list_results` から対象リストごとの `listResults` を `source_order ASC` で返却する。`sourceDetails` の `SURVEY_RECORD` には元調査レコードごとの `qrIdentifier` と非削除調査写真ドキュメントID一覧を含め、`listResults` には `result_status=''ACTIVE''` / `''REVERTED''` の両方を含める。`created_asset_ledger_id` が設定済みの場合は `assetLedgerId` として返却し、同資産に紐づく `application_documents.owner_type=''ASSET_LEDGER'' AND document_category=''PHOTO''` の件数と代表写真IDも返却する',
       'セッションが `CONFIRMED` の場合も、当該セッション確定時点の統合結果として同じ形式で返却する',
       '`canConfirmOriginal` は全件が原本確定必須項目と QR 解決・紐付け可否の両方を満たす場合のみ true とし、阻害件数を `unreadyItemCount` と `qrBlockingItemCount` で返却する',
       '`cursor` 指定時は既定ソート順と `lockVersion` を固定した snapshot の続き位置から取得し、`pageSize` 件を上限に返却する',
@@ -849,6 +852,9 @@ $endpointSpecs = @(
           @('unit', 'string|null', '✓', '数量単位'),
           @('purchasedOn', 'date', '-', '購入日'),
           @('sourceSummary', 'string', '-', '統合元サマリ'),
+          @('sourcePhotoCount', 'int32', '✓', '現在の `SURVEY_RECORD` 元レコードに紐づく非削除調査写真件数。未確定時は原本確定時の写真引継ぎ候補件数'),
+          @('assetPhotoCount', 'int32', '✓', '原本確定後に当該 `assetLedgerId` へ作成された資産写真件数。未確定時は 0'),
+          @('primaryAssetPhotoDocumentId', 'int64|null', '✓', '原本確定後に代表資産写真となった `application_documents.application_document_id`。未確定または写真なしの場合は null'),
           @('sourceDetails', 'SourceDetail[]', '✓', '現在代表元の詳細一覧'),
           @('listResults', 'ListResultSummary[]', '✓', '対象リストごとの判定履歴一覧'),
           @('blockingReasons', 'string[]', '✓', '原本確定を阻害している理由コード一覧。例: `MISSING_CATEGORY_ID`、`QR_UNRESOLVED`、`QR_NOT_ISSUED`'),
@@ -865,7 +871,9 @@ $endpointSpecs = @(
           @('sourceRelationType', 'string', '✓', '元反映区分。例: `MATCHED` / `UNREGISTERED` / `UNCONFIRMED`'),
           @('assetSurveyRecordId', 'int64|null', '✓', '`sourceType=''SURVEY_RECORD''` の場合の調査レコードID'),
           @('assetImportRowId', 'int64|null', '✓', '`sourceType=''IMPORT_ROW''` の場合の資産インポート行ID'),
-          @('qrIdentifier', 'string|null', '✓', '`sourceType=''SURVEY_RECORD''` の場合は当該調査レコードの QR 識別子、`IMPORT_ROW` の場合は null')
+          @('qrIdentifier', 'string|null', '✓', '`sourceType=''SURVEY_RECORD''` の場合は当該調査レコードの QR 識別子、`IMPORT_ROW` の場合は null'),
+          @('sourcePhotoDocumentIds', 'int64[]', '✓', '`sourceType=''SURVEY_RECORD''` の場合は当該調査レコードに紐づく非削除調査写真の `application_document_id` 一覧、`IMPORT_ROW` の場合は空配列'),
+          @('sourcePrimaryPhotoDocumentId', 'int64|null', '✓', '`sourceType=''SURVEY_RECORD''` の場合は当該調査レコードの代表調査写真ID。写真なしまたは `IMPORT_ROW` の場合は null')
         )
       },
       @{
@@ -903,8 +911,8 @@ $endpointSpecs = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\参考_作業用\API設計書_データ突合.docx'
   ScreenLabel = 'データ突合'
-  CoverDateText = '2026年4月23日'
-  RevisionDateText = '2026/4/23'
+  CoverDateText = '2026年4月27日'
+  RevisionDateText = '2026/4/27'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -914,7 +922,7 @@ $endpointSpecs = @(
       '現有品調査を基底としたデータ突合セッション開始 / 再開 I/F',
       '統合リスト、固定資産台帳、ME管理台帳の一覧取得と一致検索 I/F',
       '完全一致 / 部分一致 / 数量不一致 / 再確認 / 未登録 / 未確認の判定登録ルール',
-      '原本直前スナップショット、更新競合制御、`asset_ledgers` 生成と `qr_codes` 紐付けルール'
+      '原本直前スナップショット、更新競合制御、`asset_ledgers` 生成、現有品調査写真引継ぎ、`qr_codes` 紐付けルール'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = 'データ突合は、現有品調査リストを起点に整形済み台帳リスト（固定資産台帳 / ME管理台帳 / その他）を 1 リストずつ統合し、最終的な原本リストを確定する機能である。' },
@@ -938,7 +946,7 @@ $endpointSpecs = @(
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
-    @{ Type = 'Paragraph'; Text = '本 API 群は、現有品調査・資産台帳取込の後段で、複数リストを統合して原本台帳を生成するための I/F を提供する。`/data-matching` が主導線であり、セッション開始、一覧取得、判定登録、原本確定、および QR 遷移用の資産紐付け確定までを一連で扱う。' },
+    @{ Type = 'Paragraph'; Text = '本 API 群は、現有品調査・資産台帳取込の後段で、複数リストを統合して原本台帳を生成するための I/F を提供する。`/data-matching` が主導線であり、セッション開始、一覧取得、判定登録、原本確定、現有品調査写真の資産写真引継ぎ、および QR 遷移用の資産紐付け確定までを一連で扱う。' },
     @{ Type = 'Paragraph'; Text = '参考画面 `/data-matching/ledger` と `/data-matching/me-ledger` は、選択中セッションの台帳側候補を補助的に表示する位置づけであり、独立した正本 API 群は設けない。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
@@ -961,10 +969,11 @@ $endpointSpecs = @(
       @('asset_survey_sessions / asset_survey_records', '基底現有品調査の選定と統合リスト初期生成', 'asset_survey_session_id, asset_survey_record_id, qr_identifier, department_name, section_name, room_name, asset_item_id'),
       @('asset_import_jobs / asset_import_rows', '統合候補リスト選定、台帳側一覧取得、表示スナップショット反映', 'asset_import_job_id, status, import_type, asset_import_row_id, parsed_ledger_no, parsed_management_device_no, parsed_department_name, parsed_section_name, parsed_asset_name, parsed_manufacturer_name, parsed_model_name, parsed_quantity, parsed_unit'),
       @('asset_ledgers', '原本リスト確定時の作成先、確定後参照', 'asset_ledger_id, facility_id, facility_location_id, asset_no, equipment_no, category_id, large_class_name, medium_class_name, asset_item_name, asset_name, detail_type, parent_asset_ledger_id, quantity, unit'),
+      @('application_documents / asset_survey_photos / asset_photos', '現有品調査写真の参照と原本確定時の資産写真引継ぎ', 'application_document_id, owner_type, asset_survey_record_id, asset_ledger_id, document_category, file_name, file_path, content_hash, taken_at, taken_by_user_id, is_primary, deleted_at'),
       @('qr_codes', '原本確定時の QR 紐付け更新と QR 遷移有効化', 'qr_code_id, facility_id, qr_identifier, asset_ledger_id, updated_at, deleted_at'),
       @('asset_import_survey_mappings', '参考画面での個別対応補助管理。主導線の正本ではない', 'asset_import_survey_mapping_id, mapping_type, matching_status, confirm_status, decision_note'),
       @('facilities / facility_locations', '施設整合検証、部門 / 部署 / 室表示', 'facility_id, facility_name, department_name, section_name, room_name'),
-      @('asset_categories / asset_large_classes / asset_medium_classes / asset_items / manufacturers / models', 'フィルタ候補、正規分類 / 表示スナップショット整合', '各マスタID, 表示名, deleted_at')
+      @('asset_categories / asset_large_classes / asset_medium_classes / asset_items / manufacturers / models', 'フィルタ候補、正規分類 / 表示スナップショット整合', '各マスタID, 表示名, is_active')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -1120,13 +1129,25 @@ $endpointSpecs = @(
       '対応する `asset_ledgers` 作成後に `qr_codes.asset_ledger_id` へ採番済み `asset_ledger_id` を設定し、更新は原本生成と同一トランザクションで完了させる',
       '原本確定後の QR 再発行、貼替え、別資産への付替えは本 API の責務に含めず、QR発行・台帳保守側の機能で扱う'
     ) },
+    @{ Type = 'Heading2'; Text = '原本確定時の写真引継ぎルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '写真引継ぎ対象は、`merged_into_item_id IS NULL AND item_status=''ACTIVE''` の統合リスト行に紐づく `asset_data_matching_item_sources.source_type=''SURVEY_RECORD''` の元調査レコードとする',
+      '対象調査レコードに紐づく `application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL` の写真を取得し、`application_document_id` 昇順ではなく、`asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` を安定順として処理する',
+      '引継ぎ先は `application_documents.owner_type=''ASSET_LEDGER''` / `document_category=''PHOTO''` の新規行とし、`asset_ledger_id` には今回作成した `asset_ledgers.asset_ledger_id`、`asset_survey_record_id` には元調査レコードIDを設定して provenance を保持する',
+      'ファイル実体は複製せず、元調査写真の `file_name` / `file_path` / `mime_type` / `file_size_bytes` / `content_hash` / `storage_format` / `taken_at` / `taken_by_user_id` / `sort_order` を再利用する。`uploaded_by_user_id` / `uploaded_at` は原本確定実行者とサーバ時刻を設定する',
+      '同一原本資産へ複数調査レコードが統合される場合は、全ての非削除調査写真を引き継ぐ。ただし同一 `content_hash` と `file_path` の組み合わせが重複する場合は1件に正規化する',
+      '代表写真は、元調査写真で `is_primary=true` のものを優先する。候補が複数または存在しない場合は `asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` の先頭1件を `is_primary=true` とし、同一 `asset_ledger_id` の他写真は `is_primary=false` とする',
+      '現有品調査レコードを含まない台帳のみ行（`creation_type=''UNCONFIRMED_IMPORT''` / `source_type=''IMPORT_ROW''` のみ）は写真引継ぎを行わず、写真なしでも原本確定を阻害しない',
+      '写真引継ぎ、`asset_ledgers` 作成、`asset_data_matching_items.created_asset_ledger_id` 保存、QR 紐付け更新は同一トランザクションで完了させ、いずれかが失敗した場合は原本確定全体をロールバックする'
+    ) },
     @{ Type = 'Heading2'; Text = '原本確定時の生成順序' },
     @{ Type = 'Bullets'; Items = @(
       '原本確定前に、対象セッションの `asset_data_matching_items` のうち `merged_into_item_id IS NULL AND item_status=''ACTIVE''` の有効行について必須項目の充足を検証し、不足行が1件でもあれば確定を中止する',
       '生成順序は `merged_into_item_id IS NULL AND item_status=''ACTIVE''` かつ `parent_asset_data_matching_item_id IS NULL` の行から開始し、親の `asset_ledger_id` が確定した後に子行の `parent_asset_ledger_id` へ設定する',
       '`qr_resolution_status=''RESOLVED''` かつ `qr_identifier` が設定された行は、対応する `asset_ledger_id` が確定した時点で `qr_codes.asset_ledger_id` を更新し、未解決または競合があれば 409 エラーとして原本確定を失敗させる',
+      '各行の `asset_ledger_id` が確定した時点で、当該行の `SURVEY_RECORD` 元レコードに紐づく非削除調査写真を `application_documents.owner_type=''ASSET_LEDGER''` の資産写真として引き継ぐ',
       '親参照が欠落している行、循環参照、または別セッション行を参照する親子関係は 409 エラーとして原本確定を失敗させる',
-      '原本生成と QR 紐付け更新が完了した後に `asset_data_matching_sessions.session_status` を `CONFIRMED` とし、同セッションを read-only 化する'
+      '原本生成、写真引継ぎ、QR 紐付け更新が完了した後に `asset_data_matching_sessions.session_status` を `CONFIRMED` とし、同セッションを read-only 化する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 権限・業務ルール' },
@@ -1163,7 +1184,7 @@ $endpointSpecs = @(
     @{ Type = 'Bullets'; Items = @(
       '現在リスト完了（`COMPLETE_LIST`）は、当該リストに対する未判定の統合リスト行と未処理台帳行が 0 件の場合のみ許可する',
       '残りリストがある状態で原本確定する場合は `skipRemaining=true` を必須とし、残存 `PENDING` リストを `SKIPPED` として監査可能に残す',
-      '原本確定時は `asset_data_matching_items` の原本直前スナップショットを使って `asset_ledgers` を作成し、`qr_resolution_status=''RESOLVED''` かつ `qr_identifier` がある行は対応する `qr_codes.asset_ledger_id` も同一トランザクションで更新する。原本生成時に元の `asset_survey_records` / `asset_import_rows` を再解釈しない',
+      '原本確定時は `asset_data_matching_items` の原本直前スナップショットを使って `asset_ledgers` を作成し、`SURVEY_RECORD` 元レコードの非削除調査写真は `application_documents.owner_type=''ASSET_LEDGER''` の資産写真として引き継ぐ。`qr_resolution_status=''RESOLVED''` かつ `qr_identifier` がある行は対応する `qr_codes.asset_ledger_id` も同一トランザクションで更新する。原本生成時に元の `asset_survey_records` / `asset_import_rows` を再解釈しない',
       '原本確定可否の正本は `result` / `context` が返す `canConfirmOriginal`、`unreadyItemCount`、`qrBlockingItemCount`、各 item の `blockingReasons` とする',
       '確定後の台帳編集、QR 再発行、QR 貼替え、別資産への付替え責務は本 API 群に含めず、以後の台帳保守・QR発行機能で扱う'
     ) },
@@ -1213,7 +1234,7 @@ $endpointSpecs = @(
       '画面表示時は `/data-matching/context` で進行中セッション有無を確認し、既存セッションがあれば必ずそれを再開する',
       '共通フィルタ候補と一致検索条件の UI 変更時は、`merged-items` / `fixed-asset-ledger-items` / `me-ledger-items` のクエリ仕様と `cursor` 継続取得仕様を同時に見直す',
       '原本確定前のレビューは `/data-matching/sessions/{sessionId}/result` を正本とし、クライアント側で独自に統合結果を再計算しない',
-      '原本確定後の `asset_ledgers` 件数が `mergedItemCount` と一致し、`qrResolutionStatus=''RESOLVED''` の確定行は対応する `qr_codes.asset_ledger_id` が設定されていることを監査対象とする'
+      '原本確定後の `asset_ledgers` 件数が `mergedItemCount` と一致し、`sourcePhotoCount > 0` の確定行は対応する `application_documents.owner_type=''ASSET_LEDGER''` の資産写真と代表写真が作成され、`qrResolutionStatus=''RESOLVED''` の確定行は対応する `qr_codes.asset_ledger_id` が設定されていることを監査対象とする'
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(

@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_SHIP施設マスタ.docx'
   ScreenLabel = 'SHIP施設マスタ'
-  CoverDateText = '2026年4月18日'
-  RevisionDateText = '2026/4/18'
+  CoverDateText = '2026年4月27日'
+  RevisionDateText = '2026/4/27'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -13,30 +13,33 @@
       '一覧表示および絞り込み条件の I/F',
       '設立母体候補取得と新規設立母体登録ルール',
       '施設マスタの新規作成・更新・削除 I/F',
+      '施設提供機能・提供カラム設定の取得・保存 I/F',
       'エクスポート処理の I/F',
       '権限・バリデーション・エラーレスポンス'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = 'SHIP施設マスタは、施設コード、施設名、都道府県、設立母体、病床数などの施設マスタを参照・管理する画面である。ヘッダーの表示件数、一覧絞り込み、エクスポート、新規作成、編集、削除を提供する。' },
+    @{ Type = 'Paragraph'; Text = 'SHIP施設マスタは、施設コード、施設名、都道府県、設立母体、病床数などの施設マスタを参照・管理する画面である。ヘッダーの表示件数、一覧絞り込み、エクスポート、新規作成、編集、削除に加えて、施設単位の提供機能・提供カラム設定を提供する。' },
     @{ Type = 'Paragraph'; Text = '設立母体は既存候補から選択でき、新規名称が入力された場合は設立母体登録後に施設へ紐づける。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('SHIP施設マスタ', 'SHIP側で参照・管理する施設マスタ画面およびその対象データ'),
       @('設立母体', '施設の上位組織。`establishments` で管理する'),
       @('施設マスタ', '施設コード、施設名、都道府県、病床数などを保持する `facilities` の業務概念'),
-      @('作業対象施設', '認可判定の基準となる選択中施設。Bearer トークン上のコンテキストとして扱う')
+      @('作業対象施設', '認可判定の基準となる選択中施設。Bearer トークン上のコンテキストとして扱う'),
+      @('施設提供機能', '対象施設で利用可能にする `feature_code`。`facility_feature_settings` で管理する'),
+      @('施設提供カラム', '対象施設で表示可能にする `column_code`。`facility_column_settings` で管理する')
     ) },
     @{ Type = 'Heading2'; Text = '対象画面' },
     @{ Type = 'Table'; Headers = @('項目', '内容'); Rows = @(
       @('画面名', '18. SHIP施設マスタ画面'),
       @('画面URL', '/ship-facility-master'),
-      @('主機能', '施設一覧の検索、設立母体候補取得、エクスポート、施設作成、更新、削除')
+      @('主機能', '施設一覧の検索、設立母体候補取得、エクスポート、施設作成、更新、削除、施設提供機能・提供カラム設定')
     ) },
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
-    @{ Type = 'Paragraph'; Text = '本API群は、SHIP施設マスタ画面の一覧参照、設立母体候補取得、エクスポート、施設登録、施設更新、施設削除を提供する。' },
-    @{ Type = 'Paragraph'; Text = '画面は `establishments` と `facilities` を主に参照し、設立母体の新規入力時のみ `establishments` の作成を伴う。施設基本情報として、都道府県と病床数も本APIで扱う。' },
+    @{ Type = 'Paragraph'; Text = '本API群は、SHIP施設マスタ画面の一覧参照、設立母体候補取得、エクスポート、施設登録、施設更新、施設削除、施設提供機能・提供カラム設定の取得と保存を提供する。' },
+    @{ Type = 'Paragraph'; Text = '画面は `establishments` と `facilities` を主に参照し、設立母体の新規入力時のみ `establishments` の作成を伴う。施設基本情報として、都道府県と病床数も本APIで扱う。施設提供設定は `feature_catalogs` / `column_catalogs` を候補正本とし、`facility_feature_settings` / `facility_column_settings` へ保存する。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
       '画面初期表示およびフィルタ変更時に施設マスタ一覧取得 API を呼び出す',
@@ -44,12 +47,17 @@
       'エクスポート押下時にエクスポート API を呼び出す',
       '新規作成モーダルの登録押下時に施設マスタ新規作成 API を呼び出す',
       '編集モーダルの更新押下時に施設マスタ更新 API を呼び出す',
-      '削除確認モーダルの OK 押下時に施設マスタ削除 API を呼び出す'
+      '削除確認モーダルの OK 押下時に施設マスタ削除 API を呼び出す',
+      '施設提供機能設定 UI 表示時に施設提供設定取得 API を呼び出し、保存時に施設提供設定保存 API を呼び出す'
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '用途', '主な利用カラム'); Rows = @(
       @('establishments', '設立母体候補表示、新規設立母体登録', 'establishment_id, establishment_name'),
-      @('facilities', '一覧表示、施設登録、施設更新、施設削除', 'facility_id, establishment_id, facility_code, facility_name, prefecture, bed_count, system_contract_status, deleted_at')
+      @('facilities', '一覧表示、施設登録、施設更新、施設削除、施設提供設定対象施設の確認', 'facility_id, establishment_id, facility_code, facility_name, prefecture, bed_count, system_contract_status, deleted_at'),
+      @('feature_catalogs', '施設提供機能候補の正本', 'feature_code, feature_name, category_code, config_scope'),
+      @('column_catalogs', '施設提供カラム候補の正本', 'column_code, column_name, related_feature_code'),
+      @('facility_feature_settings', '施設単位の提供機能設定', 'facility_id, feature_code, is_enabled'),
+      @('facility_column_settings', '施設単位の提供カラム設定', 'facility_id, column_code, is_enabled')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -69,16 +77,19 @@
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。施設を論理削除しても関連認可設定は保持するが、削除済み施設は `/auth/me`、`/auth/context`、業務 API の対象外とする。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('施設マスタ / 一覧', '`facility_master_list`', '一覧表示、設立母体候補取得、エクスポート'),
-      @('施設マスタ / 新規作成・編集', '`facility_master_edit`', '新規作成、更新、削除')
+      @('施設マスタ / 新規作成・編集', '`facility_master_edit`', '新規作成、更新、削除'),
+      @('施設提供機能 / 編集', '`facility_feature_edit`', '施設提供機能・提供カラム設定の取得、保存')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
       @('一覧表示 / 設立母体候補取得 / エクスポート', '`facility_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照系の処理'),
-      @('新規作成 / 更新 / 削除', '`facility_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '施設マスタ管理処理')
+      @('新規作成 / 更新 / 削除', '`facility_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '施設マスタ管理処理'),
+      @('施設提供設定取得 / 施設提供設定保存', '`facility_feature_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '施設単位の提供機能・提供カラム設定処理')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
       '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
       '一覧・エクスポートの返却対象は施設マスタ全件とし、個票データ閲覧で用いる他施設公開設定は適用しない',
+      '施設提供機能・提供カラム設定の編集は `facility_feature_edit` で制御する',
       '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
@@ -104,7 +115,9 @@
       @('施設マスタエクスポート', 'GET', '/ship-facility-master/facilities/export', '現在の絞り込み条件で Excel を出力する', '要'),
       @('施設マスタ新規作成', 'POST', '/ship-facility-master/facilities', '施設マスタを新規登録する', '要'),
       @('施設マスタ更新', 'PUT', '/ship-facility-master/facilities/{facilityId}', '施設マスタを更新する', '要'),
-      @('施設マスタ削除', 'DELETE', '/ship-facility-master/facilities/{facilityId}', '施設マスタを削除する', '要')
+      @('施設マスタ削除', 'DELETE', '/ship-facility-master/facilities/{facilityId}', '施設マスタを削除する', '要'),
+      @('施設提供設定取得', 'GET', '/ship-facility-master/facilities/{facilityId}/feature-settings', '対象施設の提供機能・提供カラム設定を取得する', '要'),
+      @('施設提供設定保存', 'PUT', '/ship-facility-master/facilities/{facilityId}/feature-settings', '対象施設の提供機能・提供カラム設定を保存する', '要')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 SHIP施設マスタ機能設計' },
@@ -240,7 +253,7 @@
         )
         ResponseLines = @(
           'Body: フィルタ適用後の施設マスタ一覧を Excel バイナリで返却する。',
-          '出力列の詳細は画面要件に未定義のため、本設計では少なくとも一覧表示項目（都道府県、設立母体、施設コード、施設名、病床数）を含むものとする。'
+          '出力列は一覧表示項目に合わせ、都道府県、設立母体、施設コード、施設名、病床数をこの順で含める。'
         )
         StatusRows = @(
           @('200', '出力成功', 'Excel File'),
@@ -391,6 +404,141 @@
           @('404', '対象施設が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
+      },
+      @{
+        Title = '施設提供設定取得（/ship-facility-master/facilities/{facilityId}/feature-settings）'
+        Overview = '対象施設で提供する機能およびカラムの現在設定を取得する。施設提供機能設定 UI の初期表示に利用する。'
+        Method = 'GET'
+        Path = '/ship-facility-master/facilities/{facilityId}/feature-settings'
+        Auth = '要（Bearer）'
+        ParametersTitle = 'リクエストパラメータ'
+        ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
+        ParametersRows = @(
+          @('facilityId', 'path', 'int64', '✓', '設定取得対象の施設ID')
+        )
+        PermissionLines = @(
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_feature_edit` が有効であること'
+        )
+        ProcessingLines = @(
+          '対象施設が存在し、未削除であることを確認する',
+          '`feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は候補に含めない。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として候補に含める',
+          '`lending_in_use_used` は `lending_checkout` の子機能として扱う。画面は `lending_checkout` が OFF の場合に `lending_in_use_used` を非活性または自動 OFF として表示する',
+          '`column_catalogs` から施設提供カラム候補を取得し、`related_feature_code` を併せて返却する',
+          '`facility_feature_settings` と `facility_column_settings` の既存値を左結合し、設定行がない候補は `isEnabled=false` として返却する',
+          'カラム候補は、関連 `feature_code` が施設提供機能として有効化されていない場合 `isSelectable=false` として返却する'
+        )
+        ResponseTitle = 'レスポンス（200：FacilityFeatureSettingsResponse）'
+        ResponseHeaders = @('フィールド', '型', '必須', '説明')
+        ResponseRows = @(
+          @('facilityId', 'int64', '✓', '設定対象施設ID'),
+          @('featureSettings', 'FacilityFeatureSettingItem[]', '✓', '施設提供機能候補と現在値'),
+          @('columnSettings', 'FacilityColumnSettingItem[]', '✓', '施設提供カラム候補と現在値')
+        )
+        ResponseSubtables = @(
+          @{
+            Title = 'featureSettings要素（FacilityFeatureSettingItem）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = @(
+              @('featureCode', 'string', '✓', '`feature_catalogs.feature_code`'),
+              @('featureName', 'string', '✓', '機能表示名'),
+              @('categoryCode', 'string', '✓', 'カテゴリコード'),
+              @('configScope', 'string', '✓', '`FACILITY` または `FACILITY_USER`。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER`'),
+              @('isEnabled', 'boolean', '✓', '対象施設で提供するかどうか')
+            )
+          },
+          @{
+            Title = 'columnSettings要素（FacilityColumnSettingItem）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = @(
+              @('columnCode', 'string', '✓', '`column_catalogs.column_code`'),
+              @('columnName', 'string', '✓', 'カラム表示名'),
+              @('relatedFeatureCode', 'string', '✓', '関連する `feature_code`'),
+              @('isEnabled', 'boolean', '✓', '対象施設で提供するかどうか'),
+              @('isSelectable', 'boolean', '✓', '関連 `feature_code` が施設提供機能として有効で、ON にできるかどうか')
+            )
+          }
+        )
+        StatusRows = @(
+          @('200', '取得成功', 'FacilityFeatureSettingsResponse'),
+          @('401', '未認証', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `facility_feature_edit` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('500', 'サーバー内部エラー', 'ErrorResponse')
+        )
+      },
+      @{
+        Title = '施設提供設定保存（/ship-facility-master/facilities/{facilityId}/feature-settings）'
+        Overview = '対象施設で提供する機能およびカラムの設定を保存する。'
+        Method = 'PUT'
+        Path = '/ship-facility-master/facilities/{facilityId}/feature-settings'
+        Auth = '要（Bearer）'
+        ParametersTitle = 'リクエストパラメータ'
+        ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
+        ParametersRows = @(
+          @('facilityId', 'path', 'int64', '✓', '設定保存対象の施設ID')
+        )
+        RequestTitle = 'リクエスト（FacilityFeatureSettingsUpdateRequest）'
+        RequestHeaders = @('フィールド', '型', '必須', '説明')
+        RequestRows = @(
+          @('enabledFeatureCodes', 'string[]', '✓', '対象施設で提供する `feature_code` 一覧'),
+          @('enabledColumnCodes', 'string[]', '✓', '対象施設で提供する `column_code` 一覧')
+        )
+        PermissionLines = @(
+          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_feature_edit` が有効であること'
+        )
+        ProcessingLines = @(
+          '対象施設が存在し、未削除であることを確認する',
+          '`enabledFeatureCodes` は `feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の候補集合の部分集合でなければならない。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は受け付けない。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
+          '`enabledFeatureCodes` に `lending_in_use_used` を含める場合は `lending_checkout` も含めなければならない。含まれない場合は 400 (`FACILITY_SETTING_CODE_INVALID`) とする',
+          '既存設定で `lending_in_use_used=true` の施設について、リクエストで `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、未返却の `使用中` / `使用済` 状態が存在しないことを確認する。具体的には `lending_devices.status IN (''使用中'',''使用済'')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN (''使用中'',''使用済'')` が存在する場合は 409 (`LENDING_IN_USE_USED_ACTIVE_EXISTS`) とする。返却済み履歴や対象施設外の機器は OFF 拒否条件に含めない',
+          '`enabledColumnCodes` は `column_catalogs` の候補集合の部分集合でなければならない',
+          '`enabledColumnCodes` に含む各 `column_code` は、`column_catalogs.related_feature_code` が `enabledFeatureCodes` に含まれている場合のみ有効化できる',
+          '候補集合の各 `feature_code` について `facility_feature_settings` を UPSERT し、`enabledFeatureCodes` に含むコードを `is_enabled=true`、含まないコードを `false` とする',
+          '候補集合の各 `column_code` について `facility_column_settings` を UPSERT し、`enabledColumnCodes` に含み、かつ関連 `feature_code` が有効なコードを `is_enabled=true`、それ以外を `false` とする',
+          'ユーザー施設別設定（`user_facility_feature_settings` / `user_facility_column_settings`）は本 API では更新しない。`config_scope=''FACILITY_USER''` の施設提供設定が OFF になったコードは、既存ユーザー設定が残っていても実効権限としては無効になる。`normal_ship_request` / `lending_in_use_used` もこの対象であり、`lending_in_use_used` の実効利用には親 `lending_checkout` の実効権限も必要とする'
+        )
+        ResponseTitle = 'レスポンス（200：FacilityFeatureSettingsResponse）'
+        ResponseHeaders = @('フィールド', '型', '必須', '説明')
+        ResponseRows = @(
+          @('facilityId', 'int64', '✓', '設定対象施設ID'),
+          @('featureSettings', 'FacilityFeatureSettingItem[]', '✓', '保存後の施設提供機能候補と現在値'),
+          @('columnSettings', 'FacilityColumnSettingItem[]', '✓', '保存後の施設提供カラム候補と現在値')
+        )
+        ResponseSubtables = @(
+          @{
+            Title = 'featureSettings要素（FacilityFeatureSettingItem）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = @(
+              @('featureCode', 'string', '✓', '`feature_catalogs.feature_code`'),
+              @('featureName', 'string', '✓', '機能表示名'),
+              @('categoryCode', 'string', '✓', 'カテゴリコード'),
+              @('configScope', 'string', '✓', '`FACILITY` または `FACILITY_USER`。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER`'),
+              @('isEnabled', 'boolean', '✓', '対象施設で提供するかどうか')
+            )
+          },
+          @{
+            Title = 'columnSettings要素（FacilityColumnSettingItem）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = @(
+              @('columnCode', 'string', '✓', '`column_catalogs.column_code`'),
+              @('columnName', 'string', '✓', 'カラム表示名'),
+              @('relatedFeatureCode', 'string', '✓', '関連する `feature_code`'),
+              @('isEnabled', 'boolean', '✓', '対象施設で提供するかどうか'),
+              @('isSelectable', 'boolean', '✓', '関連 `feature_code` が施設提供機能として有効で、ON にできるかどうか')
+            )
+          }
+        )
+        StatusRows = @(
+          @('200', '保存成功', 'FacilityFeatureSettingsResponse'),
+          @('400', '未知のコード、固定導線コード指定、親 feature 不足、または関連 feature が無効な column_code 指定', 'ErrorResponse'),
+          @('401', '未認証', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `facility_feature_edit` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('409', '`lending_in_use_used` を OFF にできない未返却の使用中/使用済データが存在する', 'ErrorResponse'),
+          @('500', 'サーバー内部エラー', 'ErrorResponse')
+        )
       }
     ) },
 
@@ -400,7 +548,18 @@
       @('一覧表示', '`facility_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_list` を持つこと', '施設一覧と表示件数を参照する'),
       @('設立母体候補取得', '`facility_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_list` を持つこと', '既存設立母体候補を取得する'),
       @('エクスポート', '`facility_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_list` を持つこと', '絞り込み結果を Excel で取得する'),
-      @('新規作成 / 更新 / 削除', '`facility_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_edit` を持つこと', '施設マスタを管理する')
+      @('新規作成 / 更新 / 削除', '`facility_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_edit` を持つこと', '施設マスタを管理する'),
+      @('施設提供設定取得 / 保存', '`facility_feature_edit`', 'Bearer トークン上の作業対象施設に対して実効 `facility_feature_edit` を持つこと', '施設提供機能・提供カラムを管理する')
+    ) },
+    @{ Type = 'Heading2'; Text = '施設提供設定ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '施設提供機能の候補は `feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` とし、`auth_login` / `facility_select` などの固定導線は対象外とする。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として施設提供機能候補に含める',
+      '`lending_in_use_used` は `lending_checkout` の子機能であり、`lending_checkout` が OFF の場合は ON にできない。保存 API は `lending_in_use_used=true` かつ `lending_checkout=false` の組み合わせを拒否する',
+      '`lending_in_use_used` を ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、`lending_devices.status IN (''使用中'',''使用済'')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN (''使用中'',''使用済'')` が存在しないことを検証する。存在する場合は 409 で拒否し、運用上は該当機器を返却完了してから OFF にする',
+      '施設提供カラムの候補は `column_catalogs` を正本とする',
+      '施設提供カラムは、`column_catalogs.related_feature_code` に対応する施設提供機能が ON の場合のみ ON にできる',
+      '施設提供設定を OFF にしてもユーザー施設別設定は削除しない。`config_scope=''FACILITY_USER''` では実効権限判定時に施設提供設定が OFF であれば、ユーザー側が ON でも利用不可とする。`normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象であり、`lending_in_use_used` の実効利用には親 `lending_checkout` の実効権限も必要とする',
+      '施設削除時は `facility_feature_settings` / `facility_column_settings` を削除せず保持する'
     ) },
     @{ Type = 'Heading2'; Text = '設立母体登録ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -423,9 +582,10 @@
       '論理削除済み施設は一覧、候補、エクスポート、認可判定、業務データ参照の対象外とする',
       '施設論理削除時も関連認可設定は削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する'
     ) },
-    @{ Type = 'Heading2'; Text = '未確定事項' },
+    @{ Type = 'Heading2'; Text = 'エクスポート出力ルール' },
     @{ Type = 'Bullets'; Items = @(
-      'エクスポート API の詳細出力列は画面要件に明記がないため、一覧表示項目を最低限の出力対象としている'
+      'エクスポート API の出力列は一覧表示項目に合わせ、都道府県、設立母体、施設コード、施設名、病床数の順とする',
+      '検索条件、認可条件、論理削除済み施設の除外条件は一覧取得 API と同一とする'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
@@ -434,8 +594,11 @@
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
       @('AUTH_403_FACILITY_MASTER_LIST_DENIED', '403', '作業対象施設に対する実効 `facility_master_list` がない'),
       @('AUTH_403_FACILITY_MASTER_EDIT_DENIED', '403', '作業対象施設に対する実効 `facility_master_edit` がない'),
+      @('AUTH_403_FACILITY_FEATURE_EDIT_DENIED', '403', '作業対象施設に対する実効 `facility_feature_edit` がない'),
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('ESTABLISHMENT_NOT_FOUND', '404', '指定した設立母体が存在しない、または削除済み'),
+      @('FACILITY_SETTING_CODE_INVALID', '400', '施設提供設定に未知の feature_code / column_code、固定導線コード、親 feature 不足、または関連 feature が無効な column_code が指定された'),
+      @('LENDING_IN_USE_USED_ACTIVE_EXISTS', '409', '`lending_in_use_used` を OFF にできない未返却の使用中/使用済貸出データが存在する'),
       @('FACILITY_CODE_DUPLICATE', '409', '論理削除済み施設を含めて施設コードが重複している'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },

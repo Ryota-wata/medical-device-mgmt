@@ -39,7 +39,7 @@
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、QR発行画面で入力された条件を検証してプレビュー情報を返却し、印刷画面で印刷ジョブ開始受付・状態参照・印刷結果反映を行うための I/F を提供する。' },
-    @{ Type = 'Paragraph'; Text = 'テンプレート定義本体はアプリ内固定、プリンタ候補は端末のローカル印刷モジュール依存とし、本API群ではこれらのマスタ配信は行わない。' },
+    @{ Type = 'Paragraph'; Text = 'テンプレート定義本体はテプラクリエイターで事前作成したファイルをフロントエンド資材として保持する。プリンタ候補はフロントエンドが端末のテプラ連携/ローカル印刷モジュールから取得する。本API群ではテンプレート一覧取得API、プリンタ候補取得API、DBマスタ配信は行わない。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
       '新規発行/再発行条件の入力後、印刷画面へ遷移する前にプレビュー生成 API を呼び出す',
@@ -67,21 +67,30 @@
       '日時形式: ISO 8601（例: `2026-04-22T10:30:00+09:00`）',
       'プレビューの QRシンボル自体は base64 PNG 文字列または同等の表示用データを返却する',
       '印刷用の最終確定データは印刷ジョブ開始受付 API のレスポンスを正本とし、クライアントはそれをローカル印刷モジュールへ渡す',
-      'QRシンボルへ埋め込む遷移用URLは、アプリ設定ベースURLに `facilityId` と `qrIdentifier` の両方をクエリとして付与した形式を用いる',
-      '`qrContentUrl` は `facilityId` / `qrIdentifier` / アプリ設定ベースURLから決定的に生成する派生値であり、DBへは保存しない'
+      'QRシンボルへ埋め込む遷移用URLは、アプリ設定ベースURLに `facilityId` と `qr_identifier` の両方をクエリとして付与した形式を用いる',
+      '`qrContentUrl` は `facilityId` / `qr_identifier` / アプリ設定ベースURLから決定的に生成する派生値であり、DBへは保存しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート定義本体とプリンタ候補取得はアプリ内固定/ローカルモジュール前提のため、本APIの権限制御対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールの取得結果として扱うため、本APIの権限制御対象外とする。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('QRコード発行', '`qr_issue`', 'プレビュー生成、印刷ジョブ開始受付、印刷ジョブ取得、印刷結果反映')
     ) },
-    @{ Type = 'Table'; Headers = @('処理', '必要権限', '説明'); Rows = @(
-      @('プレビュー生成', '対象施設に対する実効 `qr_issue`', '新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
-      @('印刷ジョブ開始受付', '対象施設に対する実効 `qr_issue`', '印刷開始受付と `qr_codes` / `qr_print_job_items` の確定を行う'),
-      @('印刷ジョブ取得', '対象ジョブ施設に対する実効 `qr_issue`', '印刷プレビュー画面の表示情報と現在の結果を取得する'),
-      @('印刷結果反映', '対象ジョブ施設に対する実効 `qr_issue`', 'ローカル印刷モジュールの実行結果を `qr_codes` / 印刷結果へ反映する')
+    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
+      @('プレビュー生成', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
+      @('印刷ジョブ開始受付', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '印刷開始受付と `qr_codes` / `qr_print_job_items` の確定を行う'),
+      @('印刷ジョブ取得', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '印刷プレビュー画面の表示情報と現在の結果を取得する'),
+      @('印刷結果反映', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'ローカル印刷モジュールの実行結果を `qr_codes` / 印刷結果へ反映する')
+    ) },
+    @{ Type = 'Heading2'; Text = '永続化とトランザクション境界' },
+    @{ Type = 'Bullets'; Items = @(
+      '`POST /qr-issue/preview` は入力検証と採番候補/再発行対象の導出だけを行い、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` は永続化しない',
+      '`POST /qr-print/jobs` は 1 回の印刷開始受付を 1 DB トランザクションで完結させ、`qr_print_jobs` の作成、新規発行時の `qr_codes` 作成または再発行時の `qr_codes` 更新、`qr_print_job_items` の全件作成を同一トランザクションで行う',
+      '新規発行時の採番競合は `(facility_id, code_prefix, code_branch)` 単位でサーバー側再採番またはリトライして解消し、解消できない場合のみ 409 を返す',
+      '`GET /qr-print/jobs/{qrPrintJobId}` は参照専用であり、ジョブ・明細・QRコードの保存値は更新しない。`qrContentUrl` は保存値ではなく、取得時に `facilityId` と `qr_identifier` から再生成する',
+      '`POST /qr-print/jobs/{qrPrintJobId}/result` は 1 回の結果反映を 1 DB トランザクションで完結させ、`qr_print_job_items`、`qr_codes.print_status` / `printed_at`、`qr_print_jobs` の集計列を同時更新する。新しい `qr_codes` 採番や `qr_print_job_items` 追加作成は行わない',
+      'テンプレート定義本体はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュール側の責務とし、サーバーDBには保存しない。テンプレート一覧取得APIおよびプリンタ候補取得APIは設けない'
     ) },
     @{ Type = 'Heading2'; Text = '施設スコープ仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -152,6 +161,17 @@
           '再発行時は指定した `reissueStartQrIdentifier` を起点に、既存 `qr_codes` を連番で件数分取得し、1件でも欠番がある場合はエラーとする',
           'プレビュー生成時点では `qr_codes` / `qr_print_jobs` / `qr_print_job_items` を保存しない',
           'テンプレート定義本体はアプリ内固定のため、`templateKey` の妥当性だけを検証する'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_codes` / `qr_print_jobs` / `qr_print_job_items`', '行作成・更新なし', '永続化しない', '本 API はプレビュー生成のみを行う'),
+              @('保存対象外入力', 'リクエスト `templateKey` / `freeEntryText` / `issueCount` / `codePrefix` / `codeBranch` / `startSerial` / `reissueStartQrIdentifier`', 'レスポンス生成と後続印刷開始要求の材料としてのみ利用する', 'DB 保存は `POST /qr-print/jobs` で行う'),
+              @('保存対象外派生値', 'レスポンス `items[*].previewImageBase64` / `rangeStartQrIdentifier` / `rangeEndQrIdentifier`', '都度生成して返却する', '`previewImageBase64` と採番範囲は保存しない')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（200：QrIssuePreviewResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -225,11 +245,51 @@
           '入力値、`clientRequestId` の形式、`printOrder` 重複、件数整合を検証し、比較用に開始受付ペイロードを正規化する',
           '正規化ルールは、`items` を `printOrder` 昇順で並べ、未指定と `null` は同値として扱う対象項目を統一し、比較対象を `facilityId` / `issueMode` / `templateKey` / `printerName` / `freeEntryText` / `items[*].printOrder` / `items[*].qrIdentifier` / `items[*].existingQrCodeId` とする',
           '正規化済み開始受付ペイロードから `requestPayloadHash` を生成する。同一ユーザー・同一施設・同一 `clientRequestId` の再送は冪等に扱い、既存 `request_payload_hash` と一致する場合は既存ジョブを返し、不一致の場合は 409 を返す',
+          '冪等再送として既存ジョブを返す場合は、`qr_print_jobs` / `qr_codes` / `qr_print_job_items` の新規作成・更新を行わない',
           '`qr_print_jobs` に1件作成し、`client_request_id`、`request_payload_hash`、`requested_by_user_id`、`requested_at`、`started_at`、`status=''IN_PROGRESS''` を設定する。`started_at` は印刷開始受付完了時刻とする',
-          '新規発行時は `(facility_id, qr_identifier)` と `(facility_id, code_prefix, code_branch, code_serial)` の重複を再検証したうえで `qr_codes` を作成し、`issued_by_user_id` / `issued_at` / `print_status=''PRINTING''` / `last_print_job_id` を設定する',
-          '再発行時は既存 `qr_codes` を再取得し、存在確認と `existingQrCodeId` / `qrIdentifier` の整合を検証したうえで、`label_template_key` / `free_entry_text` / `issued_by_user_id` / `issued_at` / `print_status=''PRINTING''` / `last_print_job_id` を更新する',
+          '新規発行時は `(facility_id, qr_identifier)` と `(facility_id, code_prefix, code_branch, code_serial)` の重複を再検証したうえで `qr_codes` を作成し、`issue_type=''NEW''`、`label_template_key`、`free_entry_text`、`issued_by_user_id`、`issued_at`、`print_status=''PRINTING''`、`last_print_job_id` を設定する',
+          '再発行時は既存 `qr_codes` を再取得し、存在確認と `existingQrCodeId` / `qrIdentifier` の整合を検証したうえで、`issue_type=''REISSUE''`、`label_template_key`、`free_entry_text`、`issued_by_user_id`、`issued_at`、`print_status=''PRINTING''`、`last_print_job_id` を更新する',
           '`qr_print_job_items` を全件 `WAITING` で作成し、各明細に確定した `qr_code_id`、`print_order` を紐づける',
-          '印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する。`qrContentUrl` は保存値ではなく、確定した `facilityId` / `qrIdentifier` から生成する'
+          '印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する。`qrContentUrl` は保存値ではなく、確定した `facilityId` / `qr_identifier` から生成する'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング（印刷ジョブヘッダ）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_print_jobs`', '`qr_print_job_id`', '新規採番する', 'レスポンス `qrPrintJobId` として返却する'),
+              @('`qr_print_jobs`', '`facility_id` / `template_key` / `printer_name` / `client_request_id`', 'リクエスト `facilityId` / `templateKey` / `printerName` / `clientRequestId` を保存する', '開始受付の正本'),
+              @('`qr_print_jobs`', '`request_payload_hash`', '正規化済み開始受付ペイロードから生成した比較用ハッシュを保存する', '冪等判定に使用する'),
+              @('`qr_print_jobs`', '`requested_by_user_id`', '認証ユーザーIDを保存する', '印刷開始操作ユーザー'),
+              @('`qr_print_jobs`', '`requested_at` / `started_at` / `finished_at`', '現在時刻 / 現在時刻 / `NULL` を保存する', '`started_at` は印刷開始受付完了時刻'),
+              @('`qr_print_jobs`', '`status` / `success_count` / `failure_count` / `error_stage` / `error_summary`', '`IN_PROGRESS` / `0` / `0` / `NULL` / `NULL` を保存する', '結果反映前の初期状態'),
+              @('`qr_print_jobs`', '`created_at` / `updated_at`', '現在時刻を設定する', '監査用')
+            )
+          },
+          @{
+            Title = '永続化マッピング（QRコード）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_codes`', '新規発行: `facility_id` / `qr_identifier` / `code_prefix` / `code_branch` / `code_serial`', 'リクエスト `facilityId` と `items[*].qrIdentifier` から導出した採番構成要素を保存する', '新規発行時のみ新規作成する'),
+              @('`qr_codes`', '新規発行: `issue_type` / `label_template_key` / `free_entry_text`', '`NEW` / リクエスト `templateKey` / `freeEntryText` を保存する', 'テンプレート識別子とフリー記入項目の正本'),
+              @('`qr_codes`', '新規発行: `issued_by_user_id` / `issued_at` / `print_status` / `last_print_job_id` / `printed_at`', '認証ユーザーID / 現在時刻 / `PRINTING` / 新規 `qr_print_job_id` / `NULL` を保存する', '印刷開始受付完了時点の状態'),
+              @('`qr_codes`', '新規発行: `asset_ledger_id` / `created_at` / `updated_at` / `deleted_at`', '`NULL` / 現在時刻 / 現在時刻 / `NULL` を保存する', '資産紐付けは別機能で行う'),
+              @('`qr_codes`', '再発行: 対象 `existingQrCodeId` 行の `issue_type` / `label_template_key` / `free_entry_text`', '`REISSUE` / リクエスト `templateKey` / `freeEntryText` で更新する', '既存 QR を再利用する'),
+              @('`qr_codes`', '再発行: 対象 `existingQrCodeId` 行の `issued_by_user_id` / `issued_at` / `print_status` / `last_print_job_id`', '認証ユーザーID / 現在時刻 / `PRINTING` / 新規 `qr_print_job_id` で更新する', '印刷開始受付時点の最終発行情報へ更新する'),
+              @('`qr_codes`', '再発行: `qr_identifier` / `code_prefix` / `code_branch` / `code_serial` / `asset_ledger_id` / `printed_at`', '変更しない', '再発行では既存 QR 識別子をそのまま再利用する')
+            )
+          },
+          @{
+            Title = '永続化マッピング（印刷ジョブ明細）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_print_job_items`', '`qr_print_job_item_id`', '明細ごとに新規採番する', 'レスポンス `items[*].qrPrintJobItemId` として返却する'),
+              @('`qr_print_job_items`', '`qr_print_job_id` / `qr_code_id` / `print_order`', '新規 `qr_print_job_id` / 確定した `qr_code_id` / リクエスト `items[*].printOrder` を保存する', '印刷対象一覧の正本'),
+              @('`qr_print_job_items`', '`status` / `printed_at` / `error_message`', '`WAITING` / `NULL` / `NULL` で作成する', '結果反映前の初期状態'),
+              @('`qr_print_job_items`', '`created_at` / `updated_at`', '現在時刻を設定する', '監査用'),
+              @('保存対象外派生値', 'レスポンス `items[*].qrContentUrl`', '確定した `facilityId` / `qrIdentifier` から都度生成して返却する', 'DB には保存しない')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（201：QrPrintJobCreateResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -282,7 +342,7 @@
         ProcessingLines = @(
           '`qr_print_jobs` と `qr_print_job_items` を取得する',
           '印刷対象の `qrIdentifier`、表示順、現在ステータス、エラーメッセージを返却する',
-          '`qrContentUrl` は保存値ではなく、ジョブの `facilityId`、各明細の `qrIdentifier`、アプリ設定ベースURLから組み立てて返却する',
+          '`qrContentUrl` は保存値ではなく、ジョブの `facilityId`、各明細の `qrIdentifier` を URL パラメーター `qr_identifier` として用い、アプリ設定ベースURLから組み立てて返却する',
           'テンプレート表示名とシールサイズ表示は `templateKey` に対応するアプリ内固定定義から補完する',
           'ジョブ全体の成功/失敗件数、開始/終了時刻、失敗段階、エラー概要を返却する'
         )
@@ -380,10 +440,43 @@
           '各 `resultItems` について `status` と `printedAt` / `errorMessage` の組み合わせを検証し、`PRINTED` では `printedAt` 必須・`errorMessage` 未指定、`FAILED` では `printedAt` 未指定・`errorMessage` 必須、`CANCELED` では `printedAt` 未指定とする',
           'ローカル印刷モジュール初期化失敗や印刷要求開始失敗など、物理印刷前に失敗した場合でも、本 API を呼び出して対象全件を `FAILED` として終端させる',
           'ジョブがすでに終端ステータスの場合、同一結果の再送は冪等に受理し、矛盾する更新要求は 409 とする',
+          '終端済みジョブへ同一結果を冪等再送する場合は、`qr_print_job_items` / `qr_codes` / `qr_print_jobs` を再更新せず既存終端結果を返す',
           '印刷成功時は対応する `qr_print_job_items.status=''PRINTED''` / `printed_at` を更新し、対応する `qr_codes.print_status=''PRINTED''` / `printed_at` を更新する',
           '印刷失敗またはキャンセル時は対応する `qr_print_job_items.status` / `error_message` を更新し、対応する `qr_codes.print_status` を `FAILED` または `CANCELED` へ更新する。失敗時は過去の最終成功 `printed_at` を上書きしない',
           '`jobErrorStage` / `jobErrorSummary` が指定された場合は `qr_print_jobs.error_stage` / `error_summary` へ反映し、未指定時は明細エラーから要約を補完する',
           'ジョブ全体の成功/失敗件数を集計し、全件 `PRINTED` の場合は `COMPLETED`、全件 `CANCELED` の場合は `CANCELED`、`PRINTED` を1件以上含みかつ `FAILED` または `CANCELED` を1件以上含む場合は `PARTIAL_FAILED`、それ以外で `FAILED` を1件以上含む場合は `FAILED` として `qr_print_jobs.status`、`success_count`、`failure_count`、`finished_at` を更新する'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング（印刷ジョブ明細）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_print_job_items`', 'リクエスト `resultItems[*].qrPrintJobItemId` に一致する各行の `status` / `printed_at` / `error_message`', 'リクエスト `status` / `printedAt` / `errorMessage` で更新する', 'PRINTED は `printed_at` 必須、FAILED は `error_message` 必須'),
+              @('`qr_print_job_items`', '対象各行の `updated_at`', '現在時刻へ更新する', '結果反映日時として扱う'),
+              @('`qr_print_job_items`', '対象各行の `qr_print_job_id` / `qr_code_id` / `print_order` / `created_at`', '変更しない', '開始受付時に確定済みのため更新しない')
+            )
+          },
+          @{
+            Title = '永続化マッピング（QRコード）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_codes`', '対象明細に紐づく各行の `print_status`', '対応する `resultItems[*].status` に応じて `PRINTED` / `FAILED` / `CANCELED` へ更新する', '印刷状態の正本'),
+              @('`qr_codes`', '対象明細に紐づく各行の `printed_at`', '`PRINTED` の場合はリクエスト `printedAt` で更新し、`FAILED` / `CANCELED` の場合は既存値を維持する', '過去の最終成功印刷時刻は失敗で上書きしない'),
+              @('`qr_codes`', '対象明細に紐づく各行の `updated_at`', '現在時刻へ更新する', '状態更新時刻'),
+              @('`qr_codes`', '対象明細に紐づく各行の `issue_type` / `label_template_key` / `free_entry_text` / `issued_by_user_id` / `issued_at` / `last_print_job_id` / `asset_ledger_id` / `created_at` / `deleted_at`', '変更しない', '開始受付時点の確定値を維持する')
+            )
+          },
+          @{
+            Title = '永続化マッピング（印刷ジョブヘッダ集計）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`qr_print_jobs`', '対象 `qrPrintJobId` 行の `success_count` / `failure_count`', '結果反映後の `PRINTED` 件数 / `FAILED` または `CANCELED` 件数を保存する', 'レスポンス集計値の正本'),
+              @('`qr_print_jobs`', '対象 `qrPrintJobId` 行の `status`', '集計結果に応じて `COMPLETED` / `PARTIAL_FAILED` / `FAILED` / `CANCELED` へ更新する', 'ジョブ終端ステータス'),
+              @('`qr_print_jobs`', '対象 `qrPrintJobId` 行の `error_stage` / `error_summary`', 'リクエスト `jobErrorStage` / `jobErrorSummary` を保存し、未指定時は明細エラーから補完する', 'ジョブ全体の失敗要約'),
+              @('`qr_print_jobs`', '対象 `qrPrintJobId` 行の `finished_at` / `updated_at`', '現在時刻 / 現在時刻へ更新する', '終端時刻と最終更新時刻'),
+              @('`qr_print_jobs`', '対象 `qrPrintJobId` 行の `facility_id` / `template_key` / `printer_name` / `client_request_id` / `request_payload_hash` / `requested_by_user_id` / `requested_at` / `started_at` / `created_at`', '変更しない', '開始受付時に確定済みのため更新しない')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（200：QrPrintResultResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -410,8 +503,8 @@
 
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Bullets'; Items = @(
-      'テンプレート定義本体はアプリ内固定であり、DB テーブル/専用取得APIは設けない',
-      'プリンタ候補は端末上のローカル印刷モジュールが返す前提とし、サーバーAPIでは管理しない',
+      'テンプレート定義本体はテプラクリエイターで事前作成したファイルをフロントエンド資材として保持し、DB テーブル/テンプレート一覧取得APIは設けない',
+      'プリンタ候補はフロントエンドが端末上のテプラ連携/ローカル印刷モジュールから取得する前提とし、サーバーAPIでは管理しない',
       'プレビュー生成時点では `qr_codes` / `qr_print_jobs` / `qr_print_job_items` を永続化しない',
       '新規発行時の最終採番確定と `qr_codes` 保存は `POST /qr-print/jobs` の印刷開始受付時に行う',
       '`POST /qr-print/jobs` は `clientRequestId` を用いて冪等に扱い、同一操作の再送では正規化済み開始受付ペイロードの `requestPayloadHash` 一致時のみ既存ジョブを返し、不一致時は 409 とする',
@@ -422,7 +515,7 @@
       '再発行では新しい QR識別子を採番せず、既存 `qr_identifier` を再利用する',
       '同一ジョブへの同一結果再送は冪等に受理し、矛盾する結果更新は 409 とする',
       'ジョブ終端ステータスは、全件 `PRINTED` の場合のみ `COMPLETED`、全件 `CANCELED` の場合のみ `CANCELED`、`PRINTED` を1件以上含む混在時は `PARTIAL_FAILED`、それ以外で `FAILED` を含む場合は `FAILED` とする',
-      '`qrContentUrl` は派生値として都度生成し、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` には保存しない。URL生成ルール変更時は本機能の影響調査対象とする'
+      '`qrContentUrl` は派生値として都度生成し、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` には保存しない。URL には `facilityId` と `qr_identifier` を用い、生成ルール変更時は本機能の影響調査対象とする'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
@@ -443,7 +536,7 @@
 
     @{ Type = 'Heading1'; Text = '第8章 運用・保守方針' },
     @{ Type = 'Bullets'; Items = @(
-      'テンプレート一覧とプリンタ候補を API 化する要否は `taniguchi/機能要件.md` の未確定事項として継続確認する',
+      'テンプレート一覧はフロントエンド資材として保持するアプリ内固定定義から表示し、プリンタ候補はフロントエンドが端末上のテプラ連携/ローカル印刷モジュールから取得する。サーバー側にテンプレート一覧取得API、プリンタ候補取得API、DBマスタは設けない',
       'QRコードの採番規則や `qr_identifier` 形式を変更する場合は、`qr_codes` の複合ユニーク制約と API の再発行ロジックを同時に見直す',
       'ローカル印刷モジュールとの連携仕様を変更する場合は、`POST /qr-print/jobs` の印刷用確定レスポンスと `POST /qr-print/jobs/{qrPrintJobId}/result` の request/response を同時に更新する',
       '結果未反映のまま長時間 `IN_PROGRESS` に留まるジョブは、通信断または端末異常の可能性があるため、運用上の監視対象として扱う'

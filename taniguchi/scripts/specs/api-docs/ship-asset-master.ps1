@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_SHIP資産マスタ.docx'
   ScreenLabel = 'SHIP資産マスタ'
-  CoverDateText = '2026年4月20日'
-  RevisionDateText = '2026/4/20'
+  CoverDateText = '2026年4月26日'
+  RevisionDateText = '2026/4/26'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -14,6 +14,7 @@
       'Category から型式までの組み合わせ解決と、必要に応じた分割マスタ自動作成ルール',
       'JMDN登録品目の検索・選択、および該当なし時の JMDN分類・一般的名称 / JMDN登録品目 新規作成ルール',
       'SHIP資産マスタ任意カラムの定義管理、および資産マスタ行ごとの任意カラム値保存ルール',
+      '資産マスタ / SHIP表示列（`asset_master_ship_column`）による列返却制御ルール',
       '資産マスタ選択ポップアップが共通 API を再利用する際の返却データ範囲',
       '権限、バリデーション、論理削除、エラーレスポンス'
     ) },
@@ -27,6 +28,7 @@
       @('JMDN分類・一般的名称', '類別コード / 類別名称 / JMDN中分類名 / 一般的名称 / JMDNコードを保持する共有マスタ。実体は `jmdn_classifications`'),
       @('JMDN登録品目', '販売名 / 製造販売業者等 / 添付文書ファイル名 / 添付文書URLを保持する共有マスタ。SHIP資産マスタは本 ID を必須参照する'),
       @('任意カラム', 'SHIP資産マスタに追加できる動的項目。定義は `ship_asset_master_custom_columns`、値は `ship_asset_master_custom_values` に保存する'),
+      @('SHIP表示列', '資産マスタ文脈で Category〜型式、JMDN、添付文書、任意カラムを表示する列群。現行の `column_code` は `asset_master_ship_column`'),
       @('資産マスタ選択ポップアップ', '`/asset-master`。編集リスト等から呼び出され、選択した SHIP 資産マスタ情報を親画面へ返却する'),
       @('追加インポート', 'プレビュー済み行を既存データへ追加・更新する取込モード'),
       @('置換インポート', 'プレビュー済み行を追加・更新し、ファイルに含まれない有効資産マスタを論理削除する取込モード')
@@ -67,7 +69,10 @@
       @('ship_asset_master_custom_columns', 'READ / CREATE / UPDATE / DELETE', '任意カラム定義一覧、登録、更新、論理削除'),
       @('ship_asset_master_custom_values', 'READ / CREATE / UPDATE', '資産マスタ行ごとの任意カラム値'),
       @('jmdn_classifications', 'READ / CREATE', '類別コード、類別名称、JMDN中分類名、一般的名称、JMDNコードの解決と未登録時の新規作成'),
-      @('jmdn_registered_items', 'READ / CREATE', 'JMDN登録品目検索、販売名、製造販売業者等、添付文書ファイル名、添付文書URLの解決と未登録時の新規作成')
+      @('jmdn_registered_items', 'READ / CREATE', 'JMDN登録品目検索、販売名、製造販売業者等、添付文書ファイル名、添付文書URLの解決と未登録時の新規作成'),
+      @('column_catalogs', 'READ', '`asset_master_ship_column` の列カタログと関連 feature の確認'),
+      @('facility_column_settings', 'READ', '施設単位の SHIP表示列有効/無効判定'),
+      @('user_facility_column_settings', 'READ', 'ユーザー×施設単位の SHIP表示列有効/無効判定')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -84,13 +89,15 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
-    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
-      @('資産マスタ / 一覧', '`asset_master_list`', '一覧取得、エクスポート、資産マスタ選択ポップアップ候補取得'),
-      @('資産マスタ / 新規作成・編集', '`asset_master_edit`', 'テンプレート取得、インポートプレビュー、インポート、JMDN検索、JMDN作成、新規作成、更新、削除、任意カラム設定')
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` / `column_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。SHIP表示列の返却可否は `asset_master_ship_column` を `facility_column_settings` と `user_facility_column_settings` で判定し、画面表示用の `/auth/context` は UX 用キャッシュとして扱い、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Table'; Headers = @('管理単位名', '種別', 'コード', '対象処理'); Rows = @(
+      @('資産マスタ / 一覧', 'feature_code', '`asset_master_list`', '一覧取得、エクスポート、資産マスタ選択ポップアップ候補取得'),
+      @('資産マスタ / 新規作成・編集', 'feature_code', '`asset_master_edit`', 'テンプレート取得、インポートプレビュー、インポート、JMDN検索、JMDN作成、新規作成、更新、削除、任意カラム設定'),
+      @('資産マスタ / SHIP表示列', 'column_code', '`asset_master_ship_column`', '一覧・エクスポート・資産マスタ選択ポップアップで SHIP表示列を返却するかの判定')
     ) },
-    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
+    @{ Type = 'Table'; Headers = @('処理', '必要コード', '判定テーブル', '説明'); Rows = @(
       @('一覧取得 / エクスポート', '`asset_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'SHIP資産マスタ一覧参照とポップアップ候補取得'),
+      @('SHIP表示列返却', '`asset_master_ship_column`', '`column_catalogs`, `facility_column_settings`, `user_facility_column_settings`', '`asset_master_list` が実効有効な場合に、資産マスタ文脈の SHIP表示列を返却するかを判定'),
       @('テンプレート取得 / インポートプレビュー / インポート', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '資産マスタ一括更新処理'),
       @('JMDN登録品目検索 / JMDN作成', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '資産マスタ編集モーダル内の JMDN 選択/作成処理'),
       @('新規作成 / 更新 / 削除', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '資産マスタ変更系処理'),
@@ -99,8 +106,10 @@
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
       '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '`asset_master_ship_column` は `column_catalogs.related_feature_code = asset_master_list` の列権限として扱い、`asset_master_list` が実効有効な場合のみ列返却判定を行う',
       'SHIP資産マスタは共通マスタのため、一覧・候補取得の返却対象を施設単位で絞り込まない',
-      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
+      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する',
+      '`asset_master_ship_column` が実効無効な場合でも `asset_master_list` が有効であれば API 実行は許可し、SHIP表示列の値と任意カラム定義/値のみレスポンスおよび Excel から除外する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -114,6 +123,7 @@
       'テンプレートおよびエクスポートの固定列は `shipAssetMasterId`、Category、大分類、中分類、品目、メーカー、型式、類別コード、類別名称、JMDN中分類名、一般的名称、JMDNコード、販売名、製造販売業者等、添付文書ファイル名、添付文書URLとする',
       'テンプレート入力時の必須固定列は Category、大分類、中分類、品目、類別コード、類別名称、一般的名称、JMDNコード、販売名とし、`shipAssetMasterId` は既存行更新時のみ使用する任意列とする',
       '任意カラムは有効列のみを `sort_order ASC, ship_asset_master_custom_column_id ASC` で固定列の後ろへ可変追加する',
+      '`asset_master_ship_column` が実効無効な場合、エクスポートでは SHIP表示列と任意カラム列を出力しない',
       'テンプレートには hidden sheet `_custom_columns` を付与し、`column_key` と表示名の対応を保持する',
       'インポートプレビューは hidden sheet が存在する場合 `column_key` を優先して任意カラムを解決し、hidden sheet が存在しない場合のみ表示名一致で補完する',
       'インポート実行時はプレビュー作成時の任意カラム定義スナップショットと現行定義の差分を検知し、不整合があれば 409 `IMPORT_PREVIEW_STALE` を返却する',
@@ -165,7 +175,8 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること'
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること',
+          '列返却条件: `facility_column_settings` と `user_facility_column_settings` の両方で `asset_master_ship_column` が有効な場合のみ SHIP表示列を返却する'
         )
         ProcessingLines = @(
           '`ship_asset_masters.is_active = true` の有効データのみを対象にする',
@@ -173,12 +184,14 @@
           '`asset_categories` / `asset_large_classes` / `asset_medium_classes` / `asset_items` / `manufacturers` / `models` を結合して固定階層表示値を解決する',
           '`ship_asset_master_custom_columns.is_active = true` の任意カラム定義を `sort_order` 順で取得し、各 `ship_asset_master_id` に紐づく `ship_asset_master_custom_values` を結合する',
           '`ship_asset_masters.jmdn_registered_item_id` から `jmdn_registered_items` と親の `jmdn_classifications` を参照し、JMDN 表示項目を補完する',
+          '`asset_master_ship_column` が実効無効な場合は、Category〜型式、JMDN、添付文書、任意カラムなど SHIP表示列の値を返却せず、`customColumns=[]`、`canViewShipColumns=false` とする',
           '資産マスタ選択ポップアップでは本レスポンスを再利用し、スコープ付与と `postMessage` はフロントエンドで処理する'
         )
         ResponseTitle = 'レスポンス（200：ShipAssetMasterListResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
         ResponseRows = @(
           @('totalCount', 'int32', '✓', '絞り込み後の一覧件数'),
+          @('canViewShipColumns', 'boolean', '✓', '`asset_master_ship_column` が実効有効な場合は `true`。`false` の場合、SHIP表示列は未返却'),
           @('customColumns', 'ShipAssetCustomColumnSummary[]', '✓', '表示対象の有効任意カラム定義'),
           @('items', 'ShipAssetMasterSummary[]', '✓', '資産マスタ一覧')
         )
@@ -233,6 +246,9 @@
             )
           }
         )
+        ResponseLines = @(
+          'items要素のうち Category〜型式、JMDN、添付文書、任意カラムに該当する SHIP表示列は `canViewShipColumns=true` の場合のみ返却する。各サブテーブルの必須欄は同条件を満たす場合の必須を示す。'
+        )
         StatusRows = @(
           @('200', '取得成功', 'ShipAssetMasterListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
@@ -258,12 +274,14 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること'
+          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること',
+          '列返却条件: `facility_column_settings` と `user_facility_column_settings` の両方で `asset_master_ship_column` が有効な場合のみ SHIP表示列を出力する'
         )
         ProcessingLines = @(
           '一覧取得 API と同一の絞り込み条件、並び順、表示解決ルールを適用する',
           '固定列の後ろに有効任意カラムを可変列として追加する',
-          'JMDN 関連列、添付文書ファイル名、添付文書 URL は参照値として出力する'
+          'JMDN 関連列、添付文書ファイル名、添付文書 URL は参照値として出力する',
+          '`asset_master_ship_column` が実効無効な場合は、SHIP表示列と任意カラム列を Excel に含めず、権限不足で非表示としたことをメタシートへ記録する'
         )
         ResponseTitle = 'レスポンス（200：Excel File）'
         ResponseSubtables = @(
@@ -278,7 +296,7 @@
         )
         ResponseLines = @(
           'Body: 絞り込み条件に一致する SHIP 資産マスタ一覧を Excel バイナリで返却する。',
-          '出力列は少なくとも一覧画面の固定表示列と、有効任意カラム列を含む。'
+          '出力列は `asset_master_ship_column` が実効有効な場合のみ、一覧画面の固定表示列と有効任意カラム列を含む。'
         )
         StatusRows = @(
           @('200', '出力成功', 'Excel File'),
@@ -982,12 +1000,21 @@
 
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
-    @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
+    @{ Type = 'Table'; Headers = @('処理', '必要コード', '判定基準', '説明'); Rows = @(
       @('一覧表示 / ポップアップ候補取得 / エクスポート', '`asset_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_list` を持つこと', '一覧参照系処理'),
+      @('SHIP表示列返却 / エクスポート列 / ポップアップ候補表示', '`asset_master_ship_column`', '`asset_master_list` が実効有効で、同一作業対象施設に対して `facility_column_settings` と `user_facility_column_settings` の両方が有効であること', '資産マスタ文脈の SHIP表示列制御'),
       @('テンプレート取得 / インポートプレビュー / インポート', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '一括更新処理'),
       @('JMDN登録品目検索 / JMDN作成', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '資産マスタ編集モーダル内の JMDN 選択/作成処理'),
       @('新規作成 / 更新 / 削除', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '資産マスタ管理処理'),
       @('任意カラム一覧 / 新規作成 / 更新 / 削除', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '任意カラム設定処理')
+    ) },
+    @{ Type = 'Heading2'; Text = 'SHIP表示列返却ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '`asset_master_ship_column` は資産マスタ文脈の `column_code` とし、旧来の共通 SHIP 列コードは使用しない',
+      '`column_catalogs.related_feature_code` は `asset_master_list` とし、`asset_master_list` が実効無効の場合は列権限だけで一覧系 API を実行できない',
+      '`asset_master_ship_column` が実効有効な場合、Category〜型式、JMDN、添付文書、任意カラム定義/値を一覧レスポンス、Excel、資産マスタ選択ポップアップ候補へ含める',
+      '`asset_master_ship_column` が実効無効な場合、一覧系 API は `canViewShipColumns=false` を返し、SHIP表示列値と `customColumns` / `customValues` を返却しない',
+      'エクスポートでは `asset_master_ship_column` が実効有効な場合のみ SHIP表示列と任意カラム列を出力する'
     ) },
     @{ Type = 'Heading2'; Text = '階層マスタ解決ルール' },
     @{ Type = 'Bullets'; Items = @(

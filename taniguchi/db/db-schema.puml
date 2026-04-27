@@ -23,6 +23,15 @@ package "認証・ユーザー" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of feature_catalogs
+    config_scope:
+    SYSTEM_FIXED = 固定導線
+    FACILITY = 施設設定のみ
+    FACILITY_USER = 施設設定 + ユーザー施設別設定
+    normal_ship_request / lending_in_use_used は FACILITY_USER とする。
+    lending_in_use_used の実効利用には lending_checkout も必須。
+  end note
+
   entity "column_catalogs" as column_catalogs {
     * カラムコード / column_code : varchar
     --
@@ -94,6 +103,14 @@ package "認証・ユーザー" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of facility_feature_settings
+    config_scope が FACILITY または
+    FACILITY_USER の feature_code を保持する。
+    FACILITY_USER はこの設定と
+    user_facility_feature_settings の両方が
+    ON の場合に実効利用できる。
+  end note
+
   entity "facility_column_settings" as facility_column_settings {
     * 施設カラム設定ID / facility_column_setting_id : bigint
     --
@@ -117,6 +134,13 @@ package "認証・ユーザー" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of user_facility_feature_settings
+    config_scope が FACILITY_USER の
+    feature_code のみ保持する。
+    normal_ship_request / lending_in_use_used も
+    FACILITY_USER として保持する。
+  end note
 
   entity "user_facility_column_settings" as user_facility_column_settings {
     * ユーザー施設カラム設定ID / user_facility_column_setting_id : bigint
@@ -255,9 +279,19 @@ package "施設・ロケーション" {
   note right of facility_locations
     現有品調査・調査登録内容修正の
     部門/部署候補の正本。
+    資産一覧の管理部署編集候補も
+    department_id 非NULLの
+    active 行を department_id 単位で
+    重複排除して利用する。
     棟/階は施設により NULL 可。
     室名は候補表示に使うが、
     画面では自由記述も許容する。
+    同一施設・同一 department_id では
+    department_name / section_name の
+    不一致を許容しない。
+    section_name の施設内重複は許容し、
+    候補表示では department_name /
+    section_name で識別する。
   end note
 
   entity "ship_departments" as ship_departments {
@@ -306,6 +340,7 @@ package "施設・ロケーション" {
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
   }
+
 }
 
 ' 資産マスタ・分類系
@@ -478,6 +513,7 @@ package "資産台帳" {
     設置場所 / installation_location : varchar
     資産番号 / asset_no : varchar
     管理機器番号 / management_no : varchar
+    管理部署ID / management_department_id : varchar
     管理部署 / management_department_name : varchar
     ME番号 / equipment_no : varchar
     シリアル番号 / serial_no : varchar
@@ -519,6 +555,19 @@ package "資産台帳" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of asset_ledgers
+    management_department_id は
+    対象施設の active facility_locations から
+    department_id 単位で重複排除した
+    部署候補への論理参照。
+    management_department_name は
+    検索/表示用スナップショット。
+    既存データ移行時は
+    facility_id + management_department_name の
+    一意一致で backfill し、
+    未解決時は NULL を許容する。
+  end note
+
   entity "asset_documents <<VIEW>>" as asset_documents {
     * 資産ドキュメントID / asset_document_id : bigint
     --
@@ -557,6 +606,25 @@ package "資産台帳" {
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
   }
+
+  note right of asset_photos
+    Direct asset photos are projected from
+    `application_documents` where
+    `owner_type='ASSET_LEDGER'`
+    and `document_category='PHOTO'`
+    and `deleted_at IS NULL`.
+    Data matching confirm copies survey photo
+    metadata from
+    `owner_type='ASSET_SURVEY_RECORD'`
+    records to `ASSET_LEDGER` records for
+    created `asset_ledgers`.
+    `file_path` / `content_hash` are reused;
+    the binary object is not duplicated.
+    `survey_record_id` keeps source provenance.
+    Inherited asset photos have exactly one
+    `is_primary=true` per asset ledger when
+    at least one photo is inherited.
+  end note
 }
 
 ' QRコード
@@ -1810,8 +1878,9 @@ package "個人設定" {
   }
 
   note right of user_column_setting_presets
+    active 行（deleted_at IS NULL）に対して
     UNIQUE(user_id, screen_id, preset_name)
-    screen_id ごとに is_default=true は 0..1 件
+    (user_id, screen_id) ごとに is_default=true は 0..1 件
   end note
 
   entity "user_column_setting_preset_items" as user_column_setting_preset_items {

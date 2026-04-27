@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_認証／認可.docx'
   ScreenLabel = '認証／認可'
-  CoverDateText = '2026年4月17日'
-  RevisionDateText = '2026/4/17'
+  CoverDateText = '2026年4月27日'
+  RevisionDateText = '2026/4/27'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -23,7 +23,7 @@
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('担当施設', '`user_facility_assignments` に直接登録された、ユーザーが作業対象として選択できる施設'),
       @('作業対象施設', 'ログイン後に現在の操作文脈として選択した施設。`actingFacilityId` で表す'),
-      @('実効 feature_code', '施設提供機能とユーザー施設別機能の両方が有効な場合に利用できる機能コード'),
+        @('実効 feature_code', '`config_scope` に応じて判定済みの利用可能機能コード。`FACILITY_USER` は施設提供機能とユーザー施設別機能の両方を基本条件として判定する。`FACILITY` は施設単位のみで完結する将来用スコープだが、現行採用コードでは固定導線を除く業務機能を `FACILITY_USER` に統一する'),
       @('実効 column_code', '施設提供カラムとユーザー施設別カラムの両方が有効で、かつ関連 feature が有効な場合に表示できるカラムコード'),
       @('他施設閲覧', '作業対象施設とは別の施設データを、協業グループと公開元施設設定に基づいて閲覧すること')
     ) },
@@ -84,16 +84,76 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後は Bearer トークンを用いて `GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用トークンも発行し、再訪時は認証基盤側でセッション再開を試みる。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し（事務）` や `DataLINK / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。' },
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、`config_scope=''FACILITY_USER''` の機能は施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。固定導線を除く現行採用機能は `FACILITY_USER` に統一し、`normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象に含める。ただし子機能など追加条件を持つコードは各コードの補足規定に従う。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し / 完了` や `DataLINK / SHIP表示列（リモデル）` / `DataLINK / SHIP表示列（通常）` / `資産マスタ / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。' },
     @{ Type = 'Table'; Headers = @('管理単位名', '種別', 'コード', '対象処理'); Rows = @(
       @('ログイン・パスワード再設定（固定導線）', 'feature_code', '`auth_login`', '`POST /auth/login`、`POST /auth/password/forgot`、`POST /auth/password/reset` の固定導線を扱う。`config_scope=''SYSTEM_FIXED''` として固定扱いにする'),
       @('施設選択（固定導線）', 'feature_code', '`facility_select`', '`GET /auth/me` の担当施設選択導線と `GET /auth/context` の `actingFacilityId` 確定に用いる。`config_scope=''SYSTEM_FIXED''` として固定扱いにする')
     ) },
-    @{ Type = 'Paragraph'; Text = '上記以外の業務 `feature_code` / `column_code` は各業務 API 設計書で採用単位を定義し、本 API 群の `/auth/context` と `/authorization/check` では `feature_catalogs` / `column_catalogs` に登録されたコードを汎用的に評価する。' },
+    @{ Type = 'Paragraph'; Text = '固定導線を含む本システム全体の `feature_code` / `column_code` カタログは以下の通りとする。2026-04-27 時点の採用件数は、シート外固定導線2件を含む `feature_code` 48件、`column_code` 4件である。各業務 API 設計書は当該 API 群で利用するコードだけを抜粋して記載するが、コード追加・名称変更・関連付けは本表を基準に扱う。' },
+    @{ Type = 'Heading3'; Text = 'feature_code 全量一覧' },
+    @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', 'category_code', 'usage_context', 'config_scope'); Rows = @(
+      @('ユーザー 一覧', '`user_list_view`', '`USER_MGMT`', '`COMMON`', '`FACILITY_USER`'),
+      @('ユーザー 新規作成・編集', '`user_edit`', '`USER_MGMT`', '`COMMON`', '`FACILITY_USER`'),
+      @('担当施設 編集', '`user_facility_assignment_edit`', '`USER_MGMT`', '`COMMON`', '`FACILITY_USER`'),
+      @('施設グループ 一覧', '`facility_group_list`', '`USER_MGMT`', '`COMMON`', '`FACILITY_USER`'),
+      @('施設グループ 新規作成・編集', '`facility_group_edit`', '`USER_MGMT`', '`COMMON`', '`FACILITY_USER`'),
+      @('ログイン・パスワード再設定（固定導線）', '`auth_login`', '`AUTH`', '`COMMON`', '`SYSTEM_FIXED`'),
+      @('施設選択（固定導線）', '`facility_select`', '`AUTH`', '`COMMON`', '`SYSTEM_FIXED`'),
+      @('資産一覧・カルテ閲覧', '`original_list_view`', '`ASSET_REQUEST`', '`OWN`', '`FACILITY_USER`'),
+      @('資産一覧 / 新規・更新・増設・移動・廃棄', '`original_application`', '`ASSET_REQUEST`', '`OWN`', '`FACILITY_USER`'),
+      @('資産一覧 / 管理部署編集', '`management_department_edit`', '`ASSET_REQUEST`', '`OWN`', '`FACILITY_USER`'),
+      @('資産カルテ / 原本編集', '`original_list_edit`', '`ASSET_REQUEST`', '`OWN`', '`FACILITY_USER`'),
+      @('日常点検・オフライン準備', '`daily_inspection`', '`MAINTENANCE`', '`OWN`', '`FACILITY_USER`'),
+      @('貸出・返却', '`lending_checkout`', '`MAINTENANCE`', '`OWN`', '`FACILITY_USER`'),
+      @('貸出・返却 / 使用中 & 使用済み', '`lending_in_use_used`', '`MAINTENANCE`', '`OWN`', '`FACILITY_USER`'),
+      @('修理申請', '`repair_application`', '`MAINTENANCE`', '`OWN`', '`FACILITY_USER`'),
+      @('棚卸し', '`inventory`', '`INVENTORY`', '`OWN`', '`FACILITY_USER`'),
+      @('棚卸し / 完了', '`inventory_complete`', '`INVENTORY`', '`OWN`', '`FACILITY_USER`'),
+      @('QRコード発行', '`qr_issue`', '`QR`', '`OWN`', '`FACILITY_USER`'),
+      @('現有品調査', '`existing_survey`', '`SURVEY`', '`OWN`', '`FACILITY_USER`'),
+      @('現有品調査内容修正', '`survey_data_edit`', '`SURVEY`', '`OWN`', '`FACILITY_USER`'),
+      @('資産台帳取込登録', '`asset_ledger_import`', '`SURVEY`', '`OWN`', '`FACILITY_USER`'),
+      @('データ突合', '`survey_ledger_matching`', '`SURVEY`', '`OWN`', '`FACILITY_USER`'),
+      @('編集リスト（リモデル）', '`remodel_edit_list`', '`REMODEL`', '`OWN`', '`FACILITY_USER`'),
+      @('リモデル購入管理 / 申請受付～見積登録', '`remodel_purchase`', '`REMODEL`', '`OWN`', '`FACILITY_USER`'),
+      @('リモデル購入管理 / 発注登録～資産登録', '`remodel_order`', '`REMODEL`', '`OWN`', '`FACILITY_USER`'),
+      @('リモデル購入管理 / 検収登録', '`remodel_acceptance`', '`REMODEL`', '`OWN`', '`FACILITY_USER`'),
+      @('編集リスト（通常）', '`normal_edit_list`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('通常購入管理 / 申請受付～見積登録', '`normal_purchase`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('通常購入管理 / 発注登録～仮資産登録', '`normal_order`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('通常購入管理 / 検収登録', '`normal_acceptance`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('通常購入管理 / 見積管理', '`normal_quotation`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('通常購入管理 / SHIP依頼機能', '`normal_ship_request`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('移動・廃棄管理', '`transfer_disposal`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('修理管理', '`repair_management`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('保守契約管理', '`maintenance_contract`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('点検管理', '`inspection_management`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('貸出管理（タスク管理）', '`lending_management`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
+      @('資産マスタ / 一覧', '`asset_master_list`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('資産マスタ / 新規作成・編集', '`asset_master_edit`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('施設マスタ / 一覧', '`facility_master_list`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('施設マスタ / 新規作成・編集', '`facility_master_edit`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('施設提供機能 / 編集', '`facility_feature_edit`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('SHIP部署マスタ / 一覧', '`ship_dept_master_list`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('SHIP部署マスタ / 新規作成・編集', '`ship_dept_master_edit`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('個別部署マスタ / 一覧', '`hospital_dept_master_list`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('個別部署マスタ / 新規作成・編集', '`hospital_dept_master_edit`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('業者マスタ / 一覧', '`vendor_master_list`', '`MASTER`', '`OWN`', '`FACILITY_USER`'),
+      @('業者マスタ / 新規作成・編集', '`vendor_master_edit`', '`MASTER`', '`OWN`', '`FACILITY_USER`')
+    ) },
+    @{ Type = 'Heading3'; Text = 'column_code 全量一覧' },
+    @{ Type = 'Table'; Headers = @('column_code', 'column_name', 'related_feature_code', 'usage_context'); Rows = @(
+      @('`original_price_column`', '資産一覧・カルテ / 原本価格情報', '`original_list_view`', '`OWN`'),
+      @('`remodel_ship_column`', 'DataLINK / SHIP表示列（リモデル）', '`remodel_edit_list`', '`OWN`'),
+      @('`normal_ship_column`', 'DataLINK / SHIP表示列（通常）', '`normal_edit_list`', '`OWN`'),
+      @('`asset_master_ship_column`', '資産マスタ / SHIP表示列', '`asset_master_list`', '`OWN`')
+    ) },
+    @{ Type = 'Heading3'; Text = 'コードカタログの利用方針' },
+    @{ Type = 'Paragraph'; Text = '本 API 群の `/auth/context` と `/authorization/check` は、上記 `feature_code` / `column_code` カタログに登録されたコードを汎用的に評価する。各業務 API 設計書は、そのうち当該 API 群で必要なコードだけを抜粋して記載するが、コード値、管理単位名、関連付けの正本は本設計書のカタログとする。資産一覧起点の管理部署編集は `management_department_edit`、点検管理登録は `inspection_management`、保守契約登録は `maintenance_contract` を利用し、通常購入管理のSHIP依頼は `config_scope=''FACILITY_USER''` の `normal_ship_request`、貸出・返却の使用中/使用済みフローは `config_scope=''FACILITY_USER''` の `lending_in_use_used` を利用する。ただし `lending_in_use_used` の実効利用には、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` も有効であることを必須とする。' },
     @{ Type = 'Table'; Headers = @('対象', '判定に使う主な情報', '説明'); Rows = @(
       @('ログイン関連', '`users`, `user_remember_tokens`, `password_reset_tokens`', '認証とトークン管理を扱う。施設別権限は判定しない'),
       @('作業対象施設決定', '`user_facility_assignments`, `facilities`', '担当施設一覧と既定施設を決定する'),
-      @('自施設機能判定', '`facility_feature_settings`, `user_facility_feature_settings`', '施設提供とユーザー許可の両方が必要'),
+      @('自施設機能判定', '`feature_catalogs.config_scope`, `facility_feature_settings`, `user_facility_feature_settings`', '`FACILITY_USER` は施設提供とユーザー許可の両方を基本条件とする。`normal_ship_request` / `lending_in_use_used` も `FACILITY_USER` として判定し、`lending_in_use_used` は親 `lending_checkout` も必要'),
       @('自施設カラム判定', '`facility_column_settings`, `user_facility_column_settings`, `column_catalogs.related_feature_code`', '関連 feature が有効な場合のみ成立する'),
       @('他施設閲覧判定', '上記に加え `facility_collaboration_groups`, `facility_collaboration_group_facilities`, `facility_external_view_settings`, `facility_external_column_settings`', '閲覧者側権限と公開元施設設定の両方が必要')
     ) },
@@ -287,10 +347,13 @@
         ProcessingLines = @(
           '`user_facility_assignments` で対象施設への割当を確認する',
           '`facilities.deleted_at IS NULL` の未削除施設であることを確認し、削除済みなら 404 とする',
-          '`facilities.system_contract_status` を確認し、作業対象施設が `ACTIVE` の場合のみ外部閲覧系の `feature_code` / `column_code` を返却候補に含める',
-          '`facility_feature_settings` と `user_facility_feature_settings` の両方が `is_enabled=true` の `feature_code` を実効機能として返す',
+          '`facilities.system_contract_status` を確認し、契約有効施設だけを認可判定対象にする',
+          '`config_scope=''FACILITY_USER''` の `feature_code` は `facility_feature_settings` と `user_facility_feature_settings` の両方が `is_enabled=true` の場合に実効機能として返す',
+          '`normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として `facility_feature_settings.is_enabled=true` かつ `user_facility_feature_settings.is_enabled=true` の場合だけ返却候補に含める',
+          '`lending_in_use_used` は施設提供設定とユーザー施設別設定が有効であっても、同一担当施設で `lending_checkout` の実効権限が成立しない場合は `featureCodes` から除外する',
           '`facility_column_settings` と `user_facility_column_settings` の両方が `is_enabled=true` で、かつ `related_feature_code` が有効な `column_code` を実効カラムとして返す',
-          '他施設閲覧の具体的な対象施設可否は本 API では解決せず、協業グループ、対象施設契約状態、公開設定を `/authorization/check` または業務 API 側で再判定する',
+          '最新の `権限管理単位一覧` シートで採用した `feature_code` / `column_code` だけを返却候補に含める',
+          '他施設閲覧の具体的な対象施設可否は本 API では解決せず、協業グループ、対象施設契約状態、公開設定を `/authorization/check` または業務 API 側で再判定する。external 向けコードは現行カタログには未採用であり、追加時に別途拡張する',
           '`config_scope=''SYSTEM_FIXED''` の `auth_login` / `facility_select` は返却対象に含めない'
         )
         ResponseTitle = 'レスポンス（200：AuthContextResponse）'
@@ -383,7 +446,7 @@
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
           @('actingFacilityId', 'int64', '✓', '作業対象施設ID'),
-          @('targetFacilityId', 'int64', '-', '閲覧対象施設ID。他施設閲覧時のみ指定'),
+          @('targetFacilityId', 'int64', '-', '閲覧対象施設ID。external 向けコードを将来追加した際に利用する'),
           @('featureCode', 'string', '✓', '判定対象 `feature_code`'),
           @('columnCodes', 'string[]', '-', '同時判定する `column_code` 一覧')
         )
@@ -395,9 +458,9 @@
         )
         ProcessingLines = @(
           '判定対象ユーザーは Bearer トークンから解決し、リクエストボディで `userId` は受け取らない',
-          '自施設判定では `user_facility_assignments`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する',
+          '自施設判定では `user_facility_assignments`、`feature_catalogs.config_scope`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する。`normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として施設提供設定とユーザー施設別設定の両方を必須とする。ただし `lending_in_use_used` は `lending_checkout` の実効権限も成立する場合のみ許可する',
           'カラム判定では `facility_column_settings`、`user_facility_column_settings`、`column_catalogs.related_feature_code` を用いて可否を評価する',
-          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、協業グループ所属、`facility_external_view_settings`、`facility_external_column_settings` を追加で評価する',
+          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、協業グループ所属、`facility_external_view_settings`、`facility_external_column_settings` を追加で評価する。現行カタログには external 向け `feature_code` / `column_code` がないため、本分岐は将来拡張の予約仕様とする',
           '本 API は補助判定用であり、各業務 API 側でも同条件を再判定する'
         )
         ResponseTitle = 'レスポンス（200：AuthorizationCheckResponse）'
@@ -426,7 +489,7 @@
       '`/auth/me` は担当施設一覧のみを返し、協業グループ経由で見える施設は返さない',
       '`/auth/me` と `/auth/context` は `facilities.deleted_at IS NULL` の未削除施設だけを対象にする',
       '`/auth/context` は選択施設に対する実効 `feature_code` / `column_code` を返す',
-      '他施設閲覧は、閲覧者側の `other_*` 権限と公開元施設側の公開設定の両方が有効な場合のみ許可する',
+      '現行カタログに external 向け `feature_code` / `column_code` は含めない。協業グループと公開設定を使う判定は将来コード追加時の拡張点として保持する',
       '`column_code` は、関連 `feature_code` が有効な場合のみ成立する'
     ) },
     @{ Type = 'Heading2'; Text = '施設選択・ホーム導線ルール' },

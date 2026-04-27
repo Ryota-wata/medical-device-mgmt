@@ -23,8 +23,9 @@
 - `feature` は権限判定の単位である。
 - 例:
   - `user_list_view`
-  - `own_asset_list`
-  - `other_asset_list`
+  - `original_list_view`
+  - `management_department_edit`
+  - `inventory_complete`
   - `qr_issue`
 - `feature` は DB の boolean カラムを大量に増やして管理するのではなく、機能カタログの 1 行として定義する。
 
@@ -33,9 +34,9 @@
 - `column` は画面上の表示項目の制御単位である。
 - 例:
   - `original_price_column`
-  - `own_price_column`
-  - `other_price_column`
-  - `ship_column`
+  - `remodel_ship_column`
+  - `normal_ship_column`
+  - `asset_master_ship_column`
 - `column` も `feature` と同様に、カラムカタログの 1 行として定義する。
 
 ### 2-3. `1行で管理する` の意味
@@ -85,7 +86,7 @@
 - `facility_feature_settings`
   - 施設ごとに、どの `feature` をその施設で提供するかを管理する。
   - 例:
-    - 施設 A では `own_asset_list=true`
+    - 施設 A では `original_list_view=true`
     - 施設 A では `qr_issue=false`
 - `facility_column_settings`
   - 施設ごとに、どの `column` をその施設で提供するかを管理する。
@@ -96,7 +97,7 @@
 - `user_facility_feature_settings`
   - ユーザーが特定施設で、どの `feature` を利用できるかを管理する。
   - 例:
-    - ユーザー X は施設 A で `own_asset_list=true`
+    - ユーザー X は施設 A で `original_list_view=true`
     - ユーザー X は施設 A で `qr_issue=false`
 - `user_facility_column_settings`
   - ユーザーが特定施設で、どの `column` を表示できるかを管理する。
@@ -123,7 +124,7 @@
 - 例:
 
 ```text
-facility_id = 10, feature_code = 'own_asset_list', is_enabled = true
+facility_id = 10, feature_code = 'original_list_view', is_enabled = true
 facility_id = 10, feature_code = 'qr_issue', is_enabled = false
 ```
 
@@ -133,7 +134,7 @@ facility_id = 10, feature_code = 'qr_issue', is_enabled = false
 - 例:
 
 ```text
-user_facility_assignment_id = 100, feature_code = 'own_asset_list', is_enabled = true
+user_facility_assignment_id = 100, feature_code = 'original_list_view', is_enabled = true
 user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 ```
 
@@ -169,18 +170,19 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 1. `user_facility_assignments` に、当該ユーザーと作業対象施設の割当がある
 2. `facilities.deleted_at IS NULL` で、その施設が未削除である
 3. `facility_feature_settings` で、その施設の当該 `feature_code` が `true`
-4. `user_facility_feature_settings` で、そのユーザー施設割当の当該 `feature_code` が `true`
+4. `config_scope='FACILITY_USER'` の場合は `user_facility_feature_settings` で、そのユーザー施設割当の当該 `feature_code` が `true`
+5. `lending_in_use_used` は子機能のため、上記に加えて親機能 `lending_checkout` の実効権限も成立している場合だけ利用可能とする
 
 ### 5-2. 他施設閲覧
 
 他施設データを見られる条件は次のとおり。
 
-1. 閲覧者に対して、作業対象施設で `other_*` 系機能が有効
+1. 閲覧者に対して、作業対象施設で external 向け `feature_code` が有効
 2. 閲覧者の作業対象施設と公開元施設が同じ `facility_collaboration_groups` に属する
 3. 閲覧者側施設と公開元施設の両方が `facilities.deleted_at IS NULL` の未削除施設である
 4. 両施設が契約中である
 5. 公開元施設で、対象データの `facility_external_view_settings` が `true`
-6. 必要な `other_*_column` について `facility_external_column_settings` が `true`
+6. 必要な external 向け `column_code` について `facility_external_column_settings` が `true`
 
 他施設閲覧は、閲覧者側権限と公開元施設側公開設定の両方を満たした場合のみ許可する。
 
@@ -248,7 +250,7 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 
 - `user_facility_feature_settings` は、`facility_feature_settings.is_enabled=true` の機能だけ ON にできる
 - `user_facility_column_settings` は、`facility_column_settings.is_enabled=true` かつ `related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムだけ ON にできる
-- `facility_feature_settings` には、`config_scope='FACILITY_USER'` の機能だけ登録できる
+- `facility_feature_settings` には、`config_scope in ('FACILITY', 'FACILITY_USER')` の機能だけ登録できる
 - `facility_column_settings` は、`related_feature_code` に対応する `facility_feature_settings.is_enabled=true` のときだけ ON にできる
 - `facility_external_view_settings` には、`usage_context='EXTERNAL'` の機能だけ登録できる
 - `facility_external_column_settings` には、`usage_context='EXTERNAL'` かつ `related_feature_code` に対応する `facility_external_view_settings.is_enabled=true` のカラムだけ登録できる
@@ -278,7 +280,7 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 - `menu_group_code` は表示整理用であり、認可判定の正本ではない。
 - `auth_login` は認証前提機能であり、施設・ユーザー権限設定の対象に含めない。
 - `facility_select_all` は採用しない。
-- `original_price_column`、`own_price_column`、`other_price_column` は分離維持する。
+- `original_price_column`、`remodel_ship_column`、`normal_ship_column`、`asset_master_ship_column` は、`権限管理単位一覧` シート A列の最新粒度に合わせて分離維持する。
 - `users.account_type` は認可判定に使わない。
 - 病院ユーザーでは `users.facility_id` と `user_facility_assignments.is_default=true` の施設を一致させる。
 - モックは画面イメージの根拠であり、実装ベースではない。
@@ -293,16 +295,15 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | 値 | 用途 |
 | --- | --- |
 | `AUTH` | 認証・施設選択などログイン前後の共通導線 |
-| `USER_MGMT` | ユーザー管理、担当施設設定 |
-| `ASSET_REQUEST` | 原本閲覧、原本修正、各種申請 |
-| `MAINTENANCE` | 点検、貸出、修理、申請ステータス |
+| `USER_MGMT` | ユーザー管理、担当施設設定、施設グループ管理 |
+| `ASSET_REQUEST` | 資産一覧・カルテ閲覧、資産一覧起点の各種登録 |
+| `MAINTENANCE` | 日常点検、貸出返却、修理申請 |
 | `INVENTORY` | 棚卸し |
+| `QR` | QR 発行 |
+| `SURVEY` | 現有品調査、台帳取込、データ突合 |
 | `REMODEL` | リモデル系機能 |
 | `TASK` | 通常購入、各種管理、タスク管理配下 |
-| `QR` | QR 発行、QR 読取 |
-| `DATA_VIEW` | データ閲覧 |
 | `MASTER` | マスタ管理 |
-| `SURVEY` | 個体管理リスト作成、現調、台帳取込、突合 |
 
 #### `menu_group_code`
 
@@ -310,17 +311,14 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | --- | --- |
 | `USER_ADMIN` | ユーザー管理 |
 | `ASSET_REQUEST` | 資産閲覧申請 |
-| `MAINTENANCE_REQUEST` | 保守点検／貸出／修理申請／申請ステータス |
+| `MAINTENANCE_REQUEST` | 保守点検／貸出／修理申請 |
 | `INVENTORY` | 棚卸し |
-| `REMODEL` | リモデルメニュー |
+| `QR_ISSUE` | QRコード発行 |
+| `SURVEY` | 個体管理リスト作成 |
+| `REMODEL` | 編集リスト（リモデル） |
 | `NORMAL_EDIT` | 編集リスト（通常） |
 | `TASK` | タスク管理 |
-| `QR_ISSUE` | QRコード発行 |
-| `QR_SCAN` | QR読取 |
-| `OWN_DATA_VIEW` | データ閲覧（編集権限がある自施設） |
-| `OTHER_DATA_VIEW` | データ閲覧（閲覧権限がある他施設） |
 | `MASTER_ADMIN` | マスタ管理 |
-| `SURVEY` | 個体管理リスト作成 |
 
 `auth_login` と `facility_select` はメニューに載せないため、`menu_group_code` は持たない。
 
@@ -331,7 +329,6 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | `AUTH` | 認証やログイン前提導線 |
 | `SCREEN` | 画面利用そのものを表す機能 |
 | `ACTION` | 登録、編集、申請、実行などの操作 |
-| `DATA_VIEW` | データ閲覧を主目的とする機能 |
 
 #### `usage_context`
 
@@ -339,14 +336,15 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | --- | --- |
 | `COMMON` | 認証、施設選択、ユーザー管理など共通文脈 |
 | `OWN` | 自施設文脈で使う機能・カラム |
-| `EXTERNAL` | 他施設閲覧文脈で使う機能・カラム |
+| `EXTERNAL` | 他施設公開設計の予約値。最新の `権限管理単位一覧` シートでは未使用 |
 
 #### `config_scope`
 
 | 値 | 意味 |
 | --- | --- |
 | `SYSTEM_FIXED` | 施設・ユーザー設定では ON/OFF しない固定機能 |
-| `FACILITY_USER` | 施設設定、ユーザー施設設定の対象 |
+| `FACILITY` | 施設設定のみ対象。現行採用コードでは使用しない |
+| `FACILITY_USER` | 施設設定、ユーザー施設設定の対象。固定導線を除く現行機能コードはこのスコープに統一 |
 
 #### `column_group_code`
 
@@ -369,43 +367,42 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | `user_list_view` | ユーザー / 一覧 | `USER_MGMT` | `USER_ADMIN` | `SCREEN` | `COMMON` | `FACILITY_USER` | ユーザー一覧画面の利用可否 |
 | `user_edit` | ユーザー / 新規作成・編集 | `USER_MGMT` | `USER_ADMIN` | `ACTION` | `COMMON` | `FACILITY_USER` | ユーザー新規作成・編集モーダル |
 | `user_facility_assignment_edit` | 担当施設 / 編集 | `USER_MGMT` | `USER_ADMIN` | `ACTION` | `COMMON` | `FACILITY_USER` | ユーザー編集画面の担当施設設定 UI |
+| `facility_group_list` | 施設グループ / 一覧 | `USER_MGMT` | `USER_ADMIN` | `SCREEN` | `COMMON` | `FACILITY_USER` | 施設グループ一覧画面 |
+| `facility_group_edit` | 施設グループ / 新規作成・編集 | `USER_MGMT` | `USER_ADMIN` | `ACTION` | `COMMON` | `FACILITY_USER` | 施設グループ編集モーダル |
 | `auth_login` | ログイン・パスワード再設定（固定導線） | `AUTH` | - | `AUTH` | `COMMON` | `SYSTEM_FIXED` | 認証前提機能 |
-| `facility_select` | 施設選択（固定導線） | `AUTH` | - | `SCREEN` | `COMMON` | `SYSTEM_FIXED` | 担当施設から作業対象施設を選ぶ |
+| `facility_select` | 施設選択（固定導線） | `AUTH` | - | `SCREEN` | `COMMON` | `SYSTEM_FIXED` | 権限管理単位一覧シート外の固定導線 |
 | `original_list_view` | 資産一覧・カルテ閲覧 | `ASSET_REQUEST` | `ASSET_REQUEST` | `SCREEN` | `OWN` | `FACILITY_USER` | 資産一覧とカルテ閲覧 |
-| `original_application` | 資産一覧 / 各種申請・管理登録 | `ASSET_REQUEST` | `ASSET_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 資産一覧から起動する申請・管理登録 |
+| `original_application` | 資産一覧 / 新規・更新・増設・移動・廃棄 | `ASSET_REQUEST` | `ASSET_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 資産一覧起点の申請系ボタン |
+| `management_department_edit` | 資産一覧 / 管理部署編集 | `ASSET_REQUEST` | `ASSET_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 資産一覧上の管理部署編集と一括保存 |
+| `inspection_management` | 資産一覧 / 点検管理登録 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 点検管理と同一コードで資産一覧起点導線を制御 |
+| `maintenance_contract` | 資産一覧 / 保守契約登録 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 保守契約管理と同一コードで資産一覧起点導線を制御 |
 | `original_list_edit` | 資産カルテ / 原本編集 | `ASSET_REQUEST` | `ASSET_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 資産カルテからの原本編集 |
-| `daily_inspection` | 日常点検・オフライン準備 | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 点検事前準備を含む |
-| `lending_checkout` | 貸出・返却 | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 貸出返却画面 |
-| `repair_application` | 修理申請 | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 修理申請起票 |
-| `application_status` | 申請ステータス | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `SCREEN` | `OWN` | `FACILITY_USER` | 申請状況参照 |
-| `inventory_field` | 棚卸し（現場） | `INVENTORY` | `INVENTORY` | `SCREEN` | `OWN` | `FACILITY_USER` | 現場棚卸し |
-| `inventory_office` | 棚卸し（事務） | `INVENTORY` | `INVENTORY` | `ACTION` | `OWN` | `FACILITY_USER` | 棚卸完了と Excel 出力を同一単位で管理 |
+| `daily_inspection` | 日常点検・オフライン準備 | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `SCREEN` | `OWN` | `FACILITY_USER` | 日常点検画面とオフライン準備導線 |
+| `lending_checkout` | 貸出・返却 | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `SCREEN` | `OWN` | `FACILITY_USER` | 貸出可能機器閲覧と貸出返却 |
+| `lending_in_use_used` | 貸出・返却 / 使用中 & 使用済み | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `ACTION` | `OWN` | `FACILITY_USER` | 貸出返却画面の使用中/使用済みモーダル・ボタン。施設提供設定とユーザー施設別設定の両方で制御。実効利用には `lending_checkout` も必須 |
+| `repair_application` | 修理申請 | `MAINTENANCE` | `MAINTENANCE_REQUEST` | `SCREEN` | `OWN` | `FACILITY_USER` | 修理申請画面 |
+| `inventory` | 棚卸し | `INVENTORY` | `INVENTORY` | `SCREEN` | `OWN` | `FACILITY_USER` | 棚卸し画面の利用可否 |
+| `inventory_complete` | 棚卸し / 完了 | `INVENTORY` | `INVENTORY` | `ACTION` | `OWN` | `FACILITY_USER` | 棚卸し完了操作と Excel 出力を同一単位で扱う |
+| `qr_issue` | QRコード発行 | `QR` | `QR_ISSUE` | `SCREEN` | `OWN` | `FACILITY_USER` | QR 発行画面、プレビュー、印刷 |
+| `existing_survey` | 現有品調査 | `SURVEY` | `SURVEY` | `SCREEN` | `OWN` | `FACILITY_USER` | オフライン準備、調査場所入力、履歴を含む |
+| `survey_data_edit` | 現有品調査内容修正 | `SURVEY` | `SURVEY` | `SCREEN` | `OWN` | `FACILITY_USER` | 現有品調査内容修正画面 |
+| `asset_ledger_import` | 資産台帳取込登録 | `SURVEY` | `SURVEY` | `SCREEN` | `OWN` | `FACILITY_USER` | 資産台帳取込画面とマスタ突合せ画面 |
+| `survey_ledger_matching` | データ突合 | `SURVEY` | `SURVEY` | `SCREEN` | `OWN` | `FACILITY_USER` | 固定資産台帳未突合画面の利用可否 |
 | `remodel_edit_list` | 編集リスト（リモデル） | `REMODEL` | `REMODEL` | `SCREEN` | `OWN` | `FACILITY_USER` | リモデル編集リスト画面の利用可否 |
-| `remodel_purchase` | リモデル購入管理 / 申請受付～見積登録 | `REMODEL` | `REMODEL` | `SCREEN` | `OWN` | `FACILITY_USER` | リモデル購入管理の入口 |
-| `remodel_order` | リモデル購入管理 / 発注登録～資産登録 | `REMODEL` | `REMODEL` | `ACTION` | `OWN` | `FACILITY_USER` | 発注から資産登録まで |
-| `remodel_acceptance` | リモデル購入管理 / 検収登録 | `REMODEL` | `REMODEL` | `ACTION` | `OWN` | `FACILITY_USER` | 検収登録 |
-| `remodel_quotation` | 見積管理（リモデル） | `REMODEL` | `REMODEL` | `SCREEN` | `OWN` | `FACILITY_USER` | リモデル見積管理 |
+| `remodel_purchase` | リモデル購入管理 / 申請受付～見積登録 | `REMODEL` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | タスク管理画面のリモデル管理タブで見積登録行を扱う |
+| `remodel_order` | リモデル購入管理 / 発注登録～資産登録 | `REMODEL` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | リモデル管理タブの発注登録～資産登録行 |
+| `remodel_acceptance` | リモデル購入管理 / 検収登録 | `REMODEL` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | リモデル管理タブの検収登録行 |
 | `normal_edit_list` | 編集リスト（通常） | `TASK` | `NORMAL_EDIT` | `SCREEN` | `OWN` | `FACILITY_USER` | 通常編集リスト画面の利用可否 |
 | `normal_purchase` | 通常購入管理 / 申請受付～見積登録 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 通常購入管理の入口 |
-| `normal_order` | 通常購入管理 / 発注登録～仮資産登録 | `TASK` | `TASK` | `ACTION` | `OWN` | `FACILITY_USER` | 発注から仮資産登録まで |
-| `normal_acceptance` | 通常購入管理 / 検収登録 | `TASK` | `TASK` | `ACTION` | `OWN` | `FACILITY_USER` | 検収登録 |
-| `normal_quotation` | 通常購入管理 / 見積管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 通常見積管理 |
-| `transfer_disposal` | 移動・廃棄管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 移動廃棄申請と廃棄契約管理 |
-| `repair_management` | 修理管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 修理申請一覧と修理管理 |
-| `maintenance_contract` | 保守契約管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 保守契約一覧、詳細登録、対象機器登録を含む |
-| `inspection_management` | 点検管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 点検管理画面、各モーダル、予定表出力を含む |
-| `periodic_inspection` | 定期点検実施 | `TASK` | `TASK` | `ACTION` | `OWN` | `FACILITY_USER` | 定期点検実施モーダル |
-| `lending_management` | 貸出管理（タスク管理） | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 貸出管理タブ、エクスポート、対象機器登録を含む |
-| `qr_issue` | QRコード発行 | `QR` | `QR_ISSUE` | `ACTION` | `OWN` | `FACILITY_USER` | QR 発行 |
-| `qr_scan` | QR読取 | `QR` | `QR_SCAN` | `ACTION` | `OWN` | `FACILITY_USER` | QR 読取 |
-| `own_asset_master_view` | 資産マスタデータ | `DATA_VIEW` | `OWN_DATA_VIEW` | `DATA_VIEW` | `OWN` | `FACILITY_USER` | 自施設閲覧 |
-| `own_user_master` | ユーザーマスタデータ | `DATA_VIEW` | `OWN_DATA_VIEW` | `DATA_VIEW` | `OWN` | `FACILITY_USER` | 自施設閲覧 |
-| `own_asset_list` | 資産原本リストデータ | `DATA_VIEW` | `OWN_DATA_VIEW` | `DATA_VIEW` | `OWN` | `FACILITY_USER` | 自施設閲覧 |
-| `own_estimate` | 見積データ | `DATA_VIEW` | `OWN_DATA_VIEW` | `DATA_VIEW` | `OWN` | `FACILITY_USER` | 自施設閲覧 |
-| `own_data_history` | データ履歴一覧 | `DATA_VIEW` | `OWN_DATA_VIEW` | `DATA_VIEW` | `OWN` | `FACILITY_USER` | 自施設閲覧 |
-| `other_asset_list` | 資産原本リストデータ（他施設） | `DATA_VIEW` | `OTHER_DATA_VIEW` | `DATA_VIEW` | `EXTERNAL` | `FACILITY_USER` | 他施設閲覧 |
-| `other_estimate` | 見積データ（他施設） | `DATA_VIEW` | `OTHER_DATA_VIEW` | `DATA_VIEW` | `EXTERNAL` | `FACILITY_USER` | 他施設閲覧 |
-| `other_data_history` | データ履歴一覧（他施設） | `DATA_VIEW` | `OTHER_DATA_VIEW` | `DATA_VIEW` | `EXTERNAL` | `FACILITY_USER` | 他施設閲覧 |
+| `normal_order` | 通常購入管理 / 発注登録～仮資産登録 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 購入管理タブの発注登録～仮資産登録行 |
+| `normal_acceptance` | 通常購入管理 / 検収登録 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 購入管理タブの検収登録行 |
+| `normal_quotation` | 通常購入管理 / 見積管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 購入管理タブの見積管理行 |
+| `normal_ship_request` | 通常購入管理 / SHIP依頼機能 | `TASK` | `TASK` | `ACTION` | `OWN` | `FACILITY_USER` | 購入管理タブのSHIPへ一括依頼ボタン。施設提供設定とユーザー施設別設定の両方で制御 |
+| `transfer_disposal` | 移動・廃棄管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 移動・廃棄管理タブ |
+| `repair_management` | 修理管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 修理管理タブ |
+| `maintenance_contract` | 保守契約管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 保守管理タブ |
+| `inspection_management` | 点検管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 点検管理タブ |
+| `lending_management` | 貸出管理（タスク管理） | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 貸出管理タブ |
 | `asset_master_list` | 資産マスタ / 一覧 | `MASTER` | `MASTER_ADMIN` | `SCREEN` | `OWN` | `FACILITY_USER` | 一覧参照 |
 | `asset_master_edit` | 資産マスタ / 新規作成・編集 | `MASTER` | `MASTER_ADMIN` | `ACTION` | `OWN` | `FACILITY_USER` | 編集・新規作成 |
 | `facility_master_list` | 施設マスタ / 一覧 | `MASTER` | `MASTER_ADMIN` | `SCREEN` | `OWN` | `FACILITY_USER` | 一覧参照 |
@@ -417,12 +414,6 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | `hospital_dept_master_edit` | 個別部署マスタ / 新規作成・編集 | `MASTER` | `MASTER_ADMIN` | `ACTION` | `OWN` | `FACILITY_USER` | 編集・新規作成 |
 | `vendor_master_list` | 業者マスタ / 一覧 | `MASTER` | `MASTER_ADMIN` | `SCREEN` | `OWN` | `FACILITY_USER` | 一覧参照 |
 | `vendor_master_edit` | 業者マスタ / 新規作成・編集 | `MASTER` | `MASTER_ADMIN` | `ACTION` | `OWN` | `FACILITY_USER` | 編集・新規作成 |
-| `facility_group_list` | 施設グループ / 一覧 | `USER_MGMT` | `USER_ADMIN` | `SCREEN` | `COMMON` | `FACILITY_USER` | 施設グループ一覧画面 |
-| `facility_group_edit` | 施設グループ / 新規作成・編集 | `USER_MGMT` | `USER_ADMIN` | `ACTION` | `COMMON` | `FACILITY_USER` | 施設グループ編集モーダル |
-| `existing_survey` | 現有品調査 | `SURVEY` | `SURVEY` | `SCREEN` | `OWN` | `FACILITY_USER` | 準備、場所入力、履歴を含む |
-| `survey_data_edit` | 現調データ修正 | `SURVEY` | `SURVEY` | `ACTION` | `OWN` | `FACILITY_USER` | 修正系 |
-| `asset_ledger_import` | 資産台帳取込登録 | `SURVEY` | `SURVEY` | `ACTION` | `OWN` | `FACILITY_USER` | 台帳取込と登録 |
-| `survey_ledger_matching` | 現調台帳突合せ | `SURVEY` | `SURVEY` | `ACTION` | `OWN` | `FACILITY_USER` | データ突合 |
 
 `sort_order` は画面上の表示順制御値であり、現時点ではクライアント合意に含まれていないため、本メモでは固定しない。
 
@@ -430,21 +421,29 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 
 | column_code | column_name | related_feature_code | column_group_code | usage_context | 備考 |
 | --- | --- | --- | --- | --- | --- |
-| `original_price_column` | 原本価格情報カラム | `original_list_view` | `PRICE` | `OWN` | 原本リスト、カード、カルテ文脈 |
-| `own_price_column` | 価格カラム（自施設データ閲覧） | `own_asset_list` | `PRICE` | `OWN` | 自施設データ閲覧文脈 |
-| `other_price_column` | 価格カラム（他施設データ閲覧） | `other_asset_list` | `PRICE` | `EXTERNAL` | 他施設公開ポリシーと組み合わせて判定 |
-| `ship_column` | DataLINK / SHIP表示列 | `normal_edit_list` | `SHIP_ONLY` | `OWN` | 通常編集リストの SHIP 固有列 |
+| `original_price_column` | 資産一覧・カルテ / 原本価格情報 | `original_list_view` | `PRICE` | `OWN` | 原本リストと資産カルテの価格列 |
+| `remodel_ship_column` | DataLINK / SHIP表示列（リモデル） | `remodel_edit_list` | `SHIP_ONLY` | `OWN` | リモデル編集リストの SHIP 列 |
+| `normal_ship_column` | DataLINK / SHIP表示列（通常） | `normal_edit_list` | `SHIP_ONLY` | `OWN` | 通常編集リストの SHIP 列 |
+| `asset_master_ship_column` | 資産マスタ / SHIP表示列 | `asset_master_list` | `SHIP_ONLY` | `OWN` | A列名称に合わせて資産マスタ文脈で管理。対象画面セルは通常編集リストを指しており要確認 |
 
 ### 11-4. 採用しないコード
 
 | 値 | 扱い |
 | --- | --- |
 | `facility_select_all` | `feature_catalogs` には登録しない。施設選択は `user_facility_assignments` の担当施設からのみ行う |
+| `application_status`, `qr_scan`, `remodel_quotation`, `periodic_inspection` | 最新の `権限管理単位一覧` シートに単位が存在しないため、今回の `feature_catalogs` から外す |
+| `inventory_field`, `inventory_office` | `棚卸し` / `棚卸し / 完了` へ再編する |
+| `own_asset_master_view`, `own_user_master`, `own_asset_list`, `own_estimate`, `own_data_history`, `other_asset_list`, `other_estimate`, `other_data_history`, `own_price_column`, `other_price_column` | 最新の `権限管理単位一覧` シートに単位が存在しないため、今回の `feature_catalogs` / `column_catalogs` から外す |
+| `ship_column` | `remodel_ship_column`、`normal_ship_column`、`asset_master_ship_column` に再編する |
 
 ## 12. Fix 方針
 
 - 権限管理単位は `taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列を正本とする。
 - 1つの権限管理単位には、1つの `feature_code` または `column_code` を割り当てる。
+- 2026-04-27 時点の採用件数は、A列由来のユニークな `feature_code` 46件、`column_code` 4件、シート外固定導線の `feature_code` 2件である。
+- `資産一覧 / 管理部署編集` は `management_department_edit` として独立管理し、`資産カルテ / 原本編集` の `original_list_edit` には束ねない。
+- `通常購入管理 / SHIP依頼機能` は `normal_ship_request` として独立管理し、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` には束ねない。`config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方で利用可否を判定する。
+- `貸出・返却 / 使用中 & 使用済み` は `lending_in_use_used` として独立管理し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` には束ねない。`config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方で管理する。ただし実効利用には `lending_checkout` も有効であることを必須とし、施設提供設定・ユーザー施設別設定のいずれでも `lending_checkout` OFF 時は `lending_in_use_used` を ON にできない。施設提供設定で ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は、そのユーザーの利用可否だけを変更し、貸出データ自体は変更しない。
 - 今後さらに細かい制御が必要になった場合は、A列の粒度を崩さずに新規 `feature_code` / `column_code` を追加して対応する。
 
 ## 13. このメモの位置づけ

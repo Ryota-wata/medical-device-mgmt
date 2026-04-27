@@ -539,6 +539,13 @@ function Add-ApiEndpointBlock {
     }
   }
 
+  if ($Spec.ContainsKey('ExtraTables')) {
+    foreach ($table in $Spec.ExtraTables) {
+      Add-Paragraph -Selection $Selection -Text $table.Title -Style $script:wdStyleHeading4
+      Add-Table -Document $Document -Selection $Selection -Headers $table.Headers -Rows $table.Rows
+    }
+  }
+
   if ($Spec.ContainsKey('ResponseTitle')) {
     Add-Paragraph -Selection $Selection -Text $Spec.ResponseTitle -Style $script:wdStyleHeading3
   }

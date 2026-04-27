@@ -52,11 +52,11 @@
       @('facilities', 'マスタパッケージ内の施設情報、修正画面の施設整合確認', 'facility_id, facility_name'),
       @('facility_locations', 'ロケーション候補の配布、修正画面のロケーション正本', 'facility_location_id, facility_id, building, floor, department_name, section_name, room_name'),
       @('asset_categories / asset_large_classes / asset_medium_classes / asset_items / manufacturers / models', '分類マスタパッケージの配布、修正画面の分類表示/更新', '各マスタID, 表示名, 並び順, deleted_at'),
+      @('users', '調査担当者名の解決、送信者/確定者の監査', 'user_id, name'),
       @('asset_survey_sessions', '調査結果アップロード時の親セッション作成', 'asset_survey_session_id, facility_id, created_by_user_id, started_at, ended_at, status'),
       @('asset_survey_records', '調査結果アップロード、一覧表示、修正、確定', 'asset_survey_record_id, asset_survey_session_id, facility_location_id, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, survey_date, surveyor_user_id, confirmed_by_user_id, confirmed_at, building, floor, department_name, section_name, room_name, qr_identifier, detail_type, parent_asset_survey_record_id, asset_no, equipment_no, serial_no, purchased_on, width_mm, depth_mm, height_mm, remarks, survey_status'),
       @('application_documents', '調査写真の正本保存、削除、代表写真更新', 'application_document_id, asset_survey_record_id, owner_type, document_category, file_name, file_path, is_primary, taken_at, taken_by_user_id, uploaded_by_user_id, uploaded_at, deleted_at'),
-      @('asset_survey_photos', '修正画面の写真一覧参照互換VIEW', 'asset_survey_photo_id, asset_survey_record_id, file_name, file_path, is_primary'),
-      @('qr_codes', '修正画面のQR表示補助', 'qr_identifier, facility_id')
+      @('asset_survey_photos', '修正画面の写真一覧参照互換VIEW', 'asset_survey_photo_id, asset_survey_record_id, file_name, file_path, is_primary')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -79,6 +79,15 @@
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
       @('マスタパッケージ取得 / 調査結果アップロード', '`existing_survey`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '現有品調査の準備・送信を行う'),
       @('調査登録内容修正の一覧 / 写真参照 / 更新 / 写真削除 / 確定', '`survey_data_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '送信後データの修正系処理を行う')
+    ) },
+    @{ Type = 'Heading2'; Text = '永続化とトランザクション境界' },
+    @{ Type = 'Bullets'; Items = @(
+      '`POST /offline-prep/survey/upload` は 1 リクエストを 1 調査セッションとして扱い、`asset_survey_sessions` を親、`asset_survey_records` を子、写真を `application_documents` に保存する。`asset_survey_photos` は `application_documents` からの互換 VIEW であり、直接更新しない',
+      '調査結果アップロードは DB 更新を 1 トランザクションで完結させ、写真のオブジェクトストレージ保存に失敗した場合は `asset_survey_sessions` / `asset_survey_records` / `application_documents` をロールバックし、保存済みオブジェクトも破棄する',
+      '`localPhotoUuid` はファイル名・ファイルパス生成に使う入力であり、業務テーブルの正本カラムとしては保持しない',
+      '`/asset-survey` 画面で行う QR 重複チェックは PWA 側責務とし、`POST /offline-prep/survey/upload` は重複チェック済みの `qrIdentifier` スナップショットを保存する',
+      '`PUT /registration-edit/records/{recordId}` は `asset_survey_records` のみ、`DELETE /registration-edit/records/{recordId}/photos/{photoId}` は `application_documents` のみ、`POST /registration-edit/records/confirm` は対象 `asset_survey_records` のみを更新する',
+      '更新系 API は 1 回の呼び出しを 1 DB トランザクションで完結させる。写真削除は論理削除を正本とし、オブジェクトストレージ上の実ファイルはこの API では削除しない'
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
@@ -197,8 +206,6 @@
             Title = 'records要素（OfflineSurveyRecordInput）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = @(
-              @('clientRecordKey', 'string', '✓', '端末内の一時識別子。親子紐づけ解決用'),
-              @('parentClientRecordKey', 'string', '-', '本体/明細/付属品の親端末識別子'),
               @('facilityLocationId', 'int64', '-', '既存ロケーションへ解決できた場合の施設ロケーションID'),
               @('surveyDate', 'date', '-', '調査日'),
               @('building', 'string', '-', '棟の表示値スナップショット'),
@@ -207,7 +214,6 @@
               @('sectionName', 'string', '-', '部署名の表示値スナップショット'),
               @('roomName', 'string', '-', '室名称'),
               @('qrIdentifier', 'string', '-', '読取QR識別子'),
-              @('detailType', 'string', '-', '本体 / 明細 / 付属品'),
               @('categoryId', 'int64', '-', 'Category ID'),
               @('largeClassId', 'int64', '-', '大分類ID'),
               @('mediumClassId', 'int64', '-', '中分類ID'),
@@ -253,14 +259,64 @@
           '`facilityId` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
           '`asset_survey_sessions` に1件作成し、1回の送信単位をセッションとして記録する。`created_by_user_id` には認証ユーザーIDを設定する',
           '`records[].facilityLocationId`、`categoryId`、`largeClassId`、`mediumClassId`、`assetItemId`、`manufacturerId`、`modelId` が指定された場合は、いずれも未削除の参照先であることを検証する',
+          '分類マスタIDは「親は子を兼ねる」前提で整合性を検証し、不整合な組み合わせは 422 とする',
+          '`records[].facilityLocationId` が指定された場合は、`facility_locations` の当該行から `building` / `floor` / `department_name` / `section_name` / `room_name` を正本スナップショットとして保存する。指定されない場合はリクエストの表示値を保存する',
+          '分類マスタIDが指定された場合は、各マスタの正規名称を再解決して `*_name` に保存する。ID 未指定時はリクエストの表示値を保存し、対応する ID は `NULL` のままとする',
           '`records` の各要素を `asset_survey_records` へ保存し、各レコードの `facility_id` にはトップレベルの `facilityId` を設定する',
           '各レコードの `surveyor_user_id` には認証ユーザーIDを設定する',
-          '`clientRecordKey` / `parentClientRecordKey` を用いて、親子関係を `parent_asset_survey_record_id` へ解決する',
+          '`records[].qrIdentifier` は `/asset-survey` 画面で重複チェック済みの値を受け取り、`asset_survey_records.qr_identifier` のスナップショットとして保存する',
+          'アップロード時点では各レコードを独立した未確定調査データとして作成し、`detail_type` / `parent_asset_survey_record_id` は `NULL` で開始する。本体 / 明細 / 付属品の紐付けは `/registration-edit` で行う',
           '写真は `application_documents` に `owner_type=''ASSET_SURVEY_RECORD''` / `document_category=''PHOTO''` として保存し、`taken_by_user_id` と `uploaded_by_user_id` には認証ユーザーIDを設定する',
+          '写真が1件以上あるレコードでは、`photos[].isPrimary=true` は最大1件だけ許可する。すべて未指定または `false` の場合は先頭写真を `is_primary=true` として保存する',
           '現有品調査写真の `file_name` は、受信した `photos[].fileName` をそのまま使わず、`survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` 形式のシステム生成名を採番して保存する',
           '写真保存時の `file_path` は `asset-survey/{facility_id}/{YYYY}/{MM}/{local_photo_uuid}.{拡張子}` 形式で生成する',
           '写真保存時の `uploaded_at` にはサーバー受信時刻を設定する',
           'アップロード完了後、セッションステータスを `COMPLETED` へ更新する'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング（調査セッション）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`asset_survey_sessions`', '`asset_survey_session_id`', '新規採番する', 'レスポンス `assetSurveySessionId` として返却する'),
+              @('`asset_survey_sessions`', '`facility_id`', 'リクエスト `facilityId` を保存する', 'Bearer トークン上の作業対象施設と一致している前提'),
+              @('`asset_survey_sessions`', '`created_by_user_id`', '認証ユーザーIDを保存する', '送信実行ユーザー'),
+              @('`asset_survey_sessions`', '`started_at` / `ended_at`', 'リクエスト `startedAt` / `endedAt` を保存する', '未指定時は `NULL` を許容する'),
+              @('`asset_survey_sessions`', '`status`', '作成時は `IN_PROGRESS`、配下レコードと写真の保存完了後に `COMPLETED` へ更新する', '1 回の送信単位の親セッション'),
+              @('`asset_survey_sessions`', '`created_at` / `updated_at`', 'サーバー受信時刻を設定し、完了時に `updated_at` を再更新する', '監査用')
+            )
+          },
+          @{
+            Title = '永続化マッピング（調査レコード）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`asset_survey_records`', '`asset_survey_record_id`', 'レコードごとに新規採番する', '1 調査レコード = 1 行'),
+              @('`asset_survey_records`', '`asset_survey_session_id` / `facility_id`', '新規作成した親 `asset_survey_session_id` とリクエスト `facilityId` を保存する', '全レコードで同一施設を使う'),
+              @('`asset_survey_records`', '`facility_location_id` / `building` / `floor` / `department_name` / `section_name` / `room_name`', '`records[].facilityLocationId` がある場合は当該 `facility_locations` 行の正本スナップショットを保存し、未指定時はリクエスト `building` / `floor` / `departmentName` / `sectionName` / `roomName` を保存する', '既存ロケーションへ解決できない場合は `facility_location_id=NULL`'),
+              @('`asset_survey_records`', '`survey_date` / `qr_identifier`', 'リクエスト `surveyDate` / `qrIdentifier` を保存する', '未指定時は `NULL` を許容する'),
+              @('`asset_survey_records`', '`detail_type` / `parent_asset_survey_record_id`', '`NULL` / `NULL` で作成する', '本体 / 明細 / 付属品の紐付けは `/registration-edit` で確定する'),
+              @('`asset_survey_records`', '`category_id` / `large_class_id` / `medium_class_id` / `asset_item_id` / `manufacturer_id` / `model_id` / `category_name` / `large_class_name` / `medium_class_name` / `asset_item_name` / `manufacturer_name` / `model_name`', '各 ID が指定された場合は対応マスタの正規名称と ID を保存し、ID 未指定時はリクエストの表示値を保存して対応 ID を `NULL` とする', '表示値スナップショットとマスタIDを併存させる'),
+              @('`asset_survey_records`', '`asset_no` / `equipment_no` / `serial_no` / `purchased_on` / `width_mm` / `depth_mm` / `height_mm` / `remarks` / `registered_at`', 'リクエスト `assetNo` / `equipmentNo` / `serialNo` / `purchasedOn` / `widthMm` / `depthMm` / `heightMm` / `remarks` / `registeredAt` を保存する', '未指定時は `NULL` を許容する'),
+              @('`asset_survey_records`', '`surveyor_user_id` / `confirmed_by_user_id` / `confirmed_at` / `survey_status`', '認証ユーザーID / `NULL` / `NULL` / `DRAFT` で作成する', '調査担当者と確定者は分離して記録する'),
+              @('`asset_survey_records`', '`created_at` / `updated_at` / `deleted_at`', 'サーバー受信時刻 / サーバー受信時刻 / `NULL` で作成する', '論理削除状態では開始しない')
+            )
+          },
+          @{
+            Title = '永続化マッピング（調査写真）'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`application_documents`', '`application_document_id`', '写真ごとに新規採番する', '互換 VIEW `asset_survey_photos.asset_survey_photo_id` の元になる'),
+              @('`application_documents`', '`owner_type` / `asset_survey_record_id` / `document_category`', '`ASSET_SURVEY_RECORD` / 対応する新規 `asset_survey_record_id` / `PHOTO` を保存する', '調査写真の正本'),
+              @('`application_documents`', 'リクエスト `photos[].localPhotoUuid` / `photos[].fileName`', '`localPhotoUuid` は DB へ保存せず、`fileName` もそのままは保存しない。両者はサーバー生成 `file_name` / `file_path` の材料としてのみ使う', 'クライアント一時識別子'),
+              @('`application_documents` / オブジェクトストレージ', 'リクエスト `photos[].fileBodyBase64`', 'DB カラムへは保存しない。復号した写真本文をオブジェクトストレージへ保存し、その結果から `file_size_bytes` / `content_hash` を導出する', '写真実体そのものは DB ではなくストレージで管理する'),
+              @('`application_documents`', '`file_name` / `file_path`', 'システム生成ファイル名 `survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` と `asset-survey/{facility_id}/{YYYY}/{MM}/{local_photo_uuid}.{拡張子}` を保存する', '実ファイルはオブジェクトストレージへ保存する'),
+              @('`application_documents`', '`mime_type` / `file_size_bytes` / `content_hash` / `storage_format`', 'リクエスト `photos[].contentType`、復号後バイト数、サーバー計算ハッシュ、`NULL` を保存する', '`storage_format` は現有品調査写真では未使用'),
+              @('`application_documents`', '`taken_at` / `taken_by_user_id` / `uploaded_by_user_id` / `uploaded_at`', 'リクエスト `photos[].takenAt`、認証ユーザーID、認証ユーザーID、サーバー受信時刻を保存する', '`takenAt` 未指定時は `uploaded_at` を正本時刻として扱える状態にする'),
+              @('`application_documents`', '`is_primary` / `sort_order`', 'レコード配下で `photos[].isPrimary=true` の写真を 1 件だけ `true` とし、未指定時は先頭写真を `true` にする。`sort_order` は `photos[]` の並び順を保存する', '同一 `asset_survey_record_id` で代表写真は必ず 1 件だけ'),
+              @('`application_documents`', '`application_id` / `application_asset_id` / `edit_list_item_id` / `rfq_id` / `rfq_vendor_id` / `quotation_id` / `inspection_result_id` / `asset_ledger_id` / `step_code` / `document_type` / `title` / `document_date` / `account_type` / `account_other_text` / `deleted_at`', '`NULL` で作成する', '現有品調査写真では利用しない汎用ドキュメント列'),
+              @('`application_documents`', '`created_at` / `updated_at`', 'サーバー受信時刻を設定する', '監査用')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（201：OfflineSurveyUploadResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -307,6 +363,7 @@
           '`facilityId` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
           '`asset_survey_records.deleted_at IS NULL` かつ `asset_survey_records.survey_status=''DRAFT''` の未確定レコードのみを対象にする',
           '選択施設内の `DRAFT` レコードは、作成者・調査担当者に関係なく一覧対象とし、同一施設内では別ユーザーが続き作業を引き継げる前提で返却する',
+          'QRコード列は `asset_survey_records.qr_identifier` のスナップショットをそのまま返却し、`qr_codes` の解決は行わない',
           '`users` を結合して調査担当者名を解決する',
           '`application_documents` を集計して写真枚数を算出する',
           'フィルタ条件は AND 条件で適用する',
@@ -468,9 +525,27 @@
           '対象レコードが `survey_status=''DRAFT''` であることを確認する',
           '`facilityLocationId` や各分類マスタIDが指定された場合は、いずれも未削除の参照先であることを検証する',
           '分類マスタIDは「親は子を兼ねる」前提で整合性を検証する',
+          '`facilityLocationId` が指定された場合は `facility_locations` の当該行から `building` / `floor` / `department_name` / `section_name` / `room_name` を正本スナップショットとして保存し、未指定または `null` の場合はリクエストの表示値を保存する',
+          '分類マスタIDが指定された場合は各マスタの正規名称を再解決して `*_name` に保存し、ID 未指定または `null` の場合はリクエストの表示値を保存して対応 ID を `NULL` とする',
           '自由記述のまま保存する場合は表示値を保持し、未確定のマスタIDは `NULL` のままとする',
-          '本体/明細/付属品の紐付け更新時は `detail_type` と `parent_asset_survey_record_id` を更新する',
+          '`detailType=''MAIN''` の場合は `parent_asset_survey_record_id=NULL` とし、`DETAIL` / `ACCESSORY` の場合は同一施設内の `DRAFT` レコードを `parentAssetSurveyRecordId` で指定する。`null` 指定時は紐付け解除として `detail_type` / `parent_asset_survey_record_id` を更新する',
+          'リクエストで未指定の項目は既存値を維持し、明示的に `null` を送った項目だけ対応カラムをクリアする',
+          '更新成功時は `asset_survey_records.updated_at` を現在時刻へ更新する',
           '更新後の `asset_survey_records` を返却する'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`asset_survey_records`', '`facility_location_id` / `building` / `floor` / `department_name` / `section_name` / `room_name`', 'リクエスト `facilityLocationId` がある場合は当該 `facility_locations` 行の正本スナップショットで上書きし、未指定または `null` の場合はリクエスト `building` / `floor` / `departmentName` / `sectionName` / `roomName` を保存する', '未指定項目は既存値を維持する'),
+              @('`asset_survey_records`', '`detail_type` / `parent_asset_survey_record_id`', 'リクエスト `detailType` / `parentAssetSurveyRecordId` で更新する。`detailType=''MAIN''` は親を `NULL`、`DETAIL` / `ACCESSORY` は同一施設内 `DRAFT` 親レコードIDを保存し、`null` 指定時は紐付け解除とする', '本体 / 明細 / 付属品の紐付け更新'),
+              @('`asset_survey_records`', '`category_id` / `large_class_id` / `medium_class_id` / `asset_item_id` / `manufacturer_id` / `model_id` / `category_name` / `large_class_name` / `medium_class_name` / `asset_item_name` / `manufacturer_name` / `model_name`', '各 ID が指定された場合は対応マスタの正規名称と ID で上書きし、ID 未指定または `null` の場合は対応するリクエスト表示値を保存して ID を `NULL` とする', '親子不整合の下位 ID はクリアする'),
+              @('`asset_survey_records`', '`asset_no` / `equipment_no` / `serial_no` / `purchased_on` / `width_mm` / `depth_mm` / `height_mm` / `remarks`', 'リクエスト `assetNo` / `equipmentNo` / `serialNo` / `purchasedOn` / `widthMm` / `depthMm` / `heightMm` / `remarks` で上書きする', '未指定時は既存値を維持し、明示 `null` はクリアする'),
+              @('`asset_survey_records`', '`updated_at`', '更新時点の日時へ更新する', 'インライン編集の最終更新時刻'),
+              @('`asset_survey_records`', '`asset_survey_session_id` / `facility_id` / `survey_date` / `surveyor_user_id` / `confirmed_by_user_id` / `confirmed_at` / `qr_identifier` / `survey_status` / `registered_at` / `created_at` / `deleted_at`', '変更しない', '本 API の更新対象外')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（200：RegistrationEditRecordResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -508,10 +583,22 @@
         ProcessingLines = @(
           '対象 `asset_survey_records` が `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
           '対象写真が同一レコード配下の未削除 `application_documents` であることを検証する',
-          '`application_documents.deleted_at` を更新して論理削除する',
+          '`application_documents.deleted_at` と `updated_at` を更新して論理削除し、削除対象の `is_primary` は `false` にする',
           '削除対象が代表写真で、他に写真が残る場合は、フロントエンドが指定した `nextPrimaryPhotoId` に `is_primary=true` を付け替える',
           '`nextPrimaryPhotoId` が指定された場合は、同一 `asset_survey_record_id` に属する未削除写真であることを検証する',
-          '写真が0件になった場合は代表写真なし状態とする'
+          '写真が0件になった場合は代表写真なし状態とし、オブジェクトストレージ上の実ファイルは本 API では削除しない'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`application_documents`', '削除対象 `photoId` の `deleted_at` / `updated_at` / `is_primary`', '現在時刻 / 現在時刻 / `false` へ更新する', '論理削除した写真は代表フラグも落とす'),
+              @('`application_documents`', 'リクエスト `nextPrimaryPhotoId` の `is_primary` / `updated_at`', '`true` / 現在時刻へ更新する', '削除対象が代表写真で、後続写真が残る場合のみ実行する'),
+              @('`application_documents`', 'その他の同一 `asset_survey_record_id` 配下写真', '変更しない', '代表写真の付け替え対象以外はそのまま保持する'),
+              @('`asset_survey_photos`', 'VIEW 行', '直接更新しない', '`application_documents` の更新結果が VIEW に反映される')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（200：RegistrationEditPhotoDeleteResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -520,6 +607,7 @@
           @('newPrimaryPhotoId', 'int64', '-', '新たに代表写真となった写真ID')
         )
         StatusRows = @(
+          @('400', '`nextPrimaryPhotoId` が不正（同一レコード配下の未削除写真ではない）', 'ErrorResponse'),
           @('200', '削除成功', 'RegistrationEditPhotoDeleteResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '作業対象施設に対する実効 `survey_data_edit` なし、または対象施設不一致', 'ErrorResponse'),
@@ -548,14 +636,27 @@
           '対象レコードが `survey_status=''DRAFT''` であることを確認する',
           '確定条件として `category_id` / `large_class_id` / `medium_class_id` / `asset_item_id` が設定されていることを検証する',
           '`manufacturer_id` / `model_id` は未設定でも許可する',
-          '条件を満たしたレコードの `survey_status` を `CONFIRMED` へ更新し、`confirmed_by_user_id` に認証ユーザーID、`confirmed_at` にサーバー時刻を設定する',
+          '条件を満たしたレコードの `survey_status` を `CONFIRMED` へ更新し、`confirmed_by_user_id` に認証ユーザーID、`confirmed_at` と `updated_at` にサーバー時刻を設定する',
+          '対象レコードのいずれかが条件未達または確定済みである場合は一括失敗とし、部分確定しない',
           '複数ユーザーが同一レコードを表示している場合は先に `CONFIRMED` へ更新したユーザーを正とし、後続ユーザーの確定要求は更新対象が `DRAFT` でなくなっているため 409 を返す'
+        )
+        ExtraTables = @(
+          @{
+            Title = '永続化マッピング'
+            Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+            Rows = @(
+              @('`asset_survey_records`', 'リクエスト `recordIds[*]` に一致する各行の `survey_status`', '`CONFIRMED` へ更新する', '`DRAFT` かつ確定条件充足行のみ対象'),
+              @('`asset_survey_records`', 'リクエスト `recordIds[*]` に一致する各行の `confirmed_by_user_id` / `confirmed_at` / `updated_at`', '認証ユーザーID / 現在時刻 / 現在時刻を保存する', '確定監査用'),
+              @('`asset_survey_records`', '各行の `facility_location_id` / 分類列 / 表示値スナップショット / 資産情報 / `surveyor_user_id` / `registered_at` / `created_at` / `deleted_at`', '変更しない', '確定は状態更新のみを行う'),
+              @('`asset_survey_sessions` / `application_documents`', '行更新なし', '変更しない', '本 API の更新対象外')
+            )
+          }
         )
         ResponseTitle = 'レスポンス（200：RegistrationEditConfirmResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
         ResponseRows = @(
           @('confirmedCount', 'int32', '✓', '確定した件数'),
-          @('failedRecordIds', 'int64[]', '-', '確定条件を満たさず失敗したレコードID一覧')
+          @('failedRecordIds', 'int64[]', '-', '本 API は部分成功を許可しないため、成功時は空配列または未返却。条件未達が含まれる場合は 409 を返す')
         )
         StatusRows = @(
           @('200', '確定成功', 'RegistrationEditConfirmResponse'),
