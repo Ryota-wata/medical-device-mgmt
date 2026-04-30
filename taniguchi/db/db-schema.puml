@@ -954,6 +954,8 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     希望順 / priority_order : int
     希望納期 / desired_delivery_on : date
     備考 / remarks : varchar
+    更新購入後処理区分 / replacement_action : varchar
+    継続利用理由 / continue_reason : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
@@ -1097,6 +1099,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     --
     申請種別 / application_type : varchar
     購入申請区分 / purchase_type : varchar
+    優先順位 / priority : varchar
     希望納期 / desired_delivery_on : date
     使用用途 / usage_purpose : varchar
     症例数（月） / cases_per_month : int
@@ -1161,6 +1164,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     * 申請ID / application_id : bigint
     --
     申請種別 / application_type : varchar
+    関連購入申請ID / related_purchase_application_id : bigint
     移動元施設ロケーションID / source_facility_location_id : bigint
     移動先施設ロケーションID / destination_facility_location_id : bigint
     移動先棟 / destination_building_name : varchar
@@ -1669,6 +1673,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     申請者名 / requested_by_name : varchar
     申請者所属 / requested_by_department_name : varchar
     申請者連絡先 / requested_by_contact : varchar
+    優先順位 / priority : varchar
     設置棟 / building_name : varchar
     設置フロア / floor_name : varchar
     設置部門 / department_name : varchar
@@ -2578,6 +2583,8 @@ applications ||--o{ borrowing_application_purposes : ""
 applications ||--o{ borrowing_cost_burdens : ""
 applications ||--|| transfer_application_details : ""
 applications ||--|| disposal_application_details : ""
+applications ||--o{ transfer_application_details : "related_purchase_application_id"
+applications ||--o{ disposal_application_details : "related_purchase_application_id"
 applications ||--|| repair_request_details : ""
 applications ||--o{ rfq_applications : ""
 applications ||--o{ maintenance_contracts : ""
