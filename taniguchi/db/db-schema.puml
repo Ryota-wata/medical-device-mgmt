@@ -1964,6 +1964,12 @@ package "インポート・マッチング" {
     選択品目ID / selected_asset_item_id : bigint
     選択メーカーID / selected_manufacturer_id : bigint
     選択型式ID / selected_model_id : bigint
+    選択SHIP資産マスタID / selected_ship_asset_master_id : bigint
+    AI明細分類 / ai_line_classification : varchar
+    AI分類信頼度 / ai_classification_confidence : decimal(5,3)
+    AI推薦要否 / ai_recommendation_required : boolean
+    AIモデルバージョン / ai_model_version : varchar
+    候補SHIP資産マスタID / suggested_ship_asset_master_id : bigint
     候補Category名 / suggested_category_name : varchar
     候補大分類名 / suggested_large_class_name : varchar
     候補中分類名 / suggested_medium_class_name : varchar
@@ -1977,6 +1983,8 @@ package "インポート・マッチング" {
     候補メーカーID / suggested_manufacturer_id : bigint
     候補型式ID / suggested_model_id : bigint
     類似度スコア / suggested_score : decimal(5,3)
+    類似度採用元 / suggested_similarity_source : varchar
+    類似度元資産台帳ID / suggested_source_asset_ledger_id : bigint
     確定済みフラグ / is_confirmed : boolean
     確定者ユーザーID / confirmed_by_user_id : bigint
     確定日時 / confirmed_at : timestamp
@@ -1991,6 +1999,55 @@ package "インポート・マッチング" {
     マスタ選択時は対応する
     `*_id` も保持し、
     自由記述時は `*_id` を NULL とする。
+    SHIP資産マスタ単位で推薦・選択できた場合は
+    suggested_ship_asset_master_id /
+    selected_ship_asset_master_id も保持する。
+    AI分類入力は PoC2 方針に従い、
+    product_name:{parsed_asset_name},
+    spec:{parsed_model_name} とし、
+    parsed_manufacturer_name は含めない。
+    ai_line_classification=ABC の行のみ
+    ai_recommendation_required=true とし、
+    suggested_* / suggested_score /
+    suggested_similarity_source /
+    suggested_source_asset_ledger_id を保存する。
+    類似度計算は PoC1 方針に従い、
+    parsed_asset_name / parsed_manufacturer_name /
+    parsed_model_name の全順列と
+    括弧除去有無の2パターンで最大スコアを採用する。
+    JMDN由来候補は
+    jmdn_registered_items.product_name /
+    jmdn_registered_items.manufacturer_name /
+    jmdn_classifications.general_name を利用する。
+    原本資産台帳由来候補は全施設の
+    asset_ledgers のうち
+    ship_asset_master_id が設定済み、
+    かつ紐づく ship_asset_masters が有効な行を対象とし、
+    asset_name / manufacturer_name / model_name を利用する。
+    suggested_similarity_source は
+    JMDN_MASTER / ASSET_LEDGER。
+    同点時は ship_asset_master_id 昇順、
+    採用元は JMDN_MASTER -> ASSET_LEDGER の順、
+    原本資産台帳由来の同一マスタ内では
+    asset_ledger_id 昇順で決定する。
+    D/OTHER 行は AI推薦対象外として
+    suggested_* / suggested_score /
+    suggested_similarity_source /
+    suggested_source_asset_ledger_id を NULL とする。
+    Excel出力/取込によるローカル紐づけ作業も
+    asset_import_rows を正本とし、
+    出力ブック内の asset_import_job_id /
+    asset_import_row_id / facility_id で
+    対象ジョブと対象行を検証する。
+    Excel取込は selected_ship_asset_master_id と
+    selected_*_id / selected_*_name のみを更新し、
+    parsed_* / ai_* / suggested_* /
+    is_confirmed / confirmed_by_user_id /
+    confirmed_at は更新しない。
+    selected_ship_asset_master_id が指定された場合は
+    有効な ship_asset_masters から
+    Category/大分類/中分類/品目/メーカー/型式を
+    再解決して selected_* に反映する。
     これはCategory/大分類/中分類/品目/メーカー/型式
     の各階層で、マスタ候補採用と
     自由記述が混在する
@@ -2536,9 +2593,11 @@ asset_medium_classes ||--o{ asset_import_rows : ""
 asset_items ||--o{ asset_import_rows : ""
 manufacturers ||--o{ asset_import_rows : ""
 models ||--o{ asset_import_rows : ""
+ship_asset_masters ||--o{ asset_import_rows : ""
 
 ' 資産台帳関連
 asset_ledgers ||--o{ asset_ledgers : "parent_asset_ledger_id"
+asset_ledgers ||--o{ asset_import_rows : "suggested_source_asset_ledger_id"
 asset_ledgers ||--o{ asset_documents : "VIEW元"
 asset_ledgers ||--o{ asset_photos : "VIEW元"
 asset_ledgers ||--o{ qr_codes : ""

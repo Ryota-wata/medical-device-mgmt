@@ -5,11 +5,12 @@
   @('取込ジョブ再取込', 'POST', '/asset-import/jobs/{assetImportJobId}/retry', 'FAILED ジョブを参照して新しい取込ジョブを作成する', '要'),
   @('取込ジョブ削除', 'DELETE', '/asset-import/jobs/{assetImportJobId}', 'READY_FOR_MATCHING / FAILED ジョブと関連行を削除する', '要'),
   @('突き合わせ画面コンテキスト取得', 'GET', '/asset-matching/context', '突き合わせ対象ジョブの件数サマリとフィルタ候補を取得する', '要'),
-  @('突き合わせ一覧取得', 'GET', '/asset-matching/rows', '取込結果一覧、AI推薦、保存済み選択値を取得する', '要'),
+  @('突き合わせ一覧取得', 'GET', '/asset-matching/rows', '取込結果一覧、AI分類、AI推薦、保存済み選択値を取得する', '要'),
   @('突き合わせ候補取得', 'GET', '/asset-matching/master-options', 'Category/分類/品目/メーカー/型式の検索候補を取得する', '要'),
   @('突き合わせ行更新', 'PUT', '/asset-matching/rows/{assetImportRowId}', '行単位で選択値や確定フラグを更新する', '要'),
   @('突き合わせ一括確定', 'POST', '/asset-matching/rows/confirm-bulk', '選択行をまとめて確定する', '要'),
-  @('突き合わせ結果Excel出力', 'GET', '/asset-matching/export', '現在の絞り込み結果を Excel で出力する', '要'),
+  @('突き合わせ結果Excel出力', 'GET', '/asset-matching/export', '現在の絞り込み結果とSHIP資産マスタを Excel で出力する', '要'),
+  @('突き合わせ結果Excel取込', 'POST', '/asset-matching/import', 'Excelで編集したSHIP資産マスタ紐づけを取込行へ反映する', '要'),
   @('突き合わせ完了', 'POST', '/asset-matching/complete', '対象ジョブを突き合わせ完了へ更新する', '要')
 )
 
@@ -96,7 +97,7 @@ $endpointSpecs = @(
   },
   @{
     Title = '取込ジョブ作成・ファイルアップロード（/asset-import/jobs）'
-    Overview = '台帳ファイルを受け取り、資産インポートジョブを作成する。ジョブ作成後に各行を `asset_import_rows` へ展開し、AI 推薦候補を初期計算する。'
+    Overview = '台帳ファイルを受け取り、資産インポートジョブを作成する。ジョブ作成後に各行を `asset_import_rows` へ展開し、PoC2 方針に基づく AI 分類を行う。`ABC` 判定行のみ AI 推薦候補を初期計算し、`D` / `OTHER` 判定行は推薦対象外として扱う。'
     Method = 'POST'
     Path = '/asset-import/jobs'
     Auth = '要（Bearer）'
@@ -117,8 +118,16 @@ $endpointSpecs = @(
       '拡張子とファイルサイズを検証し、不正時は 400 を返却する',
       '未完了ジョブが同一施設に存在する場合は新規作成不可とする',
       '`asset_import_jobs` を `PROCESSING` で作成し、ファイルを行単位に分解して `asset_import_rows` を作成する',
-      '`selected_*_id` / `suggested_*_id` に使う参照マスタは、存在し、かつ削除済みでないことを前提に保存する',
-      '各行について資産マスタ/JMDNマスタとの類似度計算を行い、最良候補の `suggested_*_name` / `suggested_*_id` と `suggested_score` を保存する',
+      '固定資産管理台帳の各行から商品名列、メーカー名列、規格列を取得し、商品名列を `parsed_asset_name`、メーカー名列を `parsed_manufacturer_name`、規格列を `parsed_model_name` へ保存する',
+      'AI 分類モデルへの入力は PoC2 最終報告書の方針に従い、`product_name:{parsed_asset_name}, spec:{parsed_model_name}` とする。`parsed_manufacturer_name` は表示・検索・確定値には利用するが、分類モデル入力には含めない',
+      'PoC2 保存済み LUKE Model A で `ABC` / `D` / `OTHER` を判定し、`ai_line_classification`、`ai_classification_confidence`、`ai_recommendation_required`、`ai_model_version` を保存する。`OTHER` はモデルラベル「その他」に対応する',
+      '`selected_*_id` / `suggested_*_id` / `selected_ship_asset_master_id` / `suggested_ship_asset_master_id` に使う参照マスタは、存在し、かつ削除済みでないことを前提に保存する',
+      '`ABC` 判定行のみ PoC1 方針の 3-gram コサイン類似度で AI 推薦候補を算出する。固定資産台帳側は `parsed_asset_name` / `parsed_manufacturer_name` / `parsed_model_name` を比較入力とし、3項目の全順列と括弧除去有無の2パターンで最大スコアを採用する',
+      'JMDN由来候補は有効な `ship_asset_masters` に紐づく `jmdn_registered_items.product_name`（販売名）、`jmdn_registered_items.manufacturer_name`（製造販売業者等）、`jmdn_classifications.general_name`（一般的名称）を比較文字列に利用する',
+      '原本資産台帳由来候補は、全施設の `asset_ledgers` のうち `ship_asset_master_id` が設定され、紐づく SHIP資産マスタが有効な行を対象に、`asset_ledgers.asset_name`（原本の商品名）、`asset_ledgers.manufacturer_name`（原本のメーカー名）、`asset_ledgers.model_name`（原本の規格）を比較文字列に利用する',
+      'JMDN由来候補と原本資産台帳由来候補を同じ候補集合として比較し、最もスコアが高いレコードに紐づく SHIP 資産マスタを `suggested_ship_asset_master_id`、`suggested_*_name` / `suggested_*_id`、`suggested_score`、`suggested_similarity_source` として保存する。原本資産台帳由来候補が採用された場合は `suggested_source_asset_ledger_id` も保存する',
+      '同点時は `ship_asset_master_id` 昇順、採用元は `JMDN_MASTER` → `ASSET_LEDGER` の順で決定し、原本資産台帳由来の同一マスタ内では `asset_ledger_id` 昇順で決定する',
+      '`D` / `OTHER` 判定行は AI 推薦対象外とし、`suggested_ship_asset_master_id`、`suggested_*_name` / `suggested_*_id`、`suggested_score`、`suggested_similarity_source`、`suggested_source_asset_ledger_id` は null のまま保存する',
       '初期取込完了後に `asset_import_jobs.status` を `READY_FOR_MATCHING` へ更新する',
       '初期取込処理が失敗した場合は、展開中の `asset_import_rows` をロールバックしたうえで、別トランザクションで `asset_import_jobs.status=FAILED`、`error_message`、`finished_at` を更新する',
       '処理時間が長い場合に備え、本APIは 202 Accepted でジョブを返却し、完了判定は状態照会APIで行う前提とする'
@@ -144,9 +153,10 @@ $endpointSpecs = @(
         Rows = @(
           @('`asset_import_rows`', '`asset_import_row_id` / `asset_import_job_id` / `row_no`', 'データ行ごとに新規採番し、親ジョブIDとヘッダー / 空白行を除いた行順を保存する', '1 取込行 = 1 レコード'),
           @('`asset_import_rows`', '`raw_data_json`', '元ファイル 1 行分の原文を JSON 化して保存する', '監査・再解析用'),
-          @('`asset_import_rows`', '`parsed_ledger_no` / `parsed_management_device_no` / `parsed_asset_name` / `parsed_manufacturer_name` / `parsed_model_name` / `parsed_department_name` / `parsed_section_name` / `parsed_room_name` / `parsed_category_name` / `parsed_quantity` / `parsed_unit` / `parsed_inspection_date`', '元ファイル各列の値を対応カラムへ保存する', '取込元表示値と監査用スナップショット'),
-          @('`asset_import_rows`', '`suggested_category_name` / `suggested_large_class_name` / `suggested_medium_class_name` / `suggested_asset_item_name` / `suggested_manufacturer_name` / `suggested_model_name` / `suggested_category_id` / `suggested_large_class_id` / `suggested_medium_class_id` / `suggested_asset_item_id` / `suggested_manufacturer_id` / `suggested_model_id` / `suggested_score`', 'AI 推薦ロジックで算出した最良候補の表示値、対応ID、類似度を保存する', '推薦時点のスナップショットを保持する'),
-          @('`asset_import_rows`', '`selected_category_name` / `selected_large_class_name` / `selected_medium_class_name` / `selected_asset_item_name` / `selected_manufacturer_name` / `selected_model_name` / `selected_category_id` / `selected_large_class_id` / `selected_medium_class_id` / `selected_asset_item_id` / `selected_manufacturer_id` / `selected_model_id` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `deleted_at`', '`NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `false` / `NULL` / `NULL` / `NULL` で作成する', '初期取込時点では未選択・未確定・未削除'),
+          @('`asset_import_rows`', '`parsed_ledger_no` / `parsed_management_device_no` / `parsed_asset_name` / `parsed_manufacturer_name` / `parsed_model_name` / `parsed_department_name` / `parsed_section_name` / `parsed_room_name` / `parsed_category_name` / `parsed_quantity` / `parsed_unit` / `parsed_inspection_date`', '元ファイル各列の値を対応カラムへ保存する。固定資産管理台帳では商品名列を `parsed_asset_name`、メーカー名列を `parsed_manufacturer_name`、規格列を `parsed_model_name` へ保存する', '取込元表示値と監査用スナップショット'),
+          @('`asset_import_rows`', '`ai_line_classification` / `ai_classification_confidence` / `ai_recommendation_required` / `ai_model_version`', 'PoC2 保存済み LUKE Model A による一次分類結果、信頼度、ABC 判定時の推薦要否、利用モデルバージョンを保存する', '`ABC` / `D` / `OTHER`。`OTHER` は画面表示上「その他」'),
+          @('`asset_import_rows`', '`suggested_ship_asset_master_id` / `suggested_category_name` / `suggested_large_class_name` / `suggested_medium_class_name` / `suggested_asset_item_name` / `suggested_manufacturer_name` / `suggested_model_name` / `suggested_category_id` / `suggested_large_class_id` / `suggested_medium_class_id` / `suggested_asset_item_id` / `suggested_manufacturer_id` / `suggested_model_id` / `suggested_score` / `suggested_similarity_source` / `suggested_source_asset_ledger_id`', '`ABC` 判定行のみ AI 推薦ロジックで算出した最良候補の SHIP 資産マスタID、表示値、対応ID、類似度、採用元、原本資産台帳由来候補の元台帳IDを保存する。`D` / `OTHER` 判定行はすべて null とする', '推薦時点のスナップショットを保持する'),
+          @('`asset_import_rows`', '`selected_category_name` / `selected_large_class_name` / `selected_medium_class_name` / `selected_asset_item_name` / `selected_manufacturer_name` / `selected_model_name` / `selected_category_id` / `selected_large_class_id` / `selected_medium_class_id` / `selected_asset_item_id` / `selected_manufacturer_id` / `selected_model_id` / `selected_ship_asset_master_id` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `deleted_at`', '`NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `NULL` / `false` / `NULL` / `NULL` / `NULL` で作成する', '初期取込時点では未選択・未確定・未削除'),
           @('`asset_import_rows`', '`created_at` / `updated_at`', '初期取込完了時点の日時を設定する', '行監査用'),
           @('`asset_import_jobs`', '`status` / `error_message` / `finished_at` / `updated_at`', '`READY_FOR_MATCHING` / `NULL` / 初期取込完了時点の日時 / 同日時へ更新する', 'ポーリング結果の正本')
         )
@@ -240,6 +250,7 @@ $endpointSpecs = @(
       '対象ジョブが `FAILED` であることを検証する',
       '`asset_import_jobs.file_path` に保持した元ファイルを再利用し、新しい `asset_import_jobs` を `PROCESSING` で作成する',
       '元の FAILED ジョブとその失敗情報は監査用に保持する',
+      '再取込時も `POST /asset-import/jobs` と同じ AI 分類・AI 推薦ルールを適用する。分類入力は `product_name:{parsed_asset_name}, spec:{parsed_model_name}` とし、メーカー名は分類入力に含めない。AI推薦は JMDN由来候補と全施設の原本資産台帳由来候補を同じ候補集合として比較する',
       '再取込の初期取込処理が失敗した場合は、展開中の `asset_import_rows` をロールバックしたうえで、新規ジョブ側だけ `status=FAILED`、`error_message`、`finished_at` を更新する',
       '新規ジョブ作成後の処理内容は通常の `/asset-import/jobs` と同じとする'
     )
@@ -260,7 +271,7 @@ $endpointSpecs = @(
         Title = '永続化マッピング（初期取込処理）'
         Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
         Rows = @(
-          @('`asset_import_rows`', '新規ジョブ配下の `asset_import_row_id` / `asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `suggested_*` / `suggested_score` / `selected_*` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `created_at` / `updated_at` / `deleted_at`', '元ファイルを再解析し、`POST /asset-import/jobs` の初期取込成功時と同じルールで新規作成する', '再取込元ジョブの `asset_import_rows` は再利用しない'),
+          @('`asset_import_rows`', '新規ジョブ配下の `asset_import_row_id` / `asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `ai_*` / `suggested_*` / `suggested_ship_asset_master_id` / `suggested_score` / `suggested_similarity_source` / `suggested_source_asset_ledger_id` / `selected_*` / `selected_ship_asset_master_id` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `created_at` / `updated_at` / `deleted_at`', '元ファイルを再解析し、`POST /asset-import/jobs` の初期取込成功時と同じルールで新規作成する', '再取込元ジョブの `asset_import_rows` は再利用しない'),
           @('`asset_import_jobs`（新規ジョブ）', '`status` / `error_message` / `finished_at` / `updated_at`', '成功時は `READY_FOR_MATCHING` / `NULL` / 完了時点の日時 / 同日時、失敗時は `FAILED` / 利用者向け失敗理由 / 失敗時点の日時 / 同日時へ更新する', '結果は新規ジョブ側だけに反映する')
         )
       }
@@ -388,7 +399,7 @@ $endpointSpecs = @(
   },
   @{
     Title = '突き合わせ一覧取得（/asset-matching/rows）'
-    Overview = '取込結果一覧、AI推薦、保存済み選択値を取得する。部門/部署/Category/大分類/中分類/品目で絞り込み可能とし、既定では未確定行のみ返却する。'
+    Overview = '取込結果一覧、AI分類、AI推薦、保存済み選択値を取得する。部門/部署/Category/大分類/中分類/品目で絞り込み可能とし、既定では未確定行のみ返却する。'
     Method = 'GET'
     Path = '/asset-matching/rows'
     Auth = '要（Bearer）'
@@ -413,7 +424,8 @@ $endpointSpecs = @(
       '対象ジョブが `READY_FOR_MATCHING` であることを前提とし、それ以外の状態では 409 を返却する',
       '部門/部署/Category/大分類/中分類/品目は AND 条件で絞り込む',
       '既定では未確定行のみ返却し、`includeConfirmed=true` の場合のみ確定済み行を含める',
-      '表示値は `asset_import_rows` に保存した `suggested_*_name` / `selected_*_name` を返却し、マスタ選択済みの場合のみ対応する `*_id` を返却する',
+      '表示値は `asset_import_rows` に保存した `ai_line_classification`、`ai_recommendation_required`、`suggested_*_name` / `selected_*_name`、`suggested_score`、`suggested_similarity_source`、`suggested_source_asset_ledger_id` を返却し、マスタ選択済みの場合のみ対応する `*_id` を返却する',
+      '`ai_line_classification=ABC` の行のみ `suggestedMatch` に AI 推薦候補を返却する。`D` / `OTHER` 行は AI 推薦対象外のため `suggestedMatch=null` とし、画面表示上は「その他」を `OTHER` に対応づける',
       '現在の画面 DTO では共通部門/共通部署/品目名(原)/メーカー名(原)/型式(原)/数量の表示に必要な項目のみ返却し、固定資産番号/管理機器番号/諸室名称/Category/検収日は監査・後続利用向けに `asset_import_rows` / `raw_data_json` へ保持する',
       '画面要件上ページングは定義しない'
     )
@@ -437,7 +449,11 @@ $endpointSpecs = @(
           @('parsedModelName', 'string', '-', '型式名（原）。`asset_import_rows.parsed_model_name` を返す'),
           @('parsedQuantity', 'int32', '-', '数量（取込）'),
           @('parsedUnit', 'string', '-', '単位（取込）'),
-          @('suggestedMatch', 'AssetMatchSelection|null', '✓', 'AI推薦候補'),
+          @('aiLineClassification', 'string', '-', 'AI分類結果。`ABC` / `D` / `OTHER`。`OTHER` は画面表示上「その他」'),
+          @('aiRecommendationRequired', 'boolean', '✓', 'AI推薦要否。`ABC` 判定行のみ true'),
+          @('aiClassificationConfidence', 'decimal(5,3)', '-', 'AI分類信頼度'),
+          @('aiModelVersion', 'string', '-', '推論に利用したモデルバージョン'),
+          @('suggestedMatch', 'AssetMatchSelection|null', '✓', 'AI推薦候補。`D` / `OTHER` 行は null'),
           @('selectedMatch', 'AssetMatchSelection|null', '✓', 'ユーザー選択結果'),
           @('isConfirmed', 'boolean', '✓', '確定済みフラグ')
         )
@@ -446,6 +462,7 @@ $endpointSpecs = @(
         Title = 'AssetMatchSelection'
         Headers = @('フィールド', '型', '必須', '説明')
         Rows = @(
+          @('shipAssetMasterId', 'int64', '-', 'SHIP資産マスタID。AI推薦またはマスタ選択で特定できた場合に返す'),
           @('categoryId', 'int64', '-', 'CategoryID。自由記述時は null'),
           @('categoryName', 'string', '-', 'Category表示名。表示値スナップショット'),
           @('largeClassId', 'int64', '-', '大分類ID。自由記述時は null'),
@@ -458,7 +475,9 @@ $endpointSpecs = @(
           @('manufacturerName', 'string', '-', 'メーカー表示名。表示値スナップショット'),
           @('modelId', 'int64', '-', '型式ID。自由記述時は null'),
           @('modelName', 'string', '-', '型式表示名。表示値スナップショット'),
-          @('score', 'decimal(5,3)', '-', 'AI推薦時のみ返却する類似度スコア')
+          @('score', 'decimal(5,3)', '-', 'AI推薦時のみ返却する類似度スコア'),
+          @('scoreSource', 'string', '-', 'AI推薦時のみ返却する類似度採用元。`JMDN_MASTER` / `ASSET_LEDGER`'),
+          @('sourceAssetLedgerId', 'int64', '-', '`scoreSource=ASSET_LEDGER` の場合に、比較元となった原本資産台帳IDを返す')
         )
       }
     )
@@ -549,6 +568,7 @@ $endpointSpecs = @(
       @('selectedManufacturerId', 'int64', '-', '選択メーカーID。自由記述時は null'),
       @('selectedModelName', 'string', '-', '選択型式表示名。自由記述時は入力値を保存する'),
       @('selectedModelId', 'int64', '-', '選択型式ID。自由記述時は null'),
+      @('selectedShipAssetMasterId', 'int64', '-', '選択SHIP資産マスタID。資産マスタ候補を採用した場合に指定する。自由記述時またはAI推薦対象外行をマスタ未選択で確定する場合は null'),
       @('isConfirmed', 'boolean', '-', 'true の場合は当該行を確定済みに更新する')
     )
     PermissionLines = @(
@@ -560,10 +580,12 @@ $endpointSpecs = @(
       '対象行が属するジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
       '編集対象は未確定行のみとし、未確定行の保存競合は最終保存勝ちとする',
       '`selected_*_name` は画面表示用文字列として保存し、マスタ選択時は対応する `selected_*_id` も保存する。自由記述時は `selected_*_id` を null とする',
+      '`selectedShipAssetMasterId` が指定された場合は、`ship_asset_masters` の Category / 大分類 / 中分類 / 品目 / メーカー / 型式を再解決し、対応する `selected_*_id` / `selected_*_name` と `selected_ship_asset_master_id` を同時に保存する',
       'マスタ選択時に `selected_*_id` が指定された場合は、当該マスタの正規名称を再解決して `selected_*_name` へ保存し、名称不一致は 400 を返却する',
       '親は子を兼ねる前提で、下位階層IDが指定された場合は必要な親階層IDを自動補完する',
       '上位階層変更時に整合しない下位階層IDはクリアする',
       'リクエストで未指定の `selected*` 項目は既存値を維持し、明示的に `null` を送った項目だけ対応する `selected_*_name` / `selected_*_id` をクリアする',
+      '`ai_recommendation_required=false` の行は `selectedShipAssetMasterId` / `selectedMatch` が null のままでも確定可能とする。`ai_recommendation_required=true` の行を確定する場合は、選択済みマスタまたは自由記述の選択値が業務必須を満たすことを検証する',
       '`isConfirmed=true` の場合は保存後に `is_confirmed` と `confirmed_by_user_id` / `confirmed_at` を更新する',
       '対象行がすでに他ユーザーにより確定済みの場合は競合エラーとする'
     )
@@ -578,10 +600,11 @@ $endpointSpecs = @(
           @('`asset_import_rows`', '`selected_asset_item_name` / `selected_asset_item_id`', 'リクエスト `selectedAssetItemId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedAssetItemId=null` の場合は `selectedAssetItemName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
           @('`asset_import_rows`', '`selected_manufacturer_name` / `selected_manufacturer_id`', 'リクエスト `selectedManufacturerId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedManufacturerId=null` の場合は `selectedManufacturerName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
           @('`asset_import_rows`', '`selected_model_name` / `selected_model_id`', 'リクエスト `selectedModelId` がある場合は対応マスタの正規名称と ID で上書きし、`selectedModelId=null` の場合は `selectedModelName` を自由記述値として保存する。明示 `null` 時は両方クリアする', '未指定時は既存値を維持する'),
+          @('`asset_import_rows`', '`selected_ship_asset_master_id`', 'リクエスト `selectedShipAssetMasterId` がある場合は対応する SHIP 資産マスタIDを保存し、明示 `null` 時はクリアする', 'SHIP資産マスタ選択時は分類階層・メーカー・型式も同時に再解決する'),
           @('`asset_import_rows`', '分類階層整合の補正', '下位階層IDが指定された場合は必要な親階層IDを自動補完し、上位階層変更で不整合になった下位階層IDはクリアする', 'Category / 大分類 / 中分類 / 品目の整合維持'),
           @('`asset_import_rows`', '`is_confirmed` / `confirmed_by_user_id` / `confirmed_at`', 'リクエスト `isConfirmed=true` の場合だけ `true` / 実行ユーザーID / 更新時点の日時へ更新する', '`isConfirmed` が `false` または未指定の場合は既存の未確定状態を維持する'),
           @('`asset_import_rows`', '`updated_at`', '更新時点の日時へ更新する', '最終保存勝ちの監査用'),
-          @('`asset_import_rows`', '`asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `suggested_*` / `suggested_score` / `created_at` / `deleted_at`', '変更しない', '取込元データと AI 推薦スナップショットは本 API の対象外')
+          @('`asset_import_rows`', '`asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `ai_*` / `suggested_*` / `suggested_ship_asset_master_id` / `suggested_score` / `suggested_similarity_source` / `suggested_source_asset_ledger_id` / `created_at` / `deleted_at`', '変更しない', '取込元データと AI 分類・AI 推薦スナップショットは本 API の対象外')
         )
       }
     )
@@ -631,6 +654,8 @@ $endpointSpecs = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
       '指定した `assetImportRowIds` の全件が対象 `assetImportJobId` に属する未削除行であることを検証し、対象外行を含む場合は 404 を返却する',
+      '`ai_recommendation_required=false` の行は AI 推薦対象外として、`selectedMatch` が null のままでも確定可能とする',
+      '`ai_recommendation_required=true` の行は、確定前に保存済みの `selected_*` または `selected_ship_asset_master_id` が業務必須を満たすことを検証する',
       '指定行の `is_confirmed` を true へ更新し、`confirmed_by_user_id` / `confirmed_at` を保存する',
       '対象は未確定行のみとし、他ユーザーが先に確定済みの行が含まれる場合は一括失敗として競合行IDを `details` で返却する',
       '業務必須を満たさない行が含まれる場合も一括失敗とし、どの行が失敗したかを `details` で返却する'
@@ -643,7 +668,7 @@ $endpointSpecs = @(
           @('`asset_import_rows`', 'リクエスト `assetImportRowIds[*]` に一致する各行の `is_confirmed`', '`true` へ更新する', '対象ジョブはリクエスト `assetImportJobId` で特定する'),
           @('`asset_import_rows`', 'リクエスト `assetImportRowIds[*]` に一致する各行の `confirmed_by_user_id` / `confirmed_at`', '実行ユーザーID / 更新時点の日時を保存する', '一括確定監査用'),
           @('`asset_import_rows`', 'リクエスト `assetImportRowIds[*]` に一致する各行の `updated_at`', '更新時点の日時へ更新する', '確定監査用'),
-          @('`asset_import_rows`', '各行の `selected_*` / `parsed_*` / `suggested_*` / `suggested_score` / `created_at` / `deleted_at`', '変更しない', '確定前に保存済みの選択内容をそのまま確定する'),
+          @('`asset_import_rows`', '各行の `selected_*` / `selected_ship_asset_master_id` / `parsed_*` / `ai_*` / `suggested_*` / `suggested_ship_asset_master_id` / `suggested_score` / `suggested_similarity_source` / `suggested_source_asset_ledger_id` / `created_at` / `deleted_at`', '変更しない', '確定前に保存済みの選択内容をそのまま確定する。AI推薦対象外行は選択値 null のまま確定できる'),
           @('`asset_import_rows`', '対象外行', '変更しない', '競合行または業務必須不足行を含む場合は全件ロールバックする')
         )
       }
@@ -666,7 +691,7 @@ $endpointSpecs = @(
   },
   @{
     Title = '突き合わせ結果Excel出力（/asset-matching/export）'
-    Overview = '現在の絞り込み条件に一致する突き合わせ結果を Excel ファイルで出力する。'
+    Overview = '現在の絞り込み条件に一致する突き合わせ結果と、有効な SHIP 資産マスタの参照用一覧を Excel ファイルで出力する。ユーザーは出力ファイルをローカルで編集し、`selectedShipAssetMasterId` に紐づけたい SHIP 資産マスタIDを指定してから `/asset-matching/import` で再取込する。'
     Method = 'GET'
     Path = '/asset-matching/export'
     Auth = '要（Bearer）'
@@ -680,7 +705,7 @@ $endpointSpecs = @(
       @('selectedLargeClassId', 'query', 'int64', '-', '大分類条件'),
       @('selectedMediumClassId', 'query', 'int64', '-', '中分類条件'),
       @('selectedAssetItemId', 'query', 'int64', '-', '品目条件'),
-      @('includeConfirmed', 'query', 'boolean', '-', '確定済み行を含めるか')
+      @('includeConfirmed', 'query', 'boolean', '-', '確定済み行を含めるか。Excel取込に利用する場合は false を前提とし、true は参照出力用途とする')
     )
     PermissionLines = @(
       '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
@@ -689,7 +714,22 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを前提とし、それ以外の状態では 409 を返却する',
-      '現在の絞り込み条件に一致する取込結果を Excel として返却する'
+      '`includeConfirmed=true` は参照出力用途とし、Excel取込で再反映する作業用ファイルは既定の未確定行のみ出力を使用する',
+      '現在の絞り込み条件に一致する取込結果を `突き合わせ結果` シートとして出力する。画面表示列、AI分類、AI推薦、現在の選択結果に加えて、再取込用の `assetImportJobId` / `assetImportRowId` / `rowNo` と、編集対象の `selectedShipAssetMasterId` を含める',
+      '有効な `ship_asset_masters` を `SHIP資産マスタ` シートとして出力し、`shipAssetMasterId`、Category、大分類、中分類、品目、メーカー、型式、JMDN販売名、製造販売業者等、一般的名称を参照できるようにする',
+      '再取込検証用に `取込管理情報` シートを含め、`assetImportJobId`、`facilityId`、テンプレートバージョン、出力日時を保持する。`取込管理情報` は画面表示・編集対象外の管理シートとして扱う',
+      '本APIで出力したExcelだけを `/asset-matching/import` の取込対象とする。任意Excelやシート構成が異なるファイルは取込時に `EXCEL_TEMPLATE_INVALID` とする'
+    )
+    ExtraTables = @(
+      @{
+        Title = '出力シート定義'
+        Headers = @('シート名', '用途', '主な列', '編集可否')
+        Rows = @(
+          @('`突き合わせ結果`', '画面に表示している取込行のローカル作業用シート', '`assetImportJobId`, `assetImportRowId`, `rowNo`, 画面表示列, AI分類, AI推薦, 現在の選択結果, `selectedShipAssetMasterId`', '`selectedShipAssetMasterId` のみ編集対象'),
+          @('`SHIP資産マスタ`', '紐づけ候補の参照用シート', '`shipAssetMasterId`, Category, 大分類, 中分類, 品目, メーカー, 型式, JMDN販売名, 製造販売業者等, 一般的名称', '参照専用'),
+          @('`取込管理情報`', '再取込時の整合検証用シート', '`assetImportJobId`, `facilityId`, `templateVersion`, `exportedAt`', '参照専用')
+        )
+      }
     )
     ResponseTitle = 'レスポンス（200：Excel File）'
     ResponseSubtables = @(
@@ -703,7 +743,7 @@ $endpointSpecs = @(
       }
     )
     ResponseLines = @(
-      'Body: 絞り込み結果を先頭シート `突き合わせ結果` として返却する。'
+      'Body: 先頭シート `突き合わせ結果`、参照用シート `SHIP資産マスタ`、管理用シート `取込管理情報` を含む Excel ブックを返却する。'
     )
     StatusRows = @(
       @('200', '出力成功', 'binary'),
@@ -712,6 +752,91 @@ $endpointSpecs = @(
       @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上、出力不可', 'ErrorResponse'),
+      @('500', 'サーバー内部エラー', 'ErrorResponse')
+    )
+  },
+  @{
+    Title = '突き合わせ結果Excel取込（/asset-matching/import）'
+    Overview = '`/asset-matching/export` で出力した Excel を受け取り、ローカルExcelで編集された SHIP 資産マスタ紐づけを `asset_import_rows` の選択結果へ反映する。原本の取込値、AI分類、AI推薦、確定状態は更新しない。'
+    Method = 'POST'
+    Path = '/asset-matching/import'
+    Auth = '要（Bearer）'
+    ParametersTitle = 'リクエストパラメータ'
+    ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
+    ParametersRows = @(
+      @('assetImportJobId', 'formData', 'int64', '✓', '対象ジョブID。Excel 内の `取込管理情報.assetImportJobId` と一致すること'),
+      @('file', 'formData', 'binary', '✓', '`/asset-matching/export` で出力した Excel ファイル（`.xlsx`）')
+    )
+    PermissionLines = @(
+      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+    )
+    ProcessingLines = @(
+      'アップロードファイルの拡張子、MIME、サイズを検証し、`.xlsx` 以外または上限超過は 400 を返却する',
+      '`取込管理情報`、`突き合わせ結果`、`SHIP資産マスタ` シートが存在し、テンプレートバージョンがサポート対象であることを検証する。存在しない場合や列構成が異なる場合は `EXCEL_TEMPLATE_INVALID` を返却する',
+      'リクエスト `assetImportJobId`、`取込管理情報.assetImportJobId`、各行の `assetImportJobId` が一致することを検証する',
+      '対象ジョブの `facility_id` が `取込管理情報.facilityId` および Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
+      '対象ジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
+      '`突き合わせ結果` シートの各データ行について、`assetImportRowId` が対象ジョブ配下の未削除行であり、`is_confirmed=false` であることを検証する。確定済み行または対象外行が含まれる場合は全件ロールバックする',
+      '`selectedShipAssetMasterId` が指定されている場合は、有効な `ship_asset_masters` に存在することを検証する。存在しない、無効、または数値形式でない場合は `EXCEL_ROW_VALIDATION_ERROR` として行番号を `details` に返す',
+      '`selectedShipAssetMasterId` が指定された行は、対応する SHIP 資産マスタから Category / 大分類 / 中分類 / 品目 / メーカー / 型式を再解決し、`selected_ship_asset_master_id` と `selected_*_id` / `selected_*_name` を更新する',
+      '`selectedShipAssetMasterId` が空欄の行は、選択解除として `selected_ship_asset_master_id` と `selected_*_id` / `selected_*_name` を null に更新する',
+      '`parsed_*`、`ai_*`、`suggested_*`、`suggested_ship_asset_master_id`、`suggested_score`、`suggested_similarity_source`、`suggested_source_asset_ledger_id`、`is_confirmed`、`confirmed_by_user_id`、`confirmed_at` は更新しない',
+      '全行検証後、1 DB トランザクションで `asset_import_rows` を更新する。1行でも検証エラーがある場合は更新せず、エラー行を `details` に返却する',
+      '取込成功後、クライアントは `/asset-matching/rows` を再取得して画面へ反映する'
+    )
+    ExtraTables = @(
+      @{
+        Title = '取込Excel列定義（突き合わせ結果シート）'
+        Headers = @('列', '必須', '取込時の扱い', '説明')
+        Rows = @(
+          @('`assetImportJobId`', '✓', '検証のみ', '対象ジョブID。リクエストおよび管理情報と一致すること'),
+          @('`assetImportRowId`', '✓', '検証キー', '更新対象の `asset_import_rows.asset_import_row_id`'),
+          @('`rowNo`', '✓', '検証/エラー表示', '元ファイル行番号。エラー時の利用者向け表示に利用'),
+          @('画面表示列 / AI分類 / AI推薦 / 現在の選択結果', '-', '取込更新対象外', '利用者のローカル確認用。変更されていてもDBへ反映しない'),
+          @('`selectedShipAssetMasterId`', '-', '更新対象', '指定された SHIP 資産マスタIDを選択結果として反映する。空欄は選択解除')
+        )
+      },
+      @{
+        Title = '永続化マッピング'
+        Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
+        Rows = @(
+          @('`asset_import_rows`', '`selected_ship_asset_master_id`', 'Excel `selectedShipAssetMasterId` を保存する。空欄の場合は null', '対象は未確定行のみ'),
+          @('`asset_import_rows`', '`selected_category_id` / `selected_large_class_id` / `selected_medium_class_id` / `selected_asset_item_id` / `selected_manufacturer_id` / `selected_model_id`', '`selectedShipAssetMasterId` に対応する `ship_asset_masters` から再解決した各IDを保存する。空欄の場合は null', 'SHIP資産マスタ選択結果を正規化して保持する'),
+          @('`asset_import_rows`', '`selected_category_name` / `selected_large_class_name` / `selected_medium_class_name` / `selected_asset_item_name` / `selected_manufacturer_name` / `selected_model_name`', '再解決した各マスタの表示名を保存する。空欄の場合は null', '画面表示用スナップショット'),
+          @('`asset_import_rows`', '`updated_at`', '取込反映時点の日時へ更新する', '一括反映監査用'),
+          @('`asset_import_rows`', '`asset_import_job_id` / `row_no` / `raw_data_json` / `parsed_*` / `ai_*` / `suggested_*` / `suggested_ship_asset_master_id` / `suggested_score` / `suggested_similarity_source` / `suggested_source_asset_ledger_id` / `is_confirmed` / `confirmed_by_user_id` / `confirmed_at` / `created_at` / `deleted_at`', '変更しない', 'Excel取込は選択結果の一括反映に限定する'),
+          @('`asset_import_jobs`', '対象ジョブ', '変更しない', 'ジョブ状態や完了日時は更新しない')
+        )
+      }
+    )
+    ResponseTitle = 'レスポンス（200：AssetMatchingExcelImportResponse）'
+    ResponseHeaders = @('フィールド', '型', '必須', '説明')
+    ResponseRows = @(
+      @('assetImportJobId', 'int64', '✓', '対象ジョブID'),
+      @('importedRowCount', 'int32', '✓', '取込対象として検証した行数'),
+      @('updatedRowCount', 'int32', '✓', 'SHIP資産マスタIDを反映した行数'),
+      @('clearedRowCount', 'int32', '✓', '選択解除として反映した行数'),
+      @('remainingRows', 'int32', '✓', '取込後の未確定件数'),
+      @('items', 'AssetMatchingExcelImportItem[]', '✓', '反映後の対象行概要')
+    )
+    ResponseSubtables = @(
+      @{
+        Title = 'items要素（AssetMatchingExcelImportItem）'
+        Headers = @('フィールド', '型', '必須', '説明')
+        Rows = @(
+          @('assetImportRowId', 'int64', '✓', '資産インポート行ID'),
+          @('selectedMatch', 'AssetMatchSelection|null', '✓', 'Excel取込反映後の選択結果。空欄反映行は null')
+        )
+      }
+    )
+    StatusRows = @(
+      @('200', '取込反映成功', 'AssetMatchingExcelImportResponse'),
+      @('400', 'Excel形式不正、テンプレート不一致、行単位検証エラー', 'ErrorResponse'),
+      @('401', '未認証', 'ErrorResponse'),
+      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('404', '対象ジョブ、対象行、または指定された SHIP 資産マスタが存在しない', 'ErrorResponse'),
+      @('409', 'ジョブ状態上取込不可、または確定済み行を含む', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -772,32 +897,35 @@ $endpointSpecs = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_資産台帳取込.docx'
   ScreenLabel = '資産台帳取込'
-  CoverDateText = '2026年4月18日'
-  RevisionDateText = '2026/4/18'
+  CoverDateText = '2026年5月1日'
+  RevisionDateText = '2026/5/1'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
-    @{ Type = 'Paragraph'; Text = '本書は、12. 資産台帳取込画面（`/asset-import`）および 13. 資産台帳とマスタの突き合わせ画面（`/asset-matching`）で利用する API の設計を定義する。資産台帳ファイルのアップロード、取込ジョブ管理、失敗ジョブの再取込、AI 推薦付きのマスタ突き合わせ、Excel 出力、突き合わせ完了までを対象とする。' },
+    @{ Type = 'Paragraph'; Text = '本書は、12. 資産台帳取込画面（`/asset-import`）および 13. 資産台帳とマスタの突き合わせ画面（`/asset-matching`）で利用する API の設計を定義する。資産台帳ファイルのアップロード、取込ジョブ管理、失敗ジョブの再取込、PoC2 方針に基づくAI分類、ABC行のみのAI推薦付きマスタ突き合わせ、Excel 出力・取込、突き合わせ完了までを対象とする。' },
     @{ Type = 'Heading2'; Text = '対象画面' },
     @{ Type = 'Table'; Headers = @('画面', 'URL', '主機能'); Rows = @(
       @('12. 資産台帳取込画面', '/asset-import', '台帳ファイルのアップロード、未完了ジョブ確認、取込開始'),
-      @('13. 資産台帳とマスタの突き合わせ画面', '/asset-matching', '取込行と SHIP 資産マスタの紐づけ、確定、Excel 出力、完了')
+      @('13. 資産台帳とマスタの突き合わせ画面', '/asset-matching', '取込行と SHIP 資産マスタの紐づけ、確定、Excel 出力・取込、完了')
     ) },
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = '利用データ' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('asset_import_jobs', '取込ジョブの作成、状態管理、件数表示、再取込元ファイル参照、失敗理由保持', 'asset_import_job_id, facility_id, import_type, file_name, file_path, status, error_message'),
-      @('asset_import_rows', '取込行の正本、AI推薦、確定値、確定監査情報', 'parsed_*, suggested_*_name/_id, selected_*_name/_id, is_confirmed, confirmed_by_user_id, confirmed_at'),
+      @('asset_import_rows', '取込行の正本、AI分類、AI推薦、確定値、確定監査情報', 'parsed_*, ai_line_classification, ai_recommendation_required, suggested_ship_asset_master_id, suggested_*_name/_id, suggested_score, suggested_similarity_source, suggested_source_asset_ledger_id, selected_ship_asset_master_id, selected_*_name/_id, is_confirmed, confirmed_by_user_id, confirmed_at'),
       @('facilities', '選択施設の解決', 'facility_id, facility_name'),
       @('users', '取込実行/確定ユーザーの記録', 'user_id'),
       @('asset_categories / asset_large_classes / asset_medium_classes / asset_items', 'Category/分類/品目候補', '各マスタID, 名称'),
+      @('ship_asset_masters', 'AI推薦候補、ユーザー選択候補', 'ship_asset_master_id, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, jmdn_registered_item_id'),
+      @('jmdn_registered_items / jmdn_classifications', 'JMDN由来候補の類似度計算', 'product_name, manufacturer_name, general_name'),
+      @('asset_ledgers', '全施設の原本資産台帳由来候補の類似度計算', 'asset_ledger_id, ship_asset_master_id, asset_name, manufacturer_name, model_name'),
       @('manufacturers / models', 'メーカー/型式候補', 'manufacturer_id, model_id, name')
     ) },
     @{ Type = 'Heading2'; Text = 'ジョブ状態遷移' },
     @{ Type = 'Bullets'; Items = @(
       '`PROCESSING`: 取込ジョブ作成直後。ファイル解析中',
-      '`READY_FOR_MATCHING`: `asset_import_rows` と `suggested_*` の初期投入完了後。突き合わせ待ち',
+      '`READY_FOR_MATCHING`: `asset_import_rows`、AI分類結果、ABC行の `suggested_*` の初期投入完了後。突き合わせ待ち',
       '`MATCHING_COMPLETED`: `/asset-matching` 完了後',
       '`FAILED`: 初期取込失敗。`/asset-matching` で失敗表示し、再取込またはアップロード画面復帰を行う'
     ) },
@@ -806,7 +934,7 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = 'API共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON（アップロードAPIと Excel 出力APIを除く）',
+      'データ形式: JSON（アップロードAPI、Excel 出力API、Excel 取込APIを除く）',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
       '論理削除済みの `asset_import_rows` は一覧・集計・出力対象外とする'
@@ -817,19 +945,19 @@ $endpointSpecs = @(
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('資産台帳取込登録', '`asset_ledger_import`', '取込画面コンテキスト取得、ジョブ状態取得、ファイルアップロード、ジョブ再取込、ジョブ削除'),
-      @('現調台帳突合せ', '`survey_ledger_matching`', '突き合わせ画面コンテキスト取得、一覧取得、候補取得、行更新、一括確定、Excel出力、突き合わせ完了')
+      @('現調台帳突合せ', '`survey_ledger_matching`', '突き合わせ画面コンテキスト取得、一覧取得、候補取得、行更新、一括確定、Excel出力、Excel取込、突き合わせ完了')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要な実効 feature_code', '判定に使う主な情報', '説明'); Rows = @(
       @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象施設への有効割当と実効機能の両方が必要'),
-      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / 突き合わせ完了', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象ジョブまたは Bearer トークン上の作業対象施設に対して再判定する')
+      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / Excel取込 / 突き合わせ完了', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象ジョブまたは Bearer トークン上の作業対象施設に対して再判定する')
     ) },
     @{ Type = 'Heading2'; Text = '永続化と非同期処理境界' },
     @{ Type = 'Bullets'; Items = @(
-      '`POST /asset-import/jobs` と `POST /asset-import/jobs/{assetImportJobId}/retry` は、受付時に `asset_import_jobs` を作成したうえで、初期取込処理が `asset_import_rows` 展開と AI 推薦初期化を進める非同期ジョブ受付APIとして扱う',
+      '`POST /asset-import/jobs` と `POST /asset-import/jobs/{assetImportJobId}/retry` は、受付時に `asset_import_jobs` を作成したうえで、初期取込処理が `asset_import_rows` 展開、AI分類、ABC行のみのAI推薦初期化を進める非同期ジョブ受付APIとして扱う',
       'アップロード元ファイルのバイナリ本体はオブジェクトストレージへ保存し、DB には `asset_import_jobs.file_name` と `file_path` をメタデータとして保持する',
-      '`asset_import_rows` は元ファイルのデータ行を 1 行 = 1 レコードで保持する。初期取込時に `parsed_*`、`suggested_*`、`suggested_score` を保存し、`selected_*` は未選択、`is_confirmed=false`、`confirmed_by_user_id` / `confirmed_at=NULL` で開始する',
-      '`PUT /asset-matching/rows/{assetImportRowId}` と `POST /asset-matching/rows/confirm-bulk` は `asset_import_rows` のみを更新し、`POST /asset-matching/complete` は `asset_import_jobs` のみを更新する。`DELETE /asset-import/jobs/{assetImportJobId}` は `asset_import_jobs` / `asset_import_rows` と元ファイルを一括削除する',
-      '同期更新API（行更新、一括確定、完了、削除）は 1 回の呼び出しを 1 DB トランザクションで完結させる。非同期受付API（取込作成、再取込）は受付トランザクションと初期取込トランザクションを分離し、失敗時は展開途中の `asset_import_rows` を残さない'
+      '`asset_import_rows` は元ファイルのデータ行を 1 行 = 1 レコードで保持する。初期取込時に `parsed_*`、`ai_line_classification`、`ai_classification_confidence`、`ai_recommendation_required`、`ai_model_version` を保存する。`ABC` 行のみ `suggested_*`、`suggested_ship_asset_master_id`、`suggested_score`、`suggested_similarity_source`、`suggested_source_asset_ledger_id` を保存し、`D` / `OTHER` 行は推薦関連項目を null とする。`selected_*` は未選択、`is_confirmed=false`、`confirmed_by_user_id` / `confirmed_at=NULL` で開始する',
+      '`PUT /asset-matching/rows/{assetImportRowId}`、`POST /asset-matching/import`、`POST /asset-matching/rows/confirm-bulk` は `asset_import_rows` のみを更新し、`POST /asset-matching/complete` は `asset_import_jobs` のみを更新する。`DELETE /asset-import/jobs/{assetImportJobId}` は `asset_import_jobs` / `asset_import_rows` と元ファイルを一括削除する',
+      '同期更新API（行更新、Excel取込、一括確定、完了、削除）は 1 回の呼び出しを 1 DB トランザクションで完結させる。非同期受付API（取込作成、再取込）は受付トランザクションと初期取込トランザクションを分離し、失敗時は展開途中の `asset_import_rows` を残さない'
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
@@ -843,7 +971,8 @@ $endpointSpecs = @(
       'アップロード対応拡張子は `.xlsx` / `.xls` / `.csv` とする',
       '最大ファイルサイズは 10MB とする',
       '1行目はヘッダー、データは2行目以降、空白行は自動スキップとする',
-      'Excel出力は現在の絞り込み結果を `突き合わせ結果` シートとして返却する'
+      'Excel出力は現在の絞り込み結果を `突き合わせ結果` シート、有効な SHIP 資産マスタを `SHIP資産マスタ` シート、再取込検証用メタデータを `取込管理情報` シートとして返却する',
+      'Excel取込は `/asset-matching/export` で出力した `.xlsx` のみを対象とし、`突き合わせ結果` シートの `selectedShipAssetMasterId` を `asset_import_rows.selected_ship_asset_master_id` と `selected_*` に反映する'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Heading3'; Text = '基本エラーレスポンス（ErrorResponse）' },
@@ -864,7 +993,7 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
       @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', 'Bearer トークン上の作業対象施設に対して実効 `asset_ledger_import` を持つこと', '資産台帳取込を実行する'),
-      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / 突き合わせ完了', '`survey_ledger_matching`', 'Bearer トークン上の作業対象施設に対して実効 `survey_ledger_matching` を持つこと', '資産台帳突き合わせを実行する')
+      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / Excel取込 / 突き合わせ完了', '`survey_ledger_matching`', 'Bearer トークン上の作業対象施設に対して実効 `survey_ledger_matching` を持つこと', '資産台帳突き合わせを実行する')
     ) },
     @{ Type = 'Heading2'; Text = '施設単位運用ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -876,8 +1005,15 @@ $endpointSpecs = @(
     ) },
     @{ Type = 'Heading2'; Text = '突き合わせ保存ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '`selected_*_name` / `suggested_*_name` は表示値スナップショットとして保持し、マスタ選択時は対応する `selected_*_id` / `suggested_*_id` も保持する',
+      'AI分類入力は PoC2 最終報告書の方針に従い、`product_name:{商品名}, spec:{規格}` の形式で商品名列と規格列を連結する。メーカー名列は `parsed_manufacturer_name` として保持・表示するが、分類モデル入力には含めない',
+      '`ai_line_classification=ABC` の行のみ `ai_recommendation_required=true` とし、JMDN由来候補と全施設の原本資産台帳由来候補を PoC1 方針の 3-gram コサイン類似度で比較して最良候補を `suggestedMatch` として提示する',
+      '類似度比較では、固定資産台帳側の `parsed_asset_name` / `parsed_manufacturer_name` / `parsed_model_name` を入力とし、JMDN由来候補は有効な `ship_asset_masters` に紐づく `jmdn_registered_items.product_name` / `jmdn_registered_items.manufacturer_name` / `jmdn_classifications.general_name`、原本資産台帳由来候補は全施設の `asset_ledgers.asset_name` / `asset_ledgers.manufacturer_name` / `asset_ledgers.model_name` を比較文字列とする。原本資産台帳由来候補は `asset_ledgers.ship_asset_master_id IS NOT NULL` かつ紐づく `ship_asset_masters.is_active=true` の行を対象とする',
+      '3項目の全順列と括弧除去有無の2パターンで最大スコアを採用し、同点時は `ship_asset_master_id` 昇順、採用元は `JMDN_MASTER` → `ASSET_LEDGER` の順、原本資産台帳由来の同一マスタ内では `asset_ledger_id` 昇順で決定する',
+      '`ai_line_classification=D` / `OTHER` の行は `ai_recommendation_required=false` とし、`suggestedMatch` は null のまま表示する。これらの行はマスタ選択なしでも確定可能とする',
+      '`selected_*_name` / `suggested_*_name` は表示値スナップショットとして保持し、マスタ選択時は対応する `selected_*_id` / `suggested_*_id` も保持する。SHIP資産マスタ単位で特定できた場合は `selected_ship_asset_master_id` / `suggested_ship_asset_master_id` も保持する',
       '自由記述時は `selected_*_name` に入力値を保存し、対応する `selected_*_id` は null とする',
+      'Excel取込では `selectedShipAssetMasterId` の指定値を有効な `ship_asset_masters` で検証し、対応する Category / 大分類 / 中分類 / 品目 / メーカー / 型式を `selected_ship_asset_master_id` と `selected_*_id` / `selected_*_name` に一括反映する。空欄は選択解除として扱う',
+      'Excel取込はローカルでの SHIP 資産マスタ紐づけ作業の反映に限定し、`parsed_*`、`ai_*`、`suggested_*`、`is_confirmed`、`confirmed_by_user_id`、`confirmed_at` は更新しない',
       '下位階層IDが入る場合は必要な親階層IDも同時に保持する',
       '上位階層変更時は整合しない下位階層IDをクリアする',
       '編集対象は未確定行のみとし、編集保存は最終保存勝ちで `asset_import_rows` へ即時反映する',
@@ -897,10 +1033,11 @@ $endpointSpecs = @(
     ) },
     @{ Type = 'Heading2'; Text = 'クライアント連携ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '画面表示制御は `/auth/context` の `asset_ledger_import` / `survey_ledger_matching` を参照して行い、取込画面導線・アップロード・削除は `asset_ledger_import`、突き合わせ画面導線・編集・確定・出力・完了は `survey_ledger_matching` で出し分ける',
+      '画面表示制御は `/auth/context` の `asset_ledger_import` / `survey_ledger_matching` を参照して行い、取込画面導線・アップロード・削除は `asset_ledger_import`、突き合わせ画面導線・編集・確定・出力・取込・完了は `survey_ledger_matching` で出し分ける',
       '`uploadedFiles` は施設単位のアップロード済みジョブ一覧を表す。複数エントリは複数ジョブの履歴であり、アップロードAPI自体は 1 リクエスト = 1 ファイルで扱う',
       'クライアント内部の fileType は `fixed-asset -> FIXED_ASSET`、`me-ledger -> OTHER_LEDGER` へ変換して API へ送信し、応答受信時は逆変換する',
-      '`/asset-matching/rows` は現行画面で表示する列だけを返却する。固定資産番号/管理機器番号/諸室名称/Category/検収日は `asset_import_rows` / `raw_data_json` に保持し、監査・後続利用時に参照する'
+      '`/asset-matching/rows` は現行画面で表示する列だけを返却する。固定資産番号/管理機器番号/諸室名称/Category/検収日は `asset_import_rows` / `raw_data_json` に保持し、監査・後続利用時に参照する',
+      '`aiLineClassification=OTHER` は画面上「その他」と表示する。`suggestedMatch=null` の行では適用ボタンを表示しない、または非活性とする'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
@@ -908,6 +1045,8 @@ $endpointSpecs = @(
       @('VALIDATION_ERROR', '400', '入力不正、必須不足、親子不整合'),
       @('FILE_TYPE_NOT_SUPPORTED', '400', '対応拡張子以外のファイルを指定した'),
       @('FILE_SIZE_EXCEEDED', '400', 'ファイルサイズが 10MB を超えている'),
+      @('EXCEL_TEMPLATE_INVALID', '400', 'Excel取込ファイルのシート構成、管理情報、またはテンプレートバージョンが不正'),
+      @('EXCEL_ROW_VALIDATION_ERROR', '400', 'Excel取込行の `selectedShipAssetMasterId`、対象行ID、または行状態が不正'),
       @('FACILITY_SELECTION_REQUIRED', '400', '施設未選択で実行した'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
       @('AUTH_403_ASSET_LEDGER_IMPORT_DENIED', '403', '作業対象施設に対する実効 `asset_ledger_import` がない、または対象施設不一致'),
@@ -915,8 +1054,11 @@ $endpointSpecs = @(
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('ASSET_IMPORT_JOB_NOT_FOUND', '404', '対象ジョブが存在しない'),
       @('ASSET_IMPORT_ROW_NOT_FOUND', '404', '対象行が存在しない'),
+      @('SHIP_ASSET_MASTER_NOT_FOUND', '404', '指定された SHIP 資産マスタが存在しない、または無効'),
       @('UNFINISHED_JOB_ALREADY_EXISTS', '409', '同一施設に未完了ジョブが存在する'),
       @('JOB_STATUS_INVALID', '409', 'ジョブ状態上、要求処理を実行できない'),
+      @('AI_MODEL_NOT_AVAILABLE', '500', 'AI分類モデルまたは tokenizer を読み込めない'),
+      @('AI_INFERENCE_FAILED', '500', 'AI分類またはAI推薦処理に失敗した'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
@@ -926,14 +1068,17 @@ $endpointSpecs = @(
       'アップロード前の形式/サイズ検証はフロントとサーバーの両方で実施する',
       '`/asset-import` 初期表示で前回ジョブが `PROCESSING` / `READY_FOR_MATCHING` / `FAILED` の場合は `/asset-matching` へ遷移し、`job.status` に応じて待機表示・失敗表示・通常表示を切り替える',
       'FAILED 表示から利用者が明示的にアップロード画面へ戻る操作を選んだ場合は、`/asset-import/context?ignoreFailedJobId={assetImportJobId}` を用いて同一 FAILED ジョブに対する自動再開をその画面遷移では抑止する',
-      'AI推薦ロジックの改善時は `suggested_score` と推薦元ロジックの整合確認を行う'
+      'AI分類モデルは保存済みモデルの `metadata.json` を基準に、モデルディレクトリからの相対パスで Model A、tokenizer、モデルバージョン、入力形式を解決する',
+      'AI推薦ロジックの改善時は、PoC1 の類似度計算方針、PoC2 最終報告書の分類前処理方針、`ai_model_version`、`ai_line_classification`、`suggested_score`、`suggested_similarity_source` の整合確認を行う'
     ) },
     @{ Type = 'Heading2'; Text = '突き合わせ運用方針' },
     @{ Type = 'Bullets'; Items = @(
       '確定値は `selected_*_name` を表示値スナップショットとして保持し、マスタ選択時のみ対応する `selected_*_id` を保存する',
       '階層マスタの親子整合が崩れないよう、保存時に自動補完と下位クリアを徹底する',
       '確定時は `confirmed_by_user_id` / `confirmed_at` を保存し、監査可能な状態を維持する',
-      'Excel出力列が画面表示列と乖離しないよう、列定義変更時は同時に見直す'
+      'Excel出力列が画面表示列と乖離しないよう、列定義変更時は同時に見直す',
+      'Excel取込はシステム出力ブックの `取込管理情報` と `assetImportRowId` を必ず検証し、任意Excelを直接受け付けない',
+      'SHIP資産マスタの表示列や `ship_asset_master_id` の採番・有効判定を変更する場合は、`SHIP資産マスタ` シートと Excel取込の検証ロジックを同時に見直す'
     ) }
   )
 }
