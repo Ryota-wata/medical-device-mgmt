@@ -90,9 +90,9 @@ interface DeadlineMapping {
 
 const STATUS_DEADLINE_MAP: Partial<Record<DisposalRfqStatus, DeadlineMapping>> = {
   '見積依頼済': { label: '見積提出期限', field: 'rfqDeadline' },
-  '見積登録済': { label: '発注期限', field: 'orderDeadline' },
-  '発注済': { label: '廃棄（移動）期日', field: 'disposalDate' },
-  '作業日確定': { label: '廃棄・移動日', field: 'workDate' },
+  '見積登録済': { label: '廃棄依頼期限', field: 'orderDeadline' },
+  '発注済': { label: '廃棄期日', field: 'disposalDate' },
+  '作業日確定': { label: '廃棄日', field: 'workDate' },
   '申請を見送る': { label: '却下日', field: 'rejectionDate' },
 };
 
@@ -101,10 +101,10 @@ type StepKey = 'all' | 'rfq' | 'quote' | 'order' | 'workdate' | 'complete';
 // タブはActionで絞り込む（そのActionを実行できるステータスでフィルタ）
 const STEP_TABS: { key: StepKey; label: string; statuses: DisposalRfqStatus[] }[] = [
   { key: 'all', label: 'すべて', statuses: [] },
-  { key: 'rfq', label: '①見積依頼', statuses: ['見積依頼'] },             // Action: 見積依頼
-  { key: 'quote', label: '②見積登録', statuses: ['見積依頼済'] },          // Action: 見積登録
-  { key: 'order', label: '③発注登録', statuses: ['見積登録済'] },          // Action: 発注登録
-  { key: 'workdate', label: '④作業日登録', statuses: ['発注済'] },         // Action: 作業日登録
+  { key: 'rfq', label: '①業者選定', statuses: ['見積依頼'] },             // Action: 廃棄業者選定
+  { key: 'quote', label: '②見積回収', statuses: ['見積依頼済'] },          // Action: 見積回収
+  { key: 'order', label: '③廃棄依頼', statuses: ['見積登録済'] },          // Action: 廃棄依頼
+  { key: 'workdate', label: '④作業日確定', statuses: ['発注済'] },         // Action: 廃棄作業日確定
   { key: 'complete', label: '⑤完了登録', statuses: ['作業日確定'] },       // Action: 完了登録
 ];
 
@@ -198,7 +198,7 @@ const MOCK_RFQ_GROUPS: DisposalRfqGroup[] = [
     rfqDeadline: null, orderDeadline: null, disposalDate: null, workDate: '2026-04-15', rejectionDate: null,
   },
   {
-    id: 5, rfqNo: 'RFQ-20260120-0005', groupName: '手術部 電気メス移動作業',
+    id: 5, rfqNo: 'RFQ-20260120-0005', groupName: '手術部 電気メス廃棄一式',
     vendorName: 'キヤノンメディカル', personInCharge: '高橋美咲', tel: '03-5678-9012',
     status: '完了',
     rfqDeadline: null, orderDeadline: null, disposalDate: null, workDate: null, rejectionDate: null,
@@ -248,6 +248,12 @@ export function TransferDisposalManagementTab() {
   const pendingApplications = MOCK_PENDING_APPLICATIONS;
   const pendingCount = pendingApplications.length;
 
+  // 廃棄申請のみが廃棄依頼グループ作成の対象（移動申請は申請受付で完結）
+  const disposalApplications = useMemo(
+    () => pendingApplications.filter(a => a.applicationType === '廃棄申請'),
+    [pendingApplications]
+  );
+
   const handleSelectApplication = (id: string) => {
     const newSet = new Set(selectedApplicationIds);
     if (newSet.has(id)) { newSet.delete(id); } else { newSet.add(id); }
@@ -256,7 +262,7 @@ export function TransferDisposalManagementTab() {
 
   const handleSelectAllApplications = (checked: boolean) => {
     if (checked) {
-      setSelectedApplicationIds(new Set(pendingApplications.map(a => a.id)));
+      setSelectedApplicationIds(new Set(disposalApplications.map(a => a.id)));
     } else {
       setSelectedApplicationIds(new Set());
     }
@@ -311,7 +317,7 @@ export function TransferDisposalManagementTab() {
     };
 
     setRfqGroups(prev => [...prev, newGroup]);
-    alert(`見積依頼グループ「${rfqGroupName.trim()}」を作成しました\n\n見積依頼No.: ${rfqNo}\n選択レコード: ${selectedApplicationIds.size}件`);
+    alert(`廃棄依頼グループ「${rfqGroupName.trim()}」を作成しました\n\n廃棄依頼No.: ${rfqNo}\n選択レコード: ${selectedApplicationIds.size}件`);
     setIsRfqGroupModalOpen(false);
     setRfqGroupName('');
     setSelectedApplicationIds(new Set());
@@ -355,28 +361,28 @@ export function TransferDisposalManagementTab() {
         return (
           <button style={{ ...btnBase, background: '#3498db' }}
             onClick={navigateToTask}>
-            見積依頼
+            業者選定
           </button>
         );
       case '見積依頼済':
         return (
           <button style={{ ...btnBase, background: '#27ae60' }}
             onClick={navigateToTask}>
-            見積登録
+            見積回収
           </button>
         );
       case '見積登録済':
         return (
           <button style={{ ...btnBase, background: '#e67e22' }}
             onClick={navigateToTask}>
-            発注登録
+            廃棄依頼
           </button>
         );
       case '発注済':
         return (
           <button style={{ ...btnBase, background: '#f39c12' }}
             onClick={navigateToTask}>
-            作業日登録
+            作業日確定
           </button>
         );
       case '作業日確定':
@@ -444,8 +450,9 @@ export function TransferDisposalManagementTab() {
                     <th rowSpan={2} style={{ ...thGroupStyle, width: '36px', verticalAlign: 'middle' }}>
                       <input
                         type="checkbox"
-                        checked={pendingApplications.length > 0 && selectedApplicationIds.size === pendingApplications.length}
+                        checked={disposalApplications.length > 0 && selectedApplicationIds.size === disposalApplications.length}
                         onChange={(e) => handleSelectAllApplications(e.target.checked)}
+                        disabled={disposalApplications.length === 0}
                       />
                     </th>
                     <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>申請項目</th>
@@ -473,6 +480,7 @@ export function TransferDisposalManagementTab() {
                 <tbody>
                   {pendingApplications.map((app) => {
                     const typeStyle = getApplicationTypeStyle(app.applicationType);
+                    const isTransfer = app.applicationType === '移動申請';
                     return (
                       <tr
                         key={app.id}
@@ -488,6 +496,8 @@ export function TransferDisposalManagementTab() {
                             type="checkbox"
                             checked={selectedApplicationIds.has(app.id)}
                             onChange={() => handleSelectApplication(app.id)}
+                            disabled={isTransfer}
+                            title={isTransfer ? '移動申請は申請受付で完結します' : undefined}
                           />
                         </td>
                         {/* 申請項目: 申請日 */}
@@ -570,14 +580,14 @@ export function TransferDisposalManagementTab() {
                   cursor: selectedApplicationIds.size === 0 ? 'not-allowed' : 'pointer',
                 }}
               >
-                見積依頼グループ作成
+                廃棄依頼グループ作成
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* ===== セクション2: 見積依頼グループ ===== */}
+      {/* ===== セクション2: 廃棄依頼グループ ===== */}
       <div style={{
         flex: 1,
         background: 'white',
@@ -596,7 +606,7 @@ export function TransferDisposalManagementTab() {
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>見積依頼グループ</span>
+          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>廃棄依頼グループ</span>
         </div>
 
         {/* ステップタブ */}
@@ -648,9 +658,9 @@ export function TransferDisposalManagementTab() {
           {filteredRfqGroups.length === 0 ? (
             <div style={{ padding: '60px 40px', textAlign: 'center', color: '#7f8c8d' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>見積依頼グループがありません</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>廃棄依頼グループがありません</div>
               <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
-                申請を選択して見積依頼グループを作成すると、<br />
+                廃棄申請を選択して廃棄依頼グループを作成すると、<br />
                 ここに表示されます。
               </div>
             </div>
@@ -659,9 +669,9 @@ export function TransferDisposalManagementTab() {
               <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                 {/* グループヘッダー行 */}
                 <tr style={{ background: '#343a40', color: 'white' }}>
-                  <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積依頼No,</th>
-                  <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積グループ名称</th>
-                  <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>業者情報</th>
+                  <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>廃棄依頼No,</th>
+                  <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>廃棄依頼グループ名称</th>
+                  <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>廃棄業者情報</th>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>ステータス</th>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>期限</th>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
