@@ -416,6 +416,15 @@ function RemodelApplicationContent() {
     getCellValue,
   } = useAssetTable(ALL_COLUMNS);
 
+  // 通常モード時は処理方針（purchaseCategory）列を非表示にする。リモデル時のみ表示。
+  useEffect(() => {
+    if (editList?.mode === 'normal') {
+      setVisibleColumns(prev => (prev.purchaseCategory === false ? prev : { ...prev, purchaseCategory: false }));
+    } else if (editList?.mode === 'remodel') {
+      setVisibleColumns(prev => (prev.purchaseCategory === true ? prev : { ...prev, purchaseCategory: true }));
+    }
+  }, [editList?.mode, setVisibleColumns]);
+
   // テーブルグループヘッダーのスパン計算
   const groupHeaderSpans = useMemo(() => {
     const visibleCols = orderedColumns.filter(col => visibleColumns[col.key]);
@@ -1112,6 +1121,35 @@ function RemodelApplicationContent() {
         targetFacilities={editList?.facilities}
         createdAt={editList?.createdAt}
       />
+
+      {/* モードバナー（リモデル / 通常） */}
+      {isEditListMode && editList && (
+        editList.mode === 'remodel' ? (
+          <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-200 flex items-center gap-3 flex-wrap">
+            <span className="px-2.5 py-1 bg-[#27ae60] text-white rounded-full text-xs font-semibold whitespace-nowrap">
+              リモデルモード
+            </span>
+            <p className="text-sm text-[#1f2937] flex-1 text-pretty">
+              ヒアリング・5方針振り分け（新規／更新／増設／廃棄／移動）・新設置場所入力を行います。進捗確認や DataLink への遷移はダッシュボードから行ってください。
+            </p>
+            <button
+              onClick={() => router.push(`/quotation-data-box/remodel-dashboard?editListId=${editList.id}`)}
+              className="px-4 py-2 bg-[#27ae60] hover:bg-[#229954] text-white rounded-md font-medium text-sm transition-colors border-0 cursor-pointer whitespace-nowrap"
+            >
+              リモデルダッシュボードへ
+            </button>
+          </div>
+        ) : (
+          <div className="px-5 py-3 bg-[#f3f4f6] border-b border-[#e5e7eb] flex items-center gap-3 flex-wrap">
+            <span className="px-2.5 py-1 bg-[#4b5563] text-white rounded-full text-xs font-semibold whitespace-nowrap">
+              通常モード
+            </span>
+            <p className="text-sm text-[#1f2937] flex-1 text-pretty">
+              ヒアリングは不要です。見積依頼グループを作成して購入管理画面でタスクを進めてください。
+            </p>
+          </div>
+        )
+      )}
 
       {/* アクションボタンバー */}
       <div style={{

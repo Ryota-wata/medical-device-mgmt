@@ -71,6 +71,17 @@ export interface EditListItem {
   addedAt: string;
 }
 
+/** 編集リスト種別。リモデル時はヒアリング・5方針振り分け・新設置場所入力が必要 */
+export type EditListMode = 'normal' | 'remodel';
+
+/** リモデル時の処理方針（行ごと） */
+export type RemodelDecision =
+  | 'new'         // 新規購入
+  | 'replace'     // 更新購入
+  | 'addition'    // 増設購入
+  | 'disposal'    // 廃棄
+  | 'transfer';   // 移動（新施設にそのまま持っていく）
+
 /**
  * 編集リスト
  */
@@ -80,6 +91,10 @@ export interface EditList {
   facilities: string[];
   baseAssets: Asset[];        // 原本資産一覧の複製
   items: EditListItem[];      // 申請から追加された要望機器
+  /** リスト種別。指定がない既存データは 'normal' とみなす */
+  mode?: EditListMode;
+  /** リモデル時のみ。リモデルプロジェクトとの紐付け */
+  remodelProjectId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -91,4 +106,6 @@ export interface CreateEditListInput {
   name: string;
   facilities: string[];
   baseAssets: Asset[];  // 原本資産一覧の複製
+  mode?: EditListMode;
+  remodelProjectId?: string;
 }

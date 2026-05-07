@@ -122,7 +122,10 @@ export default function OrderRegistrationPage() {
 
   const targetQuotationItems = useMemo(() => {
     if (!rfqGroup) return [];
-    const targetGroups = quotationGroups.filter(qg => qg.rfqGroupId === rfqGroup.id);
+    // rfqGroupId（FK）が未設定の顧客見積データも対象に含めるため、rfqNo でも引く
+    const targetGroups = quotationGroups.filter(qg =>
+      qg.rfqGroupId === rfqGroup.id || qg.rfqNo === rfqGroup.rfqNo
+    );
     return quotationItems.filter(qi =>
       targetGroups.some(qg => qg.id === qi.quotationGroupId)
     );

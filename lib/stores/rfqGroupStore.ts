@@ -23,6 +23,22 @@ interface RfqGroupState {
 
 // テストデータ（新ステータス体系）
 const testRfqGroups: RfqGroup[] = [
+  // デモ用: edit-list-demo（リモデル）の見積依頼グループ。発注登録に進める状態にしてある
+  {
+    id: 100,
+    rfqNo: 'QT26-00001',
+    groupName: '耳鼻科ユニット 一式（デモ）',
+    createdDate: '2026-04-15',
+    applicationIds: [],
+    status: '発注見積登録済',
+    editListId: 'edit-list-demo',
+    workflowType: 'rfq',
+    vendorName: '第一医科',
+    personInCharge: '担当者A',
+    email: 'sample@daiichi-med.co.jp',
+    tel: '03-9999-0001',
+    orderDeadline: '2026-05-31',
+  },
   {
     id: 10,
     rfqNo: 'RFQ-20250108-0010',

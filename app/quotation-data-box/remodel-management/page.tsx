@@ -146,6 +146,31 @@ function RemodelManagementContent() {
             >
               編集リスト &rarr;
             </button>
+            <button
+              onClick={() => {
+                if (selectedEditListId) {
+                  router.push(`/quotation-data-box/remodel-dashboard?editListId=${selectedEditListId}`);
+                } else {
+                  router.push('/quotation-data-box/remodel-dashboard');
+                }
+              }}
+              style={{
+                padding: '6px 14px',
+                background: '#27ae60',
+                color: 'white',
+                border: '1px solid #27ae60',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; e.currentTarget.style.borderColor = '#229954'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; e.currentTarget.style.borderColor = '#27ae60'; }}
+            >
+              ダッシュボード
+            </button>
           </div>
         }
       />

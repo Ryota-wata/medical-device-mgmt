@@ -91,6 +91,9 @@ export const ASSET_COLUMNS: ColumnDef[] = [
 // ============================
 
 export const REMODEL_COLUMNS: ColumnDef[] = [
+  // ── 処理方針（リモデル時のみ） ──
+  { key: 'purchaseCategory', label: '処理方針', width: '110px', defaultVisible: true, group: 'decision' },
+
   // ── 共通部署マスタ ──
   { key: 'commonDivision', label: '共通部門名', width: '120px', defaultVisible: true, group: 'commonMaster' },
   { key: 'commonDepartment', label: '共通部署名', width: '120px', defaultVisible: true, group: 'commonMaster' },
@@ -174,6 +177,7 @@ export const REMODEL_COLUMNS: ColumnDef[] = [
 
 // 編集リスト用グループラベル・色定義
 export const REMODEL_COLUMN_GROUPS: { id: string; label: string; color: string }[] = [
+  { id: 'decision', label: '処理方針', color: '#27ae60' },
   { id: 'commonMaster', label: '共通部署マスタ', color: '#6c757d' },
   { id: 'locationId', label: '設置ID', color: '#495057' },
   { id: 'currentLocation', label: '設置情報（現）', color: '#0d6efd' },
