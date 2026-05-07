@@ -74,6 +74,8 @@ next-env.d.ts
 
 # screenshots (regenerable)
 /screenshots/
+# プロジェクトルート直下のPNG（playwrightや作業用キャプチャ）。サブディレクトリの画像は対象外
+/*.png
 
 # playwright MCP logs (regenerable)
 /.playwright-mcp/
