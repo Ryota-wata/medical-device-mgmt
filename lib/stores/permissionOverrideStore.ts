@@ -3,6 +3,13 @@ import { persist } from 'zustand/middleware';
 import { UserRole } from '../types';
 import { FeatureId } from '../utils/permissions';
 
+/**
+ * @deprecated 旧 ロール×施設×機能 オーバーライドストア。
+ * ISSUE-0016（2026-05-08 解決）以降、新しい権限管理 UI は
+ * `facilityFeatureStore`（施設×PU）と `userFeatureStore`（ユーザー×施設×PU）に移行済み。
+ * 本ストアは `lib/hooks/usePermissions.ts` 経由で旧ロール体系の認可判定にまだ使われているため
+ * 残置中。完全削除は ISSUE-0017（runtime permission gate を新ストアに切替）で追跡。
+ */
 export interface PermissionOverride {
   facilityName: string;
   role: UserRole;

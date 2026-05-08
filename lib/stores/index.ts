@@ -19,6 +19,8 @@ export * from './purchaseApplicationStore';
 export * from './repairRequestStore';
 export * from './permissionOverrideStore';
 export * from './userPermissionOverrideStore';
+export * from './facilityFeatureStore';
+export * from './userFeatureStore';
 export * from './facilityGroupStore';
 export * from './maintenanceContractStore';
 export * from './lendingStore';

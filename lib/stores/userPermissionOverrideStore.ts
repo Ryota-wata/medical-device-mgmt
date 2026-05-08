@@ -3,6 +3,11 @@ import { persist } from 'zustand/middleware';
 import { FeatureId } from '../utils/permissions';
 
 /**
+ * @deprecated 旧 ユーザー×施設×機能 オーバーライドストア（FeatureId 体系）。
+ * ISSUE-0016（2026-05-08 解決）以降、新しい権限管理 UI は
+ * `userFeatureStore`（ユーザー×施設×PU-NNNN）に移行済み。
+ * 本ストアは旧画面の互換性のため残置中。完全削除は ISSUE-0017 で追跡。
+ *
  * ユーザー単位の権限オーバーライド（レイヤー3: 施設管理者 → ユーザー）
  */
 export interface UserPermissionOverride {
