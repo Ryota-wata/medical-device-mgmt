@@ -8,6 +8,7 @@ import { useMasterStore, useApplicationStore, useHospitalFacilityStore, useIndiv
 import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { ColumnSettingsModal } from '@/components/ui/ColumnSettingsModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
 import { useAssetTable } from '@/lib/hooks/useAssetTable';
@@ -32,7 +33,7 @@ function RemodelApplicationContent() {
   const { applications } = useApplicationStore();
   const { getNewLocationByCurrentLocation, facilities: hospitalFacilities, swapToNewLocation } = useHospitalFacilityStore();
   const { individuals, updateIndividual } = useIndividualStore();
-  const { getEditListById, addItemsFromApplications, updateRfqInfo, updateBaseAsset, addBaseAssets } = useEditListStore();
+  const { getEditListById, addItemsFromApplications, updateRfqInfo, updateBaseAsset, addBaseAssets, removeBaseAsset, removeItem, reorderBaseAssets, reorderItems } = useEditListStore();
   const { addRfqGroup, generateRfqNo, generateDisposalNo, generateTransferNo, rfqGroups } = useRfqGroupStore();
   const { assets: assetMasters, vendors, setAssets } = useMasterStore();
 
@@ -113,12 +114,29 @@ function RemodelApplicationContent() {
   // クローズ確認モーダル
   const [showCloseConfirmModal, setShowCloseConfirmModal] = useState(false);
 
-  // インライン新規申請モード
+  // インライン新規申請モード（複数行まとめて編集可）
+  type InlineNewRow = { id: string; data: Record<string, string> };
   const [isInlineNewMode, setIsInlineNewMode] = useState(false);
-  const [inlineNewData, setInlineNewData] = useState<Record<string, string>>({});
-  const [inlineEditingCol, setInlineEditingCol] = useState<string | null>(null);
+  const [inlineNewRows, setInlineNewRows] = useState<InlineNewRow[]>([]);
+  const [inlineEditingCell, setInlineEditingCell] = useState<{ rowId: string; colKey: string } | null>(null);
   const [inlineEditingValue, setInlineEditingValue] = useState('');
   const inlineNewRowRef = useRef<HTMLTableRowElement>(null);
+
+  // 全体検索（REQ-140④）
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+
+  // フリーカラム（REQ-141④）
+  type FreeColumn = { key: string; label: string };
+  const [freeColumns, setFreeColumns] = useState<FreeColumn[]>([]);
+  const [freeColumnValues, setFreeColumnValues] = useState<Record<number, Record<string, string>>>({});
+  const [isAddFreeColumnOpen, setIsAddFreeColumnOpen] = useState(false);
+  const [freeColumnLabelDraft, setFreeColumnLabelDraft] = useState('');
+
+  // レコード削除確認（REQ-142③）
+  const [deleteRowConfirm, setDeleteRowConfirm] = useState<{ no: number; assetName: string } | null>(null);
+
+  // フリーカラム削除確認（REQ-141④）
+  const [deleteFreeColumnConfirm, setDeleteFreeColumnConfirm] = useState<{ key: string; label: string } | null>(null);
 
   // クローズ処理
   const handleCloseProject = () => {
@@ -403,6 +421,22 @@ function RemodelApplicationContent() {
     baseFilteredAssets: filteredAssets,
   });
 
+  // 全体検索 (REQ-140④): finalFilteredAssets に対してさらにテキスト検索を適用
+  const displayedAssets = useMemo(() => {
+    const q = globalSearchQuery.trim().toLowerCase();
+    if (!q) return finalFilteredAssets;
+    return finalFilteredAssets.filter((asset) => {
+      const fields: (string | number | undefined)[] = [
+        asset.name, asset.qrCode, asset.assetNo, asset.maker, asset.model, asset.serialNumber,
+        asset.facility, asset.building, asset.floor, asset.department, asset.section,
+        asset.category, asset.largeClass, asset.mediumClass, asset.item,
+      ];
+      const haystack = fields.filter(Boolean).join(' ').toLowerCase();
+      const freeVals = Object.values(freeColumnValues[asset.no] || {}).join(' ').toLowerCase();
+      return haystack.includes(q) || freeVals.includes(q);
+    });
+  }, [finalFilteredAssets, globalSearchQuery, freeColumnValues]);
+
   // useAssetTableフックを使用
   const {
     visibleColumns,
@@ -450,7 +484,7 @@ function RemodelApplicationContent() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(new Set(finalFilteredAssets.map(a => a.no)));
+      setSelectedItems(new Set(displayedAssets.map(a => a.no)));
     } else {
       setSelectedItems(new Set());
     }
@@ -986,128 +1020,161 @@ function RemodelApplicationContent() {
     requestConnectionStatus: '',
   });
 
-  // インライン新規申請を開始
+  // 新規要望: 1行追加して複数行を同時編集可能にする
+  const buildNewInlineRow = (): InlineNewRow => ({
+    id: `inline-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+    data: getInitialInlineData(),
+  });
+
+  // 新規要望ボタン押下: 編集リストに無い資産の購入要望を1行追加
   const handleStartInlineNew = () => {
-    if (isInlineNewMode) {
-      // 既にインラインモード中 → 該当行にスクロール
-      inlineNewRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
+    const newRow = buildNewInlineRow();
     setIsInlineNewMode(true);
     setSelectedAssets([]);
-    setInlineNewData(getInitialInlineData());
-    setInlineEditingCol(null);
+    setInlineNewRows((prev) => [...prev, newRow]);
+    setInlineEditingCell(null);
     setTimeout(() => {
       inlineNewRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
   };
 
-  // インライン新規申請を確定
+  // 全新規要望行をまとめて確定
   const handleInlineNewConfirm = () => {
+    if (inlineNewRows.length === 0) {
+      setIsInlineNewMode(false);
+      return;
+    }
     const now = new Date().toISOString();
-    const appId = `pa-inline-${Date.now()}`;
-
-    // PurchaseApplication オブジェクトを構築
-    const newApplication: PurchaseApplication = {
-      id: appId,
-      applicationNo: inlineNewData.applicationNo,
+    const newApplications: PurchaseApplication[] = inlineNewRows.map((row, idx) => ({
+      id: `pa-inline-${Date.now()}-${idx}`,
+      applicationNo: row.data.applicationNo,
       applicationType: '新規申請',
       applicantId: 'inline-user',
       applicantName: '',
-      applicantDepartment: inlineNewData.newDepartment,
-      applicationDate: inlineNewData.applicationDate,
+      applicantDepartment: row.data.newDepartment,
+      applicationDate: row.data.applicationDate,
       status: '編集中',
       assets: [{
-        name: inlineNewData.applicationItem,
-        maker: inlineNewData.requestMaker1 || '',
-        model: inlineNewData.requestModel1 || '',
-        category: inlineNewData.category || '',
-        largeClass: inlineNewData.largeClass || '',
-        mediumClass: inlineNewData.mediumClass || '',
-        item: inlineNewData.applicationItem,
-        quantity: parseInt(inlineNewData.quantity) || 1,
-        unit: inlineNewData.quantityUnit || '台',
+        name: row.data.applicationItem,
+        maker: row.data.requestMaker1 || '',
+        model: row.data.requestModel1 || '',
+        category: row.data.category || '',
+        largeClass: row.data.largeClass || '',
+        mediumClass: row.data.mediumClass || '',
+        item: row.data.applicationItem,
+        quantity: parseInt(row.data.quantity) || 1,
+        unit: row.data.quantityUnit || '台',
       }],
       facility: facility,
-      building: inlineNewData.newBuilding,
-      floor: inlineNewData.newFloor,
-      department: inlineNewData.newDepartment,
-      section: inlineNewData.newSection,
-      roomName: inlineNewData.newRoomName,
-      desiredDeliveryDate: inlineNewData.desiredDeliveryDate,
-      priority: inlineNewData.priority,
-      usagePurpose: inlineNewData.usagePurpose,
-      caseCount: inlineNewData.caseCount,
-      comment: inlineNewData.comment,
-      currentConnectionStatus: inlineNewData.currentConnectionStatus,
-      requestConnectionStatus: inlineNewData.requestConnectionStatus,
+      building: row.data.newBuilding,
+      floor: row.data.newFloor,
+      department: row.data.newDepartment,
+      section: row.data.newSection,
+      roomName: row.data.newRoomName,
+      desiredDeliveryDate: row.data.desiredDeliveryDate,
+      priority: row.data.priority,
+      usagePurpose: row.data.usagePurpose,
+      caseCount: row.data.caseCount,
+      comment: row.data.comment,
+      currentConnectionStatus: row.data.currentConnectionStatus,
+      requestConnectionStatus: row.data.requestConnectionStatus,
       createdAt: now,
       updatedAt: now,
-    };
+    }));
 
     if (isEditListMode && listId) {
-      addItemsFromApplications(listId, [newApplication]);
+      addItemsFromApplications(listId, newApplications);
     }
 
-    alert(`新規購入申請を追加しました\n品目: ${inlineNewData.applicationItem}`);
+    alert(`新規要望を ${inlineNewRows.length} 件登録しました`);
     setIsInlineNewMode(false);
-    setInlineNewData({});
-    setInlineEditingCol(null);
+    setInlineNewRows([]);
+    setInlineEditingCell(null);
     setSelectedAssets([]);
   };
 
-  // インライン新規申請をキャンセル
+  // 全新規要望行をキャンセル
   const handleInlineNewCancel = () => {
     setIsInlineNewMode(false);
-    setInlineNewData({});
-    setInlineEditingCol(null);
+    setInlineNewRows([]);
+    setInlineEditingCell(null);
     setSelectedAssets([]);
+  };
+
+  // 特定の新規要望行を削除
+  const handleInlineRowRemove = (rowId: string) => {
+    setInlineNewRows((prev) => {
+      const next = prev.filter((r) => r.id !== rowId);
+      if (next.length === 0) {
+        setIsInlineNewMode(false);
+        setInlineEditingCell(null);
+      }
+      return next;
+    });
   };
 
   // インラインセル編集開始
-  const handleInlineCellClick = (colKey: string) => {
-    setInlineEditingCol(colKey);
-    setInlineEditingValue(inlineNewData[colKey] || '');
+  const handleInlineCellClick = (rowId: string, colKey: string) => {
+    const row = inlineNewRows.find((r) => r.id === rowId);
+    setInlineEditingCell({ rowId, colKey });
+    setInlineEditingValue(row?.data[colKey] || '');
   };
 
   // インラインセル編集確定
   const handleInlineCellSave = () => {
-    if (inlineEditingCol) {
-      setInlineNewData(prev => ({ ...prev, [inlineEditingCol]: inlineEditingValue }));
-      setInlineEditingCol(null);
+    if (inlineEditingCell) {
+      const { rowId, colKey } = inlineEditingCell;
+      setInlineNewRows((prev) =>
+        prev.map((r) =>
+          r.id === rowId ? { ...r, data: { ...r.data, [colKey]: inlineEditingValue } } : r
+        )
+      );
+      setInlineEditingCell(null);
       setInlineEditingValue('');
     }
   };
 
   // インラインセル編集キャンセル
   const handleInlineCellCancel = () => {
-    setInlineEditingCol(null);
+    setInlineEditingCell(null);
     setInlineEditingValue('');
   };
 
-  // 資産マスタ選択時にインライン行データを同期
+  // 資産マスタ選択時に最終行データを同期（最後の行が未入力の場合のみ）
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (isInlineNewMode && selectedAssets.length > 0) {
+    if (isInlineNewMode && selectedAssets.length > 0 && inlineNewRows.length > 0) {
       const lastAsset = selectedAssets[selectedAssets.length - 1];
-      setInlineNewData(prev => ({
-        ...prev,
-        applicationItem: lastAsset.asset.item || lastAsset.asset.name || '',
-        category: lastAsset.asset.category || '',
-        largeClass: lastAsset.asset.largeClass || '',
-        mediumClass: lastAsset.asset.mediumClass || '',
-        requestItem1: lastAsset.asset.item || lastAsset.asset.name || '',
-        requestMaker1: lastAsset.asset.maker || '',
-        requestModel1: lastAsset.asset.model || '',
-      }));
+      const lastRow = inlineNewRows[inlineNewRows.length - 1];
+      // 既に入力されている行を上書きしない（applicationItem が入っていれば編集済とみなす）
+      if (lastRow.data.applicationItem) return;
+      setInlineNewRows((prev) =>
+        prev.map((r) =>
+          r.id === lastRow.id
+            ? {
+                ...r,
+                data: {
+                  ...r.data,
+                  applicationItem: lastAsset.asset.item || lastAsset.asset.name || '',
+                  category: lastAsset.asset.category || '',
+                  largeClass: lastAsset.asset.largeClass || '',
+                  mediumClass: lastAsset.asset.mediumClass || '',
+                  requestItem1: lastAsset.asset.item || lastAsset.asset.name || '',
+                  requestMaker1: lastAsset.asset.maker || '',
+                  requestModel1: lastAsset.asset.model || '',
+                },
+              }
+            : r
+        )
+      );
     }
-  }, [isInlineNewMode, selectedAssets.length]);
+  }, [isInlineNewMode, selectedAssets.length, inlineNewRows.length]);
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: 'white' }}>
       <Header
         title={editList ? `編集リスト: ${editList.name}` : `リモデル管理 - ${facility} ${department}`}
-        resultCount={finalFilteredAssets.length}
+        resultCount={displayedAssets.length}
         onViewToggle={() => setCurrentView(currentView === 'list' ? 'card' : 'list')}
         onExport={() => alert('Excel/PDF出力')}
         onPrint={() => window.print()}
@@ -1122,42 +1189,42 @@ function RemodelApplicationContent() {
         createdAt={editList?.createdAt}
       />
 
-      {/* モードバナー（リモデル / 通常） */}
+      {/* モードバナー（リモデル / 通常）コンパクト表示 */}
       {isEditListMode && editList && (
         editList.mode === 'remodel' ? (
-          <div className="px-5 py-3 bg-emerald-50 border-b border-emerald-200 flex items-center gap-3 flex-wrap">
-            <span className="px-2.5 py-1 bg-[#27ae60] text-white rounded-full text-xs font-semibold whitespace-nowrap">
-              リモデルモード
+          <div className="px-4 py-1.5 bg-emerald-50 border-b border-emerald-200 flex items-center gap-2 flex-wrap">
+            <span className="px-2 py-0.5 bg-[#27ae60] text-white rounded-full text-xs font-semibold whitespace-nowrap">
+              リモデル
             </span>
-            <p className="text-sm text-[#1f2937] flex-1 text-pretty">
-              ヒアリング・5方針振り分け（新規／更新／増設／廃棄／移動）・新設置場所入力を行います。進捗確認や DataLink への遷移はダッシュボードから行ってください。
-            </p>
+            <span className="text-xs text-[#1f2937] flex-1 truncate" title="ヒアリング・5方針振り分け（新規／更新／増設／廃棄／移動）・新設置場所入力を行います">
+              ヒアリング・5方針振り分け・新設置場所入力
+            </span>
             <button
               onClick={() => router.push(`/quotation-data-box/remodel-dashboard?editListId=${editList.id}`)}
-              className="px-4 py-2 bg-[#27ae60] hover:bg-[#229954] text-white rounded-md font-medium text-sm transition-colors border-0 cursor-pointer whitespace-nowrap"
+              className="px-3 py-1 bg-[#27ae60] hover:bg-[#229954] text-white rounded font-medium text-xs transition-colors border-0 cursor-pointer whitespace-nowrap"
             >
-              リモデルダッシュボードへ
+              ダッシュボードへ
             </button>
           </div>
         ) : (
-          <div className="px-5 py-3 bg-[#f3f4f6] border-b border-[#e5e7eb] flex items-center gap-3 flex-wrap">
-            <span className="px-2.5 py-1 bg-[#4b5563] text-white rounded-full text-xs font-semibold whitespace-nowrap">
-              通常モード
+          <div className="px-4 py-1.5 bg-[#f3f4f6] border-b border-[#e5e7eb] flex items-center gap-2 flex-wrap">
+            <span className="px-2 py-0.5 bg-[#4b5563] text-white rounded-full text-xs font-semibold whitespace-nowrap">
+              通常
             </span>
-            <p className="text-sm text-[#1f2937] flex-1 text-pretty">
-              ヒアリングは不要です。見積依頼グループを作成して購入管理画面でタスクを進めてください。
-            </p>
+            <span className="text-xs text-[#1f2937] flex-1 truncate" title="見積依頼グループを作成して購入管理画面でタスクを進めてください">
+              見積依頼グループを作成して購入管理へ
+            </span>
           </div>
         )
       )}
 
-      {/* アクションボタンバー */}
+      {/* アクションボタンバー（コンパクト） */}
       <div style={{
         background: '#fff',
-        padding: '12px 20px',
+        padding: '6px 12px',
         borderBottom: '1px solid #dee2e6',
         display: 'flex',
-        gap: '10px',
+        gap: '6px',
         alignItems: 'center',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
@@ -1253,6 +1320,29 @@ function RemodelApplicationContent() {
           見積依頼グループ作成（{selectedItems.size}件選択中）
         </button>
 
+        {/* フリーカラム追加ボタン (REQ-141④) */}
+        <button
+          onClick={() => {
+            setFreeColumnLabelDraft('');
+            setIsAddFreeColumnOpen(true);
+          }}
+          style={{
+            padding: '8px 16px',
+            background: '#fff',
+            color: '#6c757d',
+            border: '1px dashed #adb5bd',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 500,
+            transition: 'all 0.2s',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; }}
+        >
+          + フリーカラム追加{freeColumns.length > 0 ? `（${freeColumns.length}）` : ''}
+        </button>
+
         {/* 廃棄・移設申請ボタン（選択行に廃棄予定 or 移設がある場合のみ活性） */}
         {(() => {
           const dtCount = finalFilteredAssets.filter(a =>
@@ -1282,26 +1372,66 @@ function RemodelApplicationContent() {
           );
         })()}
 
-        {/* 一括新規追加ボタン */}
+        {/* 新規要望ボタン (REQ-139⑤) — 編集リスト内に無い資産を新たに購入要望として追加。クリックでインライン編集行を追加し、複数まとめて登録できる */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #dee2e6' }}>
           <button
             onClick={handleStartInlineNew}
+            title="編集リストに無い資産の購入要望を追加します。クリックで編集行が1行追加され、複数行まとめてインライン編集→一括登録できます。"
             style={{
               padding: '8px 16px',
               fontSize: '13px',
               fontWeight: 600,
-              backgroundColor: '#4a6741',
+              backgroundColor: '#f39c12',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#3d5636'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#4a6741'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#e67e22'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#f39c12'; }}
           >
-            一括新規追加
+            + 新規要望{isInlineNewMode && inlineNewRows.length > 0 ? `（${inlineNewRows.length}件編集中）` : ''}
           </button>
+          {isInlineNewMode && inlineNewRows.length > 0 && (
+            <>
+              <button
+                onClick={handleInlineNewConfirm}
+                title="編集中の新規要望をすべて編集リストに登録します"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; }}
+              >
+                全て登録（{inlineNewRows.length}件）
+              </button>
+              <button
+                onClick={handleInlineNewCancel}
+                title="編集中の新規要望をすべて破棄します"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  backgroundColor: '#fff',
+                  color: '#e74c3c',
+                  border: '1px solid #f5b7b1',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                全て破棄
+              </button>
+            </>
+          )}
         </div>
 
         </div>
@@ -1325,17 +1455,14 @@ function RemodelApplicationContent() {
           <button
             onClick={() => router.push('/quotation-data-box/remodel-management')}
             style={{
-              padding: '8px 16px',
+              padding: '4px 10px',
               background: 'transparent',
               color: '#27ae60',
               border: '1px solid #27ae60',
               borderRadius: '4px',
               cursor: 'pointer',
-              fontSize: '13px',
+              fontSize: '12px',
               fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
               whiteSpace: 'nowrap',
               transition: 'all 0.15s',
             }}
@@ -1344,110 +1471,119 @@ function RemodelApplicationContent() {
           >
             タスク管理 &rarr;
           </button>
+          {/* 数量・金額合計を1つのコンパクトな枠に統合 */}
           <div style={{
-            padding: '8px 16px',
+            padding: '4px 10px',
             background: '#f8f9fa',
             borderRadius: '4px',
             border: '1px solid #dee2e6',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
           }}>
-            <span style={{ fontSize: '12px', color: '#666', marginRight: '8px' }}>表示数量合計:</span>
-            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>{finalFilteredAssets.length}件</span>
-          </div>
-          <div style={{
-            padding: '8px 16px',
-            background: '#f8f9fa',
-            borderRadius: '4px',
-            border: '1px solid #dee2e6',
-          }}>
-            <span style={{ fontSize: '12px', color: '#666', marginRight: '8px' }}>表示金額合計:</span>
-            <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60' }}>
-              ¥{finalFilteredAssets.reduce((sum, asset) => {
-                const amount = asset.rfqAmount;
-                if (typeof amount === 'number') return sum + amount;
-                if (typeof amount === 'string' && amount) {
-                  const num = parseInt(amount.replace(/[^0-9]/g, ''), 10);
-                  return sum + (isNaN(num) ? 0 : num);
-                }
-                return sum;
-              }, 0).toLocaleString()}
-            </span>
+            <span><span style={{ color: '#666' }}>件数</span> <strong style={{ color: '#1f2937', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
+            <span style={{ color: '#dee2e6' }}>|</span>
+            <span><span style={{ color: '#666' }}>金額</span> <strong style={{ color: '#27ae60', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
+              const amount = asset.rfqAmount;
+              if (typeof amount === 'number') return sum + amount;
+              if (typeof amount === 'string' && amount) {
+                const num = parseInt(amount.replace(/[^0-9]/g, ''), 10);
+                return sum + (isNaN(num) ? 0 : num);
+              }
+              return sum;
+            }, 0).toLocaleString()}</strong></span>
           </div>
         </div>
       </div>
 
-      {/* フィルターヘッダー */}
-      <div style={{ background: '#f8f9fa', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1', minWidth: '120px' }}>
+      {/* フィルターヘッダー（コンパクト・全体検索を同列配置） */}
+      <div style={{ background: '#f8f9fa', padding: '6px 12px', borderBottom: '1px solid #dee2e6' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* 全体検索 (REQ-140④) */}
+          <input
+            type="text"
+            value={globalSearchQuery}
+            onChange={(e) => setGlobalSearchQuery(e.target.value)}
+            placeholder="🔍 全体検索（資産名/型式/メーカー/設置場所/品目分類）"
+            style={{
+              flex: '2 1 280px',
+              minWidth: '220px',
+              maxWidth: '380px',
+              padding: '4px 10px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '12px',
+              outline: 'none',
+              height: '30px',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
-              label="部門"
               value={filters.department}
               onChange={(value) => setFilters({...filters, department: value})}
               options={['', ...departmentOptions]}
-              placeholder="すべて"
+              placeholder="部門"
               isMobile={isMobile}
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
-              label="部署"
               value={filters.section}
               onChange={(value) => setFilters({...filters, section: value})}
               options={['', ...sectionOptions]}
-              placeholder="すべて"
+              placeholder="部署"
               isMobile={isMobile}
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
-              label="Category"
               value={filters.category}
               onChange={(value) => setFilters({...filters, category: value})}
               options={['', ...categoryOptions]}
-              placeholder="すべて"
+              placeholder="Category"
               isMobile={isMobile}
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
-              label="大分類"
               value={filters.largeClass}
               onChange={(value) => setFilters({...filters, largeClass: value})}
               options={['', ...largeClassOptions]}
-              placeholder="すべて"
+              placeholder="大分類"
               isMobile={isMobile}
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
-              label="中分類"
               value={filters.mediumClass}
               onChange={(value) => setFilters({...filters, mediumClass: value})}
               options={['', ...mediumClassOptions]}
-              placeholder="すべて"
+              placeholder="中分類"
               isMobile={isMobile}
             />
           </div>
 
-          <div style={{ flex: '1', minWidth: '120px' }}>
+          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
-              label="資産管理部署"
               value={filters.section}
               onChange={(value) => setFilters({...filters, section: value})}
               options={['', ...sectionOptions]}
-              placeholder="すべて"
+              placeholder="管理部署"
               isMobile={isMobile}
             />
           </div>
         </div>
       </div>
 
-      {/* テーブル表示 */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
+      {/* テーブル表示（最大限の高さを確保） */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '8px 12px' }}>
         <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
 
         {/* 一括適用バナー */}
@@ -1533,6 +1669,44 @@ function RemodelApplicationContent() {
                     {span.label}
                   </th>
                 ))}
+                {/* フリーカラム group header (REQ-141④) */}
+                {freeColumns.length > 0 && (
+                  <th
+                    colSpan={freeColumns.length}
+                    style={{
+                      padding: '6px 10px',
+                      textAlign: 'center',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: 'white',
+                      background: '#f39c12',
+                      borderRight: '1px solid rgba(255,255,255,0.3)',
+                      borderBottom: '1px solid rgba(255,255,255,0.2)',
+                      whiteSpace: 'nowrap',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    フリーカラム
+                  </th>
+                )}
+                {/* 操作 group header (REQ-142②③) */}
+                <th
+                  rowSpan={2}
+                  style={{
+                    padding: '4px',
+                    textAlign: 'center',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: '#1f2937',
+                    background: '#f8f9fa',
+                    borderRight: '1px solid #dee2e6',
+                    borderBottom: '2px solid #dee2e6',
+                    borderTop: '2px solid #6c757d',
+                    width: '120px',
+                  }}
+                >
+                  操作
+                </th>
               </tr>
               {/* カラムヘッダー行 */}
               <tr>
@@ -1694,10 +1868,47 @@ function RemodelApplicationContent() {
                     </th>
                   );
                 })}
+                {/* フリーカラム header (REQ-141④) */}
+                {freeColumns.map((fc) => (
+                  <th
+                    key={`fc-${fc.key}`}
+                    style={{
+                      padding: '8px',
+                      textAlign: 'left',
+                      fontWeight: 'bold',
+                      color: '#1f2937',
+                      whiteSpace: 'nowrap',
+                      background: '#fff8e1',
+                      borderRight: '1px solid #dee2e6',
+                      borderBottom: '2px solid #dee2e6',
+                      borderTop: '2px solid #f39c12',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>{fc.label}</span>
+                      <button
+                        onClick={() => setDeleteFreeColumnConfirm({ key: fc.key, label: fc.label })}
+                        title={`フリーカラム「${fc.label}」を削除`}
+                        aria-label={`フリーカラム「${fc.label}」を削除`}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#999',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          padding: '0 2px',
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </th>
+                ))}
+                {/* 操作 header は上段で rowSpan={2} で展開済 */}
               </tr>
             </thead>
             <tbody>
-              {finalFilteredAssets.map((asset) => {
+              {displayedAssets.map((asset) => {
                 // 行ステータスの左ボーダー色
                 const getRowBorderColor = () => {
                   if (errorRows.has(asset.no)) return '#e74c3c';
@@ -1860,11 +2071,149 @@ function RemodelApplicationContent() {
                       </td>
                     );
                   })}
+                  {/* フリーカラム cells (REQ-141④) */}
+                  {freeColumns.map((fc) => {
+                    const val = freeColumnValues[asset.no]?.[fc.key] || '';
+                    return (
+                      <td
+                        key={`fc-${fc.key}-${asset.no}`}
+                        style={{
+                          padding: '4px 6px',
+                          background: selectedItems.has(asset.no) ? '#e3f2fd' : '#fffdf2',
+                          borderRight: '1px solid #dee2e6',
+                          borderBottom: '1px solid #dee2e6',
+                        }}
+                      >
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setFreeColumnValues((prev) => ({
+                              ...prev,
+                              [asset.no]: { ...(prev[asset.no] || {}), [fc.key]: v },
+                            }));
+                          }}
+                          placeholder="入力"
+                          style={{
+                            width: '100%',
+                            padding: '6px',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '3px',
+                            fontSize: '13px',
+                            background: 'white',
+                            boxSizing: 'border-box',
+                          }}
+                        />
+                      </td>
+                    );
+                  })}
+                  {/* 操作セル (REQ-142②③) */}
+                  <td
+                    style={{
+                      padding: '4px',
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white',
+                      borderRight: '1px solid #dee2e6',
+                      borderBottom: '1px solid #dee2e6',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => {
+                          // 編集リストモード: store経由で editList の baseAssets / items を更新
+                          if (isEditListMode && listId) {
+                            if (asset.no >= 90000) {
+                              reorderItems(listId, asset.no - 90000, 'up');
+                            } else {
+                              reorderBaseAssets(listId, asset.no, 'up');
+                            }
+                          } else {
+                            setMockAssets((prev) => {
+                              const idx = prev.findIndex((a) => a.no === asset.no);
+                              if (idx <= 0) return prev;
+                              const next = [...prev];
+                              [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                              return next;
+                            });
+                          }
+                        }}
+                        title="上に移動"
+                        aria-label={`資産 No.${asset.no} を上に移動`}
+                        style={{
+                          padding: '8px 10px',
+                          background: '#fff',
+                          color: '#495057',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          minHeight: '32px',
+                          minWidth: '32px',
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (isEditListMode && listId) {
+                            if (asset.no >= 90000) {
+                              reorderItems(listId, asset.no - 90000, 'down');
+                            } else {
+                              reorderBaseAssets(listId, asset.no, 'down');
+                            }
+                          } else {
+                            setMockAssets((prev) => {
+                              const idx = prev.findIndex((a) => a.no === asset.no);
+                              if (idx < 0 || idx >= prev.length - 1) return prev;
+                              const next = [...prev];
+                              [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                              return next;
+                            });
+                          }
+                        }}
+                        title="下に移動"
+                        aria-label={`資産 No.${asset.no} を下に移動`}
+                        style={{
+                          padding: '8px 10px',
+                          background: '#fff',
+                          color: '#495057',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          minHeight: '32px',
+                          minWidth: '32px',
+                        }}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        onClick={() => setDeleteRowConfirm({ no: asset.no, assetName: asset.name || `No.${asset.no}` })}
+                        title="このレコードを削除"
+                        aria-label={`資産 No.${asset.no} を削除`}
+                        style={{
+                          padding: '8px 10px',
+                          background: '#fff',
+                          color: '#e74c3c',
+                          border: '1px solid #f5b7b1',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          minHeight: '32px',
+                        }}
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </td>
                 </tr>
                 );
               })}
 
-              {/* インライン新規行 */}
+              {/* インライン新規行（複数行同時編集対応） */}
               {isInlineNewMode && (() => {
                 // 自動設定カラム（編集不可）
                 const autoFilledCols = ['applicationCategory', 'applicationDate', 'applicationNo'];
@@ -1876,9 +2225,9 @@ function RemodelApplicationContent() {
                   newSection: sectionOptions,
                 };
 
-                return (
-                  <tr ref={inlineNewRowRef} style={{ background: '#e8f5e9' }}>
-                    {/* ★ アクションセル */}
+                return inlineNewRows.map((row, rowIdx) => (
+                  <tr key={row.id} ref={rowIdx === inlineNewRows.length - 1 ? inlineNewRowRef : undefined} style={{ background: '#e8f5e9' }}>
+                    {/* ★ アクションセル（行削除のみ） */}
                     <td style={{
                       padding: '6px 4px',
                       position: 'sticky',
@@ -1892,44 +2241,29 @@ function RemodelApplicationContent() {
                       verticalAlign: 'middle',
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#4caf50', fontSize: '12px', fontWeight: 'bold' }}>新規</span>
-                        <div style={{ display: 'flex', gap: '2px' }}>
-                          <button
-                            onClick={handleInlineNewConfirm}
-                            title="申請を確定する"
-                            style={{
-                              width: '24px', height: '24px',
-                              background: '#4caf50', color: 'white',
-                              border: 'none', borderRadius: '4px',
-                              cursor: 'pointer', fontSize: '14px', fontWeight: 'bold',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              padding: 0,
-                            }}
-                          >
-                            ✓
-                          </button>
-                          <button
-                            onClick={handleInlineNewCancel}
-                            title="キャンセル"
-                            style={{
-                              width: '24px', height: '24px',
-                              background: '#e74c3c', color: 'white',
-                              border: 'none', borderRadius: '4px',
-                              cursor: 'pointer', fontSize: '14px', fontWeight: 'bold',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              padding: 0,
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </div>
+                        <span style={{ color: '#4caf50', fontSize: '12px', fontWeight: 'bold' }}>新規{rowIdx + 1}</span>
+                        <button
+                          onClick={() => handleInlineRowRemove(row.id)}
+                          title="この新規要望行を削除"
+                          aria-label={`新規要望行 ${rowIdx + 1} を削除`}
+                          style={{
+                            width: '24px', height: '24px',
+                            background: '#e74c3c', color: 'white',
+                            border: 'none', borderRadius: '4px',
+                            cursor: 'pointer', fontSize: '14px', fontWeight: 'bold',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: 0,
+                          }}
+                        >
+                          ✕
+                        </button>
                       </div>
                     </td>
                     {orderedColumns.filter(col => visibleColumns[col.key]).map(col => {
                       const isPurchaseCol = col.group === 'purchaseApplication';
                       const isNewLocationCol = col.group === 'newLocation';
-                      const isInlineEditing = inlineEditingCol === col.key;
-                      const cellValue = inlineNewData[col.key] || '';
+                      const isInlineEditing = inlineEditingCell?.rowId === row.id && inlineEditingCell?.colKey === col.key;
+                      const cellValue = row.data[col.key] || '';
                       const isAutoFilled = autoFilledCols.includes(col.key);
                       const isDropdown = col.key in dropdownCols;
 
@@ -1952,7 +2286,7 @@ function RemodelApplicationContent() {
                             cursor: isEditable ? 'pointer' : 'default',
                             transition: 'background 0.15s',
                           }}
-                          onClick={() => isEditable && handleInlineCellClick(col.key)}
+                          onClick={() => isEditable && handleInlineCellClick(row.id, col.key)}
                         >
                           {/* リモデル区分バッジ（新規追加は固定） */}
                           {col.key === 'purchaseCategory' ? (
@@ -1970,8 +2304,11 @@ function RemodelApplicationContent() {
                             <select
                               value={inlineEditingValue}
                               onChange={(e) => {
-                                setInlineNewData(prev => ({ ...prev, [col.key]: e.target.value }));
-                                setInlineEditingCol(null);
+                                const v = e.target.value;
+                                setInlineNewRows((prev) =>
+                                  prev.map((r) => (r.id === row.id ? { ...r, data: { ...r.data, [col.key]: v } } : r))
+                                );
+                                setInlineEditingCell(null);
                                 setInlineEditingValue('');
                               }}
                               onBlur={handleInlineCellSave}
@@ -2063,8 +2400,34 @@ function RemodelApplicationContent() {
                         </td>
                       );
                     })}
+                    {/* フリーカラム cells (新規行は空) */}
+                    {freeColumns.map((fc) => (
+                      <td
+                        key={`fc-new-${fc.key}`}
+                        style={{
+                          padding: '4px 6px',
+                          background: '#e8f5e9',
+                          borderRight: '1px solid #dee2e6',
+                          borderBottom: '1px solid #dee2e6',
+                        }}
+                      >
+                        <span style={{ color: '#999', fontSize: '12px' }}>-</span>
+                      </td>
+                    ))}
+                    {/* 操作セル（新規行は空） */}
+                    <td
+                      style={{
+                        padding: '4px',
+                        textAlign: 'center',
+                        background: '#e8f5e9',
+                        borderRight: '1px solid #dee2e6',
+                        borderBottom: '1px solid #dee2e6',
+                      }}
+                    >
+                      <span style={{ color: '#999', fontSize: '12px' }}>-</span>
+                    </td>
                   </tr>
-                );
+                ));
               })()}
             </tbody>
           </table>
@@ -2072,7 +2435,7 @@ function RemodelApplicationContent() {
 
         {currentView === 'card' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {finalFilteredAssets.map((asset) => (
+            {displayedAssets.map((asset) => (
               <div
                 key={asset.no}
                 style={{
@@ -2449,6 +2812,143 @@ function RemodelApplicationContent() {
           setRfqGroupName('');
           setSelectedItems(new Set());
         }}
+      />
+
+      {/* フリーカラム追加モーダル (REQ-141④) */}
+      {isAddFreeColumnOpen && (
+        <div
+          onClick={() => setIsAddFreeColumnOpen(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+          }}
+          role="presentation"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-free-col-title"
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              width: '90%',
+              maxWidth: '380px',
+              padding: '20px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            }}
+          >
+            <h2 id="add-free-col-title" style={{ margin: 0, marginBottom: '8px', fontSize: '16px', fontWeight: 700, color: '#1f2937' }}>
+              フリーカラム追加
+            </h2>
+            <p style={{ margin: 0, marginBottom: '16px', fontSize: '12px', color: '#6c757d' }}>
+              マスタにない情報を行ごとに記録するための列を追加します。
+            </p>
+            <input
+              type="text"
+              value={freeColumnLabelDraft}
+              onChange={(e) => setFreeColumnLabelDraft(e.target.value)}
+              placeholder="列名（例: 設置担当者メモ）"
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '20px' }}>
+              <button
+                onClick={() => setIsAddFreeColumnOpen(false)}
+                style={{ padding: '8px 16px', background: '#fff', color: '#4b5563', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  const label = freeColumnLabelDraft.trim();
+                  if (!label) {
+                    alert('列名を入力してください');
+                    return;
+                  }
+                  const key = `free_${Date.now()}`;
+                  setFreeColumns((prev) => [...prev, { key, label }]);
+                  setIsAddFreeColumnOpen(false);
+                }}
+                disabled={!freeColumnLabelDraft.trim()}
+                style={{
+                  padding: '8px 16px',
+                  background: freeColumnLabelDraft.trim() ? '#27ae60' : '#bdc3c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: freeColumnLabelDraft.trim() ? 'pointer' : 'not-allowed',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                }}
+              >
+                追加
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* フリーカラム削除確認 (REQ-141④) */}
+      <ConfirmDialog
+        isOpen={deleteFreeColumnConfirm !== null}
+        onClose={() => setDeleteFreeColumnConfirm(null)}
+        onConfirm={() => {
+          if (!deleteFreeColumnConfirm) return;
+          const targetKey = deleteFreeColumnConfirm.key;
+          setFreeColumns((prev) => prev.filter((c) => c.key !== targetKey));
+          setFreeColumnValues((prev) => {
+            const next: typeof prev = {};
+            for (const no of Object.keys(prev)) {
+              const row = { ...prev[Number(no)] };
+              delete row[targetKey];
+              next[Number(no)] = row;
+            }
+            return next;
+          });
+          setDeleteFreeColumnConfirm(null);
+        }}
+        title="フリーカラムを削除"
+        message={deleteFreeColumnConfirm ? `フリーカラム「${deleteFreeColumnConfirm.label}」を削除します。入力済みの値もすべてクリアされ、元に戻すことはできません。` : ''}
+        confirmLabel="列を削除"
+        cancelLabel="キャンセル"
+        variant="danger"
+      />
+
+      {/* レコード削除確認 (REQ-142③) */}
+      <ConfirmDialog
+        isOpen={deleteRowConfirm !== null}
+        onClose={() => setDeleteRowConfirm(null)}
+        onConfirm={() => {
+          if (!deleteRowConfirm) return;
+          const targetNo = deleteRowConfirm.no;
+          if (isEditListMode && listId) {
+            if (targetNo >= 90000) {
+              removeItem(listId, targetNo - 90000);
+            } else {
+              removeBaseAsset(listId, targetNo);
+            }
+          } else {
+            setMockAssets((prev) => prev.filter((a) => a.no !== targetNo));
+          }
+          setSelectedItems((prev) => {
+            const next = new Set(prev);
+            next.delete(targetNo);
+            return next;
+          });
+          setFreeColumnValues((prev) => {
+            const next = { ...prev };
+            delete next[targetNo];
+            return next;
+          });
+          setDeleteRowConfirm(null);
+        }}
+        title="レコードを削除"
+        message={deleteRowConfirm ? `「${deleteRowConfirm.assetName}」を編集リストから削除します。この操作は取り消せません。` : ''}
+        confirmLabel="レコードを削除"
+        cancelLabel="キャンセル"
+        variant="danger"
       />
 
       {/* Data Link / 見積DB Link モーダル */}

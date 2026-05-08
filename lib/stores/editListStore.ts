@@ -106,6 +106,10 @@ interface EditListState {
   updateRfqInfo: (editListId: string, selectedNos: Set<number>, rfqNo: string, rfqGroupName: string) => void;
   updateBaseAsset: (editListId: string, assetNo: number, patch: Record<string, unknown>) => void;
   addBaseAssets: (editListId: string, newAssets: import('@/lib/types').Asset[], afterNo?: number) => void;
+  removeBaseAsset: (editListId: string, assetNo: number) => void;
+  removeItem: (editListId: string, itemIndex: number) => void;
+  reorderBaseAssets: (editListId: string, assetNo: number, direction: 'up' | 'down') => void;
+  reorderItems: (editListId: string, itemIndex: number, direction: 'up' | 'down') => void;
   getItemsByEditListId: (editListId: string) => EditListItem[];
   getTotalItemCount: (editListId: string) => number;
 }
@@ -400,6 +404,69 @@ export const useEditListStore = create<EditListState>((set, get) => ({
         return {
           ...list,
           baseAssets: updated,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  removeBaseAsset: (editListId: string, assetNo: number) => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+        return {
+          ...list,
+          baseAssets: list.baseAssets.filter((a) => a.no !== assetNo),
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  removeItem: (editListId: string, itemIndex: number) => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+        return {
+          ...list,
+          items: list.items.filter((_, idx) => idx !== itemIndex),
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  reorderBaseAssets: (editListId: string, assetNo: number, direction: 'up' | 'down') => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+        const idx = list.baseAssets.findIndex((a) => a.no === assetNo);
+        if (idx < 0) return list;
+        const swapWith = direction === 'up' ? idx - 1 : idx + 1;
+        if (swapWith < 0 || swapWith >= list.baseAssets.length) return list;
+        const next = [...list.baseAssets];
+        [next[idx], next[swapWith]] = [next[swapWith], next[idx]];
+        return {
+          ...list,
+          baseAssets: next,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    }));
+  },
+
+  reorderItems: (editListId: string, itemIndex: number, direction: 'up' | 'down') => {
+    set((state) => ({
+      editLists: state.editLists.map((list) => {
+        if (list.id !== editListId) return list;
+        const swapWith = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
+        if (itemIndex < 0 || itemIndex >= list.items.length) return list;
+        if (swapWith < 0 || swapWith >= list.items.length) return list;
+        const next = [...list.items];
+        [next[itemIndex], next[swapWith]] = [next[swapWith], next[itemIndex]];
+        return {
+          ...list,
+          items: next,
           updatedAt: new Date().toISOString(),
         };
       }),
