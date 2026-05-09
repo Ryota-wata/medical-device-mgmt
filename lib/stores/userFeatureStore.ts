@@ -15,7 +15,8 @@ import { persist } from 'zustand/middleware';
  *   - 1段目が ON なら ユーザーも ON
  *   - 1段目が OFF なら ユーザーも OFF
  *
- * 注意: 旧 userPermissionOverrideStore（FeatureId 形式）は ISSUE-0016 で段階的廃止予定。
+ * runtime 認可: `lib/utils/permissions.ts` の FEATURE_TO_PU マッピングを通じて、
+ *               旧 FeatureId ベースの canAccess/canView 等から参照される。
  */
 export interface UserFeatureSetting {
   userId: string;

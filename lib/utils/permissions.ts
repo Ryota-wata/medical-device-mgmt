@@ -321,6 +321,79 @@ export function getPermissionLevel(
 type GetOverrideFn = (facilityName: string, role: UserRole, featureId: FeatureId) => boolean | undefined;
 
 /**
+ * FeatureId → PermissionUnitId[] の対応表（実利用される FeatureId のみ網羅）
+ *
+ * 用途: 新 2段階権限モデル（facilityFeatureStore × userFeatureStore × PU-NNNN）の
+ *       施設/ユーザー OFF 設定を旧 FeatureId の判定に橋渡しするための最小マッピング層。
+ *
+ * 解釈: 当該 FeatureId は「対応 PU のうち少なくとも1つが ON のとき利用可能」。
+ *       全 PU が OFF（施設または当該ユーザーで）なら、デフォルト権限を 'X' に上書きする。
+ *       マッピングが無い FeatureId は新ストアの影響を受けない（=デフォルト権限のまま）。
+ *
+ * 注記: PU と FeatureId の粒度差・仕様未確定（permission-mock-mapping.yaml v0.2 機械化対象）
+ *       のため、ここでは実画面で `canAccess`/`isMainButtonVisible` 経由参照される FeatureId のみ列挙する。
+ *
+ * 粒度差の補足:
+ *   `normal_purchase` のように 1 FeatureId が複数の PU（行表示制御）に対応するケースは、
+ *   「タスク管理画面の入口判定（広いゲート）」として扱う。配下の各行（申請受付/発注/検収/見積管理）の
+ *   表示制御は、本マッピングではなくタスク管理画面側で個別に PU を見る設計を前提とする。
+ *   よって 1 つでも ON の PU があれば本ゲートはデフォルト権限を返し、
+ *   ALL OFF（=その画面で何も操作する権限が無いユーザー）のときだけ画面入口自体を X に落とす。
+ */
+export const FEATURE_TO_PU: Partial<Record<FeatureId, string[]>> = {
+  normal_purchase: ['PU-0026', 'PU-0027', 'PU-0028', 'PU-0029'],
+  qr_issue: ['PU-0014'],
+  facility_master_list: ['PU-0039'],
+  asset_master_list: ['PU-0036'],
+  hospital_dept_master_edit: ['PU-0044', 'PU-0045'],
+  existing_survey: ['PU-0015'],
+  vendor_master_edit: ['PU-0046', 'PU-0047'],
+};
+
+/** 新ストア参照のシグネチャ（hook 側でクロージャを渡す） */
+export type GetFacilityFeatureFn = (facilityName: string, permissionUnitId: string) => boolean;
+export type GetUserFeatureFn = (userId: string, facilityName: string, permissionUnitId: string) => boolean | undefined;
+
+/**
+ * 新ストアの ON/OFF 状態を旧 GetOverrideFn シグネチャに橋渡しするファクトリ。
+ *
+ * - 当該 FeatureId にマッピングが無い場合: undefined（=デフォルト適用）
+ * - マッピング先 PU の全てが OFF の場合: false（=デフォルトを X に上書き）
+ * - 1つでも ON の PU があれば: undefined（=デフォルト適用）
+ *
+ * 評価則:
+ *   施設レベル OFF → そのユーザーの対応 PU は OFF
+ *   施設レベル ON + ユーザーレベル明示 OFF → そのユーザーの対応 PU は OFF
+ *   施設レベル ON + ユーザーレベル未設定 → そのユーザーの対応 PU は ON
+ *
+ * userId 未設定時の挙動:
+ *   ログイン直後で user.id が未確定の極短い瞬間や SHIP 系ロールで施設未選択時に呼ばれる可能性がある。
+ *   このとき 1段目（施設レベル）の状態だけで判定する: 施設 ON ならその PU を ON 扱い。
+ *   `system_admin` は呼出側 `getPermissionLevel` で override を無視するため、ここでは特別扱い不要。
+ *
+ * 旧 localStorage キー (`permission-override-storage` / `user-permission-override-storage`) は
+ * 本リファクタ以降参照しない。ブラウザに残る場合があるが runtime 動作に影響なし。
+ */
+export function createStoreBackedOverride(
+  userId: string | undefined,
+  getFacilityFeature: GetFacilityFeatureFn,
+  getUserFeature: GetUserFeatureFn,
+): GetOverrideFn {
+  return (facilityName, _role, featureId) => {
+    const puIds = FEATURE_TO_PU[featureId];
+    if (!puIds || puIds.length === 0) return undefined;
+    const allOff = puIds.every((puId) => {
+      const facilityOn = getFacilityFeature(facilityName, puId);
+      if (!facilityOn) return true;
+      if (!userId) return false;
+      const userExplicit = getUserFeature(userId, facilityName, puId);
+      return userExplicit === false;
+    });
+    return allOff ? false : undefined;
+  };
+}
+
+/**
  * 機能にアクセス可能かどうか（X以外ならアクセス可能）
  */
 export function canAccess(featureId: FeatureId, role: UserRole, facilityName?: string, getOverride?: GetOverrideFn): boolean {

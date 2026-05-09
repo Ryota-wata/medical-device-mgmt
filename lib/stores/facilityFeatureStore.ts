@@ -11,7 +11,8 @@ import { persist } from 'zustand/middleware';
  *   - 既定で全機能 ON（=施設で利用可能）として扱う。
  *   - OFF にした場合のみエントリを保存。
  *
- * 注意: 旧 permissionOverrideStore（ロール×施設×機能）は ISSUE-0016 で段階的廃止予定。
+ * runtime 認可: `lib/utils/permissions.ts` の FEATURE_TO_PU マッピングを通じて、
+ *               旧 FeatureId ベースの canAccess/canView 等から参照される。
  */
 export interface FacilityFeatureSetting {
   facilityName: string;

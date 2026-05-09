@@ -17,8 +17,6 @@ export * from './orderStore';
 export * from './inspectionStore';
 export * from './purchaseApplicationStore';
 export * from './repairRequestStore';
-export * from './permissionOverrideStore';
-export * from './userPermissionOverrideStore';
 export * from './facilityFeatureStore';
 export * from './userFeatureStore';
 export * from './facilityGroupStore';

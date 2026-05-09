@@ -3,7 +3,12 @@
  */
 
 import { useMemo } from 'react';
-import { useAuthStore, usePermissionOverrideStore, useFacilityGroupStore } from '../stores';
+import {
+  useAuthStore,
+  useFacilityGroupStore,
+  useFacilityFeatureStore,
+  useUserFeatureStore,
+} from '../stores';
 import { isShipRole, isHospitalRole, getRoleCategory } from '../types/user';
 import type { SharingDataType } from '../types/facilityGroup';
 import type { RoleCategory } from '../types/user';
@@ -20,6 +25,7 @@ import {
   isMainButtonVisible,
   getVisibleMainButtons,
   canAccessFacility,
+  createStoreBackedOverride,
 } from '../utils/permissions';
 
 export interface UsePermissionsReturn {
@@ -58,10 +64,23 @@ export interface UsePermissionsReturn {
 }
 
 export function usePermissions(): UsePermissionsReturn {
-  const { user, selectedFacility } = useAuthStore();
-  const { getOverride } = usePermissionOverrideStore();
-  const { canShareData } = useFacilityGroupStore();
+  const user = useAuthStore((s) => s.user);
+  const selectedFacility = useAuthStore((s) => s.selectedFacility);
+  // zustand のメソッド参照は stable なので useMemo の deps では検知できない。
+  // state 配列そのものを購読することで設定変更時に getOverride を再生成する。
+  const facilitySettings = useFacilityFeatureStore((s) => s.settings);
+  const userSettings = useUserFeatureStore((s) => s.settings);
+  const getFacilitySetting = useFacilityFeatureStore((s) => s.getSetting);
+  const getUserSetting = useUserFeatureStore((s) => s.getSetting);
+  const canShareData = useFacilityGroupStore((s) => s.canShareData);
   const role = user?.role ?? null;
+  // 新 2段階権限モデル（facilityFeatureStore + userFeatureStore）を旧 GetOverrideFn 互換のクロージャに包む。
+  // FEATURE_TO_PU マッピングが定義された FeatureId のみ override が効き、それ以外は PERMISSION_MATRIX の
+  // ロール別デフォルトに従う。settings 配列を deps に入れることで OFF/ON 切替が下流に伝播する。
+  const getOverride = useMemo(
+    () => createStoreBackedOverride(user?.id, getFacilitySetting, getUserSetting),
+    [user?.id, getFacilitySetting, getUserSetting, facilitySettings, userSettings],
+  );
 
   return useMemo(() => {
     // ロールがない場合はすべて不可
