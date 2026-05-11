@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_ユーザー管理.docx'
   ScreenLabel = 'ユーザー管理'
-  CoverDateText = '2026年4月27日'
-  RevisionDateText = '2026/4/27'
+  CoverDateText = '2026年5月7日'
+  RevisionDateText = '2026/5/7'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -86,7 +86,7 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。ユーザー管理APIの `availableFeatureCodes` / `enabledFeatureCodes` は `config_scope=''FACILITY_USER''` の機能を対象とし、`normal_ship_request` / `lending_in_use_used` も候補に含める。PII を含む基本情報詳細は `user_edit` を前提とし、施設グループ API は `facility_group_list` / `facility_group_edit` を前提とする。共有データ種別に対応する external 専用 `feature_code` / `column_code` は現行カタログ未採用のため、本書では施設グループ構成の保守までを対象にする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。ユーザー管理APIの `availableFeatureCodes` / `enabledFeatureCodes` は `config_scope=''FACILITY_USER''` の機能を対象とし、`normal_ship_request` / `lending_in_use_used` も候補に含める。`availableColumnCodes` / `enabledColumnCodes` は施設提供カラムを対象とする。PII を含む基本情報詳細は `user_edit` を前提とし、施設グループ API は `facility_group_list` / `facility_group_edit` を前提とする。公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は施設グループ構成とは別の公開設定であり、本 API 群では更新しない。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('ユーザー / 一覧', '`user_list_view`', '画面コンテキスト取得、一覧取得'),
       @('ユーザー / 新規作成・編集', '`user_edit`', 'ユーザー基本情報取得、ユーザー基本情報更新、初回設定案内再送、削除、ユーザー新規作成の基本情報側'),
@@ -109,7 +109,7 @@
       @('`facilityAssignments[*].enabledColumnCodes`', '対象施設の `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` が施設提供されている `column_code`', '`user_facility_column_settings`', '候補集合の各 `column_code` を現在値として管理し、リクエストに含み、かつ対応機能が `enabledFeatureCodes` に含まれるコードを `is_enabled=true`、それ以外を `false` として作成・更新する')
     ) },
     @{ Type = 'Heading2'; Text = '施設グループ設定データの保存方針' },
-    @{ Type = 'Paragraph'; Text = '`facility_group_list` と `facility_group_edit` は施設グループ管理 API 群を実行するための権限である。現行の `権限管理単位一覧` には external 専用 `feature_code` / `column_code` が含まれないため、本書で扱う施設グループ更新は `facility_collaboration_groups` と `facility_collaboration_group_facilities` の保守を対象とし、共有データ種別 UI に対応する他施設公開データ・カラム設定は予約仕様として別追補で定義する。' },
+    @{ Type = 'Paragraph'; Text = '`facility_group_list` と `facility_group_edit` は施設グループ管理 API 群を実行するための権限である。本書で扱う施設グループ更新は `facility_collaboration_groups` と `facility_collaboration_group_facilities` の保守を対象とする。公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は施設グループ構成とは別の公開設定であり、本 API 群では参照・更新しない。' },
     @{ Type = 'Table'; Headers = @('入力項目', '候補集合', '保存先', '保存ルール'); Rows = @(
       @('`groupName`', '1〜100文字のグループ名', '`facility_collaboration_groups.group_name`', '作成時に新規登録し、更新時は対象グループへ上書きする。更新成功時は `updated_at` を更新する'),
       @('`facilityIds`', '`facilities.deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` の施設ID。設立母体は問わない', '`facility_collaboration_group_facilities`', '重複を除外した現在値として総入れ替えする。作成時・更新時とも `actingFacilityId` を必ず含める')
@@ -154,7 +154,7 @@
       '`user_facility_feature_settings` は、`config_scope=FACILITY_USER` かつ対象施設の `facility_feature_settings.is_enabled=true` の機能のみ有効化できる。`normal_ship_request` / `lending_in_use_used` も対象に含める',
       '`lending_in_use_used` は `lending_checkout` の子機能として扱い、同じ担当施設で `lending_checkout` が ON でない場合はユーザー施設別設定でも ON にできない',
       '`user_facility_column_settings` は、対象施設の `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムのみ有効化できる',
-      '`facility_group_list` と `facility_group_edit` は `feature_catalogs` 上の `COMMON / FACILITY_USER` コードとして扱い、施設グループ API では external 専用コードを要求しない',
+      '`facility_group_list` と `facility_group_edit` は `feature_catalogs` 上の `COMMON / FACILITY_USER` コードとして扱い、施設グループ API では施設グループ管理権限だけを要求する',
       '`users.account_type` は表示分類・入力制御用途であり、認可判定には使わない'
     ) },
     @{ Type = 'Heading2'; Text = '初回設定案内の責務分担' },
@@ -925,7 +925,7 @@
         ProcessingLines = @(
           '`facilities` から `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` の施設を施設名昇順で取得し、施設グループ構成候補として返却する',
           '設立母体による候補制限は行わない',
-          '共有データ種別 UI に対応する external 向け `feature_code` / `column_code` は現行カタログ未採用のため、本レスポンスでは返却しない',
+          '共有データ種別 UI に対応する公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は本 API の対象外のため、本レスポンスでは返却しない。公開対象コードは認証認可 API の既存コードカタログを正本とする',
           '新規作成可否と編集可否は `facility_group_edit` の実効有無から導出する'
         )
         ResponseTitle = 'レスポンス（200：FacilityGroupContextResponse）'
@@ -1031,7 +1031,7 @@
           '対象 `facility_collaboration_groups` が `is_active=true` で存在することを確認する',
           '対象グループが `facility_collaboration_group_facilities` 上で `actingFacilityId` を含むことを確認し、含まない場合は 404 (`FACILITY_GROUP_NOT_FOUND`) を返却する',
           '所属施設は `facilities.deleted_at IS NULL` の施設だけを名称昇順で返却する',
-          '共有データ種別 UI は予約仕様のため、本 API では返却しない'
+          '共有データ種別 UI に対応する公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は本 API の対象外のため返却しない'
         )
         ResponseTitle = 'レスポンス（200：FacilityGroupDetailResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -1080,7 +1080,7 @@
           '`groupName` の必須・桁数を検証する',
           '`facility_collaboration_groups` へ `is_active=true` で新規行を作成する',
           '`facility_collaboration_group_facilities` へ `actingFacilityId` を初期所属施設として 1 行作成する',
-          '共有データ種別 UI に対応する設定値は本 API では初期化対象に含めない'
+          '共有データ種別 UI に対応する公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は本 API では初期化対象に含めない'
         )
         ResponseTitle = 'レスポンス（201：FacilityGroupDetailResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -1125,7 +1125,7 @@
           '`facilityIds` が空でないこと、重複しないこと、`actingFacilityId` を含むことを検証する',
           '指定施設がすべて `facilities.deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であることを検証する',
           '`facility_collaboration_group_facilities` を更新後の所属施設一覧で総入れ替えし、`facility_collaboration_groups.group_name` と `updated_at` を更新する',
-          '共有データ種別 UI に対応する設定値は本 API の対象外とし、external 専用コード追加時に別 API で拡張する'
+          '共有データ種別 UI に対応する公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は本 API の対象外とし、施設グループ名・所属施設の更新では変更しない'
         )
         ResponseTitle = 'レスポンス（200：FacilityGroupDetailResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -1226,7 +1226,7 @@
       '担当施設候補 API は、管理可能な直接担当施設だけを返し、協業グループ経由の他施設閲覧候補は返さない',
       '新規作成は利用可能な担当施設が存在しないと意味を持たないため、作成時だけは両権限を必須とする',
       '施設グループ API は作業対象施設を所属施設に含むグループだけを管理対象とし、設立母体を横断した施設構成を許可する',
-      '共有データ種別 UI に対応する他施設公開データ・カラム設定は、external 専用 `feature_code` / `column_code` 採用後の別追補とし、本 API では施設グループ構成だけを扱う',
+      '共有データ種別 UI に対応する他施設公開データ・カラム設定は、公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` として扱い、本 API では施設グループ構成だけを扱う',
       '平文パスワードやトークン文字列はユーザー管理 API の入出力へ含めず、認証基盤へ委譲する',
       '競合検知は `users.updated_at` を集約更新トークンとして扱う方式を採用し、HTTP 条件付き更新ヘッダーは採用しない'
     ) },
@@ -1270,13 +1270,11 @@
       '所属施設構成は `facility_collaboration_group_facilities` を現在値として保守し、無効化時は関連所属行を除去する',
       '契約無効化または論理削除された施設は、新規のグループ構成候補へ含めない'
     ) },
-    @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
+    @{ Type = 'Heading2'; Text = '運用上の留意点' },
     @{ Type = 'Bullets'; Items = @(
       '一覧件数増加時はページング上限、全文検索、非同期エクスポートを検討する',
       '基本情報タブと担当施設タブを同一モーダルに残す場合でも、バックエンド契約は分離したまま維持する',
-      '初回設定案内の再送履歴や配信状態を可視化する場合は、認証基盤または通知基盤側に監査テーブルを追加する',
-      '共有データ種別 UI を API 化する場合は、external 専用 `feature_code` / `column_code` カタログを別追補で確定し、`facility_external_view_settings` / `facility_external_column_settings` を連動させる',
-      '施設グループ単位で公開可否を変える要件が出た場合は、`facility_external_view_settings` / `facility_external_column_settings` へ `facility_collaboration_group_id` を追加する'
+      '初回設定案内の再送履歴や配信状態を可視化する場合は、認証基盤または通知基盤側に監査テーブルを追加する'
     ) }
   )
 }

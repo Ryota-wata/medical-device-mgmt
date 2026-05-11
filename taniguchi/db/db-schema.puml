@@ -1265,6 +1265,31 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of rfq_status_definitions
+    RFQステータスは購入管理タブの
+    モック状態名にアラインする。
+    初期データ:
+    見積依頼 / 見積依頼済 /
+    見積DB登録済 / 見積登録依頼中 /
+    発注用見積依頼済 / 発注見積登録済 /
+    発注済 / 納期確定 / 検収済 /
+    完了 / 申請を見送る。
+    完了と申請を見送るは終端状態。
+  end note
+
+  note right of rfq_status_transitions
+    少なくとも次の遷移を投入する。
+    見積依頼 -> 見積依頼済
+    見積依頼済 -> 見積DB登録済
+    見積DB登録済 -> 見積登録依頼中
+    見積登録依頼中 -> 発注用見積依頼済
+    発注用見積依頼済 -> 発注見積登録済
+    発注見積登録済 -> 発注済
+    発注済 -> 納期確定
+    納期確定 -> 検収済
+    検収済 -> 完了
+  end note
+
   entity "rfqs" as rfqs {
     * 見積依頼ID / rfq_id : bigint
     --
@@ -1281,6 +1306,16 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of rfqs
+    見積依頼グループの正本。
+    複数業者への相見積もりは
+    rfq_vendors 複数行で表現する。
+    同一 rfq_no の業者別RFQヘッダ複製は
+    DB/API正本として採用しない。
+    一覧APIでは rfq_vendors を
+    業者行へ展開して返す。
+  end note
 
   entity "rfq_applications" as rfq_applications {
     * 紐づけID / rfq_application_id : bigint
@@ -1304,12 +1339,26 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     メール / email : varchar
     電話 / phone : varchar
     回答期限 / due_on : date
+    依頼事項 / request_note : varchar
     依頼日時 / requested_at : timestamp
     依頼状態 / request_status : varchar
     主送信先フラグ / is_primary_vendor : boolean
+    依頼実行者ユーザーID / requested_by_user_id : bigint
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of rfq_vendors
+    見積依頼先業者の正本。
+    request_status:
+    DRAFT / SENT / REPLIED / CANCELED。
+    DRAFT の行のみ業者情報、
+    回答期限、依頼事項を更新可能。
+    個別依頼送信/SHIP一括依頼は
+    DRAFT 行だけを SENT に更新し、
+    requested_at と requested_by_user_id を
+    同一トランザクションで設定する。
+  end note
 
   entity "quotations" as quotations {
     * 見積ID / quotation_id : bigint
@@ -2006,11 +2055,18 @@ package "インポート・マッチング" {
     product_name:{parsed_asset_name},
     spec:{parsed_model_name} とし、
     parsed_manufacturer_name は含めない。
+    固定資産台帳取込では値引き文字列判定を行わず、
+    全行を PoC2 Model A で
+    ABC / D / OTHER を分類する。
+    本システムでは Model B は利用しない。
     ai_line_classification=ABC の行のみ
     ai_recommendation_required=true とし、
     suggested_* / suggested_score /
     suggested_similarity_source /
     suggested_source_asset_ledger_id を保存する。
+    ai_line_classification は AI推薦制御用の
+    内部値であり、画面表示列や
+    Excel出力列には含めない。
     類似度計算は PoC1 方針に従い、
     parsed_asset_name / parsed_manufacturer_name /
     parsed_model_name の全順列と
@@ -2438,6 +2494,110 @@ package "インポート・マッチング" {
   }
 }
 
+' 棚卸
+package "棚卸" {
+  entity "inventory_sessions" as inventory_sessions {
+    * 棚卸しセッションID / inventory_session_id : bigint
+    --
+    施設ID / facility_id : bigint
+    セッション状態 / session_status : varchar
+    棚卸し基準日 / inventory_base_date : date
+    対象件数 / total_item_count : int
+    確認済件数 / confirmed_item_count : int
+    要対応件数 / action_required_count : int
+    排他制御版 / lock_version : bigint
+    作成者ユーザーID / created_by_user_id : bigint
+    完了者ユーザーID / completed_by_user_id : bigint
+    完了日時 / completed_at : timestamp
+    取消者ユーザーID / canceled_by_user_id : bigint
+    取消日時 / canceled_at : timestamp
+    取消理由 / cancel_reason : varchar
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of inventory_sessions
+    施設単位の棚卸しプロセスヘッダ。
+    session_status:
+    IN_PROGRESS / COMPLETED / CANCELLED。
+    IN_PROGRESS は施設ごとに1件のみ。
+    同施設の権限ユーザーは
+    同じセッションを共有して作業する。
+    画面を開いたユーザー単位の
+    排他ロックは持たない。
+    `lock_version` は完了/取消時の
+    競合検知に使用し、
+    更新成功時に +1 する。
+  end note
+
+  entity "inventory_items" as inventory_items {
+    * 棚卸し明細ID / inventory_item_id : bigint
+    --
+    棚卸しセッションID / inventory_session_id : bigint
+    施設ID / facility_id : bigint
+    資産台帳ID / asset_ledger_id : bigint
+    行番号 / line_no : int
+    棚卸し状態 / inventory_status : varchar
+    確認結果区分 / result_type : varchar
+    現施設ロケーションID / source_facility_location_id : bigint
+    現設置棟 / source_building_name : varchar
+    現設置フロア / source_floor_name : varchar
+    現設置部門 / source_department_name : varchar
+    現設置部署 / source_section_name : varchar
+    現設置室名 / source_room_name : varchar
+    移動先施設ロケーションID / destination_facility_location_id : bigint
+    移動先室名 / destination_room_name : varchar
+    廃棄理由コード / disposal_reason_code : varchar
+    廃棄理由詳細 / disposal_reason_text : varchar
+    要対応コメント / action_required_comment : varchar
+    自動起票申請ID / generated_application_id : bigint
+    自動起票申請明細ID / generated_application_asset_id : bigint
+    最終更新者ユーザーID / updated_by_user_id : bigint
+    確定日時 / confirmed_at : timestamp
+    排他制御版 / lock_version : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of inventory_items
+    セッション開始時に対象資産ごとに
+    UNCHECKED 明細を生成する。
+    inventory_status:
+    UNCHECKED / CONFIRMED / ACTION_REQUIRED。
+    result_type:
+    STOCK_OK / LOCATION_CHANGE / DISPOSAL。
+    確認済の場合のみ result_type を持つ。
+    `lock_version` は明細1行単位の
+    楽観ロック用。
+    更新APIは expectedLockVersion と比較し、
+    不一致なら 409 を返して
+    他ユーザー更新を上書きしない。
+    UNIQUE(inventory_session_id, asset_ledger_id)
+    で同一セッション内の二重生成を禁止する。
+  end note
+
+  entity "inventory_item_status_histories" as inventory_item_status_histories {
+    * 棚卸し明細状態履歴ID / inventory_item_status_history_id : bigint
+    --
+    棚卸しセッションID / inventory_session_id : bigint
+    棚卸し明細ID / inventory_item_id : bigint
+    変更前状態 / from_inventory_status : varchar
+    変更後状態 / to_inventory_status : varchar
+    変更前結果区分 / from_result_type : varchar
+    変更後結果区分 / to_result_type : varchar
+    変更者ユーザーID / changed_by_user_id : bigint
+    変更日時 / changed_at : timestamp
+    変更理由 / change_reason : varchar
+  }
+
+  note right of inventory_item_status_histories
+    棚卸し明細の状態変更監査。
+    個別更新、一括更新、
+    完了時の自動起票紐づけ更新で
+    履歴を作成する。
+  end note
+}
+
 ' レイアウト補助
 ' パッケージ単位の大まかな段組み
 users -[hidden]right-> establishments
@@ -2611,6 +2771,19 @@ asset_ledgers ||--o{ application_documents : ""
 asset_survey_records ||--o{ application_documents : ""
 order_items ||--o{ asset_ledgers : ""
 
+' 棚卸
+facilities ||--o{ inventory_sessions : ""
+users ||--o{ inventory_sessions : "created_by/completed_by/canceled_by"
+inventory_sessions ||--o{ inventory_items : ""
+inventory_sessions ||--o{ inventory_item_status_histories : ""
+asset_ledgers ||--o{ inventory_items : ""
+facility_locations ||--o{ inventory_items : "source/destination"
+users ||--o{ inventory_items : "updated_by"
+inventory_items ||--o{ inventory_item_status_histories : ""
+users ||--o{ inventory_item_status_histories : "changed_by"
+applications ||--o{ inventory_items : "generated_application_id"
+application_assets ||--o{ inventory_items : "generated_application_asset_id"
+
 ' QRコード
 qr_print_jobs ||--o{ qr_codes : ""
 qr_print_jobs ||--o{ qr_print_job_items : ""
@@ -2677,6 +2850,7 @@ lending_transaction_status_definitions ||--o{ lending_transaction_status_transit
 edit_list_items ||--o{ rfq_applications : ""
 edit_list_items ||--o{ application_documents : ""
 vendors ||--o{ rfq_vendors : ""
+users ||--o{ rfq_vendors : "requested_by"
 vendors ||--o{ quotations : ""
 vendors ||--o{ orders : ""
 vendors ||--o{ borrowing_application_details : ""

@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_QR発行・ラベル印刷.docx'
   ScreenLabel = 'QR発行・ラベル印刷'
-  CoverDateText = '2026年4月23日'
-  RevisionDateText = '2026/4/23'
+  CoverDateText = '2026年5月6日'
+  RevisionDateText = '2026/5/6'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -14,12 +14,14 @@
       '印刷ジョブ開始受付、取得、結果反映 I/F',
       '印刷開始受付時の `qr_codes` / `qr_print_job_items` 確定タイミング',
       '冪等キーによる二重送信対策と、ローカル印刷失敗時の終端方法',
-      'サーバーAPIとローカル印刷モジュールの責務分担'
+      'サーバーAPIとローカル印刷モジュールの責務分担',
+      'QRシンボルへ埋め込む遷移用URLと、読み取り後の認証・認可判定の責務境界'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = 'QR発行・ラベル印刷は、資産管理用QRコードの新規発行・再発行を行う `/qr-issue` と、印刷プレビュー・印刷実行を行う `/qr-print` から構成される。' },
     @{ Type = 'Paragraph'; Text = 'QR識別子は施設単位で一意に管理し、新規発行時の採番確定と `qr_codes` / `qr_print_job_items` への保存は印刷開始受付時にサーバー側で行う。物理印刷の成功/失敗は、その後に端末上のローカル印刷モジュールが実行した結果を結果反映 API で更新する。' },
     @{ Type = 'Paragraph'; Text = 'テプラプリンタへの直接接続は端末上のローカル印刷モジュールが担い、サーバーAPIはプリンタ制御を行わない。' },
+    @{ Type = 'Paragraph'; Text = 'QRシンボルへ埋め込む遷移用URLは資産詳細画面へ到達するための識別情報であり、QRコードの物理的所持または読み取り成功は資産詳細の閲覧権限を意味しない。読み取り後のログイン状態確認、対象資産解決、閲覧権限判定は資産一覧・資産詳細 API 側の責務とする。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('新規発行', 'プレフィックス・2桁番号・5桁開始番号から新しい QR識別子を連番採番する発行方式'),
@@ -40,6 +42,7 @@
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、QR発行画面で入力された条件を検証してプレビュー情報を返却し、印刷画面で印刷ジョブ開始受付・状態参照・印刷結果反映を行うための I/F を提供する。' },
     @{ Type = 'Paragraph'; Text = 'テンプレート定義本体はテプラクリエイターで事前作成したファイルをフロントエンド資材として保持する。プリンタ候補はフロントエンドが端末のテプラ連携/ローカル印刷モジュールから取得する。本API群ではテンプレート一覧取得API、プリンタ候補取得API、DBマスタ配信は行わない。' },
+    @{ Type = 'Paragraph'; Text = '本API群は、印刷するQRシンボルに埋め込む `qrContentUrl` を生成・返却するが、そのURLへアクセスしたユーザーの認証誘導、資産詳細閲覧可否、他施設資産の閲覧制御は扱わない。これらは `/asset-detail/assets/by-qr` を含む資産一覧・資産詳細 API 側で判定する。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Numbered'; Items = @(
       '新規発行/再発行条件の入力後、印刷画面へ遷移する前にプレビュー生成 API を呼び出す',
@@ -68,12 +71,15 @@
       'プレビューの QRシンボル自体は base64 PNG 文字列または同等の表示用データを返却する',
       '印刷用の最終確定データは印刷ジョブ開始受付 API のレスポンスを正本とし、クライアントはそれをローカル印刷モジュールへ渡す',
       'QRシンボルへ埋め込む遷移用URLは、アプリ設定ベースURLに `facilityId` と `qr_identifier` の両方をクエリとして付与した形式を用いる',
-      '`qrContentUrl` は `facilityId` / `qr_identifier` / アプリ設定ベースURLから決定的に生成する派生値であり、DBへは保存しない'
+      'QRシンボルへ埋め込む遷移用URLには、認証トークン、ユーザーID、ロール、権限情報などユーザー認証・認可に関わる情報を含めない',
+      '`qrContentUrl` は `facilityId` / `qr_identifier` / アプリ設定ベースURLから決定的に生成する派生値であり、DBへは保存しない',
+      'QRコードの読み取り後に未ログインユーザーをログイン画面へ誘導し、ログイン後に元URLの資産解決処理を継続する制御は資産一覧・資産詳細 API およびフロントエンドの責務とする'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールの取得結果として扱うため、本APIの権限制御対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '`qr_issue` はQR発行・ラベル印刷APIの実行可否を制御する権限であり、QRコード読み取り後の資産詳細閲覧権限ではない。資産詳細表示可否は、遷移先の資産一覧・資産詳細 API がログインユーザーの対象施設・対象資産に対する閲覧権限で判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('QRコード発行', '`qr_issue`', 'プレビュー生成、印刷ジョブ開始受付、印刷ジョブ取得、印刷結果反映')
     ) },
@@ -250,7 +256,7 @@
           '新規発行時は `(facility_id, qr_identifier)` と `(facility_id, code_prefix, code_branch, code_serial)` の重複を再検証したうえで `qr_codes` を作成し、`issue_type=''NEW''`、`label_template_key`、`free_entry_text`、`issued_by_user_id`、`issued_at`、`print_status=''PRINTING''`、`last_print_job_id` を設定する',
           '再発行時は既存 `qr_codes` を再取得し、存在確認と `existingQrCodeId` / `qrIdentifier` の整合を検証したうえで、`issue_type=''REISSUE''`、`label_template_key`、`free_entry_text`、`issued_by_user_id`、`issued_at`、`print_status=''PRINTING''`、`last_print_job_id` を更新する',
           '`qr_print_job_items` を全件 `WAITING` で作成し、各明細に確定した `qr_code_id`、`print_order` を紐づける',
-          '印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する。`qrContentUrl` は保存値ではなく、確定した `facilityId` / `qr_identifier` から生成する'
+          '印刷用の最終確定データとして、各明細の `qrIdentifier` と QRシンボル用遷移URLをレスポンスへ返却する。`qrContentUrl` は保存値ではなく、確定した `facilityId` / `qr_identifier` から生成し、認証トークン、ユーザーID、ロール、権限情報は含めない'
         )
         ExtraTables = @(
           @{
@@ -515,7 +521,9 @@
       '再発行では新しい QR識別子を採番せず、既存 `qr_identifier` を再利用する',
       '同一ジョブへの同一結果再送は冪等に受理し、矛盾する結果更新は 409 とする',
       'ジョブ終端ステータスは、全件 `PRINTED` の場合のみ `COMPLETED`、全件 `CANCELED` の場合のみ `CANCELED`、`PRINTED` を1件以上含む混在時は `PARTIAL_FAILED`、それ以外で `FAILED` を含む場合は `FAILED` とする',
-      '`qrContentUrl` は派生値として都度生成し、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` には保存しない。URL には `facilityId` と `qr_identifier` を用い、生成ルール変更時は本機能の影響調査対象とする'
+      '`qrContentUrl` は派生値として都度生成し、`qr_codes` / `qr_print_jobs` / `qr_print_job_items` には保存しない。URL には `facilityId` と `qr_identifier` を用い、生成ルール変更時は本機能の影響調査対象とする',
+      '`qrContentUrl` には認証トークン、ユーザーID、ロール、権限情報を含めない。QRコードの物理的所持または読み取り成功は資産詳細の閲覧権限を意味しない',
+      'QRコード読み取り後の未ログイン誘導、ログイン後の元URL復帰、`facilityId` と `qr_identifier` による対象資産解決、閲覧権限不足時の非表示、未発行・論理削除済み・未紐付・施設不一致などのエラー制御は資産一覧・資産詳細 API 側の責務とする'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
@@ -538,6 +546,7 @@
     @{ Type = 'Bullets'; Items = @(
       'テンプレート一覧はフロントエンド資材として保持するアプリ内固定定義から表示し、プリンタ候補はフロントエンドが端末上のテプラ連携/ローカル印刷モジュールから取得する。サーバー側にテンプレート一覧取得API、プリンタ候補取得API、DBマスタは設けない',
       'QRコードの採番規則や `qr_identifier` 形式を変更する場合は、`qr_codes` の複合ユニーク制約と API の再発行ロジックを同時に見直す',
+      'QRコード読み取り後の資産詳細遷移、ログイン誘導、閲覧権限判定の仕様を変更する場合は、資産一覧・資産詳細 API 設計書と整合確認する',
       'ローカル印刷モジュールとの連携仕様を変更する場合は、`POST /qr-print/jobs` の印刷用確定レスポンスと `POST /qr-print/jobs/{qrPrintJobId}/result` の request/response を同時に更新する',
       '結果未反映のまま長時間 `IN_PROGRESS` に留まるジョブは、通信断または端末異常の可能性があるため、運用上の監視対象として扱う'
     ) }

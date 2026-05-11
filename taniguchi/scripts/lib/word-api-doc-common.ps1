@@ -26,6 +26,7 @@ $script:wdTrailingTab = 0
 $script:wdAutoFitFixed = 0
 $script:wdAutoFitContent = 1
 $script:wdAutoFitWindow = 2
+$script:wdPageBreak = 7
 $script:tableHeaderShade = -738132173
 
 function Release-ComObjectSafely {
@@ -102,11 +103,75 @@ function Normalize-DocxSquareBullets {
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($numberingPath, $numberingText, $utf8NoBom)
 
+    # Embedded font subsets can render as a blank page in the artifact renderer.
+    # Keep the Meiryo UI style references, but strip the embedded font payloads.
+    $fontsDir = Join-Path $extractDir 'word\\fonts'
+    if (Test-Path $fontsDir) {
+      Remove-Item -LiteralPath $fontsDir -Recurse -Force
+    }
+
+    $fontRelPath = Join-Path $extractDir 'word\\_rels\\fontTable.xml.rels'
+    if (Test-Path $fontRelPath) {
+      Remove-Item -LiteralPath $fontRelPath -Force
+    }
+
+    $settingsPath = Join-Path $extractDir 'word\\settings.xml'
+    if (Test-Path $settingsPath) {
+      $settingsText = [System.IO.File]::ReadAllText($settingsPath)
+      $settingsText = [System.Text.RegularExpressions.Regex]::Replace($settingsText, '<w:embedTrueTypeFonts\s*/>', '')
+      $settingsText = [System.Text.RegularExpressions.Regex]::Replace($settingsText, '<w:saveSubsetFonts\s*/>', '')
+      [System.IO.File]::WriteAllText($settingsPath, $settingsText, $utf8NoBom)
+    }
+
+    $fontTablePath = Join-Path $extractDir 'word\\fontTable.xml'
+    if (Test-Path $fontTablePath) {
+      $fontTableText = [System.IO.File]::ReadAllText($fontTablePath)
+      $fontTableText = [System.Text.RegularExpressions.Regex]::Replace($fontTableText, '<w:embed(?:Regular|Bold|Italic|BoldItalic)\b[^>]*/>', '')
+      [System.IO.File]::WriteAllText($fontTablePath, $fontTableText, $utf8NoBom)
+    }
+
     $repackedPath = Join-Path $tempRoot 'repacked.zip'
     if (Test-Path $repackedPath) {
       Remove-Item -LiteralPath $repackedPath -Force
     }
-    [System.IO.Compression.ZipFile]::CreateFromDirectory($extractDir, $repackedPath)
+    $archiveItems = @()
+    foreach ($relativePath in @('_rels', 'customXml', 'docProps', 'word', '[Content_Types].xml')) {
+      $archiveItem = Join-Path $extractDir $relativePath
+      if (Test-Path -LiteralPath $archiveItem) {
+        $archiveItems += $archiveItem
+      }
+    }
+    $zipArchive = [System.IO.Compression.ZipFile]::Open($repackedPath, [System.IO.Compression.ZipArchiveMode]::Create)
+    try {
+      $basePath = (Resolve-Path $extractDir).Path
+      foreach ($archiveItem in $archiveItems) {
+        $item = Get-Item -LiteralPath $archiveItem
+        $files = if ($item.PSIsContainer) {
+          Get-ChildItem -LiteralPath $item.FullName -Recurse -File
+        }
+        else {
+          @($item)
+        }
+
+        foreach ($file in $files) {
+          $entryName = $file.FullName.Substring($basePath.Length + 1).Replace('\', '/')
+          $entry = $zipArchive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::NoCompression)
+          $entry.LastWriteTime = [DateTimeOffset]::Now
+          $sourceStream = [System.IO.File]::OpenRead($file.FullName)
+          $entryStream = $entry.Open()
+          try {
+            $sourceStream.CopyTo($entryStream)
+          }
+          finally {
+            $entryStream.Dispose()
+            $sourceStream.Dispose()
+          }
+        }
+      }
+    }
+    finally {
+      $zipArchive.Dispose()
+    }
 
     Remove-Item -LiteralPath $DocxPath -Force
     Move-Item -LiteralPath $repackedPath -Destination $DocxPath
@@ -433,6 +498,8 @@ function Add-Table {
   $table.Style = $script:wdStyleTableGrid
   $table.AllowAutoFit = $true
   $table.Range.Style = $script:wdStyleNormal
+  $table.Rows.AllowBreakAcrossPages = $true
+  $table.Rows.Item(1).HeadingFormat = $true
   try {
     $table.AutoFitBehavior($script:wdAutoFitContent) | Out-Null
     $table.AutoFitBehavior($script:wdAutoFitWindow) | Out-Null
@@ -541,6 +608,9 @@ function Add-ApiEndpointBlock {
 
   if ($Spec.ContainsKey('ExtraTables')) {
     foreach ($table in $Spec.ExtraTables) {
+      if ($table.ContainsKey('PageBreakBefore') -and [bool]$table.PageBreakBefore) {
+        $Selection.InsertBreak($script:wdPageBreak) | Out-Null
+      }
       Add-Paragraph -Selection $Selection -Text $table.Title -Style $script:wdStyleHeading4
       Add-Table -Document $Document -Selection $Selection -Headers $table.Headers -Rows $table.Rows
     }
@@ -723,6 +793,14 @@ function New-ApiWordDocumentFromSpec {
     $word.Visible = $false
     $word.DisplayAlerts = 0
     $doc = $word.Documents.Open((Resolve-Path $outputPath).Path)
+    try {
+      $word.Options.EmbedTrueTypeFonts = $false
+      $word.Options.SaveSubsetFonts = $false
+      $doc.EmbedTrueTypeFonts = $false
+      $doc.SaveSubsetFonts = $false
+    }
+    catch {
+    }
 
     $replacementMap = @{
       '__SCREEN_LABEL__'  = $Spec.ScreenLabel
@@ -755,6 +833,12 @@ function New-ApiWordDocumentFromSpec {
     catch {
       Write-Warning ("Apply-ApiDocFormatting failed. Saved document without final formatting pass. {0}" -f $_.Exception.Message)
     }
+
+    if ($doc.TablesOfContents.Count -ge 1) {
+      $doc.TablesOfContents.Item(1).Update() | Out-Null
+      $doc.TablesOfContents.Item(1).Range.Fields.Unlink() | Out-Null
+    }
+    $doc.Save()
   }
   finally {
     if ($doc) {

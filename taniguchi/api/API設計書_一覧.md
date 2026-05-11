@@ -2,7 +2,7 @@
 
 最終更新: 2026-04-27
 
-ステータス件数: `Fix 13件` / `作成済み 0件` / `未着手 12件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
+ステータス件数: `Fix 13件` / `作成済み 1件` / `未着手 11件` / `不要 4件` / `旧版 1件` / `参考/作業用 1件`
 
 本一覧は、[機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) の画面一覧をもとに、API設計書の作成対象を機能単位で管理するための台帳である。  
 既存ファイルの羅列ではなく、「どの機能を、どの設計書で管理するか」を正として扱う。
@@ -42,7 +42,7 @@
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
 | 8 | 資産一覧・資産詳細 | `Fix/API設計書_資産一覧・資産詳細.docx` | 15. `/asset-search-result`、16. `/asset-detail` | `Fix` | 管理部署編集の独立 `feature_code`、bookmark 永続化、管理部署正本、QR直接遷移解決、履歴API、classificationMode、cursor pagination を反映済み。申請API本体は資産申請起票で扱う |
-| 9 | 棚卸し | 未作成 | 38. `/inventory` | `未着手` | 独立機能として別途定義予定 |
+| 9 | 棚卸し | `Fix/API設計書_棚卸し.docx` | 38. `/inventory` | `Fix` | サーバー側の `inventory_sessions` / `inventory_items` を正本とする施設内共有型へ更新。`inventory_field` / `inventory_office`、明細1行単位の即時保存、明細単位の楽観ロック、一括更新時の全体ロールバック、完了時の移動/廃棄申請自動起票、完了/取消と明細更新の交差防止を反映済み。再レビューで重大課題なし |
 
 ## マスタ管理
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
@@ -58,9 +58,9 @@
 | No | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
 | --- | --- | --- | --- | --- | --- |
 | 16 | 資産申請起票 | `Fix/API設計書_資産申請起票.docx` | 15. `/asset-search-result`（新規購入/増設購入/更新購入/移動/廃棄申請モーダル） | `Fix` | 資産一覧起点の新規購入・増設購入・更新購入・移動・廃棄申請の起票APIを扱う。選択資産引継ぎ、入力検証、添付、`applications` / `application_assets` / 申請種別別詳細 / `application_documents` / 初期ステータス履歴を同一トランザクションで作成する。更新購入後の廃棄/移動/継続利用、関連移動/廃棄申請の追跡、廃棄理由コード未指定時の `OTHER` 保存方針を反映済み |
-| 17 | 編集リスト・リモデル申請 | 未作成 | 22. `/remodel-application` | `未着手` | 編集リスト本体と申請明細操作を1本で扱う |
+| 17 | 編集リスト・リモデル申請 | 未作成 | 22. `/remodel-application` | `未着手` | 編集リスト本体、申請明細操作、購入管理タブからの購入申請取り込み、編集リスト起点のRFQグループ作成を1本で扱う |
 | 18 | タスク管理トップ | 個別ファイルなし | 23. `/quotation-data-box` | `不要` | 既定サブタブへのリダイレクトのみ。業務APIは各サブタブ側の設計書で管理する |
-| 19 | 購入管理・リモデル管理・RFQ | 未作成 | 51. `/quotation-data-box/purchase-management`、55. `/quotation-data-box/remodel-management`、60. `/quotation-data-box/rfq-process` | `未着手` | 見積依頼グループの進行管理とRFQ作成を1本で扱う。通常購入管理 / SHIP依頼機能は `normal_ship_request` として独立判定し、`config_scope='FACILITY_USER'` で施設提供設定とユーザー施設別設定の両方を必須とする |
+| 19 | 購入管理・リモデル管理・RFQ | 未作成 | 51. `/quotation-data-box/purchase-management`、55. `/quotation-data-box/remodel-management`、60. `/quotation-data-box/rfq-process` | `未着手` | 起票後の購入申請一覧、購入/リモデル管理タブのRFQ進行、見積依頼先保存、個別/一括SHIP依頼を扱う。編集リスト作成・購入申請取り込み・RFQグループ作成はNo.17で扱う。RFQ正本は `rfqs` 1件 + `rfq_vendors` 複数件とし、APIレスポンスで業者行へ展開する。通常購入管理 / SHIP依頼機能は `normal_ship_request` として独立判定し、`config_scope='FACILITY_USER'` で施設提供設定とユーザー施設別設定の両方を必須とする |
 | 20 | 見積登録・見積管理 | 未作成 | 24. `/quotation-data-box/ocr-confirm`、29. `/quotation-management`、44. `/quotation-data-box/category-registration`、47. `/quotation-data-box/item-ai-matching`、50. `/quotation-data-box/price-allocation`、54. `/quotation-data-box/registration-confirm`、59. `/quotation-processing` | `未着手` | Phase1は見積原本参照・手動入力前提でOCR非依存のAPI設計とし、OCR連携は利用SaaS決定後のPhase2で再検討する |
 | 21 | 発注・検収・資産仮登録 | 未作成 | 25. `/quotation-data-box/order-registration`、26. `/quotation-data-box/inspection-registration`、27. `/quotation-data-box/asset-provisional-registration` | `未着手` | 見積登録後の発注・検収・仮登録工程を1本で扱う |
 

@@ -17,7 +17,7 @@ $customValueRows = @(
 $accessibleFacilityRows = @(
   @('facilityId', 'int64', '✓', '対象施設ID')
   @('facilityName', 'string', '✓', '施設名')
-  @('accessMode', 'string', '✓', '現行仕様では `OWN` 固定')
+  @('accessMode', 'string', '✓', '`OWN` / `EXTERNAL_READONLY`。`EXTERNAL_READONLY` は協業グループ経由の他施設閲覧')
   @('isCurrentTarget', 'boolean', '✓', '現在選択中施設かどうか')
 )
 
@@ -215,8 +215,8 @@ $assetDetailRows = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_資産一覧・資産詳細.docx'
   ScreenLabel = '資産一覧・資産詳細'
-  CoverDateText = '2026年4月27日'
-  RevisionDateText = '2026/4/27'
+  CoverDateText = '2026年5月6日'
+  RevisionDateText = '2026/5/6'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -225,12 +225,12 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       '資産一覧の検索・絞り込み・ページング・カード/リスト表示・管理部署インライン編集・エクスポート I/F',
       '表示カラム現在設定と named bookmark の取得・保存・適用 I/F',
-      '資産詳細の参照、QRコード直接遷移解決、履歴表示、および作業対象施設原本に限定した編集・写真・ドキュメント管理 I/F',
+      '資産詳細の参照、QRコード直接遷移解決、履歴表示、協業グループ経由の他施設閲覧、および作業対象施設原本に限定した編集・写真・ドキュメント管理 I/F',
       '資産一覧・カルテ閲覧、価格カラム表示、申請起票導線、点検管理登録、保守契約登録、原本編集の権限境界'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '資産一覧は `asset_ledgers` を正本として、施設・ロケーション・分類・識別情報・調達情報・ライフサイクル情報を一覧表示し、表示カラム設定に応じて SHIP資産マスタ任意カラムも可変表示する画面である。作業対象施設かつ編集権限がある場合は、一覧上から管理部署をインライン編集できる。' },
-    @{ Type = 'Paragraph'; Text = '資産詳細は、一覧から選択した資産の詳細情報、QR情報、写真、ドキュメントを表示する画面であり、作業対象施設の資産に対してのみ原本編集、写真追加/削除、ドキュメント追加/削除を許可する。他施設データ閲覧は最新の `権限管理単位一覧` に external 専用コードがないため、本 API の対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '資産詳細は、一覧から選択した資産の詳細情報、QR情報、写真、ドキュメントを表示する画面であり、作業対象施設の資産に対してのみ原本編集、写真追加/削除、ドキュメント追加/削除を許可する。協業グループ経由で他施設資産を参照できる場合は閲覧専用とし、編集系操作および申請系導線は許可しない。' },
     @{ Type = 'Paragraph'; Text = '資産一覧から起動する新規購入/更新/増設/移動/廃棄などの申請処理は、本 API 群ではなく各業務機能の API 設計書で扱う。本書では一覧側から必要となる表示可否と選択対象データの返却までを対象とする。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
@@ -239,9 +239,9 @@ $assetDetailRows = @(
       @('named bookmark', '`user_column_setting_presets` / `user_column_setting_preset_items` に保持する列表示プリセット。現在設定とは別管理とする'),
       @('SHIP資産マスタ任意カラム', '`ship_asset_master_custom_columns` / `ship_asset_master_custom_values` で管理する可変項目'),
       @('作業対象施設閲覧', 'Bearer トークン上の作業対象施設を対象に `original_list_view` を使って資産を参照するモード'),
-      @('他施設閲覧', '最新の `権限管理単位一覧` に external 専用 `feature_code` / `column_code` がないため、本 API では扱わない別スコープ。本 API は資産一覧・カルテの `original_list_view` を対象とする'),
+      @('他施設閲覧', '作業対象施設とは異なる施設の資産を、`original_list_view`、協業グループ、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` に基づいて閲覧専用で参照するモード。施設切替候補には含めない'),
       @('原本編集', '資産詳細から `asset_ledgers` 正本と、資産に紐づく写真・ドキュメントを更新する処理。`original_list_edit` を前提とする'),
-      @('価格カラム', '取得価格などの価格系項目。現行仕様では `original_price_column` で制御する')
+      @('価格カラム', '取得価格などの価格系項目。閲覧者側の `original_price_column` で制御し、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` も判定する')
     ) },
     @{ Type = 'Heading2'; Text = '対象画面' },
     @{ Type = 'Table'; Headers = @('画面名', '画面URL', '利用目的'); Rows = @(
@@ -252,7 +252,7 @@ $assetDetailRows = @(
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'API の位置づけ' },
     @{ Type = 'Paragraph'; Text = '本 API 群は、資産一覧画面のコンテキスト取得、表示カラム現在設定保存、named bookmark 一覧/保存/削除/適用、資産一覧取得、一覧管理部署編集候補の取得と一括保存、一覧結果エクスポート、QRコード直接遷移解決、資産詳細取得、資産履歴取得、資産原本更新、写真追加/削除、ドキュメント一覧取得・追加・削除を提供する。' },
-    @{ Type = 'Paragraph'; Text = '本 API は最新の `権限管理単位一覧` における資産一覧・カルテ系の権限管理単位を対象とする。`targetFacilityId` に作業対象施設と異なる値は受け付けない。他施設データ閲覧は external 専用 `feature_code` / `column_code` が追加された場合に別設計で扱う。' },
+    @{ Type = 'Paragraph'; Text = '本 API は最新の `権限管理単位一覧` における資産一覧・カルテ系の権限管理単位を対象とする。`targetFacilityId` は通常は作業対象施設を指す。他施設閲覧は施設切替候補には展開せず、QR直接遷移や参照系APIで `targetFacilityId` / `facilityId` が作業対象施設と異なる場合に、協業グループと公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を再判定して `EXTERNAL_READONLY` として扱う。' },
     @{ Type = 'Paragraph'; Text = '資産詳細の履歴表示は、申請履歴、点検結果、貸出/返却履歴を共通イベント形式へ正規化して返却し、詳細本体 API とは分離したタブ読込用 I/F として扱う。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Numbered'; Items = @(
@@ -282,8 +282,8 @@ $assetDetailRows = @(
       @('user_column_setting_presets / user_column_setting_preset_items', 'READ / CREATE / UPDATE / DELETE', 'named bookmark の一覧、保存、削除、適用'),
       @('user_facility_assignments / facility_feature_settings / user_facility_feature_settings', 'READ', '画面・業務APIの feature_code 判定'),
       @('facility_column_settings / user_facility_column_settings', 'READ', '自施設閲覧時の column_code 判定'),
-      @('facility_collaboration_groups / facility_collaboration_group_facilities', '対象外', '他施設データ閲覧画面の権限スコープで扱うため、本 API では参照しない'),
-      @('facility_external_view_settings / facility_external_column_settings', '対象外', '他施設データ閲覧画面の権限スコープで扱うため、本 API では参照しない'),
+      @('facility_collaboration_groups / facility_collaboration_group_facilities', 'READ', '協業グループ経由の他施設資産閲覧可否判定'),
+      @('facility_external_view_settings / facility_external_column_settings', 'READ', '公開元施設が他施設へ公開するデータ種別・カラムの判定'),
       @('qr_codes', 'READ', '資産詳細画面の QR 情報表示'),
       @('applications / application_assets / application_status_histories', 'READ', '資産関連申請と状態履歴の表示'),
       @('inspection_tasks / inspection_results', 'READ', '資産関連点検結果の履歴表示'),
@@ -301,32 +301,34 @@ $assetDetailRows = @(
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-04-20T00:00:00Z`）',
       '一覧系 API は `cursor` / `pageSize` による cursor pagination を採用し、既定 `pageSize=100`、上限 `500` とする',
-      '対象施設は Bearer トークン上の作業対象施設を正本とし、`targetFacilityId` は作業対象施設と同一値のみ許可する',
+      '対象施設は Bearer トークン上の作業対象施設を基本とする。参照系APIで `targetFacilityId` または `facilityId` が作業対象施設と異なる場合は、他施設閲覧条件を満たす場合のみ `EXTERNAL_READONLY` として許可する',
       '一覧/詳細レスポンスは、許可されていないデータ項目やカラムを含めない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '画面導線・ボタン表示の `feature_code` と、表示カラムの `column_code` を処理単位で判定する。資産データ参照は Bearer トークン上の作業対象施設に限定し、一覧・詳細・履歴・QR解決・ドキュメント参照は `original_list_view` を正本とする。申請起票ボタンは `original_application`、点検管理登録ボタンは `inspection_management`、保守契約登録ボタンは `maintenance_contract`、管理部署編集ボタンは `management_department_edit` を個別に判定し、資産詳細の原本編集系は `original_list_edit`、価格項目は `original_price_column` を追加判定する。' },
+    @{ Type = 'Paragraph'; Text = '画面導線・ボタン表示の `feature_code` と、表示カラムの `column_code` を処理単位で判定する。作業対象施設の資産データ参照は `original_list_view` を正本とする。他施設資産参照は、作業対象施設側で `original_list_view` が有効であることに加え、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たす場合のみ閲覧専用で許可する。申請起票ボタンは `original_application`、点検管理登録ボタンは `inspection_management`、保守契約登録ボタンは `maintenance_contract`、管理部署編集ボタンは `management_department_edit` を個別に判定し、資産詳細の原本編集系は `original_list_edit`、価格項目は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を追加判定する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要コード', '説明'); Rows = @(
-      @('一覧画面表示 / 詳細画面表示 / 一覧取得 / 詳細取得 / 履歴取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '作業対象施設の資産原本データを返却する'),
+      @('一覧画面表示 / 詳細画面表示 / 一覧取得 / 詳細取得 / 履歴取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '作業対象施設の資産原本データは `original_list_view`、他施設閲覧は同じ閲覧者権限に加えて協業グループ・公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` で判定する'),
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請系導線を表示する'),
       @('点検管理登録ボタン表示', '`inspection_management`', '一覧起点の点検管理登録導線を表示する'),
       @('保守契約登録ボタン表示', '`maintenance_contract`', '一覧起点の保守契約登録導線を表示する'),
       @('一覧管理部署編集', '`original_list_view` + `management_department_edit`', '作業対象施設原本の管理部署列だけを一覧上で更新する'),
       @('資産詳細の原本編集 / 写真操作 / ドキュメント追加削除', '`original_list_view` + `original_list_edit`', '作業対象施設原本に限定した詳細編集系処理'),
-      @('価格項目の返却 / 更新', '`original_price_column`', '取得価格などの価格系項目を返却または更新する')
+      @('価格項目の返却 / 更新', '`original_price_column`', '返却は閲覧者側の権限に従い、他施設閲覧では公開元施設の公開カラム設定も判定する。更新は `OWN` かつ `original_price_column` 有効時のみ許可する')
     ) },
-    @{ Type = 'Heading2'; Text = '作業対象施設閲覧ルール' },
+    @{ Type = 'Heading2'; Text = '施設閲覧ルール' },
     @{ Type = 'Bullets'; Items = @(
       '`targetFacilityId` 未指定時は Bearer トークン上の作業対象施設を参照対象とする',
-      '`targetFacilityId` が指定されても、作業対象施設と同一値のみ受け付ける。異なる施設を指定した場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
-      '価格項目は `original_price_column` が有効な場合だけ返却し、権限がない場合はレスポンスへ含めない',
-      '一覧管理部署編集は `management_department_edit` が有効な場合だけ許可する',
-      '原本編集、写真、ドキュメント更新は `original_list_edit` が有効な場合だけ許可する',
-      '申請起票、点検管理登録、保守契約登録の表示可否はそれぞれ `original_application`、`inspection_management`、`maintenance_contract` を個別に判定する',
-      '他施設閲覧の協業グループ・公開設定テーブルは全データ閲覧画面の権限スコープで扱い、本 API では参照しない',
-      '対象施設が `facilities.deleted_at IS NOT NULL` の場合は 404 とする'
+      '`targetFacilityId` または `facilityId` が作業対象施設と同一の場合は `OWN` として扱い、作業対象施設に対する `original_list_view` を判定する',
+      '`targetFacilityId` または `facilityId` が作業対象施設と異なる場合は `EXTERNAL_READONLY` 候補として扱い、作業対象施設に対する `original_list_view` が実効有効、作業対象施設・対象施設の双方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''`、双方が active な同一 `facility_collaboration_groups` に所属、公開元施設の `facility_external_view_settings(provider_facility_id=対象施設, feature_code=''original_list_view'', is_enabled=true)` が存在することを確認する',
+      '他施設閲覧は施設切替候補へ直接展開しない。`accessibleFacilities` には作業対象施設を `OWN` として返し、QR直接遷移や明示的な `targetFacilityId` 指定時だけ `EXTERNAL_READONLY` を解決する',
+      '他施設閲覧時は資産閲覧のみ許可し、申請起票、点検管理登録、保守契約登録、管理部署編集、原本編集、写真追加/削除、ドキュメント追加/削除は不可とする',
+      '価格項目は `OWN` では `original_price_column` が有効な場合、`EXTERNAL_READONLY` では作業対象施設に対する `original_price_column` と公開元施設の `facility_external_column_settings(provider_facility_id=対象施設, column_code=''original_price_column'', is_enabled=true)` が有効な場合だけ返却する',
+      '一覧管理部署編集は `OWN` かつ `management_department_edit` が有効な場合だけ許可する',
+      '原本編集、写真、ドキュメント更新は `OWN` かつ `original_list_edit` が有効な場合だけ許可する',
+      '申請起票、点検管理登録、保守契約登録の表示可否は `OWN` の場合のみ、それぞれ `original_application`、`inspection_management`、`maintenance_contract` を個別に判定する',
+      '対象施設が `facilities.deleted_at IS NOT NULL` の場合は 404 とする。施設が存在しても他施設閲覧条件を満たさない場合は 403 とする'
     ) },
     @{ Type = 'Heading2'; Text = '表示カラム設定ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -352,6 +354,7 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       'QRラベルの遷移用URLは `facilityId` と `qr_identifier` をクエリとして保持し、画面起動時にその値を `GET /asset-detail/assets/by-qr` の `facilityId` / `qrIdentifier` へ引き渡して資産詳細の対象を解決する',
       'QR識別子の一意性は施設単位のため、直接遷移解決では `facilityId` の指定を必須とする',
+      '`facilityId` が作業対象施設と異なる場合でも、協業グループ経由の他施設閲覧条件を満たす場合は `EXTERNAL_READONLY` として資産詳細対象を解決する',
       'QRコードNo. の変更・再発行は QR発行・ラベル印刷 API の責務とし、資産詳細更新 API では扱わない'
     ) },
     @{ Type = 'Heading2'; Text = '競合制御と更新方針' },
@@ -408,31 +411,31 @@ $assetDetailRows = @(
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
         ParametersRows = @(
-          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と同一値のみ許可する')
+          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する')
         )
         PermissionLines = @(
-          '認可条件: `original_list_view` が有効であること'
+          '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと'
         )
         ProcessingLines = @(
           'Bearer トークンから作業対象施設を解決し、`targetFacilityId` 未指定時はそれを参照対象にする',
-          '`targetFacilityId` が指定され、作業対象施設と異なる場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
-          '閲覧可能施設一覧として、現行仕様では作業対象施設のみを返却する',
+          '`targetFacilityId` が作業対象施設と異なる場合は他施設閲覧条件を判定し、成立する場合は `targetFacility.accessMode=EXTERNAL_READONLY`、成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
+          '施設切替候補としての `accessibleFacilities` は作業対象施設のみを返却する。他施設は `targetFacilityId` 指定時に `targetFacility` として返却する',
           '参照対象施設の `asset_ledgers` を基準に、管理部署、設置部署、Category、大分類、中分類、品目の候補を取得する',
-          '`management_department_edit` が有効な場合は、対象施設の active `facility_locations` から `department_id IS NOT NULL` の行を `department_id` 単位で重複排除した管理部署編集候補を解決し、`displayLabel` を付与して `displayLabel ASC, department_id ASC` で返す。権限がない場合は空配列を返す',
+          '`accessMode=OWN` かつ `management_department_edit` が有効な場合は、対象施設の active `facility_locations` から `department_id IS NOT NULL` の行を `department_id` 単位で重複排除した管理部署編集候補を解決し、`displayLabel` を付与して `displayLabel ASC, department_id ASC` で返す。権限がない場合または `EXTERNAL_READONLY` の場合は空配列を返す',
           '既存資産で `management_department_id` が未解決の行は `managementDepartmentId=null` のまま返し、編集モードでは未選択状態として再選択させる',
           '`ship_asset_master_custom_columns.is_active=true` の任意カラム定義を `sort_order ASC` で取得する',
           '`user_column_settings(screen_id=asset_search)` を読み込み、現在列設定へマージする。設定がない列は API 既定値を採用する',
           '`user_column_setting_presets(screen_id=asset_search)` を読み込み、named bookmark 一覧と既定 bookmark を解決する',
           '現在列設定が未保存で既定 bookmark が存在する場合は、その列構成を current settings として返却する',
-          '価格カラムのロック状態は `original_price_column` の実効有無を元に算出する',
-          '`original_application`、`inspection_management`、`maintenance_contract`、`management_department_edit`、`original_list_edit`、`original_price_column`、`original_list_view` の実効有無から、申請起票導線、点検管理登録、保守契約登録、一覧管理部署編集、詳細編集モード遷移、価格表示、履歴タブ表示の可否フラグを返却する'
+          '価格カラムのロック状態は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` の実効有無を元に算出する',
+          '`accessMode=OWN` の場合は `original_application`、`inspection_management`、`maintenance_contract`、`management_department_edit`、`original_list_edit`、`original_price_column`、`original_list_view` の実効有無から、申請起票導線、点検管理登録、保守契約登録、一覧管理部署編集、詳細編集モード遷移、価格表示、履歴タブ表示の可否フラグを返却する。`EXTERNAL_READONLY` の場合は `original_list_view` と `original_price_column` の実効有無、および公開元施設設定を判定し、閲覧系以外の操作可否を `false` とする'
         )
         ResponseTitle = 'レスポンス（200：AssetSearchContextResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
         ResponseRows = @(
           @('actingFacility', 'FacilityContext', '✓', '作業対象施設'),
           @('targetFacility', 'FacilityContext', '✓', '現在参照中の施設'),
-          @('accessibleFacilities', 'AccessibleFacility[]', '✓', '参照可能な施設一覧。現行仕様では作業対象施設のみ'),
+          @('accessibleFacilities', 'AccessibleFacility[]', '✓', '施設切替候補として参照可能な施設一覧。作業対象施設を `OWN` として返却する'),
           @('filterOptions', 'AssetSearchFilterOptions', '✓', '検索候補'),
         @('managementDepartmentEditOptions', 'ManagementDepartmentOption[]', '✓', '一覧の管理部署編集候補。`management_department_edit` が有効な場合のみ返却する'),
           @('columnDefinitions', 'AssetSearchColumnDefinition[]', '✓', '列定義と現在設定'),
@@ -447,7 +450,7 @@ $assetDetailRows = @(
             Rows = @(
               @('facilityId', 'int64', '✓', '施設ID'),
               @('facilityName', 'string', '✓', '施設名'),
-          @('accessMode', 'string', '✓', '現行仕様では `OWN` 固定')
+          @('accessMode', 'string', '✓', '`OWN` / `EXTERNAL_READONLY`')
             )
           },
           @{
@@ -503,10 +506,10 @@ $assetDetailRows = @(
         )
         StatusRows = @(
           @('200', '取得成功', 'AssetSearchContextResponse'),
-          @('400', '`targetFacilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '画面閲覧権限なし', 'ErrorResponse'),
-          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
+          @('403', '画面閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
+          @('404', '作業対象施設または指定された参照対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -715,14 +718,14 @@ $assetDetailRows = @(
       },
       @{
         Title = '資産一覧取得（/asset-search-result/assets）'
-        Overview = '作業対象施設の資産一覧を検索・絞り込み取得する。権限で許可されていない項目は返却しない。'
+        Overview = '参照対象施設の資産一覧を検索・絞り込み取得する。権限で許可されていない項目は返却しない。他施設閲覧時は閲覧専用で返却する。'
         Method = 'GET'
         Path = '/asset-search-result/assets'
         Auth = '要（Bearer）'
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
         ParametersRows = @(
-          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と同一値のみ許可する'),
+          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する'),
           @('managementDepartmentName', 'query', 'string', '-', '管理部署の部分一致条件'),
           @('installedDepartmentName', 'query', 'string', '-', '設置部署名の部分一致条件'),
           @('categoryId', 'query', 'int64', '-', 'Category ID'),
@@ -734,16 +737,17 @@ $assetDetailRows = @(
           @('pageSize', 'query', 'int32', '-', '取得件数。`1-500`、既定値 `100`')
         )
         PermissionLines = @(
-          '認可条件: `original_list_view` が有効であること',
-          '価格項目を返す場合は、さらに `original_price_column` が有効であること'
+          '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと',
+          '他施設閲覧時は協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たすこと',
+          '価格項目を返す場合、閲覧者側で `original_price_column` が有効であること。`EXTERNAL_READONLY` では加えて公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` が有効であること'
         )
         ProcessingLines = @(
-          '参照対象施設を解決し、`targetFacilityId` が指定され、作業対象施設と異なる場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
+          '参照対象施設を解決し、`targetFacilityId` が作業対象施設と異なる場合は他施設閲覧条件を判定する。成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
           '`asset_ledgers` を基準に `facilities`、`qr_codes`、`ship_asset_masters`、`ship_asset_master_custom_values`、代表写真用 `asset_photos` を結合する',
-          '`managementDepartmentName` は `asset_ledgers.management_department_name` をそのまま候補・検索・返却に使用し、自施設かつ一覧編集可能な文脈では `managementDepartmentId` も併せて返す。legacy 未解決行は `managementDepartmentId=null` として返却する',
+          '`managementDepartmentName` は `asset_ledgers.management_department_name` をそのまま候補・検索・返却に使用し、`accessMode=OWN` かつ一覧編集可能な文脈では `managementDepartmentId` も併せて返す。legacy 未解決行は `managementDepartmentId=null` として返却する',
           '検索条件は AND 条件で適用し、キーワードは識別情報・名称・設置場所・任意カラム値を対象に部分一致で評価する',
           '`cursor` 指定時は `asset_ledger_id ASC` の続き位置から取得し、`pageSize` 件を上限に返却する',
-          '取得価格を含む価格系項目は、権限を満たさない場合レスポンスから完全に除外する',
+          '取得価格を含む価格系項目は、閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の公開カラム設定を満たさない場合レスポンスから完全に除外する',
           '任意カラム定義は有効列のみを返し、各資産行には `customValues` を `columnKey` 単位で格納する'
         )
         ResponseTitle = 'レスポンス（200：AssetSearchResultResponse）'
@@ -764,7 +768,7 @@ $assetDetailRows = @(
             Rows = @(
               @('facilityId', 'int64', '✓', '施設ID'),
               @('facilityName', 'string', '✓', '施設名'),
-          @('accessMode', 'string', '✓', '現行仕様では `OWN` 固定')
+          @('accessMode', 'string', '✓', '`OWN` / `EXTERNAL_READONLY`')
             )
           },
           @{
@@ -785,10 +789,10 @@ $assetDetailRows = @(
         )
         StatusRows = @(
           @('200', '取得成功', 'AssetSearchResultResponse'),
-          @('400', '検索条件不正、または `targetFacilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対するデータ閲覧権限なし', 'ErrorResponse'),
-          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
+          @('403', '対象施設に対するデータ閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
+          @('404', '作業対象施設または指定された参照対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -853,7 +857,7 @@ $assetDetailRows = @(
         ParametersTitle = 'リクエストパラメータ'
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
         ParametersRows = @(
-          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と同一値のみ許可する'),
+          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する'),
           @('managementDepartmentName', 'query', 'string', '-', '管理部署の部分一致条件'),
           @('installedDepartmentName', 'query', 'string', '-', '設置部署名の部分一致条件'),
           @('categoryId', 'query', 'int64', '-', 'Category ID'),
@@ -867,7 +871,7 @@ $assetDetailRows = @(
           '認可条件は一覧取得 API と同一とする'
         )
         ProcessingLines = @(
-          '一覧取得 API と同一の認可、`targetFacilityId` 検証、絞り込み、価格マスクルールを適用する',
+          '一覧取得 API と同一の認可、参照対象施設解決、他施設閲覧条件、絞り込み、価格マスクルールを適用する',
           '出力対象列は `user_column_settings` 上の表示対象列と、現在ターゲット施設で許可された列の積集合とする',
           'ファイル名は `assets_{facilityId}_{yyyyMMddHHmmss}.{ext}` を基本とする'
         )
@@ -878,16 +882,16 @@ $assetDetailRows = @(
         )
         StatusRows = @(
           @('200', '出力成功', 'ファイルバイナリ'),
-          @('400', '不正な出力形式、検索条件不正、または `targetFacilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', '不正な出力形式、または検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対するデータ閲覧権限なし', 'ErrorResponse'),
-          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
+          @('403', '対象施設に対するデータ閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
+          @('404', '作業対象施設または指定された参照対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
         Title = 'QRコード直接遷移解決（/asset-detail/assets/by-qr）'
-        Overview = '施設IDとQR識別子から資産詳細画面の対象資産を解決する。'
+        Overview = '施設IDとQR識別子から資産詳細画面の対象資産を解決する。他施設QRの場合は他施設閲覧条件を満たす場合のみ閲覧専用で解決する。'
         Method = 'GET'
         Path = '/asset-detail/assets/by-qr'
         Auth = '要（Bearer）'
@@ -898,13 +902,14 @@ $assetDetailRows = @(
           @('qrIdentifier', 'query', 'string', '✓', 'QR識別子。画面遷移URL上の `qr_identifier` を受けて API では camelCase で扱う')
         )
         PermissionLines = @(
-          '認可条件: `original_list_view` が有効であること'
+          '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと',
+          '`facilityId` が作業対象施設と異なる場合は、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たすこと'
         )
         ProcessingLines = @(
-          'Bearer トークン上の作業対象施設を解決し、`facilityId` がそれと異なる場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
+          'Bearer トークン上の作業対象施設を解決し、`facilityId` が作業対象施設と同一の場合は `OWN`、異なる場合は `EXTERNAL_READONLY` 候補として他施設閲覧条件を判定する。成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
           '`qr_codes` から `(facility_id, qr_identifier)` で対象 QR を解決する',
-          '対象 QR に `asset_ledger_id` が紐づき、対応する `asset_ledgers` が作業対象施設の資産として存在することを確認する',
-          '解決した資産について資産詳細取得 API と同じ `original_list_view` 判定を適用する',
+          '対象 QR に `asset_ledger_id` が紐づき、対応する `asset_ledgers` が参照対象施設の資産として存在することを確認する',
+          '解決した資産について資産詳細取得 API と同じ参照可否判定を適用する',
           '成功時はフロントエンドが `assetId` と `targetFacility` を使って詳細画面遷移を構成できる情報を返却する'
         )
         ResponseTitle = 'レスポンス（200：AssetByQrResolveResponse）'
@@ -921,22 +926,22 @@ $assetDetailRows = @(
             Rows = @(
               @('facilityId', 'int64', '✓', '施設ID'),
               @('facilityName', 'string', '✓', '施設名'),
-          @('accessMode', 'string', '✓', '現行仕様では `OWN` 固定')
+          @('accessMode', 'string', '✓', '`OWN` / `EXTERNAL_READONLY`')
             )
           }
         )
         StatusRows = @(
           @('200', '解決成功', 'AssetByQrResolveResponse'),
-          @('400', '入力不正、または `facilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対するデータ閲覧権限なし', 'ErrorResponse'),
+          @('403', '対象施設に対するデータ閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
           @('404', 'QRコードまたは資産が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
       @{
         Title = '資産詳細取得（/asset-detail/assets/{assetId}）'
-        Overview = '指定した資産の詳細情報、写真一覧、QR情報、任意カラム値を取得する。'
+        Overview = '指定した資産の詳細情報、写真一覧、QR情報、任意カラム値を取得する。他施設閲覧時は閲覧専用で返却する。'
         Method = 'GET'
         Path = '/asset-detail/assets/{assetId}'
         Auth = '要（Bearer）'
@@ -944,26 +949,28 @@ $assetDetailRows = @(
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
         ParametersRows = @(
           @('assetId', 'path', 'int64', '✓', '資産台帳ID'),
-          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と同一値のみ許可する')
+          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する')
         )
         PermissionLines = @(
-          '認可条件: `original_list_view` が有効であること',
-          '編集可否フラグは `original_list_edit` の有効有無で決定する'
+          '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと',
+          '他施設閲覧時は協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たすこと',
+          '編集可否フラグは `accessMode=OWN` かつ `original_list_edit` が有効な場合のみ `true` とする'
         )
         ProcessingLines = @(
-          'Bearer トークン上の作業対象施設を解決し、`targetFacilityId` が指定され、作業対象施設と異なる場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
-          '対象 `assetId` の `asset_ledgers` を取得し、作業対象施設との整合を確認する',
+          'Bearer トークン上の作業対象施設を解決し、`targetFacilityId` が作業対象施設と同一の場合は `OWN`、異なる場合は `EXTERNAL_READONLY` 候補として他施設閲覧条件を判定する。成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
+          '対象 `assetId` の `asset_ledgers` を取得し、参照対象施設との整合を確認する',
           '`qr_codes` から現在有効な QR 情報を取得する',
           '`asset_photos` から表示対象写真一覧を取得し、代表写真フラグ順・登録順で返却する',
           '`ship_asset_master_custom_columns` / `ship_asset_master_custom_values` から任意カラムを取得する',
-          '価格項目は `original_price_column` が有効な場合だけ返却する',
-          '履歴タブ表示可否は `original_list_view` の有効有無から算出する'
+          '価格項目は、閲覧者側で `original_price_column` が有効であり、`EXTERNAL_READONLY` では加えて公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` が有効な場合だけ返却する',
+          '履歴タブ表示可否は閲覧者側の `original_list_view` の有効有無から算出し、`EXTERNAL_READONLY` では他施設閲覧条件も前提とする'
         )
         ExtraSections = @(
           @{
             Title = '直接遷移補足'
             Lines = @(
-              'QRコード遷移URLで詳細画面を開く場合は、事前に `GET /asset-detail/assets/by-qr` で `assetId` を解決してから本 API を呼び出す',
+              'QRコード遷移URLで詳細画面を開く場合は、事前に `GET /asset-detail/assets/by-qr` で `assetId` と `targetFacility.accessMode` を解決してから本 API を呼び出す',
+              'QR解決結果が `EXTERNAL_READONLY` の場合、本 API も同じ参照対象施設で呼び出し、編集系フラグはすべて `false` とする',
               '施設名と QR識別子は参照専用とし、変更は移動申請および QR発行・ラベル印刷 API の責務で行う'
             )
           }
@@ -1011,9 +1018,9 @@ $assetDetailRows = @(
         )
         StatusRows = @(
           @('200', '取得成功', 'AssetDetailResponse'),
-          @('400', '`targetFacilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対するデータ閲覧権限なし', 'ErrorResponse'),
+          @('403', '対象施設に対するデータ閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
           @('404', '資産が存在しない、または対象施設不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -1028,15 +1035,15 @@ $assetDetailRows = @(
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
         ParametersRows = @(
           @('assetId', 'path', 'int64', '✓', '資産台帳ID'),
-          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と同一値のみ許可する'),
+          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する'),
           @('cursor', 'query', 'string', '-', '既定ソート順の続き位置を表す continuation token'),
           @('pageSize', 'query', 'int32', '-', '取得件数。`1-500`、既定値 `100`')
         )
         PermissionLines = @(
-          '認可条件: `original_list_view` が有効であること'
+          '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと'
         )
         ProcessingLines = @(
-          'Bearer トークン上の作業対象施設を解決し、`targetFacilityId` が指定され、作業対象施設と異なる場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
+          'Bearer トークン上の作業対象施設を解決し、`targetFacilityId` が作業対象施設と異なる場合は資産詳細取得 API と同じ他施設閲覧条件を判定する。成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
           '対象資産の参照可否を資産詳細取得 API と同条件で判定する',
           '`application_assets`、`applications`、`application_status_histories` から資産関連申請の状態履歴を取得する',
           '`inspection_tasks`、`inspection_results` から資産関連点検結果を取得する',
@@ -1072,9 +1079,9 @@ $assetDetailRows = @(
         )
         StatusRows = @(
           @('200', '取得成功', 'AssetHistoryResponse'),
-          @('400', 'cursor / pageSize 不正、または `targetFacilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', 'cursor / pageSize 不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する履歴閲覧権限なし', 'ErrorResponse'),
+          @('403', '対象施設に対する履歴閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
           @('404', '資産が存在しない、または対象施設不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -1315,7 +1322,7 @@ $assetDetailRows = @(
       },
       @{
         Title = '資産ドキュメント一覧取得（/asset-detail/assets/{assetId}/documents）'
-        Overview = '指定資産に紐づく登録ドキュメント一覧を取得する。'
+        Overview = '指定資産に紐づく登録ドキュメント一覧を取得する。他施設閲覧時は閲覧専用で一覧のみ返却する。'
         Method = 'GET'
         Path = '/asset-detail/assets/{assetId}/documents'
         Auth = '要（Bearer）'
@@ -1323,13 +1330,13 @@ $assetDetailRows = @(
         ParametersHeaders = @('パラメータ', 'In', '型', '必須', '説明')
         ParametersRows = @(
           @('assetId', 'path', 'int64', '✓', '資産台帳ID'),
-          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と同一値のみ許可する')
+          @('targetFacilityId', 'query', 'int64', '-', '参照対象施設ID。未指定時は作業対象施設。作業対象施設と異なる場合は他施設閲覧条件を満たす場合のみ許可する')
         )
         PermissionLines = @(
           '認可条件は資産詳細取得 API と同一とする'
         )
         ProcessingLines = @(
-          'Bearer トークン上の作業対象施設を解決し、`targetFacilityId` が指定され、作業対象施設と異なる場合は 400 (`TARGET_FACILITY_NOT_SUPPORTED`) を返却する',
+          'Bearer トークン上の作業対象施設を解決し、`targetFacilityId` が作業対象施設と異なる場合は資産詳細取得 API と同じ他施設閲覧条件を判定する。成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
           '対象資産の参照可否を資産詳細取得 API と同条件で判定する',
           '`asset_documents` VIEW から `owner_type=ASSET_LEDGER` のドキュメント一覧を取得する',
           'ファイル実体URLはアプリケーションの認可済みダウンロードURLとして返却する'
@@ -1349,9 +1356,9 @@ $assetDetailRows = @(
         )
         StatusRows = @(
           @('200', '取得成功', 'AssetDocumentListResponse'),
-          @('400', '`targetFacilityId` に作業対象施設と異なる値が指定された', 'ErrorResponse'),
+          @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対するデータ閲覧権限なし', 'ErrorResponse'),
+          @('403', '対象施設に対するデータ閲覧権限なし、または他施設閲覧条件不成立', 'ErrorResponse'),
           @('404', '資産が存在しない、または対象施設不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -1442,9 +1449,9 @@ $assetDetailRows = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '権限管理単位別マトリクス' },
     @{ Type = 'Table'; Headers = @('項目', '必要コード', '備考'); Rows = @(
-      @('一覧取得 / 詳細取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '作業対象施設の資産原本データのみ対象'),
-      @('資産履歴表示', '`original_list_view`', '現行仕様では履歴表示可否も `original_list_view` に従う'),
-      @('価格項目表示', '`original_price_column`', '保存済み列設定に含まれていても権限がない場合は返却しない'),
+      @('一覧取得 / 詳細取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '自施設は作業対象施設の資産原本データを対象とする。他施設は同じ閲覧者権限、協業グループ、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たす場合のみ `EXTERNAL_READONLY` で返却する'),
+      @('資産履歴表示', '`original_list_view`', '資産詳細取得と同じ参照可否判定に従う'),
+      @('価格項目表示', '`original_price_column`', '保存済み列設定に含まれていても、閲覧者側の権限または公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は返却しない'),
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請導線のみ制御する'),
       @('点検管理登録ボタン表示', '`inspection_management`', '一覧起点の点検管理登録導線のみ制御する'),
       @('保守契約登録ボタン表示', '`maintenance_contract`', '一覧起点の保守契約登録導線のみ制御する'),
@@ -1455,7 +1462,7 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       '固定列のラベル変更やグループ変更は API 契約変更として扱う',
       '任意カラムは `ship_asset_master_custom_columns.is_active=true` の列だけを返却し、無効列の既存値は保持しても新規一覧候補へは出さない',
-      '価格列は保存済み列設定に含まれていても、権限要件を満たさない場合は `isLocked=true` とし、値も返却しない',
+      '価格列は保存済み列設定に含まれていても、閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は `isLocked=true` とし、値も返却しない',
       'named bookmark は current settings とは別に `user_column_setting_presets` / `user_column_setting_preset_items` で管理する',
       '既定 bookmark は active 行に対して `user_id + screen_id` 単位で 0..1 件とし、current settings 未保存時の初期表示へ適用する',
       'current settings は bookmark 保存/削除/既定切替では変化させず、bookmark 適用時だけ置換更新する'
@@ -1464,6 +1471,7 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       'QR情報は `qr_codes` 正本から参照し、資産詳細取得レスポンスへ含める',
       'QRラベル遷移URLは `facilityId` と `qr_identifier` を含め、詳細画面では画面側で resolve-by-qr API へ橋渡しして `assetId` を解決する',
+      'QRラベル遷移URL上の `facilityId` が作業対象施設と異なる場合でも、他施設閲覧条件を満たす場合は `EXTERNAL_READONLY` として資産詳細へ遷移できる',
       '資産写真・資産ドキュメントの正本更新先は `application_documents` とし、互換VIEWへ直接書き込まない',
       '写真代表判定は `ASSET_LEDGER` 写真を優先し、調査写真の投影ロジックは `asset_photos` VIEW の定義に従う',
       'ドキュメント一覧取得は `owner_type=ASSET_LEDGER` を対象とし、申請・RFQ・見積の添付は本 API の対象外'
@@ -1471,9 +1479,9 @@ $assetDetailRows = @(
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', '主な発生API', '説明'); Rows = @(
-      @('ASSET_VIEW_FORBIDDEN', '一覧/詳細参照系', '対象施設に対するデータ閲覧権限がない'),
-      @('TARGET_FACILITY_NOT_SUPPORTED', '一覧/詳細/履歴/エクスポート/QR解決系', '作業対象施設と異なる `targetFacilityId` または `facilityId` が指定された'),
-      @('ASSET_HISTORY_FORBIDDEN', '資産履歴取得', '作業対象施設に対する履歴閲覧権限がない'),
+      @('ASSET_VIEW_FORBIDDEN', '一覧/詳細/履歴/エクスポート/QR解決/ドキュメント一覧系', '対象施設に対するデータ閲覧権限がない、または他施設閲覧条件を満たさない'),
+      @('TARGET_FACILITY_NOT_SUPPORTED', '更新/写真/ドキュメント更新系', '作業対象施設以外の資産に対する変更操作が指定された'),
+      @('ASSET_HISTORY_FORBIDDEN', '資産履歴取得', '対象施設に対する履歴閲覧権限がない、または他施設閲覧条件を満たさない'),
       @('ASSET_NOT_FOUND', '一覧/詳細/更新/写真/ドキュメント系', '対象資産が存在しない、または対象施設不一致'),
       @('ASSET_QR_NOT_FOUND', 'QRコード直接遷移解決', '指定した施設IDとQR識別子に対応する資産が存在しない'),
       @('ASSET_CONFLICT', '一覧管理部署一括更新 / 資産原本更新', '取得後に `asset_ledgers.updated_at` が更新され競合した'),
