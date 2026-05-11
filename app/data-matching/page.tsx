@@ -923,6 +923,25 @@ export default function DataMatchingPage() {
   const thStyle: React.CSSProperties = { padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '12px', textAlign: 'left' };
   const tdStyle: React.CSSProperties = { padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '12px' };
 
+  // REQ-037: 上下リストのカラム幅を完全一致させるための共通定義
+  const matchColWidth = {
+    status: '90px',
+    qrCode: '100px',
+    assetNo: '130px',
+    meNo: '110px',
+    department: '110px',
+    section: '110px',
+    roomName: '90px',
+    category: '110px',
+    majorCategory: '110px',
+    middleCategory: '110px',
+    item: '130px',
+    manufacturer: '110px',
+    model: '130px',
+    quantity: '60px',
+    acquisitionDate: '110px',
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -1309,7 +1328,7 @@ export default function DataMatchingPage() {
 
           {/* 上パネル テーブル */}
           <div style={{ flex: 1, overflow: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: activeTab === 'pending' ? '1590px' : '1550px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f5f5f5', position: 'sticky', top: 0, zIndex: 1 }}>
                   {activeTab === 'pending' && (
@@ -1322,21 +1341,21 @@ export default function DataMatchingPage() {
                       />
                     </th>
                   )}
-                  <th style={thStyle}>突合状況</th>
-                  <th style={thStyle}>QRコード</th>
-                  <th style={thStyle}>資産番号</th>
-                  <th style={thStyle}>ME番号</th>
-                  <th style={thStyle}>共通部門</th>
-                  <th style={thStyle}>共通部署</th>
-                  <th style={thStyle}>室名</th>
-                  <th style={thStyle}>カテゴリ</th>
-                  <th style={thStyle}>大分類</th>
-                  <th style={thStyle}>中分類</th>
-                  <th style={thStyle}>品目</th>
-                  <th style={thStyle}>メーカー</th>
-                  <th style={thStyle}>型式</th>
-                  <th style={thStyle}>数量</th>
-                  <th style={thStyle}>購入年月日</th>
+                  <th style={{ ...thStyle, width: matchColWidth.status }}>突合状況</th>
+                  <th style={{ ...thStyle, width: matchColWidth.qrCode }}>QRコード</th>
+                  <th style={{ ...thStyle, width: matchColWidth.assetNo }}>資産番号</th>
+                  <th style={{ ...thStyle, width: matchColWidth.meNo }}>ME番号</th>
+                  <th style={{ ...thStyle, width: matchColWidth.department }}>共通部門</th>
+                  <th style={{ ...thStyle, width: matchColWidth.section }}>共通部署</th>
+                  <th style={{ ...thStyle, width: matchColWidth.roomName }}>室名</th>
+                  <th style={{ ...thStyle, width: matchColWidth.category }}>カテゴリ</th>
+                  <th style={{ ...thStyle, width: matchColWidth.majorCategory }}>大分類</th>
+                  <th style={{ ...thStyle, width: matchColWidth.middleCategory }}>中分類</th>
+                  <th style={{ ...thStyle, width: matchColWidth.item }}>品目</th>
+                  <th style={{ ...thStyle, width: matchColWidth.manufacturer }}>メーカー</th>
+                  <th style={{ ...thStyle, width: matchColWidth.model }}>型式</th>
+                  <th style={{ ...thStyle, width: matchColWidth.quantity }}>数量</th>
+                  <th style={{ ...thStyle, width: matchColWidth.acquisitionDate }}>購入年月日</th>
                 </tr>
               </thead>
               <tbody>
@@ -1505,7 +1524,7 @@ export default function DataMatchingPage() {
 
           {/* 下パネル テーブル */}
           <div style={{ flex: 1, overflow: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <table style={{ width: '1590px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <thead>
                 <tr style={{ backgroundColor: '#fff8e1', position: 'sticky', top: 0, zIndex: 1 }}>
                   <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>
@@ -1516,21 +1535,21 @@ export default function DataMatchingPage() {
                       style={{ cursor: 'pointer' }}
                     />
                   </th>
-                  <th style={thStyle}>突合状況</th>
-                  <th style={thStyle}>QRコード</th>
-                  <th style={thStyle}>資産番号</th>
-                  <th style={thStyle}>ME番号</th>
-                  <th style={thStyle}>共通部門</th>
-                  <th style={thStyle}>共通部署</th>
-                  <th style={thStyle}>室名</th>
-                  <th style={thStyle}>カテゴリ</th>
-                  <th style={thStyle}>大分類</th>
-                  <th style={thStyle}>中分類</th>
-                  <th style={thStyle}>品目</th>
-                  <th style={thStyle}>メーカー</th>
-                  <th style={thStyle}>型式</th>
-                  <th style={thStyle}>数量</th>
-                  <th style={thStyle}>購入年月日</th>
+                  <th style={{ ...thStyle, width: matchColWidth.status }}>突合状況</th>
+                  <th style={{ ...thStyle, width: matchColWidth.qrCode }}>QRコード</th>
+                  <th style={{ ...thStyle, width: matchColWidth.assetNo }}>資産番号</th>
+                  <th style={{ ...thStyle, width: matchColWidth.meNo }}>ME番号</th>
+                  <th style={{ ...thStyle, width: matchColWidth.department }}>共通部門</th>
+                  <th style={{ ...thStyle, width: matchColWidth.section }}>共通部署</th>
+                  <th style={{ ...thStyle, width: matchColWidth.roomName }}>室名</th>
+                  <th style={{ ...thStyle, width: matchColWidth.category }}>カテゴリ</th>
+                  <th style={{ ...thStyle, width: matchColWidth.majorCategory }}>大分類</th>
+                  <th style={{ ...thStyle, width: matchColWidth.middleCategory }}>中分類</th>
+                  <th style={{ ...thStyle, width: matchColWidth.item }}>品目</th>
+                  <th style={{ ...thStyle, width: matchColWidth.manufacturer }}>メーカー</th>
+                  <th style={{ ...thStyle, width: matchColWidth.model }}>型式</th>
+                  <th style={{ ...thStyle, width: matchColWidth.quantity }}>数量</th>
+                  <th style={{ ...thStyle, width: matchColWidth.acquisitionDate }}>購入年月日</th>
                 </tr>
               </thead>
               <tbody>
