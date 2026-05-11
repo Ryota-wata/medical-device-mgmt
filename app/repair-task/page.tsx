@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
 
 /** カラートークン（order-registration準拠） */
@@ -331,6 +332,7 @@ function RepairTaskContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestId = searchParams.get('id') || '3';
+  const user = useAuthStore((s) => s.user);
 
   const [request, setRequest] = useState<RepairRequest | null>(null);
   const [formData, setFormData] = useState<RepairRequest | null>(null);
@@ -397,10 +399,14 @@ function RepairTaskContent() {
   useEffect(() => {
     const data = getMockRequest(requestId);
     setRequest(data);
-    setFormData({ ...data });
+    // REQ-078: 受付部署はログインIDより自動登録
+    setFormData({
+      ...data,
+      receptionDepartment: data.receptionDepartment || user?.department || '',
+    });
     // 初期ステップを設定
     setCurrentStep(getInitialStep(data.status));
-  }, [requestId]);
+  }, [requestId, user?.department]);
 
   // currentStepをactiveStepとして使用
   const activeStep = currentStep;
@@ -704,10 +710,10 @@ function RepairTaskContent() {
           overflow: 'auto',
           padding: '16px',
         }}>
-        {/* STEP①: 修理申請の受付・見積依頼 */}
+        {/* STEP①: 見積依頼 */}
         <Section
           step={1}
-          title="STEP1. 修理申請の受付・見積依頼"
+          title="STEP1. 見積依頼"
           accentColor="#3498db"
           enabled={isStepEnabled(1)}
           completed={1 < activeStep}
@@ -846,43 +852,6 @@ function RepairTaskContent() {
             修理申請書を確認し院内修理の場合は院内修理対応とし、納期が確定次第、納期登録を実施してください。
           </div>
 
-          <FormRow style={{ justifyContent: 'flex-start', gap: '12px' }}>
-            <button
-              className="repair-btn"
-              onClick={() => handleStep1Submit('院内修理')}
-              disabled={!isStepEnabled(1) || isSubmitting}
-              style={{
-                padding: '10px 24px',
-                background: COLORS.primary,
-                color: COLORS.textOnColor,
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-              }}
-            >
-              院内修理対応
-            </button>
-            <button
-              className="repair-btn"
-              onClick={() => handleStep1Submit('院外修理')}
-              disabled={!isStepEnabled(1) || isSubmitting}
-              style={{
-                padding: '10px 24px',
-                background: COLORS.accent,
-                color: COLORS.textOnAccent,
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-              }}
-            >
-              院外修理（見積依頼へ）
-            </button>
-          </FormRow>
-
           {/* 商品引取日・修理品納品日（どのタイミングでも入力可能） */}
           <div style={{
             padding: '12px 16px',
@@ -911,9 +880,8 @@ function RepairTaskContent() {
             </FormRow>
           </div>
 
-          {/* 院外修理選択時：見積依頼セクション */}
-          {formData.repairCategory === '院外修理' && (
-            <>
+          {/* 見積依頼セクション */}
+          <>
               <div style={{
                 padding: '12px 16px',
                 background: '#e3f2fd',
@@ -1021,11 +989,10 @@ function RepairTaskContent() {
                     fontWeight: 'bold',
                   }}
                 >
-                  見積依頼完了 → STEP2へ
+                  見積依頼完了
                 </button>
               </FormRow>
             </>
-          )}
         </Section>
 
         {/* STEP②: 見積書登録・発注 */}
@@ -1196,7 +1163,7 @@ function RepairTaskContent() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                見積を登録
+                見積書の登録
               </button>
             </div>
           </div>
@@ -1264,7 +1231,7 @@ function RepairTaskContent() {
                 発注書プレビュー
               </button>
               <button className="repair-btn" onClick={handleStep2Order} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.accent, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                発注書を発行 → STEP3へ
+                発注書を発行
               </button>
             </FormRow>
           )}
@@ -1432,7 +1399,7 @@ function RepairTaskContent() {
               {/* アクションボタン */}
               <FormRow style={{ justifyContent: 'flex-end', gap: '12px' }}>
                 <button className="repair-btn" onClick={handleStep3InspectionComplete} disabled={!isStepEnabled(3) || isSubmitting} style={{ padding: '10px 24px', background: '#e67e22', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
-                  {isSubmitting ? '登録中...' : '検収登録 → STEP4へ'}
+                  {isSubmitting ? '登録中...' : '検収登録'}
                 </button>
               </FormRow>
             </>
