@@ -1517,6 +1517,7 @@ export default function DataMatchingPage() {
                     />
                   </th>
                   <th style={thStyle}>突合状況</th>
+                  <th style={thStyle}>QRコード</th>
                   <th style={thStyle}>資産番号</th>
                   {currentList?.type === 'me-ledger' && <th style={thStyle}>ME番号</th>}
                   <th style={thStyle}>共通部門</th>
@@ -1529,7 +1530,7 @@ export default function DataMatchingPage() {
                   <th style={thStyle}>メーカー</th>
                   <th style={thStyle}>型式</th>
                   <th style={thStyle}>数量</th>
-                  <th style={thStyle}>取得年月日</th>
+                  <th style={thStyle}>購入年月日</th>
                 </tr>
               </thead>
               <tbody>
@@ -1559,6 +1560,7 @@ export default function DataMatchingPage() {
                         <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
                       )}
                     </td>
+                    <td style={tdStyle}>{row.qrCode || '-'}</td>
                     <td style={tdStyle}>{row.assetNo}</td>
                     {currentList?.type === 'me-ledger' && <td style={tdStyle}>{row.assetNo || '-'}</td>}
                     <td style={tdStyle}>{row.department}</td>

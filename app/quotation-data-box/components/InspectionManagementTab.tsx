@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { useInspectionStore, useMasterStore } from '@/lib/stores';
+import { useInspectionStore } from '@/lib/stores';
 import { InspectionTask, LendingStatus } from '@/lib/types';
 import { InspectionMenuModal } from './InspectionMenuModal';
 import { InspectionRegistrationModal } from './InspectionRegistrationModal';
@@ -15,10 +15,6 @@ interface InspectionManagementTabProps {
 // ソート方向
 type SortDirection = 'asc' | 'desc' | null;
 type SortField = 'maker' | 'model' | 'lendingStatus' | 'nextInspectionDate' | 'status';
-
-// 定期ステータスフィルター選択肢
-const STATUS_FILTER_OPTIONS = ['全て', '点検超過', '点検月', '点検1ヶ月前'] as const;
-type StatusFilterOption = typeof STATUS_FILTER_OPTIONS[number];
 
 // 貸出ステータスの色
 const LENDING_STATUS_COLORS: Record<LendingStatus, string> = {
@@ -72,37 +68,13 @@ const LENDING_STATUS_ORDER: Record<LendingStatus, number> = {
 export function InspectionManagementTab({ isMobile = false }: InspectionManagementTabProps) {
   const router = useRouter();
   const { tasks, menus, skipInspection, setInspectionDate, getMenuById } = useInspectionStore();
-  const { assets } = useMasterStore();
 
-  // assetsからユニーク値抽出
-  const categories = useMemo(() => [...new Set(assets.map((a) => a.category))], [assets]);
-  const largeClasses = useMemo(() => [...new Set(assets.map((a) => a.largeClass))], [assets]);
-  const mediumClassesMap = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    assets.forEach((a) => {
-      if (!map[a.largeClass]) map[a.largeClass] = [];
-      if (!map[a.largeClass].includes(a.mediumClass)) map[a.largeClass].push(a.mediumClass);
-    });
-    return map;
-  }, [assets]);
-  const itemsMap = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    assets.forEach((a) => {
-      if (!map[a.mediumClass]) map[a.mediumClass] = [];
-      if (!map[a.mediumClass].includes(a.item)) map[a.mediumClass].push(a.item);
-    });
-    return map;
-  }, [assets]);
-
-  // フィルター状態
-  const [statusFilter, setStatusFilter] = useState<StatusFilterOption>('全て');
+  // フィルター状態（REQ-108: 4項目のみ）
   const [filters, setFilters] = useState({
-    category: '',
-    largeClass: '',
-    mediumClass: '',
-    item: '',
-    lendingStatus: '',
+    inspectionDate: '',      // 点検超過 / 点検月 / 点検１ヶ月前
+    inspectionType: '',      // 院内点検 / メーカー点検 / スポット点検
     inspectionGroupName: '',
+    lendingState: '',        // 貸出中 / 貸出中以外
   });
 
   // ソート状態
@@ -136,27 +108,38 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   }, [tasks]);
 
   // 貸出ステータスオプション
-  const lendingStatusOptions: LendingStatus[] = ['待機中', '貸出可', '貸出中', '使用中', '使用済', '返却済', '使用不可'];
 
-  // フィルタリング
+  // フィルタリング（REQ-108: 4項目）
   const filteredTasks = useMemo(() => {
+    // 点検日 表示値 → task.status データ値 マッピング
+    const inspectionDateMap: Record<string, string> = {
+      '点検超過': '点検月超過',
+      '点検月': '点検月',
+      '点検１ヶ月前': '点検1ヶ月前',
+    };
+    // 定期点検種別 表示値 → task.inspectionType データ値 マッピング
+    const inspectionTypeMap: Record<string, string> = {
+      '院内点検': '院内定期点検',
+      'メーカー点検': 'メーカー保守',
+      'スポット点検': '院内スポット点検',
+    };
     return tasks.filter((task) => {
-      // 定期ステータスフィルター（ラジオボタン）
-      if (statusFilter === '点検超過' && task.status !== '点検月超過') return false;
-      if (statusFilter === '点検月' && task.status !== '点検月') return false;
-      if (statusFilter === '点検1ヶ月前' && task.status !== '点検1ヶ月前') return false;
-
-      if (filters.category) {
-        // categoryはtaskに直接ないのでスキップ（将来対応）
+      if (filters.inspectionDate) {
+        const target = inspectionDateMap[filters.inspectionDate];
+        if (target && task.status !== target) return false;
       }
-      if (filters.largeClass && task.largeClass !== filters.largeClass) return false;
-      if (filters.mediumClass && task.mediumClass !== filters.mediumClass) return false;
-      if (filters.item && task.assetName !== filters.item) return false;
-      if (filters.lendingStatus && task.lendingStatus !== filters.lendingStatus) return false;
+      if (filters.inspectionType) {
+        const target = inspectionTypeMap[filters.inspectionType];
+        if (target && task.inspectionType !== target) return false;
+      }
       if (filters.inspectionGroupName && task.inspectionGroupName !== filters.inspectionGroupName) return false;
+      if (filters.lendingState) {
+        if (filters.lendingState === '貸出中' && task.lendingStatus !== '貸出中') return false;
+        if (filters.lendingState === '貸出中以外' && task.lendingStatus === '貸出中') return false;
+      }
       return true;
     });
-  }, [tasks, statusFilter, filters]);
+  }, [tasks, filters]);
 
   // ソート適用
   const sortedTasks = useMemo(() => {
@@ -205,8 +188,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   };
 
   const handleClearFilters = () => {
-    setStatusFilter('全て');
-    setFilters({ category: '', largeClass: '', mediumClass: '', item: '', lendingStatus: '', inspectionGroupName: '' });
+    setFilters({ inspectionDate: '', inspectionType: '', inspectionGroupName: '', lendingState: '' });
     setSortField(null);
     setSortDirection(null);
   };
@@ -309,59 +291,20 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
         <button onClick={handleExportSchedule} style={btnStyle('#3498db')}>点検予定表の出力</button>
       </div>
 
-      {/* フィルターエリア */}
+      {/* フィルターエリア（REQ-108: 4項目のみ） */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', background: '#f8f9fa' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'nowrap' }}>
-          {/* ステータスラジオボタン */}
-          <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
-            {STATUS_FILTER_OPTIONS.map((opt) => {
-              const isActive = statusFilter === opt;
-              let bg = '#f0f0f0';
-              let fg = '#333';
-              if (isActive) {
-                if (opt === '点検超過') { bg = '#e74c3c'; fg = 'white'; }
-                else if (opt === '点検月') { bg = '#f39c12'; fg = 'white'; }
-                else if (opt === '点検1ヶ月前') { bg = '#3498db'; fg = 'white'; }
-                else { bg = '#555'; fg = 'white'; }
-              }
-              return (
-                <label key={opt} style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '6px 14px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: isActive ? 700 : 500,
-                  background: bg,
-                  color: fg,
-                  cursor: 'pointer',
-                  border: isActive ? 'none' : '1px solid #ccc',
-                }}>
-                  <input type="radio" name="statusFilter" value={opt} checked={isActive} onChange={() => setStatusFilter(opt)} style={{ display: 'none' }} />
-                  {opt}
-                </label>
-              );
-            })}
-          </div>
-
-          {/* プルダウンフィルター */}
-          <FilterItem label="Category">
-            <SearchableSelect value={filters.category} onChange={(v) => handleFilterChange('category', v)} options={categories} placeholder="全て" />
+          <FilterItem label="点検日">
+            <SearchableSelect value={filters.inspectionDate} onChange={(v) => handleFilterChange('inspectionDate', v)} options={['点検超過', '点検月', '点検１ヶ月前']} placeholder="全て" />
           </FilterItem>
-          <FilterItem label="貸出ステータス">
-            <SearchableSelect value={filters.lendingStatus} onChange={(v) => handleFilterChange('lendingStatus', v)} options={lendingStatusOptions} placeholder="全て" />
+          <FilterItem label="定期点検種別">
+            <SearchableSelect value={filters.inspectionType} onChange={(v) => handleFilterChange('inspectionType', v)} options={['院内点検', 'メーカー点検', 'スポット点検']} placeholder="全て" />
           </FilterItem>
-          <FilterItem label="中分類">
-            <SearchableSelect value={filters.mediumClass} onChange={(v) => handleFilterChange('mediumClass', v)} options={filters.largeClass ? mediumClassesMap[filters.largeClass] || [] : []} placeholder="全て" />
-          </FilterItem>
-          <FilterItem label="品目">
-            <SearchableSelect value={filters.item} onChange={(v) => handleFilterChange('item', v)} options={filters.mediumClass ? itemsMap[filters.mediumClass] || [] : []} placeholder="全て" />
-          </FilterItem>
-          <FilterItem label="大分類">
-            <SearchableSelect value={filters.largeClass} onChange={(v) => handleFilterChange('largeClass', v)} options={largeClasses} placeholder="全て" />
-          </FilterItem>
-          <FilterItem label="保守・点検グループ名">
+          <FilterItem label="点検グループ名">
             <SearchableSelect value={filters.inspectionGroupName} onChange={(v) => handleFilterChange('inspectionGroupName', v)} options={inspectionGroupOptions} placeholder="全て" />
+          </FilterItem>
+          <FilterItem label="貸出状況">
+            <SearchableSelect value={filters.lendingState} onChange={(v) => handleFilterChange('lendingState', v)} options={['貸出中', '貸出中以外']} placeholder="全て" />
           </FilterItem>
         </div>
 

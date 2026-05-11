@@ -149,6 +149,25 @@ export function SearchableSelect({
           overflowY: 'auto',
           zIndex: 9999
         }}>
+          {/* REQ-002: 一番上に「すべて選択」を配置（クリックで絞込解除＝全体に戻す） */}
+          <div
+            onClick={() => handleOptionClick('')}
+            style={{
+              padding: isMobile ? '10px 12px' : '12px 14px',
+              cursor: 'pointer',
+              fontSize: isMobile ? '13px' : '14px',
+              color: '#1565c0',
+              fontWeight: 600,
+              background: value === '' ? '#e8f4f8' : 'white',
+              borderBottom: '1px solid #d0d0d0',
+              transition: 'background 0.15s',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={(e) => { if (value !== '') e.currentTarget.style.background = '#f8f9fa'; }}
+            onMouseLeave={(e) => { if (value !== '') e.currentTarget.style.background = 'white'; }}
+          >
+            すべて選択
+          </div>
           {filteredOptions.map((option, index) => (
             <div
               key={index}
