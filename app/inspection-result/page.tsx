@@ -433,7 +433,7 @@ function InspectionResultContent() {
                         borderBottom: '1px solid #eee',
                         textAlign: 'center',
                         fontWeight: 600,
-                        color: item.result === '合' ? '#27ae60' : item.result === '否' ? '#e74c3c' : '#333'
+                        color: item.result === '○' ? '#27ae60' : item.result === '×' ? '#e74c3c' : '#333'
                       }}>
                         {item.unit ? `${item.result} ${item.unit}` : item.result}
                       </td>
