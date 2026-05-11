@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
+import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
 /** カラートークン */
 const COLORS = {
@@ -275,6 +276,9 @@ function MaintenanceQuoteRegistrationContent() {
   const [quotationAmount, setQuotationAmount] = useState<string>('');
   // REQ-082: 見積登録時の会計区分
   const [quotationAccountDivision, setQuotationAccountDivision] = useState<string>('');
+  // REQ-069: 発注登録用見積を登録した場合の追加項目
+  const [isOrderRegisterModalOpen, setIsOrderRegisterModalOpen] = useState(false);
+  const [registeredOrderNo, setRegisteredOrderNo] = useState<string>('');
   const [annualAmount, setAnnualAmount] = useState<string>('');
 
   // STEP④ ドキュメント
@@ -1025,25 +1029,20 @@ function MaintenanceQuoteRegistrationContent() {
               </table>
             </div>
 
-            {/* 見積登録業者セクション */}
+            {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
             <div style={{
               marginBottom: '20px',
-              border: `2px solid ${COLORS.step2}`,
+              border: `2px solid #27ae60`,
               borderRadius: '8px',
               padding: '16px',
             }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 'bold',
-                color: COLORS.step2,
-                marginBottom: '12px',
-              }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#27ae60', marginBottom: '12px' }}>
                 見積登録業者
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {/* 業者名ドロップダウン */}
+                {/* 業者名 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '80px' }}>業者名</label>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>業者名</label>
                   <select
                     value={selectedQuotationVendorId}
                     onChange={(e) => setSelectedQuotationVendorId(e.target.value ? parseInt(e.target.value, 10) : '')}
@@ -1055,34 +1054,36 @@ function MaintenanceQuoteRegistrationContent() {
                       <option key={v.id} value={v.id}>{v.vendorName}</option>
                     ))}
                   </select>
-                  {selectedQuotationVendorId && (
-                    <span style={{ fontSize: '12px', color: COLORS.textMuted }}>
-                      担当: {filledVendors.find(v => v.id === selectedQuotationVendorId)?.personInCharge || '-'}
-                    </span>
-                  )}
                 </div>
-                {/* 見積金額 */}
+                {/* 担当者 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '80px' }}>見積金額</label>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>担当者</label>
+                  <span style={{ fontSize: '13px', color: COLORS.textMuted }}>
+                    {filledVendors.find(v => v.id === selectedQuotationVendorId)?.personInCharge || '-'}
+                  </span>
+                </div>
+                {/* 見積金額（税別） */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>見積金額（税別）</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '13px' }}>¥</span>
+                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
                     <input
                       type="text"
                       placeholder="0"
                       value={quotationAmount}
                       onChange={(e) => setQuotationAmount(e.target.value)}
                       disabled={!isStepEnabled(2)}
-                      style={{ ...inputStyle, width: '160px', textAlign: 'right' }}
+                      style={{ ...inputStyle, width: '160px' }}
                       className="tabular-nums"
                     />
                     <span style={{ fontSize: '12px', color: COLORS.textMuted }}>（税別）</span>
                   </div>
                 </div>
-                {/* 単年度金額 */}
+                {/* 単年度金額（保守契約固有・残置） */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '80px' }}>単年度金額</label>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>単年度金額</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '13px' }}>¥</span>
+                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
                     <input
                       type="text"
                       placeholder="0"
@@ -1092,22 +1093,21 @@ function MaintenanceQuoteRegistrationContent() {
                       style={{
                         ...inputStyle,
                         width: '160px',
-                        textAlign: 'right',
                         background: '#fffbeb',
-                        borderColor: COLORS.step2,
+                        borderColor: '#e0d6a8',
                       }}
                       className="tabular-nums"
                     />
                   </div>
                 </div>
-                {/* 会計区分 (REQ-082) */}
+                {/* 会計区分 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '80px' }}>会計区分</label>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>会計区分</label>
                   <select
                     value={quotationAccountDivision}
                     onChange={(e) => setQuotationAccountDivision(e.target.value)}
                     disabled={!isStepEnabled(2)}
-                    style={{ ...inputStyle, width: '200px' }}
+                    style={{ ...inputStyle, width: '250px' }}
                   >
                     <option value="">選択してください</option>
                     {ACCOUNT_DIVISIONS.map((d) => (
@@ -1115,7 +1115,7 @@ function MaintenanceQuoteRegistrationContent() {
                     ))}
                   </select>
                 </div>
-                {/* 見積書の登録 ボタン (REQ-082 統一文言) */}
+                {/* 見積書の登録 ボタン */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     className="maintenance-btn"
@@ -1123,8 +1123,8 @@ function MaintenanceQuoteRegistrationContent() {
                     disabled={!isStepEnabled(2) || !selectedQuotationFile}
                     style={{
                       padding: '8px 20px',
-                      background: selectedQuotationFile ? COLORS.step2 : COLORS.disabled,
-                      color: COLORS.textOnColor,
+                      background: selectedQuotationFile ? '#27ae60' : COLORS.disabled,
+                      color: 'white',
                       border: 'none',
                       borderRadius: '4px',
                       cursor: selectedQuotationFile ? 'pointer' : 'not-allowed',
@@ -1135,6 +1135,60 @@ function MaintenanceQuoteRegistrationContent() {
                     見積書の登録
                   </button>
                 </div>
+
+                {/* REQ-069: 発注登録用見積を登録した場合のみ表示 */}
+                {quotationPhase === '発注登録用見積' && registeredQuotations.some((q) => q.phase === '発注登録用見積') && (
+                  <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: `1px dashed ${COLORS.border}` }}>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1565c0', marginBottom: '8px' }}>
+                      発注登録用見積として登録済み — 発注登録に進めます
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>決済No,</label>
+                      <input
+                        type="text"
+                        value={formData.settlementNo}
+                        onChange={(e) => updateFormData({ settlementNo: e.target.value })}
+                        placeholder="院内の任意の決済番号"
+                        disabled={!isStepEnabled(2)}
+                        style={{ ...inputStyle, width: '250px' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                      <button
+                        onClick={() => alert('発注書プレビュー（mock）')}
+                        disabled={!isStepEnabled(2)}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#34495e',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed',
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        発注書プレビュー
+                      </button>
+                      <button
+                        onClick={() => setIsOrderRegisterModalOpen(true)}
+                        disabled={!isStepEnabled(2) || !!registeredOrderNo}
+                        style={{
+                          padding: '8px 16px',
+                          background: registeredOrderNo ? COLORS.disabled : '#e67e22',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: !registeredOrderNo && isStepEnabled(2) ? 'pointer' : 'not-allowed',
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        {registeredOrderNo ? `発注登録済 (${registeredOrderNo})` : '発注登録'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1909,6 +1963,18 @@ function MaintenanceQuoteRegistrationContent() {
           ))}
         </div>
       </div>
+
+      {/* REQ-069: 発注登録モーダル（保守契約） */}
+      <OrderRegistrationModal
+        isOpen={isOrderRegisterModalOpen}
+        onClose={() => setIsOrderRegisterModalOpen(false)}
+        orderNoPrefix="PO-MAINT"
+        onConfirm={(orderNo, deliveryMethod) => {
+          setRegisteredOrderNo(orderNo);
+          setIsOrderRegisterModalOpen(false);
+          alert(`発注登録が完了しました。\n発注No,: ${orderNo}\n送付方法: ${deliveryMethod}`);
+        }}
+      />
     </div>
   );
 }
