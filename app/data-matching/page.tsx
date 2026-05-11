@@ -1519,7 +1519,7 @@ export default function DataMatchingPage() {
                   <th style={thStyle}>突合状況</th>
                   <th style={thStyle}>QRコード</th>
                   <th style={thStyle}>資産番号</th>
-                  {currentList?.type === 'me-ledger' && <th style={thStyle}>ME番号</th>}
+                  <th style={thStyle}>ME番号</th>
                   <th style={thStyle}>共通部門</th>
                   <th style={thStyle}>共通部署</th>
                   <th style={thStyle}>室名</th>
@@ -1562,7 +1562,7 @@ export default function DataMatchingPage() {
                     </td>
                     <td style={tdStyle}>{row.qrCode || '-'}</td>
                     <td style={tdStyle}>{row.assetNo}</td>
-                    {currentList?.type === 'me-ledger' && <td style={tdStyle}>{row.assetNo || '-'}</td>}
+                    <td style={tdStyle}>{row.meNo || '-'}</td>
                     <td style={tdStyle}>{row.department}</td>
                     <td style={tdStyle}>{row.section}</td>
                     <td style={tdStyle}>{row.roomName || '-'}</td>
