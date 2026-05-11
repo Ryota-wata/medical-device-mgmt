@@ -423,6 +423,14 @@ function RepairTaskContent() {
 
   const isStepEnabled = (step: number) => step <= activeStep;
 
+  // REQ-084: 廃棄申請モーダルに渡す対象資産 (qrLabel をキーに資産マスタから検索)
+  // ※ 早期 return より前で useMemo を呼ぶ必要があるため、ここに配置
+  const disposalTargetAssets = useMemo(() => {
+    if (!request?.qrLabel) return [];
+    const match = assets.find((a) => a.qrCode === request.qrLabel);
+    return match ? [match] : [];
+  }, [assets, request?.qrLabel]);
+
   if (!request || !formData) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
@@ -536,13 +544,6 @@ function RepairTaskContent() {
       setIsDisposalModalOpen(true);
     }
   };
-
-  // REQ-084: 廃棄申請モーダルに渡す対象資産 (qrLabel をキーに資産マスタから検索)
-  const disposalTargetAssets = useMemo(() => {
-    if (!request?.qrLabel) return [];
-    const match = assets.find((a) => a.qrCode === request.qrLabel);
-    return match ? [match] : [];
-  }, [assets, request?.qrLabel]);
 
   // STEP②: 発注書送信 → STEP③へ
   const handleStep2Order = () => {
