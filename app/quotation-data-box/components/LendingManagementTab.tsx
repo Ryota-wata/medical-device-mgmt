@@ -699,7 +699,7 @@ export const LendingManagementTab: React.FC = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '10px 12px', background: '#f8f9fa', border: '1px solid #dee2e6', textAlign: 'left', width: '140px', fontWeight: 600 }}>貸出種別名</th>
+                    <th style={{ padding: '10px 12px', background: '#f8f9fa', border: '1px solid #dee2e6', textAlign: 'left', width: '140px', fontWeight: 600 }}>貸出グループ名</th>
                     <td style={{ padding: '10px 12px', border: '1px solid #dee2e6' }}>
                       <input
                         type="text"

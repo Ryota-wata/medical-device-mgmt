@@ -637,7 +637,7 @@ function AssetSurveyContent() {
                 fontWeight: 600,
                 color: '#374151'
               }}>
-                分類情報
+                品目情報
               </h3>
 
               <div style={{

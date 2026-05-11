@@ -391,7 +391,6 @@ function PurchaseManagementContent() {
                         <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
                         <th style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>品目情報</th>
                         <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
-                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}>コメント</th>
                         <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}></th>
                       </tr>
                       {/* サブカラムヘッダー行 */}
@@ -455,10 +454,6 @@ function PurchaseManagementContent() {
                             <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
                             <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937' }}>{app.applicantName}</td>
                             <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>-</td>
-                            {/* コメント */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>
-                              {app.comment || '-'}
-                            </td>
                             {/* 申請内容ボタン */}
                             <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                               <button

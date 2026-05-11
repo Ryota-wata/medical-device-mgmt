@@ -324,21 +324,6 @@ export function ApplicationDetailModal({
               印刷
             </button>
             <button
-              onClick={() => alert('修正機能は今後実装予定です')}
-              style={{
-                padding: '10px 20px',
-                background: 'white',
-                color: '#6c757d',
-                border: '2px solid #6c757d',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold',
-              }}
-            >
-              修正する
-            </button>
-            <button
               onClick={() => alert('添付ファイルダウンロード機能は今後実装予定です')}
               style={{
                 padding: '10px 20px',

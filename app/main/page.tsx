@@ -324,7 +324,7 @@ export default function MainPage() {
   const headerNavItems = useMemo(() => {
     const items: { key: string; label: string; icon: string; onClick: () => void; visible: boolean }[] = [
       { key: 'qr', label: 'QR読取', icon: 'qr', onClick: handleQRRead, visible: isShipUser },
-      { key: 'editList', label: '編集リスト', icon: 'list', onClick: handleEditListManagement, visible: isMainButtonVisible('edit_list') },
+      { key: 'editList', label: '編集・分析', icon: 'list', onClick: handleEditListManagement, visible: isMainButtonVisible('edit_list') },
       { key: 'taskMgmt', label: 'タスク管理', icon: 'clipboard', onClick: handleQuotationManagement, visible: canAccess('normal_purchase') },
       { key: 'quotation', label: '見積管理', icon: 'clipboard', onClick: () => router.push('/quotation-management'), visible: isMainButtonVisible('quotation_management') },
       { key: 'qrIssue', label: 'QRコード発行', icon: 'qr', onClick: handleQRIssueFromModal, visible: isHospitalUser && canAccess('qr_issue') },
