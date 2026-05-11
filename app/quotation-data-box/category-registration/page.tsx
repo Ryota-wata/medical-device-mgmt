@@ -140,7 +140,7 @@ export default function CategoryRegistrationPage() {
     router.push('/quotation-data-box/ocr-confirm');
   };
 
-  // 次へボタン（資産マスタ登録へ）
+  // 次へボタン（個体品目AI判定へ）
   const handleNext = () => {
     // 全件登録済みかチェック
     const allRegistered = detailItems.every(item => item.isRegistered);
@@ -180,7 +180,7 @@ export default function CategoryRegistrationPage() {
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>明細区分登録</span>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>登録区分登録</span>
               <span style={{ fontSize: '12px', opacity: 0.9 }}>
                 登録: {registeredCount} / {detailItems.length}件
               </span>
@@ -348,7 +348,7 @@ export default function CategoryRegistrationPage() {
               fontWeight: 'bold',
             }}
           >
-            資産マスタ登録へ
+            個体品目AI判定へ
           </button>
         </div>
       </div>

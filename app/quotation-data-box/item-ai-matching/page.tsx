@@ -257,7 +257,7 @@ export default function ItemAiMatchingPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
       <Header
-        title="見積登録（購入）資産マスタ登録"
+        title="見積登録（購入）個体品目AI判定"
         stepBadge="STEP 4"
         hideMenu={true}
         showBackButton={false}
@@ -282,7 +282,7 @@ export default function ItemAiMatchingPage() {
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>資産マスタ登録</span>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>個体品目AI判定</span>
             </div>
           </div>
 
