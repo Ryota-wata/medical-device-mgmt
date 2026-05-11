@@ -189,7 +189,7 @@ export default function PriceAllocationPage() {
                     STEP❸
                   </th>
                   <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
-                    STEP❹ 個体管理品目登録
+                    STEP❹ 資産マスタ登録
                   </th>
                   <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
                     価格情報（原本情報）

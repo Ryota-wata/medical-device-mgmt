@@ -350,7 +350,7 @@ export default function ItemAiMatchingPage() {
                     padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0',
                     fontWeight: 'bold', color: '#9c27b0', background: '#f3e5f5', fontSize: '11px'
                   }}>
-                    STEP❹ 個体管理品目登録
+                    STEP❹ 資産マスタ登録
                   </th>
                 </tr>
                 <tr style={{ background: '#f8f9fa' }}>
