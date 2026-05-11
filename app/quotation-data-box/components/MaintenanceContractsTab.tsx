@@ -999,8 +999,15 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   <td style={tdStyle}>{contract.contractorName || '-'}</td>
                   <td style={tdStyle}>{contract.contractorPerson || '-'}</td>
                   <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums">{contract.contractorPhone || '-'}</td>
-                  <td style={tdStyle} className="tabular-nums">
-                    {contract.reviewStartDate || '-'}
+                  <td style={tdStyle}>
+                    {(() => {
+                      const status = calcStatus(contract);
+                      return (
+                        <span style={{ color: status.color, fontWeight: status.fontWeight || 'normal' }}>
+                          {status.label}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     {(() => {

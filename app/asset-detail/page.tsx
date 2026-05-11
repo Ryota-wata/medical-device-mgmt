@@ -57,6 +57,17 @@ function AssetDetailContent() {
     }
   };
 
+  // ドキュメントアップロードハンドラー（追加分）
+  const [uploadedDocuments, setUploadedDocuments] = useState<{ name: string; date: string }[]>([]);
+  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const newDocs = Array.from(files).map((f) => ({ name: f.name, date: today }));
+    setUploadedDocuments((prev) => [...prev, ...newDocs]);
+    e.target.value = '';
+  };
+
   // 写真アップロードハンドラー
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -326,12 +337,22 @@ function AssetDetailContent() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-base font-bold text-[#1f2937]">登録ドキュメント</h3>
               {isEditMode && (
-                <button
-                  className="px-3 py-1.5 bg-[#27ae60] text-white border-none rounded-md cursor-pointer text-[13px] hover:bg-[#219a52]"
-                  onClick={() => alert('ドキュメント追加')}
-                >
-                  ➕ ドキュメント追加
-                </button>
+                <>
+                  <label
+                    htmlFor="document-upload"
+                    className="px-3 py-1.5 bg-[#27ae60] text-white border-none rounded-md cursor-pointer text-[13px] hover:bg-[#219a52]"
+                  >
+                    ➕ ドキュメント追加
+                  </label>
+                  <input
+                    id="document-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                    multiple
+                    onChange={handleDocumentUpload}
+                    className="hidden"
+                  />
+                </>
               )}
             </div>
 
@@ -339,7 +360,7 @@ function AssetDetailContent() {
             <div className="mb-5">
               {['契約書.pdf', '納品書.pdf', '検収書.pdf'].map((doc, index) => (
                 <div
-                  key={index}
+                  key={`default-${index}`}
                   className={`flex items-center p-3 mb-2 rounded cursor-pointer ${
                     index === 0 ? 'bg-[#e3f2fd]' : 'bg-[#f8f9fa]'
                   }`}
@@ -348,6 +369,18 @@ function AssetDetailContent() {
                   <div className="flex-1">
                     <div className="font-bold text-sm text-[#1f2937]">{doc}</div>
                     <div className="text-xs text-[#4b5563]">2025-01-15 登録</div>
+                  </div>
+                </div>
+              ))}
+              {uploadedDocuments.map((doc, index) => (
+                <div
+                  key={`uploaded-${index}`}
+                  className="flex items-center p-3 mb-2 rounded cursor-pointer bg-[#f8f9fa]"
+                >
+                  <span className="text-2xl mr-3">📄</span>
+                  <div className="flex-1">
+                    <div className="font-bold text-sm text-[#1f2937]">{doc.name}</div>
+                    <div className="text-xs text-[#4b5563]">{doc.date} 登録</div>
                   </div>
                 </div>
               ))}

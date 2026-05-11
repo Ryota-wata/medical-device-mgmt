@@ -91,6 +91,9 @@ interface RepairRequest {
   needsAlternative: boolean;
   alternativeDeliveryDate: string;
   alternativeReturnDate: string;
+  // 商品引取対応 (REQ-079)
+  pickupRequired: boolean;
+  pickupRequiredDate: string;
   // 導入業者
   installerName: string;
   installerPerson: string;
@@ -169,6 +172,8 @@ const getMockRequest = (id: string): RepairRequest => {
     needsAlternative: false,
     alternativeDeliveryDate: '',
     alternativeReturnDate: '',
+    pickupRequired: false,
+    pickupRequiredDate: '',
     installerName: 'フクダ電子株式会社',
     installerPerson: '山田太郎',
     installerContact: '03-9876-5432',
@@ -827,6 +832,42 @@ function RepairTaskContent() {
           </FormRow>
 
           <FormRow>
+            <span style={labelStyle}>商品引取対応</span>
+            <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <input
+                type="radio"
+                name="pickupRequired"
+                checked={formData.pickupRequired}
+                onChange={() => updateFormData({ pickupRequired: true })}
+                disabled={!isStepEnabled(1)}
+              />
+              必要
+            </label>
+            <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <input
+                type="radio"
+                name="pickupRequired"
+                checked={!formData.pickupRequired}
+                onChange={() => updateFormData({ pickupRequired: false })}
+                disabled={!isStepEnabled(1)}
+              />
+              不要
+            </label>
+            {formData.pickupRequired && (
+              <>
+                <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>引取日:</span>
+                <input
+                  type="date"
+                  value={formData.pickupRequiredDate}
+                  onChange={(e) => updateFormData({ pickupRequiredDate: e.target.value })}
+                  {...getInputProps(1)}
+                  style={{ ...getInputProps(1).style, width: '150px' }}
+                />
+              </>
+            )}
+          </FormRow>
+
+          <FormRow>
             <span style={labelStyle}>導入業者</span>
             <span style={{ fontSize: '13px', color: COLORS.textSecondary }}>
               {request.installerName} / {request.installerPerson} / {request.installerContact}
@@ -852,7 +893,7 @@ function RepairTaskContent() {
             修理申請書を確認し院内修理の場合は院内修理対応とし、納期が確定次第、納期登録を実施してください。
           </div>
 
-          {/* 商品引取日・修理品納品日（どのタイミングでも入力可能） */}
+          {/* 商品引取日（どのタイミングでも入力可能） */}
           <div style={{
             padding: '12px 16px',
             background: '#fff8e1',
@@ -860,21 +901,12 @@ function RepairTaskContent() {
             border: '1px solid #ffcc80',
             marginBottom: '16px',
           }}>
-            <FormRow style={{ marginBottom: '8px' }}>
+            <FormRow style={{ marginBottom: 0 }}>
               <span style={{ ...labelStyle, color: '#e65100', minWidth: '100px' }}>商品引取日</span>
               <input
                 type="date"
                 value={formData.pickupDate}
                 onChange={(e) => updateFormData({ pickupDate: e.target.value })}
-                style={{ ...inputStyle, width: '160px' }}
-              />
-            </FormRow>
-            <FormRow style={{ marginBottom: 0 }}>
-              <span style={{ ...labelStyle, color: '#e65100', minWidth: '100px' }}>修理品納品日</span>
-              <input
-                type="date"
-                value={formData.repairDeliveryDate}
-                onChange={(e) => updateFormData({ repairDeliveryDate: e.target.value })}
                 style={{ ...inputStyle, width: '160px' }}
               />
             </FormRow>
