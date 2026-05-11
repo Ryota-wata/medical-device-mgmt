@@ -122,8 +122,7 @@ interface RepairRequest {
   quotationVendorPerson: string;
   // STEP①追加：ご依頼事項
   requestComment: string;
-  // STEP①追加：商品引取日・修理品納品日
-  pickupDate: string;
+  // STEP①追加
   repairDeliveryDate: string;
   // STEP①追加：代替機返却済フラグ
   alternativeReturned: boolean;
@@ -178,7 +177,6 @@ const getMockRequest = (id: string): RepairRequest => {
     installerPerson: '山田太郎',
     installerContact: '03-9876-5432',
     requestComment: '',
-    pickupDate: '',
     repairDeliveryDate: '',
     alternativeReturned: false,
     vendors: [
@@ -897,25 +895,6 @@ function RepairTaskContent() {
             color: COLORS.textSecondary,
           }}>
             修理申請書を確認し院内修理の場合は院内修理対応とし、納期が確定次第、納期登録を実施してください。
-          </div>
-
-          {/* 商品引取日（どのタイミングでも入力可能） */}
-          <div style={{
-            padding: '12px 16px',
-            background: '#fff8e1',
-            borderRadius: '4px',
-            border: '1px solid #ffcc80',
-            marginBottom: '16px',
-          }}>
-            <FormRow style={{ marginBottom: 0 }}>
-              <span style={{ ...labelStyle, color: '#e65100', minWidth: '100px' }}>商品引取日</span>
-              <input
-                type="date"
-                value={formData.pickupDate}
-                onChange={(e) => updateFormData({ pickupDate: e.target.value })}
-                style={{ ...inputStyle, width: '160px' }}
-              />
-            </FormRow>
           </div>
 
           {/* 見積依頼セクション */}
