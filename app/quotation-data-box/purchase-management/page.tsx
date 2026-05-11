@@ -278,7 +278,10 @@ function PurchaseManagementContent() {
     addQuotationItems(itemsToAdd);
 
     if (rfqGroup) {
-      updateRfqGroup(rfqGroup.id, { status: '見積DB登録済' });
+      // REQ-041 残部: 見積フェーズが「発注登録用見積」(= 確定見積) なら発注登録に進めるよう '発注見積登録済' に。
+      // それ以外（定価見積 / 概算見積）は見積DB登録でタスククローズ扱いとして '完了' に。
+      const nextStatus = submittedOcrResult.phase === '確定見積' ? '発注見積登録済' : '完了';
+      updateRfqGroup(rfqGroup.id, { status: nextStatus });
     }
 
     alert(MESSAGES.QUOTATION_REGISTERED(quotationNo, itemsToAdd.length));
