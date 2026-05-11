@@ -104,13 +104,14 @@ interface RepairRequest {
   // 保守契約
   hasMaintenanceContract: boolean;
   warrantyEndDate: string;
-  // 見積依頼先（複数）
+  // 見積依頼先（複数、REQ-077: 購入タスク管理 rfq-process と同様に動的追加/削除可）
   vendors: {
     name: string;
     person: string;
     email: string;
     contact: string;
     deadline: string;
+    isSent: boolean;
   }[];
   // 見積情報
   quotationFile: string;
@@ -183,9 +184,7 @@ const getMockRequest = (id: string): RepairRequest => {
     repairDeliveryDate: '',
     alternativeReturned: false,
     vendors: [
-      { name: 'フクダ電子株式会社', person: '山田太郎', email: '', contact: '03-9876-5432', deadline: '' },
-      { name: '', person: '', email: '', contact: '', deadline: '' },
-      { name: '', person: '', email: '', contact: '', deadline: '' },
+      { name: 'フクダ電子株式会社', person: '山田太郎', email: '', contact: '03-9876-5432', deadline: '', isSent: false },
     ],
     quotationFile: '',
     quotationPhase: '発注用',
@@ -483,6 +482,22 @@ function RepairTaskContent() {
     updateFormData({ vendors: newVendors });
   };
 
+  // REQ-077: 業者追加（購入タスク管理 rfq-process と同等）
+  const handleAddVendor = () => {
+    if (!formData) return;
+    updateFormData({
+      vendors: [...formData.vendors, { name: '', person: '', email: '', contact: '', deadline: '', isSent: false }],
+    });
+  };
+
+  // REQ-077: 業者削除（未送信のみ、最低1社残す）
+  const handleRemoveVendor = (index: number) => {
+    if (!formData) return;
+    if (formData.vendors.length <= 1) return;
+    if (formData.vendors[index]?.isSent) return;
+    updateFormData({ vendors: formData.vendors.filter((_, i) => i !== index) });
+  };
+
   // STEP①: 院内/院外修理を選択して受付
   const handleStep1Submit = (category: '院内修理' | '院外修理') => {
     setIsSubmitting(true);
@@ -506,6 +521,10 @@ function RepairTaskContent() {
       alert('業者名とメールアドレスを入力してください');
       return;
     }
+    // REQ-077: 送信済み状態を vendor.isSent に記録（未送信のみ削除可になる）
+    const newVendors = [...formData.vendors];
+    newVendors[index] = { ...newVendors[index], isSent: true };
+    updateFormData({ vendors: newVendors });
     alert(`${vendor.name}へ見積依頼を送信しました。`);
   };
 
@@ -947,13 +966,34 @@ function RepairTaskContent() {
                 marginBottom: '16px',
                 fontSize: '13px',
                 color: '#1565c0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
               }}>
-                修理業者を登録し、修理見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。
+                <span>修理業者を登録し、修理見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。</span>
+                <button
+                  onClick={handleAddVendor}
+                  disabled={!isStepEnabled(1)}
+                  style={{
+                    padding: '4px 12px',
+                    background: '#1565c0',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isStepEnabled(1) ? 'pointer' : 'not-allowed',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  + 業者追加（{formData.vendors.length}社）
+                </button>
               </div>
 
               {/* 依頼先テーブル */}
               <div style={{ overflowX: 'auto', marginBottom: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '850px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
                   <thead>
                     <tr style={{ background: COLORS.surfaceAlt }}>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '70px' }}></th>
@@ -962,49 +1002,66 @@ function RepairTaskContent() {
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>メール <span style={{ color: COLORS.error }}>*</span></th>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>連絡先</th>
                       <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '130px' }}>提出期限</th>
-                      <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '150px' }}>アクション</th>
+                      <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '210px' }}>アクション</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[0, 1, 2].map((i) => {
-                      const vendor = formData.vendors[i];
-                      const hasVendorData = vendor?.name && vendor?.email;
+                    {formData.vendors.map((vendor, i) => {
+                      const hasVendorData = vendor.name && vendor.email;
                       const isSelected = previewTab === '修理依頼書' && previewVendorIndex === i;
+                      const isSent = vendor.isSent;
+                      const canDelete = !isSent && formData.vendors.length > 1;
                       return (
                         <tr
                           key={i}
                           style={{
                             borderBottom: `1px solid ${COLORS.borderLight}`,
                             background: isSelected ? '#e3f2fd' : 'transparent',
+                            opacity: isSent ? 0.7 : 1,
                           }}
                         >
                           <td style={{ padding: '6px 8px', color: COLORS.textMuted, fontSize: '11px' }}>
-                            依頼先{i + 1}
-                            {i === 0 && <span style={{ display: 'block', fontSize: '10px', color: COLORS.success }}>(導入業者)</span>}
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: isSent ? '#27ae60' : '#f39c12',
+                              color: 'white',
+                              fontWeight: 'bold',
+                              fontSize: '11px',
+                            }}>{isSent ? '済' : `依頼${i + 1}`}</span>
+                            {i === 0 && <span style={{ display: 'block', fontSize: '10px', color: COLORS.success, marginTop: '2px' }}>(導入業者)</span>}
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="text" value={vendor?.name || ''} onChange={(e) => updateVendor(i, 'name', e.target.value)} placeholder="業者名" {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input type="text" value={vendor.name} onChange={(e) => updateVendor(i, 'name', e.target.value)} placeholder="業者名" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="text" value={vendor?.person || ''} onChange={(e) => updateVendor(i, 'person', e.target.value)} placeholder="担当者" {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input type="text" value={vendor.person} onChange={(e) => updateVendor(i, 'person', e.target.value)} placeholder="担当者" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="email" value={vendor?.email || ''} onChange={(e) => updateVendor(i, 'email', e.target.value)} placeholder="email@example.com" {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input type="email" value={vendor.email} onChange={(e) => updateVendor(i, 'email', e.target.value)} placeholder="email@example.com" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="tel" value={vendor?.contact || ''} onChange={(e) => updateVendor(i, 'contact', e.target.value)} placeholder="03-0000-0000" {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input type="tel" value={vendor.contact} onChange={(e) => updateVendor(i, 'contact', e.target.value)} placeholder="03-0000-0000" disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px' }}>
-                            <input type="date" value={vendor?.deadline || ''} onChange={(e) => updateVendor(i, 'deadline', e.target.value)} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '100%' }} />
+                            <input type="date" value={vendor.deadline} onChange={(e) => updateVendor(i, 'deadline', e.target.value)} disabled={!isStepEnabled(1) || isSent} style={{ ...getInputProps(1).style, width: '100%' }} />
                           </td>
                           <td style={{ padding: '4px', textAlign: 'center' }}>
                             <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                               <button className="repair-btn" onClick={() => { setPreviewTab('修理依頼書'); setPreviewVendorIndex(i); }} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? '#3498db' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? 'プレビュー表示' : '業者名とメールを入力してください'}>
                                 プレビュー
                               </button>
-                              <button className="repair-btn" onClick={() => handleStep2Submit(i)} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? COLORS.primary : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? '依頼を送信' : '業者名とメールを入力してください'}>
-                                依頼送信
-                              </button>
+                              {!isSent && (
+                                <button className="repair-btn" onClick={() => handleStep2Submit(i)} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? COLORS.primary : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? '依頼を送信' : '業者名とメールを入力してください'}>
+                                  依頼送信
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button onClick={() => handleRemoveVendor(i)} style={{ padding: '4px 8px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }} title="この業者を削除">
+                                  削除
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
