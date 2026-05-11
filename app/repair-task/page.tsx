@@ -61,7 +61,7 @@ interface RegisteredQuotation {
 // 登録済みドキュメントの型（STEP5用）
 interface RegisteredDocument {
   id: number;
-  documentType: '修理報告書' | '納品書' | '検収書' | '請求書' | 'その他';
+  documentType: '修理報告書' | '納品書' | 'その他';
   accountType: '修繕費' | 'その他';
   accountOther?: string;
   fileName: string;
@@ -134,7 +134,7 @@ interface RepairRequest {
   orderVendorEmail: string;
   orderVendorContact: string;
   // 完了情報
-  documentType: '修理報告書' | '納品書' | '検収書' | '請求書' | 'その他';
+  documentType: '修理報告書' | '納品書';
   accountType: '修繕費' | 'その他';
   accountOther: string;
   deliveryDate: string;
@@ -343,6 +343,9 @@ function RepairTaskContent() {
   const { assets } = useAssetStore();
   // REQ-084: 廃棄申請モーダル表示状態
   const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
+  // REQ-086: STEP④ 完了登録の添付ファイル + ドキュメント種別
+  const [step4DocFiles, setStep4DocFiles] = useState<string[]>([]);
+  const [step4DocumentType, setStep4DocumentType] = useState<'修理報告書' | '納品書' | '検収書' | '請求書' | 'その他'>('修理報告書');
 
   const [request, setRequest] = useState<RepairRequest | null>(null);
   const [formData, setFormData] = useState<RepairRequest | null>(null);
@@ -357,7 +360,7 @@ function RepairTaskContent() {
   // STEP5用：登録済みドキュメントリスト
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
   // STEP5用：選択中のファイル名
-  const [selectedDocFileNames, setSelectedDocFileNames] = useState<string[]>([]);
+  const [selectedDocFileName, setSelectedDocFileName] = useState<string>('');
   // STEP5用：納期確定フラグ
   const [isDeliveryDateConfirmed, setIsDeliveryDateConfirmed] = useState<boolean>(false);
   // STEP②用：対応区分（発注 or 申請却下）
@@ -552,26 +555,25 @@ function RepairTaskContent() {
     alert('発注書を発行しました。STEP③へ進みます。');
   };
 
-  // STEP③: ドキュメント登録（複数ファイル一括追加）
+  // STEP③: ドキュメント登録（リストに追加）
   const handleAddDocument = () => {
-    if (selectedDocFileNames.length === 0) {
+    if (!selectedDocFileName) {
       alert('ファイルを選択してください');
       return;
     }
 
-    const now = new Date().toISOString();
-    const newDocuments: RegisteredDocument[] = selectedDocFileNames.map((name, idx) => ({
-      id: Date.now() + idx,
+    const newDocument: RegisteredDocument = {
+      id: Date.now(),
       documentType: formData.documentType,
       accountType: formData.accountType,
       accountOther: formData.accountType === 'その他' ? formData.accountOther : undefined,
-      fileName: name,
-      registeredAt: now,
-    }));
+      fileName: selectedDocFileName,
+      registeredAt: new Date().toISOString(),
+    };
 
-    setRegisteredDocuments(prev => [...prev, ...newDocuments]);
-    setSelectedDocFileNames([]);
-    alert(`${newDocuments.length}件のドキュメントを登録しました`);
+    setRegisteredDocuments(prev => [...prev, newDocument]);
+    setSelectedDocFileName('');
+    alert('ドキュメントを登録しました');
   };
 
   // STEP③: ドキュメント削除
@@ -1372,14 +1374,12 @@ function RepairTaskContent() {
                     <tr>
                       <th style={{ background: '#e67e22', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #e67e22', whiteSpace: 'nowrap' }}>添付ファイル</th>
                       <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #e67e22' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <label style={{ padding: '6px 16px', background: '#f5f5f5', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(3) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(3) ? 1 : 0.6 }}>
-                            ファイルの選択（複数可）
-                            <input type="file" accept=".pdf,.jpg,.png" multiple disabled={!isStepEnabled(3)} onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length > 0) setSelectedDocFileNames(files.map(f => f.name)); }} style={{ display: 'none' }} />
+                            ファイルの選択
+                            <input type="file" accept=".pdf,.jpg,.png" disabled={!isStepEnabled(3)} onChange={(e) => { const file = e.target.files?.[0]; if (file) setSelectedDocFileName(file.name); }} style={{ display: 'none' }} />
                           </label>
-                          <span style={{ color: selectedDocFileNames.length > 0 ? COLORS.success : '#666', fontSize: '13px' }}>
-                            {selectedDocFileNames.length > 0 ? `${selectedDocFileNames.length}件選択: ${selectedDocFileNames.join(', ')}` : 'ファイルが選択されていません'}
-                          </span>
+                          <span style={{ color: selectedDocFileName ? COLORS.success : '#666', fontSize: '13px' }}>{selectedDocFileName || 'ファイルが選択されていません'}</span>
                         </div>
                       </td>
                     </tr>
@@ -1389,9 +1389,6 @@ function RepairTaskContent() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === '修理報告書'} onChange={() => updateFormData({ documentType: '修理報告書' })} disabled={!isStepEnabled(3)} /> 修理報告書</label>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === '納品書'} onChange={() => updateFormData({ documentType: '納品書' })} disabled={!isStepEnabled(3)} /> 納品書</label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === '検収書'} onChange={() => updateFormData({ documentType: '検収書' })} disabled={!isStepEnabled(3)} /> 検収書</label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === '請求書'} onChange={() => updateFormData({ documentType: '請求書' })} disabled={!isStepEnabled(3)} /> 請求書</label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === 'その他'} onChange={() => updateFormData({ documentType: 'その他' })} disabled={!isStepEnabled(3)} /> その他</label>
                         </div>
                       </td>
                     </tr>
@@ -1413,7 +1410,7 @@ function RepairTaskContent() {
                   </tbody>
                 </table>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-                  <button className="repair-btn" onClick={handleAddDocument} disabled={!isStepEnabled(3) || isSubmitting || selectedDocFileNames.length === 0} style={{ padding: '8px 20px', background: selectedDocFileNames.length > 0 ? '#e67e22' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: selectedDocFileNames.length > 0 ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>
+                  <button className="repair-btn" onClick={handleAddDocument} disabled={!isStepEnabled(3) || isSubmitting || !selectedDocFileName} style={{ padding: '8px 20px', background: selectedDocFileName ? '#e67e22' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: selectedDocFileName ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 'bold' }}>
                     + ドキュメントを登録
                   </button>
                 </div>
@@ -1477,6 +1474,32 @@ function RepairTaskContent() {
               </label>
             </div>
           </FormRow>
+
+          {/* REQ-086: 完了登録の添付ファイル + ドキュメント種別 */}
+          <div style={{ marginTop: '16px', padding: '12px', border: '1px solid #e74c3c', borderRadius: '4px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#c62828', marginBottom: '12px' }}>添付ファイル / ドキュメント種別</div>
+            <FormRow>
+              <span style={{ ...labelStyle, fontWeight: 'bold', minWidth: '110px' }}>添付ファイル</span>
+              <label style={{ padding: '6px 16px', background: '#f5f5f5', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
+                ファイルの選択（複数可）
+                <input type="file" accept=".pdf,.jpg,.png" multiple disabled={!isStepEnabled(4)} onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length > 0) setStep4DocFiles((prev) => [...prev, ...files.map(f => f.name)]); e.target.value = ''; }} style={{ display: 'none' }} />
+              </label>
+              <span style={{ color: step4DocFiles.length > 0 ? COLORS.success : '#666', fontSize: '13px' }}>
+                {step4DocFiles.length > 0 ? `${step4DocFiles.length}件: ${step4DocFiles.join(', ')}` : 'ファイルが選択されていません'}
+              </span>
+            </FormRow>
+            <FormRow style={{ marginTop: '8px' }}>
+              <span style={{ ...labelStyle, fontWeight: 'bold', minWidth: '110px' }}>ドキュメント種別</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                {(['修理報告書', '納品書', '検収書', '請求書', 'その他'] as const).map((dt) => (
+                  <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                    <input type="radio" name="step4DocumentType" checked={step4DocumentType === dt} onChange={() => setStep4DocumentType(dt)} disabled={!isStepEnabled(4)} />
+                    {dt}
+                  </label>
+                ))}
+              </div>
+            </FormRow>
+          </div>
 
           <FormRow style={{ justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <button className="repair-btn" onClick={handleStep4Complete} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 24px', background: '#e74c3c', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
