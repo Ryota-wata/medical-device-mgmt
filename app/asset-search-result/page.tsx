@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts';
 import { useAssetStore, useMasterStore, useApplicationStore } from '@/lib/stores';
 import { Asset, Application } from '@/lib/types';
@@ -48,7 +48,6 @@ const GROUP_STYLES: Record<string, { label: string; bg: string; color: string }>
 
 export default function AssetSearchResultPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { assets } = useAssetStore();
   const { addApplication } = useApplicationStore();
   const { addContract } = useMaintenanceContractStore();
@@ -62,21 +61,6 @@ export default function AssetSearchResultPage() {
 
   // 廃棄申請モーダル関連の状態
   const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
-
-  // REQ-084: ?openDisposal=true&qrCode=XX で遷移してきた場合に廃棄申請モーダルを自動表示
-  useEffect(() => {
-    if (searchParams.get('openDisposal') === 'true') {
-      const qrCode = searchParams.get('qrCode');
-      if (qrCode) {
-        const target = assets.find((a) => a.qrCode === qrCode);
-        if (target && typeof target.no === 'number') {
-          setSelectedItems(new Set([target.no]));
-        }
-      }
-      setIsDisposalModalOpen(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // 購入申請モーダル関連の状態
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);

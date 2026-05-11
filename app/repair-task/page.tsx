@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, Suspense, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthStore } from '@/lib/stores';
+import { useAuthStore, useAssetStore } from '@/lib/stores';
+import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { Header } from '@/components/layouts/Header';
 
 /** カラートークン（order-registration準拠） */
@@ -339,6 +340,9 @@ function RepairTaskContent() {
   const requestId = searchParams.get('id') || '3';
   const repairCategory = searchParams.get('repairCategory') || ''; // REQ-076: 申請内容 (院内対応/外部依頼)
   const user = useAuthStore((s) => s.user);
+  const { assets } = useAssetStore();
+  // REQ-084: 廃棄申請モーダル表示状態
+  const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
 
   const [request, setRequest] = useState<RepairRequest | null>(null);
   const [formData, setFormData] = useState<RepairRequest | null>(null);
@@ -525,14 +529,20 @@ function RepairTaskContent() {
     }
   };
 
-  // STEP②: 対象品の廃棄申請へ (REQ-084: タスククローズ + 原本資産一覧の廃棄申請モーダルへ遷移)
+  // STEP②: 対象品の廃棄申請へ (REQ-084: タスククローズ + 当該資産の情報入り廃棄申請モーダルをその場で表示)
   const handleStep2Dispose = () => {
     if (confirm('タスクをクローズし、対象資産の廃棄申請に進みますか？')) {
       setRequest(prev => prev ? { ...prev, status: '却下' } : prev);
-      const qrParam = request?.qrLabel ? `&qrCode=${encodeURIComponent(request.qrLabel)}` : '';
-      router.push(`/asset-search-result?openDisposal=true${qrParam}`);
+      setIsDisposalModalOpen(true);
     }
   };
+
+  // REQ-084: 廃棄申請モーダルに渡す対象資産 (qrLabel をキーに資産マスタから検索)
+  const disposalTargetAssets = useMemo(() => {
+    if (!request?.qrLabel) return [];
+    const match = assets.find((a) => a.qrCode === request.qrLabel);
+    return match ? [match] : [];
+  }, [assets, request?.qrLabel]);
 
   // STEP②: 発注書送信 → STEP③へ
   const handleStep2Order = () => {
@@ -2583,6 +2593,19 @@ function RepairTaskContent() {
           </div>
         </div>
       </div>
+
+      {/* REQ-084: 廃棄申請モーダル（対象資産プリセット） */}
+      <DisposalApplicationModal
+        isOpen={isDisposalModalOpen}
+        onClose={() => setIsDisposalModalOpen(false)}
+        assets={disposalTargetAssets}
+        onSuccess={() => {
+          setIsDisposalModalOpen(false);
+          router.push('/quotation-data-box/repair-requests');
+        }}
+        returnDestination="修理申請一覧"
+        returnHref="/quotation-data-box/repair-requests"
+      />
     </div>
   );
 }
