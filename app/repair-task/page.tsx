@@ -527,10 +527,12 @@ function RepairTaskContent() {
     }
   };
 
-  // STEP②: 対象品の廃棄申請へ
+  // STEP②: 対象品の廃棄申請へ (REQ-084: タスククローズ + 原本資産一覧の廃棄申請モーダルへ遷移)
   const handleStep2Dispose = () => {
-    if (confirm('廃棄申請画面へ移動しますか？')) {
-      router.push('/quotation-data-box/disposal-management');
+    if (confirm('タスクをクローズし、対象資産の廃棄申請に進みますか？')) {
+      setRequest(prev => prev ? { ...prev, status: '却下' } : prev);
+      const qrParam = request?.qrLabel ? `&qrCode=${encodeURIComponent(request.qrLabel)}` : '';
+      router.push(`/asset-search-result?openDisposal=true${qrParam}`);
     }
   };
 
