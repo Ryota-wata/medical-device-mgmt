@@ -1007,7 +1007,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                       const stepConfig: Record<number, { label: string; color: string }> = {
                         1: { label: '見積依頼', color: '#7c3aed' },
                         2: { label: '見積登録', color: '#d97706' },
-                        3: { label: '契約発注', color: '#3498db' },
+                        3: { label: '契約登録', color: '#3498db' },
                         4: { label: '完了登録', color: '#27ae60' },
                       };
                       if (contract.currentStep === 'completed') {

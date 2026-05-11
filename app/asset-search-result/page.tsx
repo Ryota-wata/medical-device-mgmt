@@ -276,14 +276,14 @@ export default function AssetSearchResultPage() {
             style={getButtonStyle(isAnySelected)}
             onClick={() => {
               if (selectedItems.size === 0) {
-                alert('保守契約登録する資産を選択してください');
+                alert('契約対象の資産登録する資産を選択してください');
                 return;
               }
               setIsMaintenanceContractModalOpen(true);
             }}
             title={isAnySelected ? '' : '資産を選択してください'}
           >
-            保守契約登録
+            契約対象の資産登録
           </button>
           <button
             style={getButtonStyle(isAnySelected)}
@@ -323,12 +323,12 @@ export default function AssetSearchResultPage() {
           )}
           {selectedItems.size === 1 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 更新・増設・移動・廃棄申請 / 点検管理・保守契約登録が可能です
+              ✓ 更新・増設・移動・廃棄申請 / 点検管理・契約対象の資産登録が可能です
             </span>
           )}
           {selectedItems.size > 1 && (
             <span style={{ color: '#90EE90' }}>
-              ✓ 移動・廃棄申請 / 点検管理・保守契約登録が可能です
+              ✓ 移動・廃棄申請 / 点検管理・契約対象の資産登録が可能です
             </span>
           )}
         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
 
 /** カラートークン */
@@ -34,7 +35,7 @@ const COLORS = {
   // ステップ別テーマカラー
   step1: '#7c3aed',  // 紫: 見積依頼
   step2: '#d97706',  // 琥珀: 見積登録
-  step3: '#3498db',  // 青: 契約発注
+  step3: '#3498db',  // 青: 契約登録
   step4: '#27ae60',  // 緑: 完了登録
 } as const;
 
@@ -42,7 +43,7 @@ const COLORS = {
 const MAINTENANCE_STEPS = [
   { step: 1, label: '見積依頼', color: COLORS.step1 },
   { step: 2, label: '見積登録', color: COLORS.step2 },
-  { step: 3, label: '契約発注', color: COLORS.step3 },
+  { step: 3, label: '契約登録', color: COLORS.step3 },
   { step: 4, label: '完了登録', color: COLORS.step4 },
 ];
 
@@ -89,6 +90,7 @@ interface MaintenanceContract {
   // 保守契約情報
   maintenanceNo: string;
   contractGroupName: string;
+  settlementNo: string;
   contractType: string;
   contractTypeMemo: string;
   contractPeriodStart: string;
@@ -116,6 +118,7 @@ const getMockContract = (id: string): MaintenanceContract => {
     applicationContact: '内線2346',
     maintenanceNo: `MC-2026-${id.padStart(4, '0')}`,
     contractGroupName: '',
+    settlementNo: '',
     contractType: '',
     contractTypeMemo: 'フルメンテナンス',
     contractPeriodStart: '',
@@ -249,6 +252,7 @@ function MaintenanceQuoteRegistrationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const contractId = searchParams.get('id') || '1';
+  const user = useAuthStore((s) => s.user);
 
   const [formData, setFormData] = useState<MaintenanceContract | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -305,13 +309,15 @@ function MaintenanceQuoteRegistrationContent() {
   }, [handleDragMove, handleDragEnd]);
 
   useEffect(() => {
+    // REQ-090: 受付部署はログインIDより自動登録（受付部署=applicationDepartmentのみ対象、担当者/連絡先は対象外）
+    const departmentDefault = user?.department || 'ME室';
     const storedData = sessionStorage.getItem('maintenanceContract');
     if (storedData) {
       try {
         const parsed = JSON.parse(storedData);
         const data: MaintenanceContract = {
           ...getMockContract(contractId),
-          applicationDepartment: parsed.managementDepartment || 'ME室',
+          applicationDepartment: parsed.managementDepartment || departmentDefault,
           contractGroupName: parsed.contractGroupName || '',
           contractType: parsed.contractType || '',
           itemName: parsed.item || '人工呼吸器',
@@ -319,12 +325,12 @@ function MaintenanceQuoteRegistrationContent() {
         };
         setFormData({ ...data });
       } catch {
-        setFormData({ ...getMockContract(contractId) });
+        setFormData({ ...getMockContract(contractId), applicationDepartment: departmentDefault });
       }
     } else {
-      setFormData({ ...getMockContract(contractId) });
+      setFormData({ ...getMockContract(contractId), applicationDepartment: departmentDefault });
     }
-  }, [contractId]);
+  }, [contractId, user?.department]);
 
   const activeStep = currentStep;
   const isStepEnabled = (step: number) => step <= activeStep;
@@ -1197,16 +1203,30 @@ function MaintenanceQuoteRegistrationContent() {
             </div>
           </Section>
 
-          {/* ===== STEP③ 契約発注 ===== */}
+          {/* ===== STEP③ 契約登録 ===== */}
           <Section
             step={3}
-            title="STEP③. 契約発注"
+            title="STEP③. 契約登録"
             accentColor={COLORS.step3}
             enabled={isStepEnabled(3)}
             completed={3 < activeStep}
           >
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <tbody>
+                {/* 決済No,（院内の任意の決済番号） */}
+                <tr>
+                  <td style={thCellStyle(COLORS.step3)}>決済No,</td>
+                  <td style={tdCellStyle}>
+                    <input
+                      type="text"
+                      value={formData.settlementNo}
+                      onChange={(e) => updateFormData({ settlementNo: e.target.value })}
+                      placeholder="院内の任意の決済番号"
+                      disabled={!isStepEnabled(3)}
+                      style={{ ...inputStyle, width: '240px' }}
+                    />
+                  </td>
+                </tr>
                 {/* 契約グループ（読み取り専用） */}
                 <tr>
                   <td style={thCellStyle(COLORS.sectionHeader)}>契約グループ</td>
@@ -1257,24 +1277,6 @@ function MaintenanceQuoteRegistrationContent() {
                     </div>
                   </td>
                 </tr>
-                {/* 契約検討開始 */}
-                <tr>
-                  <td style={thCellStyle(COLORS.step3)}>契約検討開始</td>
-                  <td style={tdCellStyle}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <input
-                        type="date"
-                        value={formData.contractReviewStartDate}
-                        onChange={(e) => updateFormData({ contractReviewStartDate: e.target.value })}
-                        disabled={!isStepEnabled(3)}
-                        style={{ ...inputStyle, width: '160px' }}
-                      />
-                      <span style={{ fontSize: '11px', color: COLORS.textMuted }}>
-                        ※本契約期間終了前など任意で保守などの検討開始時期を登録できます
-                      </span>
-                    </div>
-                  </td>
-                </tr>
               </tbody>
             </table>
 
@@ -1295,7 +1297,7 @@ function MaintenanceQuoteRegistrationContent() {
                   fontWeight: 'bold',
                 }}
               >
-                契約発注完了→STEP④へ
+                契約登録完了→STEP④へ
               </button>
             </div>
           </Section>
@@ -1702,10 +1704,6 @@ function MaintenanceQuoteRegistrationContent() {
                       </td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold' }}>契約検討開始</td>
-                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>{formData.contractReviewStartDate || '（未設定）'}</td>
-                    </tr>
-                    <tr>
                       <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold' }}>登録見積数</td>
                       <td style={{ padding: '10px', border: '1px solid #ccc' }}>{registeredQuotations.length}件</td>
                     </tr>
@@ -1837,13 +1835,6 @@ function MaintenanceQuoteRegistrationContent() {
                     <tr>
                       <td style={{ padding: '8px', background: COLORS.step4, color: 'white', fontWeight: 'bold', width: '120px' }}>種別</td>
                       <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredDocuments[previewDocumentIndex].documentType}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '8px', background: COLORS.step4, color: 'white', fontWeight: 'bold' }}>勘定科目</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>
-                        {registeredDocuments[previewDocumentIndex].accountType}
-                        {registeredDocuments[previewDocumentIndex].accountOther && ` (${registeredDocuments[previewDocumentIndex].accountOther})`}
-                      </td>
                     </tr>
                     <tr>
                       <td style={{ padding: '8px', background: COLORS.step4, color: 'white', fontWeight: 'bold' }}>登録日時</td>
