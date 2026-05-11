@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore, useAssetStore } from '@/lib/stores';
+import { Asset } from '@/lib/types';
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { Header } from '@/components/layouts/Header';
 
@@ -428,11 +429,34 @@ function RepairTaskContent() {
 
   // REQ-084: 廃棄申請モーダルに渡す対象資産 (qrLabel をキーに資産マスタから検索)
   // ※ 早期 return より前で useMemo を呼ぶ必要があるため、ここに配置
+  // 資産マスタに一致が無い場合は request データから合成 Asset を生成（mock の qrLabel と資産マスタ qrCode の体系が異なるため）
   const disposalTargetAssets = useMemo(() => {
-    if (!request?.qrLabel) return [];
-    const match = assets.find((a) => a.qrCode === request.qrLabel);
-    return match ? [match] : [];
-  }, [assets, request?.qrLabel]);
+    if (!request) return [];
+    const match = request.qrLabel ? assets.find((a) => a.qrCode === request.qrLabel) : undefined;
+    if (match) return [match];
+    // フォールバック: request から最小限の Asset を合成
+    const synthetic = {
+      qrCode: request.qrLabel || '',
+      no: -1,
+      facility: 'サンプル病院',
+      building: '',
+      floor: '',
+      department: request.applicantDepartment || '',
+      section: '',
+      category: '',
+      largeClass: '',
+      mediumClass: '',
+      item: request.itemName || '',
+      name: request.itemName || '',
+      maker: request.maker || '',
+      model: request.model || '',
+      quantity: 1,
+      width: '',
+      depth: '',
+      height: '',
+    } as Asset;
+    return [synthetic];
+  }, [assets, request]);
 
   if (!request || !formData) {
     return (
