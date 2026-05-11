@@ -290,9 +290,11 @@ function RepairRequestsContent() {
     return Array.from(cats);
   }, [repairTasks]);
 
-  // タスクアクションハンドラー → 修理申請管理画面へ遷移
+  // タスクアクションハンドラー → 修理申請管理画面へ遷移（REQ-076: 申請内容 repairCategory を引き渡し）
   const handleNavigateToRepairTask = (id: number) => {
-    router.push(`/repair-task?id=${id}`);
+    const task = repairTasks.find(t => t.id === id);
+    const category = task?.repairCategory || '';
+    router.push(`/repair-task?id=${id}&repairCategory=${encodeURIComponent(category)}`);
   };
   const handleDelete = (id: number) => {
     if (confirm('この修理タスクを削除しますか？')) {
