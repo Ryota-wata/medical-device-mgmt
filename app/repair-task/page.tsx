@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore, useAssetStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
+import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 import { Header } from '@/components/layouts/Header';
 
 /** カラートークン（order-registration準拠） */
@@ -354,6 +355,8 @@ function RepairTaskContent() {
   // STEP②用：見積登録時の選択業者名・金額
   const [quotationVendorName, setQuotationVendorName] = useState<string>('');
   const [quotationAmount, setQuotationAmount] = useState<string>('');
+  // REQ-082: 見積登録時の会計区分
+  const [quotationAccountDivision, setQuotationAccountDivision] = useState<string>('');
   // STEP3用：登録済み見積リスト
   const [registeredQuotations, setRegisteredQuotations] = useState<RegisteredQuotation[]>([]);
   // STEP3用：選択中のファイル名
@@ -544,6 +547,7 @@ function RepairTaskContent() {
     setSelectedFileName('');
     setQuotationVendorName('');
     setQuotationAmount('');
+    setQuotationAccountDivision('');
 
     alert('見積を登録しました');
   };
@@ -1200,6 +1204,15 @@ function RepairTaskContent() {
                   style={{ ...inputStyle, width: '120px', fontVariantNumeric: 'tabular-nums' }}
                 />
                 <span style={{ fontSize: '12px', color: COLORS.textMuted }}>（税別）</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>会計区分</span>
+                <select value={quotationAccountDivision} onChange={(e) => setQuotationAccountDivision(e.target.value)} disabled={!isStepEnabled(2)} style={{ ...inputStyle, width: '180px' }}>
+                  <option value="">選択してください</option>
+                  {ACCOUNT_DIVISIONS.map((d) => (
+                    <option key={d.value} value={d.value}>{d.label}</option>
+                  ))}
+                </select>
               </div>
               <button
                 className="repair-btn"

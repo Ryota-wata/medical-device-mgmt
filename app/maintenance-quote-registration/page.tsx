@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
+import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 
 /** カラートークン */
 const COLORS = {
@@ -272,6 +273,8 @@ function MaintenanceQuoteRegistrationContent() {
   const [saveFormat, setSaveFormat] = useState<'電子取引' | 'スキャナ保存' | '未指定'>('未指定');
   const [selectedQuotationVendorId, setSelectedQuotationVendorId] = useState<number | ''>('');
   const [quotationAmount, setQuotationAmount] = useState<string>('');
+  // REQ-082: 見積登録時の会計区分
+  const [quotationAccountDivision, setQuotationAccountDivision] = useState<string>('');
   const [annualAmount, setAnnualAmount] = useState<string>('');
 
   // STEP④ ドキュメント
@@ -442,6 +445,7 @@ function MaintenanceQuoteRegistrationContent() {
     setRegisteredQuotations(prev => [...prev, newQuotation]);
     setSelectedQuotationFile('');
     setQuotationAmount('');
+    setQuotationAccountDivision('');
     setAnnualAmount('');
     setSelectedQuotationVendorId('');
     setPreviewTab(2);
@@ -1096,7 +1100,22 @@ function MaintenanceQuoteRegistrationContent() {
                     />
                   </div>
                 </div>
-                {/* 見積を登録ボタン */}
+                {/* 会計区分 (REQ-082) */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '80px' }}>会計区分</label>
+                  <select
+                    value={quotationAccountDivision}
+                    onChange={(e) => setQuotationAccountDivision(e.target.value)}
+                    disabled={!isStepEnabled(2)}
+                    style={{ ...inputStyle, width: '200px' }}
+                  >
+                    <option value="">選択してください</option>
+                    {ACCOUNT_DIVISIONS.map((d) => (
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* 見積書の登録 ボタン (REQ-082 統一文言) */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     className="maintenance-btn"
@@ -1113,7 +1132,7 @@ function MaintenanceQuoteRegistrationContent() {
                       fontWeight: 'bold',
                     }}
                   >
-                    見積を登録
+                    見積書の登録
                   </button>
                 </div>
               </div>

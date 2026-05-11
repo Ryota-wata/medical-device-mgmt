@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
+import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 
 /** カラートークン */
 const COLORS = {
@@ -1305,14 +1306,13 @@ function DisposalTaskContent() {
                   <select
                     value={quotationAccountType}
                     onChange={(e) => setQuotationAccountType(e.target.value)}
-                    style={{ ...inputStyle, width: '140px' }}
+                    style={{ ...inputStyle, width: '200px' }}
                     disabled={!isStepEnabled(2) || 2 < activeStep}
                   >
                     <option value="">選択してください</option>
-                    <option value="修繕費">修繕費</option>
-                    <option value="消耗品費">消耗品費</option>
-                    <option value="廃棄費">廃棄費</option>
-                    <option value="その他">その他</option>
+                    {ACCOUNT_DIVISIONS.map((d) => (
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -1348,7 +1348,7 @@ function DisposalTaskContent() {
                     fontWeight: 'bold',
                   }}
                 >
-                  {formData.quotationPhase === '発注用' ? '発注用見積登録' : '参考見積登録'}
+                  見積書の登録
                 </button>
               </div>
             </div>

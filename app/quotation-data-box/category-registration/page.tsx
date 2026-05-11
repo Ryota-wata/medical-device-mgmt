@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
+import { ACCOUNT_DIVISIONS as CATEGORY_OPTIONS } from '@/lib/data/account-divisions';
 
 // 明細区分の型
 type DetailClassification =
@@ -25,27 +26,6 @@ const DETAIL_CLASSIFICATION_OPTIONS: { value: DetailClassification; label: strin
   { value: '孫明細', label: '孫明細' },
   { value: 'その他', label: 'その他' },
   { value: '値引き', label: '値引き' },
-];
-
-// category（会計区分）の選択肢
-const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: '01', label: '01 医療機器' },
-  { value: '02', label: '02 医療用具' },
-  { value: '03', label: '03 鋼製小物' },
-  { value: '04', label: '04 什器備品' },
-  { value: '05', label: '05 家電製品' },
-  { value: '06', label: '06 その他器械備品' },
-  { value: '07', label: '07 情報機器' },
-  { value: '08', label: '08 ソフトウェア' },
-  { value: '09', label: '09 車両他' },
-  { value: '10', label: '10 放射線同位元素' },
-  { value: '11', label: '11 建物' },
-  { value: '12', label: '12 建物付帯設備' },
-  { value: '13', label: '13 その他' },
-  { value: '14', label: '14 器械保守料' },
-  { value: '15', label: '15 修繕費' },
-  { value: '16', label: '16 器械賃借料' },
-  { value: '17', label: '17 材料費' },
 ];
 
 // 明細データの型
