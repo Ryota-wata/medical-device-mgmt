@@ -766,7 +766,7 @@ function DailyInspectionContent() {
                 : 'text-[#27ae60] bg-white border border-[#27ae60] cursor-pointer hover:bg-[#f0fdf4]'
             }`}
           >
-            {isExporting ? '出力中...' : '報告書出力'}
+            {isExporting ? '出力中...' : '修理申請へ'}
           </button>
         </div>
       </div>

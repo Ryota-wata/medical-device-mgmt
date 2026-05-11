@@ -11,8 +11,8 @@ interface StepProgressBarProps {
 const DEFAULT_STEPS = [
   { step: 1, label: '見積情報入力' },
   { step: 2, label: 'OCR明細確認' },
-  { step: 3, label: '登録区分登録' },
-  { step: 4, label: '個体品目AI判定' },
+  { step: 3, label: '明細区分登録' },
+  { step: 4, label: '資産マスタ登録' },
   { step: 5, label: '個体登録/金額按分' },
   { step: 6, label: '登録確認' },
 ];

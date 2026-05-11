@@ -140,7 +140,7 @@ export default function CategoryRegistrationPage() {
     router.push('/quotation-data-box/ocr-confirm');
   };
 
-  // 次へボタン（個体品目AI判定へ）
+  // 次へボタン（資産マスタ登録へ）
   const handleNext = () => {
     // 全件登録済みかチェック
     const allRegistered = detailItems.every(item => item.isRegistered);
@@ -180,7 +180,7 @@ export default function CategoryRegistrationPage() {
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>登録区分登録</span>
+              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>明細区分登録</span>
               <span style={{ fontSize: '12px', opacity: 0.9 }}>
                 登録: {registeredCount} / {detailItems.length}件
               </span>
@@ -199,7 +199,7 @@ export default function CategoryRegistrationPage() {
                 <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   <tr>
                     <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', borderRight: '1px solid #ccc' }}>商品情報（原本情報）</th>
-                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>STEP❸ 登録区分登録</th>
+                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>STEP❸ 明細区分登録</th>
                   </tr>
                   <tr>
                     <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '40px' }}>No.</th>
@@ -348,7 +348,7 @@ export default function CategoryRegistrationPage() {
               fontWeight: 'bold',
             }}
           >
-            個体品目AI判定へ
+            資産マスタ登録へ
           </button>
         </div>
       </div>

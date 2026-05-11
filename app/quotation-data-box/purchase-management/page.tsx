@@ -56,15 +56,14 @@ function PurchaseManagementContent() {
   const [applicationToReject, setApplicationToReject] = useState<string | null>(null);
 
   // 見積依頼グループ: ステップタブ
-  type StepKey = 'all' | 'rfq-quotation' | 'order-rfq' | 'order' | 'delivery' | 'inspection' | 'asset';
+  type StepKey = 'all' | 'rfq-quotation' | 'order' | 'delivery' | 'inspection' | 'asset';
   const STEP_TABS: { key: StepKey; label: string; statuses: RfqGroupStatus[] }[] = [
     { key: 'all', label: 'すべて', statuses: [] },
     { key: 'rfq-quotation', label: '①見積依頼・登録', statuses: ['見積依頼', '見積依頼済', '見積DB登録済'] },
-    { key: 'order-rfq', label: '②発注見積依頼', statuses: ['見積登録依頼中', '発注用見積依頼済'] },
-    { key: 'order', label: '③発注登録', statuses: ['発注見積登録済'] },
-    { key: 'delivery', label: '④納品日登録', statuses: ['発注済'] },
-    { key: 'inspection', label: '⑤検収登録', statuses: ['納期確定'] },
-    { key: 'asset', label: '⑥資産登録', statuses: ['検収済'] },
+    { key: 'order', label: '②発注登録', statuses: ['発注見積登録済'] },
+    { key: 'delivery', label: '③納品日登録', statuses: ['発注済'] },
+    { key: 'inspection', label: '④検収登録', statuses: ['納期確定'] },
+    { key: 'asset', label: '⑤資産登録', statuses: ['検収済'] },
   ];
   const [activeStep, setActiveStep] = useState<StepKey>('all');
 

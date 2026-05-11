@@ -12,8 +12,8 @@ import { Header } from '@/components/layouts/Header';
 const STEPS = [
   { num: 1, label: '見積情報入力' },
   { num: 2, label: 'OCR明細確認' },
-  { num: 3, label: '登録区分登録' },
-  { num: 4, label: '個体品目AI判定' },
+  { num: 3, label: '明細区分登録' },
+  { num: 4, label: '資産マスタ登録' },
   { num: 5, label: '個体登録,金額案分' },
   { num: 6, label: '登録確認' },
 ];
