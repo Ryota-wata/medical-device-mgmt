@@ -58,7 +58,7 @@ const DISPOSAL_STEPS = [
   { step: 1, label: '見積依頼' },
   { step: 2, label: '見積登録' },
   { step: 3, label: '発注登録' },
-  { step: 5, label: '検収登録' },
+  { step: 4, label: '完了登録' },
 ];
 
 // ステータス型（8ステータス）
@@ -76,7 +76,7 @@ interface RegisteredQuotation {
   registeredAt: string;
 }
 
-// 登録済みドキュメントの型（STEP⑤用）
+// 登録済みドキュメントの型（STEP④用）
 interface RegisteredDocument {
   id: number;
   documentType: '完了報告書' | '廃棄証明書' | 'マニフェスト' | '契約書' | '請求書' | 'その他';
@@ -181,8 +181,8 @@ const getInitialStep = (status: DisposalStatus): number => {
     case '発注用見積登録済': return 2;
     case '発注済': return 3;
     case '納期確定': return 3;
-    case '検収済': return 5;
-    case '完了': return 5;
+    case '検収済': return 4;
+    case '完了': return 4;
     case '申請見送り': return 1;
     default: return 1;
   }
@@ -313,7 +313,7 @@ function DisposalTaskContent() {
   const [quotationAccountType, setQuotationAccountType] = useState<string>('');
   // STEP③用：決済No.
   const [settlementNo, setSettlementNo] = useState<string>('');
-  // STEP⑤用：ドキュメント関連
+  // STEP④用：ドキュメント関連
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
   const [selectedDocFileName, setSelectedDocFileName] = useState<string>('');
   // プレビュータブ
@@ -544,17 +544,17 @@ function DisposalTaskContent() {
     }, 300);
   };
 
-  // STEP③: 発注登録完了 → STEP⑤へ
+  // STEP③: 発注登録完了 → STEP④へ
   const handleStep3Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
       setApplication(prev => prev ? { ...prev, status: '発注済' } : prev);
-      setCurrentStep(5);
+      setCurrentStep(4);
       setIsSubmitting(false);
     }, 300);
   };
 
-  // STEP⑤: ドキュメント追加
+  // STEP④: ドキュメント追加
   const handleAddDocument = () => {
     if (!selectedDocFileName) return;
     const newDoc: RegisteredDocument = {
@@ -569,7 +569,7 @@ function DisposalTaskContent() {
     setSelectedDocFileName('');
   };
 
-  // STEP⑤: 検収完了（タスク完了）
+  // STEP④: 完了登録（タスク完了）
   const handleStep5Complete = () => {
     if (confirm('検収を完了し、このタスクを完了しますか？')) {
       setIsSubmitting(true);
@@ -1516,13 +1516,13 @@ function DisposalTaskContent() {
             enabled={isStepEnabled(3)}
             completed={3 < activeStep}
           >
-            {/* 納期確認 */}
+            {/* 作業日確認 */}
             <div style={{ marginBottom: '20px' }}>
               <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                納期確認
+                作業日確認
               </div>
               <FormRow>
-                <label style={labelStyle}>納期</label>
+                <label style={labelStyle}>作業日</label>
                 <input
                   type="date"
                   value={formData.deliveryDate}
@@ -1556,10 +1556,10 @@ function DisposalTaskContent() {
             </div>
           </Section>
 
-          {/* ===== STEP⑤ 検収登録 ===== */}
+          {/* ===== STEP④ 完了登録 ===== */}
           <Section
             step={5}
-            title="STEP⑤．検収登録"
+            title="STEP④．完了登録"
             accentColor="#dc2626"
             enabled={isStepEnabled(5)}
             completed={false}
@@ -2177,7 +2177,7 @@ function DisposalTaskContent() {
                   <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
                     <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
                     <div>登録済みのドキュメントはありません</div>
-                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP⑤でドキュメントを登録してください</div>
+                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP④でドキュメントを登録してください</div>
                   </div>
                 )}
               </div>
