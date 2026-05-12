@@ -333,103 +333,133 @@ export function ColumnSettingsModal({
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
         }}
       >
-        {/* モーダルヘッダー */}
+        {/* モーダルヘッダー（Figma準拠: light bg + dark text） */}
         <div
           onMouseDown={handleMouseDown}
           style={{
-            background: '#9b59b6',
-            color: 'white',
-            padding: '20px 24px',
-            fontSize: '18px',
-            fontWeight: 'bold',
+            background: '#FAFAFA',
+            color: '#4A4A4A',
+            padding: '14px 20px',
+            fontSize: 16,
+            fontWeight: 700,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             cursor: isDragging ? 'grabbing' : 'grab',
             userSelect: 'none',
+            borderBottom: '1px solid #E1E1E1',
           }}
         >
-          <span>表示カラム設定（{columns.length}カラム）</span>
+          <span>表示カラム設定 <span style={{ fontSize: 13, color: '#8A8A8A', fontWeight: 500, marginLeft: 6 }}>{columns.length}カラム</span></span>
           <button
             onClick={onClose}
             onMouseDown={(e) => e.stopPropagation()}
+            aria-label="閉じる"
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'white',
-              fontSize: '24px',
+              color: '#8A8A8A',
               cursor: 'pointer',
-              padding: '0',
-              width: '30px',
-              height: '30px',
+              padding: 0,
+              width: 28,
+              height: 28,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 4,
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
-            ×
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
           </button>
         </div>
 
         {/* モーダルボディ */}
         <div style={{ padding: '24px', overflow: 'auto', flex: 1 }}>
-          <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ marginBottom: 16, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <button
               onClick={onSelectAll}
               style={{
-                padding: '8px 16px',
-                background: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
+                padding: '6px 12px',
+                background: '#FFFFFF',
+                color: '#146E2E',
+                border: '1px solid #008C1D',
+                borderRadius: 6,
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: 13,
+                fontWeight: 500,
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#EBF5EE')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
             >
               全て選択
             </button>
             <button
               onClick={onDeselectAll}
               style={{
-                padding: '8px 16px',
-                background: '#95a5a6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
+                padding: '6px 12px',
+                background: '#FFFFFF',
+                color: '#4A4A4A',
+                border: '1px solid #E1E1E1',
+                borderRadius: 6,
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: 13,
+                fontWeight: 500,
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
             >
               全て解除
             </button>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
               <button
                 onClick={() => setIsBookmarkInputOpen(!isBookmarkInputOpen)}
                 style={{
-                  padding: '8px 16px',
-                  background: '#f39c12',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
+                  padding: '6px 12px',
+                  background: '#FFFFFF',
+                  color: '#4A4A4A',
+                  border: '1px solid #E1E1E1',
+                  borderRadius: 6,
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  display: 'flex',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: 6,
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
               >
-                ⭐ ブックマーク保存
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                ブックマーク保存
               </button>
               <button
                 onClick={() => setShowBookmarks(!showBookmarks)}
                 style={{
-                  padding: '8px 16px',
-                  background: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
+                  padding: '6px 12px',
+                  background: '#FFFFFF',
+                  color: '#4A4A4A',
+                  border: '1px solid #E1E1E1',
+                  borderRadius: 6,
                   cursor: 'pointer',
-                  fontSize: '14px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
               >
-                📚 ブックマーク一覧 ({bookmarks.length})
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                ブックマーク一覧 <span className="tabular-nums">({bookmarks.length})</span>
               </button>
             </div>
           </div>
@@ -437,16 +467,16 @@ export function ColumnSettingsModal({
           {/* ブックマーク保存フォーム */}
           {isBookmarkInputOpen && (
             <div style={{
-              marginBottom: '20px',
-              padding: '16px',
-              background: '#fff3cd',
-              border: '1px solid #f39c12',
-              borderRadius: '6px',
+              marginBottom: 16,
+              padding: 14,
+              background: '#FAFAFA',
+              border: '1px solid #E1E1E1',
+              borderRadius: 6,
             }}>
-              <div style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 'bold', color: '#856404' }}>
+              <div style={{ marginBottom: 10, fontSize: 13, fontWeight: 600, color: '#4A4A4A' }}>
                 現在の選択状態をブックマークとして保存
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
                   value={bookmarkName}
@@ -455,23 +485,26 @@ export function ColumnSettingsModal({
                   placeholder="ブックマーク名を入力..."
                   style={{
                     flex: 1,
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    fontSize: '14px',
+                    padding: '7px 10px',
+                    border: '1px solid #E1E1E1',
+                    borderRadius: 6,
+                    fontSize: 13,
                   }}
                 />
                 <button
                   onClick={saveBookmark}
                   style={{
-                    padding: '8px 16px',
-                    background: '#27ae60',
-                    color: 'white',
+                    padding: '7px 14px',
+                    background: '#008C1D',
+                    color: '#FFFFFF',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: 6,
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: 13,
+                    fontWeight: 600,
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#0A6B17')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#008C1D')}
                 >
                   保存
                 </button>
@@ -481,14 +514,16 @@ export function ColumnSettingsModal({
                     setBookmarkName('');
                   }}
                   style={{
-                    padding: '8px 16px',
-                    background: '#95a5a6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
+                    padding: '7px 14px',
+                    background: '#FFFFFF',
+                    color: '#4A4A4A',
+                    border: '1px solid #E1E1E1',
+                    borderRadius: 6,
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: 13,
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
                 >
                   キャンセル
                 </button>
@@ -499,73 +534,78 @@ export function ColumnSettingsModal({
           {/* ブックマーク一覧 */}
           {showBookmarks && (
             <div style={{
-              marginBottom: '20px',
-              padding: '16px',
-              background: '#e3f2fd',
-              border: '1px solid #3498db',
-              borderRadius: '6px',
-              maxHeight: '300px',
+              marginBottom: 16,
+              padding: 14,
+              background: '#FAFAFA',
+              border: '1px solid #E1E1E1',
+              borderRadius: 6,
+              maxHeight: 300,
               overflow: 'auto',
             }}>
-              <div style={{ marginBottom: '12px', fontSize: '14px', fontWeight: 'bold', color: '#1565c0' }}>
+              <div style={{ marginBottom: 10, fontSize: 13, fontWeight: 600, color: '#4A4A4A' }}>
                 保存済みブックマーク
               </div>
               {bookmarks.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#666', fontSize: '14px' }}>
+                <div style={{ padding: 16, textAlign: 'center', color: '#8A8A8A', fontSize: 13 }}>
                   ブックマークがまだ保存されていません
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {bookmarks.map((bookmark) => {
                     const selectedCount = Object.values(bookmark.visibleColumns).filter(Boolean).length;
                     return (
                       <div
                         key={bookmark.id}
                         style={{
-                          padding: '12px',
-                          background: 'white',
-                          borderRadius: '4px',
+                          padding: 10,
+                          background: '#FFFFFF',
+                          borderRadius: 6,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '12px',
-                          border: '1px solid #dee2e6',
+                          gap: 10,
+                          border: '1px solid #E1E1E1',
                         }}
                       >
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#2c3e50', marginBottom: '4px' }}>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: '#4A4A4A', marginBottom: 2 }}>
                             {bookmark.name}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                          <div style={{ fontSize: 11, color: '#8A8A8A' }}>
                             {selectedCount}カラム選択 • {new Date(bookmark.createdAt).toLocaleString('ja-JP')}
                           </div>
                         </div>
                         <button
                           onClick={() => applyBookmark(bookmark)}
                           style={{
-                            padding: '6px 12px',
-                            background: '#27ae60',
-                            color: 'white',
+                            padding: '5px 10px',
+                            background: '#008C1D',
+                            color: '#FFFFFF',
                             border: 'none',
-                            borderRadius: '4px',
+                            borderRadius: 6,
                             cursor: 'pointer',
-                            fontSize: '13px',
+                            fontSize: 12,
+                            fontWeight: 600,
                             whiteSpace: 'nowrap',
                           }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#0A6B17')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '#008C1D')}
                         >
                           適用
                         </button>
                         <button
                           onClick={() => deleteBookmark(bookmark.id)}
                           style={{
-                            padding: '6px 12px',
-                            background: '#e74c3c',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
+                            padding: '5px 10px',
+                            background: '#FFFFFF',
+                            color: '#DA0000',
+                            border: '1px solid #E1E1E1',
+                            borderRadius: 6,
                             cursor: 'pointer',
-                            fontSize: '13px',
+                            fontSize: 12,
                             whiteSpace: 'nowrap',
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#DA0000'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E1E1E1'; }}
                         >
                           削除
                         </button>
@@ -585,27 +625,25 @@ export function ColumnSettingsModal({
               if (groupCols.length === 0) return null;
               const status = getGroupStatus(group.id);
 
+              const groupBg = status === 'all' ? '#EBF5EE' : status === 'partial' ? '#FDF1E5' : '#FAFAFA';
+              const groupBgHover = status === 'all' ? '#DBEDE0' : status === 'partial' ? '#F5E2CB' : '#F1F1F1';
               return (
-                <div key={group.id} style={{ border: '1px solid #dee2e6', borderRadius: '6px', overflow: 'hidden' }}>
+                <div key={group.id} style={{ border: '1px solid #E1E1E1', borderRadius: 6, overflow: 'hidden' }}>
                   {/* グループヘッダー */}
                   <div
                     onClick={() => handleGroupToggle(group.id)}
                     style={{
-                      background: status === 'all' ? '#e8f5e9' : status === 'partial' ? '#fff3e0' : '#f5f5f5',
-                      padding: '12px 16px',
+                      background: groupBg,
+                      padding: '10px 14px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      borderBottom: '1px solid #dee2e6',
-                      transition: 'background 0.2s',
+                      gap: 10,
+                      borderBottom: '1px solid #E1E1E1',
+                      transition: 'background 0.15s ease',
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = status === 'all' ? '#c8e6c9' : status === 'partial' ? '#ffe0b2' : '#eeeeee';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = status === 'all' ? '#e8f5e9' : status === 'partial' ? '#fff3e0' : '#f5f5f5';
-                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = groupBgHover)}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = groupBg)}
                   >
                     <input
                       type="checkbox"
@@ -614,34 +652,34 @@ export function ColumnSettingsModal({
                         if (el) el.indeterminate = status === 'partial';
                       }}
                       onChange={() => {}}
-                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      style={{ cursor: 'pointer', width: 16, height: 16, accentColor: '#008C1D' }}
                     />
-                    <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#2c3e50' }}>
-                      {group.label} ({groupCols.filter(col => visibleColumns[col.key]).length}/{groupCols.length})
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#4A4A4A' }}>
+                      {group.label} <span style={{ fontSize: 12, color: '#8A8A8A', fontWeight: 500 }} className="tabular-nums">({groupCols.filter(col => visibleColumns[col.key]).length}/{groupCols.length})</span>
                     </span>
                   </div>
 
                   {/* グループ内のカラム */}
-                  <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                  <div style={{ padding: 10, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, background: '#FFFFFF' }}>
                     {groupCols.map((col) => (
                       <label
                         key={col.key}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
-                          padding: '8px',
-                          background: visibleColumns[col.key] ? '#e3f2fd' : 'white',
-                          borderRadius: '4px',
+                          gap: 8,
+                          padding: '6px 10px',
+                          background: visibleColumns[col.key] ? '#EBF5EE' : '#FFFFFF',
+                          borderRadius: 4,
                           cursor: 'pointer',
-                          transition: 'background 0.2s',
-                          border: '1px solid transparent',
+                          transition: 'all 0.15s ease',
+                          border: `1px solid ${visibleColumns[col.key] ? '#008C1D' : 'transparent'}`,
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = '#90caf9';
+                          if (!visibleColumns[col.key]) e.currentTarget.style.background = '#FAFAFA';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = 'transparent';
+                          if (!visibleColumns[col.key]) e.currentTarget.style.background = '#FFFFFF';
                         }}
                       >
                         <input
@@ -652,12 +690,12 @@ export function ColumnSettingsModal({
                             onVisibilityChange(col.key);
                           }}
                           disabled={lockedColumns?.has(col.key)}
-                          style={{ cursor: lockedColumns?.has(col.key) ? 'not-allowed' : 'pointer' }}
+                          style={{ cursor: lockedColumns?.has(col.key) ? 'not-allowed' : 'pointer', accentColor: '#008C1D' }}
                         />
-                        <span style={{ fontSize: '13px', color: lockedColumns?.has(col.key) ? '#95a5a6' : '#2c3e50' }}>
+                        <span style={{ fontSize: 12, color: lockedColumns?.has(col.key) ? '#8A8A8A' : '#4A4A4A' }}>
                           {col.label}
                           {lockedColumns?.has(col.key) && (
-                            <span style={{ fontSize: '10px', color: '#e74c3c', marginLeft: '4px' }}>管理者により非表示</span>
+                            <span style={{ fontSize: 10, color: '#DA0000', marginLeft: 4 }}>管理者により非表示</span>
                           )}
                         </span>
                       </label>
@@ -672,8 +710,9 @@ export function ColumnSettingsModal({
         {/* モーダルフッター */}
         <div
           style={{
-            padding: '16px 24px',
-            borderTop: '1px solid #dee2e6',
+            padding: '12px 20px',
+            borderTop: '1px solid #E1E1E1',
+            background: '#FAFAFA',
             display: 'flex',
             justifyContent: 'flex-end',
           }}
@@ -681,15 +720,17 @@ export function ColumnSettingsModal({
           <button
             onClick={onClose}
             style={{
-              padding: '10px 24px',
-              background: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
+              padding: '8px 20px',
+              background: '#FFFFFF',
+              color: '#4A4A4A',
+              border: '1px solid #E1E1E1',
+              borderRadius: 6,
               cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              fontSize: 13,
+              fontWeight: 500,
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
           >
             閉じる
           </button>

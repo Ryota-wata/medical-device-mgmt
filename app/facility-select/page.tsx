@@ -56,22 +56,22 @@ export default function FacilitySelectPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-gray-50 overflow-y-auto py-8">
-      <div className="bg-white w-full max-w-md mx-5 p-12 my-auto rounded-xl shadow-md">
+    <div className="min-h-dvh flex items-center justify-center bg-surface-screen overflow-y-auto py-8 font-figma">
+      <div className="bg-surface-card border border-stroke-card w-full max-w-md mx-5 p-10 my-auto rounded-2xl">
         {/* タイトル */}
-        <h1 className="text-2xl font-bold text-center mb-2 text-balance text-gray-800">
+        <h1 className="text-[24px] font-bold text-center mb-4 text-balance text-content-primary leading-[1.3]">
           作業対象施設の選択
         </h1>
-        <p className="text-sm text-gray-500 text-center mb-8 text-pretty">
+        <p className="text-base text-content-primary text-center mb-10 text-pretty leading-[1.5]">
           作業を行う施設を選択してください
         </p>
 
         {/* ユーザー情報 */}
         <div className="mb-6">
-          <label className="block text-sm font-semibold mb-1 text-gray-800">
+          <label className="block text-base font-normal mb-1 text-content-primary leading-[1.5]">
             管理者太郎
           </label>
-          <div className="w-full px-4 py-3 text-sm text-gray-500 bg-gray-100 rounded-lg border border-gray-200">
+          <div className="w-full h-[42px] px-3 py-[9px] text-base text-content-sub bg-content-placeholder rounded-lg border border-stroke-input">
             {user.email}
           </div>
         </div>
@@ -80,8 +80,8 @@ export default function FacilitySelectPage() {
           /* 全施設管理者: SearchableSelect + 決定ボタン */
           <>
             <div className="mb-8">
-              <label className="block text-sm font-semibold mb-1 text-gray-800">
-                <span className="text-red-600">※</span>施設を選択
+              <label className="block text-base font-normal mb-1 text-content-primary leading-[1.5]">
+                <span className="text-content-alert">※</span>施設を選択
               </label>
               <SearchableSelect
                 value={selected}
@@ -93,10 +93,10 @@ export default function FacilitySelectPage() {
             <button
               onClick={handleSubmit}
               disabled={!selected}
-              className={`w-full border-0 rounded-lg text-base font-semibold py-3.5 px-6 transition-colors ${
+              className={`w-full h-12 border-0 rounded-lg text-base font-normal px-6 transition-colors ${
                 selected
-                  ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-cta-primary hover:opacity-90 text-white cursor-pointer'
+                  : 'bg-surface-disabled text-content-disabled cursor-not-allowed'
               }`}
             >
               決定
@@ -109,17 +109,17 @@ export default function FacilitySelectPage() {
               <button
                 key={facilityName}
                 onClick={() => handleFacilitySelect(facilityName)}
-                className="w-full text-left px-5 py-4 bg-white border border-gray-200 rounded-lg text-base font-semibold text-gray-700 cursor-pointer transition-colors hover:border-green-500 hover:bg-green-50"
+                className="w-full text-left px-5 py-4 bg-surface-card border border-stroke-input rounded-lg text-base font-normal text-content-primary cursor-pointer transition-colors hover:border-cta-primary hover:bg-surface-select"
               >
                 <div className="flex items-center justify-between">
                   <span>{facilityName}</span>
-                  <span className="text-green-600 text-xl">→</span>
+                  <span className="text-cta-primary text-xl">→</span>
                 </div>
               </button>
             ))}
 
             {facilityList.length === 0 && (
-              <div className="text-center py-10 text-gray-400 text-pretty">
+              <div className="text-center py-10 text-content-sub text-pretty">
                 <p>アクセス可能な施設がありません</p>
                 <p className="text-sm mt-2">管理者にお問い合わせください</p>
               </div>

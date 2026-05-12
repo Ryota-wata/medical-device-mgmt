@@ -28,6 +28,7 @@
   --color-foreground: var(--foreground);
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
   --font-mono: var(--font-geist-mono);
+  --font-figma: 'Hiragino Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
 
   /* カスタムカラー */
   --color-header: #2c3e50;
@@ -40,6 +41,23 @@
   --color-info-dark: #138496;
   --color-secondary: #6c757d;
   --color-secondary-dark: #5a6268;
+
+  /* Figma 準拠カラー（Step ② デザイン反映で導入） */
+  --color-content-primary: #4A4A4A;       /* 本文・見出し */
+  --color-content-sub: #8A8A8A;           /* 補助テキスト */
+  --color-content-disabled: #D6D6D6;      /* 無効テキスト */
+  --color-content-placeholder: #E6E6E6;   /* プレースホルダー */
+  --color-content-alert: #DA0000;         /* 必須印・エラー強調 */
+  --color-content-link: #0092E6;          /* リンク */
+  --color-surface-screen: #FAFAFA;        /* 画面背景 */
+  --color-surface-card: #FFFFFF;          /* カード・フォーム背景 */
+  --color-surface-disabled: #F1F1F1;      /* 無効ボタン背景 */
+  --color-cta-primary: #008C1D;           /* 主要CTA（緑塗りつぶし） */
+  --color-cta-primary-dark: #146E2E;      /* CTAアウトラインボタンのテキスト色 */
+  --color-stroke-input: #E1E1E1;          /* 入力欄ボーダー */
+  --color-stroke-card: #F1F1F1;           /* カード薄ボーダー */
+  --color-surface-header: #EDEDED;        /* ヘッダー背景 */
+  --color-surface-select: #EBF5EE;        /* ドロップダウン選択中ハイライト（薄緑） */
 }
 
 body {

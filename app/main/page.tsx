@@ -11,6 +11,7 @@ import { usePermissions } from '@/lib/hooks/usePermissions';
 import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
+import { AppHeader, type AppHeaderNavItem } from '@/components/layouts/AppHeader';
 
 export default function MainPage() {
   const router = useRouter();
@@ -316,13 +317,9 @@ export default function MainPage() {
     }
   };
 
-  // ヘッダーナビアイテムのスタイル
-  const navItemClass = 'flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#1f2937] hover:bg-[#f3f4f6] rounded-md transition-colors cursor-pointer border-0 bg-transparent';
-  const navIconClass = 'size-4 text-[#6b7280]';
-
-  // ヘッダーナビアイテムの構築
-  const headerNavItems = useMemo(() => {
-    const items: { key: string; label: string; icon: string; onClick: () => void; visible: boolean }[] = [
+  // ヘッダーナビアイテムの構築（AppHeader用、visible で権限フィルタ）
+  const headerNavItems: AppHeaderNavItem[] = useMemo(() => {
+    return [
       { key: 'qr', label: 'QR読取', icon: 'qr', onClick: handleQRRead, visible: isShipUser },
       { key: 'editList', label: '編集・分析', icon: 'list', onClick: handleEditListManagement, visible: isMainButtonVisible('edit_list') },
       { key: 'taskMgmt', label: 'タスク管理', icon: 'clipboard', onClick: handleQuotationManagement, visible: canAccess('normal_purchase') },
@@ -330,174 +327,19 @@ export default function MainPage() {
       { key: 'qrIssue', label: 'QRコード発行', icon: 'qr', onClick: handleQRIssueFromModal, visible: isHospitalUser && canAccess('qr_issue') },
       { key: 'master', label: 'マスタ管理', icon: 'user', onClick: isShipUser ? showMasterModal : () => { setIsMobileMenuOpen(false); setIsHospitalMasterModalOpen(true); }, visible: isMainButtonVisible('master_management') },
     ];
-    return items.filter(item => item.visible);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isShipUser, isHospitalUser, isAdmin, canAccess, isMainButtonVisible]);
 
-  // SVGアイコンコンポーネント
-  const NavIcon = ({ type }: { type: string }) => {
-    switch (type) {
-      case 'qr':
-        return (
-          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
-            <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h1a1 1 0 110 2h-2a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM13 11a1 1 0 100 2h3a1 1 0 100-2h-3zM15 13a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1z" />
-          </svg>
-        );
-      case 'list':
-        return (
-          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
-          </svg>
-        );
-      case 'clipboard':
-        return (
-          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-            <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-          </svg>
-        );
-      case 'user':
-        return (
-          <svg className={navIconClass} viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="min-h-dvh flex flex-col bg-[#f9fafb] p-5">
-      <div className="max-w-[1400px] mx-auto bg-white rounded-lg shadow-lg w-full flex flex-col">
-        {/* ヘッダー */}
-        <header className="bg-white border-b border-[#e5e7eb] px-5 py-3 rounded-t-lg">
-          <div className="flex justify-between items-center">
-            {/* 左: ロゴ + タイトル */}
-            <div className="flex items-center gap-2.5">
-              <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px]">
-                logo
-              </div>
-              {!isMobile && (
-                <div className="text-lg font-bold text-[#1f2937] text-balance">
-                  HEALTHCARE 医療機器管理システム
-                </div>
-              )}
-            </div>
-
-            {/* PC/タブレット: ナビゲーション */}
-            {!isMobile && (
-              <div className="flex items-center gap-0.5">
-                {/* 施設バッジ */}
-                {selectedFacility && user?.accessibleFacilities && (
-                  <div className="flex items-center gap-2 mr-2">
-                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium">
-                      {selectedFacility}
-                    </span>
-                    <button
-                      onClick={() => router.push('/facility-select')}
-                      className="px-2 py-1 text-xs text-[#6b7280] hover:text-[#1f2937] hover:bg-[#f3f4f6] rounded border-0 bg-transparent cursor-pointer transition-colors"
-                    >
-                      施設切替
-                    </button>
-                  </div>
-                )}
-
-                {/* ナビアイテム */}
-                {headerNavItems.map(item => (
-                  <button key={item.key} onClick={item.onClick} className={navItemClass}>
-                    <NavIcon type={item.icon} />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-
-                {/* ユーティリティアイコン */}
-                <div className="flex items-center gap-0.5 ml-2 pl-2 border-l border-[#e5e7eb]">
-                  <button
-                    className="size-9 flex items-center justify-center rounded-md text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
-                    aria-label="ユーザー情報"
-                    title={user?.username || ''}
-                  >
-                    <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="size-9 flex items-center justify-center rounded-md text-[#6b7280] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border-0 bg-transparent"
-                    aria-label="ログアウト"
-                  >
-                    <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4.414l-4.293 4.293a1 1 0 01-1.414-1.414L11.586 7H7a1 1 0 110-2h6a1 1 0 011 1v6a1 1 0 11-2 0V7.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* スマートフォン: ハンバーガーメニュー */}
-            {isMobile && (
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="size-10 flex items-center justify-center rounded-md text-[#1f2937] hover:bg-[#f3f4f6] transition-colors cursor-pointer border-0 bg-transparent"
-                aria-label="メニュー"
-              >
-                {isMobileMenuOpen ? (
-                  <svg className="size-6" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg className="size-6" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* スマートフォン: 展開メニュー */}
-          {isMobile && isMobileMenuOpen && (
-            <div className="mt-3 pt-3 border-t border-[#e5e7eb] flex flex-col gap-1">
-              {/* 施設バッジ */}
-              {selectedFacility && user?.accessibleFacilities && (
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-medium">
-                    {selectedFacility}
-                  </span>
-                  <button
-                    onClick={() => router.push('/facility-select')}
-                    className="text-xs text-[#6b7280] hover:text-[#1f2937] border-0 bg-transparent cursor-pointer"
-                  >
-                    施設切替
-                  </button>
-                </div>
-              )}
-
-              {headerNavItems.map(item => (
-                <button key={item.key} onClick={item.onClick} className={navItemClass}>
-                  <NavIcon type={item.icon} />
-                  <span>{item.label}</span>
-                </button>
-              ))}
-
-              <div className="border-t border-[#e5e7eb] mt-1 pt-1">
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer border-0 bg-transparent w-full"
-                >
-                  <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4.414l-4.293 4.293a1 1 0 01-1.414-1.414L11.586 7H7a1 1 0 110-2h6a1 1 0 011 1v6a1 1 0 11-2 0V7.414z" clipRule="evenodd" />
-                  </svg>
-                  <span>ログアウト</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </header>
+    <div className="min-h-dvh flex flex-col bg-surface-screen p-5 font-figma">
+      <div className="max-w-[1400px] mx-auto bg-surface-card rounded-lg shadow-lg w-full flex flex-col">
+        {/* 共通ヘッダー（AppHeader: ロゴ + システム名 + ナビ + ユーザーメニュー） */}
+        <div className="rounded-t-lg overflow-visible">
+          <AppHeader navItems={headerNavItems} />
+        </div>
 
         {/* メニューセクション */}
-        <div className={`bg-white ${isMobile ? 'px-4 py-5' : isTablet ? 'px-5 py-6' : 'px-8 py-10'}`}>
+        <div className={`bg-surface-card ${isMobile ? 'px-4 py-5' : isTablet ? 'px-5 py-6' : 'px-8 py-10'}`}>
           <div className={`max-w-[1000px] mx-auto ${
             isMobile
               ? 'flex flex-col gap-3'
@@ -509,8 +351,8 @@ export default function MainPage() {
             {isMainButtonVisible('asset_list') && (
               <button
                 onClick={isHospitalUser ? handleAssetListForHospital : handleAssetBrowseAndApplication}
-                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
                 }`}
               >
                 {isHospitalUser ? '資産リスト（各種申請）' : '資産閲覧・申請'}
@@ -521,8 +363,8 @@ export default function MainPage() {
             {isMainButtonVisible('maintenance_inspection') && (
               <button
                 onClick={handleMaintenanceInspection}
-                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
                 }`}
               >
                 点検
@@ -533,8 +375,8 @@ export default function MainPage() {
             {isMainButtonVisible('lending_management') && (
               <button
                 onClick={isHospitalUser ? () => setIsLendingMenuModalOpen(true) : handleLendingManagement}
-                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
                 }`}
               >
                 貸出・返却
@@ -544,8 +386,8 @@ export default function MainPage() {
             {/* 編集・分析 */}
             <button
               onClick={handleEditAnalysis}
-              className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+              className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
               }`}
             >
               編集・分析
@@ -555,8 +397,8 @@ export default function MainPage() {
             {isMainButtonVisible('inventory') && (
               <button
                 onClick={() => router.push('/inventory')}
-                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
                 }`}
               >
                 棚卸し
@@ -567,8 +409,8 @@ export default function MainPage() {
             {isMainButtonVisible('repair_request') && (
               <button
                 onClick={handleRepairApplication}
-                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
                 }`}
               >
                 修理申請
@@ -579,8 +421,8 @@ export default function MainPage() {
             {isHospitalUser && (
               <button
                 onClick={handleApplicationStatus}
-                className={`bg-white border-2 border-[#27ae60] rounded-lg font-semibold text-[#1f2937] cursor-pointer transition-all hover:bg-[#27ae60] hover:text-white hover:shadow-md ${
-                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-[15px]'
+                className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
+                  isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
                 }`}
               >
                 申請ステータス
@@ -591,13 +433,13 @@ export default function MainPage() {
 
         {/* ダッシュボードボディ（次スコープ用） */}
         <div className="px-5 py-10 min-h-[300px] flex items-center justify-center flex-1">
-          <div className="text-center text-[#6b7280] text-base p-10 bg-white border-2 border-dashed border-[#d1d5db] rounded-lg max-w-[600px] mx-auto">
+          <div className="text-center text-content-sub text-base p-10 bg-surface-card border-2 border-dashed border-stroke-input rounded-lg max-w-[600px] mx-auto">
             <p className="text-pretty">※ ダッシュボード機能は次スコープで実装予定です</p>
           </div>
         </div>
 
         {/* フッター */}
-        <footer className="text-center text-xs text-[#9ca3af] py-4 border-t border-[#e5e7eb]">
+        <footer className="text-center text-[10px] font-light text-content-sub py-4 border-t border-stroke-card leading-[1.3]">
           &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
         </footer>
       </div>
@@ -610,14 +452,14 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg w-[90%] max-w-[500px] shadow-xl overflow-hidden"
+            className="bg-surface-card rounded-lg w-[90%] max-w-[500px] shadow-xl overflow-hidden"
           >
             {/* モーダルヘッダー */}
-            <div className="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center">
-              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">個体管理リスト作成</h2>
+            <div className="px-6 py-5 border-b border-stroke-card flex justify-between items-center">
+              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">個体管理リスト作成</h2>
               <button
                 onClick={closeListModal}
-                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
                 <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
@@ -628,9 +470,9 @@ export default function MainPage() {
 
             {/* 施設選択 */}
             <div className="px-6 pt-5">
-              <label className="block text-sm font-medium text-[#6b7280] mb-2">施設選択</label>
+              <label className="block text-sm font-medium text-content-sub mb-2">施設選択</label>
               {selectedFacility && (
-                <div className="px-4 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-md text-sm text-[#1f2937]">
+                <div className="px-4 py-2.5 bg-surface-screen border border-stroke-card rounded-md text-sm text-content-primary">
                   {selectedFacility}
                 </div>
               )}
@@ -651,7 +493,7 @@ export default function MainPage() {
                     <button
                       key={label}
                       onClick={() => handleMenuSelect(menuMap[label])}
-                      className="px-4 py-3 bg-white border border-[#d1d5db] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
+                      className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg text-sm font-medium text-content-primary cursor-pointer transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
                     >
                       {label}
                     </button>
@@ -671,14 +513,14 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg w-full max-w-[460px] max-h-[80vh] flex flex-col shadow-xl"
+            className="bg-surface-card rounded-lg w-full max-w-[460px] max-h-[80vh] flex flex-col shadow-xl"
           >
             {/* モーダルヘッダー */}
-            <div className="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center shrink-0">
-              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">マスタ管理</h2>
+            <div className="px-6 py-5 border-b border-stroke-card flex justify-between items-center shrink-0">
+              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">マスタ管理</h2>
               <button
                 onClick={closeMasterModal}
-                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
                 <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
@@ -689,13 +531,13 @@ export default function MainPage() {
 
             {/* モーダルコンテンツ */}
             <div className="px-6 pt-4 pb-6 overflow-y-auto overscroll-contain">
-              <p className="text-sm text-[#6b7280] mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
+              <p className="text-sm text-content-sub mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
               <div className="flex flex-col gap-2">
                 {/* SHIP施設マスタ */}
                 {canAccess('facility_master_list') && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/ship-facility-master'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     SHIP施設マスタ
                   </button>
@@ -705,7 +547,7 @@ export default function MainPage() {
                 {canAccess('asset_master_list') && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/ship-asset-master'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     SHIP資産マスタ
                   </button>
@@ -715,7 +557,7 @@ export default function MainPage() {
                 {canAccess('asset_master_list') && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/ship-department-master'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     共通部署マスタ
                   </button>
@@ -725,7 +567,7 @@ export default function MainPage() {
                 {isMainButtonVisible('user_management') && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/user-management'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     ユーザー管理
                   </button>
@@ -735,7 +577,7 @@ export default function MainPage() {
                 {canAccess('hospital_dept_master_edit') && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/hospital-facility-master'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     個別施設マスタ
                   </button>
@@ -745,7 +587,7 @@ export default function MainPage() {
                 {canAccess('existing_survey') && (
                   <button
                     onClick={() => { closeMasterModal(); showListModal(); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center relative transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center relative transition-all hover:bg-cta-primary hover:text-white"
                   >
                     個体管理リスト作成
                     <svg xmlns="http://www.w3.org/2000/svg" className="size-4 absolute right-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -756,7 +598,7 @@ export default function MainPage() {
                 {canAccess('vendor_master_edit') && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/vendor-master'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     業者マスタ
                   </button>
@@ -766,7 +608,7 @@ export default function MainPage() {
                 {isAdmin && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/permission-management'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     権限管理
                   </button>
@@ -776,7 +618,7 @@ export default function MainPage() {
                 {isAdmin && (
                   <button
                     onClick={() => { closeMasterModal(); router.push('/facility-group-management'); }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     施設グループ管理
                   </button>
@@ -795,14 +637,14 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg w-[90%] max-w-[600px] shadow-xl overflow-visible flex flex-col"
+            className="bg-surface-card rounded-lg w-[90%] max-w-[600px] shadow-xl overflow-visible flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div className="px-5 py-4 border-b border-[#e5e7eb] flex justify-between items-center">
-              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">編集リスト</h2>
+            <div className="px-5 py-4 border-b border-stroke-card flex justify-between items-center">
+              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">編集リスト</h2>
               <button
                 onClick={closeEditListModal}
-                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
                 <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
@@ -812,13 +654,13 @@ export default function MainPage() {
             </div>
 
             {/* タブ切り替え */}
-            <div className="flex border-b border-[#e5e7eb]">
+            <div className="flex border-b border-stroke-card">
               <button
                 onClick={() => setEditListMode('select')}
                 className={`flex-1 py-3 text-sm font-semibold transition-all cursor-pointer border-0 ${
                   editListMode === 'select'
-                    ? 'bg-white text-[#27ae60] border-b-2 border-b-[#27ae60]'
-                    : 'bg-[#f9fafb] text-[#6b7280] hover:text-[#1f2937]'
+                    ? 'bg-surface-card text-[#27ae60] border-b-2 border-b-[#27ae60]'
+                    : 'bg-surface-screen text-content-sub hover:text-content-primary'
                 }`}
               >
                 作成済みリスト
@@ -827,8 +669,8 @@ export default function MainPage() {
                 onClick={() => setEditListMode('create')}
                 className={`flex-1 py-3 text-sm font-semibold transition-all cursor-pointer border-0 ${
                   editListMode === 'create'
-                    ? 'bg-white text-[#27ae60] border-b-2 border-b-[#27ae60]'
-                    : 'bg-[#f9fafb] text-[#6b7280] hover:text-[#1f2937]'
+                    ? 'bg-surface-card text-[#27ae60] border-b-2 border-b-[#27ae60]'
+                    : 'bg-surface-screen text-content-sub hover:text-content-primary'
                 }`}
               >
                 新規リスト作成
@@ -840,7 +682,7 @@ export default function MainPage() {
               {editListMode === 'select' ? (
                 <div>
                   {editLists.length === 0 ? (
-                    <p className="text-center text-[#6b7280] p-5 text-pretty">
+                    <p className="text-center text-content-sub p-5 text-pretty">
                       作成済みの編集リストがありません
                     </p>
                   ) : (
@@ -849,15 +691,15 @@ export default function MainPage() {
                         <div key={list.id} className="flex items-stretch gap-2">
                           <button
                             onClick={() => handleSelectEditList(list.id)}
-                            className="flex-1 p-4 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-left transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
+                            className="flex-1 p-4 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-left transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
                           >
-                            <div className="font-semibold text-sm text-[#1f2937] mb-1">
+                            <div className="font-semibold text-sm text-content-primary mb-1">
                               {list.name}
                             </div>
-                            <div className="text-xs text-[#6b7280]">
+                            <div className="text-xs text-content-sub">
                               施設: {list.facilities.join(', ')}
                             </div>
-                            <div className="text-xs text-[#9ca3af] mt-1 tabular-nums">
+                            <div className="text-xs text-content-sub mt-1 tabular-nums">
                               作成日: {new Date(list.createdAt).toLocaleDateString('ja-JP')}
                             </div>
                           </button>
@@ -866,7 +708,7 @@ export default function MainPage() {
                               e.stopPropagation();
                               handleDeleteEditList({ id: list.id, name: list.name });
                             }}
-                            className="px-3 py-2 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-[#dc2626] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#dc2626]"
+                            className="px-3 py-2 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-[#dc2626] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#dc2626]"
                             title="削除"
                           >
                             削除
@@ -879,7 +721,7 @@ export default function MainPage() {
               ) : (
                 <div>
                   <div className="mb-5">
-                    <label className="block mb-2 text-sm font-medium text-[#1f2937]">
+                    <label className="block mb-2 text-sm font-medium text-content-primary">
                       編集リスト名称
                     </label>
                     <input
@@ -887,16 +729,16 @@ export default function MainPage() {
                       value={newEditListName}
                       onChange={(e) => setNewEditListName(e.target.value)}
                       placeholder="例: 2025年度リモデル計画"
-                      className="w-full p-3 border border-[#d1d5db] rounded-lg text-sm focus:outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]"
+                      className="w-full p-3 border border-stroke-input rounded-lg text-sm focus:outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#27ae60]"
                     />
                   </div>
 
                   {selectedFacility && (
                     <div className="mb-5">
-                      <label className="block mb-2 text-sm font-medium text-[#1f2937]">
+                      <label className="block mb-2 text-sm font-medium text-content-primary">
                         取り込む原本データ（施設）を選択
                       </label>
-                      <select className="w-full p-3 border border-[#d1d5db] rounded-lg text-sm bg-white focus:outline-none focus:border-[#27ae60]">
+                      <select className="w-full p-3 border border-stroke-input rounded-lg text-sm bg-surface-card focus:outline-none focus:border-cta-primary">
                         <option>{selectedFacility}</option>
                       </select>
                     </div>
@@ -907,8 +749,8 @@ export default function MainPage() {
                     disabled={!newEditListName.trim()}
                     className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${
                       newEditListName.trim()
-                        ? 'bg-[#27ae60] text-white cursor-pointer hover:bg-[#219a52]'
-                        : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+                        ? 'bg-cta-primary text-white cursor-pointer hover:bg-[#219a52]'
+                        : 'bg-[#e5e7eb] text-content-sub cursor-not-allowed'
                     }`}
                   >
                     作成
@@ -935,14 +777,14 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg w-[90%] max-w-[460px] max-h-[90vh] shadow-xl flex flex-col"
+            className="bg-surface-card rounded-lg w-[90%] max-w-[460px] max-h-[90vh] shadow-xl flex flex-col"
           >
             {/* モーダルヘッダー */}
-            <div className="px-6 py-5 border-b border-[#e5e7eb] flex justify-between items-center shrink-0">
-              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">マスタ管理</h2>
+            <div className="px-6 py-5 border-b border-stroke-card flex justify-between items-center shrink-0">
+              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">マスタ管理</h2>
               <button
                 onClick={() => setIsHospitalMasterModalOpen(false)}
-                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
                 <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
@@ -953,14 +795,14 @@ export default function MainPage() {
 
             {/* モーダルボディ */}
             <div className="p-6 overflow-y-auto overscroll-contain">
-              <p className="text-sm text-[#6b7280] mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
+              <p className="text-sm text-content-sub mb-4 text-pretty">マスタ管理と各種リスト管理を行えます</p>
               <div className="flex flex-col gap-2">
                 <button
                   onClick={() => {
                     setIsHospitalMasterModalOpen(false);
                     router.push('/hospital-facility-master');
                   }}
-                  className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                  className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                 >
                   個別部署マスタ
                 </button>
@@ -971,7 +813,7 @@ export default function MainPage() {
                       setIsHospitalMasterModalOpen(false);
                       router.push('/user-management');
                     }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     ユーザー管理
                   </button>
@@ -983,7 +825,7 @@ export default function MainPage() {
                       setIsHospitalMasterModalOpen(false);
                       router.push('/user-permission-management');
                     }}
-                    className="px-4 py-3 bg-white border border-[#27ae60] rounded-lg text-sm font-medium text-[#1f2937] cursor-pointer flex items-center justify-center transition-all hover:bg-[#27ae60] hover:text-white"
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
                   >
                     ユーザー権限管理
                   </button>
@@ -1002,13 +844,13 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg w-[90%] max-w-[400px] shadow-xl flex flex-col"
+            className="bg-surface-card rounded-lg w-[90%] max-w-[400px] shadow-xl flex flex-col"
           >
-            <div className="px-5 py-4 border-b border-[#e5e7eb] flex justify-between items-center shrink-0">
-              <h2 className="m-0 text-lg font-semibold text-[#1f2937] text-balance">貸出メニュー</h2>
+            <div className="px-5 py-4 border-b border-stroke-card flex justify-between items-center shrink-0">
+              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">貸出メニュー</h2>
               <button
                 onClick={() => setIsLendingMenuModalOpen(false)}
-                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
                 <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
@@ -1021,13 +863,13 @@ export default function MainPage() {
               <div className="flex flex-col gap-2">
                 <button
                   onClick={handleAvailableDevices}
-                  className="px-4 py-3 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-sm font-medium text-[#1f2937] transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
+                  className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-sm font-medium text-content-primary transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
                 >
                   貸出可能機器閲覧
                 </button>
                 <button
                   onClick={handleLendingCheckout}
-                  className="px-4 py-3 bg-white border border-[#d1d5db] rounded-lg cursor-pointer text-sm font-medium text-[#1f2937] transition-all hover:border-[#27ae60] hover:bg-[#f0fdf4]"
+                  className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-sm font-medium text-content-primary transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
                 >
                   貸出・返却
                 </button>
@@ -1045,15 +887,15 @@ export default function MainPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`bg-white rounded-lg w-full max-h-[95vh] shadow-xl flex flex-col ${
+            className={`bg-surface-card rounded-lg w-full max-h-[95vh] shadow-xl flex flex-col ${
               isMobile ? 'max-w-full mx-2' : isTablet ? 'max-w-[700px]' : 'max-w-[900px]'
             }`}
           >
-            <div className={`bg-white border-b border-[#e5e7eb] ${isMobile ? 'px-3 py-3 text-base' : 'px-5 py-4 text-lg'} font-bold flex justify-between items-center rounded-t-lg shrink-0`}>
-              <span className="text-[#1f2937] text-balance">申請ステータス</span>
+            <div className={`bg-surface-card border-b border-stroke-card ${isMobile ? 'px-3 py-3 text-base' : 'px-5 py-4 text-lg'} font-bold flex justify-between items-center rounded-t-lg shrink-0`}>
+              <span className="text-content-primary text-balance">申請ステータス</span>
               <button
                 onClick={() => setIsApplicationStatusModalOpen(false)}
-                className="size-8 flex items-center justify-center rounded-full text-[#9ca3af] hover:bg-[#f3f4f6] hover:text-[#1f2937] transition-colors cursor-pointer border-0 bg-transparent"
+                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
                 aria-label="閉じる"
               >
                 <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
@@ -1062,19 +904,19 @@ export default function MainPage() {
               </button>
             </div>
 
-            <div className={`${isMobile ? 'px-3 py-2' : 'px-5 py-3'} border-b border-[#e5e7eb] bg-[#f9fafb] shrink-0`}>
+            <div className={`${isMobile ? 'px-3 py-2' : 'px-5 py-3'} border-b border-stroke-card bg-surface-screen shrink-0`}>
               <div className="flex items-center gap-2">
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-[#6b7280] whitespace-nowrap`}>申請部署</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-[#1f2937]`}>{userDepartment}</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-[#9ca3af] ml-2 tabular-nums`}>({unifiedApplications.length}件)</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-content-sub whitespace-nowrap`}>申請部署</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-content-primary`}>{userDepartment}</span>
+                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-content-sub ml-2 tabular-nums`}>({unifiedApplications.length}件)</span>
               </div>
             </div>
 
             <div className={`${isMobile ? 'p-2' : 'p-4'} overflow-y-auto overscroll-contain flex-1`}>
               {unifiedApplications.length === 0 ? (
-                <div className="text-center py-10 text-[#6b7280]">
+                <div className="text-center py-10 text-content-sub">
                   <p className="text-pretty">申請履歴がありません</p>
-                  <p className="text-sm mt-2 text-[#9ca3af] text-pretty">資産リスト画面から各種申請を行ってください</p>
+                  <p className="text-sm mt-2 text-content-sub text-pretty">資産リスト画面から各種申請を行ってください</p>
                 </div>
               ) : isMobile ? (
                 <div className="flex flex-col gap-3">
@@ -1082,12 +924,12 @@ export default function MainPage() {
                     const statusStyle = getStatusBadgeStyle(app.status);
                     const typeStyle = getTypeBadgeStyle(app.applicationType);
                     return (
-                      <div key={app.id} className="border border-[#e5e7eb] rounded-lg p-3 bg-white">
+                      <div key={app.id} className="border border-stroke-card rounded-lg p-3 bg-surface-card">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs text-[#6b7280]">{app.applicationNo}</span>
+                            <span className="font-mono text-xs text-content-sub">{app.applicationNo}</span>
                             <span className="text-xs text-[#d1d5db]">|</span>
-                            <span className="text-xs text-[#6b7280] tabular-nums">{app.applicationDate}</span>
+                            <span className="text-xs text-content-sub tabular-nums">{app.applicationDate}</span>
                           </div>
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                             {app.status}
@@ -1097,7 +939,7 @@ export default function MainPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
                             {app.applicationType}
                           </span>
-                          <span className="text-sm font-medium text-[#1f2937] truncate">{app.itemName}</span>
+                          <span className="text-sm font-medium text-content-primary truncate">{app.itemName}</span>
                         </div>
                         {app.deadline && (
                           <div className="text-xs text-orange-600">期限: {app.deadline}</div>
@@ -1110,13 +952,13 @@ export default function MainPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
                     <thead>
-                      <tr className="bg-[#f9fafb]">
-                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">申請No.</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">申請日</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">申請種別</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">品目</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">ステータス</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-[#1f2937] whitespace-nowrap border-b border-[#e5e7eb]">期限</th>
+                      <tr className="bg-surface-screen">
+                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">申請No.</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">申請日</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">申請種別</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">品目</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">ステータス</th>
+                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">期限</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1124,15 +966,15 @@ export default function MainPage() {
                         const statusStyle = getStatusBadgeStyle(app.status);
                         const typeStyle = getTypeBadgeStyle(app.applicationType);
                         return (
-                          <tr key={app.id} className="border-b border-[#f3f4f6] hover:bg-[#f9fafb]">
-                            <td className="py-2.5 px-3 font-mono text-xs text-[#6b7280]">{app.applicationNo}</td>
-                            <td className="py-2.5 px-3 text-[#6b7280] tabular-nums">{app.applicationDate}</td>
+                          <tr key={app.id} className="border-b border-[#f3f4f6] hover:bg-surface-screen">
+                            <td className="py-2.5 px-3 font-mono text-xs text-content-sub">{app.applicationNo}</td>
+                            <td className="py-2.5 px-3 text-content-sub tabular-nums">{app.applicationDate}</td>
                             <td className="py-2.5 px-3">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
                                 {app.applicationType}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 text-[#1f2937] max-w-[200px] truncate">{app.itemName}</td>
+                            <td className="py-2.5 px-3 text-content-primary max-w-[200px] truncate">{app.itemName}</td>
                             <td className="py-2.5 px-3">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                                 {app.status}
@@ -1148,7 +990,7 @@ export default function MainPage() {
               )}
             </div>
 
-            <div className={`${isMobile ? 'px-3 py-3' : 'px-5 py-4'} border-t border-[#e5e7eb] bg-[#f9fafb] rounded-b-lg shrink-0`}>
+            <div className={`${isMobile ? 'px-3 py-3' : 'px-5 py-4'} border-t border-stroke-card bg-surface-screen rounded-b-lg shrink-0`}>
               <div className="flex justify-end">
                 <button
                   onClick={() => setIsApplicationStatusModalOpen(false)}

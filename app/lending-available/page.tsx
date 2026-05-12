@@ -72,10 +72,10 @@ export default function LendingAvailablePage() {
       {/* ヘッダー */}
       <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
         <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
-          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+          <div className="size-10 bg-cta-primary rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
             logo
           </div>
-          <div className="text-base font-bold text-[#1f2937] text-balance">
+          <div className="text-base font-bold text-content-primary text-balance">
             貸出可能機器閲覧
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function LendingAvailablePage() {
 
           {/* 貸出可能合計 */}
           <div className="pt-6 pb-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">貸出可能状況</h2>
+            <h2 className="text-sm font-bold text-content-primary mb-3">貸出可能状況</h2>
             {selectedGroup && deviceCounts.length > 0 ? (
               <div>
                 {selectedDevice && selectedDeviceCounts ? (
@@ -132,14 +132,14 @@ export default function LendingAvailablePage() {
                       }`}
                     >
                       <span className="text-sm text-[#4b5563]">{device.name}</span>
-                      <span className="text-sm font-semibold text-[#1f2937] tabular-nums">
+                      <span className="text-sm font-semibold text-content-primary tabular-nums">
                         {device.available} / {device.total} 台
                       </span>
                     </div>
                   ))}
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-[#1f2937]">貸出可能合計</span>
+                  <span className="text-sm font-bold text-content-primary">貸出可能合計</span>
                   <span className="text-2xl font-bold text-[#27ae60] tabular-nums">{groupAvailableTotal}</span>
                   <span className="text-sm text-[#4b5563]">台</span>
                 </div>

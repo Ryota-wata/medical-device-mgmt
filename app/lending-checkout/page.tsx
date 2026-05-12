@@ -91,7 +91,7 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
 
 // ステータスに応じたバッジスタイル
 const STATUS_STYLES: Record<DeviceStatus, string> = {
-  available: 'bg-[#e8f5e9] text-[#2e7d32] border-[#27ae60]',
+  available: 'bg-[#e8f5e9] text-[#2e7d32] border-cta-primary',
   lending: 'bg-[#e3f2fd] text-[#1565c0] border-[#42a5f5]',
   in_use: 'bg-[#fff3e0] text-[#e65100] border-[#ff9800]',
   used: 'bg-[#fce4ec] text-[#c62828] border-[#ef5350]',
@@ -402,10 +402,10 @@ export default function LendingCheckoutPage() {
       {/* ヘッダー */}
       <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
         <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
-          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+          <div className="size-10 bg-cta-primary rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
             logo
           </div>
-          <div className="text-base font-bold text-[#1f2937] text-balance">
+          <div className="text-base font-bold text-content-primary text-balance">
             貸出・返却
           </div>
         </div>
@@ -417,7 +417,7 @@ export default function LendingCheckoutPage() {
 
           {/* QRラベル入力セクション */}
           <div className="pb-6 border-b border-[#e5e7eb]">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">機器のQRコードを読み取る</h2>
+            <h2 className="text-sm font-bold text-content-primary mb-3">機器のQRコードを読み取る</h2>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -428,12 +428,12 @@ export default function LendingCheckoutPage() {
                   setProcessedAction(null);
                 }}
                 placeholder="例: 1（貸出可）/ 2（貸出中）/ 3（使用中）/ 4（使用済）"
-                className="flex-1 px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
+                className="flex-1 px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
               />
               {(isTablet || isMobile) && (
                 <button
                   onClick={handleQRScan}
-                  className="px-4 py-2.5 bg-[#27ae60] text-white text-sm font-medium border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors whitespace-nowrap"
+                  className="px-4 py-2.5 bg-cta-primary text-white text-sm font-medium border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors whitespace-nowrap"
                 >
                   QR読取
                 </button>
@@ -446,12 +446,12 @@ export default function LendingCheckoutPage() {
             <>
               {/* 機器情報 */}
               <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">機器ポンプ</h2>
+                <h2 className="text-sm font-bold text-content-primary mb-3">機器ポンプ</h2>
                 <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
-                      <div className="text-base font-bold text-[#1f2937]">{deviceInfo.name}</div>
-                      <div className="text-xs text-[#6b7280] mt-0.5">
+                      <div className="text-base font-bold text-content-primary">{deviceInfo.name}</div>
+                      <div className="text-xs text-content-sub mt-0.5">
                         {deviceInfo.manufacturer} / {deviceInfo.model}
                       </div>
                     </div>
@@ -459,11 +459,11 @@ export default function LendingCheckoutPage() {
                       {STATUS_LABELS[deviceInfo.status]}
                     </span>
                   </div>
-                  <div className="text-xs text-[#6b7280]">
+                  <div className="text-xs text-content-sub">
                     ME管理No: <span className="font-semibold text-[#374151] tabular-nums">{deviceInfo.meNo}</span>
                   </div>
                   {showLendingInfoReadonly && deviceInfo.lendingInfo && (
-                    <div className="mt-2 pt-2 border-t border-[#bbf7d0] text-xs text-[#6b7280]">
+                    <div className="mt-2 pt-2 border-t border-[#bbf7d0] text-xs text-content-sub">
                       貸出日: <span className="tabular-nums">{deviceInfo.lendingInfo.lendingDate}</span> ／
                       返却予定: <span className="tabular-nums">{deviceInfo.lendingInfo.returnDueDate}</span>
                     </div>
@@ -473,14 +473,14 @@ export default function LendingCheckoutPage() {
 
               {/* 担当者ID入力 */}
               <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">担当者ID</h2>
+                <h2 className="text-sm font-bold text-content-primary mb-3">担当者ID</h2>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     placeholder="例: 1 / 2 / 3 / 4"
-                    className="flex-1 px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
+                    className="flex-1 px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
                   />
                   {(isTablet || isMobile) && (
                     <button
@@ -501,9 +501,9 @@ export default function LendingCheckoutPage() {
               {/* 返却予定日（貸出可/貸出中のときのみ） */}
               {showReturnDate && (
                 <div className="py-6 border-b border-[#e5e7eb]">
-                  <h2 className="text-sm font-bold text-[#1f2937] mb-3">返却予定日</h2>
+                  <h2 className="text-sm font-bold text-content-primary mb-3">返却予定日</h2>
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-semibold text-[#1f2937] tabular-nums">
+                    <span className="text-base font-semibold text-content-primary tabular-nums">
                       {deviceInfo.status === 'lending' && deviceInfo.lendingInfo
                         ? deviceInfo.lendingInfo.returnDueDate
                         : formatDate(returnDate)
@@ -526,8 +526,8 @@ export default function LendingCheckoutPage() {
                   disabled={!userInfo}
                   className={`w-full py-3.5 text-base font-bold border-0 rounded-md transition-colors ${
                     userInfo
-                      ? 'bg-[#27ae60] text-white cursor-pointer hover:bg-[#219a52]'
-                      : 'bg-[#e5e7eb] text-[#9ca3af] cursor-not-allowed'
+                      ? 'bg-cta-primary text-white cursor-pointer hover:bg-[#219a52]'
+                      : 'bg-[#e5e7eb] text-content-sub cursor-not-allowed'
                   }`}
                 >
                   {getActionLabel()}
@@ -541,16 +541,16 @@ export default function LendingCheckoutPage() {
             <div className="py-6">
               <div className="text-center mb-6">
                 <div className="text-[#27ae60] text-lg font-bold mb-1">{getCompletionTitle()}</div>
-                <div className="text-sm text-[#6b7280]">{getCompletionDescription()}</div>
+                <div className="text-sm text-content-sub">{getCompletionDescription()}</div>
               </div>
 
               {/* 完了時の機器情報カード */}
               <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4 mb-6">
-                <div className="text-base font-bold text-[#1f2937] mb-1">{deviceInfo.name}</div>
-                <div className="text-xs text-[#6b7280]">
+                <div className="text-base font-bold text-content-primary mb-1">{deviceInfo.name}</div>
+                <div className="text-xs text-content-sub">
                   {deviceInfo.manufacturer} / {deviceInfo.model}
                 </div>
-                <div className="text-xs text-[#6b7280] mt-1">
+                <div className="text-xs text-content-sub mt-1">
                   ME管理No: <span className="font-semibold text-[#374151] tabular-nums">{deviceInfo.meNo}</span>
                 </div>
               </div>
@@ -570,15 +570,15 @@ export default function LendingCheckoutPage() {
           {!deviceInfo && !isProcessed && (
             <div className="py-12 text-center">
               <div className="w-20 h-16 mx-auto mb-4 bg-[#f3f4f6] rounded-lg flex items-center justify-center">
-                <svg className="w-8 h-8 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-content-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <div className="text-sm text-[#6b7280] text-pretty">
+              <div className="text-sm text-content-sub text-pretty">
                 機器のQRコードを読み取ってください
               </div>
-              <div className="text-xs text-[#9ca3af] mt-2 text-pretty">
+              <div className="text-xs text-content-sub mt-2 text-pretty">
                 機器の状態に応じて貸出・返却・使用開始・使用終了を行います
               </div>
             </div>
@@ -597,7 +597,7 @@ export default function LendingCheckoutPage() {
       </div>
 
       {/* フッター */}
-      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+      <footer className="py-3 text-center text-xs text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 
@@ -615,11 +615,11 @@ export default function LendingCheckoutPage() {
             <div className="flex justify-between items-center px-5 py-4 border-b border-[#e5e7eb]">
               <button
                 onClick={cancelDatePicker}
-                className="bg-transparent border-0 text-base text-[#9ca3af] cursor-pointer px-1 py-1"
+                className="bg-transparent border-0 text-base text-content-sub cursor-pointer px-1 py-1"
               >
                 キャンセル
               </button>
-              <span className="text-base font-bold text-[#1f2937]">
+              <span className="text-base font-bold text-content-primary">
                 返却予定日
               </span>
               <button
@@ -632,9 +632,9 @@ export default function LendingCheckoutPage() {
 
             {/* 年月日ヘッダー */}
             <div className="flex px-2.5 py-2 border-b border-[#e5e7eb] bg-[#fafafa]">
-              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">年</div>
-              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">月</div>
-              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">日</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-content-sub">年</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-content-sub">月</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-content-sub">日</div>
             </div>
 
             {/* ドラムロール */}
@@ -745,7 +745,7 @@ export default function LendingCheckoutPage() {
 
             {/* クイック選択 */}
             <div className="px-5 py-3 border-t border-[#e5e7eb]">
-              <div className="text-xs text-[#6b7280] mb-2">クイック選択:</div>
+              <div className="text-xs text-content-sub mb-2">クイック選択:</div>
               <div className="flex gap-2 flex-wrap">
                 {[7, 14, 21, 30].map(days => {
                   const targetDate = new Date();
@@ -758,7 +758,7 @@ export default function LendingCheckoutPage() {
                         setTempMonth((targetDate.getMonth() + 1).toString());
                         setTempDay(targetDate.getDate().toString());
                       }}
-                      className="px-4 py-2 bg-white border border-[#27ae60] rounded-full text-[13px] cursor-pointer text-[#27ae60] hover:bg-[#f0fdf4] transition-colors"
+                      className="px-4 py-2 bg-white border border-cta-primary rounded-full text-[13px] cursor-pointer text-[#27ae60] hover:bg-[#f0fdf4] transition-colors"
                     >
                       {days}日後
                     </button>

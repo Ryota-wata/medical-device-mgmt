@@ -23,27 +23,29 @@ import { ASSET_COLUMNS, type ColumnDef } from '@/lib/constants/assetColumns';
 
 // 原本リスト用の8グループのみ（契約・リース詳細・財務・耐用年数は編集リスト専用）
 const ORIGINAL_LIST_GROUPS = ['basic', 'commonMaster', 'location', 'identity', 'classification', 'specification', 'acquisition', 'other'];
-const ALL_COLUMNS = ASSET_COLUMNS.filter(col => ORIGINAL_LIST_GROUPS.includes(col.group || ''));
+// 施設名は資産選択画面で確定済みのためテーブルから除外
+const ALL_COLUMNS = ASSET_COLUMNS.filter(
+  col => ORIGINAL_LIST_GROUPS.includes(col.group || '') && col.key !== 'facility'
+);
 
-// グループ表示用の定義（ラベルと背景色）
+// グループ表示用の定義（彩度を下げて上品に。テキストは #4A4A4A 基調 + アクセント） */
 const GROUP_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  basic: { label: '基本情報', bg: '#f8f9fa', color: '#495057' },
-  commonMaster: { label: '共通マスタ', bg: '#e8f5e9', color: '#2e7d32' },
-  location: { label: '設置情報', bg: '#e3f2fd', color: '#1565c0' },
-  identity: { label: '識別情報', bg: '#fff3e0', color: '#e65100' },
-  classification: { label: '資産分類', bg: '#f3e5f5', color: '#7b1fa2' },
-  specification: { label: '機器仕様', bg: '#e0f7fa', color: '#00838f' },
-  acquisition: { label: '取得情報', bg: '#fce4ec', color: '#c62828' },
-  other: { label: 'その他', bg: '#f5f5f5', color: '#616161' },
-  contract: { label: '契約情報', bg: '#ede7f6', color: '#4527a0' },
-  leaseDetail: { label: 'リース詳細', bg: '#e8eaf6', color: '#283593' },
-  financial: { label: '財務情報', bg: '#fff8e1', color: '#f57f17' },
-  lifespan: { label: '耐用年数', bg: '#efebe9', color: '#4e342e' },
-  // 編集リスト用（REMODEL_COLUMNS等で使われるグループ）
-  application: { label: '申請内容', bg: '#e8f5e9', color: '#2e7d32' },
-  applicationDetail: { label: '申請詳細', bg: '#e8f5e9', color: '#2e7d32' },
-  connection: { label: '接続要望', bg: '#e8f5e9', color: '#2e7d32' },
-  work: { label: '作業用', bg: '#fff3e0', color: '#e65100' },
+  basic: { label: '基本情報', bg: '#F5F5F5', color: '#4A4A4A' },
+  commonMaster: { label: '共通マスタ', bg: '#EBF5EE', color: '#146E2E' },
+  location: { label: '設置情報', bg: '#EAF3FB', color: '#1E5A9E' },
+  identity: { label: '識別情報', bg: '#FDF1E5', color: '#A35414' },
+  classification: { label: '資産分類', bg: '#F1ECF7', color: '#5E3A93' },
+  specification: { label: '機器仕様', bg: '#E6F4F5', color: '#256F76' },
+  acquisition: { label: '取得情報', bg: '#FBE9EC', color: '#9A2333' },
+  other: { label: 'その他', bg: '#F1F1F1', color: '#4A4A4A' },
+  contract: { label: '契約情報', bg: '#EDE7F6', color: '#4527A0' },
+  leaseDetail: { label: 'リース詳細', bg: '#E8EAF6', color: '#283593' },
+  financial: { label: '財務情報', bg: '#FFF8E1', color: '#A66F1B' },
+  lifespan: { label: '耐用年数', bg: '#EFEBE9', color: '#4E342E' },
+  application: { label: '申請内容', bg: '#EBF5EE', color: '#146E2E' },
+  applicationDetail: { label: '申請詳細', bg: '#EBF5EE', color: '#146E2E' },
+  connection: { label: '接続要望', bg: '#EBF5EE', color: '#146E2E' },
+  work: { label: '作業用', bg: '#FDF1E5', color: '#A35414' },
 };
 
 export default function AssetSearchResultPage() {
@@ -168,22 +170,38 @@ export default function AssetSearchResultPage() {
   const isSingleSelected = selectedItems.size === 1;
   const isAnySelected = selectedItems.size > 0;
 
-  // ボタンスタイル
-  const getButtonStyle = (isEnabled: boolean): React.CSSProperties => ({
-    padding: '6px 16px',
-    background: isEnabled ? '#fff' : 'rgba(255,255,255,0.5)',
-    color: isEnabled ? '#333' : 'rgba(0,0,0,0.4)',
-    border: isEnabled ? '2px solid #fff' : '1px solid rgba(255,255,255,0.5)',
-    borderRadius: '4px',
-    cursor: isEnabled ? 'pointer' : 'default',
-    fontSize: '13px',
-    fontWeight: isEnabled ? 600 : 'normal',
-    opacity: isEnabled ? 1 : 0.6,
-    transition: 'all 0.2s',
+  // セカンダリボタンスタイル（白背景アクションバー上）
+  const getSecondaryBtn = (isEnabled: boolean): React.CSSProperties => ({
+    padding: '6px 12px',
+    background: '#FFFFFF',
+    color: isEnabled ? '#4A4A4A' : '#D6D6D6',
+    border: `1px solid ${isEnabled ? '#E1E1E1' : '#EDEDED'}`,
+    borderRadius: 6,
+    cursor: isEnabled ? 'pointer' : 'not-allowed',
+    fontSize: 13,
+    fontWeight: 500,
+    transition: 'all 0.15s ease',
+    whiteSpace: 'nowrap',
   });
+  // プライマリボタンスタイル（強調CTA、新規申請）
+  const getPrimaryBtn = (isEnabled: boolean): React.CSSProperties => ({
+    padding: '6px 14px',
+    background: isEnabled ? '#008C1D' : '#F1F1F1',
+    color: isEnabled ? '#FFFFFF' : '#D6D6D6',
+    border: 'none',
+    borderRadius: 6,
+    cursor: isEnabled ? 'pointer' : 'not-allowed',
+    fontSize: 13,
+    fontWeight: 600,
+    transition: 'all 0.15s ease',
+    whiteSpace: 'nowrap',
+  });
+  // レガシー名残（参照箇所互換用）
+  const getButtonStyle = getSecondaryBtn;
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden" style={{ background: 'white' }}>
+      {/* 資産一覧専用の軽量ヘッダー（メイン共通ヘッダーは使わない: 検索結果表示でテーブル領域を最大化するため） */}
       <Header
         title="資産リスト"
         resultCount={filteredAssets.length}
@@ -197,151 +215,108 @@ export default function AssetSearchResultPage() {
         hideMenu={true}
       />
 
-      {/* 申請エリア */}
-      <div style={{ background: '#4a6741', padding: '12px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* 左側ボタン群（購入系） */}
-          <button
-            style={getButtonStyle(isSingleSelected)}
-            onClick={handleUpdateApplication}
-            title={isSingleSelected ? '' : '資産を1件選択してください'}
-          >
-            更新申請
-          </button>
-          <button
-            style={getButtonStyle(isSingleSelected)}
-            onClick={handleExpandApplication}
-            title={isSingleSelected ? '' : '資産を1件選択してください'}
-          >
-            増設申請
-          </button>
-          <button
-            style={getButtonStyle(!isAnySelected)}
-            onClick={() => {
-              if (isAnySelected) {
-                alert('新規申請は資産を選択せずに行ってください');
-                return;
-              }
-              handleNewApplication();
-            }}
-            title={!isAnySelected ? '' : '資産の選択を解除してください'}
-          >
-            新規申請
-          </button>
-
-          {/* 右側ボタン群 */}
-          <button
-            style={getButtonStyle(isAnySelected)}
-            onClick={() => {
-              if (selectedItems.size === 0) {
-                alert('移動申請する資産を選択してください');
-                return;
-              }
-              setIsTransferModalOpen(true);
-            }}
-            title={isAnySelected ? '' : '資産を選択してください'}
-          >
-            移動申請
-          </button>
-          <button
-            style={getButtonStyle(isAnySelected)}
-            onClick={() => {
-              if (selectedItems.size === 0) {
-                alert('廃棄申請する資産を選択してください');
-                return;
-              }
-              setIsDisposalModalOpen(true);
-            }}
-            title={isAnySelected ? '' : '資産を選択してください'}
-          >
-            廃棄申請
-          </button>
-
-          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.3)', margin: '0 4px' }} />
-
-          <button
-            style={getButtonStyle(isAnySelected)}
-            onClick={() => {
-              if (selectedItems.size === 0) {
-                alert('点検管理登録する資産を選択してください');
-                return;
-              }
-              setIsInspectionModalOpen(true);
-            }}
-            title={isAnySelected ? '' : '資産を選択してください'}
-          >
-            点検管理登録
-          </button>
-          <button
-            style={getButtonStyle(isAnySelected)}
-            onClick={() => {
-              if (selectedItems.size === 0) {
-                alert('契約対象の資産登録する資産を選択してください');
-                return;
-              }
-              setIsMaintenanceContractModalOpen(true);
-            }}
-            title={isAnySelected ? '' : '資産を選択してください'}
-          >
-            契約対象の資産登録
-          </button>
-          <button
-            style={getButtonStyle(isAnySelected)}
-            onClick={() => {
-              if (selectedItems.size === 0) {
-                alert('貸出登録する資産を選択してください');
-                return;
-              }
-              setIsLendingModalOpen(true);
-            }}
-            title={isAnySelected ? '' : '資産を選択してください'}
-          >
-            貸出登録
-          </button>
-        </div>
-        {/* 選択状態表示 */}
-        <div style={{
-          marginTop: '8px',
-          fontSize: '12px',
-          color: 'rgba(255,255,255,0.9)',
-          display: 'flex',
+      {/* アクションバー（白基調、プライマリ「新規申請」を強調 + 区切り線でグループ化） */}
+      <div style={{ background: '#FFFFFF', padding: '8px 16px', borderBottom: '1px solid #E1E1E1', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {/* 選択状態バッジ */}
+        <span style={{
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '16px'
+          gap: 6,
+          padding: '4px 10px',
+          background: isAnySelected ? '#EBF5EE' : '#F1F1F1',
+          color: isAnySelected ? '#146E2E' : '#8A8A8A',
+          border: `1px solid ${isAnySelected ? '#008C1D' : '#E1E1E1'}`,
+          borderRadius: 999,
+          fontSize: 12,
+          fontWeight: 500,
         }}>
-          <span style={{
-            background: 'rgba(255,255,255,0.2)',
-            padding: '4px 12px',
-            borderRadius: '12px',
-            fontWeight: 500
-          }}>
-            選択中: {selectedItems.size}件
-          </span>
-          {selectedItems.size === 0 && (
-            <span style={{ color: '#90EE90' }}>
-              ✓ 新規申請が可能です
-            </span>
-          )}
-          {selectedItems.size === 1 && (
-            <span style={{ color: '#90EE90' }}>
-              ✓ 更新・増設・移動・廃棄申請 / 点検管理・契約対象の資産登録が可能です
-            </span>
-          )}
-          {selectedItems.size > 1 && (
-            <span style={{ color: '#90EE90' }}>
-              ✓ 移動・廃棄申請 / 点検管理・契約対象の資産登録が可能です
-            </span>
-          )}
-        </div>
+          選択中: <span className="tabular-nums">{selectedItems.size}</span>件
+        </span>
+
+        <div style={{ width: 1, height: 22, background: '#E1E1E1' }} />
+
+        {/* プライマリ: 新規申請 */}
+        <button
+          style={getPrimaryBtn(!isAnySelected)}
+          onClick={() => {
+            if (isAnySelected) {
+              alert('新規申請は資産を選択せずに行ってください');
+              return;
+            }
+            handleNewApplication();
+          }}
+          title={!isAnySelected ? '' : '資産の選択を解除してください'}
+        >
+          + 新規申請
+        </button>
+
+        {/* セカンダリ: 単一選択系 */}
+        <button style={getSecondaryBtn(isSingleSelected)} onClick={handleUpdateApplication} title={isSingleSelected ? '' : '資産を1件選択してください'}>
+          更新申請
+        </button>
+        <button style={getSecondaryBtn(isSingleSelected)} onClick={handleExpandApplication} title={isSingleSelected ? '' : '資産を1件選択してください'}>
+          増設申請
+        </button>
+
+        <div style={{ width: 1, height: 22, background: '#E1E1E1' }} />
+
+        {/* セカンダリ: 複数選択可 */}
+        <button
+          style={getSecondaryBtn(isAnySelected)}
+          onClick={() => {
+            if (selectedItems.size === 0) { alert('移動申請する資産を選択してください'); return; }
+            setIsTransferModalOpen(true);
+          }}
+        >
+          移動申請
+        </button>
+        <button
+          style={getSecondaryBtn(isAnySelected)}
+          onClick={() => {
+            if (selectedItems.size === 0) { alert('廃棄申請する資産を選択してください'); return; }
+            setIsDisposalModalOpen(true);
+          }}
+        >
+          廃棄申請
+        </button>
+
+        <div style={{ width: 1, height: 22, background: '#E1E1E1' }} />
+
+        {/* セカンダリ: 登録系 */}
+        <button
+          style={getSecondaryBtn(isAnySelected)}
+          onClick={() => {
+            if (selectedItems.size === 0) { alert('点検管理登録する資産を選択してください'); return; }
+            setIsInspectionModalOpen(true);
+          }}
+        >
+          点検管理登録
+        </button>
+        <button
+          style={getSecondaryBtn(isAnySelected)}
+          onClick={() => {
+            if (selectedItems.size === 0) { alert('契約対象の資産登録する資産を選択してください'); return; }
+            setIsMaintenanceContractModalOpen(true);
+          }}
+        >
+          契約対象の資産登録
+        </button>
+        <button
+          style={getSecondaryBtn(isAnySelected)}
+          onClick={() => {
+            if (selectedItems.size === 0) { alert('貸出登録する資産を選択してください'); return; }
+            setIsLendingModalOpen(true);
+          }}
+        >
+          貸出登録
+        </button>
       </div>
 
-      {/* フィルターエリア */}
-      <div style={{ background: '#fff', padding: '12px 20px', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ fontSize: '13px', color: '#333', marginBottom: '10px', fontWeight: 'bold' }}>
-          資産を絞り込む
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+      {/* フィルターエリア（1行レイアウト: 各フィルター + キーワード検索を横並び。テーブルエリア最大化） */}
+      <div style={{ background: '#fff', padding: '6px 16px', borderBottom: '1px solid #dee2e6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
           {/* 施設 */}
-          <div style={{ minWidth: '160px', position: 'relative', zIndex: 17 }}>
+          <div style={{ flex: '1 1 110px', minWidth: '110px', position: 'relative', zIndex: 17 }}>
             <SearchableSelect
               value={filters.facility}
               onChange={(val) => setFilters({ facility: val })}
@@ -352,7 +327,7 @@ export default function AssetSearchResultPage() {
           </div>
 
           {/* 管理部署 */}
-          <div style={{ minWidth: '140px', position: 'relative', zIndex: 16 }}>
+          <div style={{ flex: '1 1 110px', minWidth: '110px', position: 'relative', zIndex: 16 }}>
             <SearchableSelect
               value={filters.department}
               onChange={(val) => setFilters({ department: val })}
@@ -363,7 +338,7 @@ export default function AssetSearchResultPage() {
           </div>
 
           {/* 設置部門 */}
-          <div style={{ minWidth: '140px', position: 'relative', zIndex: 15 }}>
+          <div style={{ flex: '1 1 110px', minWidth: '110px', position: 'relative', zIndex: 15 }}>
             <SearchableSelect
               value={filters.section}
               onChange={(val) => setFilters({ section: val })}
@@ -374,7 +349,7 @@ export default function AssetSearchResultPage() {
           </div>
 
           {/* category */}
-          <div style={{ minWidth: '140px', position: 'relative', zIndex: 14 }}>
+          <div style={{ flex: '1 1 110px', minWidth: '110px', position: 'relative', zIndex: 14 }}>
             <SearchableSelect
               value={filters.category}
               onChange={(val) => setFilters({ category: val })}
@@ -385,7 +360,7 @@ export default function AssetSearchResultPage() {
           </div>
 
           {/* 大分類 */}
-          <div style={{ minWidth: '120px', position: 'relative', zIndex: 13 }}>
+          <div style={{ flex: '1 1 100px', minWidth: '100px', position: 'relative', zIndex: 13 }}>
             <SearchableSelect
               value={filters.largeClass}
               onChange={(val) => setFilters({ largeClass: val })}
@@ -396,7 +371,7 @@ export default function AssetSearchResultPage() {
           </div>
 
           {/* 中分類 */}
-          <div style={{ minWidth: '120px', position: 'relative', zIndex: 12 }}>
+          <div style={{ flex: '1 1 100px', minWidth: '100px', position: 'relative', zIndex: 12 }}>
             <SearchableSelect
               value={filters.mediumClass}
               onChange={(val) => setFilters({ mediumClass: val })}
@@ -407,7 +382,7 @@ export default function AssetSearchResultPage() {
           </div>
 
           {/* 品目 */}
-          <div style={{ minWidth: '120px', position: 'relative', zIndex: 11 }}>
+          <div style={{ flex: '1 1 100px', minWidth: '100px', position: 'relative', zIndex: 11 }}>
             <SearchableSelect
               value={filters.item}
               onChange={(val) => setFilters({ item: val })}
@@ -417,48 +392,44 @@ export default function AssetSearchResultPage() {
             />
           </div>
 
-          {/* スペーサー */}
-          <div style={{ flex: 1 }} />
-
-          {/* 全体検索 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="text"
-              placeholder="キーワード検索"
-              value={filters.keyword}
-              onChange={(e) => setFilters({ keyword: e.target.value })}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #4a6741',
-                borderRadius: '4px',
-                fontSize: '13px',
-                width: '180px',
-              }}
-            />
-          </div>
+          {/* キーワード検索 */}
+          <input
+            type="text"
+            placeholder="キーワード検索"
+            value={filters.keyword}
+            onChange={(e) => setFilters({ keyword: e.target.value })}
+            style={{
+              flex: '0 0 160px',
+              padding: '8px 12px',
+              border: '1px solid #4a6741',
+              borderRadius: '4px',
+              fontSize: '13px',
+            }}
+          />
         </div>
       </div>
 
-      {/* テーブル表示 */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
+      {/* テーブル表示（パディング縮小でテーブル領域を最大化） */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '8px 16px' }}>
         <div style={{ flex: 1, overflow: 'auto' }}>
         {currentView === 'list' && (
           <table style={{ borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8f9fa' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#FAFAFA' }}>
               {/* グループヘッダー行 */}
-              <tr style={{ borderBottom: '1px solid #dee2e6' }}>
+              <tr style={{ borderBottom: '1px solid #F1F1F1' }}>
                 <th
                   rowSpan={2}
                   style={{
                     padding: '8px',
                     textAlign: 'center',
                     width: `${columnWidths.checkbox}px`,
-                    background: '#f8f9fa',
+                    background: '#FAFAFA',
                     position: 'relative',
                     verticalAlign: 'middle',
+                    borderRight: '1px solid #F1F1F1',
                   }}
                 >
-                  <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} />
+                  <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} style={{ accentColor: '#008C1D', cursor: 'pointer' }} />
                   <div
                     onMouseDown={(e) => handleResizeStart(e, 'checkbox')}
                     style={{
@@ -468,7 +439,7 @@ export default function AssetSearchResultPage() {
                       bottom: 0,
                       width: '4px',
                       cursor: 'col-resize',
-                      background: resizingColumn === 'checkbox' ? '#27ae60' : 'transparent',
+                      background: resizingColumn === 'checkbox' ? '#008C1D' : 'transparent',
                       transition: 'background 0.2s',
                     }}
                     onMouseEnter={(e) => {
@@ -497,13 +468,15 @@ export default function AssetSearchResultPage() {
                         key={`${span.group}-${idx}`}
                         colSpan={span.count}
                         style={{
-                          padding: '6px 8px',
+                          padding: '5px 8px',
                           textAlign: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          letterSpacing: '0.02em',
                           color: style.color,
                           background: style.bg,
-                          borderLeft: idx > 0 ? '2px solid #dee2e6' : undefined,
+                          borderLeft: idx > 0 ? '1px solid #F1F1F1' : undefined,
+                          borderBottom: '1px solid #F1F1F1',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -514,24 +487,25 @@ export default function AssetSearchResultPage() {
                 })()}
               </tr>
               {/* カラム名行 */}
-              <tr style={{ borderBottom: '2px solid #dee2e6' }}>
+              <tr style={{ borderBottom: '1px solid #E1E1E1' }}>
                 {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => {
-                  const groupStyle = GROUP_STYLES[col.group || 'other'] || { bg: '#f8f9fa' };
+                  const groupStyle = GROUP_STYLES[col.group || 'other'] || { bg: '#FAFAFA' };
                   return (
                   <th
                     key={col.key}
                     style={{
-                      padding: '8px 8px',
+                      padding: '8px 10px',
                       textAlign: 'left',
-                      fontWeight: 'bold',
-                      color: '#1f2937',
+                      fontWeight: 600,
+                      color: '#4A4A4A',
                       width: `${columnWidths[col.key]}px`,
                       position: 'relative',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      background: groupStyle.bg,
-                      fontSize: '12px',
+                      background: '#FAFAFA',
+                      borderRight: '1px solid #F1F1F1',
+                      fontSize: 12,
                     }}
                   >
                     {col.label}
@@ -544,7 +518,7 @@ export default function AssetSearchResultPage() {
                         bottom: 0,
                         width: '4px',
                         cursor: 'col-resize',
-                        background: resizingColumn === col.key ? '#27ae60' : 'transparent',
+                        background: resizingColumn === col.key ? '#008C1D' : 'transparent',
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => {
@@ -564,31 +538,33 @@ export default function AssetSearchResultPage() {
                 <tr
                   key={asset.no}
                   style={{
-                    borderBottom: '1px solid #dee2e6',
+                    borderBottom: '1px solid #F1F1F1',
                     cursor: 'pointer',
-                    background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white'
+                    background: selectedItems.has(asset.no) ? '#EBF5EE' : '#FFFFFF',
+                    transition: 'background 0.1s ease',
                   }}
                   onDoubleClick={() => router.push(`/asset-detail?no=${asset.no}&from=asset-search`)}
                   onMouseEnter={(e) => {
                     if (!selectedItems.has(asset.no)) {
-                      e.currentTarget.style.background = '#f8f9fa';
+                      e.currentTarget.style.background = '#FAFAFA';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!selectedItems.has(asset.no)) {
-                      e.currentTarget.style.background = 'white';
+                      e.currentTarget.style.background = '#FFFFFF';
                     }
                   }}
                 >
-                  <td style={{ padding: '12px 8px', whiteSpace: 'nowrap', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+                  <td style={{ padding: '10px 10px', whiteSpace: 'nowrap', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedItems.has(asset.no)}
                       onChange={() => handleSelectItem(asset.no)}
+                      style={{ accentColor: '#008C1D', cursor: 'pointer' }}
                     />
                   </td>
                   {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                    <td key={col.key} style={{ padding: '12px 8px', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <td key={col.key} style={{ padding: '10px 10px', color: '#4A4A4A', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {getCellValue(asset, col.key)}
                     </td>
                   ))}
@@ -625,9 +601,9 @@ export default function AssetSearchResultPage() {
                     checked={selectedItems.has(asset.no)}
                     onChange={() => handleSelectItem(asset.no)}
                   />
-                  <strong style={{ color: '#1f2937' }}>No. {asset.no}</strong>
+                  <strong style={{ color: '#4A4A4A' }}>No. {asset.no}</strong>
                 </div>
-                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1f2937' }}>{asset.name}</h3>
+                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#4A4A4A' }}>{asset.name}</h3>
                 <div style={{ fontSize: '13px', color: '#5a6c7d', lineHeight: '1.6' }}>
                   <div>施設: {asset.facility}</div>
                   <div>場所: {asset.building} {asset.floor}</div>

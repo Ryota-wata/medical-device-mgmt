@@ -85,10 +85,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-gray-50 overflow-y-auto py-8">
-      <div className="bg-white w-full max-w-md mx-5 p-12 my-auto rounded-xl shadow-md">
+    <div className="min-h-dvh flex items-center justify-center bg-surface-screen overflow-y-auto py-8 font-figma">
+      <div className="bg-surface-card border border-stroke-card w-full max-w-md mx-5 p-10 my-auto rounded-2xl">
         {/* タイトル */}
-        <h1 className="text-2xl font-bold text-center mb-8 text-balance text-gray-800">
+        <h1 className="text-[24px] font-bold text-center mb-10 text-balance text-content-primary leading-[1.3]">
           医療機器管理システム
         </h1>
 
@@ -96,8 +96,8 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           {/* メールアドレス */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-1 text-gray-800">
-              <span className="text-red-600">※</span>メールアドレス
+            <label className="block text-base font-normal mb-1 text-content-primary leading-[1.5]">
+              <span className="text-content-alert">※</span>メールアドレス
             </label>
             <input
               type="email"
@@ -107,21 +107,21 @@ export default function LoginPage() {
                 if (emailError) setEmailError('');
               }}
               placeholder="入力してください"
-              className={`w-full px-4 py-3 text-base rounded-lg border outline-none transition-colors ${
+              className={`w-full h-[42px] px-3 py-[9px] text-base rounded-lg border outline-none transition-colors placeholder:text-content-placeholder ${
                 emailError
-                  ? 'border-red-500 bg-red-50 text-red-600'
-                  : 'border-gray-300 text-gray-800 focus:border-blue-400'
+                  ? 'border-content-alert bg-red-50 text-content-alert'
+                  : 'border-stroke-input text-content-primary bg-surface-card focus:border-content-link'
               }`}
             />
             {emailError && (
-              <p className="mt-1 text-sm text-red-600">{emailError}</p>
+              <p className="mt-1 text-sm text-content-alert">{emailError}</p>
             )}
           </div>
 
           {/* パスワード */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold mb-1 text-gray-800">
-              <span className="text-red-600">※</span>パスワード
+            <label className="block text-base font-normal mb-1 text-content-primary leading-[1.5]">
+              <span className="text-content-alert">※</span>パスワード
             </label>
             <div className="relative">
               <input
@@ -132,16 +132,16 @@ export default function LoginPage() {
                   if (passwordError) setPasswordError('');
                 }}
                 placeholder="・・・・・"
-                className={`w-full px-4 py-3 pr-12 text-base rounded-lg border outline-none transition-colors ${
+                className={`w-full h-[42px] px-3 py-[9px] pr-12 text-base rounded-lg border outline-none transition-colors placeholder:text-content-placeholder ${
                   passwordError
-                    ? 'border-red-500 bg-red-50 text-red-600'
-                    : 'border-gray-300 text-gray-800 focus:border-blue-400'
+                    ? 'border-content-alert bg-red-50 text-content-alert'
+                    : 'border-stroke-input text-content-primary bg-surface-card focus:border-content-link'
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-content-sub"
                 aria-label={showPassword ? 'パスワードを隠す' : 'パスワードを表示'}
               >
                 {showPassword ? (
@@ -158,20 +158,20 @@ export default function LoginPage() {
               </button>
             </div>
             {passwordError && (
-              <p className="mt-1 text-sm text-red-600">{passwordError}</p>
+              <p className="mt-1 text-sm text-content-alert">{passwordError}</p>
             )}
           </div>
 
           {/* ログイン状態を記憶する */}
-          <div className="mb-6 flex justify-center">
-            <label className="flex items-center cursor-pointer">
+          <div className="mb-4 flex justify-center">
+            <label className="flex items-center cursor-pointer gap-2">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="size-5 rounded cursor-pointer accent-green-600"
+                className="size-6 rounded cursor-pointer accent-cta-primary"
               />
-              <span className="ml-2 text-sm text-gray-500">
+              <span className="text-base text-content-primary leading-[1.5]">
                 ログイン状態を記憶する
               </span>
             </label>
@@ -181,10 +181,10 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading || !isFormValid}
-            className={`w-full border-0 rounded-lg text-base font-semibold py-3.5 px-6 transition-colors ${
+            className={`w-full h-12 border-0 rounded-lg text-base font-normal px-6 transition-colors ${
               isFormValid
-                ? 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
-                : 'bg-gray-100 text-gray-400 cursor-default'
+                ? 'bg-cta-primary hover:opacity-90 text-white cursor-pointer'
+                : 'bg-surface-disabled text-content-disabled cursor-default'
             }`}
           >
             {isLoading ? 'ログイン中...' : 'ログイン'}
@@ -192,22 +192,22 @@ export default function LoginPage() {
         </form>
 
         {/* パスワードリセットリンク */}
-        <div className="mt-4 text-center">
+        <div className="mt-6 text-center">
           <a
             href="#"
             onClick={handlePasswordReset}
-            className="text-sm underline text-blue-500 hover:text-blue-600 transition-colors"
+            className="text-sm font-light underline text-content-link hover:opacity-80 transition-opacity leading-[1.3]"
           >
             パスワードをお忘れの方
           </a>
         </div>
 
-        {/* テストアカウント一覧 */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        {/* テストアカウント一覧（mock専用拡張: Figma準拠トークンで統一） */}
+        <div className="mt-8 pt-6 border-t border-stroke-card">
           <button
             type="button"
             onClick={() => setShowTestAccounts(!showTestAccounts)}
-            className="w-full text-sm text-gray-500 flex items-center justify-center gap-2 transition-colors bg-transparent border-none cursor-pointer"
+            className="w-full text-sm text-content-sub flex items-center justify-center gap-2 transition-colors bg-transparent border-none cursor-pointer"
           >
             <span>テストアカウント一覧</span>
             <span className={`transition-transform ${showTestAccounts ? 'rotate-180' : ''}`}>▼</span>
@@ -221,26 +221,26 @@ export default function LoginPage() {
                 if (users.length === 0) return null;
                 return (
                   <div key={cat}>
-                    <div className="text-xs text-gray-400 font-semibold mt-3 mb-2">{catInfo.label}</div>
+                    <div className="text-xs text-content-sub font-semibold mt-3 mb-2">{catInfo.label}</div>
                     {users.map((user) => (
                       <button
                         key={user.email}
                         type="button"
                         onClick={() => handleTestAccountClick(user.email)}
-                        className={`w-full text-left px-3 py-2 mb-1.5 rounded-lg border border-gray-200 ${catInfo.hoverBorder} ${catInfo.hoverBg} transition-colors bg-transparent cursor-pointer`}
+                        className={`w-full text-left px-3 py-2 mb-1.5 rounded-lg border border-stroke-card ${catInfo.hoverBorder} ${catInfo.hoverBg} transition-colors bg-transparent cursor-pointer`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">{user.roleLabel}</span>
+                          <span className="text-sm font-medium text-content-primary">{user.roleLabel}</span>
                           <span className={`text-xs px-2 py-0.5 rounded ${catInfo.badgeBg} ${catInfo.badgeText}`}>{user.role}</span>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1 font-mono">{user.email}</div>
+                        <div className="text-xs text-content-sub mt-1 font-mono">{user.email}</div>
                       </button>
                     ))}
                   </div>
                 );
               })}
 
-              <p className="text-xs text-gray-400 mt-3 text-center text-pretty">
+              <p className="text-xs text-content-sub mt-3 text-center text-pretty">
                 クリックするとメール欄に入力されます（パスワード: あ）
               </p>
             </div>
