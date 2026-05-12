@@ -6,38 +6,6 @@ import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
-/** Figma 準拠カラートークン */
-const COLORS = {
-  primary: '#008C1D',
-  primaryDark: '#146E2E',
-  accent: '#146E2E',
-  textPrimary: '#4A4A4A',
-  textSecondary: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textOnColor: '#ffffff',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  surface: '#FAFAFA',
-  surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4A4A4A',
-  white: '#ffffff',
-  error: '#DA0000',
-  success: '#008C1D',
-  successLight: '#EBF5EE',
-  warning: '#008C1D',
-  warningBg: '#EBF5EE',
-  warningBorder: '#008C1D',
-  warningText: '#146E2E',
-  disabled: '#8A8A8A',
-  disabledBg: '#F1F1F1',
-  stepActive: '#008C1D',
-  stepCompleted: '#146E2E',
-  stepPending: '#E1E1E1',
-} as const;
-
-// ──────────────────────────────────────────────
-// VendorEntry型（購入管理rfq-processと同一パターン）
-// ──────────────────────────────────────────────
 interface VendorEntry {
   localId: string;
   vendorName: string;
@@ -55,7 +23,6 @@ function generateLocalId(): string {
   return `dv-${vendorLocalIdCounter}`;
 }
 
-/** 廃棄フローのステップ定義 */
 const DISPOSAL_STEPS = [
   { step: 1, label: '見積依頼' },
   { step: 2, label: '見積登録' },
@@ -63,10 +30,8 @@ const DISPOSAL_STEPS = [
   { step: 4, label: '完了登録' },
 ];
 
-// ステータス型（8ステータス）
 type DisposalStatus = '新規申請' | '見積依頼済' | '発注用見積登録済' | '発注済' | '納期確定' | '検収済' | '完了' | '申請見送り';
 
-// 登録済み見積の型
 interface RegisteredQuotation {
   id: number;
   phase: '発注用' | '参考';
@@ -78,7 +43,6 @@ interface RegisteredQuotation {
   registeredAt: string;
 }
 
-// 登録済みドキュメントの型（STEP④用）
 interface RegisteredDocument {
   id: number;
   documentType: '完了報告書' | '廃棄証明書' | 'マニフェスト' | '契約書' | '請求書' | 'その他';
@@ -88,10 +52,8 @@ interface RegisteredDocument {
   registeredAt: string;
 }
 
-// 廃棄申請データ型
 interface DisposalApplication {
   id: string;
-  // 見積依頼グループ情報
   groupId: string;
   groupName: string;
   rfqNo: string;
@@ -100,37 +62,28 @@ interface DisposalApplication {
   applicantName: string;
   applicantDepartment: string;
   applicantContact: string;
-  // 設置情報
   installationDivision: string;
   installationDepartment: string;
   installationRoom: string;
-  // 廃棄対象機器
   itemName: string;
   maker: string;
   model: string;
   serialNo: string;
   qrLabel: string;
-  // 廃棄理由
   disposalReason: string;
   comment: string;
-  // ステータス
   status: DisposalStatus;
-  // 受付部署情報
   receptionDepartment: string;
   receptionPerson: string;
   receptionContact: string;
-  // 見積情報
   quotationPhase: '発注用' | '参考';
   saveFormat: '電子取引' | 'スキャナ保存' | '未指定';
-  // 納期確認
   deliveryDate: string;
-  // 検収ドキュメント
   documentType: '完了報告書' | '廃棄証明書' | 'マニフェスト' | '契約書' | '請求書' | 'その他';
   accountType: '修繕費' | '廃棄費' | 'その他';
   accountOther: string;
 }
 
-// モックデータ取得（groupIdベース）
 const getMockApplication = (groupId: string): DisposalApplication => {
   const groupDataMap: Record<string, { groupName: string; rfqNo: string; status: DisposalStatus; vendorName: string; vendorPerson: string; vendorEmail: string; vendorContact: string }> = {
     '1': { groupName: 'ME室 心電計廃棄一式', rfqNo: 'RFQ-20260110-0001', status: '見積依頼済', vendorName: 'シーメンス・ジャパン', vendorPerson: '山田太郎', vendorEmail: 'yamada@siemens.co.jp', vendorContact: '03-1234-5678' },
@@ -175,7 +128,6 @@ const getMockApplication = (groupId: string): DisposalApplication => {
   };
 };
 
-// ステータスから初期ステップを取得
 const getInitialStep = (status: DisposalStatus): number => {
   switch (status) {
     case '新規申請': return 1;
@@ -190,52 +142,44 @@ const getInitialStep = (status: DisposalStatus): number => {
   }
 };
 
-// 共通スタイル（Figma 準拠）
-const inputStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: '8px',
-  fontSize: '14px',
-  color: COLORS.textPrimary,
-  backgroundColor: COLORS.white,
-};
+type PreviewDocTab = '見積依頼書' | '見積書' | '発注書' | '完了報告書他';
 
-const labelStyle: React.CSSProperties = {
-  fontSize: '14px',
-  fontWeight: 600,
-  color: COLORS.textPrimary,
-  whiteSpace: 'nowrap',
-};
+// ============================================================
+// Tailwind class constants
+// ============================================================
+const inputCls =
+  'h-[42px] px-3 rounded-lg bg-surface-card border border-stroke-input text-sm text-content-primary focus:outline-none focus:border-cta-primary transition-colors disabled:bg-stroke-card disabled:text-content-sub disabled:cursor-not-allowed';
+
+const labelCls = 'text-sm font-semibold text-content-primary whitespace-nowrap';
+
+// ============================================================
+// Sub-components
+// ============================================================
 
 /**
- * セクションコンポーネント（Step カード, Figma 準拠）
- * 白カード / rounded-2xl / 緑枠 + 緑ヘッダー
- * accentColor は受け取るが Step 4（廃棄完了, destructive 用途）以外は無視し
- * Figma パレット（緑）に統一。Step 4 のみ alert（赤）を許容。
+ * Step カード
+ * Step 4（廃棄完了, destructive）は alert (#DA0000) を使用、それ以外は Figma 緑
  */
-const Section = ({
+function Section({
   step,
   title,
   children,
-  accentColor = COLORS.primary,
-  headerAction,
+  destructive,
   enabled,
   completed,
 }: {
   step: number;
   title: string;
   children: React.ReactNode;
-  accentColor?: string;
-  headerAction?: React.ReactNode;
+  destructive?: boolean;
   enabled: boolean;
   completed: boolean;
-}) => {
-  const isDestructive = accentColor === '#dc2626' || accentColor === '#DA0000';
+}) {
   const headerBg = enabled
-    ? (isDestructive ? 'bg-[#DA0000]' : 'bg-cta-primary')
+    ? (destructive ? 'bg-[#DA0000]' : 'bg-cta-primary')
     : (completed ? 'bg-cta-primary' : 'bg-content-primary');
   const borderClass = enabled
-    ? (isDestructive ? 'border-2 border-[#DA0000]' : 'border-2 border-cta-primary')
+    ? (destructive ? 'border-2 border-[#DA0000]' : 'border-2 border-cta-primary')
     : 'border border-stroke-card';
   return (
     <div className={`bg-surface-card ${borderClass} rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
@@ -244,29 +188,81 @@ const Section = ({
           {completed ? '✓' : step}
         </span>
         <span className="text-sm font-bold flex-1">{title}</span>
-        {completed && (
-          <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">完了</span>
-        )}
-        {enabled && !headerAction && !completed && (
+        {completed && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">完了</span>}
+        {enabled && !completed && (
           <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full">作業中</span>
         )}
-        {headerAction}
       </div>
       <div className={`p-4 ${enabled ? '' : 'pointer-events-none'}`}>{children}</div>
     </div>
   );
-};
+}
 
-// フォーム行コンポーネント
-const FormRow = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', flexWrap: 'wrap', ...style }}>
-    {children}
-  </div>
-);
+/** プログレスバー */
+function ProgressBar({ activeStep }: { activeStep: number }) {
+  return (
+    <div className="flex items-center justify-center px-4 py-3 bg-stroke-card border-b border-stroke-input">
+      {DISPOSAL_STEPS.map((item, index) => {
+        const isCompleted = item.step < activeStep;
+        const isActive = item.step === activeStep;
+        const circleClass = isCompleted
+          ? 'bg-cta-primary-dark text-white'
+          : isActive
+          ? 'bg-cta-primary text-white border-2 border-cta-primary-dark'
+          : 'bg-stroke-input text-content-sub';
+        const labelClass = isActive
+          ? 'text-cta-primary font-bold'
+          : isCompleted
+          ? 'text-cta-primary-dark'
+          : 'text-content-sub';
+        return (
+          <React.Fragment key={item.step}>
+            <div className="flex flex-col items-center min-w-[80px]">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${circleClass}`}>
+                {isCompleted ? '✓' : item.step}
+              </div>
+              <span className={`text-xs mt-1 text-center whitespace-nowrap ${labelClass}`}>
+                {item.label}
+              </span>
+            </div>
+            {index < DISPOSAL_STEPS.length - 1 && (
+              <div
+                className={`flex-1 h-[3px] mx-2 mb-4 min-w-[30px] max-w-[60px] ${isCompleted ? 'bg-cta-primary-dark' : 'bg-stroke-input'}`}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
 
-// プレビュータブ型
-type PreviewDocTab = '見積依頼書' | '見積書' | '発注書' | '完了報告書他';
+function ThLabelCell({ children, accent = 'primary', width = 'w-[120px]' }: { children: React.ReactNode; accent?: 'primary' | 'destructive'; width?: string }) {
+  const bg = accent === 'destructive' ? 'bg-[#DA0000]' : 'bg-cta-primary';
+  return (
+    <th className={`${bg} text-white px-3 py-2.5 text-sm font-bold text-left ${width} border border-stroke-input whitespace-nowrap`}>
+      {children}
+    </th>
+  );
+}
 
+function TdCell({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <td className={`bg-surface-card px-3 py-2.5 border border-stroke-input text-sm text-content-primary ${className}`}>
+      {children}
+    </td>
+  );
+}
+
+function FormRow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`flex items-center gap-4 mb-3 flex-wrap ${className}`}>{children}</div>
+  );
+}
+
+// ============================================================
+// Main content
+// ============================================================
 function DisposalTaskContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -276,34 +272,26 @@ function DisposalTaskContent() {
   const [formData, setFormData] = useState<DisposalApplication | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // STEP①用：業者リスト（購入管理rfq-processと同一パターン）
   const [vendors, setVendors] = useState<VendorEntry[]>([]);
-  // STEP②用：見積関連
   const [registeredQuotations, setRegisteredQuotations] = useState<RegisteredQuotation[]>([]);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [quotationVendorName, setQuotationVendorName] = useState<string>('');
   const [quotationAmount, setQuotationAmount] = useState<string>('');
   const [quotationAccountType, setQuotationAccountType] = useState<string>('');
-  // REQ-069: 発注登録用見積を登録した場合の追加項目（STEP② 見積登録 + STEP③ 共用）
   const [settlementNo, setSettlementNo] = useState<string>('');
   const [isOrderRegisterModalOpen, setIsOrderRegisterModalOpen] = useState(false);
   const [registeredOrderNo, setRegisteredOrderNo] = useState<string>('');
-  // STEP④用：ドキュメント関連
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
   const [selectedDocFileName, setSelectedDocFileName] = useState<string>('');
-  // プレビュータブ
   const [previewTab, setPreviewTab] = useState<PreviewDocTab>('見積依頼書');
-  // 見積依頼書プレビュー対象の業者インデックス
   const [previewVendorIndex, setPreviewVendorIndex] = useState<number | null>(null);
   const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
   const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
 
-  // パネル幅の状態
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<boolean>(false);
 
-  // ドラッグハンドラ
   const handleDragMove = useCallback((e: MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
@@ -330,7 +318,6 @@ function DisposalTaskContent() {
     setFormData({ ...data });
     setCurrentStep(getInitialStep(data.status));
 
-    // モックデータから初期業者リストを生成
     const groupDataMap: Record<string, { vendorName: string; vendorPerson: string; vendorEmail: string; vendorContact: string }> = {
       '1': { vendorName: 'シーメンス・ジャパン', vendorPerson: '山田太郎', vendorEmail: 'yamada@siemens.co.jp', vendorContact: '03-1234-5678' },
       '2': { vendorName: 'GEヘルスケア', vendorPerson: '鈴木一郎', vendorEmail: 'suzuki@ge.co.jp', vendorContact: '03-2345-6789' },
@@ -370,7 +357,7 @@ function DisposalTaskContent() {
 
   if (!application || !formData) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <Header
           title="廃棄契約管理"
           hideMenu={true}
@@ -380,8 +367,8 @@ function DisposalTaskContent() {
           backButtonVariant="secondary"
           hideHomeButton={true}
         />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-content-sub">読み込み中...</p>
         </div>
       </div>
     );
@@ -391,42 +378,23 @@ function DisposalTaskContent() {
     setFormData(prev => prev ? { ...prev, ...updates } : prev);
   };
 
-  // ── 業者フィールド更新 ──
   const updateVendorField = (index: number, field: keyof VendorEntry, value: string) => {
-    setVendors(prev => prev.map((v, i) =>
-      i === index ? { ...v, [field]: value } : v
-    ));
+    setVendors(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
   };
 
-  // ── 業者追加 ──
   const handleAddVendor = () => {
     setVendors(prev => [
       ...prev,
-      {
-        localId: generateLocalId(),
-        vendorName: '',
-        personInCharge: '',
-        email: '',
-        tel: '',
-        submitDeadline: '',
-        requestNote: '',
-        isSent: false,
-      },
+      { localId: generateLocalId(), vendorName: '', personInCharge: '', email: '', tel: '', submitDeadline: '', requestNote: '', isSent: false },
     ]);
   };
 
-  // ── 業者削除（未送信のみ） ──
   const handleRemoveVendor = (index: number) => {
-    setVendors(prev => {
-      if (prev.length <= 1) return prev;
-      return prev.filter((_, i) => i !== index);
-    });
+    setVendors(prev => prev.length <= 1 ? prev : prev.filter((_, i) => i !== index));
   };
 
-  // 未送信カウント
   const unsentCount = vendors.filter(v => !v.isSent).length;
 
-  // STEP①: 個別依頼送信
   const handleStep1VendorSubmit = (index: number) => {
     const vendor = vendors[index];
     if (!vendor.vendorName || !vendor.email) {
@@ -437,14 +405,10 @@ function DisposalTaskContent() {
       alert('見積提出期限を入力してください');
       return;
     }
-    // 送信済みにマーク
-    setVendors(prev => prev.map((v, i) =>
-      i === index ? { ...v, isSent: true } : v
-    ));
+    setVendors(prev => prev.map((v, i) => i === index ? { ...v, isSent: true } : v));
     alert(`${vendor.vendorName} への見積依頼を送信しました`);
   };
 
-  // STEP①: 一括送信
   const handleSendRfqAll = () => {
     const unsent = vendors.filter(v => !v.isSent);
     if (unsent.length === 0) {
@@ -456,12 +420,10 @@ function DisposalTaskContent() {
       alert('未送信の業者すべてに業者名とメールアドレスを入力してください');
       return;
     }
-    // 全件送信済みにマーク
     setVendors(prev => prev.map(v => ({ ...v, isSent: true })));
     alert(`${unsent.length}件の見積依頼を送信しました`);
   };
 
-  // STEP①完了 → STEP②へ
   const handleStep1Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -472,7 +434,6 @@ function DisposalTaskContent() {
     }, 300);
   };
 
-  // STEP①: 申請見送り
   const handleCancelApplication = () => {
     if (confirm('この廃棄申請を見送りますか？廃棄品の更新が必要な場合は原本リストより更新申請を行って下さい。')) {
       setApplication(prev => prev ? { ...prev, status: '申請見送り' } : prev);
@@ -481,7 +442,6 @@ function DisposalTaskContent() {
     }
   };
 
-  // STEP②: 見積登録
   const handleAddQuotation = () => {
     if (!selectedFileName) {
       alert('見積ファイルを選択してください');
@@ -509,7 +469,6 @@ function DisposalTaskContent() {
     alert(`${formData.quotationPhase === '発注用' ? '発注用' : '参考'}見積を登録しました`);
   };
 
-  // STEP②完了 → STEP③へ
   const handleStep2Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -519,7 +478,6 @@ function DisposalTaskContent() {
     }, 300);
   };
 
-  // STEP③: 発注登録完了 → STEP④へ
   const handleStep3Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -529,7 +487,6 @@ function DisposalTaskContent() {
     }, 300);
   };
 
-  // STEP④: ドキュメント追加
   const handleAddDocument = () => {
     if (!selectedDocFileName) return;
     const newDoc: RegisteredDocument = {
@@ -544,7 +501,6 @@ function DisposalTaskContent() {
     setSelectedDocFileName('');
   };
 
-  // STEP④: 完了登録（タスク完了）
   const handleStep5Complete = () => {
     if (confirm('検収を完了し、このタスクを完了しますか？')) {
       setIsSubmitting(true);
@@ -555,80 +511,10 @@ function DisposalTaskContent() {
     }
   };
 
-  // 見積依頼済みの業者名リスト（STEP②の業者選択用）
-  const vendorOptions = vendors
-    .filter(v => v.vendorName)
-    .map(v => v.vendorName);
-
-  // プログレスバー
-  const ProgressBar = () => (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '12px 16px',
-      background: COLORS.surfaceAlt,
-      borderBottom: `1px solid ${COLORS.borderLight}`,
-    }}>
-      {DISPOSAL_STEPS.map((item, index) => (
-        <React.Fragment key={item.step}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            minWidth: '80px',
-          }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              background: item.step < activeStep ? COLORS.stepCompleted : item.step === activeStep ? COLORS.stepActive : COLORS.stepPending,
-              color: item.step <= activeStep ? 'white' : COLORS.textMuted,
-              border: item.step === activeStep ? `2px solid ${COLORS.primaryDark}` : 'none',
-            }}>
-              {item.step < activeStep ? '✓' : item.step}
-            </div>
-            <span style={{
-              fontSize: '11px',
-              marginTop: '4px',
-              color: item.step === activeStep ? COLORS.stepActive : item.step < activeStep ? COLORS.stepCompleted : COLORS.textMuted,
-              fontWeight: item.step === activeStep ? 'bold' : 'normal',
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-            }}>
-              {item.label}
-            </span>
-          </div>
-          {index < DISPOSAL_STEPS.length - 1 && (
-            <div style={{
-              flex: 1,
-              height: '3px',
-              background: item.step < activeStep ? COLORS.stepCompleted : COLORS.stepPending,
-              margin: '0 8px',
-              marginBottom: '18px',
-              minWidth: '30px',
-              maxWidth: '60px',
-            }} />
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
+  const vendorOptions = vendors.filter(v => v.vendorName).map(v => v.vendorName);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-      <style>{`
-        .task-btn { transition: filter 150ms ease-out; }
-        .task-btn:hover:not(:disabled) { filter: brightness(0.9); }
-        .task-btn:focus-visible { outline: 2px solid ${COLORS.primary}; outline-offset: 2px; }
-        .task-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-      `}</style>
-
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Header
         title="廃棄契約管理"
         hideMenu={true}
@@ -639,34 +525,16 @@ function DisposalTaskContent() {
         hideHomeButton={true}
       />
 
-      <ProgressBar />
+      <ProgressBar activeStep={activeStep} />
 
       {/* 見積依頼グループ名 */}
-      <div style={{
-        padding: '8px 16px',
-        background: '#EBF5EE',
-        borderBottom: '1px solid #c5cae9',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        color: '#146E2E',
-      }}>
+      <div className="px-4 py-2 bg-surface-select border-b border-cta-primary text-sm font-bold text-cta-primary-dark">
         見積依頼グループ: {application.groupName}
-        <span style={{ marginLeft: '16px', fontSize: '12px', fontWeight: 'normal', color: '#146E2E' }}>
-          {application.rfqNo}
-        </span>
+        <span className="ml-4 text-xs font-normal text-cta-primary-dark">{application.rfqNo}</span>
       </div>
 
       {/* 基本情報バー */}
-      <div style={{
-        padding: '8px 16px',
-        background: COLORS.warningBg,
-        borderBottom: `1px solid ${COLORS.warningBorder}`,
-        display: 'flex',
-        gap: '24px',
-        fontSize: '12px',
-        color: COLORS.warningText,
-        flexWrap: 'wrap',
-      }}>
+      <div className="flex gap-6 flex-wrap px-4 py-2 bg-surface-select border-b border-cta-primary text-xs text-cta-primary-dark">
         <span><strong>申請No:</strong> {application.applicationNo}</span>
         <span><strong>品目:</strong> {application.itemName}</span>
         <span><strong>メーカー:</strong> {application.maker}</span>
@@ -674,1298 +542,759 @@ function DisposalTaskContent() {
         <span><strong>QRラベル:</strong> {application.qrLabel}</span>
       </div>
 
-      {/* メインコンテンツ（左右分割） */}
-      <div ref={containerRef} style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-        {/* 左側: タスク入力エリア */}
-        <div style={{
-          width: `${leftPanelWidth}%`,
-          minWidth: '400px',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '16px',
-          }}>
-
-          {/* ===== STEP① 見積依頼 ===== */}
-          <Section
-            step={1}
-            title="STEP①．見積依頼"
-            accentColor="#008C1D"
-            enabled={isStepEnabled(1)}
-            completed={1 < activeStep}
-          >
-            {/* ガイドメッセージ */}
-            <div style={{
-              background: '#EBF5EE',
-              border: '1px solid #A66F1B',
-              padding: '10px 16px',
-              borderRadius: '4px',
-              marginBottom: '16px',
-              fontSize: '13px',
-              color: '#146E2E',
-              fontWeight: 500,
-            }}>
-              業者を登録し見積依頼書を作成してください。複数業者への相見積もりが可能です。
-            </div>
-
-            {/* 受付部署 */}
-            <div style={{
-              marginBottom: '16px',
-              padding: '12px 16px',
-              background: COLORS.surfaceAlt,
-              borderRadius: '4px',
-              border: `1px solid ${COLORS.borderLight}`,
-            }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                受付部署
-              </div>
-              <FormRow>
-                <label style={labelStyle}>部署名</label>
-                <input
-                  type="text"
-                  value={formData.receptionDepartment}
-                  onChange={(e) => updateFormData({ receptionDepartment: e.target.value })}
-                  style={{ ...inputStyle, width: '160px' }}
-                  disabled={1 < activeStep}
-                />
-                <label style={labelStyle}>担当者名</label>
-                <input
-                  type="text"
-                  value={formData.receptionPerson}
-                  onChange={(e) => updateFormData({ receptionPerson: e.target.value })}
-                  style={{ ...inputStyle, width: '120px' }}
-                  disabled={1 < activeStep}
-                />
-                <label style={labelStyle}>連絡先</label>
-                <input
-                  type="text"
-                  value={formData.receptionContact}
-                  onChange={(e) => updateFormData({ receptionContact: e.target.value })}
-                  style={{ ...inputStyle, width: '140px' }}
-                  disabled={1 < activeStep}
-                />
-              </FormRow>
-            </div>
-
-            {/* 依頼先（購入管理rfq-processと同一パターン） */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary }}>
-                  依頼先
-                </div>
-                <button
-                  className="task-btn"
-                  onClick={handleAddVendor}
-                  disabled={1 < activeStep}
-                  style={{
-                    padding: '4px 12px',
-                    background: '#008C1D',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                >
-                  + 業者追加（{vendors.length}社）
-                </button>
+      {/* メインコンテンツ */}
+      <div ref={containerRef} className="flex flex-1 min-h-0 relative overflow-hidden">
+        {/* 左側 */}
+        <div
+          className="flex flex-col min-h-0 overflow-hidden min-w-[400px]"
+          style={{ width: `${leftPanelWidth}%` }}
+        >
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* ===== STEP① ===== */}
+            <Section step={1} title="STEP①．見積依頼" enabled={isStepEnabled(1)} completed={1 < activeStep}>
+              <div className="px-4 py-2.5 bg-surface-select border border-cta-primary rounded-md mb-4 text-sm text-cta-primary-dark font-medium">
+                業者を登録し見積依頼書を作成してください。複数業者への相見積もりが可能です。
               </div>
 
-              {/* 業者入力行ループ */}
-              {vendors.map((vendor, index) => (
-                <div key={vendor.localId} style={{
-                  padding: '8px',
-                  marginBottom: '8px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  background: vendor.isSent ? '#FAFAFA' : 'white',
-                  opacity: vendor.isSent ? 0.8 : 1,
-                }}>
-                  {/* 1行目: バッジ + 業者名 + 担当者名 + アクション */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{
-                      background: vendor.isSent ? '#008C1D' : '#008C1D',
-                      color: 'white',
-                      padding: '4px 6px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      flexShrink: 0,
-                      minWidth: '48px',
-                      textAlign: 'center',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {vendor.isSent ? '送信済' : `依頼${index + 1}`}
-                    </span>
-                    <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '2px' }}>業者名 <span style={{ color: '#DA0000' }}>*</span></div>
-                        <input
-                          value={vendor.vendorName}
-                          onChange={(e) => updateVendorField(index, 'vendorName', e.target.value)}
-                          placeholder="業者名"
-                          disabled={vendor.isSent || 1 < activeStep}
-                          style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', ...(vendor.isSent ? { background: '#F1F1F1', color: '#8A8A8A' } : {}) }}
-                        />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '2px' }}>担当者名</div>
-                        <input
-                          value={vendor.personInCharge}
-                          onChange={(e) => updateVendorField(index, 'personInCharge', e.target.value)}
-                          placeholder="担当者"
-                          disabled={vendor.isSent || 1 < activeStep}
-                          style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', ...(vendor.isSent ? { background: '#F1F1F1', color: '#8A8A8A' } : {}) }}
-                        />
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                      <button
-                        className="task-btn"
-                        onClick={() => {
-                          setPreviewVendorIndex(index);
-                          setPreviewTab('見積依頼書');
-                        }}
-                        style={{
-                          padding: '6px 8px',
-                          background: previewVendorIndex === index ? '#4A4A4A' : '#8A8A8A',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '11px',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >プレビュー</button>
-                      {!vendor.isSent && 1 >= activeStep && (
-                        <button
-                          className="task-btn"
-                          onClick={() => handleStep1VendorSubmit(index)}
-                          disabled={isSubmitting}
-                          style={{
-                            padding: '6px 8px',
-                            background: '#008C1D',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            whiteSpace: 'nowrap',
-                            fontWeight: 600,
-                          }}
-                        >依頼送信</button>
-                      )}
-                      {!vendor.isSent && vendors.length > 1 && 1 >= activeStep && (
-                        <button
-                          className="task-btn"
-                          onClick={() => handleRemoveVendor(index)}
-                          style={{
-                            padding: '6px 8px',
-                            background: '#DA0000',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >削除</button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 2行目: メール + 連絡先 + 提出期限 */}
-                  <div style={{ display: 'flex', gap: '8px', marginLeft: '56px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '2px' }}>メール <span style={{ color: '#DA0000' }}>*</span></div>
-                      <input
-                        value={vendor.email}
-                        onChange={(e) => updateVendorField(index, 'email', e.target.value)}
-                        placeholder="email@example.com"
-                        disabled={vendor.isSent || 1 < activeStep}
-                        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', ...(vendor.isSent ? { background: '#F1F1F1', color: '#8A8A8A' } : {}) }}
-                      />
-                    </div>
-                    <div style={{ width: '150px', flexShrink: 0 }}>
-                      <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '2px' }}>連絡先</div>
-                      <input
-                        value={vendor.tel}
-                        onChange={(e) => updateVendorField(index, 'tel', e.target.value)}
-                        placeholder="03-0000-0000"
-                        disabled={vendor.isSent || 1 < activeStep}
-                        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', ...(vendor.isSent ? { background: '#F1F1F1', color: '#8A8A8A' } : {}) }}
-                      />
-                    </div>
-                    <div style={{ width: '150px', flexShrink: 0 }}>
-                      <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '2px' }}>提出期限</div>
-                      <input
-                        type="date"
-                        value={vendor.submitDeadline}
-                        onChange={(e) => updateVendorField(index, 'submitDeadline', e.target.value)}
-                        disabled={vendor.isSent || 1 < activeStep}
-                        style={{ ...inputStyle, width: '100%', boxSizing: 'border-box', ...(vendor.isSent ? { background: '#F1F1F1', color: '#8A8A8A' } : {}) }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* ご依頼事項（業者ごと） */}
-                  <div style={{
-                    marginTop: '8px',
-                    marginLeft: '56px',
-                    border: '1px solid #E1E1E1',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      padding: '4px 12px',
-                      fontSize: '12px',
-                      color: '#4A4A4A',
-                      background: '#FAFAFA',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <span style={{ fontWeight: 600 }}>ご依頼事項</span>
-                    </div>
-                    <textarea
-                      value={vendor.requestNote}
-                      onChange={(e) => updateVendorField(index, 'requestNote', e.target.value)}
-                      placeholder="ご依頼事項を入力してください"
-                      rows={2}
-                      disabled={vendor.isSent || 1 < activeStep}
-                      style={{
-                        ...inputStyle,
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        border: 'none',
-                        borderTop: '1px solid #E1E1E1',
-                        borderRadius: 0,
-                        resize: 'vertical',
-                        minHeight: '48px',
-                        ...(vendor.isSent ? { background: '#F1F1F1', color: '#8A8A8A' } : {}),
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {/* 一括送信エリア */}
-              <div style={{
-                padding: '12px 4px',
-                borderTop: '1px solid #E1E1E1',
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}>
-                <button
-                  className="task-btn"
-                  onClick={handleSendRfqAll}
-                  disabled={unsentCount === 0 || 1 < activeStep}
-                  style={{
-                    padding: '8px 24px',
-                    background: unsentCount === 0 || 1 < activeStep ? '#8A8A8A' : '#DA0000',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: unsentCount === 0 || 1 < activeStep ? 'not-allowed' : 'pointer',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {unsentCount > 0 ? `一括依頼送信（${unsentCount}件）` : '全件送信済'}
-                </button>
-              </div>
-            </div>
-
-            {/* アクションボタン */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-              <button
-                className="task-btn"
-                onClick={handleCancelApplication}
-                disabled={1 < activeStep || isSubmitting}
-                style={{
-                  padding: '8px 16px',
-                  background: 'transparent',
-                  color: COLORS.error,
-                  border: `1px solid ${COLORS.error}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                }}
-              >
-                申請を見送る
-              </button>
-              <button
-                className="task-btn"
-                onClick={handleStep1Complete}
-                disabled={1 < activeStep || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: '#008C1D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                見積依頼完了 → STEP②へ
-              </button>
-            </div>
-          </Section>
-
-          {/* ===== STEP② 見積登録/発注登録 ===== */}
-          <Section
-            step={2}
-            title="STEP②．見積登録/発注登録"
-            accentColor="#008C1D"
-            enabled={isStepEnabled(2)}
-            completed={2 < activeStep}
-          >
-            {/* ガイドメッセージ */}
-            <div style={{
-              padding: '12px 16px',
-              background: '#EBF5EE',
-              borderRadius: '4px',
-              marginBottom: '16px',
-              fontSize: '13px',
-              color: '#146E2E',
-            }}>
-              見積書をファイル選択して登録し、業者名と見積金額を入力してください。
-            </div>
-
-            {/* 見積を追加テーブル（青枠） */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                見積を追加
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #0073B8' }}>
-                <tbody>
-                  {/* 添付ファイル */}
-                  <tr>
-                    <th style={{
-                      background: '#008C1D',
-                      color: 'white',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      textAlign: 'left',
-                      width: '120px',
-                      border: '1px solid #0073B8',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      添付ファイル
-                    </th>
-                    <td style={{
-                      background: 'white',
-                      padding: '10px 12px',
-                      border: '1px solid #0073B8',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <label style={{
-                          padding: '6px 16px',
-                          background: '#FAFAFA',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          cursor: isStepEnabled(2) && activeStep <= 2 ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          whiteSpace: 'nowrap',
-                          opacity: isStepEnabled(2) && activeStep <= 2 ? 1 : 0.6,
-                        }}>
-                          ファイルの選択
-                          <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={!isStepEnabled(2) || 2 < activeStep}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) setSelectedFileName(file.name);
-                            }}
-                            style={{ display: 'none' }}
-                          />
-                        </label>
-                        <span style={{ color: selectedFileName ? COLORS.success : '#4A4A4A', fontSize: '13px' }}>
-                          {selectedFileName || 'ファイルが選択されていません'}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* 業者名 */}
-                  <tr>
-                    <th style={{
-                      background: '#008C1D',
-                      color: 'white',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      textAlign: 'left',
-                      width: '120px',
-                      border: '1px solid #0073B8',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      業者名
-                    </th>
-                    <td style={{
-                      background: 'white',
-                      padding: '10px 12px',
-                      border: '1px solid #0073B8',
-                    }}>
-                      <input
-                        type="text"
-                        value={vendors[0]?.vendorName || ''}
-                        disabled
-                        style={{
-                          ...inputStyle,
-                          width: '300px',
-                          background: COLORS.disabledBg,
-                          color: COLORS.textMuted,
-                        }}
-                      />
-                      <span style={{ fontSize: '11px', color: COLORS.textMuted, marginLeft: '8px' }}>
-                        ※STEP①で登録した依頼先から自動取得
-                      </span>
-                    </td>
-                  </tr>
-
-                  {/* 見積フェーズ */}
-                  <tr>
-                    <th style={{
-                      background: '#008C1D',
-                      color: 'white',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      textAlign: 'left',
-                      width: '120px',
-                      border: '1px solid #0073B8',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'top',
-                    }}>
-                      見積フェーズ
-                    </th>
-                    <td style={{
-                      background: 'white',
-                      padding: '10px 12px',
-                      border: '1px solid #0073B8',
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                          <input
-                            type="radio"
-                            name="quotationPhase"
-                            checked={formData.quotationPhase === '発注用'}
-                            onChange={() => updateFormData({ quotationPhase: '発注用' })}
-                            disabled={!isStepEnabled(2) || 2 < activeStep}
-                          />
-                          発注登録用見積
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                          <input
-                            type="radio"
-                            name="quotationPhase"
-                            checked={formData.quotationPhase === '参考'}
-                            onChange={() => updateFormData({ quotationPhase: '参考' })}
-                            disabled={!isStepEnabled(2) || 2 < activeStep}
-                          />
-                          参考見積
-                        </label>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* 保存形式 */}
-                  <tr>
-                    <th style={{
-                      background: '#008C1D',
-                      color: 'white',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      textAlign: 'left',
-                      width: '120px',
-                      border: '1px solid #0073B8',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'top',
-                    }}>
-                      保存形式
-                    </th>
-                    <td style={{
-                      background: 'white',
-                      padding: '10px 12px',
-                      border: '1px solid #0073B8',
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
-                          <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                            <input
-                              type="radio"
-                              name="saveFormat"
-                              checked={formData.saveFormat === fmt}
-                              onChange={() => updateFormData({ saveFormat: fmt })}
-                              disabled={!isStepEnabled(2) || 2 < activeStep}
-                            />
-                            {fmt}
-                          </label>
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
-            <div style={{ marginBottom: '20px', border: `2px solid #008C1D`, borderRadius: '8px', padding: '16px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#008C1D', marginBottom: '12px' }}>
-                見積登録業者
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {/* 業者名 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>業者名</label>
-                  <select
-                    value={quotationVendorName}
-                    onChange={(e) => setQuotationVendorName(e.target.value)}
-                    disabled={!isStepEnabled(2) || 2 < activeStep}
-                    style={{ ...inputStyle, width: '250px' }}
-                  >
-                    <option value="">選択してください</option>
-                    {vendorOptions.map((name, idx) => (
-                      <option key={idx} value={name}>{name}</option>
-                    ))}
-                  </select>
-                </div>
-                {/* 担当者 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>担当者</label>
-                  <span style={{ fontSize: '13px', color: COLORS.textSecondary }}>
-                    {vendors.find(v => v.vendorName === quotationVendorName)?.personInCharge || '-'}
-                  </span>
-                </div>
-                {/* 見積金額（税別） */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>見積金額（税別）</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
-                    <input
-                      type="text"
-                      value={quotationAmount}
-                      onChange={(e) => setQuotationAmount(e.target.value)}
-                      placeholder="0"
-                      disabled={!isStepEnabled(2) || 2 < activeStep}
-                      style={{ ...inputStyle, width: '160px', fontVariantNumeric: 'tabular-nums' }}
-                    />
-                    <span style={{ fontSize: '12px', color: COLORS.textMuted }}>（税別）</span>
-                  </div>
-                </div>
-                {/* 会計区分 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>会計区分</label>
-                  <select
-                    value={quotationAccountType}
-                    onChange={(e) => setQuotationAccountType(e.target.value)}
-                    disabled={!isStepEnabled(2) || 2 < activeStep}
-                    style={{ ...inputStyle, width: '250px' }}
-                  >
-                    <option value="">選択してください</option>
-                    {ACCOUNT_DIVISIONS.map((d) => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
-                  </select>
-                </div>
-                {/* 見積書の登録ボタン */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    className="task-btn"
-                    onClick={handleAddQuotation}
-                    disabled={!isStepEnabled(2) || isSubmitting || !selectedFileName || !quotationVendorName || 2 < activeStep}
-                    style={{
-                      padding: '8px 20px',
-                      background: selectedFileName && quotationVendorName ? '#008C1D' : COLORS.disabledBg,
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: selectedFileName && quotationVendorName ? 'pointer' : 'not-allowed',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    見積書の登録
-                  </button>
-                </div>
-
-                {/* REQ-069: 発注登録用見積を登録した場合のみ表示 */}
-                {formData.quotationPhase === '発注用' && registeredQuotations.some((q) => q.phase === '発注用') && (
-                  <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: `1px dashed ${COLORS.border}` }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#146E2E', marginBottom: '8px' }}>
-                      発注登録用見積として登録済み — 発注登録に進めます
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>決済No,</label>
-                      <input type="text" value={settlementNo} onChange={(e) => setSettlementNo(e.target.value)} placeholder="院内の任意の決済番号" disabled={!isStepEnabled(2) || 2 < activeStep} style={{ ...inputStyle, width: '250px' }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button
-                        onClick={() => alert('発注書プレビュー（mock）')}
-                        disabled={!isStepEnabled(2)}
-                        style={{
-                          padding: '8px 16px',
-                          background: '#4A4A4A',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        発注書プレビュー
-                      </button>
-                      <button
-                        onClick={() => setIsOrderRegisterModalOpen(true)}
-                        disabled={!isStepEnabled(2) || !!registeredOrderNo}
-                        style={{
-                          padding: '8px 16px',
-                          background: registeredOrderNo ? COLORS.disabled : '#008C1D',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: !registeredOrderNo && isStepEnabled(2) ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {registeredOrderNo ? `発注登録済 (${registeredOrderNo})` : '発注登録'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 登録済み見積一覧 */}
-            {registeredQuotations.length > 0 && (
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                  登録済み見積（{registeredQuotations.length}件）
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                    <thead>
-                      <tr style={{ background: COLORS.surfaceAlt }}>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>フェーズ</th>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>業者名</th>
-                        <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.border}` }}>見積金額</th>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {registeredQuotations.map((q) => (
-                        <tr key={q.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                          <td style={{ padding: '8px' }}>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '11px',
-                              fontWeight: 'bold',
-                              background: q.phase === '発注用' ? '#EAF3FB' : '#F1F1F1',
-                              color: q.phase === '発注用' ? '#1E5A9E' : '#146E2E',
-                            }}>
-                              {q.phase === '発注用' ? '発注登録用' : '参考'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '8px' }}>{q.vendorName}</td>
-                          <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                            ¥{q.amount.toLocaleString()}
-                          </td>
-                          <td style={{ padding: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '14px' }}>📄</span>
-                              <span>{q.fileName}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: '8px', textAlign: 'center' }}>
-                            <button
-                              onClick={() => {
-                                if (confirm('この見積を削除しますか？')) {
-                                  setRegisteredQuotations(prev => prev.filter(rq => rq.id !== q.id));
-                                }
-                              }}
-                              disabled={!isStepEnabled(2) || 2 < activeStep}
-                              style={{
-                                padding: '2px 8px',
-                                background: 'transparent',
-                                color: COLORS.error,
-                                border: `1px solid ${COLORS.error}`,
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
-                            >
-                              削除
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* 決済No. + 発注書の発行 */}
-            <div style={{
-              marginBottom: '16px',
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'flex-end',
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={labelStyle}>決済No.：</label>
+              {/* 受付部署 */}
+              <div className="mb-4 px-4 py-3 bg-stroke-card rounded-md border border-stroke-input">
+                <p className="text-sm font-bold text-content-primary mb-2">受付部署</p>
+                <FormRow>
+                  <label className={labelCls}>部署名</label>
                   <input
                     type="text"
-                    value={settlementNo}
-                    onChange={(e) => setSettlementNo(e.target.value)}
-                    placeholder="院内決済番号を入力"
-                    style={{ ...inputStyle, flex: 1, background: '#fffde7' }}
-                    disabled={!isStepEnabled(2) || 2 < activeStep}
+                    value={formData.receptionDepartment}
+                    onChange={(e) => updateFormData({ receptionDepartment: e.target.value })}
+                    className={`${inputCls} w-[160px]`}
+                    disabled={1 < activeStep}
                   />
-                </div>
+                  <label className={labelCls}>担当者名</label>
+                  <input
+                    type="text"
+                    value={formData.receptionPerson}
+                    onChange={(e) => updateFormData({ receptionPerson: e.target.value })}
+                    className={`${inputCls} w-[120px]`}
+                    disabled={1 < activeStep}
+                  />
+                  <label className={labelCls}>連絡先</label>
+                  <input
+                    type="text"
+                    value={formData.receptionContact}
+                    onChange={(e) => updateFormData({ receptionContact: e.target.value })}
+                    className={`${inputCls} w-[140px]`}
+                    disabled={1 < activeStep}
+                  />
+                </FormRow>
               </div>
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontSize: '12px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '4px', textAlign: 'center' }}>
-                  発注書の発行
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+
+              {/* 依頼先 */}
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-bold text-content-primary">依頼先</p>
                   <button
-                    className="task-btn"
-                    onClick={() => setPreviewTab('発注書')}
-                    disabled={!isStepEnabled(2) || 2 < activeStep}
-                    style={{
-                      padding: '8px 16px',
-                      background: '#4A4A4A',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
+                    onClick={handleAddVendor}
+                    disabled={1 < activeStep}
+                    className="px-3 py-1 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs font-semibold hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    発注書プレビュー
-                  </button>
-                  <button
-                    className="task-btn"
-                    onClick={() => alert('発注書を送信しました（モック）')}
-                    disabled={!isStepEnabled(2) || 2 < activeStep || isSubmitting}
-                    style={{
-                      padding: '8px 16px',
-                      background: '#008C1D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    発注送信
+                    + 業者追加（{vendors.length}社）
                   </button>
                 </div>
-              </div>
-            </div>
 
-            {/* STEP③へ進むボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button
-                className="task-btn"
-                onClick={handleStep2Complete}
-                disabled={!isStepEnabled(2) || 2 < activeStep || isSubmitting}
-                style={{
-                  padding: '10px 32px',
-                  background: COLORS.accent,
-                  color: COLORS.textOnColor,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                見積登録完了 → STEP③へ
-              </button>
-            </div>
-          </Section>
-
-          {/* ===== STEP③ 作業日登録 ===== */}
-          <Section
-            step={3}
-            title="STEP③．作業日登録"
-            accentColor="#008C1D"
-            enabled={isStepEnabled(3)}
-            completed={3 < activeStep}
-          >
-            {/* 作業日確認 */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                作業日確認
-              </div>
-              <FormRow>
-                <label style={labelStyle}>作業日</label>
-                <input
-                  type="date"
-                  value={formData.deliveryDate}
-                  onChange={(e) => updateFormData({ deliveryDate: e.target.value })}
-                  style={{ ...inputStyle, width: '180px' }}
-                  disabled={!isStepEnabled(3) || 3 < activeStep}
-                />
-              </FormRow>
-            </div>
-
-            {/* 作業日確定 */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                className="task-btn"
-                onClick={handleStep3Complete}
-                disabled={!isStepEnabled(3) || 3 < activeStep || isSubmitting || !formData.deliveryDate}
-                style={{
-                  padding: '12px 48px',
-                  background: '#fffde7',
-                  color: '#4A4A4A',
-                  border: '1px solid #e0d6a8',
-                  borderRadius: '4px',
-                  cursor: formData.deliveryDate ? 'pointer' : 'not-allowed',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  opacity: formData.deliveryDate && !isSubmitting ? 1 : 0.6,
-                }}
-              >
-                作業日確定
-              </button>
-            </div>
-          </Section>
-
-          {/* ===== STEP④ 完了登録 ===== */}
-          <Section
-            step={5}
-            title="STEP④．完了登録"
-            accentColor="#dc2626"
-            enabled={isStepEnabled(5)}
-            completed={false}
-          >
-            {/* ガイドメッセージ */}
-            <div style={{
-              padding: '12px 16px',
-              background: '#EBF5EE',
-              borderRadius: '4px',
-              marginBottom: '16px',
-              fontSize: '13px',
-              color: '#DA0000',
-            }}>
-              完了報告書・廃棄証明書等のドキュメントを登録し、検収を完了してください。
-            </div>
-
-            {/* ドキュメント追加テーブル（赤枠） */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                ドキュメント追加
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dc2626' }}>
-                <tbody>
-                  {/* 添付ファイル */}
-                  <tr>
-                    <th style={{
-                      background: '#DA0000',
-                      color: 'white',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      textAlign: 'left',
-                      width: '140px',
-                      border: '1px solid #dc2626',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      添付ファイル
-                    </th>
-                    <td style={{
-                      background: 'white',
-                      padding: '10px 12px',
-                      border: '1px solid #dc2626',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <label style={{
-                          padding: '6px 16px',
-                          background: '#FAFAFA',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          cursor: isStepEnabled(5) ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          whiteSpace: 'nowrap',
-                          opacity: isStepEnabled(5) ? 1 : 0.6,
-                        }}>
-                          ファイルの選択
+                {vendors.map((vendor, index) => (
+                  <div
+                    key={vendor.localId}
+                    className={`p-2 mb-2 border border-stroke-input rounded-md ${vendor.isSent ? 'bg-surface-screen opacity-80' : 'bg-surface-card'}`}
+                  >
+                    {/* 1行目 */}
+                    <div className="flex gap-2 items-center mb-1.5">
+                      <span className="bg-cta-primary text-white px-1.5 py-1 rounded-md text-xs font-bold flex-shrink-0 min-w-[48px] text-center whitespace-nowrap">
+                        {vendor.isSent ? '送信済' : `依頼${index + 1}`}
+                      </span>
+                      <div className="flex-1 flex gap-2">
+                        <div className="flex-1">
+                          <p className="text-xs text-content-sub mb-0.5">業者名 <span className="text-content-alert">*</span></p>
                           <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={!isStepEnabled(5)}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) setSelectedDocFileName(file.name);
-                            }}
-                            style={{ display: 'none' }}
+                            value={vendor.vendorName}
+                            onChange={(e) => updateVendorField(index, 'vendorName', e.target.value)}
+                            placeholder="業者名"
+                            disabled={vendor.isSent || 1 < activeStep}
+                            className={`${inputCls} w-full`}
                           />
-                        </label>
-                        <span style={{ color: selectedDocFileName ? COLORS.success : '#4A4A4A', fontSize: '13px' }}>
-                          {selectedDocFileName || 'ファイルが選択されていません'}
-                        </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-content-sub mb-0.5">担当者名</p>
+                          <input
+                            value={vendor.personInCharge}
+                            onChange={(e) => updateVendorField(index, 'personInCharge', e.target.value)}
+                            placeholder="担当者"
+                            disabled={vendor.isSent || 1 < activeStep}
+                            className={`${inputCls} w-full`}
+                          />
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-
-                  {/* ドキュメント種別 */}
-                  <tr>
-                    <th style={{
-                      background: '#DA0000',
-                      color: 'white',
-                      padding: '10px 12px',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      textAlign: 'left',
-                      width: '140px',
-                      border: '1px solid #dc2626',
-                      whiteSpace: 'nowrap',
-                      verticalAlign: 'top',
-                    }}>
-                      ドキュメント種別
-                    </th>
-                    <td style={{
-                      background: 'white',
-                      padding: '10px 12px',
-                      border: '1px solid #dc2626',
-                    }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        {(['完了報告書', '廃棄証明書', 'マニフェスト', '契約書', '請求書', 'その他'] as const).map(dtype => (
-                          <label key={dtype} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                            <input
-                              type="radio"
-                              name="documentType"
-                              checked={formData.documentType === dtype}
-                              onChange={() => updateFormData({ documentType: dtype })}
-                              disabled={!isStepEnabled(5)}
-                            />
-                            {dtype}
-                          </label>
-                        ))}
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => {
+                            setPreviewVendorIndex(index);
+                            setPreviewTab('見積依頼書');
+                          }}
+                          className={`px-2 py-1.5 text-white border-0 rounded-md cursor-pointer text-xs whitespace-nowrap transition-colors ${previewVendorIndex === index ? 'bg-content-primary' : 'bg-content-sub hover:bg-content-primary'}`}
+                        >プレビュー</button>
+                        {!vendor.isSent && 1 >= activeStep && (
+                          <button
+                            onClick={() => handleStep1VendorSubmit(index)}
+                            disabled={isSubmitting}
+                            className="px-2 py-1.5 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs whitespace-nowrap font-semibold hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >依頼送信</button>
+                        )}
+                        {!vendor.isSent && vendors.length > 1 && 1 >= activeStep && (
+                          <button
+                            onClick={() => handleRemoveVendor(index)}
+                            className="px-2 py-1.5 bg-content-alert text-white border-0 rounded-md cursor-pointer text-xs whitespace-nowrap hover:opacity-90 transition-colors"
+                          >削除</button>
+                        )}
                       </div>
-                    </td>
-                  </tr>
+                    </div>
 
-                </tbody>
-              </table>
+                    {/* 2行目 */}
+                    <div className="flex gap-2 ml-14">
+                      <div className="flex-1">
+                        <p className="text-xs text-content-sub mb-0.5">メール <span className="text-content-alert">*</span></p>
+                        <input
+                          value={vendor.email}
+                          onChange={(e) => updateVendorField(index, 'email', e.target.value)}
+                          placeholder="email@example.com"
+                          disabled={vendor.isSent || 1 < activeStep}
+                          className={`${inputCls} w-full`}
+                        />
+                      </div>
+                      <div className="w-[150px] flex-shrink-0">
+                        <p className="text-xs text-content-sub mb-0.5">連絡先</p>
+                        <input
+                          value={vendor.tel}
+                          onChange={(e) => updateVendorField(index, 'tel', e.target.value)}
+                          placeholder="03-0000-0000"
+                          disabled={vendor.isSent || 1 < activeStep}
+                          className={`${inputCls} w-full`}
+                        />
+                      </div>
+                      <div className="w-[150px] flex-shrink-0">
+                        <p className="text-xs text-content-sub mb-0.5">提出期限</p>
+                        <input
+                          type="date"
+                          value={vendor.submitDeadline}
+                          onChange={(e) => updateVendorField(index, 'submitDeadline', e.target.value)}
+                          disabled={vendor.isSent || 1 < activeStep}
+                          className={`${inputCls} w-full tabular-nums`}
+                        />
+                      </div>
+                    </div>
 
-              {/* 登録ボタン */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                    {/* ご依頼事項 */}
+                    <div className="mt-2 ml-14 border border-stroke-input rounded-md overflow-hidden">
+                      <div className="px-3 py-1 text-xs text-content-primary bg-surface-screen flex items-center gap-2">
+                        <span className="font-semibold">ご依頼事項</span>
+                      </div>
+                      <textarea
+                        value={vendor.requestNote}
+                        onChange={(e) => updateVendorField(index, 'requestNote', e.target.value)}
+                        placeholder="ご依頼事項を入力してください"
+                        rows={2}
+                        disabled={vendor.isSent || 1 < activeStep}
+                        className="w-full px-3 py-2 bg-surface-card text-sm text-content-primary border-0 border-t border-stroke-input resize-y min-h-[48px] focus:outline-none focus:border-cta-primary disabled:bg-stroke-card disabled:text-content-sub"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {/* 一括送信 */}
+                <div className="py-3 px-1 border-t border-stroke-input flex justify-end">
+                  <button
+                    onClick={handleSendRfqAll}
+                    disabled={unsentCount === 0 || 1 < activeStep}
+                    className={`h-10 px-6 text-white border-0 rounded-md text-sm font-bold transition-colors ${unsentCount === 0 || 1 < activeStep ? 'bg-content-sub cursor-not-allowed' : 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer'}`}
+                  >
+                    {unsentCount > 0 ? `一括依頼送信（${unsentCount}件）` : '全件送信済'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center gap-3">
                 <button
-                  className="task-btn"
-                  onClick={handleAddDocument}
-                  disabled={!isStepEnabled(5) || !selectedDocFileName}
-                  style={{
-                    padding: '8px 20px',
-                    background: selectedDocFileName ? '#DA0000' : COLORS.disabled,
-                    color: COLORS.textOnColor,
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: selectedDocFileName ? 'pointer' : 'not-allowed',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                  }}
+                  onClick={handleCancelApplication}
+                  disabled={1 < activeStep || isSubmitting}
+                  className="h-9 px-4 bg-transparent text-content-alert border border-content-alert rounded-md cursor-pointer text-sm hover:bg-surface-card transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  ドキュメント登録
+                  申請を見送る
+                </button>
+                <button
+                  onClick={handleStep1Complete}
+                  disabled={1 < activeStep || isSubmitting}
+                  className="h-10 px-6 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  見積依頼完了 → STEP②へ
                 </button>
               </div>
-            </div>
+            </Section>
 
-            {/* 登録済みドキュメント一覧 */}
-            {registeredDocuments.length > 0 && (
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
-                  登録済みドキュメント（{registeredDocuments.length}件）
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                    <thead>
-                      <tr style={{ background: COLORS.surfaceAlt }}>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>種別</th>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {registeredDocuments.map((doc) => (
-                        <tr key={doc.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                          <td style={{ padding: '8px' }}>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '11px',
-                              fontWeight: 'bold',
-                              background: '#EBF5EE',
-                              color: '#DA0000',
-                            }}>
-                              {doc.documentType}
-                            </span>
-                          </td>
-                          <td style={{ padding: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '14px' }}>📄</span>
-                              <span>{doc.fileName}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: '8px', textAlign: 'center' }}>
-                            <button
-                              onClick={() => {
-                                if (confirm('このドキュメントを削除しますか？')) {
-                                  setRegisteredDocuments(prev => prev.filter(d => d.id !== doc.id));
-                                }
+            {/* ===== STEP② ===== */}
+            <Section step={2} title="STEP②．見積登録/発注登録" enabled={isStepEnabled(2)} completed={2 < activeStep}>
+              <div className="px-4 py-3 bg-surface-select rounded-md mb-4 text-sm text-cta-primary-dark">
+                見積書をファイル選択して登録し、業者名と見積金額を入力してください。
+              </div>
+
+              {/* 見積を追加テーブル */}
+              <div className="mb-5">
+                <p className="text-sm font-bold text-content-primary mb-2">見積を追加</p>
+                <table className="w-full border-collapse border border-stroke-input">
+                  <tbody>
+                    <tr>
+                      <ThLabelCell>添付ファイル</ThLabelCell>
+                      <TdCell>
+                        <div className="flex items-center gap-2.5">
+                          <label className={`px-4 py-1.5 bg-surface-screen border border-stroke-input rounded-md text-sm whitespace-nowrap hover:bg-stroke-card transition-colors ${isStepEnabled(2) && activeStep <= 2 ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                            ファイルの選択
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={!isStepEnabled(2) || 2 < activeStep}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) setSelectedFileName(file.name);
                               }}
-                              disabled={!isStepEnabled(5)}
-                              style={{
-                                padding: '2px 8px',
-                                background: 'transparent',
-                                color: COLORS.error,
-                                border: `1px solid ${COLORS.error}`,
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
-                            >
-                              削除
-                            </button>
-                          </td>
-                        </tr>
+                              className="hidden"
+                            />
+                          </label>
+                          <span className={`text-sm ${selectedFileName ? 'text-cta-primary' : 'text-content-primary'}`}>
+                            {selectedFileName || 'ファイルが選択されていません'}
+                          </span>
+                        </div>
+                      </TdCell>
+                    </tr>
+                    <tr>
+                      <ThLabelCell>業者名</ThLabelCell>
+                      <TdCell>
+                        <input
+                          type="text"
+                          value={vendors[0]?.vendorName || ''}
+                          disabled
+                          className={`${inputCls} w-[300px]`}
+                        />
+                        <span className="text-xs text-content-sub ml-2">
+                          ※STEP①で登録した依頼先から自動取得
+                        </span>
+                      </TdCell>
+                    </tr>
+                    <tr>
+                      <ThLabelCell>見積フェーズ</ThLabelCell>
+                      <TdCell>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                            <input
+                              type="radio"
+                              name="quotationPhase"
+                              checked={formData.quotationPhase === '発注用'}
+                              onChange={() => updateFormData({ quotationPhase: '発注用' })}
+                              disabled={!isStepEnabled(2) || 2 < activeStep}
+                              className="accent-cta-primary"
+                            />
+                            発注登録用見積
+                          </label>
+                          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                            <input
+                              type="radio"
+                              name="quotationPhase"
+                              checked={formData.quotationPhase === '参考'}
+                              onChange={() => updateFormData({ quotationPhase: '参考' })}
+                              disabled={!isStepEnabled(2) || 2 < activeStep}
+                              className="accent-cta-primary"
+                            />
+                            参考見積
+                          </label>
+                        </div>
+                      </TdCell>
+                    </tr>
+                    <tr>
+                      <ThLabelCell>保存形式</ThLabelCell>
+                      <TdCell>
+                        <div className="flex flex-col gap-1.5">
+                          {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
+                            <label key={fmt} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                              <input
+                                type="radio"
+                                name="saveFormat"
+                                checked={formData.saveFormat === fmt}
+                                onChange={() => updateFormData({ saveFormat: fmt })}
+                                disabled={!isStepEnabled(2) || 2 < activeStep}
+                                className="accent-cta-primary"
+                              />
+                              {fmt}
+                            </label>
+                          ))}
+                        </div>
+                      </TdCell>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 見積登録業者 */}
+              <div className="mb-5 border-2 border-cta-primary rounded-lg p-4">
+                <p className="text-sm font-bold text-cta-primary mb-3">見積登録業者</p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-bold min-w-[120px]">業者名</label>
+                    <select
+                      value={quotationVendorName}
+                      onChange={(e) => setQuotationVendorName(e.target.value)}
+                      disabled={!isStepEnabled(2) || 2 < activeStep}
+                      className={`${inputCls} w-[250px]`}
+                    >
+                      <option value="">選択してください</option>
+                      {vendorOptions.map((name, idx) => (
+                        <option key={idx} value={name}>{name}</option>
                       ))}
-                    </tbody>
-                  </table>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-bold min-w-[120px]">担当者</label>
+                    <span className="text-sm text-content-sub">
+                      {vendors.find(v => v.vendorName === quotationVendorName)?.personInCharge || '---'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-bold min-w-[120px]">見積金額（税別）</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold">¥</span>
+                      <input
+                        type="text"
+                        value={quotationAmount}
+                        onChange={(e) => setQuotationAmount(e.target.value)}
+                        placeholder="0"
+                        disabled={!isStepEnabled(2) || 2 < activeStep}
+                        className={`${inputCls} w-[160px] tabular-nums`}
+                      />
+                      <span className="text-xs text-content-sub">（税別）</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm font-bold min-w-[120px]">会計区分</label>
+                    <select
+                      value={quotationAccountType}
+                      onChange={(e) => setQuotationAccountType(e.target.value)}
+                      disabled={!isStepEnabled(2) || 2 < activeStep}
+                      className={`${inputCls} w-[250px]`}
+                    >
+                      <option value="">選択してください</option>
+                      {ACCOUNT_DIVISIONS.map((d) => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleAddQuotation}
+                      disabled={!isStepEnabled(2) || isSubmitting || !selectedFileName || !quotationVendorName || 2 < activeStep}
+                      className={`h-9 px-5 text-white border-0 rounded-md text-sm font-bold transition-colors ${selectedFileName && quotationVendorName ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
+                    >
+                      見積書の登録
+                    </button>
+                  </div>
+
+                  {formData.quotationPhase === '発注用' && registeredQuotations.some((q) => q.phase === '発注用') && (
+                    <div className="mt-2 pt-3 border-t border-dashed border-stroke-input">
+                      <p className="text-xs font-bold text-cta-primary-dark mb-2">
+                        発注登録用見積として登録済み — 発注登録に進めます
+                      </p>
+                      <div className="flex items-center gap-3 mb-3">
+                        <label className="text-sm font-bold min-w-[120px]">決済No,</label>
+                        <input
+                          type="text"
+                          value={settlementNo}
+                          onChange={(e) => setSettlementNo(e.target.value)}
+                          placeholder="院内の任意の決済番号"
+                          disabled={!isStepEnabled(2) || 2 < activeStep}
+                          className={`${inputCls} w-[250px]`}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => alert('発注書プレビュー（mock）')}
+                          disabled={!isStepEnabled(2)}
+                          className="h-9 px-4 bg-content-primary text-white border-0 rounded-md text-sm font-bold cursor-pointer hover:bg-content-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          発注書プレビュー
+                        </button>
+                        <button
+                          onClick={() => setIsOrderRegisterModalOpen(true)}
+                          disabled={!isStepEnabled(2) || !!registeredOrderNo}
+                          className={`h-9 px-4 text-white border-0 rounded-md text-sm font-bold transition-colors ${registeredOrderNo ? 'bg-content-sub cursor-not-allowed' : 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer'} disabled:cursor-not-allowed`}
+                        >
+                          {registeredOrderNo ? `発注登録済 (${registeredOrderNo})` : '発注登録'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
 
-            {/* 検収完了ボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button
-                className="task-btn"
-                onClick={handleStep5Complete}
-                disabled={!isStepEnabled(5) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: '#DA0000',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
-              >
-                検収完了（タスク完了）
-              </button>
-            </div>
-          </Section>
+              {/* 登録済み見積一覧 */}
+              {registeredQuotations.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm font-bold text-content-primary mb-2">
+                    登録済み見積（{registeredQuotations.length}件）
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-stroke-card">
+                          <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">フェーズ</th>
+                          <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">業者名</th>
+                          <th className="px-2 py-2 text-right border-b border-stroke-input font-semibold">見積金額</th>
+                          <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">ファイル名</th>
+                          <th className="px-2 py-2 text-center border-b border-stroke-input w-[60px]"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {registeredQuotations.map((q) => (
+                          <tr key={q.id} className="border-b border-stroke-input">
+                            <td className="px-2 py-2">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${q.phase === '発注用' ? 'bg-surface-select text-cta-primary-dark' : 'bg-stroke-card text-content-sub'}`}>
+                                {q.phase === '発注用' ? '発注登録用' : '参考'}
+                              </span>
+                            </td>
+                            <td className="px-2 py-2">{q.vendorName}</td>
+                            <td className="px-2 py-2 text-right tabular-nums">¥{q.amount.toLocaleString()}</td>
+                            <td className="px-2 py-2">
+                              <span className="inline-flex items-center gap-1.5">
+                                <span>📄</span>
+                                <span>{q.fileName}</span>
+                              </span>
+                            </td>
+                            <td className="px-2 py-2 text-center">
+                              <button
+                                onClick={() => {
+                                  if (confirm('この見積を削除しますか？')) {
+                                    setRegisteredQuotations(prev => prev.filter(rq => rq.id !== q.id));
+                                  }
+                                }}
+                                disabled={!isStepEnabled(2) || 2 < activeStep}
+                                className="px-2 py-0.5 bg-transparent text-content-alert border border-content-alert rounded-md cursor-pointer text-xs hover:bg-surface-card transition-colors disabled:opacity-50"
+                              >
+                                削除
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
 
+              {/* 決済No + 発注書発行 */}
+              <div className="mb-4 flex gap-4 items-end">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <label className={labelCls}>決済No.：</label>
+                    <input
+                      type="text"
+                      value={settlementNo}
+                      onChange={(e) => setSettlementNo(e.target.value)}
+                      placeholder="院内決済番号を入力"
+                      className={`${inputCls} flex-1 bg-[#fffbe3]`}
+                      disabled={!isStepEnabled(2) || 2 < activeStep}
+                    />
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <p className="text-xs font-bold text-content-primary mb-1 text-center">発注書の発行</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setPreviewTab('発注書')}
+                      disabled={!isStepEnabled(2) || 2 < activeStep}
+                      className="h-9 px-4 bg-content-primary text-white border-0 rounded-md cursor-pointer text-sm hover:bg-content-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      発注書プレビュー
+                    </button>
+                    <button
+                      onClick={() => alert('発注書を送信しました（モック）')}
+                      disabled={!isStepEnabled(2) || 2 < activeStep || isSubmitting}
+                      className="h-9 px-4 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      発注送信
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleStep2Complete}
+                  disabled={!isStepEnabled(2) || 2 < activeStep || isSubmitting}
+                  className="h-10 px-8 bg-cta-primary text-white border-0 rounded-md text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  見積登録完了 → STEP③へ
+                </button>
+              </div>
+            </Section>
+
+            {/* ===== STEP③ ===== */}
+            <Section step={3} title="STEP③．作業日登録" enabled={isStepEnabled(3)} completed={3 < activeStep}>
+              <div className="mb-5">
+                <p className="text-sm font-bold text-content-primary mb-2">作業日確認</p>
+                <FormRow>
+                  <label className={labelCls}>作業日</label>
+                  <input
+                    type="date"
+                    value={formData.deliveryDate}
+                    onChange={(e) => updateFormData({ deliveryDate: e.target.value })}
+                    className={`${inputCls} w-[180px] tabular-nums`}
+                    disabled={!isStepEnabled(3) || 3 < activeStep}
+                  />
+                </FormRow>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleStep3Complete}
+                  disabled={!isStepEnabled(3) || 3 < activeStep || isSubmitting || !formData.deliveryDate}
+                  className={`h-12 px-12 text-content-primary border border-stroke-input rounded-md text-sm font-bold transition-colors ${formData.deliveryDate ? 'bg-[#fffbe3] cursor-pointer hover:bg-[#fffdf5]' : 'bg-stroke-card cursor-not-allowed'} disabled:opacity-60`}
+                >
+                  作業日確定
+                </button>
+              </div>
+            </Section>
+
+            {/* ===== STEP④（destructive） ===== */}
+            <Section step={5} title="STEP④．完了登録" destructive enabled={isStepEnabled(5)} completed={false}>
+              <div className="px-4 py-3 bg-surface-select rounded-md mb-4 text-sm text-content-alert">
+                完了報告書・廃棄証明書等のドキュメントを登録し、検収を完了してください。
+              </div>
+
+              <div className="mb-5">
+                <p className="text-sm font-bold text-content-primary mb-2">ドキュメント追加</p>
+                <table className="w-full border-collapse border border-[#DA0000]">
+                  <tbody>
+                    <tr>
+                      <ThLabelCell accent="destructive" width="w-[140px]">添付ファイル</ThLabelCell>
+                      <TdCell>
+                        <div className="flex items-center gap-2.5">
+                          <label className={`px-4 py-1.5 bg-surface-screen border border-stroke-input rounded-md text-sm whitespace-nowrap hover:bg-stroke-card transition-colors ${isStepEnabled(5) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                            ファイルの選択
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={!isStepEnabled(5)}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) setSelectedDocFileName(file.name);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          <span className={`text-sm ${selectedDocFileName ? 'text-cta-primary' : 'text-content-primary'}`}>
+                            {selectedDocFileName || 'ファイルが選択されていません'}
+                          </span>
+                        </div>
+                      </TdCell>
+                    </tr>
+                    <tr>
+                      <ThLabelCell accent="destructive" width="w-[140px]">ドキュメント種別</ThLabelCell>
+                      <TdCell>
+                        <div className="flex flex-col gap-1.5">
+                          {(['完了報告書', '廃棄証明書', 'マニフェスト', '契約書', '請求書', 'その他'] as const).map(dtype => (
+                            <label key={dtype} className="flex items-center gap-1.5 cursor-pointer text-sm">
+                              <input
+                                type="radio"
+                                name="documentType"
+                                checked={formData.documentType === dtype}
+                                onChange={() => updateFormData({ documentType: dtype })}
+                                disabled={!isStepEnabled(5)}
+                                className="accent-[#DA0000]"
+                              />
+                              {dtype}
+                            </label>
+                          ))}
+                        </div>
+                      </TdCell>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="flex justify-end mt-3">
+                  <button
+                    onClick={handleAddDocument}
+                    disabled={!isStepEnabled(5) || !selectedDocFileName}
+                    className={`h-9 px-5 text-white border-0 rounded-md text-sm font-bold transition-colors ${selectedDocFileName ? 'bg-[#DA0000] hover:opacity-90 cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
+                  >
+                    ドキュメント登録
+                  </button>
+                </div>
+              </div>
+
+              {/* 登録済みドキュメント */}
+              {registeredDocuments.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm font-bold text-content-primary mb-2">
+                    登録済みドキュメント（{registeredDocuments.length}件）
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-stroke-card">
+                          <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">種別</th>
+                          <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">ファイル名</th>
+                          <th className="px-2 py-2 text-center border-b border-stroke-input w-[60px]"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {registeredDocuments.map((doc) => (
+                          <tr key={doc.id} className="border-b border-stroke-input">
+                            <td className="px-2 py-2">
+                              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-surface-select text-content-alert">
+                                {doc.documentType}
+                              </span>
+                            </td>
+                            <td className="px-2 py-2">
+                              <span className="inline-flex items-center gap-1.5">
+                                <span>📄</span>
+                                <span>{doc.fileName}</span>
+                              </span>
+                            </td>
+                            <td className="px-2 py-2 text-center">
+                              <button
+                                onClick={() => {
+                                  if (confirm('このドキュメントを削除しますか？')) {
+                                    setRegisteredDocuments(prev => prev.filter(d => d.id !== doc.id));
+                                  }
+                                }}
+                                disabled={!isStepEnabled(5)}
+                                className="px-2 py-0.5 bg-transparent text-content-alert border border-content-alert rounded-md cursor-pointer text-xs hover:bg-surface-card transition-colors disabled:opacity-50"
+                              >
+                                削除
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleStep5Complete}
+                  disabled={!isStepEnabled(5) || isSubmitting}
+                  className="h-10 px-6 bg-[#DA0000] text-white border-0 rounded-md text-sm font-bold cursor-pointer hover:opacity-90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  検収完了（タスク完了）
+                </button>
+              </div>
+            </Section>
           </div>
         </div>
 
         {/* ドラッグハンドル */}
         <div
           onMouseDown={handleDragStart}
-          style={{
-            width: '8px',
-            cursor: 'col-resize',
-            background: COLORS.borderLight,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="w-2 cursor-col-resize bg-stroke-card flex items-center justify-center"
         >
-          <div style={{ width: '2px', height: '40px', background: COLORS.border, borderRadius: '1px' }} />
+          <div className="w-0.5 h-10 bg-stroke-input rounded" />
         </div>
 
-        {/* 右側: ドキュメントプレビューエリア */}
-        <div style={{
-          flex: 1,
-          minWidth: '300px',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          overflow: 'hidden',
-          background: COLORS.surfaceAlt,
-        }}>
-          {/* プレビューコンテンツ */}
-          <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
-
-            {/* === 見積依頼書プレビュー === */}
+        {/* 右側プレビュー */}
+        <div className="flex-1 min-w-[300px] flex flex-col min-h-0 overflow-hidden bg-stroke-card">
+          <div className="flex-1 p-4 overflow-auto">
+            {/* 見積依頼書 */}
             {previewTab === '見積依頼書' && (() => {
               const vIdx = previewVendorIndex ?? 0;
               const vendor = vendors[vIdx];
               return (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '24px',
-                maxWidth: '600px',
-                margin: '0 auto',
-              }}>
-                <h2 style={{ textAlign: 'center', fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: COLORS.textPrimary, textDecoration: 'underline' }}>
-                  見積依頼書
-                </h2>
+                <div className="bg-surface-card border border-stroke-input rounded-2xl p-6 max-w-[600px] mx-auto">
+                  <h2 className="text-center text-lg font-bold mb-4 text-content-primary underline">見積依頼書</h2>
 
-                {/* 宛先 + 差出人 */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', gap: '24px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '4px' }}>【宛先】</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary }}>
-                      {vendor?.vendorName || '（未設定）'}
+                  <div className="flex justify-between mb-4 gap-6">
+                    <div className="flex-1">
+                      <p className="text-xs text-content-sub mb-1">【宛先】</p>
+                      <p className="text-sm font-bold text-content-primary">{vendor?.vendorName || '（未設定）'}</p>
+                      <p className="text-xs text-content-primary">{vendor?.personInCharge || ''} 様</p>
                     </div>
-                    <div style={{ fontSize: '12px', color: COLORS.textSecondary }}>
-                      {vendor?.personInCharge || ''} 様
+                    <div className="flex-1 text-right">
+                      <p className="text-xs text-content-sub mb-1">【差出人】</p>
+                      <p className="text-sm text-content-primary">{formData.receptionDepartment || '○○病院'}</p>
+                      <p className="text-xs text-content-primary">
+                        {formData.receptionPerson} / {formData.receptionContact}
+                      </p>
                     </div>
                   </div>
-                  <div style={{ flex: 1, textAlign: 'right' }}>
-                    <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '4px' }}>【差出人】</div>
-                    <div style={{ fontSize: '13px', color: COLORS.textPrimary }}>
-                      {formData.receptionDepartment || '○○病院'}
-                    </div>
-                    <div style={{ fontSize: '12px', color: COLORS.textSecondary }}>
-                      {formData.receptionPerson} / {formData.receptionContact}
-                    </div>
+
+                  <p className="text-center text-sm font-bold mb-3">記</p>
+                  <p className="text-xs mb-3"><strong>申請No.</strong> {application.applicationNo}</p>
+
+                  <table className="w-full border-collapse text-xs mb-4">
+                    <tbody>
+                      {([
+                        ['QRラベル', application.qrLabel],
+                        ['品目名', application.itemName],
+                        ['メーカー', application.maker],
+                        ['型式', application.model],
+                        ['シリアルNo.', application.serialNo],
+                        ['設置部署', `${application.installationDivision} ${application.installationDepartment}`],
+                        ['室名', application.installationRoom],
+                      ] as [string, string][]).map(([label, value]) => (
+                        <tr key={label}>
+                          <th className="px-2.5 py-1.5 bg-content-primary text-white text-left w-[100px] border border-stroke-input text-xs">{label}</th>
+                          <td className="px-2.5 py-1.5 border border-stroke-input text-xs">{value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div className="mb-3">
+                    <p className="text-xs font-bold mb-1">廃棄理由</p>
+                    <p className="text-xs text-content-primary">{application.disposalReason}</p>
                   </div>
-                </div>
 
-                <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginBottom: '12px' }}>記</div>
-
-                {/* 申請No */}
-                <div style={{ fontSize: '12px', marginBottom: '12px' }}>
-                  <strong>申請No.</strong> {application.applicationNo}
-                </div>
-
-                {/* 機器情報テーブル */}
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginBottom: '16px' }}>
-                  <tbody>
-                    {[
-                      ['QRラベル', application.qrLabel],
-                      ['品目名', application.itemName],
-                      ['メーカー', application.maker],
-                      ['型式', application.model],
-                      ['シリアルNo.', application.serialNo],
-                      ['設置部署', `${application.installationDivision} ${application.installationDepartment}`],
-                      ['室名', application.installationRoom],
-                    ].map(([label, value]) => (
-                      <tr key={label}>
-                        <th style={{
-                          padding: '6px 10px',
-                          background: '#4A4A4A',
-                          color: 'white',
-                          textAlign: 'left',
-                          width: '100px',
-                          border: '1px solid #4b5563',
-                          fontSize: '11px',
-                        }}>
-                          {label}
-                        </th>
-                        <td style={{
-                          padding: '6px 10px',
-                          border: '1px solid #ccc',
-                          fontSize: '12px',
-                        }}>
-                          {value}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* 廃棄理由 */}
-                <div style={{ marginBottom: '12px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>廃棄理由</div>
-                  <div style={{ fontSize: '12px', color: COLORS.textSecondary }}>
-                    {application.disposalReason}
-                  </div>
-                </div>
-
-                {/* ご依頼事項 */}
-                {vendor?.requestNote && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>ご依頼事項</div>
-                    <div style={{
-                      fontSize: '12px',
-                      color: COLORS.textSecondary,
-                      padding: '8px',
-                      background: '#fffde7',
-                      borderRadius: '4px',
-                      border: '1px solid #f5c518',
-                    }}>
-                      {vendor.requestNote}
+                  {vendor?.requestNote && (
+                    <div className="mb-3">
+                      <p className="text-xs font-bold mb-1">ご依頼事項</p>
+                      <p className="text-xs text-content-primary p-2 bg-[#fffbe3] rounded-md border border-stroke-input">
+                        {vendor.requestNote}
+                      </p>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div style={{ textAlign: 'center', fontSize: '11px', color: COLORS.textMuted, marginTop: '24px' }}>
-                  — 以上 —
+                  <p className="text-center text-xs text-content-sub mt-6">— 以上 —</p>
                 </div>
-              </div>
               );
             })()}
 
-            {/* === 見積書プレビュー === */}
+            {/* 見積書一覧 */}
             {previewTab === '見積書' && previewQuotationIndex === null && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#146E2E' }}>
-                  登録済み見積書一覧
-                </h4>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
+                <h4 className="text-sm font-bold mb-3 text-cta-primary-dark">登録済み見積書一覧</h4>
                 {registeredQuotations.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr style={{ background: '#008C1D', color: 'white' }}>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #0073B8' }}>業者名</th>
-                        <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #0073B8' }}>見積金額</th>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #0073B8' }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #0073B8', width: '80px' }}>操作</th>
+                      <tr className="bg-cta-primary text-white">
+                        <th className="px-2 py-2 text-left border border-stroke-input">業者名</th>
+                        <th className="px-2 py-2 text-right border border-stroke-input">見積金額</th>
+                        <th className="px-2 py-2 text-left border border-stroke-input">ファイル名</th>
+                        <th className="px-2 py-2 text-center border border-stroke-input w-20">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {registeredQuotations.map((q, idx) => (
-                        <tr key={q.id} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{q.vendorName}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                            ¥{q.amount.toLocaleString()}
-                          </td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{q.fileName}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                        <tr key={q.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                          <td className="px-2 py-2 border border-stroke-input">{q.vendorName}</td>
+                          <td className="px-2 py-2 border border-stroke-input text-right tabular-nums">¥{q.amount.toLocaleString()}</td>
+                          <td className="px-2 py-2 border border-stroke-input">{q.fileName}</td>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
                             <button
                               onClick={() => setPreviewQuotationIndex(idx)}
-                              style={{
-                                padding: '4px 8px',
-                                background: '#008C1D',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
+                              className="px-2 py-1 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs hover:bg-cta-primary-dark transition-colors"
                             >
                               表示
                             </button>
@@ -1975,70 +1304,44 @@ function DisposalTaskContent() {
                     </tbody>
                   </table>
                 ) : (
-                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
-                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
-                    <div>登録済みの見積書はありません</div>
-                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP②で見積書を登録してください</div>
+                  <div className="text-center text-content-sub p-8">
+                    <p className="text-4xl mb-3">📁</p>
+                    <p>登録済みの見積書はありません</p>
+                    <p className="text-xs mt-2">STEP②で見積書を登録してください</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* 見積書個別プレビュー */}
+            {/* 見積書個別 */}
             {previewTab === '見積書' && previewQuotationIndex !== null && (() => {
               const q = registeredQuotations[previewQuotationIndex];
               if (!q) return null;
               return (
-                <div style={{
-                  background: COLORS.white,
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: '8px',
-                  padding: '16px',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}>
+                <div className="bg-surface-card border border-stroke-input rounded-2xl p-4 h-full flex flex-col">
                   <button
                     onClick={() => setPreviewQuotationIndex(null)}
-                    style={{
-                      padding: '6px 12px',
-                      background: '#F1F1F1',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      alignSelf: 'flex-start',
-                      marginBottom: '16px',
-                    }}
+                    className="px-3 py-1.5 bg-stroke-card border border-stroke-input rounded-md cursor-pointer text-xs self-start mb-4 hover:bg-stroke-input transition-colors"
                   >
                     ← 一覧に戻る
                   </button>
-                  <div style={{
-                    flex: 1,
-                    background: '#4A4A4A',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '300px',
-                  }}>
-                    <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'white' }}>{q.fileName}</div>
-                    <div style={{ fontSize: '12px', color: '#8A8A8A', marginTop: '4px' }}>PDFプレビュー（モック）</div>
+                  <div className="flex-1 bg-content-primary rounded-md flex flex-col items-center justify-center min-h-[300px]">
+                    <p className="text-6xl mb-4">📄</p>
+                    <p className="text-sm font-bold text-white">{q.fileName}</p>
+                    <p className="text-xs text-content-sub mt-1">PDFプレビュー（モック）</p>
                   </div>
-                  <div style={{ marginTop: '16px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <div className="mt-4">
+                    <table className="w-full border-collapse text-xs">
                       <tbody>
-                        {[
+                        {([
                           ['業者名', q.vendorName],
                           ['見積金額', `¥${q.amount.toLocaleString()}（税別）`],
                           ['フェーズ', q.phase === '発注用' ? '発注登録用' : '参考'],
                           ['保存形式', q.saveFormat],
-                        ].map(([label, value]) => (
+                        ] as [string, string][]).map(([label, value]) => (
                           <tr key={label}>
-                            <td style={{ padding: '8px', background: '#008C1D', color: 'white', fontWeight: 'bold', width: '120px' }}>{label}</td>
-                            <td style={{ padding: '8px', border: '1px solid #ccc' }}>{value}</td>
+                            <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px]">{label}</td>
+                            <td className="px-2 py-2 border border-stroke-input">{value}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2048,120 +1351,72 @@ function DisposalTaskContent() {
               );
             })()}
 
-            {/* === 発注書プレビュー === */}
+            {/* 発注書 */}
             {previewTab === '発注書' && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '24px',
-                maxWidth: '600px',
-                margin: '0 auto',
-              }}>
-                <h2 style={{ textAlign: 'center', fontSize: '18px', fontWeight: 'bold', marginBottom: '16px', color: COLORS.textPrimary, textDecoration: 'underline' }}>
-                  廃棄発注書
-                </h2>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-6 max-w-[600px] mx-auto">
+                <h2 className="text-center text-lg font-bold mb-4 text-content-primary underline">廃棄発注書</h2>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', gap: '24px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '4px' }}>【宛先】</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary }}>
-                      {vendors[0]?.vendorName || '（未設定）'}
-                    </div>
+                <div className="flex justify-between mb-4 gap-6">
+                  <div className="flex-1">
+                    <p className="text-xs text-content-sub mb-1">【宛先】</p>
+                    <p className="text-sm font-bold text-content-primary">{vendors[0]?.vendorName || '（未設定）'}</p>
                   </div>
-                  <div style={{ flex: 1, textAlign: 'right' }}>
-                    <div style={{ fontSize: '12px', color: COLORS.textMuted, marginBottom: '4px' }}>【差出人】</div>
-                    <div style={{ fontSize: '13px', color: COLORS.textPrimary }}>
-                      {formData.receptionDepartment || '○○病院'}
-                    </div>
+                  <div className="flex-1 text-right">
+                    <p className="text-xs text-content-sub mb-1">【差出人】</p>
+                    <p className="text-sm text-content-primary">{formData.receptionDepartment || '○○病院'}</p>
                   </div>
                 </div>
 
-                <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 'bold', marginBottom: '12px' }}>記</div>
+                <p className="text-center text-sm font-bold mb-3">記</p>
 
-                {/* 発注内容テーブル */}
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '6px', color: COLORS.textPrimary }}>【発注内容】</div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <div className="mb-4">
+                  <p className="text-xs font-bold mb-1.5 text-content-primary">【発注内容】</p>
+                  <table className="w-full border-collapse text-xs">
                     <tbody>
-                      {[
+                      {([
                         ['発注No.', application.applicationNo],
                         ['発注金額', `¥${(registeredQuotations.find(q => q.phase === '発注用')?.amount || 0).toLocaleString()}（税別）`],
                         ['納品場所', `${application.installationDivision} ${application.installationDepartment} ${application.installationRoom}`],
-                      ].map(([label, value]) => (
+                      ] as [string, string][]).map(([label, value]) => (
                         <tr key={label}>
-                          <th style={{
-                            padding: '6px 10px',
-                            background: '#4A4A4A',
-                            color: 'white',
-                            textAlign: 'left',
-                            width: '100px',
-                            border: '1px solid #4b5563',
-                            fontSize: '11px',
-                          }}>
-                            {label}
-                          </th>
-                          <td style={{
-                            padding: '6px 10px',
-                            border: '1px solid #ccc',
-                            fontSize: '12px',
-                            fontVariantNumeric: 'tabular-nums',
-                          }}>
-                            {value}
-                          </td>
+                          <th className="px-2.5 py-1.5 bg-content-primary text-white text-left w-[100px] border border-stroke-input text-xs">{label}</th>
+                          <td className="px-2.5 py-1.5 border border-stroke-input text-xs tabular-nums">{value}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div style={{ textAlign: 'center', fontSize: '11px', color: COLORS.textMuted, marginTop: '24px' }}>
-                  — 以上 —
-                </div>
+                <p className="text-center text-xs text-content-sub mt-6">— 以上 —</p>
               </div>
             )}
 
-            {/* === 完了報告書他プレビュー === */}
+            {/* 完了報告書他 一覧 */}
             {previewTab === '完了報告書他' && previewDocumentIndex === null && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#DA0000' }}>
-                  登録済みドキュメント一覧
-                </h4>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
+                <h4 className="text-sm font-bold mb-3 text-content-alert">登録済みドキュメント一覧</h4>
                 {registeredDocuments.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr style={{ background: '#DA0000', color: 'white' }}>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #dc2626' }}>種別</th>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #dc2626' }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #dc2626' }}>登録日</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #dc2626', width: '80px' }}>操作</th>
+                      <tr className="bg-[#DA0000] text-white">
+                        <th className="px-2 py-2 text-left border border-[#DA0000]">種別</th>
+                        <th className="px-2 py-2 text-left border border-[#DA0000]">ファイル名</th>
+                        <th className="px-2 py-2 text-center border border-[#DA0000]">登録日</th>
+                        <th className="px-2 py-2 text-center border border-[#DA0000] w-20">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {registeredDocuments.map((doc, idx) => (
-                        <tr key={doc.id} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{doc.documentType}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{doc.fileName}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                        <tr key={doc.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                          <td className="px-2 py-2 border border-stroke-input">{doc.documentType}</td>
+                          <td className="px-2 py-2 border border-stroke-input">{doc.fileName}</td>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
                             {new Date(doc.registeredAt).toLocaleDateString('ja-JP')}
                           </td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
                             <button
                               onClick={() => setPreviewDocumentIndex(idx)}
-                              style={{
-                                padding: '4px 8px',
-                                background: '#DA0000',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
+                              className="px-2 py-1 bg-[#DA0000] text-white border-0 rounded-md cursor-pointer text-xs hover:opacity-90 transition-colors"
                             >
                               表示
                             </button>
@@ -2171,69 +1426,43 @@ function DisposalTaskContent() {
                     </tbody>
                   </table>
                 ) : (
-                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
-                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
-                    <div>登録済みのドキュメントはありません</div>
-                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP④でドキュメントを登録してください</div>
+                  <div className="text-center text-content-sub p-8">
+                    <p className="text-4xl mb-3">📁</p>
+                    <p>登録済みのドキュメントはありません</p>
+                    <p className="text-xs mt-2">STEP④でドキュメントを登録してください</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* 完了報告書他 個別プレビュー */}
+            {/* 完了報告書他 個別 */}
             {previewTab === '完了報告書他' && previewDocumentIndex !== null && (() => {
               const doc = registeredDocuments[previewDocumentIndex];
               if (!doc) return null;
               return (
-                <div style={{
-                  background: COLORS.white,
-                  border: `1px solid ${COLORS.borderLight}`,
-                  borderRadius: '8px',
-                  padding: '16px',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}>
+                <div className="bg-surface-card border border-stroke-input rounded-2xl p-4 h-full flex flex-col">
                   <button
                     onClick={() => setPreviewDocumentIndex(null)}
-                    style={{
-                      padding: '6px 12px',
-                      background: '#F1F1F1',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      alignSelf: 'flex-start',
-                      marginBottom: '16px',
-                    }}
+                    className="px-3 py-1.5 bg-stroke-card border border-stroke-input rounded-md cursor-pointer text-xs self-start mb-4 hover:bg-stroke-input transition-colors"
                   >
                     ← 一覧に戻る
                   </button>
-                  <div style={{
-                    flex: 1,
-                    background: '#4A4A4A',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '300px',
-                  }}>
-                    <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'white' }}>{doc.fileName}</div>
-                    <div style={{ fontSize: '12px', color: '#8A8A8A', marginTop: '4px' }}>PDFプレビュー（モック）</div>
+                  <div className="flex-1 bg-content-primary rounded-md flex flex-col items-center justify-center min-h-[300px]">
+                    <p className="text-6xl mb-4">📄</p>
+                    <p className="text-sm font-bold text-white">{doc.fileName}</p>
+                    <p className="text-xs text-content-sub mt-1">PDFプレビュー（モック）</p>
                   </div>
-                  <div style={{ marginTop: '16px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <div className="mt-4">
+                    <table className="w-full border-collapse text-xs">
                       <tbody>
-                        {[
+                        {([
                           ['種別', doc.documentType],
                           ['勘定科目', doc.accountType === 'その他' ? doc.accountOther || 'その他' : doc.accountType],
                           ['登録日時', new Date(doc.registeredAt).toLocaleString('ja-JP')],
-                        ].map(([label, value]) => (
+                        ] as [string, string][]).map(([label, value]) => (
                           <tr key={label}>
-                            <td style={{ padding: '8px', background: '#DA0000', color: 'white', fontWeight: 'bold', width: '120px' }}>{label}</td>
-                            <td style={{ padding: '8px', border: '1px solid #ccc' }}>{value}</td>
+                            <td className="px-2 py-2 bg-[#DA0000] text-white font-bold w-[120px]">{label}</td>
+                            <td className="px-2 py-2 border border-stroke-input">{value}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -2242,19 +1471,11 @@ function DisposalTaskContent() {
                 </div>
               );
             })()}
-
           </div>
         </div>
 
-        {/* 縦型タブバー（右端・文書名ベース） */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          background: '#F1F1F1',
-          borderLeft: '1px solid #E1E1E1',
-          width: '40px',
-          flexShrink: 0,
-        }}>
+        {/* 縦型タブバー */}
+        <div className="flex flex-col bg-stroke-card border-l border-stroke-input w-10 flex-shrink-0">
           {(['見積依頼書', '見積書', '発注書', '完了報告書他'] as PreviewDocTab[]).map((tab) => {
             const isActive = previewTab === tab;
             return (
@@ -2265,23 +1486,7 @@ function DisposalTaskContent() {
                   setPreviewQuotationIndex(null);
                   setPreviewDocumentIndex(null);
                 }}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: 'none',
-                  borderBottom: '1px solid #E1E1E1',
-                  background: isActive ? '#EBF5EE' : 'transparent',
-                  color: isActive ? '#4A4A4A' : '#4A4A4A',
-                  cursor: 'pointer',
-                  fontSize: '10px',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  transition: 'all 0.2s',
-                  padding: '8px 0',
-                  gap: '4px',
-                }}
+                className={`flex-1 flex flex-col items-center justify-center border-0 border-b border-stroke-input cursor-pointer text-[10px] transition-all py-2 gap-1 ${isActive ? 'bg-surface-select text-content-primary font-bold' : 'bg-transparent text-content-primary hover:bg-stroke-input'}`}
                 title={tab}
               >
                 <span style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>{tab}</span>
@@ -2291,7 +1496,6 @@ function DisposalTaskContent() {
         </div>
       </div>
 
-      {/* REQ-069: 発注登録モーダル（廃棄） */}
       <OrderRegistrationModal
         isOpen={isOrderRegisterModalOpen}
         onClose={() => setIsOrderRegisterModalOpen(false)}
@@ -2309,7 +1513,7 @@ function DisposalTaskContent() {
 export default function DisposalTaskPage() {
   return (
     <Suspense fallback={
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <Header
           title="廃棄契約管理"
           hideMenu={true}
@@ -2319,8 +1523,8 @@ export default function DisposalTaskPage() {
           backButtonVariant="secondary"
           hideHomeButton={true}
         />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-content-sub">読み込み中...</p>
         </div>
       </div>
     }>
