@@ -159,20 +159,20 @@ function AssetMasterContent() {
   };
 
   return (
-    <div className="min-h-dvh bg-[#FAFAFA] flex flex-col">
+    <div className="min-h-dvh bg-surface-screen flex flex-col">
       {/* ヘッダー */}
-      <div className="bg-[#FAFAFA] border-b border-[#E1E1E1] px-5 py-3 flex items-center gap-3 shadow-sm">
-        <span className="text-[#8A8A8A] text-lg cursor-pointer select-none">&lt;</span>
-        <h1 className="text-lg md:text-xl font-bold text-[#4A4A4A] m-0 text-balance">
+      <div className="bg-surface-screen border-b border-stroke-input px-5 py-3 flex items-center gap-3 shadow-sm">
+        <span className="text-content-sub text-lg cursor-pointer select-none">&lt;</span>
+        <h1 className="text-lg md:text-xl font-bold text-content-primary m-0 text-balance">
           資産マスタ選択
         </h1>
       </div>
 
       {/* フィルターヘッダー */}
-      <div className="bg-white mx-4 mt-4 rounded-lg border border-[#E1E1E1] p-4">
+      <div className="bg-surface-card mx-4 mt-4 rounded-lg border border-stroke-input p-4">
         {/* 全体検索 */}
         <div className="mb-3">
-          <label className="block text-xs font-bold text-[#4A4A4A] mb-1">
+          <label className="block text-xs font-bold text-content-primary mb-1">
             全体検索
           </label>
           <input
@@ -180,7 +180,7 @@ function AssetMasterContent() {
             value={filters.globalSearch || ''}
             onChange={(e) => setFilters({...filters, globalSearch: e.target.value})}
             placeholder="キーワードを入力（全カラムから曖昧検索）"
-            className="w-full px-3 py-2.5 border border-[#E1E1E1] rounded-lg text-sm text-[#4A4A4A] placeholder:text-[#8A8A8A] focus:outline-none focus:ring-2 focus:ring-[#008C1D]/30 focus:border-[#008C1D] box-border"
+            className="w-full px-3 py-2.5 border border-stroke-input rounded-lg text-sm text-content-primary placeholder:text-content-sub focus:outline-none focus:ring-2 focus:ring-cta-primary/30 focus:border-cta-primary box-border"
           />
         </div>
         {/* 個別フィルター */}
@@ -255,7 +255,7 @@ function AssetMasterContent() {
               maker: '',
               model: ''
             })}
-            className="px-4 py-2 bg-[#4A4A4A] text-white border-none rounded-lg text-[13px] cursor-pointer whitespace-nowrap hover:bg-[#4A4A4A] transition-colors"
+            className="px-4 py-2 bg-content-primary text-white border-none rounded-lg text-[13px] cursor-pointer whitespace-nowrap hover:bg-content-primary transition-colors"
           >
             クリア
           </button>
@@ -263,7 +263,7 @@ function AssetMasterContent() {
       </div>
 
       {/* アクションバー */}
-      <div className="bg-white mx-4 mt-3 rounded-lg border border-[#E1E1E1] px-4 py-3 flex justify-between items-center flex-wrap gap-3">
+      <div className="bg-surface-card mx-4 mt-3 rounded-lg border border-stroke-input px-4 py-3 flex justify-between items-center flex-wrap gap-3">
         <div className="flex gap-2 flex-wrap">
           {isSimpleMode ? (
             // シンプルモード: 選択ボタンのみ
@@ -273,8 +273,8 @@ function AssetMasterContent() {
                 disabled={!selectedAssetId}
                 className={`px-3 py-2 md:px-5 md:py-2.5 text-white border-none rounded-lg text-xs md:text-sm font-bold transition-colors ${
                   !selectedAssetId
-                    ? 'bg-[#bdc3c7] cursor-not-allowed'
-                    : 'bg-[#008C1D] cursor-pointer'
+                    ? 'bg-surface-disabled cursor-not-allowed'
+                    : 'bg-cta-primary cursor-pointer'
                 }`}
                 onMouseEnter={(e) => {
                   if (selectedAssetId) {
@@ -291,7 +291,7 @@ function AssetMasterContent() {
               </button>
               <button
                 onClick={() => window.close()}
-                className="px-3 py-2 md:px-5 md:py-2.5 bg-[#8A8A8A] text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
+                className="px-3 py-2 md:px-5 md:py-2.5 bg-content-sub text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#8A8A8A';
                 }}
@@ -310,8 +310,8 @@ function AssetMasterContent() {
                 disabled={!selectedAssetId}
                 className={`px-3 py-2 md:px-5 md:py-2.5 text-white border-none rounded-lg text-xs md:text-sm font-bold transition-colors ${
                   !selectedAssetId
-                    ? 'bg-[#bdc3c7] cursor-not-allowed'
-                    : 'bg-[#008C1D] cursor-pointer'
+                    ? 'bg-surface-disabled cursor-not-allowed'
+                    : 'bg-cta-primary cursor-pointer'
                 }`}
                 onMouseEnter={(e) => {
                   if (selectedAssetId) {
@@ -328,7 +328,7 @@ function AssetMasterContent() {
               </button>
               <button
                 onClick={() => window.close()}
-                className="px-3 py-2 md:px-5 md:py-2.5 bg-[#8A8A8A] text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
+                className="px-3 py-2 md:px-5 md:py-2.5 bg-content-sub text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#8A8A8A';
                 }}
@@ -344,33 +344,33 @@ function AssetMasterContent() {
       </div>
 
       {/* 資産テーブル */}
-      <div className="flex-1 bg-white mx-4 mt-3 mb-4 rounded-lg border border-[#E1E1E1] overflow-hidden flex flex-col">
+      <div className="flex-1 bg-surface-card mx-4 mt-3 mb-4 rounded-lg border border-stroke-input overflow-hidden flex flex-col">
         <div className="flex-1 overflow-x-auto overflow-y-auto">
           <table className="w-full border-collapse text-xs md:text-sm">
-            <thead className="bg-[#FAFAFA] sticky top-0 z-10">
+            <thead className="bg-surface-screen sticky top-0 z-10">
               <tr>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-center font-semibold text-[#8A8A8A] text-xs w-[50px] border-b border-[#E1E1E1]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-center font-semibold text-content-sub text-xs w-[50px] border-b border-stroke-input">
                   選択
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[60px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[60px]">
                   No.
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[100px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[100px]">
                   Category
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
                   大分類
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
                   中分類
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[200px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[200px]">
                   個体管理品目
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
                   メーカー
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-[#8A8A8A] text-xs border-b border-[#E1E1E1] min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
                   型式
                 </th>
               </tr>
@@ -379,10 +379,10 @@ function AssetMasterContent() {
               {filteredAssets.map((asset, index) => (
                 <tr
                   key={asset.id}
-                  className={`border-b border-[#E1E1E1] cursor-pointer transition-colors ${
+                  className={`border-b border-stroke-input cursor-pointer transition-colors ${
                     selectedAssetId === asset.id
-                      ? 'bg-[#d5f4e6]'
-                      : index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'
+                      ? 'bg-surface-select'
+                      : index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'
                   }`}
                   onClick={() => setSelectedAssetId(asset.id)}
                   onMouseEnter={(e) => {
@@ -409,25 +409,25 @@ function AssetMasterContent() {
                       className="cursor-pointer w-4 h-4 accent-[#008C1D]"
                     />
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A] tabular-nums">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary tabular-nums">
                     {index + 1}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A]">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
                     {asset.category}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A]">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
                     {asset.largeClass}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A]">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
                     {asset.mediumClass}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A]">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
                     {asset.item}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A]">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
                     {asset.maker}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-[#4A4A4A]">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
                     {asset.model}
                   </td>
                 </tr>
@@ -437,7 +437,7 @@ function AssetMasterContent() {
         </div>
 
         {filteredAssets.length === 0 && (
-          <div className="py-10 text-center text-[#8A8A8A] text-sm md:text-base">
+          <div className="py-10 text-center text-content-sub text-sm md:text-base">
             該当する資産がありません
           </div>
         )}
