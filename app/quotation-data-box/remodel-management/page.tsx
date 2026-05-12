@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowRight, Monitor, Smartphone, X } from 'lucide-react';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { RfqGroupStatus } from '@/lib/types';
@@ -14,32 +15,24 @@ function RemodelManagementContent() {
   const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
   const { editLists } = useEditListStore();
 
-  // 選択中の編集リスト
   const [selectedEditListId, setSelectedEditListId] = useState<string>('');
 
-  // ステータスフィルター
   const [rfqStatusFilter, setRfqStatusFilter] = useState<RfqGroupStatus | ''>('');
   const filteredRfqGroups = useMemo(() => {
     if (!rfqStatusFilter) return rfqGroups;
     return rfqGroups.filter(g => g.status === rfqStatusFilter);
   }, [rfqGroups, rfqStatusFilter]);
 
-  // 見積依頼/見積登録 → STEP画面へ遷移
   const handleNavigateToRfqProcess = (rfqGroupId: number) => {
     router.push(`/quotation-data-box/rfq-process?rfqGroupId=${rfqGroupId}`);
   };
-
-  // 発注登録開始（画面遷移）
   const handleStartOrderRegistration = (rfqGroupId: number) => {
     router.push(`/quotation-data-box/order-registration?rfqGroupId=${rfqGroupId}`);
   };
-
-  // 検収登録開始（画面遷移）
   const handleStartInspectionRegistration = (rfqGroupId: number) => {
     router.push(`/quotation-data-box/inspection-registration?rfqGroupId=${rfqGroupId}`);
   };
 
-  // 資産仮登録開始（モード選択）
   const [showModeSelection, setShowModeSelection] = useState(false);
   const [pendingRfqGroupId, setPendingRfqGroupId] = useState<number | null>(null);
 
@@ -48,7 +41,6 @@ function RemodelManagementContent() {
     setShowModeSelection(true);
   };
 
-  // 資産登録開始（画面遷移）
   const handleStartAssetRegistration = (rfqGroupId: number) => {
     router.push(`/quotation-data-box/asset-registration?rfqGroupId=${rfqGroupId}`);
   };
@@ -61,7 +53,6 @@ function RemodelManagementContent() {
     setPendingRfqGroupId(null);
   };
 
-  // 廃棄・移設の承認操作
   const today = new Date().toISOString().split('T')[0];
   const handleApprove = (rfqGroupId: number) => {
     const group = rfqGroups.find(g => g.id === rfqGroupId);
@@ -83,7 +74,7 @@ function RemodelManagementContent() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-dvh flex flex-col bg-surface-screen">
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -91,27 +82,13 @@ function RemodelManagementContent() {
         backLabel="メイン画面に戻る"
         hideMenu={true}
         centerContent={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: '#A30000',
-              padding: '6px 16px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}>
-              <span style={{ fontSize: '12px', color: 'white', fontWeight: 'bold' }}>編集リスト:</span>
+          <div className="flex items-center gap-3">
+            <div className="bg-content-alert px-4 py-1.5 rounded-md flex items-center gap-2">
+              <span className="text-xs text-white font-bold">編集リスト:</span>
               <select
                 value={selectedEditListId}
                 onChange={(e) => setSelectedEditListId(e.target.value)}
-                style={{
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  border: 'none',
-                  borderRadius: '3px',
-                  background: 'white',
-                  minWidth: '180px',
-                }}
+                className="px-2 py-1 text-xs border-0 rounded-sm bg-surface-card min-w-[180px] focus:outline-none"
               >
                 <option value="">選択してください</option>
                 {editLists.map((list) => (
@@ -129,22 +106,10 @@ function RemodelManagementContent() {
                   router.push('/remodel-application');
                 }
               }}
-              style={{
-                padding: '6px 14px',
-                background: 'transparent',
-                color: 'white',
-                border: '1px solid rgba(255,255,255,0.6)',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.borderColor = 'white'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'; }}
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-transparent text-white border border-white/60 rounded-md cursor-pointer text-xs font-semibold whitespace-nowrap transition-colors hover:bg-white/15 hover:border-white"
             >
-              編集リスト &rarr;
+              編集リスト
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden />
             </button>
             <button
               onClick={() => {
@@ -154,20 +119,7 @@ function RemodelManagementContent() {
                   router.push('/quotation-data-box/remodel-dashboard');
                 }
               }}
-              style={{
-                padding: '6px 14px',
-                background: '#008C1D',
-                color: 'white',
-                border: '1px solid #008C1D',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#0A6B17'; e.currentTarget.style.borderColor = '#0A6B17'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#008C1D'; e.currentTarget.style.borderColor = '#008C1D'; }}
+              className="px-3.5 py-1.5 bg-cta-primary text-white border border-cta-primary rounded-md cursor-pointer text-xs font-semibold whitespace-nowrap transition-colors hover:bg-cta-primary-dark hover:border-cta-primary-dark"
             >
               ダッシュボード
             </button>
@@ -175,141 +127,138 @@ function RemodelManagementContent() {
         }
       />
 
-      {/* メインコンテンツ */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflowY: 'auto' }}>
-          {/* サブタブ */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col p-4 overflow-y-auto">
           <SubTabNavigation activeTab="remodelManagement" />
 
-          {/* フィルター */}
-          <div style={{
-                background: 'white',
-                padding: '12px 16px',
-                borderBottom: '1px solid #E1E1E1',
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'center',
-                flexWrap: 'wrap'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
-                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}>
-                    <option value="">すべて</option>
-                    <option value="purchase">購入</option>
-                    <option value="lease">リース</option>
-                    <option value="installment">割賦</option>
-                    <option value="rental">レンタル</option>
-                    <option value="trial">試用</option>
-                    <option value="borrow">借用</option>
-                    <option value="repair">修理</option>
-                    <option value="maintenance">保守</option>
-                    <option value="inspection">点検</option>
-                    <option value="other">その他</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
-                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}>
-                    <option value="">すべて</option>
-                    <option value="listPrice">定価</option>
-                    <option value="estimate">概算</option>
-                    <option value="final">最終原本登録用</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}>
-                    <option value="">すべて</option>
-                    <option value="見積依頼">見積依頼</option>
-                    <option value="見積依頼済">見積依頼済</option>
-                    <option value="見積DB登録済">見積DB登録済</option>
-                    <option value="見積登録依頼中">見積登録依頼中</option>
-                    <option value="発注用見積依頼済">発注用見積依頼済</option>
-                    <option value="発注見積登録済">発注見積登録済</option>
-                    <option value="発注済">発注済</option>
-                    <option value="納期確定">納期確定</option>
-                    <option value="検収済">検収済</option>
-                    <option value="完了">完了</option>
-                    <option value="申請を見送る">申請を見送る</option>
-                    <option value="廃棄承認待ち">廃棄承認待ち</option>
-                    <option value="廃棄承認済み">廃棄承認済み</option>
-                    <option value="廃棄完了">廃棄完了</option>
-                    <option value="移動承認待ち">移動承認待ち</option>
-                    <option value="移動承認済み">移動承認済み</option>
-                    <option value="移動完了">移動完了</option>
-                  </select>
-                </div>
-              </div>
+          <div className="bg-surface-card px-4 py-3 border-b border-stroke-input flex gap-4 items-center flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-content-primary">見積区分</label>
+              <select className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary">
+                <option value="">すべて</option>
+                <option value="purchase">購入</option>
+                <option value="lease">リース</option>
+                <option value="installment">割賦</option>
+                <option value="rental">レンタル</option>
+                <option value="trial">試用</option>
+                <option value="borrow">借用</option>
+                <option value="repair">修理</option>
+                <option value="maintenance">保守</option>
+                <option value="inspection">点検</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-content-primary">見積フェーズ</label>
+              <select className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary">
+                <option value="">すべて</option>
+                <option value="listPrice">定価</option>
+                <option value="estimate">概算</option>
+                <option value="final">最終原本登録用</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-content-primary">ステータス</label>
+              <select
+                value={rfqStatusFilter}
+                onChange={(e) => setRfqStatusFilter(e.target.value as RfqGroupStatus | '')}
+                className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary"
+              >
+                <option value="">すべて</option>
+                <option value="見積依頼">見積依頼</option>
+                <option value="見積依頼済">見積依頼済</option>
+                <option value="見積DB登録済">見積DB登録済</option>
+                <option value="見積登録依頼中">見積登録依頼中</option>
+                <option value="発注用見積依頼済">発注用見積依頼済</option>
+                <option value="発注見積登録済">発注見積登録済</option>
+                <option value="発注済">発注済</option>
+                <option value="納期確定">納期確定</option>
+                <option value="検収済">検収済</option>
+                <option value="完了">完了</option>
+                <option value="申請を見送る">申請を見送る</option>
+                <option value="廃棄承認待ち">廃棄承認待ち</option>
+                <option value="廃棄承認済み">廃棄承認済み</option>
+                <option value="廃棄完了">廃棄完了</option>
+                <option value="移動承認待ち">移動承認待ち</option>
+                <option value="移動承認済み">移動承認済み</option>
+                <option value="移動完了">移動完了</option>
+              </select>
+            </div>
+          </div>
 
-              {/* テーブルエリア */}
-              <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
-                <RfqGroupsTab
-                  rfqGroups={filteredRfqGroups}
-                  onSendRfq={handleNavigateToRfqProcess}
-                  onRegisterQuotation={handleNavigateToRfqProcess}
-                  onRegisterOrder={handleStartOrderRegistration}
-                  onRegisterInspection={handleStartInspectionRegistration}
-                  onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
-                  onRegisterAsset={handleStartAssetRegistration}
-                  onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onCompleteDisposal={handleCompleteDisposal}
-                  onCompleteTransfer={handleCompleteTransfer}
-                />
-              </div>
+          <div className="flex-1 bg-surface-card overflow-auto">
+            <RfqGroupsTab
+              rfqGroups={filteredRfqGroups}
+              onSendRfq={handleNavigateToRfqProcess}
+              onRegisterQuotation={handleNavigateToRfqProcess}
+              onRegisterOrder={handleStartOrderRegistration}
+              onRegisterInspection={handleStartInspectionRegistration}
+              onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
+              onRegisterAsset={handleStartAssetRegistration}
+              onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onCompleteDisposal={handleCompleteDisposal}
+              onCompleteTransfer={handleCompleteTransfer}
+            />
+          </div>
         </div>
       </div>
 
       {/* 資産仮登録モード選択ダイアログ */}
       {showModeSelection && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
-          <div style={{ background: 'white', borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textWrap: 'balance' }}>資産仮登録の入力方法を選択</h2>
-            <p style={{ fontSize: 13, color: '#8A8A8A', marginBottom: 24 }}>登録作業の状況に応じて入力方法を選んでください。</p>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+          <div className="bg-surface-card rounded-2xl p-8 max-w-[520px] w-[90%] shadow-2xl">
+            <div className="flex items-start justify-between mb-2">
+              <h2 className="text-lg font-bold text-content-primary text-balance">資産仮登録の入力方法を選択</h2>
+              <button
+                onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
+                aria-label="閉じる"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-content-sub hover:bg-stroke-card bg-transparent border-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-content-sub mb-6">登録作業の状況に応じて入力方法を選んでください。</p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               <button
                 onClick={() => handleModeSelected('mobile')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
+                className="flex items-start gap-4 p-4 border-2 border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary"
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#EAF3FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 24 }}>&#128241;</span>
+                <div className="w-12 h-12 rounded-lg bg-surface-select flex items-center justify-center shrink-0 text-cta-primary-dark">
+                  <Smartphone className="w-6 h-6" aria-hidden />
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>モバイル（現場作業）</div>
-                  <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
+                  <p className="text-[15px] font-semibold text-content-primary mb-1">モバイル（現場作業）</p>
+                  <p className="text-xs text-content-sub leading-relaxed">
                     現場でQRラベル貼付・写真撮影・シリアルNo.入力を行います。<br />
                     1品目ずつ登録する操作フローです。
-                  </div>
+                  </p>
                 </div>
               </button>
 
               <button
                 onClick={() => handleModeSelected('pc')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
+                className="flex items-start gap-4 p-4 border-2 border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary"
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#FDF1E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 24 }}>&#128187;</span>
+                <div className="w-12 h-12 rounded-lg bg-surface-select flex items-center justify-center shrink-0 text-cta-primary-dark">
+                  <Monitor className="w-6 h-6" aria-hidden />
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>PC（手書き検収書から手入力）</div>
-                  <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
+                  <p className="text-[15px] font-semibold text-content-primary mb-1">PC（手書き検収書から手入力）</p>
+                  <p className="text-xs text-content-sub leading-relaxed">
                     手書き検収書の内容をテーブル形式で一括入力します。<br />
                     全品目を一覧しながら効率的に登録できます。
-                  </div>
+                  </p>
                 </div>
               </button>
             </div>
 
-            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="mt-5 flex justify-end">
               <button
                 onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
-                style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#8A8A8A' }}
+                className="h-10 px-5 bg-transparent border border-stroke-input rounded-md cursor-pointer text-sm text-content-sub hover:bg-stroke-card transition-colors"
               >
                 キャンセル
               </button>
@@ -317,14 +266,13 @@ function RemodelManagementContent() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
 
 export default function RemodelManagementPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>読み込み中...</div>}>
+    <Suspense fallback={<div className="p-5 text-center text-content-sub">読み込み中...</div>}>
       <RemodelManagementContent />
     </Suspense>
   );
