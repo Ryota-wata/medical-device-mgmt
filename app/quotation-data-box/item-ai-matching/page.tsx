@@ -255,7 +255,7 @@ export default function ItemAiMatchingPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FAFAFA' }}>
+    <div className="flex flex-col h-dvh bg-surface-screen">
       <Header
         title="見積登録（購入）個体品目AI判定"
         stepBadge="STEP 4"
@@ -264,109 +264,72 @@ export default function ItemAiMatchingPage() {
       />
       <StepProgressBar currentStep={4} />
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {/* メインコンテンツ */}
-        <div style={{
-          background: 'white',
-          border: '1px solid #E1E1E1',
-          borderRadius: '4px',
-          marginBottom: '16px',
-        }}>
-          {/* セクションヘッダー */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            background: '#4A4A4A',
-            color: 'white',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>個体品目AI判定</span>
+      <div className="flex-1 overflow-auto p-4">
+        <section className="bg-surface-card border border-stroke-input rounded mb-4">
+          <div className="flex items-center justify-between px-4 py-3 bg-content-primary text-white">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold">個体品目AI判定</span>
             </div>
           </div>
 
-          {/* 説明文 */}
-          <div style={{ padding: '12px 16px', background: '#F1ECF7', fontSize: '12px', color: '#7b1fa2', borderBottom: '1px solid #ce93d8' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-              個体管理品目のAI判定を実施し確認・修正を実施してください
-            </div>
-            <div style={{ fontSize: '11px', color: '#555' }}>
+          <div className="px-4 py-3 bg-surface-select text-xs text-cta-primary-dark border-b border-cta-primary">
+            <p className="font-bold mb-1">個体管理品目のAI判定を実施し確認・修正を実施してください</p>
+            <p className="text-[11px] text-content-primary">
               ・不適格な場合は資産マスタを別ウィンドウで開いて選択が可能です<br />
               ・IDの登録により耐用年数、推奨使用年数、添付文書などの情報が登録できます
-            </div>
+            </p>
           </div>
 
-          {/* 進捗状況 + フィルタ */}
-          <div style={{ padding: '12px 16px', display: 'flex', gap: '16px', alignItems: 'center', borderBottom: '1px solid #E1E1E1' }}>
+          <div className="px-4 py-3 flex gap-4 items-center border-b border-stroke-input">
             <button
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
-              style={{
-                padding: '6px 14px',
-                background: showOnlyIndividual ? '#008C1D' : '#EBF5EE',
-                border: '1px solid #a5d6a7',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: showOnlyIndividual ? 'white' : '#146E2E',
-                cursor: 'pointer',
-              }}
+              className={`px-3.5 py-1.5 border rounded text-xs font-bold cursor-pointer transition-colors ${
+                showOnlyIndividual
+                  ? 'bg-cta-primary text-white border-cta-primary hover:bg-cta-primary-dark'
+                  : 'bg-surface-select text-cta-primary-dark border-cta-primary hover:bg-stroke-card'
+              }`}
             >
               個体管理品目のみ表示
             </button>
-            <div style={{
-              padding: '6px 14px',
-              background: confirmedCount === individualItems.length ? '#EBF5EE' : '#FDF1E5',
-              border: `1px solid ${confirmedCount === individualItems.length ? '#a5d6a7' : '#ffcc80'}`,
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: confirmedCount === individualItems.length ? '#146E2E' : '#ef6c00',
-            }}>
-              紐付け済み: {confirmedCount}/{individualItems.length}件
+            <div
+              className={`px-3.5 py-1.5 border rounded text-xs font-bold ${
+                confirmedCount === individualItems.length
+                  ? 'bg-surface-select border-cta-primary text-cta-primary-dark'
+                  : 'bg-surface-select border-content-alert text-content-alert'
+              }`}
+            >
+              紐付け済み: <span className="tabular-nums">{confirmedCount}/{individualItems.length}</span>件
             </div>
           </div>
 
-          {/* 明細テーブル */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '1400px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                {/* 2段ヘッダー */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px] min-w-[1400px]">
+              <thead className="sticky top-0 z-[2]">
                 <tr>
-                  <th colSpan={5} style={{
-                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #333',
-                    fontWeight: 'bold', background: '#EAF3FB', fontSize: '11px'
-                  }}>
+                  <th colSpan={5} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary font-bold bg-stroke-card text-[11px] text-content-primary">
                     商品情報（原本情報）
                   </th>
-                  <th colSpan={2} style={{
-                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #333',
-                    borderRight: '1px solid #ccc',
-                    fontWeight: 'bold', background: '#EAF3FB', fontSize: '11px'
-                  }}>
+                  <th colSpan={2} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary border-r border-stroke-input font-bold bg-stroke-card text-[11px] text-content-primary">
                     STEP❸
                   </th>
-                  <th colSpan={7} style={{
-                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93',
-                    fontWeight: 'bold', color: '#5E3A93', background: '#F1ECF7', fontSize: '11px'
-                  }}>
+                  <th colSpan={7} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary font-bold text-cta-primary-dark bg-surface-select text-[11px]">
                     STEP❹ 資産マスタ登録
                   </th>
                 </tr>
-                <tr style={{ background: '#FAFAFA' }}>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '30px' }}>No</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', minWidth: '140px' }}>品名（見積名称）</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '100px' }}>型式（見積名称）</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '40px' }}>数量</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '60px' }}>明細区分</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', borderRight: '1px solid #ccc', width: '90px' }}>カテゴリ</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '130px', background: '#faf5fc' }}>大分類</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '90px', background: '#faf5fc' }}>中分類</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', minWidth: '140px', background: '#faf5fc' }}>個体管理品目</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', background: '#faf5fc' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '100px', background: '#faf5fc' }}>型式</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '180px', background: '#faf5fc' }}>操作</th>
+                <tr className="bg-surface-screen">
+                  <th className="px-1.5 py-1 text-center border-b border-stroke-input w-[30px] font-normal text-content-primary">No</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input min-w-[140px] font-normal text-content-primary">品名（見積名称）</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input w-20 font-normal text-content-primary">メーカー</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input w-[100px] font-normal text-content-primary">型式（見積名称）</th>
+                  <th className="px-1.5 py-1 text-center border-b border-stroke-input w-10 font-normal text-content-primary">数量</th>
+                  <th className="px-1.5 py-1 text-center border-b border-stroke-input w-[60px] font-normal text-content-primary">明細区分</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input border-r border-stroke-input w-[90px] font-normal text-content-primary">カテゴリ</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input w-[130px] bg-surface-select font-normal text-cta-primary-dark">大分類</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input w-[90px] bg-surface-select font-normal text-cta-primary-dark">中分類</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input min-w-[140px] bg-surface-select font-normal text-cta-primary-dark">個体管理品目</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input w-20 bg-surface-select font-normal text-cta-primary-dark">メーカー</th>
+                  <th className="px-1.5 py-1 text-left border-b border-stroke-input w-[100px] bg-surface-select font-normal text-cta-primary-dark">型式</th>
+                  <th className="px-1.5 py-1 text-center border-b border-stroke-input w-[180px] bg-surface-select font-normal text-cta-primary-dark">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -377,79 +340,77 @@ export default function ItemAiMatchingPage() {
                   const aiJudgment = item.aiJudgment;
                   const displayData = confirmedInfo?.assetInfo || aiJudgment;
                   const isIndividual = item.detailClassification === '親明細' || item.detailClassification === '子明細';
-                  const classColor = item.detailClassification === '親明細' ? '#DA0000'
-                    : item.detailClassification === '子明細' ? '#2196f3'
-                    : item.detailClassification === '孫明細' ? '#5E3A93'
-                    : '#666';
+                  const classBgCls = item.detailClassification === '親明細' ? 'bg-content-alert'
+                    : item.detailClassification === '子明細' ? 'bg-content-link'
+                    : item.detailClassification === '孫明細' ? 'bg-content-primary'
+                    : 'bg-content-sub';
+                  const rowBgCls = isSelectingThisRow ? 'bg-surface-select' : rowIsConfirmed ? 'bg-surface-select' : 'bg-surface-card';
+                  const cellIndividualBgCls = isIndividual ? 'bg-surface-select' : '';
 
                   return (
-                    <tr key={item.id} style={{
-                      borderBottom: '1px solid #E1E1E1',
-                      background: isSelectingThisRow ? '#FDF1E5' : rowIsConfirmed ? '#EBF5EE' : 'transparent',
-                    }}>
-                      <td style={{ padding: '5px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.rowNo}</td>
-                      <td style={{ padding: '5px' }} title={item.itemName}>{item.itemName}</td>
-                      <td style={{ padding: '5px', color: '#555' }}>{item.manufacturer || ''}</td>
-                      <td style={{ padding: '5px', color: '#555' }}>{item.model || ''}</td>
-                      <td style={{ padding: '5px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.quantity ?? '-'}</td>
-                      <td style={{ padding: '5px', textAlign: 'center' }}>
+                    <tr key={item.id} className={`border-b border-stroke-input ${rowBgCls}`}>
+                      <td className="px-1.5 py-1 text-center tabular-nums text-content-primary">{item.rowNo}</td>
+                      <td className="px-1.5 py-1 text-content-primary" title={item.itemName}>{item.itemName}</td>
+                      <td className="px-1.5 py-1 text-content-primary">{item.manufacturer || ''}</td>
+                      <td className="px-1.5 py-1 text-content-primary">{item.model || ''}</td>
+                      <td className="px-1.5 py-1 text-center tabular-nums text-content-primary">{item.quantity ?? '-'}</td>
+                      <td className="px-1.5 py-1 text-center">
                         {item.detailClassification && (
-                          <span style={{
-                            padding: '2px 6px', borderRadius: '3px', fontSize: '10px', fontWeight: 'bold',
-                            color: 'white', background: classColor,
-                          }}>
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${classBgCls}`}>
                             {item.detailClassification.replace('明細', '')}
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '5px', fontSize: '10px', borderRight: '1px solid #ccc' }}>
+                      <td className="px-1.5 py-1 text-[10px] border-r border-stroke-input text-content-primary">
                         {item.category || ''}
                       </td>
-                      {/* STEP4 columns */}
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
+                      <td className={`px-1.5 py-1 text-[10px] text-content-primary ${cellIndividualBgCls}`}>
                         {displayData?.majorCategory || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
+                      <td className={`px-1.5 py-1 text-[10px] text-content-primary ${cellIndividualBgCls}`}>
                         {displayData?.middleCategory || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', fontWeight: isIndividual ? 'bold' : 'normal' }}>
+                      <td className={`px-1.5 py-1 text-content-primary ${cellIndividualBgCls} ${isIndividual ? 'font-bold' : ''}`}>
                         {displayData?.assetName || item.itemName || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
+                      <td className={`px-1.5 py-1 text-[10px] text-content-primary ${cellIndividualBgCls}`}>
                         {displayData?.manufacturer || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
+                      <td className={`px-1.5 py-1 text-[10px] text-content-primary ${cellIndividualBgCls}`}>
                         {displayData?.model || ''}
                       </td>
-                      <td style={{ padding: '5px', textAlign: 'center' }}>
+                      <td className="px-1.5 py-1 text-center">
                         {isIndividual ? (
                           rowIsConfirmed ? (
-                            <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                              <span style={{ padding: '2px 5px', background: '#A66F1B', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
-                                {confirmedInfo?.status === 'asset_master_selected' ? 'AI適用' : 'AI適用'}
+                            <div className="flex gap-1 justify-center items-center flex-wrap">
+                              <span className="px-1.5 py-0.5 bg-cta-primary text-white rounded text-[9px] font-bold">
+                                AI適用
                               </span>
-                              <span style={{ padding: '2px 5px', background: '#008C1D', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                              <span className="px-1.5 py-0.5 bg-cta-primary-dark text-white rounded text-[9px] font-bold">
                                 資産マスタ
                               </span>
-                              <span style={{ padding: '2px 5px', background: '#2196f3', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                              <span className="px-1.5 py-0.5 bg-content-link text-white rounded text-[9px] font-bold">
                                 紐付済
                               </span>
-                              <span style={{ padding: '2px 5px', background: '#DA0000', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleUnconfirm(item.id)}>
+                              <button
+                                onClick={() => handleUnconfirm(item.id)}
+                                className="px-1.5 py-0.5 bg-content-alert text-white border-0 rounded text-[9px] font-bold cursor-pointer hover:opacity-90 transition-colors"
+                              >
                                 解除
-                              </span>
+                              </button>
                             </div>
                           ) : isSelectingThisRow ? (
-                            <span style={{ padding: '3px 8px', background: '#A66F1B', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                            <span className="inline-block px-2 py-1 bg-cta-primary text-white rounded text-[9px] font-bold">
                               選択中...
                             </span>
                           ) : (
-                            <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <div className="flex gap-1 justify-center flex-wrap">
                               {aiJudgment && (
-                                <button onClick={() => handleApplyAI(item.id, aiJudgment)} style={{ padding: '2px 5px', background: '#A66F1B', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>
+                                <button onClick={() => handleApplyAI(item.id, aiJudgment)} className="px-1.5 py-0.5 bg-cta-primary text-white border-0 rounded text-[9px] font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors">
                                   AI適用
                                 </button>
                               )}
-                              <button onClick={() => handleOpenAssetMaster(item.id)} style={{ padding: '2px 5px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                              <button onClick={() => handleOpenAssetMaster(item.id)} className="px-1.5 py-0.5 bg-cta-primary-dark text-white border-0 rounded text-[9px] font-bold cursor-pointer whitespace-nowrap hover:opacity-90 transition-colors">
                                 資産マスタ
                               </button>
                             </div>
@@ -462,38 +423,18 @@ export default function ItemAiMatchingPage() {
               </tbody>
             </table>
           </div>
+        </section>
 
-        </div>
-
-        {/* フッターボタン */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
+        <div className="flex gap-3 justify-between mt-4">
           <button
             onClick={handleBack}
-            style={{
-              padding: '12px 28px',
-              background: '#8A8A8A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
+            className="h-12 px-7 bg-surface-negative text-content-primary border-0 rounded cursor-pointer text-sm font-bold hover:bg-stroke-input transition-colors"
           >
             一つ前のSTEPに戻る
           </button>
           <button
             onClick={handleNext}
-            style={{
-              padding: '12px 28px',
-              background: '#DA0000',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
+            className="h-12 px-7 bg-cta-primary text-white border-0 rounded cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
           >
             個体登録/価格按分へ
           </button>
