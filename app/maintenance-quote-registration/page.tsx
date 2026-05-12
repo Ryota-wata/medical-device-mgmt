@@ -7,38 +7,38 @@ import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
-/** カラートークン */
+/** Figma 準拠カラートークン（Tailwind 補完用） */
 const COLORS = {
   primary: '#008C1D',
   primaryDark: '#146E2E',
-  accent: '#A35414',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  accent: '#008C1D',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#E1E1E1',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  borderLight: '#E1E1E1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4A4A4A',
   white: '#ffffff',
-  error: '#dc2626',
+  error: '#DA0000',
   success: '#008C1D',
-  successLight: '#e8f5e9',
-  warning: '#f59e0b',
-  warningBg: '#fffbeb',
-  warningBorder: '#f59e0b',
-  warningText: '#92400e',
-  disabled: '#9ca3af',
-  disabledBg: '#f3f4f6',
-  stepActive: '#0092E6',
-  stepCompleted: '#008C1D',
+  successLight: '#EBF5EE',
+  warning: '#008C1D',
+  warningBg: '#EBF5EE',
+  warningBorder: '#008C1D',
+  warningText: '#146E2E',
+  disabled: '#8A8A8A',
+  disabledBg: '#F1F1F1',
+  stepActive: '#008C1D',
+  stepCompleted: '#146E2E',
   stepPending: '#E1E1E1',
-  // ステップ別テーマカラー
-  step1: '#7c3aed',  // 紫: 見積依頼
-  step2: '#d97706',  // 琥珀: 見積登録
-  step3: '#0092E6',  // 青: 契約登録
-  step4: '#008C1D',  // 緑: 完了登録
+  // ステップ別テーマカラー（Figma 単色グリーンに統一）
+  step1: '#008C1D',
+  step2: '#008C1D',
+  step3: '#008C1D',
+  step4: '#008C1D',
 } as const;
 
 /** 保守契約登録のステップ定義 */
@@ -137,20 +137,25 @@ const getMockContract = (id: string): MaintenanceContract => {
   };
 };
 
-// 共通スタイル
+// 共通スタイル（Figma 準拠）
 const inputStyle: React.CSSProperties = {
-  padding: '6px 10px',
+  padding: '8px 12px',
   border: `1px solid ${COLORS.border}`,
-  borderRadius: '4px',
-  fontSize: '13px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  color: COLORS.textPrimary,
+  backgroundColor: COLORS.white,
 };
 
-// セクションコンポーネント
+/**
+ * セクションコンポーネント（Step カード）
+ * Figma 準拠：白カード / rounded-2xl / グリーン枠
+ * accentColor は受け取るが無視し、Figma パレットに統一
+ */
 const Section = ({
   step,
   title,
   children,
-  accentColor = COLORS.primary,
   enabled,
   completed,
 }: {
@@ -161,93 +166,57 @@ const Section = ({
   enabled: boolean;
   completed: boolean;
 }) => {
+  const borderClass = enabled
+    ? 'border-2 border-cta-primary'
+    : 'border border-stroke-card';
+  const headerBg = enabled || completed
+    ? 'bg-cta-primary'
+    : 'bg-content-primary';
   return (
-    <div style={{
-      background: COLORS.white,
-      border: enabled ? `2px solid ${accentColor}` : `1px solid ${COLORS.borderLight}`,
-      borderRadius: '8px',
-      marginBottom: '16px',
-      opacity: enabled ? 1 : 0.7,
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        padding: '10px 16px',
-        background: enabled ? accentColor : completed ? COLORS.success : COLORS.sectionHeader,
-        color: COLORS.textOnColor,
-        borderRadius: '6px 6px 0 0',
-      }}>
-        <span style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '24px',
-          height: '24px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.2)',
-          fontSize: '12px',
-          fontWeight: 'bold',
-        }}>
+    <div className={`bg-surface-card ${borderClass} rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
+      <div className={`flex items-center gap-3 px-4 py-3 ${headerBg} text-white rounded-t-2xl`}>
+        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-xs font-bold">
           {completed ? '✓' : step}
         </span>
-        <span style={{ fontSize: '14px', fontWeight: 'bold', flex: 1 }}>{title}</span>
+        <span className="text-sm font-bold flex-1">{title}</span>
         {completed && (
-          <span style={{
-            fontSize: '11px',
-            background: 'rgba(255,255,255,0.2)',
-            padding: '2px 8px',
-            borderRadius: '10px',
-          }}>
-            完了
-          </span>
+          <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">完了</span>
         )}
         {enabled && !completed && (
-          <span style={{
-            fontSize: '11px',
-            background: 'rgba(255,255,255,0.3)',
-            padding: '2px 8px',
-            borderRadius: '10px',
-          }}>
-            作業中
-          </span>
+          <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full">作業中</span>
         )}
       </div>
-      <div style={{
-        padding: '16px',
-        pointerEvents: enabled ? 'auto' : 'none',
-      }}>
-        {children}
-      </div>
+      <div className={`p-4 ${enabled ? '' : 'pointer-events-none'}`}>{children}</div>
     </div>
   );
 };
 
-// テーブルラベルセルスタイル生成
-const thCellStyle = (bg: string): React.CSSProperties => ({
+// テーブルラベルセルスタイル生成（Figma パレット：灰背景 + 暗色テキスト）
+const thCellStyle = (_bg?: string): React.CSSProperties => ({
   width: '180px',
   padding: '10px 12px',
-  background: bg,
-  color: '#fff',
-  fontWeight: 'bold',
-  border: '1px solid #d1d5db',
+  background: COLORS.surfaceAlt,
+  color: COLORS.textPrimary,
+  fontWeight: 600,
+  border: `1px solid ${COLORS.border}`,
   verticalAlign: 'middle',
-  fontSize: '13px',
+  fontSize: '14px',
 });
 
 const tdCellStyle: React.CSSProperties = {
   padding: '10px 12px',
-  border: '1px solid #d1d5db',
-  background: '#fff',
-  fontSize: '13px',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.white,
+  fontSize: '14px',
+  color: COLORS.textPrimary,
 };
 
 const readonlyTdStyle: React.CSSProperties = {
   padding: '10px 12px',
-  border: '1px solid #d1d5db',
-  background: '#f9fafb',
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.surface,
   color: COLORS.textPrimary,
-  fontSize: '13px',
+  fontSize: '14px',
 };
 
 function MaintenanceQuoteRegistrationContent() {
@@ -638,7 +607,7 @@ function MaintenanceQuoteRegistrationContent() {
             {/* ガイドテキスト */}
             <div style={{
               padding: '10px 14px',
-              background: '#f5f3ff',
+              background: '#EBF5EE',
               borderRadius: '4px',
               marginBottom: '16px',
               fontSize: '13px',
@@ -711,7 +680,7 @@ function MaintenanceQuoteRegistrationContent() {
                   </thead>
                   <tbody>
                     {rfqVendors.map((vendor, idx) => (
-                      <tr key={vendor.id} style={{ background: idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                      <tr key={vendor.id} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
                         <td style={{ ...vendorTdStyle, textAlign: 'center', fontWeight: 'bold', color: COLORS.textMuted }}>
                           {idx + 1}
                         </td>
@@ -1218,7 +1187,7 @@ function MaintenanceQuoteRegistrationContent() {
                               borderRadius: '10px',
                               fontSize: '11px',
                               fontWeight: 'bold',
-                              background: q.phase === '発注登録用見積' ? '#e3f2fd' : '#F1ECF7',
+                              background: q.phase === '発注登録用見積' ? '#EBF5EE' : '#F1F1F1',
                               color: q.phase === '発注登録用見積' ? '#1E5A9E' : '#7b1fa2',
                             }}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
@@ -1568,7 +1537,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <div style={{ marginBottom: '8px' }}><strong>メーカー:</strong> {formData.maker}</div>
                   <div><strong>対象台数:</strong> {formData.assetCount}台</div>
                 </div>
-                <div style={{ padding: '16px', background: '#f5f3ff', borderRadius: '4px', marginBottom: '16px', fontSize: '13px' }}>
+                <div style={{ padding: '16px', background: '#EBF5EE', borderRadius: '4px', marginBottom: '16px', fontSize: '13px' }}>
                   <div style={{ fontWeight: 'bold', marginBottom: '8px', color: COLORS.step1 }}>受付部署</div>
                   <div>{formData.applicationDepartment} / {formData.applicationPerson} / {formData.applicationContact}</div>
                 </div>
@@ -1617,7 +1586,7 @@ function MaintenanceQuoteRegistrationContent() {
                               padding: '2px 8px',
                               borderRadius: '10px',
                               fontSize: '10px',
-                              background: q.phase === '発注登録用見積' ? '#e3f2fd' : '#fff8e1',
+                              background: q.phase === '発注登録用見積' ? '#EBF5EE' : '#FAFAFA',
                               color: q.phase === '発注登録用見積' ? '#1E5A9E' : '#f57c00',
                             }}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
@@ -1814,7 +1783,7 @@ function MaintenanceQuoteRegistrationContent() {
                               padding: '2px 8px',
                               borderRadius: '10px',
                               fontSize: '10px',
-                              background: d.documentType === '契約書' ? '#e8f5e9' : '#fff8e1',
+                              background: d.documentType === '契約書' ? '#EBF5EE' : '#FAFAFA',
                               color: d.documentType === '契約書' ? '#146E2E' : '#f57c00',
                             }}>
                               {d.documentType === '契約書' ? '契約書' : 'その他'}
