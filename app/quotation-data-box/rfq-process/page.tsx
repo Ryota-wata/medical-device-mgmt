@@ -391,7 +391,7 @@ function RfqProcessContent() {
                   justifyContent: 'center',
                   fontSize: '12px',
                   fontWeight: 'bold',
-                  background: step.num < 1 ? '#27ae60'
+                  background: step.num < 1 ? '#008C1D'
                     : step.num === 1 ? '#3498db'
                     : '#dee2e6',
                   color: step.num <= 1 ? 'white' : '#999',
@@ -400,7 +400,7 @@ function RfqProcessContent() {
                 </div>
                 <span style={{
                   fontSize: '11px',
-                  color: step.num === 1 ? '#2c3e50' : step.num < 1 ? '#27ae60' : '#999',
+                  color: step.num === 1 ? '#2c3e50' : step.num < 1 ? '#008C1D' : '#999',
                   whiteSpace: 'nowrap',
                   fontWeight: step.num === 1 ? 600 : 400,
                 }}>
@@ -480,7 +480,7 @@ function RfqProcessContent() {
                 }}>
                   {/* インデックスバッジ */}
                   <span style={{
-                    background: vendor.isSent ? '#27ae60' : '#f39c12',
+                    background: vendor.isSent ? '#008C1D' : '#f39c12',
                     color: 'white',
                     padding: '4px 6px',
                     borderRadius: '4px',
@@ -585,7 +585,7 @@ function RfqProcessContent() {
                     alignItems: 'center',
                     gap: '8px',
                   }}>
-                    <span style={{ color: vendor.isSent ? '#27ae60' : '#f39c12', fontWeight: 600 }}>
+                    <span style={{ color: vendor.isSent ? '#008C1D' : '#f39c12', fontWeight: 600 }}>
                       依頼先{index + 1}
                     </span>
                     <span style={{ fontWeight: 600 }}>ご依頼事項</span>
@@ -641,7 +641,7 @@ function RfqProcessContent() {
             display: 'flex',
             flexDirection: 'column',
           }}>
-            <div style={{ background: '#27ae60', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: '#008C1D', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>見積登録</span>
               <span style={{
                 background: 'rgba(255,255,255,0.25)',
@@ -1060,7 +1060,7 @@ function RfqProcessContent() {
           disabled={ocrProcessing}
           style={{
             padding: '8px 20px',
-            background: ocrProcessing ? '#95a5a6' : '#27ae60',
+            background: ocrProcessing ? '#95a5a6' : '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

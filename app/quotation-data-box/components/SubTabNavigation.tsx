@@ -38,25 +38,41 @@ export function SubTabNavigation({ activeTab }: SubTabNavigationProps) {
   }, [role]);
 
   return (
-    <div style={{ background: 'white', borderBottom: '2px solid #dee2e6', display: 'flex', borderRadius: '4px 4px 0 0', flexWrap: 'wrap' }}>
-      {visibleTabs.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => router.push(tab.path)}
-          style={{
-            padding: '10px 20px',
-            background: activeTab === tab.key ? '#3498db' : 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: activeTab === tab.key ? 'bold' : 'normal',
-            color: activeTab === tab.key ? 'white' : '#555',
-            borderRadius: '4px 4px 0 0',
-          }}
-        >
-          {tab.label}
-        </button>
-      ))}
+    <div style={{
+      background: '#FFFFFF',
+      borderBottom: '1px solid #E1E1E1',
+      display: 'flex',
+      flexWrap: 'wrap',
+    }}>
+      {visibleTabs.map((tab) => {
+        const isActive = activeTab === tab.key;
+        return (
+          <button
+            key={tab.key}
+            onClick={() => router.push(tab.path)}
+            style={{
+              padding: '10px 18px',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: isActive ? '2px solid #008C1D' : '2px solid transparent',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: isActive ? 600 : 500,
+              color: isActive ? '#146E2E' : '#4A4A4A',
+              transition: 'all 0.15s ease',
+              marginBottom: -1,
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) e.currentTarget.style.background = '#F8F8F8';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

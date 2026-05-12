@@ -156,9 +156,9 @@ function RemodelManagementContent() {
               }}
               style={{
                 padding: '6px 14px',
-                background: '#27ae60',
+                background: '#008C1D',
                 color: 'white',
-                border: '1px solid #27ae60',
+                border: '1px solid #008C1D',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '12px',
@@ -166,8 +166,8 @@ function RemodelManagementContent() {
                 whiteSpace: 'nowrap',
                 transition: 'all 0.15s',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; e.currentTarget.style.borderColor = '#229954'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; e.currentTarget.style.borderColor = '#27ae60'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#0A6B17'; e.currentTarget.style.borderColor = '#0A6B17'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#008C1D'; e.currentTarget.style.borderColor = '#008C1D'; }}
             >
               ダッシュボード
             </button>

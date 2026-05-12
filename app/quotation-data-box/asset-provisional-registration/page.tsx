@@ -25,8 +25,8 @@ const C = {
   border: '#ccc',
   borderLight: '#ddd',
   borderLighter: '#eee',
-  divider: '#27ae60',
-  green: '#27ae60',
+  divider: '#008C1D',
+  green: '#008C1D',
   greenLight: '#d5f4e6',
   greenBg: '#e8f5e9',
   red: '#e74c3c',
@@ -42,7 +42,7 @@ const C = {
 // PC モード用カラートークン（order-registration / inspection-registration 準拠）
 // ============================================================
 const COLORS = {
-  primary: '#27ae60',
+  primary: '#008C1D',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
   textOnAccent: '#1f2937',
@@ -57,7 +57,7 @@ const COLORS = {
   sectionHeader: '#4b5563',
   white: '#ffffff',
   disabled: '#9ca3af',
-  green: '#27ae60',
+  green: '#008C1D',
   greenBg: '#e8f5e9',
 } as const;
 

@@ -303,7 +303,7 @@ export default function ItemAiMatchingPage() {
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
                 padding: '6px 14px',
-                background: showOnlyIndividual ? '#27ae60' : '#e8f5e9',
+                background: showOnlyIndividual ? '#008C1D' : '#e8f5e9',
                 border: '1px solid #a5d6a7',
                 borderRadius: '4px',
                 fontSize: '12px',
@@ -428,7 +428,7 @@ export default function ItemAiMatchingPage() {
                               <span style={{ padding: '2px 5px', background: '#ff9800', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
                                 {confirmedInfo?.status === 'asset_master_selected' ? 'AI適用' : 'AI適用'}
                               </span>
-                              <span style={{ padding: '2px 5px', background: '#27ae60', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                              <span style={{ padding: '2px 5px', background: '#008C1D', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
                                 資産マスタ
                               </span>
                               <span style={{ padding: '2px 5px', background: '#2196f3', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
@@ -449,7 +449,7 @@ export default function ItemAiMatchingPage() {
                                   AI適用
                                 </button>
                               )}
-                              <button onClick={() => handleOpenAssetMaster(item.id)} style={{ padding: '2px 5px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                              <button onClick={() => handleOpenAssetMaster(item.id)} style={{ padding: '2px 5px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                                 資産マスタ
                               </button>
                             </div>

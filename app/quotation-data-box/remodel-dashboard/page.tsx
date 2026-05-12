@@ -164,14 +164,14 @@ function DashboardContent() {
               <div className="text-xs text-[#6b7280] font-medium">方針決定</div>
               <div className="text-2xl font-bold text-[#1f2937] tabular-nums">{decidedAssets} <span className="text-sm text-[#9ca3af]">/ {totalAssets}</span></div>
               <div className="w-full bg-[#e5e7eb] rounded-full h-1.5 mt-2 overflow-hidden">
-                <div className="bg-[#27ae60] h-1.5 transition-all" style={{ width: `${decisionRate}%` }} />
+                <div className="bg-[#008C1D] h-1.5 transition-all" style={{ width: `${decisionRate}%` }} />
               </div>
             </div>
             <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-md p-3">
               <div className="text-xs text-[#6b7280] font-medium">新設置場所入力</div>
               <div className="text-2xl font-bold text-[#1f2937] tabular-nums">{locationStats.filled} <span className="text-sm text-[#9ca3af]">/ {locationStats.needsLocation}</span></div>
               <div className="w-full bg-[#e5e7eb] rounded-full h-1.5 mt-2 overflow-hidden">
-                <div className="bg-[#27ae60] h-1.5 transition-all" style={{ width: `${locationRate}%` }} />
+                <div className="bg-[#008C1D] h-1.5 transition-all" style={{ width: `${locationRate}%` }} />
               </div>
             </div>
           </div>
@@ -242,7 +242,7 @@ function DashboardContent() {
               onClick={handleClose}
               disabled={!canClose}
               title={canClose ? undefined : '上記の対応必要項目を解消してください'}
-              className="px-5 py-2.5 bg-[#27ae60] hover:bg-[#229954] disabled:bg-[#9ca3af] disabled:cursor-not-allowed text-white rounded-md font-semibold text-sm transition-colors border-0 cursor-pointer whitespace-nowrap"
+              className="px-5 py-2.5 bg-[#008C1D] hover:bg-[#0A6B17] disabled:bg-[#9ca3af] disabled:cursor-not-allowed text-white rounded-md font-semibold text-sm transition-colors border-0 cursor-pointer whitespace-nowrap"
             >
               {canClose ? 'リモデルをクローズ' : 'クローズ条件未達'}
             </button>

@@ -457,7 +457,7 @@ export default function OcrConfirmPage() {
                 onClick={handleExcelImport}
                 style={{
                   padding: '12px 32px',
-                  background: '#27ae60',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

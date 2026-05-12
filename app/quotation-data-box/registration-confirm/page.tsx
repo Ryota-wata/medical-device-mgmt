@@ -210,12 +210,12 @@ export default function RegistrationConfirmPage() {
           {/* 上部バー */}
           <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #ddd' }}>
             <button onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
-              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#27ae60' : '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer' }}>
+              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer' }}>
               個体管理品目のみ表示
             </button>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
                 ¥{totalAmount.toLocaleString()}
               </div>
             </div>

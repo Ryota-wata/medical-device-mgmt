@@ -247,7 +247,7 @@ export default function CategoryRegistrationPage() {
                           borderRadius: '10px',
                           fontSize: '10px',
                           fontWeight: 'bold',
-                          background: item.isRegistered ? '#27ae60' : '#f39c12',
+                          background: item.isRegistered ? '#008C1D' : '#f39c12',
                           color: 'white',
                         }}>
                           {item.isRegistered ? '登録済' : '未登録'}
@@ -276,7 +276,7 @@ export default function CategoryRegistrationPage() {
                             disabled={!item.detailClassification}
                             style={{
                               padding: '4px 12px',
-                              background: item.detailClassification ? '#27ae60' : '#bdc3c7',
+                              background: item.detailClassification ? '#008C1D' : '#bdc3c7',
                               color: 'white',
                               border: 'none',
                               borderRadius: '3px',

@@ -348,7 +348,7 @@ function PurchaseManagementContent() {
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               display: 'flex',
               justifyContent: 'space-between',
@@ -431,7 +431,7 @@ function PurchaseManagementContent() {
                             {/* 申請情報: 申請日, 申請No/種別 */}
                             <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
                             <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#27ae60', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
+                              <span style={{ color: '#008C1D', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                               <span style={{
                                 ...typeStyle,
                                 padding: '2px 8px',
@@ -499,7 +499,7 @@ function PurchaseManagementContent() {
                       disabled={selectedApplicationIds.size === 0}
                       style={{
                         padding: '8px 16px',
-                        background: selectedApplicationIds.size === 0 ? '#bdc3c7' : '#27ae60',
+                        background: selectedApplicationIds.size === 0 ? '#bdc3c7' : '#008C1D',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -528,7 +528,7 @@ function PurchaseManagementContent() {
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               display: 'flex',
               justifyContent: 'space-between',
@@ -555,9 +555,9 @@ function PurchaseManagementContent() {
                     onClick={() => setActiveStep(tab.key)}
                     style={{
                       padding: '10px 16px',
-                      background: isActive ? '#27ae60' : 'transparent',
+                      background: isActive ? '#008C1D' : 'transparent',
                       border: 'none',
-                      borderBottom: isActive ? '2px solid #27ae60' : '2px solid transparent',
+                      borderBottom: isActive ? '2px solid #008C1D' : '2px solid transparent',
                       cursor: 'pointer',
                       fontSize: '12px',
                       fontWeight: isActive ? 'bold' : 'normal',

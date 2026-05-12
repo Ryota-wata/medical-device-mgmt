@@ -156,7 +156,7 @@ export default function PriceAllocationPage() {
             <button
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
-                padding: '6px 14px', background: showOnlyIndividual ? '#27ae60' : '#e8f5e9',
+                padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#e8f5e9',
                 border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
                 color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer',
               }}
@@ -167,7 +167,7 @@ export default function PriceAllocationPage() {
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
                   {totals.total.toLocaleString()}
                 </div>
               </div>

@@ -14,7 +14,7 @@ import { OrderPreviewModal, OrderPreviewData } from '@/components/modals/OrderPr
 
 /** カラートークン */
 const COLORS = {
-  primary: '#27ae60',
+  primary: '#008C1D',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
   textOnAccent: '#1f2937',
@@ -282,7 +282,7 @@ export default function OrderRegistrationPage() {
       <style>{`
         .order-btn { transition: filter 150ms ease-out; }
         .order-btn:hover:not(:disabled) { filter: brightness(0.9); }
-        .order-btn:focus-visible { outline: 2px solid #27ae60; outline-offset: 2px; }
+        .order-btn:focus-visible { outline: 2px solid #008C1D; outline-offset: 2px; }
         .order-btn-secondary { transition: background 150ms ease-out; }
         .order-btn-secondary:hover { background: #e5e7eb !important; }
         .order-btn-secondary:focus-visible { outline: 2px solid #d1d5db; outline-offset: 2px; }

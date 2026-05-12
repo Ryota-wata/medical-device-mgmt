@@ -325,7 +325,7 @@ function RepairRequestsContent() {
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               display: 'flex',
               justifyContent: 'space-between',
@@ -400,12 +400,12 @@ function RepairRequestsContent() {
                           </td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>
-                            <span style={{ color: '#27ae60', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
+                            <span style={{ color: '#008C1D', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                           </td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.department}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontFamily: 'monospace', color: '#27ae60', fontSize: '12px' }}>{app.qrCode}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontFamily: 'monospace', color: '#008C1D', fontSize: '12px' }}>{app.qrCode}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.itemName}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.maker}</td>
                           <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.model}</td>
