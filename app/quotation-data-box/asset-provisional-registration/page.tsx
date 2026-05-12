@@ -22,20 +22,20 @@ const C = {
   card: '#ffffff',
   textDark: '#4A4A4A',
   textMuted: '#8A8A8A',
-  border: '#ccc',
+  border: '#E1E1E1',
   borderLight: '#E1E1E1',
-  borderLighter: '#eee',
+  borderLighter: '#F1F1F1',
   divider: '#008C1D',
   green: '#008C1D',
-  greenLight: '#d5f4e6',
+  greenLight: '#EBF5EE',
   greenBg: '#EBF5EE',
   red: '#DA0000',
-  redLight: '#fadbd8',
-  gray: '#ecf0f1',
-  accent: '#A66F1B',
+  redLight: '#EBF5EE',
+  gray: '#F1F1F1',
+  accent: '#146E2E',
   white: '#ffffff',
-  inputBg: '#f8f8f8',
-  disabled: '#999',
+  inputBg: '#FAFAFA',
+  disabled: '#8A8A8A',
 } as const;
 
 // ============================================================
@@ -44,7 +44,7 @@ const C = {
 const COLORS = {
   primary: '#008C1D',
   primaryDark: '#146E2E',
-  accent: '#A35414',
+  accent: '#146E2E',
   textOnAccent: '#4A4A4A',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',
@@ -559,7 +559,7 @@ export default function AssetProvisionalRegistrationPage() {
                       <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
                         <th style={{ ...pcTableThStyle, textAlign: 'center' }} rowSpan={2}>No</th>
                         <th style={pcTableThStyle} colSpan={7}>商品分類</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }} colSpan={7}>入力項目</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }} colSpan={7}>入力項目</th>
                       </tr>
                       {/* 個別ヘッダー行 */}
                       <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
@@ -570,13 +570,13 @@ export default function AssetProvisionalRegistrationPage() {
                         <th style={pcTableThStyle}>品名</th>
                         <th style={pcTableThStyle}>メーカー名</th>
                         <th style={pcTableThStyle}>型式</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>階</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>部門</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>部署</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>室名</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>QRコード</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>シリアルNo.</th>
-                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>写真撮影</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>階</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>部門</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>部署</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>室名</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>QRコード</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>シリアルNo.</th>
+                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>写真撮影</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -604,7 +604,7 @@ export default function AssetProvisionalRegistrationPage() {
                                 {r.photoFileName ? (
                                   <span style={{ fontSize: '11px', color: COLORS.green, fontWeight: 500 }}>{r.photoFileName}</span>
                                 ) : (
-                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: '#FDF1E5', border: '1px solid #fdba74', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', color: '#A35414', whiteSpace: 'nowrap' }}>
+                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: '#fffbe3', border: '1px solid #fdba74', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', color: '#146E2E', whiteSpace: 'nowrap' }}>
                                     <span>📷 アップロード</span>
                                     <input
                                       type="file"
@@ -891,7 +891,7 @@ export default function AssetProvisionalRegistrationPage() {
                 borderRadius: '8px',
                 padding: '40px',
                 textAlign: 'center',
-                backgroundColor: formData.photoTaken ? C.greenBg : '#f9f9f9',
+                backgroundColor: formData.photoTaken ? C.greenBg : '#FAFAFA',
               }}>
                 <div style={{ fontSize: '40px', marginBottom: '8px' }}>📷</div>
                 <div style={{ fontSize: '14px', color: C.textMuted }}>
@@ -1040,7 +1040,7 @@ export default function AssetProvisionalRegistrationPage() {
                       minHeight: 60,
                       transition: 'background 0.15s',
                     }}
-                    onMouseEnter={(e) => { if (!isRegistered) e.currentTarget.style.background = '#f0f0f0'; }}
+                    onMouseEnter={(e) => { if (!isRegistered) e.currentTarget.style.background = '#F1F1F1'; }}
                     onMouseLeave={(e) => { if (!isRegistered) e.currentTarget.style.background = C.white; else e.currentTarget.style.background = C.greenBg; }}
                   >
                     <div style={{
@@ -1288,7 +1288,7 @@ const readOnlyStyle: React.CSSProperties = {
   borderRadius: '4px',
   padding: '10px',
   fontSize: '14px',
-  color: '#666666',
+  color: '#4A4A4A',
 };
 
 const inputFieldStyle: React.CSSProperties = {
@@ -1342,7 +1342,7 @@ const pcTableTdStyle: React.CSSProperties = {
 /** PC 明細テーブル: 編集可能セル */
 const pcEditCellStyle: React.CSSProperties = {
   ...pcTableTdStyle,
-  background: '#FDF1E5',
+  background: '#fffbe3',
 };
 
 /** PC 明細テーブル: セル内input */
