@@ -541,80 +541,54 @@ export default function InventoryPage() {
       />
 
       {/* 進捗バー */}
-      <div style={{ background: 'white', padding: '20px', borderBottom: '1px solid #E1E1E1' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A' }}>
+      <div className="bg-white px-5 py-4 border-b border-stroke-card">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div className="text-base font-bold text-content-primary tabular-nums">
             棚卸し進捗: {progress.checked} / {progress.total} 件 ({progress.percentage}%)
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '14px', color: '#A35414' }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-[#A35414] tabular-nums">
               要対応: {progress.actionRequired}件
             </span>
             <button
               onClick={() => setCompleteModal(true)}
               disabled={progress.percentage < 100}
-              style={{
-                padding: '8px 20px',
-                background: progress.percentage < 100 ? '#ccc' : '#008C1D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: progress.percentage < 100 ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}
+              className="px-5 py-2 text-sm font-bold rounded-md text-white bg-cta-primary hover:bg-cta-primary-dark disabled:bg-content-disabled disabled:cursor-not-allowed transition-colors"
             >
               棚卸し完了
             </button>
             <button
               onClick={() => setResetModal(true)}
-              style={{
-                padding: '8px 12px',
-                background: '#DA0000',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
+              className="px-3 py-2 text-xs text-white bg-[#DA0000] rounded hover:opacity-90 transition-opacity"
             >
               リセット
             </button>
           </div>
         </div>
-        <div style={{
-          width: '100%',
-          height: '20px',
-          background: '#e0e0e0',
-          borderRadius: '10px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            width: `${progress.percentage}%`,
-            height: '100%',
-            background: progress.percentage === 100 ? '#008C1D' : '#008C1D',
-            borderRadius: '10px',
-            transition: 'width 0.3s ease'
-          }} />
+        <div className="w-full h-5 bg-[#E1E1E1] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-cta-primary rounded-full transition-[width] duration-300 ease-out"
+            style={{ width: `${progress.percentage}%` }}
+          />
         </div>
       </div>
 
       {/* フィルターバー */}
-      <div style={{ background: 'white', padding: '15px 20px', borderBottom: '1px solid #E1E1E1' }}>
+      <div className="bg-white px-5 py-4 border-b border-stroke-card">
         {/* ステータスフィルター */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+        <div className="flex flex-wrap gap-2 mb-3">
           {[
             { value: 'all', label: '未確認' },
             { value: 'checked', label: '確認済' },
             { value: 'action_required', label: '要対応' }
           ].map(option => (
-            <label key={option.value} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+            <label key={option.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
               <input
                 type="radio"
                 name="filterStatus"
                 checked={filterStatus === option.value}
                 onChange={() => setFilterStatus(option.value as typeof filterStatus)}
-                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                className="w-4 h-4 accent-cta-primary cursor-pointer"
               />
               {option.label}
             </label>
@@ -622,7 +596,7 @@ export default function InventoryPage() {
         </div>
 
         {/* 6つのフィルター */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div className="flex flex-wrap gap-2.5 items-end">
           <div style={{ minWidth: '120px' }}>
             <SearchableSelect
               label="管理部署"
@@ -688,40 +662,22 @@ export default function InventoryPage() {
 
       {/* 一括操作バー（未確認フィルター時のみ表示） */}
       {filterStatus === 'all' && filteredItems.length > 0 && (
-        <div style={{
-          background: '#EAF3FB',
-          padding: '12px 20px',
-          borderBottom: '1px solid #A8D4F0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap'
-        }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+        <div className="flex flex-wrap items-center gap-3 bg-[#EAF3FB] px-5 py-3 border-b border-[#A8D4F0]">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={selectedItems.size === filteredItems.filter(item => item.status === 'unchecked').length && filteredItems.filter(item => item.status === 'unchecked').length > 0}
               onChange={handleSelectAll}
-              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              className="w-[18px] h-[18px] accent-cta-primary cursor-pointer"
             />
-            <span style={{ fontSize: '14px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>
+            <span className="text-sm text-content-primary whitespace-nowrap tabular-nums">
               全選択 ({selectedItems.size}/{filteredItems.filter(item => item.status === 'unchecked').length})
             </span>
           </label>
           <button
             disabled={selectedItems.size === 0}
             onClick={handleBulkStockOkClick}
-            style={{
-              padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#008C1D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '13px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}
+            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-cta-primary hover:bg-cta-primary-dark disabled:bg-content-disabled disabled:cursor-not-allowed transition-colors"
           >
             確認済
           </button>
@@ -731,17 +687,7 @@ export default function InventoryPage() {
               if (selectedItems.size === 0) return;
               setBulkDisposalModal(true);
             }}
-            style={{
-              padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#DA0000',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '13px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}
+            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#DA0000] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
           >
             廃棄（除却）申請へ
           </button>
@@ -751,17 +697,7 @@ export default function InventoryPage() {
               if (selectedItems.size === 0) return;
               setBulkTransferModal(true);
             }}
-            style={{
-              padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#A35414',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '13px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}
+            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#A35414] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
           >
             移動申請へ
           </button>
@@ -771,17 +707,7 @@ export default function InventoryPage() {
               if (selectedItems.size === 0) return;
               setActionRequiredModal(true);
             }}
-            style={{
-              padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#8A8A8A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: selectedItems.size === 0 ? 'not-allowed' : 'pointer',
-              fontSize: '13px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}
+            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-content-sub hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
           >
             要対応（保留）
           </button>
@@ -789,12 +715,8 @@ export default function InventoryPage() {
       )}
 
       {/* カード一覧 */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '20px'
-        }}>
+      <div className="flex-1 overflow-auto p-5">
+        <div className={`grid gap-5 ${isMobile ? 'grid-cols-1' : 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'}`}>
           {filteredItems.map((item) => {
             const originalIndex = inventoryItems.indexOf(item);
             return (

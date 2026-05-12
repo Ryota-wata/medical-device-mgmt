@@ -15,12 +15,12 @@ interface InspectionCertPreviewModalProps {
 /** カラートークン */
 const COLORS = {
   primary: '#4a6fa5',
-  primaryDark: '#3d5a80',
+  primaryDark: '#146E2E',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',
   textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
-  border: '#d1d5db',
+  border: '#E1E1E1',
   borderLight: '#E1E1E1',
   white: '#ffffff',
   surfaceHeader: '#FAFAFA',

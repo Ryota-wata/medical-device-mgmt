@@ -23,7 +23,7 @@ const COLORS = {
   borderLight: '#F1F1F1',
   surface: '#FAFAFA',
   surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4b5563',
+  sectionHeader: '#4A4A4A',
   white: '#ffffff',
   error: '#DA0000',
   success: '#008C1D',
