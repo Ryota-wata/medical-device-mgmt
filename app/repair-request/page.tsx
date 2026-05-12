@@ -250,7 +250,7 @@ function RepairRequestContent() {
         {isConfirmView ? (
           /* ========== 確認画面 ========== */
           <>
-            <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-3 mb-4 text-center">
+            <div className="bg-surface-select border border-cta-primary rounded-lg p-3 mb-4 text-center">
               <span className="text-sm font-bold text-cta-primary-dark">
                 以下の内容で送信します。内容をご確認ください。
               </span>
@@ -359,7 +359,7 @@ function RepairRequestContent() {
               <div className="pt-6 flex justify-center gap-4">
                 <button
                   onClick={() => setIsConfirmView(false)}
-                  className="px-8 py-3 bg-[#e5e7eb] text-sm font-bold text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors min-h-[48px]"
+                  className="px-8 py-3 bg-surface-negative text-sm font-bold text-content-primary rounded-md border-0 cursor-pointer hover:bg-stroke-input transition-colors min-h-[48px]"
                 >
                   修正する
                 </button>
@@ -368,8 +368,8 @@ function RepairRequestContent() {
                   disabled={isSubmitting}
                   className={`px-8 py-3 text-sm font-bold text-white rounded-md border-0 transition-colors min-h-[48px] ${
                     isSubmitting
-                      ? 'bg-[#9ca3af] cursor-not-allowed'
-                      : 'bg-cta-primary cursor-pointer hover:bg-[#219a52]'
+                      ? 'bg-surface-disabled cursor-not-allowed'
+                      : 'bg-cta-primary cursor-pointer hover:bg-cta-primary-dark'
                   }`}
                 >
                   {isSubmitting ? '送信中...' : '修理依頼を送信する'}
@@ -388,19 +388,19 @@ function RepairRequestContent() {
                 <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
                   <div>
                     <label className="block text-xs text-content-sub mb-1">修理依頼No.</label>
-                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-content-primary tabular-nums">
+                    <div className="px-3 py-2 bg-stroke-card rounded-md text-sm font-semibold text-content-primary tabular-nums">
                       {requestNo}
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs text-content-sub mb-1">依頼日</label>
-                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-content-primary">
+                    <div className="px-3 py-2 bg-stroke-card rounded-md text-sm font-semibold text-content-primary">
                       {requestDate}
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs text-content-sub mb-1">依頼時間</label>
-                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-content-primary">
+                    <div className="px-3 py-2 bg-stroke-card rounded-md text-sm font-semibold text-content-primary">
                       {requestTime}
                     </div>
                   </div>
@@ -447,7 +447,7 @@ function RepairRequestContent() {
                       onChange={() => setIsRegisteredAsset(true)}
                       className="size-4 accent-cta-primary cursor-pointer"
                     />
-                    <span className={`text-sm ${isRegisteredAsset ? 'font-semibold text-content-primary' : 'text-[#4b5563]'}`}>
+                    <span className={`text-sm ${isRegisteredAsset ? 'font-semibold text-content-primary' : 'text-content-primary'}`}>
                       登録済み資産
                     </span>
                   </label>
@@ -459,7 +459,7 @@ function RepairRequestContent() {
                       onChange={() => setIsRegisteredAsset(false)}
                       className="size-4 accent-cta-primary cursor-pointer"
                     />
-                    <span className={`text-sm ${!isRegisteredAsset ? 'font-semibold text-content-primary' : 'text-[#4b5563]'}`}>
+                    <span className={`text-sm ${!isRegisteredAsset ? 'font-semibold text-content-primary' : 'text-content-primary'}`}>
                       未登録資産
                     </span>
                   </label>
@@ -483,8 +483,8 @@ function RepairRequestContent() {
                           disabled={isQrScanning}
                           className={`px-4 py-2.5 text-white text-sm font-medium border-0 rounded-md whitespace-nowrap transition-colors ${
                             isQrScanning
-                              ? 'bg-[#9ca3af] cursor-not-allowed'
-                              : 'bg-cta-primary cursor-pointer hover:bg-[#219a52]'
+                              ? 'bg-surface-disabled cursor-not-allowed'
+                              : 'bg-cta-primary cursor-pointer hover:bg-cta-primary-dark'
                           }`}
                         >
                           {isQrScanning ? '読取中...' : 'QR読取'}
@@ -494,10 +494,10 @@ function RepairRequestContent() {
 
                     {/* 読み取った機器情報 */}
                     {deviceInfo && (
-                      <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                      <div className="bg-surface-select border border-cta-primary rounded-lg p-4">
                         <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-[120px_1fr]'}`}>
                           {/* 機器写真プレースホルダー */}
-                          <div className={`${isMobile ? 'w-full h-[150px]' : 'w-[120px] h-[120px]'} bg-[#e5e7eb] rounded-lg flex items-center justify-center`}>
+                          <div className={`${isMobile ? 'w-full h-[150px]' : 'w-[120px] h-[120px]'} bg-surface-negative rounded-lg flex items-center justify-center`}>
                             <svg className="w-10 h-10 text-content-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -593,7 +593,7 @@ function RepairRequestContent() {
                   )}
                   <button
                     onClick={() => photoInputRef.current?.click()}
-                    className="w-full py-4 bg-[#f3f4f6] border-2 border-dashed border-stroke-input rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:border-cta-primary transition-colors"
+                    className="w-full py-4 bg-stroke-card border-2 border-dashed border-stroke-input rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:border-cta-primary transition-colors"
                   >
                     <svg className="w-5 h-5 text-content-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -638,7 +638,7 @@ function RepairRequestContent() {
                         onChange={() => setAlternativeDevice(option.value)}
                         className="size-4 accent-cta-primary cursor-pointer"
                       />
-                      <span className={`text-sm ${alternativeDevice === option.value ? 'font-semibold text-content-primary' : 'text-[#4b5563]'}`}>
+                      <span className={`text-sm ${alternativeDevice === option.value ? 'font-semibold text-content-primary' : 'text-content-primary'}`}>
                         {option.label}
                       </span>
                     </label>
@@ -663,7 +663,7 @@ function RepairRequestContent() {
             <div className="mt-4">
               <button
                 onClick={handleConfirm}
-                className="w-full py-3.5 bg-cta-primary text-white text-base font-bold border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors"
+                className="w-full py-3.5 bg-cta-primary text-white text-base font-bold border-0 rounded-md cursor-pointer hover:bg-cta-primary-dark transition-colors"
               >
                 記載内容を確認する
               </button>
@@ -675,7 +675,7 @@ function RepairRequestContent() {
         <div className="mt-4">
           <button
             onClick={handleHomeClick}
-            className="px-8 py-2.5 bg-[#e5e7eb] text-sm font-medium text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors"
+            className="px-8 py-2.5 bg-surface-negative text-sm font-medium text-content-primary rounded-md border-0 cursor-pointer hover:bg-stroke-input transition-colors"
           >
             戻る
           </button>
