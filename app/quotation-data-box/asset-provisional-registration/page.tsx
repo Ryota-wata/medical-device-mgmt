@@ -14,54 +14,6 @@ import { useMasterStore } from '@/lib/stores';
 import { OrderItem } from '@/lib/types';
 
 // ============================================================
-// カラートークン（survey-location / asset-survey-integrated 準拠）
-// ============================================================
-const C = {
-  headerBg: '#4A4A4A',
-  bg: '#FAFAFA',
-  card: '#ffffff',
-  textDark: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  borderLighter: '#F1F1F1',
-  divider: '#008C1D',
-  green: '#008C1D',
-  greenLight: '#EBF5EE',
-  greenBg: '#EBF5EE',
-  red: '#DA0000',
-  redLight: '#EBF5EE',
-  gray: '#F1F1F1',
-  accent: '#146E2E',
-  white: '#ffffff',
-  inputBg: '#FAFAFA',
-  disabled: '#8A8A8A',
-} as const;
-
-// ============================================================
-// PC モード用カラートークン（order-registration / inspection-registration 準拠）
-// ============================================================
-const COLORS = {
-  primary: '#008C1D',
-  primaryDark: '#146E2E',
-  accent: '#146E2E',
-  textOnAccent: '#4A4A4A',
-  textPrimary: '#4A4A4A',
-  textSecondary: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textOnColor: '#ffffff',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  surface: '#FAFAFA',
-  surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4A4A4A',
-  white: '#ffffff',
-  disabled: '#8A8A8A',
-  green: '#008C1D',
-  greenBg: '#EBF5EE',
-} as const;
-
-// ============================================================
 // Types
 // ============================================================
 type ViewState = 'list' | 'form';
@@ -91,23 +43,21 @@ const EMPTY_FORM: FormData = {
   largeClass: '', mediumClass: '', itemClass: '',
 };
 
-/** PC テーブル行ごとの編集データ */
 interface RowEditData {
-  assetMasterId: string;      // 資産MasterID
-  category: string;           // category
-  largeClass: string;         // 大分類
-  mediumClass: string;        // 中分類
-  itemClass: string;          // 品目
-  floor: string;              // 階
-  department: string;         // 部門
-  section: string;            // 部署
-  roomName: string;           // 室名
-  qrCode: string;             // QRコード
-  serialNumber: string;       // シリアルNo.
-  photoFileName: string;      // 写真ファイル名
+  assetMasterId: string;
+  category: string;
+  largeClass: string;
+  mediumClass: string;
+  itemClass: string;
+  floor: string;
+  department: string;
+  section: string;
+  roomName: string;
+  qrCode: string;
+  serialNumber: string;
+  photoFileName: string;
 }
 
-/** SearchParams 読み取り */
 function ParamsReader({ onRead }: { onRead: (rfqGroupId: number | null, mode: string) => void }) {
   const searchParams = useSearchParams();
   const rfqGroupIdParam = searchParams.get('rfqGroupId');
@@ -130,7 +80,6 @@ export default function AssetProvisionalRegistrationPage() {
   const { getApplicationsByRfqNo } = useApplicationStore();
   const { assets: assetMasters } = useMasterStore();
 
-  // Params
   const [rfqGroupId, setRfqGroupId] = useState<number | null>(null);
   const [mode, setMode] = useState<string>('mobile');
   const handleParamsRead = useCallback((id: number | null, m: string) => {
@@ -140,13 +89,11 @@ export default function AssetProvisionalRegistrationPage() {
 
   const isMobileMode = mode === 'mobile';
 
-  // View state (mobile)
   const [viewState, setViewState] = useState<ViewState>('list');
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Shared state
   const [registeredItemIds, setRegisteredItemIds] = useState<number[]>([]);
   const [registrationComplete, setRegistrationComplete] = useState<{
     groupName: string;
@@ -154,10 +101,8 @@ export default function AssetProvisionalRegistrationPage() {
     inspectionDate: string;
   } | null>(null);
 
-  // PC state
   const [rowEditMap, setRowEditMap] = useState<Record<number, RowEditData>>({});
 
-  // Confirm dialog
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -176,7 +121,6 @@ export default function AssetProvisionalRegistrationPage() {
     setConfirmDialog(prev => ({ ...prev, isOpen: false }));
   }, []);
 
-  // Data
   const rfqGroup = useMemo(() => rfqGroupId ? getRfqGroupById(rfqGroupId) : undefined, [rfqGroupId, getRfqGroupById]);
   const orderGroup = useMemo(() => rfqGroupId ? getOrderGroupByRfqGroupId(rfqGroupId) : undefined, [rfqGroupId, getOrderGroupByRfqGroupId]);
   const orderItems = useMemo(() => orderGroup ? getOrderItemsByGroupId(orderGroup.id) : [], [orderGroup, getOrderItemsByGroupId]);
@@ -197,20 +141,17 @@ export default function AssetProvisionalRegistrationPage() {
     return assetMasters.find(m => m.item === item.itemName || m.model === item.model);
   }, [assetMasters]);
 
-  // 編集リスト（Application）から設置場所を取得
   const rfqApplications = useMemo(() => {
     if (!rfqGroup) return [];
     return getApplicationsByRfqNo(rfqGroup.rfqNo);
   }, [rfqGroup, getApplicationsByRfqNo]);
 
   const getApplicationLocationMatch = useCallback((item: OrderItem) => {
-    // itemName または model でマッチする Application を検索
     const direct = rfqApplications.find(app =>
       app.asset.name === item.itemName || app.asset.model === item.model
     );
     if (direct) return direct;
 
-    // 付属品の場合: 同じ quotationItemId を持つ本体の Application を参照
     if (item.registrationType === '付属品' && item.quotationItemId != null) {
       const parentItem = orderItems.find(i =>
         i.quotationItemId === item.quotationItemId && i.registrationType === '本体'
@@ -221,16 +162,13 @@ export default function AssetProvisionalRegistrationPage() {
         );
       }
     }
-    // 最終フォールバック: rfqApplications の先頭（同じグループなので同施設の可能性が高い）
     return rfqApplications.length > 0 ? rfqApplications[0] : undefined;
   }, [rfqApplications, orderItems]);
 
-  // SearchableSelect options from asset masters
   const largeClassOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.largeClass).filter(Boolean))), [assetMasters]);
   const mediumClassOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.mediumClass).filter(Boolean))), [assetMasters]);
   const itemOptions = useMemo(() => Array.from(new Set(assetMasters.map(a => a.item).filter(Boolean))), [assetMasters]);
 
-  // Initialize PC row data
   React.useEffect(() => {
     if (orderItems.length > 0 && Object.keys(rowEditMap).length === 0) {
       const newMap: Record<number, RowEditData> = {};
@@ -338,7 +276,6 @@ export default function AssetProvisionalRegistrationPage() {
     }, 400);
   }, [selectedItem, orderGroup, rfqGroup, formData, addIndividual]);
 
-  // PC handlers
   const handlePcCellChange = useCallback((itemId: number, field: keyof RowEditData, value: string) => {
     setRowEditMap(prev => ({
       ...prev,
@@ -385,7 +322,6 @@ export default function AssetProvisionalRegistrationPage() {
     });
   }, [orderGroup, rfqGroup, rfqGroupId, orderItems, totalItems, rowEditMap, addIndividual, updateRfqGroup, showDialog]);
 
-  // Mobile: complete all (after individual registrations)
   const handleCompleteAll = useCallback(() => {
     if (!rfqGroupId || !allRegistered || !rfqGroup || !orderGroup) return;
     showDialog({
@@ -404,22 +340,11 @@ export default function AssetProvisionalRegistrationPage() {
   }, [rfqGroupId, allRegistered, totalItems, rfqGroup, orderGroup, updateRfqGroup, showDialog]);
 
   // ============================================================
-  // Render: PC mode（order-registration / inspection-registration 準拠）
+  // PC mode
   // ============================================================
   if (!isMobileMode) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-        <style>{`
-          .order-btn { transition: filter 150ms ease-out; }
-          .order-btn:hover:not(:disabled) { filter: brightness(0.9); }
-          .order-btn:focus-visible { outline: 2px solid ${COLORS.primary}; outline-offset: 2px; }
-          .order-btn-secondary { transition: background 150ms ease-out; }
-          .order-btn-secondary:hover { background: ${COLORS.borderLight} !important; }
-          .order-btn-secondary:focus-visible { outline: 2px solid ${COLORS.border}; outline-offset: 2px; }
-          .prov-cell-input { transition: border-color 150ms ease-out; }
-          .prov-cell-input:focus { border-color: ${COLORS.primary} !important; outline: none; }
-        `}</style>
-
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <Suspense fallback={null}>
           <ParamsReader onRead={handleParamsRead} />
         </Suspense>
@@ -430,223 +355,55 @@ export default function AssetProvisionalRegistrationPage() {
           showBackButton={false}
         />
 
-        <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-          {/* PC: 完了画面 */}
+        <div className="flex-1 overflow-auto p-6">
           {registrationComplete ? (
-            <div style={{ maxWidth: '560px', margin: '40px auto', textAlign: 'center' }}>
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '32px',
-              }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
-                <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px', textWrap: 'balance' }}>
-                  検収登録が完了しました
-                </h2>
-                <p style={{ fontSize: '14px', color: COLORS.textSecondary, marginBottom: '24px', fontVariantNumeric: 'tabular-nums', textWrap: 'pretty' }}>
-                  {registrationComplete.groupName}（{registrationComplete.itemCount}品目 / 検収日: {registrationComplete.inspectionDate}）
-                </p>
-                <button
-                  className="order-btn"
-                  onClick={() => router.push('/quotation-data-box')}
-                  style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
-                >
-                  一覧画面に戻る
-                </button>
-              </div>
-            </div>
-
-          /* PC: データなし */
+            <PcCompletionView
+              groupName={registrationComplete.groupName}
+              itemCount={registrationComplete.itemCount}
+              inspectionDate={registrationComplete.inspectionDate}
+              onBack={() => router.push('/quotation-data-box')}
+            />
           ) : !rfqGroup || !orderGroup || orderItems.length === 0 ? (
-            <div style={{ maxWidth: '480px', margin: '40px auto', textAlign: 'center', color: COLORS.textMuted }}>
-              <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px' }}>
-                対象の発注データが見つかりません
-              </p>
-              <p style={{ fontSize: '12px', marginBottom: '16px', textWrap: 'pretty' }}>
-                URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
-              </p>
-              <button
-                className="order-btn"
-                onClick={() => router.push('/quotation-data-box')}
-                style={{ padding: '8px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-              >
-                ← 一覧画面に戻る
-              </button>
-            </div>
-
-          /* PC: メイン入力画面 */
+            <PcNotFoundView onBack={() => router.push('/quotation-data-box')} />
           ) : (
-            <>
-              {/* 基本情報セクション（読取専用） */}
-              <div style={{ background: COLORS.white, borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
-                <div style={{ padding: '8px 16px', background: COLORS.sectionHeader, color: COLORS.textOnColor, fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>
-                  基本情報
-                </div>
-                <div style={{ padding: '12px 16px' }}>
-                  <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                    <tbody>
-                      <tr>
-                        <td style={pcInfoThStyle}>見積依頼No.</td>
-                        <td style={pcInfoTdStyle}>{rfqGroup.rfqNo}</td>
-                        <td style={pcInfoThStyle}>見積依頼G名称</td>
-                        <td style={pcInfoTdStyle}>{rfqGroup.groupName}</td>
-                      </tr>
-                      <tr>
-                        <td style={pcInfoThStyle}>発注先</td>
-                        <td style={pcInfoTdStyle}>{orderGroup.vendorName}</td>
-                        <td style={pcInfoThStyle}>担当</td>
-                        <td style={pcInfoTdStyle}>{rfqGroup.personInCharge || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td style={pcInfoThStyle}>発注形態</td>
-                        <td style={pcInfoTdStyle}>{orderGroup.orderType}</td>
-                        <td style={pcInfoThStyle}>見積日付</td>
-                        <td style={{ ...pcInfoTdStyle, fontVariantNumeric: 'tabular-nums' }}>{rfqGroup.createdDate || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td style={pcInfoThStyle}>発注日</td>
-                        <td style={{ ...pcInfoTdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.orderDate || '-'}</td>
-                        <td style={pcInfoThStyle}>納品日</td>
-                        <td style={{ ...pcInfoTdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.deliveryDate || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td style={pcInfoThStyle}>検収日</td>
-                        <td style={{ ...pcInfoTdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.inspectionDate || '-'}</td>
-                        <td style={pcInfoThStyle}>合計金額</td>
-                        <td style={{ ...pcInfoTdStyle, fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>¥{totalAmount.toLocaleString()}</td>
-                      </tr>
-                      {orderGroup.orderType?.includes('リース') && (
-                        <tr>
-                          <td style={pcInfoThStyle}>リース開始日</td>
-                          <td style={{ ...pcInfoTdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.leaseStartDate || '-'}</td>
-                          <td style={pcInfoThStyle}>リース年数</td>
-                          <td style={pcInfoTdStyle}>{orderGroup.leaseYears ? `${orderGroup.leaseYears}年` : '-'}</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            <div className="flex flex-col gap-6">
+              <PcBasicInfoCard
+                rfqNo={rfqGroup.rfqNo}
+                groupName={rfqGroup.groupName}
+                vendorName={orderGroup.vendorName}
+                personInCharge={rfqGroup.personInCharge}
+                orderType={orderGroup.orderType}
+                quoteDate={rfqGroup.createdDate}
+                orderDate={orderGroup.orderDate}
+                deliveryDate={orderGroup.deliveryDate}
+                inspectionDate={orderGroup.inspectionDate}
+                totalAmount={totalAmount}
+                leaseStartDate={orderGroup.leaseStartDate}
+                leaseYears={orderGroup.leaseYears}
+              />
 
-              {/* 明細テーブル */}
-              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: '4px', marginBottom: '16px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 16px',
-                  background: COLORS.primary,
-                  color: COLORS.textOnColor,
-                }}>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>
-                    明細に対する基本情報
-                    <span style={{ fontSize: '11px', fontWeight: 400, marginLeft: '12px', opacity: 0.9 }}>
-                      【オレンジ列 = 入力項目】
-                    </span>
-                  </span>
-                  <span style={{ fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>
-                    合計金額（税別）:
-                    <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px' }}>
-                      ¥{totalAmount.toLocaleString()}
-                    </span>
-                  </span>
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: 1400 }}>
-                    <thead>
-                      {/* グループヘッダー行 */}
-                      <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
-                        <th style={{ ...pcTableThStyle, textAlign: 'center' }} rowSpan={2}>No</th>
-                        <th style={pcTableThStyle} colSpan={7}>商品分類</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }} colSpan={7}>入力項目</th>
-                      </tr>
-                      {/* 個別ヘッダー行 */}
-                      <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
-                        <th style={pcTableThStyle}>資産MasterID</th>
-                        <th style={pcTableThStyle}>category</th>
-                        <th style={pcTableThStyle}>大分類</th>
-                        <th style={pcTableThStyle}>中分類</th>
-                        <th style={pcTableThStyle}>品名</th>
-                        <th style={pcTableThStyle}>メーカー名</th>
-                        <th style={pcTableThStyle}>型式</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>階</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>部門</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>部署</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>室名</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>QRコード</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>シリアルNo.</th>
-                        <th style={{ ...pcTableThStyle, background: '#fffbe3', color: '#146E2E' }}>写真撮影</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orderItems.map((item, index) => {
-                        const r = rowEditMap[item.id];
-                        if (!r) return null;
-                        return (
-                          <tr key={item.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                            <td style={{ ...pcTableTdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{index + 1}</td>
-                            <td style={{ ...pcTableTdStyle, fontFamily: 'monospace', fontSize: '10px', color: COLORS.textMuted }}>{r.assetMasterId || '-'}</td>
-                            <td style={{ ...pcTableTdStyle, fontSize: '10px' }}>{r.category || '-'}</td>
-                            <td style={{ ...pcTableTdStyle, fontSize: '10px' }}>{r.largeClass || '-'}</td>
-                            <td style={{ ...pcTableTdStyle, fontSize: '10px' }}>{r.mediumClass || '-'}</td>
-                            <td style={{ ...pcTableTdStyle, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>{item.itemName}</td>
-                            <td style={{ ...pcTableTdStyle, whiteSpace: 'nowrap' }}>{item.manufacturer}</td>
-                            <td style={{ ...pcTableTdStyle, fontFamily: 'monospace', fontSize: '10px' }}>{item.model}</td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.floor} onChange={(e) => handlePcCellChange(item.id, 'floor', e.target.value)} placeholder="階" style={{ ...pcCellInputStyle, width: '40px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.department} onChange={(e) => handlePcCellChange(item.id, 'department', e.target.value)} placeholder="部門" style={{ ...pcCellInputStyle, width: '80px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.section} onChange={(e) => handlePcCellChange(item.id, 'section', e.target.value)} placeholder="部署" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.roomName} onChange={(e) => handlePcCellChange(item.id, 'roomName', e.target.value)} placeholder="室名" style={{ ...pcCellInputStyle, width: '70px' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.qrCode} onChange={(e) => handlePcCellChange(item.id, 'qrCode', e.target.value)} placeholder="QRコード" style={{ ...pcCellInputStyle, width: '120px', fontFamily: 'monospace' }} /></td>
-                            <td style={pcEditCellStyle}><input className="prov-cell-input" type="text" value={r.serialNumber} onChange={(e) => handlePcCellChange(item.id, 'serialNumber', e.target.value)} placeholder="入力" style={pcCellInputStyle} /></td>
-                            <td style={pcEditCellStyle}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                {r.photoFileName ? (
-                                  <span style={{ fontSize: '11px', color: COLORS.green, fontWeight: 500 }}>{r.photoFileName}</span>
-                                ) : (
-                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: '#fffbe3', border: '1px solid #fdba74', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', color: '#146E2E', whiteSpace: 'nowrap' }}>
-                                    <span>📷 アップロード</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          handlePcCellChange(item.id, 'photoFileName', file.name);
-                                        }
-                                      }}
-                                    />
-                                  </label>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <PcDetailTableCard
+                totalAmount={totalAmount}
+                orderItems={orderItems}
+                rowEditMap={rowEditMap}
+                onCellChange={handlePcCellChange}
+              />
 
-              {/* フッターボタン */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+              <div className="flex justify-between items-center pt-2 gap-3">
                 <button
-                  className="order-btn-secondary"
                   onClick={() => router.push('/quotation-data-box')}
-                  style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                  className="h-12 min-w-[180px] px-6 rounded-lg bg-[#d6d6d6] text-content-primary text-base font-normal cursor-pointer transition-colors hover:bg-stroke-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-sub"
                 >
-                  ← 一覧画面に戻る
+                  戻る
                 </button>
                 <button
-                  className="order-btn"
                   onClick={handlePcRegisterAll}
-                  style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', minHeight: '44px' }}
+                  className="h-12 min-w-[200px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
                 >
                   検収登録する
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
 
@@ -663,513 +420,84 @@ export default function AssetProvisionalRegistrationPage() {
   }
 
   // ============================================================
-  // Render: Mobile mode（survey-location / asset-survey-integrated 準拠）
+  // Mobile mode
   // ============================================================
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', backgroundColor: C.bg }}>
-      <style>{`
-        .prov-cell-input { transition: border-color 150ms ease-out; }
-        .prov-cell-input:focus { border-color: ${C.headerBg} !important; outline: none; }
-      `}</style>
-
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Suspense fallback={null}>
         <ParamsReader onRead={handleParamsRead} />
       </Suspense>
 
-      {/* ======== Sticky Header（asset-survey-integrated 準拠） ======== */}
-      <div style={{
-        backgroundColor: C.headerBg,
-        color: C.white,
-        padding: isMobile ? '12px 16px' : '16px 24px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-      }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
-          <h1 style={{
-            fontSize: isMobile ? '16px' : '18px',
-            fontWeight: 600,
-            margin: 0,
-            textWrap: 'balance',
-          }}>
-            {registrationComplete ? '検収登録完了' : '検収登録'}
-          </h1>
-          <span style={{
-            fontSize: '11px',
-            padding: '2px 8px',
-            background: 'rgba(255,255,255,0.2)',
-            borderRadius: '4px',
-            marginLeft: '8px',
-          }}>
-            モバイル
-          </span>
-        </div>
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-[100] bg-content-primary text-white px-4 py-3 md:px-6 md:py-4 shadow-md flex justify-center items-center">
+        <h1 className="text-base md:text-lg font-semibold m-0 text-balance">
+          {registrationComplete ? '検収登録完了' : '検収登録'}
+        </h1>
+        <span className="text-xs px-2 py-0.5 bg-white/20 rounded ml-2">モバイル</span>
       </div>
 
-      {/* ======== Main Content ======== */}
-      <main style={{
-        flex: 1,
-        padding: isMobile ? '16px 12px 120px 12px' : '24px 20px 120px 20px',
-        overflowY: 'auto',
-      }}>
-
-        {/* ======== 登録完了画面 ======== */}
+      <main className="flex-1 overflow-y-auto px-3 py-4 pb-32 md:px-5 md:py-6">
         {registrationComplete ? (
-          <div style={{ maxWidth: '500px', margin: '40px auto' }}>
-            <div style={{
-              backgroundColor: C.card,
-              borderRadius: '8px',
-              padding: isMobile ? '24px 16px' : '32px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              textAlign: 'center',
-            }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: C.greenBg,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-                fontSize: '32px',
-                color: C.green,
-              }}>
-                &#10003;
-              </div>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: C.textDark, marginBottom: '8px', textWrap: 'balance' }}>
-                検収登録が完了しました
-              </h2>
-              <p style={{ fontSize: '14px', color: C.textMuted, marginBottom: '24px', fontVariantNumeric: 'tabular-nums', textWrap: 'pretty' }}>
-                {registrationComplete.groupName}<br />
-                {registrationComplete.itemCount}品目 / 検収日: {registrationComplete.inspectionDate}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                <button
-                  onClick={() => router.push('/quotation-data-box')}
-                  style={{
-                    padding: '12px 24px',
-                    backgroundColor: C.headerBg,
-                    color: C.white,
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    width: '240px',
-                    minHeight: '44px',
-                  }}
-                >
-                  一覧画面に戻る
-                </button>
-              </div>
-            </div>
-          </div>
-
-        /* ======== データなし ======== */
+          <MobileCompletionView
+            groupName={registrationComplete.groupName}
+            itemCount={registrationComplete.itemCount}
+            inspectionDate={registrationComplete.inspectionDate}
+            isMobile={isMobile}
+            onBack={() => router.push('/quotation-data-box')}
+          />
         ) : !rfqGroup || !orderGroup || orderItems.length === 0 ? (
-          <div style={{ maxWidth: '480px', margin: '40px auto', textAlign: 'center' }}>
-            <div style={{
-              backgroundColor: C.card,
-              borderRadius: '8px',
-              padding: '32px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            }}>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: C.textDark, marginBottom: '8px' }}>
-                対象の発注データが見つかりません
-              </p>
-              <p style={{ fontSize: '12px', color: C.textMuted, marginBottom: '16px', textWrap: 'pretty' }}>
-                URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
-              </p>
-              <button
-                onClick={() => router.push('/quotation-data-box')}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: C.headerBg,
-                  color: C.white,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                }}
-              >
-                一覧画面に戻る
-              </button>
-            </div>
-          </div>
-
-        /* ======== モバイル: フォーム表示 ======== */
+          <MobileNotFoundView onBack={() => router.push('/quotation-data-box')} />
         ) : viewState === 'form' && selectedItem ? (
-          <>
-            {/* QR入力 */}
-            <Card isMobile={isMobile}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: C.textDark, marginBottom: '12px' }}>
-                QRコード
-              </div>
-              <input
-                type="text"
-                value={formData.qrCode}
-                onChange={(e) => handleFieldChange('qrCode', e.target.value)}
-                placeholder="QRコードを入力してください"
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: '4px',
-                  fontSize: '16px',
-                  fontFamily: 'monospace',
-                  fontVariantNumeric: 'tabular-nums',
-                  boxSizing: 'border-box' as const,
-                }}
-              />
-            </Card>
-
-            {/* Blue Bar */}
-            <BlueDivider />
-
-            {/* Asset Info */}
-            <Card isMobile={isMobile}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: C.textDark, marginBottom: '12px' }}>
-                {selectedItem.itemName}
-                <span style={{ fontSize: '12px', fontWeight: 400, color: C.textMuted, marginLeft: '8px' }}>
-                  {selectedItem.model} / {selectedItem.registrationType}
-                </span>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>品目名</label>
-                  <div style={readOnlyStyle}>{selectedItem.itemName}</div>
-                </div>
-                <div>
-                  <label style={labelStyle}>メーカー</label>
-                  <div style={readOnlyStyle}>{selectedItem.manufacturer}</div>
-                </div>
-                <div>
-                  <label style={labelStyle}>型式</label>
-                  <div style={readOnlyStyle}>{selectedItem.model}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>シリアルNo.</label>
-                  <input
-                    type="text"
-                    value={formData.serialNumber}
-                    onChange={(e) => handleFieldChange('serialNumber', e.target.value)}
-                    placeholder="シリアルNo.を入力"
-                    style={inputFieldStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>購入年月日</label>
-                  <div style={readOnlyStyle}>{purchaseDate || '-'}</div>
-                </div>
-                <div>
-                  <label style={labelStyle}>取得金額</label>
-                  <div style={{ ...readOnlyStyle, fontVariantNumeric: 'tabular-nums' }}>¥{selectedItem.totalPrice.toLocaleString()}</div>
-                </div>
-              </div>
-
-              <div style={{ fontSize: '11px', color: C.disabled, fontStyle: 'italic' }}>
-                ※ 資産番号・備品番号は本登録時に配番されます
-              </div>
-            </Card>
-
-            {/* Photo Display */}
-            <Card isMobile={isMobile}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: C.textDark, marginBottom: '12px' }}>写真</div>
-              <div style={{
-                border: '2px dashed #ccc',
-                borderRadius: '8px',
-                padding: '40px',
-                textAlign: 'center',
-                backgroundColor: formData.photoTaken ? C.greenBg : '#FAFAFA',
-              }}>
-                <div style={{ fontSize: '40px', marginBottom: '8px' }}>📷</div>
-                <div style={{ fontSize: '14px', color: C.textMuted }}>
-                  {formData.photoTaken ? '写真撮影済み' : '写真を撮影してください'}
-                </div>
-              </div>
-            </Card>
-
-            {/* Blue Bar */}
-            <BlueDivider />
-
-            {/* Classification */}
-            <Card isMobile={isMobile}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: C.textDark, marginBottom: '16px' }}>分類情報</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
-                <SearchableSelect label="大分類" value={formData.largeClass} onChange={(v) => handleFieldChange('largeClass', v)} options={['', ...largeClassOptions]} placeholder="選択してください" isMobile={isMobile} />
-                <SearchableSelect label="中分類" value={formData.mediumClass} onChange={(v) => handleFieldChange('mediumClass', v)} options={['', ...mediumClassOptions]} placeholder="選択してください" isMobile={isMobile} />
-                <SearchableSelect label="品目" value={formData.itemClass} onChange={(v) => handleFieldChange('itemClass', v)} options={['', ...itemOptions]} placeholder="選択してください" isMobile={isMobile} />
-              </div>
-            </Card>
-
-            {/* Location */}
-            <Card isMobile={isMobile}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: C.textDark, marginBottom: '16px' }}>設置場所</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '16px' }}>
-                <div>
-                  <label style={labelStyle}>棟</label>
-                  <input type="text" value={formData.building} onChange={(e) => handleFieldChange('building', e.target.value)} placeholder="例: 本館" style={inputFieldStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>階</label>
-                  <input type="text" value={formData.floor} onChange={(e) => handleFieldChange('floor', e.target.value)} placeholder="例: 3F" style={inputFieldStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>部門</label>
-                  <input type="text" value={formData.department} onChange={(e) => handleFieldChange('department', e.target.value)} placeholder="例: 内視鏡センター" style={inputFieldStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>部署</label>
-                  <input type="text" value={formData.section} onChange={(e) => handleFieldChange('section', e.target.value)} placeholder="例: 検査室1" style={inputFieldStyle} />
-                </div>
-              </div>
-            </Card>
-
-            {/* Size */}
-            <Card isMobile={isMobile}>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: C.textDark, marginBottom: '16px' }}>サイズ情報</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px' }}>
-                <div>
-                  <label style={labelStyle}>W (幅)</label>
-                  <input type="number" value={formData.width} onChange={(e) => handleFieldChange('width', e.target.value)} placeholder="0" style={{ ...inputFieldStyle, fontVariantNumeric: 'tabular-nums' }} />
-                </div>
-                <div>
-                  <label style={labelStyle}>D (奥行)</label>
-                  <input type="number" value={formData.depth} onChange={(e) => handleFieldChange('depth', e.target.value)} placeholder="0" style={{ ...inputFieldStyle, fontVariantNumeric: 'tabular-nums' }} />
-                </div>
-                <div>
-                  <label style={labelStyle}>H (高さ)</label>
-                  <input type="number" value={formData.height} onChange={(e) => handleFieldChange('height', e.target.value)} placeholder="0" style={{ ...inputFieldStyle, fontVariantNumeric: 'tabular-nums' }} />
-                </div>
-              </div>
-              <div style={{ fontSize: '12px', color: C.textMuted, marginTop: '8px' }}>単位: mm</div>
-            </Card>
-
-            {/* Remarks */}
-            <Card isMobile={isMobile}>
-              <label style={labelStyle}>備考</label>
-              <textarea
-                value={formData.remarks}
-                onChange={(e) => handleFieldChange('remarks', e.target.value)}
-                placeholder="備考を入力してください"
-                rows={4}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
-                }}
-              />
-            </Card>
-          </>
-
-        /* ======== モバイル: リスト表示 ======== */
+          <MobileForm
+            isMobile={isMobile}
+            selectedItem={selectedItem}
+            formData={formData}
+            purchaseDate={purchaseDate}
+            largeClassOptions={largeClassOptions}
+            mediumClassOptions={mediumClassOptions}
+            itemOptions={itemOptions}
+            onChange={handleFieldChange}
+          />
         ) : (
-          <>
-            {/* 基本情報 */}
-            <Card isMobile={isMobile}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: C.textDark, marginBottom: '12px' }}>基本情報</div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '120px 1fr', gap: '8px' }}>
-                <InfoRow label="見積依頼No." value={rfqGroup.rfqNo} />
-                <InfoRow label="見積G名称" value={rfqGroup.groupName} />
-                <InfoRow label="発注先" value={orderGroup.vendorName} />
-                <InfoRow label="検収日" value={orderGroup.inspectionDate || orderGroup.deliveryDate || '-'} />
-              </div>
-            </Card>
-
-            {/* 進捗バー */}
-            <Card isMobile={isMobile}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: C.textDark }}>
-                  登録済: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{registeredCount} / {totalItems} 件</span>
-                </span>
-                <span style={{ fontSize: '12px', color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>{progressPercent}%</span>
-              </div>
-              <div style={{ height: 6, background: '#E1E1E1', borderRadius: 9999, overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${progressPercent}%`,
-                  background: progressPercent === 100 ? C.green : C.headerBg,
-                  borderRadius: 9999,
-                  transition: 'width 0.3s ease',
-                }} />
-              </div>
-            </Card>
-
-            {/* Blue Bar */}
-            <BlueDivider />
-
-            {/* 品目リスト */}
-            <Card isMobile={isMobile} noPadding>
-              <div style={{ padding: isMobile ? '12px 16px' : '16px 20px', borderBottom: `1px solid ${C.borderLighter}` }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: C.textDark }}>個体管理品目一覧</div>
-              </div>
-              {orderItems.map((item) => {
-                const isRegistered = registeredItemIds.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => !isRegistered && handleSelectItem(item.id)}
-                    disabled={isRegistered}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: isMobile ? '14px 16px' : '16px 20px',
-                      width: '100%',
-                      textAlign: 'left',
-                      background: isRegistered ? C.greenBg : C.white,
-                      border: 'none',
-                      borderBottom: `1px solid ${C.borderLighter}`,
-                      cursor: isRegistered ? 'default' : 'pointer',
-                      minHeight: 60,
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => { if (!isRegistered) e.currentTarget.style.background = '#F1F1F1'; }}
-                    onMouseLeave={(e) => { if (!isRegistered) e.currentTarget.style.background = C.white; else e.currentTarget.style.background = C.greenBg; }}
-                  >
-                    <div style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: isRegistered ? C.greenLight : C.gray,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      fontSize: 16,
-                      color: isRegistered ? C.green : C.disabled,
-                      fontWeight: 700,
-                    }}>
-                      {isRegistered ? '✓' : ''}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 500, color: isRegistered ? C.textMuted : C.textDark, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.itemName}
-                      </div>
-                      <div style={{ fontSize: '12px', color: C.textMuted, marginTop: 2 }}>
-                        {item.model} / {item.registrationType}
-                      </div>
-                    </div>
-                    {!isRegistered && <span style={{ color: C.disabled, fontSize: 18, flexShrink: 0 }}>&rsaquo;</span>}
-                  </button>
-                );
-              })}
-            </Card>
-          </>
+          <MobileList
+            isMobile={isMobile}
+            rfqNo={rfqGroup.rfqNo}
+            groupName={rfqGroup.groupName}
+            vendorName={orderGroup.vendorName}
+            inspectionDate={orderGroup.inspectionDate || orderGroup.deliveryDate || '-'}
+            registeredCount={registeredCount}
+            totalItems={totalItems}
+            progressPercent={progressPercent}
+            orderItems={orderItems}
+            registeredItemIds={registeredItemIds}
+            onSelectItem={handleSelectItem}
+          />
         )}
       </main>
 
-      {/* ======== Fixed Footer（asset-survey-integrated 準拠） ======== */}
+      {/* Fixed Footer */}
       {!registrationComplete && rfqGroup && orderGroup && (
-        <footer style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: C.white,
-          borderTop: `1px solid ${C.borderLight}`,
-          padding: isMobile ? '8px' : '10px',
-          display: 'flex',
-          justifyContent: 'space-around',
-          flexWrap: 'wrap',
-          boxShadow: '0 -2px 4px rgba(0,0,0,0.1)',
-          zIndex: 100,
-        }}>
-          {/* 戻る */}
-          <FooterButton
-            onClick={handleBack}
-            icon={
-              <div style={{
-                width: 0,
-                height: 0,
-                borderTop: '6px solid transparent',
-                borderBottom: '6px solid transparent',
-                borderRight: `10px solid ${C.textDark}`,
-              }} />
-            }
-            label="戻る"
-            color={C.textDark}
-            bgColor={C.gray}
-            hoverBg={C.gray}
-            isMobile={isMobile}
-          />
-
-          {/* QR読取 */}
-          <FooterButton
-            onClick={handleQRScan}
-            icon={<span style={{ fontSize: '20px' }}>📷</span>}
-            label="QR読取"
-            color={C.red}
-            bgColor={C.redLight}
-            hoverBg={C.redLight}
-            isMobile={isMobile}
-          />
-
-          {/* 写真撮影 */}
-          <FooterButton
-            onClick={handlePhotoCapture}
-            icon={<span style={{ fontSize: '20px' }}>📷</span>}
-            label="写真撮影"
-            color={C.red}
-            bgColor={C.redLight}
-            hoverBg={C.redLight}
-            isMobile={isMobile}
-          />
-
-          {/* 商品登録 / 登録完了 */}
+        <footer className="fixed bottom-0 left-0 right-0 bg-surface-card border-t border-stroke-input px-2 py-2 md:px-3 md:py-2.5 flex justify-around flex-wrap shadow-[0_-2px_4px_rgba(0,0,0,0.1)] z-[100]">
+          <FooterButton onClick={handleBack} icon="◀" label="戻る" variant="default" isMobile={isMobile} />
+          <FooterButton onClick={handleQRScan} icon="📷" label="QR読取" variant="alert" isMobile={isMobile} />
+          <FooterButton onClick={handlePhotoCapture} icon="📷" label="写真撮影" variant="alert" isMobile={isMobile} />
           {viewState === 'form' ? (
             <FooterButton
               onClick={handleRegisterItem}
               disabled={isSubmitting}
-              icon={<span style={{ fontSize: '20px' }}>✓</span>}
+              icon="✓"
               label={isSubmitting ? '登録中...' : '商品登録'}
-              color={C.green}
-              bgColor={C.greenLight}
-              hoverBg={C.greenLight}
+              variant="primary"
               isMobile={isMobile}
             />
           ) : allRegistered ? (
-            <FooterButton
-              onClick={handleCompleteAll}
-              icon={<span style={{ fontSize: '20px' }}>✓</span>}
-              label="登録完了"
-              color={C.green}
-              bgColor={C.greenLight}
-              hoverBg={C.greenLight}
-              isMobile={isMobile}
-            />
+            <FooterButton onClick={handleCompleteAll} icon="✓" label="登録完了" variant="primary" isMobile={isMobile} />
           ) : (
-            <FooterButton
-              onClick={() => {}}
-              disabled
-              icon={<span style={{ fontSize: '20px', opacity: 0.4 }}>✓</span>}
-              label="商品登録"
-              color={C.disabled}
-              bgColor={C.gray}
-              hoverBg={C.gray}
-              isMobile={isMobile}
-            />
+            <FooterButton onClick={() => {}} disabled icon="✓" label="商品登録" variant="disabled" isMobile={isMobile} />
           )}
         </footer>
       )}
 
-      {/* 確認ダイアログ */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={closeDialog}
@@ -1183,176 +511,712 @@ export default function AssetProvisionalRegistrationPage() {
 }
 
 // ============================================================
-// Sub-components（asset-survey-integrated 準拠）
+// PC sub views
 // ============================================================
-
-/** カードコンポーネント */
-function Card({ children, isMobile, noPadding }: { children: React.ReactNode; isMobile: boolean; noPadding?: boolean }) {
+function PcCompletionView({
+  groupName,
+  itemCount,
+  inspectionDate,
+  onBack,
+}: {
+  groupName: string;
+  itemCount: number;
+  inspectionDate: string;
+  onBack: () => void;
+}) {
   return (
-    <div style={{
-      backgroundColor: C.card,
-      borderRadius: '8px',
-      padding: noPadding ? 0 : (isMobile ? '16px' : '20px'),
-      marginBottom: '16px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    }}>
+    <div className="max-w-[560px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <div className="text-5xl mb-4 text-cta-primary leading-none">&#10003;</div>
+        <h2 className="text-lg font-bold text-content-primary mb-2 text-balance">
+          検収登録が完了しました
+        </h2>
+        <p className="text-sm text-content-sub mb-6 text-pretty tabular-nums">
+          {groupName}（{itemCount}品目 / 検収日: {inspectionDate}）
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select min-w-[240px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PcNotFoundView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="max-w-[480px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <p className="text-sm font-bold text-content-primary mb-2">対象の発注データが見つかりません</p>
+        <p className="text-xs text-content-sub mb-6 text-pretty">
+          URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-cta-primary text-white text-base font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type PcBasicInfoCardProps = {
+  rfqNo: string;
+  groupName: string;
+  vendorName: string;
+  personInCharge?: string;
+  orderType: string;
+  quoteDate?: string;
+  orderDate?: string;
+  deliveryDate?: string;
+  inspectionDate?: string;
+  totalAmount: number;
+  leaseStartDate?: string;
+  leaseYears?: number;
+};
+
+function PcBasicInfoCard(p: PcBasicInfoCardProps) {
+  const isLease = p.orderType?.includes('リース');
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
+      <div className="border border-stroke-input">
+        <PcInfoRow>
+          <PcInfoCell label="見積依頼No." value={p.rfqNo} />
+          <PcInfoCell label="見積依頼G名称" value={p.groupName} />
+        </PcInfoRow>
+        <PcInfoRow>
+          <PcInfoCell label="発注先" value={p.vendorName} />
+          <PcInfoCell label="担当" value={p.personInCharge || '---'} />
+        </PcInfoRow>
+        <PcInfoRow>
+          <PcInfoCell label="発注形態" value={p.orderType} />
+          <PcInfoCell label="見積日付" value={p.quoteDate || '---'} numeric />
+        </PcInfoRow>
+        <PcInfoRow>
+          <PcInfoCell label="発注日" value={p.orderDate || '---'} numeric />
+          <PcInfoCell label="納品日" value={p.deliveryDate || '---'} numeric />
+        </PcInfoRow>
+        <PcInfoRow last={!isLease}>
+          <PcInfoCell label="検収日" value={p.inspectionDate || '---'} numeric />
+          <PcInfoCell label="合計金額" value={`¥${p.totalAmount.toLocaleString()}`} labelBold valueBold valueLarge numeric />
+        </PcInfoRow>
+        {isLease && (
+          <PcInfoRow last>
+            <PcInfoCell label="リース開始日" value={p.leaseStartDate || '---'} numeric />
+            <PcInfoCell label="リース年数" value={p.leaseYears ? `${p.leaseYears}年` : '---'} numeric />
+          </PcInfoRow>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function PcInfoRow({ children, last }: { children: React.ReactNode; last?: boolean }) {
+  return (
+    <div className={`flex w-full ${last ? '' : 'border-b border-stroke-input'}`}>
       {children}
     </div>
   );
 }
 
-/** ブルーバー区切り */
-function BlueDivider() {
+function PcInfoCell({
+  label,
+  value,
+  labelBold,
+  valueBold,
+  valueLarge,
+  numeric,
+}: {
+  label: string;
+  value: string;
+  labelBold?: boolean;
+  valueBold?: boolean;
+  valueLarge?: boolean;
+  numeric?: boolean;
+}) {
   return (
-    <div style={{
-      height: '4px',
-      backgroundColor: C.divider,
-      margin: '24px 0',
-      borderRadius: '2px',
-    }} />
+    <div className="flex items-stretch flex-1 min-w-0">
+      <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+        <p className={`text-base text-content-primary whitespace-nowrap ${labelBold ? 'font-semibold' : 'font-normal'}`}>
+          {label}
+        </p>
+      </div>
+      <div className="flex-1 min-w-0 flex items-center px-4 py-4 border-r border-stroke-input last:border-r-0">
+        <p
+          className={`min-w-0 truncate ${valueLarge ? 'text-lg' : 'text-base'} ${valueBold ? 'font-semibold' : 'font-normal'} text-content-primary ${numeric ? 'tabular-nums' : ''}`}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
   );
 }
 
-/** 基本情報行（モバイル） */
-function InfoRow({ label, value }: { label: string; value: string }) {
+// ============================================================
+// PC detail table
+// ============================================================
+function PcDetailTableCard({
+  totalAmount,
+  orderItems,
+  rowEditMap,
+  onCellChange,
+}: {
+  totalAmount: number;
+  orderItems: OrderItem[];
+  rowEditMap: Record<number, RowEditData>;
+  onCellChange: (itemId: number, field: keyof RowEditData, value: string) => void;
+}) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4 flex flex-col gap-3">
+      <div className="border border-stroke-input flex">
+        <div className="bg-surface-select px-4 py-4 flex items-center gap-3">
+          <p className="text-base text-content-primary whitespace-nowrap">明細に対する基本情報</p>
+          <span className="text-xs text-content-sub whitespace-nowrap">【黄列 = 入力項目】</span>
+        </div>
+        <div className="flex-1 min-w-0 flex items-center justify-end px-4 py-4 gap-2">
+          <p className="text-content-primary leading-tight">
+            <span className="text-base font-semibold">合計金額</span>
+            <span className="text-xs font-semibold">（税別）</span>
+          </p>
+          <div className="bg-surface-card border border-stroke-input rounded-lg h-[42px] flex items-center px-3 min-w-[180px]">
+            <p className="flex-1 text-lg font-semibold text-content-alert tabular-nums text-right">
+              ¥{totalAmount.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-stroke-input overflow-x-auto">
+        <table className="w-full border-collapse min-w-[1600px]">
+          <thead>
+            <tr className="bg-stroke-card border-b border-stroke-input text-left">
+              <th className="px-3 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input text-center" rowSpan={2}>No.</th>
+              <th className="px-3 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input" colSpan={7}>商品分類</th>
+              <th className="px-3 py-2 text-sm font-semibold text-cta-primary-dark bg-[#fffbe3]" colSpan={7}>入力項目</th>
+            </tr>
+            <tr className="bg-stroke-card border-b border-stroke-input text-left">
+              <th className="w-[120px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">資産MasterID</th>
+              <th className="w-[100px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">category</th>
+              <th className="w-[110px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">大分類</th>
+              <th className="w-[110px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">中分類</th>
+              <th className="w-[180px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">品名</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">メーカー名</th>
+              <th className="w-[120px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">型式</th>
+              <th className="w-[80px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">階</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">部門</th>
+              <th className="w-[130px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">部署</th>
+              <th className="w-[130px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">室名</th>
+              <th className="w-[160px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">QRコード</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">シリアルNo.</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3]">写真撮影</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderItems.map((item, index) => {
+              const r = rowEditMap[item.id];
+              if (!r) return null;
+              return (
+                <tr key={item.id} className="border-b border-stroke-input h-[58px]">
+                  <td className="px-3 py-2 text-base text-content-primary border-r border-stroke-input text-center tabular-nums font-semibold">{index + 1}</td>
+                  <td className="px-3 py-2 text-xs text-content-sub border-r border-stroke-input font-mono">{r.assetMasterId || '---'}</td>
+                  <td className="px-3 py-2 text-xs text-content-primary border-r border-stroke-input">{r.category || '---'}</td>
+                  <td className="px-3 py-2 text-xs text-content-primary border-r border-stroke-input">{r.largeClass || '---'}</td>
+                  <td className="px-3 py-2 text-xs text-content-primary border-r border-stroke-input">{r.mediumClass || '---'}</td>
+                  <td className="px-3 py-2 text-sm text-content-primary border-r border-stroke-input truncate max-w-[180px] font-medium">{item.itemName}</td>
+                  <td className="px-3 py-2 text-sm text-content-primary border-r border-stroke-input truncate">{item.manufacturer}</td>
+                  <td className="px-3 py-2 text-xs text-content-primary border-r border-stroke-input font-mono">{item.model}</td>
+                  <PcEditCell>
+                    <input
+                      type="text"
+                      value={r.floor}
+                      onChange={(e) => onCellChange(item.id, 'floor', e.target.value)}
+                      placeholder="階"
+                      className={pcCellInputCls}
+                    />
+                  </PcEditCell>
+                  <PcEditCell>
+                    <input
+                      type="text"
+                      value={r.department}
+                      onChange={(e) => onCellChange(item.id, 'department', e.target.value)}
+                      placeholder="部門"
+                      className={pcCellInputCls}
+                    />
+                  </PcEditCell>
+                  <PcEditCell>
+                    <input
+                      type="text"
+                      value={r.section}
+                      onChange={(e) => onCellChange(item.id, 'section', e.target.value)}
+                      placeholder="部署"
+                      className={pcCellInputCls}
+                    />
+                  </PcEditCell>
+                  <PcEditCell>
+                    <input
+                      type="text"
+                      value={r.roomName}
+                      onChange={(e) => onCellChange(item.id, 'roomName', e.target.value)}
+                      placeholder="室名"
+                      className={pcCellInputCls}
+                    />
+                  </PcEditCell>
+                  <PcEditCell>
+                    <input
+                      type="text"
+                      value={r.qrCode}
+                      onChange={(e) => onCellChange(item.id, 'qrCode', e.target.value)}
+                      placeholder="QRコード"
+                      className={`${pcCellInputCls} font-mono`}
+                    />
+                  </PcEditCell>
+                  <PcEditCell>
+                    <input
+                      type="text"
+                      value={r.serialNumber}
+                      onChange={(e) => onCellChange(item.id, 'serialNumber', e.target.value)}
+                      placeholder="入力"
+                      className={pcCellInputCls}
+                    />
+                  </PcEditCell>
+                  <td className="px-3 py-2 align-middle bg-[#fffdf5]">
+                    {r.photoFileName ? (
+                      <span className="text-xs text-cta-primary font-medium">{r.photoFileName}</span>
+                    ) : (
+                      <label className="inline-flex items-center gap-1 px-2 py-1 bg-[#fffbe3] border border-stroke-input rounded-md cursor-pointer text-xs text-cta-primary-dark whitespace-nowrap hover:bg-surface-select transition-colors">
+                        <span>📷 アップロード</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) onCellChange(item.id, 'photoFileName', file.name);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+const pcCellInputCls =
+  'w-full h-[34px] px-2 rounded-md bg-surface-card border border-stroke-input text-xs text-content-primary placeholder:text-content-placeholder focus:outline-none focus:border-cta-primary transition-colors';
+
+function PcEditCell({ children }: { children: React.ReactNode }) {
+  return <td className="px-2 py-2 align-middle bg-[#fffdf5] border-r border-stroke-input">{children}</td>;
+}
+
+// ============================================================
+// Mobile sub views
+// ============================================================
+function MobileCompletionView({
+  groupName,
+  itemCount,
+  inspectionDate,
+  isMobile,
+  onBack,
+}: {
+  groupName: string;
+  itemCount: number;
+  inspectionDate: string;
+  isMobile: boolean;
+  onBack: () => void;
+}) {
+  return (
+    <div className="max-w-[500px] mx-auto mt-10">
+      <div className={`bg-surface-card rounded-2xl shadow-md text-center ${isMobile ? 'p-6' : 'p-8'}`}>
+        <div className="w-16 h-16 rounded-full bg-surface-select flex items-center justify-center mx-auto mb-4 text-3xl text-cta-primary">
+          &#10003;
+        </div>
+        <h2 className="text-lg font-semibold text-content-primary mb-2 text-balance">
+          検収登録が完了しました
+        </h2>
+        <p className="text-sm text-content-sub mb-6 text-pretty tabular-nums">
+          {groupName}<br />
+          {itemCount}品目 / 検収日: {inspectionDate}
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-content-primary text-white text-base font-semibold cursor-pointer w-[240px] hover:bg-content-primary/90 transition-colors"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MobileNotFoundView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="max-w-[480px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card rounded-2xl shadow-md p-8">
+        <p className="text-sm font-semibold text-content-primary mb-2">対象の発注データが見つかりません</p>
+        <p className="text-xs text-content-sub mb-4 text-pretty">
+          URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
+        </p>
+        <button
+          onClick={onBack}
+          className="h-10 px-6 rounded-lg bg-content-primary text-white text-sm font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Mobile form
+// ============================================================
+function MobileForm({
+  isMobile,
+  selectedItem,
+  formData,
+  purchaseDate,
+  largeClassOptions,
+  mediumClassOptions,
+  itemOptions,
+  onChange,
+}: {
+  isMobile: boolean;
+  selectedItem: OrderItem;
+  formData: FormData;
+  purchaseDate: string;
+  largeClassOptions: string[];
+  mediumClassOptions: string[];
+  itemOptions: string[];
+  onChange: (field: keyof FormData, value: string | boolean) => void;
+}) {
+  const gridCols = isMobile ? 'grid-cols-1' : 'grid-cols-3';
+  const grid2 = isMobile ? 'grid-cols-1' : 'grid-cols-2';
+
   return (
     <>
-      <div style={{ fontSize: '12px', color: C.textMuted, fontWeight: 600, padding: '4px 0' }}>{label}</div>
-      <div style={{ fontSize: '14px', color: C.textDark, padding: '4px 0', fontVariantNumeric: 'tabular-nums' }}>{value || '-'}</div>
+      <MobileCard isMobile={isMobile}>
+        <p className="text-sm font-semibold text-content-primary mb-3">QRコード</p>
+        <input
+          type="text"
+          value={formData.qrCode}
+          onChange={(e) => onChange('qrCode', e.target.value)}
+          placeholder="QRコードを入力してください"
+          className="w-full h-12 px-3 rounded-lg border border-stroke-input bg-surface-card text-base text-content-primary font-mono tabular-nums focus:outline-none focus:border-cta-primary transition-colors"
+        />
+      </MobileCard>
+
+      <GreenDivider />
+
+      <MobileCard isMobile={isMobile}>
+        <p className="text-sm font-semibold text-content-primary mb-3">
+          {selectedItem.itemName}
+          <span className="text-xs font-normal text-content-sub ml-2">
+            {selectedItem.model} / {selectedItem.registrationType}
+          </span>
+        </p>
+
+        <div className={`grid ${gridCols} gap-4 mb-4`}>
+          <ReadOnlyField label="品目名" value={selectedItem.itemName} />
+          <ReadOnlyField label="メーカー" value={selectedItem.manufacturer} />
+          <ReadOnlyField label="型式" value={selectedItem.model} />
+        </div>
+
+        <div className={`grid ${gridCols} gap-4 mb-4`}>
+          <div>
+            <FieldLabel>シリアルNo.</FieldLabel>
+            <input
+              type="text"
+              value={formData.serialNumber}
+              onChange={(e) => onChange('serialNumber', e.target.value)}
+              placeholder="シリアルNo.を入力"
+              className={mobileInputCls}
+            />
+          </div>
+          <ReadOnlyField label="購入年月日" value={purchaseDate || '---'} numeric />
+          <ReadOnlyField label="取得金額" value={`¥${selectedItem.totalPrice.toLocaleString()}`} numeric />
+        </div>
+
+        <p className="text-xs text-content-sub italic">
+          ※ 資産番号・備品番号は本登録時に配番されます
+        </p>
+      </MobileCard>
+
+      <MobileCard isMobile={isMobile}>
+        <p className="text-sm font-semibold text-content-primary mb-3">写真</p>
+        <div
+          className={`border-2 border-dashed border-stroke-input rounded-2xl p-10 text-center ${formData.photoTaken ? 'bg-surface-select' : 'bg-surface-screen'}`}
+        >
+          <div className="text-4xl mb-2">📷</div>
+          <p className="text-sm text-content-sub">
+            {formData.photoTaken ? '写真撮影済み' : '写真を撮影してください'}
+          </p>
+        </div>
+      </MobileCard>
+
+      <GreenDivider />
+
+      <MobileCard isMobile={isMobile}>
+        <h3 className="text-base font-semibold text-content-primary mb-4">分類情報</h3>
+        <div className={`grid ${gridCols} gap-4`}>
+          <SearchableSelect label="大分類" value={formData.largeClass} onChange={(v) => onChange('largeClass', v)} options={['', ...largeClassOptions]} placeholder="選択してください" isMobile={isMobile} />
+          <SearchableSelect label="中分類" value={formData.mediumClass} onChange={(v) => onChange('mediumClass', v)} options={['', ...mediumClassOptions]} placeholder="選択してください" isMobile={isMobile} />
+          <SearchableSelect label="品目" value={formData.itemClass} onChange={(v) => onChange('itemClass', v)} options={['', ...itemOptions]} placeholder="選択してください" isMobile={isMobile} />
+        </div>
+      </MobileCard>
+
+      <MobileCard isMobile={isMobile}>
+        <h3 className="text-base font-semibold text-content-primary mb-4">設置場所</h3>
+        <div className={`grid ${grid2} gap-4`}>
+          <FieldInput label="棟" value={formData.building} onChange={(v) => onChange('building', v)} placeholder="例: 本館" />
+          <FieldInput label="階" value={formData.floor} onChange={(v) => onChange('floor', v)} placeholder="例: 3F" />
+          <FieldInput label="部門" value={formData.department} onChange={(v) => onChange('department', v)} placeholder="例: 内視鏡センター" />
+          <FieldInput label="部署" value={formData.section} onChange={(v) => onChange('section', v)} placeholder="例: 検査室1" />
+        </div>
+      </MobileCard>
+
+      <MobileCard isMobile={isMobile}>
+        <h3 className="text-base font-semibold text-content-primary mb-4">サイズ情報</h3>
+        <div className={`grid ${gridCols} gap-4`}>
+          <FieldInput label="W (幅)" value={formData.width} onChange={(v) => onChange('width', v)} placeholder="0" type="number" numeric />
+          <FieldInput label="D (奥行)" value={formData.depth} onChange={(v) => onChange('depth', v)} placeholder="0" type="number" numeric />
+          <FieldInput label="H (高さ)" value={formData.height} onChange={(v) => onChange('height', v)} placeholder="0" type="number" numeric />
+        </div>
+        <p className="text-xs text-content-sub mt-2">単位: mm</p>
+      </MobileCard>
+
+      <MobileCard isMobile={isMobile}>
+        <FieldLabel>備考</FieldLabel>
+        <textarea
+          value={formData.remarks}
+          onChange={(e) => onChange('remarks', e.target.value)}
+          placeholder="備考を入力してください"
+          rows={4}
+          className="w-full px-3 py-2 rounded-lg border border-stroke-input bg-surface-card text-sm text-content-primary resize-y font-sans focus:outline-none focus:border-cta-primary transition-colors"
+        />
+      </MobileCard>
     </>
   );
 }
 
-/** フッターボタン（asset-survey-integrated 準拠: 丸型アイコン + ラベル） */
-function FooterButton({ onClick, icon, label, color, bgColor, hoverBg, isMobile, disabled }: {
-  onClick: () => void;
-  icon: React.ReactNode;
+const mobileInputCls =
+  'w-full h-12 px-3 rounded-lg border border-stroke-input bg-surface-card text-sm text-content-primary focus:outline-none focus:border-cta-primary transition-colors box-border';
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="block text-xs text-content-sub mb-1">{children}</label>;
+}
+
+function FieldInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  numeric,
+}: {
   label: string;
-  color: string;
-  bgColor: string;
-  hoverBg: string;
-  isMobile: boolean;
-  disabled?: boolean;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  numeric?: boolean;
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '5px',
-        background: 'none',
-        border: 'none',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        padding: isMobile ? '5px' : '8px',
-        borderRadius: '8px',
-        transition: 'background 0.15s',
-        minWidth: isMobile ? '60px' : '70px',
-        opacity: disabled ? 0.5 : 1,
-      }}
-      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = hoverBg; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; }}
-    >
-      <div style={{
-        width: isMobile ? '35px' : '40px',
-        height: isMobile ? '35px' : '40px',
-        borderRadius: '50%',
-        background: bgColor,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {icon}
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`${mobileInputCls} ${numeric ? 'tabular-nums' : ''}`}
+      />
+    </div>
+  );
+}
+
+function ReadOnlyField({ label, value, numeric }: { label: string; value: string; numeric?: boolean }) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      <div className={`px-3 py-2.5 rounded-lg border border-stroke-input bg-surface-screen text-sm text-content-primary ${numeric ? 'tabular-nums' : ''}`}>
+        {value}
       </div>
-      <span style={{ fontSize: isMobile ? '11px' : '12px', color }}>{label}</span>
-    </button>
+    </div>
   );
 }
 
 // ============================================================
-// Style constants（asset-survey-integrated 準拠）
+// Mobile list
 // ============================================================
+function MobileList({
+  isMobile,
+  rfqNo,
+  groupName,
+  vendorName,
+  inspectionDate,
+  registeredCount,
+  totalItems,
+  progressPercent,
+  orderItems,
+  registeredItemIds,
+  onSelectItem,
+}: {
+  isMobile: boolean;
+  rfqNo: string;
+  groupName: string;
+  vendorName: string;
+  inspectionDate: string;
+  registeredCount: number;
+  totalItems: number;
+  progressPercent: number;
+  orderItems: OrderItem[];
+  registeredItemIds: number[];
+  onSelectItem: (id: number) => void;
+}) {
+  return (
+    <>
+      <MobileCard isMobile={isMobile}>
+        <p className="text-sm font-semibold text-content-primary mb-3">基本情報</p>
+        <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-[120px_1fr]'}`}>
+          <MobileInfoRow label="見積依頼No." value={rfqNo} />
+          <MobileInfoRow label="見積G名称" value={groupName} />
+          <MobileInfoRow label="発注先" value={vendorName} />
+          <MobileInfoRow label="検収日" value={inspectionDate} />
+        </div>
+      </MobileCard>
 
-const labelStyle: React.CSSProperties = {
-  fontSize: '12px',
-  color: C.textMuted,
-  display: 'block',
-  marginBottom: '4px',
-};
+      <MobileCard isMobile={isMobile}>
+        <div className="flex justify-between items-center mb-2">
+          <p className="text-sm font-semibold text-content-primary">
+            登録済: <span className="tabular-nums">{registeredCount} / {totalItems} 件</span>
+          </p>
+          <p className="text-xs text-content-sub tabular-nums">{progressPercent}%</p>
+        </div>
+        <div className="h-1.5 bg-stroke-input rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-[width] duration-300 ${progressPercent === 100 ? 'bg-cta-primary' : 'bg-content-primary'}`}
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </MobileCard>
 
-const readOnlyStyle: React.CSSProperties = {
-  backgroundColor: C.inputBg,
-  border: `1px solid #E1E1E1`,
-  borderRadius: '4px',
-  padding: '10px',
-  fontSize: '14px',
-  color: '#4A4A4A',
-};
+      <GreenDivider />
 
-const inputFieldStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px',
-  border: `1px solid ${C.border}`,
-  borderRadius: '4px',
-  fontSize: '14px',
-  boxSizing: 'border-box' as const,
-};
+      <MobileCard isMobile={isMobile} noPadding>
+        <div className={`border-b border-stroke-card ${isMobile ? 'px-4 py-3' : 'px-5 py-4'}`}>
+          <p className="text-sm font-semibold text-content-primary">個体管理品目一覧</p>
+        </div>
+        {orderItems.map((item) => {
+          const isRegistered = registeredItemIds.includes(item.id);
+          return (
+            <button
+              key={item.id}
+              onClick={() => !isRegistered && onSelectItem(item.id)}
+              disabled={isRegistered}
+              className={`flex items-center gap-3 w-full text-left border-b border-stroke-card min-h-[60px] transition-colors ${isMobile ? 'px-4 py-3.5' : 'px-5 py-4'} ${isRegistered ? 'bg-surface-select cursor-default' : 'bg-surface-card cursor-pointer hover:bg-stroke-card'}`}
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-base font-bold ${isRegistered ? 'bg-surface-select text-cta-primary' : 'bg-stroke-card text-content-sub'}`}>
+                {isRegistered ? '✓' : ''}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium truncate ${isRegistered ? 'text-content-sub' : 'text-content-primary'}`}>
+                  {item.itemName}
+                </p>
+                <p className="text-xs text-content-sub mt-0.5">
+                  {item.model} / {item.registrationType}
+                </p>
+              </div>
+              {!isRegistered && <span className="text-content-sub text-lg shrink-0">›</span>}
+            </button>
+          );
+        })}
+      </MobileCard>
+    </>
+  );
+}
 
 // ============================================================
-// PC モード用 Style constants（order-registration / inspection-registration 準拠）
+// Shared sub components
 // ============================================================
+function MobileCard({
+  children,
+  isMobile,
+  noPadding,
+}: {
+  children: React.ReactNode;
+  isMobile: boolean;
+  noPadding?: boolean;
+}) {
+  const padding = noPadding ? '' : isMobile ? 'p-4' : 'p-5';
+  return (
+    <div className={`bg-surface-card rounded-2xl shadow-sm mb-4 ${padding}`}>
+      {children}
+    </div>
+  );
+}
 
-/** PC 基本情報テーブル: ヘッダーセル */
-const pcInfoThStyle: React.CSSProperties = {
-  padding: '4px 8px',
-  background: COLORS.surfaceAlt,
-  fontWeight: 'bold',
-  width: '120px',
-  border: `1px solid ${COLORS.borderLight}`,
-  fontSize: '12px',
-};
+function GreenDivider() {
+  return <div className="h-1 bg-cta-primary rounded my-6" />;
+}
 
-/** PC 基本情報テーブル: データセル */
-const pcInfoTdStyle: React.CSSProperties = {
-  padding: '4px 8px',
-  border: `1px solid ${COLORS.borderLight}`,
-  fontSize: '12px',
-};
+function MobileInfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <p className="text-xs text-content-sub font-semibold py-1">{label}</p>
+      <p className="text-sm text-content-primary py-1 tabular-nums">{value || '---'}</p>
+    </>
+  );
+}
 
-/** PC 明細テーブル: ヘッダー */
-const pcTableThStyle: React.CSSProperties = {
-  padding: '8px',
-  textAlign: 'left',
-  whiteSpace: 'nowrap',
-  fontWeight: 'bold',
-  fontSize: '11px',
-  borderBottom: `1px solid ${COLORS.primaryDark}`,
-};
+type FooterVariant = 'default' | 'primary' | 'alert' | 'disabled';
 
-/** PC 明細テーブル: データセル */
-const pcTableTdStyle: React.CSSProperties = {
-  padding: '6px 8px',
-  fontSize: '12px',
-  color: COLORS.textPrimary,
-  verticalAlign: 'middle',
-};
-
-/** PC 明細テーブル: 編集可能セル */
-const pcEditCellStyle: React.CSSProperties = {
-  ...pcTableTdStyle,
-  background: '#fffbe3',
-};
-
-/** PC 明細テーブル: セル内input */
-const pcCellInputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '4px 6px',
-  fontSize: '12px',
-  border: '1px solid #fdba74',
-  borderRadius: '3px',
-  fontFamily: 'inherit',
-  background: COLORS.white,
-  boxSizing: 'border-box' as const,
-};
+function FooterButton({
+  onClick,
+  icon,
+  label,
+  variant,
+  isMobile,
+  disabled,
+}: {
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  variant: FooterVariant;
+  isMobile: boolean;
+  disabled?: boolean;
+}) {
+  const iconBgClass: Record<FooterVariant, string> = {
+    default: 'bg-stroke-card text-content-primary',
+    primary: 'bg-surface-select text-cta-primary',
+    alert: 'bg-surface-select text-content-alert',
+    disabled: 'bg-stroke-card text-content-sub',
+  };
+  const textClass: Record<FooterVariant, string> = {
+    default: 'text-content-primary',
+    primary: 'text-cta-primary',
+    alert: 'text-content-alert',
+    disabled: 'text-content-sub',
+  };
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex flex-col items-center gap-1 bg-transparent border-0 rounded-lg transition-colors ${isMobile ? 'p-1 min-w-[60px]' : 'p-2 min-w-[70px]'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-stroke-card'}`}
+    >
+      <span className={`flex items-center justify-center rounded-full text-xl ${isMobile ? 'w-9 h-9' : 'w-10 h-10'} ${iconBgClass[variant]}`}>
+        {icon}
+      </span>
+      <span className={`text-xs ${textClass[variant]}`}>{label}</span>
+    </button>
+  );
+}
