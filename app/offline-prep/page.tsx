@@ -2,19 +2,18 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
+import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 
 function OfflinePrepContent() {
   const router = useRouter();
   const { isMobile } = useResponsive();
 
-  // ダウンロードセクション
   const [downloadStatus, setDownloadStatus] = useState<'none' | 'downloading' | 'completed'>('completed');
   const [lastDownloadTime, setLastDownloadTime] = useState<string | null>('2025/06/02 10:30');
   const [facilityCount, setFacilityCount] = useState('125件');
   const [assetCount, setAssetCount] = useState('1,234件');
 
-  // 送信セクション
   const [connectionStatus] = useState('オンライン');
   const [lastSyncTime, setLastSyncTime] = useState<string | null>('2025/06/01 18:45');
   const [unsyncedCount, setUnsyncedCount] = useState(25);
@@ -54,42 +53,37 @@ function OfflinePrepContent() {
 
   const getStatusText = () => {
     switch (downloadStatus) {
-      case 'none': return 'ー';
+      case 'none': return '---';
       case 'downloading': return 'ダウンロード中...';
       case 'completed': return '最新';
     }
   };
 
-  // ダウンロードセクションのテーブルデータ
   const downloadTableData = [
     { label: '状態', value: getStatusText() },
-    { label: '最終更新', value: lastDownloadTime || 'ー', tabular: true },
-    { label: '施設', value: downloadStatus === 'completed' ? facilityCount : 'ー', tabular: true },
-    { label: '資産', value: downloadStatus === 'completed' ? assetCount : 'ー', tabular: true },
+    { label: '最終更新', value: lastDownloadTime || '---', tabular: true },
+    { label: '施設', value: downloadStatus === 'completed' ? facilityCount : '---', tabular: true },
+    { label: '資産', value: downloadStatus === 'completed' ? assetCount : '---', tabular: true },
   ];
 
-  // 送信セクションのテーブルデータ
-  const syncTableData = [
-    { label: '接続状態', value: connectionStatus, color: isOnline ? 'text-[#008C1D]' : 'text-red-500' },
-    { label: '最終送信', value: lastSyncTime || 'ー', tabular: true },
-    { label: '未送信データ', value: `${unsyncedCount}件`, tabular: true, color: unsyncedCount > 0 ? 'text-red-500' : undefined },
+  const syncTableData: { label: string; value: string; tabular?: boolean; colorClass?: string }[] = [
+    { label: '接続状態', value: connectionStatus, colorClass: isOnline ? 'text-cta-primary' : 'text-content-alert' },
+    { label: '最終送信', value: lastSyncTime || '---', tabular: true },
+    { label: '未送信データ', value: `${unsyncedCount}件`, tabular: true, colorClass: unsyncedCount > 0 ? 'text-content-alert' : undefined },
   ];
 
-  // テーブルコンポーネント（ヘッダー行+データ行、縦横罫線）
-  const StatusTable = ({ data }: { data: { label: string; value: string; tabular?: boolean; color?: string }[] }) => (
-    <div className="border border-[#E1E1E1] rounded-md overflow-hidden mb-4">
-      {/* ヘッダー行 */}
-      <div className="flex border-b border-[#E1E1E1]">
+  const StatusTable = ({ data }: { data: { label: string; value: string; tabular?: boolean; colorClass?: string }[] }) => (
+    <div className="border border-stroke-input rounded-lg overflow-hidden mb-4">
+      <div className="flex border-b border-stroke-input">
         {data.map((item, i) => (
-          <div key={i} className={`flex-1 px-3 py-2 text-xs text-[#8A8A8A] ${i > 0 ? 'border-l border-[#E1E1E1]' : ''}`}>
+          <div key={i} className={`flex-1 px-3 py-2 text-xs text-content-sub ${i > 0 ? 'border-l border-stroke-input' : ''}`}>
             {item.label}
           </div>
         ))}
       </div>
-      {/* データ行 */}
       <div className="flex">
         {data.map((item, i) => (
-          <div key={i} className={`flex-1 px-3 py-2.5 text-sm font-semibold ${item.tabular ? 'tabular-nums' : ''} ${item.color || 'text-[#4A4A4A]'} ${i > 0 ? 'border-l border-[#E1E1E1]' : ''}`}>
+          <div key={i} className={`flex-1 px-3 py-2.5 text-sm font-semibold ${item.tabular ? 'tabular-nums' : ''} ${item.colorClass || 'text-content-primary'} ${i > 0 ? 'border-l border-stroke-input' : ''}`}>
             {item.value}
           </div>
         ))}
@@ -98,44 +92,22 @@ function OfflinePrepContent() {
   );
 
   return (
-    <div className="flex flex-col bg-[#FAFAFA]">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-[#E1E1E1] px-4 py-3">
-        <div className="flex items-center justify-between max-w-[800px] mx-auto">
-          <div className="flex items-center gap-2.5">
-            <div className="size-10 bg-[#008C1D] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-              logo
-            </div>
-            <div className="text-sm font-bold text-[#4A4A4A] text-balance">
-              HEALTHCARE 医療機器管理システム
-            </div>
-          </div>
-          {isMobile && (
-            <button
-              onClick={handleClose}
-              className="size-10 flex items-center justify-center text-[#8A8A8A] bg-transparent border-0 cursor-pointer"
-              aria-label="閉じる"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </header>
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
+      <Header
+        title="現有品調査：オフライン準備"
+        hideMenu={true}
+        showBackButton={true}
+        backHref="/main"
+        backLabel="閉じる"
+        backButtonVariant="secondary"
+        hideHomeButton={true}
+      />
 
-      {/* メインコンテンツ */}
-      <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
-        <h1 className="text-lg font-bold text-[#4A4A4A] mb-4 text-balance">
-          現有品調査：オフライン準備
-        </h1>
-
-        <div className="bg-white rounded-lg shadow-sm border border-[#E1E1E1] p-4 sm:p-6">
-          {/* マスタデータダウンロード */}
-          <div className="pb-6 border-b border-[#E1E1E1]">
-            <h2 className="text-sm font-bold text-[#4A4A4A] mb-3">マスタデータダウンロード（オフライン用）</h2>
-            <p className="text-xs text-[#8A8A8A] leading-relaxed mb-4 text-pretty">
+      <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6 flex-1">
+        <div className="bg-surface-card rounded-lg shadow-sm border border-stroke-input p-4 sm:p-6">
+          <div className="pb-6 border-b border-stroke-input">
+            <h2 className="text-sm font-bold text-content-primary mb-3">マスタデータダウンロード（オフライン用）</h2>
+            <p className="text-xs text-content-sub leading-relaxed mb-4 text-pretty">
               オフライン環境で調査を実施する場合は、事前にマスタデータをダウンロードしてください。ダウンロード後、タブレット/スマートフォンがオフラインでも調査画面の選択肢が表示されます。
             </p>
 
@@ -144,20 +116,19 @@ function OfflinePrepContent() {
             <button
               onClick={handleDownloadMaster}
               disabled={downloadStatus === 'downloading'}
-              className={`w-full py-2.5 text-sm font-bold rounded-md transition-colors ${
+              className={`w-full h-12 text-sm font-bold rounded-lg transition-colors ${
                 downloadStatus === 'downloading'
-                  ? 'text-[#8A8A8A] bg-[#F1F1F1] border border-[#d1d5db] cursor-not-allowed'
-                  : 'text-[#008C1D] bg-white border border-[#008C1D] cursor-pointer hover:bg-[#f0fdf4]'
+                  ? 'text-content-sub bg-surface-disabled border border-stroke-input cursor-not-allowed'
+                  : 'text-cta-primary bg-surface-card border border-cta-primary cursor-pointer hover:bg-surface-select'
               }`}
             >
               {downloadStatus === 'downloading' ? 'ダウンロード中...' : 'マスタデータをダウンロード'}
             </button>
           </div>
 
-          {/* オフライン調査データ送信 */}
           <div className="pt-6">
-            <h2 className="text-sm font-bold text-[#4A4A4A] mb-3">オフライン調査データ送信</h2>
-            <p className="text-xs text-[#8A8A8A] leading-relaxed mb-4 text-pretty">
+            <h2 className="text-sm font-bold text-content-primary mb-3">オフライン調査データ送信</h2>
+            <p className="text-xs text-content-sub leading-relaxed mb-4 text-pretty">
               オフライン環境で登録した調査データをシステムに送信します。送信前にオンライン環境に接続していることを確認してください。
             </p>
 
@@ -165,32 +136,30 @@ function OfflinePrepContent() {
 
             <button
               onClick={handleSyncData}
-              className="w-full py-2.5 text-sm font-bold text-[#008C1D] bg-white border border-[#008C1D] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors"
+              className="w-full h-12 text-sm font-bold text-cta-primary bg-surface-card border border-cta-primary rounded-lg cursor-pointer hover:bg-surface-select transition-colors"
             >
               調査データを送信
             </button>
           </div>
         </div>
 
-        {/* 下部ボタン */}
-        <div className={`mt-4 ${isMobile ? 'flex flex-col gap-3' : 'flex gap-3'}`}>
+        <div className={`mt-6 ${isMobile ? 'flex flex-col gap-3' : 'flex gap-3 justify-center'}`}>
           <button
             onClick={handleClose}
-            className={`${isMobile ? 'w-full order-2' : 'flex-1'} py-3 text-sm font-medium text-[#4b5563] bg-[#E1E1E1] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors`}
+            className={`${isMobile ? 'w-full order-2' : 'w-[239px]'} h-12 text-base font-medium text-content-primary bg-surface-negative rounded-lg cursor-pointer hover:bg-stroke-input transition-colors`}
           >
             閉じる
           </button>
           <button
             onClick={handleStartSurvey}
-            className={`${isMobile ? 'w-full order-1' : 'flex-1'} py-3 text-sm font-bold text-[#008C1D] bg-white border border-[#008C1D] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors`}
+            className={`${isMobile ? 'w-full order-1' : 'w-[239px]'} h-12 text-base font-medium text-white bg-cta-primary border-0 rounded-lg cursor-pointer hover:bg-cta-primary-dark transition-colors`}
           >
             調査を開始する
           </button>
         </div>
       </div>
 
-      {/* フッター */}
-      <footer className="py-3 text-center text-xs text-[#8A8A8A]">
+      <footer className="py-3 text-center text-xs text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
     </div>
@@ -199,7 +168,7 @@ function OfflinePrepContent() {
 
 export default function OfflinePrepPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#8A8A8A]">読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <OfflinePrepContent />
     </Suspense>
   );
