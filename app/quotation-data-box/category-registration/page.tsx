@@ -5,19 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { StepProgressBar } from '../components/StepProgressBar';
 import { ACCOUNT_DIVISIONS as CATEGORY_OPTIONS } from '@/lib/data/account-divisions';
+import { customerStep3Items } from '@/lib/data/customer/step3-category';
 
-// 明細区分の型
 type DetailClassification =
-  | '明細代表'
-  | '内訳代表'
-  | '親明細'
-  | '子明細'
-  | '孫明細'
-  | 'その他'
-  | '値引き'
-  | '';
+  | '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';
 
-// 明細区分の選択肢
 const DETAIL_CLASSIFICATION_OPTIONS: { value: DetailClassification; label: string }[] = [
   { value: '明細代表', label: '明細代表' },
   { value: '内訳代表', label: '内訳代表' },
@@ -28,31 +20,26 @@ const DETAIL_CLASSIFICATION_OPTIONS: { value: DetailClassification; label: strin
   { value: '値引き', label: '値引き' },
 ];
 
-// 明細データの型
 interface DetailItem {
   id: number;
-  itemName: string;           // 品名（見積名称）
-  manufacturer: string;       // メーカー
-  model: string;              // 型式（見積名称）
-  quantity: number | null;    // 数量
-  listUnitPrice: number | null;   // 定価単価
-  listPrice: number | null;       // 定価金額
-  purchaseUnitPrice: number | null; // 購入単価
-  purchaseAmount: number | null;    // 購入金額
-  category: string;                // category（会計区分）
-  detailClassification: DetailClassification; // 明細区分（AI判定結果）
-  isRegistered: boolean;       // 登録済みかどうか
+  itemName: string;
+  manufacturer: string;
+  model: string;
+  quantity: number | null;
+  listUnitPrice: number | null;
+  listPrice: number | null;
+  purchaseUnitPrice: number | null;
+  purchaseAmount: number | null;
+  category: string;
+  detailClassification: DetailClassification;
+  isRegistered: boolean;
 }
 
-import { customerStep3Items } from '@/lib/data/customer/step3-category';
-
-// 顧客STEP3→明細区分マッピング
 const classificationMap: Record<string, DetailClassification> = {
   '代表明細': '明細代表', '親': '親明細', '子': '子明細', '孫': '孫明細',
   'その他': 'その他', '文字列': 'その他', '値引き': '値引き',
 };
 
-// 顧客サンプルデータから変換（再取り込み: node docs/customer-sample-data/convert.mjs）
 const testDetailItems: DetailItem[] = customerStep3Items.map((item, i) => ({
   id: i + 1,
   itemName: item.itemName,
@@ -70,16 +57,10 @@ const testDetailItems: DetailItem[] = customerStep3Items.map((item, i) => ({
 
 export default function CategoryRegistrationPage() {
   const router = useRouter();
-
-  // 明細データ
   const [detailItems, setDetailItems] = useState<DetailItem[]>(testDetailItems);
 
-  // 登録済み件数
-  const registeredCount = useMemo(() => {
-    return detailItems.filter(item => item.isRegistered).length;
-  }, [detailItems]);
+  const registeredCount = useMemo(() => detailItems.filter(item => item.isRegistered).length, [detailItems]);
 
-  // category の更新
   const handleCategoryChange = (index: number, value: string) => {
     setDetailItems(prev => {
       const updated = [...prev];
@@ -88,7 +69,6 @@ export default function CategoryRegistrationPage() {
     });
   };
 
-  // 明細区分の更新
   const handleClassificationChange = (index: number, value: DetailClassification) => {
     setDetailItems(prev => {
       const updated = [...prev];
@@ -97,7 +77,6 @@ export default function CategoryRegistrationPage() {
     });
   };
 
-  // 登録処理
   const handleRegister = (index: number) => {
     setDetailItems(prev => {
       const updated = [...prev];
@@ -106,7 +85,6 @@ export default function CategoryRegistrationPage() {
     });
   };
 
-  // 登録解除処理
   const handleUnregister = (index: number) => {
     setDetailItems(prev => {
       const updated = [...prev];
@@ -115,124 +93,82 @@ export default function CategoryRegistrationPage() {
     });
   };
 
-  // 戻るボタン
-  const handleBack = () => {
-    router.push('/quotation-data-box/ocr-confirm');
-  };
+  const handleBack = () => router.push('/quotation-data-box/ocr-confirm');
 
-  // 次へボタン（個体品目AI判定へ）
   const handleNext = () => {
-    // 全件登録済みかチェック
     const allRegistered = detailItems.every(item => item.isRegistered);
     if (!allRegistered) {
-      if (!confirm('未登録の明細があります。続行しますか？')) {
-        return;
-      }
+      if (!confirm('未登録の明細があります。続行しますか？')) return;
     }
     router.push('/quotation-data-box/item-ai-matching');
   };
 
+  const selectCls = 'w-full px-1.5 py-1 text-[11px] border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FAFAFA' }}>
-      <Header
-        title="見積登録（購入）AI判定確認"
-        stepBadge="STEP 3"
-        hideMenu={true}
-        showBackButton={false}
-      />
+    <div className="flex flex-col h-dvh bg-surface-screen">
+      <Header title="見積登録（購入）AI判定確認" stepBadge="STEP 3" hideMenu={true} showBackButton={false} />
       <StepProgressBar currentStep={3} />
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {/* メインコンテンツ */}
-        <div style={{
-          background: 'white',
-          border: '1px solid #E1E1E1',
-          borderRadius: '4px',
-          marginBottom: '16px',
-        }}>
-          {/* セクションヘッダー */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            background: '#4A4A4A',
-            color: 'white',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 'bold' }}>登録区分登録</span>
-              <span style={{ fontSize: '12px', opacity: 0.9 }}>
-                登録: {registeredCount} / {detailItems.length}件
-              </span>
+      <div className="flex-1 overflow-auto p-4">
+        <section className="bg-surface-card border border-stroke-input rounded mb-4">
+          <div className="flex items-center justify-between px-4 py-3 bg-content-primary text-white">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold">登録区分登録</span>
+              <span className="text-xs opacity-90 tabular-nums">登録: {registeredCount} / {detailItems.length}件</span>
             </div>
           </div>
 
-          {/* 説明文 */}
-          <div style={{ padding: '12px 16px', background: '#EAF3FB', fontSize: '12px', color: '#1E5A9E' }}>
+          <div className="px-4 py-3 bg-surface-select text-xs text-cta-primary-dark">
             登録区分をチェック・修正してください　※QRラベルを発行・除却が可能な単位にて登録を行います
           </div>
 
-          {/* 明細テーブル */}
-          <div style={{ padding: '16px' }}>
-            <div style={{ border: '1px solid #E1E1E1', borderRadius: '4px', overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+          <div className="p-4">
+            <div className="border border-stroke-input rounded overflow-x-auto">
+              <table className="w-full border-collapse text-[11px]">
+                <thead className="sticky top-0 z-[2]">
                   <tr>
-                    <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', borderRight: '1px solid #ccc' }}>商品情報（原本情報）</th>
-                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#F1ECF7', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❸ 明細区分登録</th>
+                    <th colSpan={5} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-[11px] font-bold text-content-primary border-r border-stroke-input">商品情報（原本情報）</th>
+                    <th colSpan={4} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-surface-select text-[11px] font-bold text-cta-primary-dark">STEP❸ 明細区分登録</th>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '40px' }}>No.</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1' }}>品名（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '100px' }}>メーカー</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '120px' }}>型式（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', borderRight: '1px solid #ccc', width: '50px' }}>数量</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '160px', fontWeight: 'bold' }}>カテゴリ</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '200px', fontWeight: 'bold' }}>明細区分</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '80px' }}>ステータス</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '80px' }}>アクション</th>
+                    <th className="px-1.5 py-2 text-center bg-surface-screen border-b border-stroke-input w-10 font-normal text-content-primary">No.</th>
+                    <th className="px-1.5 py-2 text-left bg-surface-screen border-b border-stroke-input font-normal text-content-primary">品名（見積名称）</th>
+                    <th className="px-1.5 py-2 text-left bg-surface-screen border-b border-stroke-input w-[100px] font-normal text-content-primary">メーカー</th>
+                    <th className="px-1.5 py-2 text-left bg-surface-screen border-b border-stroke-input w-[120px] font-normal text-content-primary">型式（見積名称）</th>
+                    <th className="px-1.5 py-2 text-center bg-surface-screen border-b border-stroke-input border-r border-stroke-input w-[50px] font-normal text-content-primary">数量</th>
+                    <th className="px-1.5 py-2 text-center bg-surface-select border-b border-stroke-input w-[160px] font-bold text-cta-primary-dark">カテゴリ</th>
+                    <th className="px-1.5 py-2 text-center bg-surface-select border-b border-stroke-input w-[200px] font-bold text-cta-primary-dark">明細区分</th>
+                    <th className="px-1.5 py-2 text-center bg-surface-select border-b border-stroke-input w-20 font-bold text-cta-primary-dark">ステータス</th>
+                    <th className="px-1.5 py-2 text-center bg-surface-select border-b border-stroke-input w-20 font-bold text-cta-primary-dark">アクション</th>
                   </tr>
                 </thead>
                 <tbody>
                   {detailItems.map((item, index) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: item.isRegistered ? '#EBF5EE' : 'white' }}>
-                      <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #E1E1E1' }}>{item.id}</td>
-                      <td style={{ padding: '6px', border: '1px solid #E1E1E1' }}>
-                        <div style={{ fontWeight: 'bold', fontSize: '11px' }}>{item.itemName}</div>
+                    <tr key={item.id} className={`border-b border-stroke-card ${item.isRegistered ? 'bg-surface-select' : 'bg-surface-card'}`}>
+                      <td className="px-1.5 py-1.5 text-center bg-surface-screen border border-stroke-input tabular-nums">{item.id}</td>
+                      <td className="px-1.5 py-1.5 border border-stroke-input">
+                        <div className="font-bold text-[11px] text-content-primary">{item.itemName}</div>
                       </td>
-                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', fontSize: '11px' }}>{item.manufacturer}</td>
-                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', fontSize: '11px' }}>{item.model}</td>
-                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', textAlign: 'center', fontSize: '11px' }}>{item.quantity ?? '-'}</td>
-                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #E1E1E1' }}>
+                      <td className="px-1.5 py-1.5 border border-stroke-input text-[11px] text-content-primary">{item.manufacturer}</td>
+                      <td className="px-1.5 py-1.5 border border-stroke-input text-[11px] text-content-primary">{item.model}</td>
+                      <td className="px-1.5 py-1.5 border border-stroke-input text-center text-[11px] text-content-primary tabular-nums">{item.quantity ?? '-'}</td>
+                      <td className="px-1.5 py-1.5 bg-surface-select border border-stroke-input">
                         <select
                           value={item.category}
                           onChange={(e) => handleCategoryChange(index, e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '4px 6px',
-                            fontSize: '11px',
-                            border: '1px solid #E1E1E1',
-                            borderRadius: '3px',
-                            background: 'white',
-                          }}
+                          className={selectCls}
                         >
                           {CATEGORY_OPTIONS.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
                       </td>
-                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #E1E1E1' }}>
+                      <td className="px-1.5 py-1.5 bg-surface-select border border-stroke-input">
                         <select
                           value={item.detailClassification}
                           onChange={(e) => handleClassificationChange(index, e.target.value as DetailClassification)}
-                          style={{
-                            width: '100%',
-                            padding: '4px 6px',
-                            fontSize: '11px',
-                            border: '1px solid #E1E1E1',
-                            borderRadius: '3px',
-                            background: 'white',
-                          }}
+                          className={selectCls}
                         >
                           <option value="">選択...</option>
                           {DETAIL_CLASSIFICATION_OPTIONS.map(opt => (
@@ -240,33 +176,16 @@ export default function CategoryRegistrationPage() {
                           ))}
                         </select>
                       </td>
-                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          background: item.isRegistered ? '#008C1D' : '#A35414',
-                          color: 'white',
-                        }}>
+                      <td className="px-1.5 py-1.5 border border-stroke-input text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold text-white ${item.isRegistered ? 'bg-cta-primary' : 'bg-content-sub'}`}>
                           {item.isRegistered ? '登録済' : '未登録'}
                         </span>
                       </td>
-                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
+                      <td className="px-1.5 py-1.5 border border-stroke-input text-center">
                         {item.isRegistered ? (
                           <button
                             onClick={() => handleUnregister(index)}
-                            style={{
-                              padding: '4px 12px',
-                              background: '#DA0000',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              fontSize: '10px',
-                              fontWeight: 'bold',
-                            }}
+                            className="px-3 py-1 bg-content-alert text-white border-0 rounded-sm cursor-pointer text-[10px] font-bold hover:opacity-90 transition-colors"
                           >
                             解除
                           </button>
@@ -274,16 +193,11 @@ export default function CategoryRegistrationPage() {
                           <button
                             onClick={() => handleRegister(index)}
                             disabled={!item.detailClassification}
-                            style={{
-                              padding: '4px 12px',
-                              background: item.detailClassification ? '#008C1D' : '#bdc3c7',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '3px',
-                              cursor: item.detailClassification ? 'pointer' : 'not-allowed',
-                              fontSize: '10px',
-                              fontWeight: 'bold',
-                            }}
+                            className={`px-3 py-1 text-white border-0 rounded-sm text-[10px] font-bold transition-colors ${
+                              item.detailClassification
+                                ? 'bg-cta-primary cursor-pointer hover:bg-cta-primary-dark'
+                                : 'bg-surface-disabled cursor-not-allowed'
+                            }`}
                           >
                             登録
                           </button>
@@ -295,38 +209,18 @@ export default function CategoryRegistrationPage() {
               </table>
             </div>
           </div>
+        </section>
 
-        </div>
-
-        {/* フッターボタン */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
+        <div className="flex gap-3 justify-between mt-4">
           <button
             onClick={handleBack}
-            style={{
-              padding: '12px 28px',
-              background: '#8A8A8A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
+            className="h-12 px-7 bg-surface-negative text-content-primary border-0 rounded cursor-pointer text-sm font-bold hover:bg-stroke-input transition-colors"
           >
             一つ前のSTEPに戻る
           </button>
           <button
             onClick={handleNext}
-            style={{
-              padding: '12px 28px',
-              background: '#DA0000',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}
+            className="h-12 px-7 bg-cta-primary text-white border-0 rounded cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
           >
             個体品目AI判定へ
           </button>
