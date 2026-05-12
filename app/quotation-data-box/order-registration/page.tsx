@@ -6,35 +6,9 @@ import { Header } from '@/components/layouts/Header';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useOrderStore } from '@/lib/stores/orderStore';
-import {
-  OrderType,
-  PaymentMethod,
-} from '@/lib/types/order';
+import { OrderType, PaymentMethod } from '@/lib/types/order';
 import { OrderPreviewModal, OrderPreviewData } from '@/components/modals/OrderPreviewModal';
 
-/** カラートークン */
-const COLORS = {
-  primary: '#008C1D',
-  primaryDark: '#146E2E',
-  accent: '#A35414',
-  textOnAccent: '#4A4A4A',
-  textPrimary: '#4A4A4A',
-  textSecondary: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textOnColor: '#ffffff',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  surface: '#FAFAFA',
-  surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4A4A4A',
-  white: '#ffffff',
-  error: '#dc2626',
-  warningBg: '#fffbeb',
-  warningBorder: '#f59e0b',
-  warningText: '#92400e',
-} as const;
-
-/** 発注形態の選択肢 */
 const ORDER_TYPES: OrderType[] = [
   '購入',
   '割賦',
@@ -42,31 +16,8 @@ const ORDER_TYPES: OrderType[] = [
   'リース（ファイナンス）',
 ];
 
-/** 支払方法の選択肢 */
-const PAYMENT_METHODS: PaymentMethod[] = [
-  'でんさい',
-  '銀行振込',
-  'クレジット',
-  '現金',
-];
+const PAYMENT_METHODS: PaymentMethod[] = ['でんさい', '銀行振込', 'クレジット', '現金'];
 
-/** z-index スケール */
-const Z_STICKY_HEADER = 10;
-
-const inputStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: '4px',
-  fontSize: '14px',
-};
-
-const truncateStyle: React.CSSProperties = {
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-/** SearchParams 読み取り */
 function RfqGroupIdReader({ onRead }: { onRead: (id: number | null) => void }) {
   const searchParams = useSearchParams();
   const rfqGroupIdParam = searchParams.get('rfqGroupId');
@@ -85,7 +36,6 @@ export default function OrderRegistrationPage() {
   const [rfqGroupId, setRfqGroupId] = useState<number | null>(null);
   const handleRfqGroupIdRead = useCallback((id: number | null) => setRfqGroupId(id), []);
 
-  // --- フォーム項目 ---
   const [inHouseSettlementNo, setInHouseSettlementNo] = useState('');
   const [orderType, setOrderType] = useState<OrderType>('購入');
   const [deliveryDeadline, setDeliveryDeadline] = useState('');
@@ -97,11 +47,9 @@ export default function OrderRegistrationPage() {
   const [leaseEndDate, setLeaseEndDate] = useState('');
   const [comment, setComment] = useState('');
 
-  // --- バリデーション ---
   const [deliveryDateError, setDeliveryDateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- プレビュー・登録完了状態 ---
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState<OrderPreviewData | null>(null);
   const [registrationComplete, setRegistrationComplete] = useState<{
@@ -114,7 +62,6 @@ export default function OrderRegistrationPage() {
 
   const isLeaseType = orderType === 'リース（ファイナンス）' || orderType === 'リース（オペレーティング）';
 
-  // データ取得
   const rfqGroup = useMemo(() => {
     if (!rfqGroupId) return undefined;
     return rfqGroups.find(g => g.id === rfqGroupId);
@@ -122,7 +69,6 @@ export default function OrderRegistrationPage() {
 
   const targetQuotationItems = useMemo(() => {
     if (!rfqGroup) return [];
-    // rfqGroupId（FK）が未設定の顧客見積データも対象に含めるため、rfqNo でも引く
     const targetGroups = quotationGroups.filter(qg =>
       qg.rfqGroupId === rfqGroup.id || qg.rfqNo === rfqGroup.rfqNo
     );
@@ -131,7 +77,6 @@ export default function OrderRegistrationPage() {
     );
   }, [rfqGroup, quotationGroups, quotationItems]);
 
-  // サンプル明細データ（ストアにデータがない場合のフォールバック）
   const sampleItems = useMemo(() => [
     { _expandKey: 'sample-1', itemName: '超音波診断装置 EPIQ Elite', originalItemName: '', manufacturer: 'フィリップス・ジャパン', originalManufacturer: '', model: 'EPIQ Elite 7500', originalModel: '', allocPriceUnit: 32000000 },
     { _expandKey: 'sample-2', itemName: '超音波プローブ S5-1', originalItemName: '', manufacturer: 'フィリップス・ジャパン', originalManufacturer: '', model: 'S5-1 PureWave', originalModel: '', allocPriceUnit: 2200000 },
@@ -140,13 +85,11 @@ export default function OrderRegistrationPage() {
     { _expandKey: 'sample-5', itemName: '設置・据付工事費', originalItemName: '', manufacturer: '-', originalManufacturer: '', model: '-', originalModel: '', allocPriceUnit: 4000000 },
   ], []);
 
-  // 個体管理: 数量分の行に展開した表示用データ
   const expandedItems = useMemo(() => {
     const storeItems = targetQuotationItems.flatMap(qi => {
       const qty = qi.aiQuantity || qi.originalQuantity || 1;
       return Array.from({ length: qty }, (_, i) => ({ ...qi, _expandKey: `${qi.id}-${i}` }));
     });
-    // ストアにデータがなければサンプルを使用
     return storeItems.length > 0 ? storeItems : sampleItems;
   }, [targetQuotationItems, sampleItems]);
 
@@ -154,11 +97,9 @@ export default function OrderRegistrationPage() {
     if (targetQuotationItems.length > 0) {
       return targetQuotationItems.reduce((sum, item) => sum + (item.allocTaxTotal || 0), 0);
     }
-    // サンプルデータの合計
     return sampleItems.reduce((sum, item) => sum + (item.allocPriceUnit || 0), 0);
   }, [targetQuotationItems, sampleItems]);
 
-  // プレビュー表示（バリデーション → プレビューモーダルを開く）
   const handleShowPreview = () => {
     if (!rfqGroup) return;
     if (!deliveryDeadline) {
@@ -169,8 +110,6 @@ export default function OrderRegistrationPage() {
 
     const orderNo = generateOrderNo();
     const today = new Date().toISOString().split('T')[0];
-
-    // プレビュー用の明細データを構築
     const previewItems = expandedItems.map((item) => ({
       itemName: (item.itemName || item.originalItemName || '') as string,
       manufacturer: (item.manufacturer || item.originalManufacturer || '-') as string,
@@ -201,7 +140,6 @@ export default function OrderRegistrationPage() {
     setShowPreview(true);
   };
 
-  // 登録実行（プレビューから「登録して出力」押下時）
   const handleRegisterFromPreview = () => {
     if (!rfqGroup || !previewData) return;
     setIsSubmitting(true);
@@ -230,7 +168,6 @@ export default function OrderRegistrationPage() {
       orderDate: previewData.orderDate,
     });
 
-    // 個体管理: 数量分の行に展開（1行1個体）
     const orderItems = targetQuotationItems.length > 0
       ? targetQuotationItems.flatMap(qi => {
           const qty = qi.aiQuantity || qi.originalQuantity || 1;
@@ -277,369 +214,93 @@ export default function OrderRegistrationPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-      {/* ホバー・フォーカス状態 */}
-      <style>{`
-        .order-btn { transition: filter 150ms ease-out; }
-        .order-btn:hover:not(:disabled) { filter: brightness(0.9); }
-        .order-btn:focus-visible { outline: 2px solid #008C1D; outline-offset: 2px; }
-        .order-btn-secondary { transition: background 150ms ease-out; }
-        .order-btn-secondary:hover { background: #E1E1E1 !important; }
-        .order-btn-secondary:focus-visible { outline: 2px solid #d1d5db; outline-offset: 2px; }
-      `}</style>
-
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Suspense fallback={null}>
         <RfqGroupIdReader onRead={handleRfqGroupIdRead} />
       </Suspense>
 
-      {/* ヘッダー */}
       <Header
         title={registrationComplete ? '発注登録完了' : '発注登録'}
         hideMenu={true}
         showBackButton={false}
       />
 
-      {/* ページ全体スクロール */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {/* 登録完了画面 */}
+      <div className="flex-1 overflow-auto p-6">
         {registrationComplete ? (
-          <div style={{ maxWidth: '560px', margin: '40px auto', textAlign: 'center' }}>
-            <div style={{
-              background: COLORS.white,
-              border: `1px solid ${COLORS.borderLight}`,
-              borderRadius: '8px',
-              padding: '32px',
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px', textWrap: 'balance' }}>
-                発注を登録しました
-              </h2>
-              <p style={{ fontSize: '14px', color: COLORS.textSecondary, marginBottom: '24px', fontVariantNumeric: 'tabular-nums' }}>
-                発注No. {registrationComplete.orderNo}（{registrationComplete.itemCount}品目 / ¥{registrationComplete.totalAmount.toLocaleString()}）
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-                <button
-                  className="order-btn"
-                  onClick={() => setShowOrderPreview(true)}
-                  style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
-                >
-                  印刷する
-                </button>
-                <button
-                  className="order-btn"
-                  onClick={() => {
-                    alert('mail送付機能は今後実装予定です');
-                  }}
-                  style={{ padding: '12px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
-                >
-                  mail送付
-                </button>
-                <button
-                  className="order-btn-secondary"
-                  onClick={() => router.push('/quotation-data-box')}
-                  style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
-                >
-                  一覧画面に戻る
-                </button>
-              </div>
-            </div>
-          </div>
+          <CompletionView
+            orderNo={registrationComplete.orderNo}
+            itemCount={registrationComplete.itemCount}
+            totalAmount={registrationComplete.totalAmount}
+            onPrint={() => setShowOrderPreview(true)}
+            onMail={() => alert('mail送付機能は今後実装予定です')}
+            onBack={() => router.push('/quotation-data-box')}
+          />
         ) : !rfqGroup ? (
-          <div style={{ maxWidth: '480px', margin: '40px auto', textAlign: 'center', color: COLORS.textMuted }}>
-            <p style={{ fontSize: '14px', marginBottom: '8px', fontWeight: 'bold', color: COLORS.textSecondary }}>対象の見積依頼グループが見つかりません</p>
-            <p style={{ fontSize: '12px', marginBottom: '16px' }}>URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。</p>
-            <button
-              className="order-btn"
-              onClick={() => router.push('/quotation-data-box')}
-              style={{ padding: '8px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-            >
-              ← 一覧画面に戻る
-            </button>
-          </div>
+          <NotFoundView onBack={() => router.push('/quotation-data-box')} />
         ) : (
-          <>
-            {/* 確認メッセージ */}
-            <div style={{
-              padding: '12px 16px',
-              background: COLORS.warningBg,
-              border: `1px solid ${COLORS.warningBorder}`,
-              borderRadius: '4px',
-              marginBottom: '16px',
-              fontSize: '14px',
-              color: COLORS.warningText,
-              fontWeight: 'bold',
-              textWrap: 'balance',
-            }}>
-              下記の内容で発注登録を実施します。
-            </div>
+          <div className="flex flex-col gap-6">
+            <InfoBanner>下記の内容で発注登録を実施します。</InfoBanner>
 
-            {/* 基本情報セクション */}
-            <div style={{
-              background: COLORS.white,
-              borderRadius: '4px',
-              marginBottom: '16px',
-              overflow: 'hidden',
-            }}>
-              <div style={{ padding: '8px 16px', background: COLORS.sectionHeader, color: COLORS.textOnColor, fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>
-                基本情報
-              </div>
-              <div style={{ padding: '12px 16px' }}>
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', width: '120px', border: `1px solid ${COLORS.borderLight}` }}>見積依頼No.</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}`, width: '150px' }}>{rfqGroup.rfqNo}</td>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', width: '120px', border: `1px solid ${COLORS.borderLight}` }}>見積G名称</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{rfqGroup.groupName}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>発注先</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{rfqGroup.vendorName || '-'}</td>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>担当</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{rfqGroup.personInCharge || '-'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>連絡先(TEL)</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{rfqGroup.tel || '-'}</td>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>mail</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{rfqGroup.email || '-'}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <BasicInfoCard
+              rfqNo={rfqGroup.rfqNo}
+              groupName={rfqGroup.groupName}
+              vendorName={rfqGroup.vendorName}
+              personInCharge={rfqGroup.personInCharge}
+              tel={rfqGroup.tel}
+              email={rfqGroup.email}
+            />
 
-            {/* 発注基本登録セクション */}
-            <div style={{ border: `2px solid ${COLORS.accent}`, borderRadius: '8px', marginBottom: '16px' }}>
-              <div style={{ background: COLORS.accent, color: COLORS.textOnAccent, padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', textWrap: 'balance' }}>
-                発注基本登録
-              </div>
-              <div style={{ padding: '16px' }}>
-                {/* 1行目: 院内決済No. / 発注形態 / 納期 / リース開始日・終了日 */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
-                  {/* 院内決済No. */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>院内決済No.</label>
-                    <input
-                      type="text"
-                      value={inHouseSettlementNo}
-                      onChange={(e) => setInHouseSettlementNo(e.target.value)}
-                      style={{ ...inputStyle, width: '160px' }}
-                    />
-                  </div>
+            <OrderForm
+              inHouseSettlementNo={inHouseSettlementNo}
+              setInHouseSettlementNo={setInHouseSettlementNo}
+              orderType={orderType}
+              setOrderType={setOrderType}
+              deliveryDeadline={deliveryDeadline}
+              setDeliveryDeadline={(v) => {
+                setDeliveryDeadline(v);
+                if (v) setDeliveryDateError('');
+              }}
+              deliveryDateError={deliveryDateError}
+              isLeaseType={isLeaseType}
+              leaseStartDate={leaseStartDate}
+              setLeaseStartDate={setLeaseStartDate}
+              leaseEndDate={leaseEndDate}
+              setLeaseEndDate={setLeaseEndDate}
+              paymentClosingDate={paymentClosingDate}
+              setPaymentClosingDate={setPaymentClosingDate}
+              paymentDate={paymentDate}
+              setPaymentDate={setPaymentDate}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              paymentSiteDays={paymentSiteDays}
+              setPaymentSiteDays={setPaymentSiteDays}
+            />
 
-                  {/* 発注形態 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>発注形態</label>
-                    <select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)} style={{ ...inputStyle, width: '220px' }}>
-                      {ORDER_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
-                    </select>
-                  </div>
+            <OrderItemsTable
+              items={expandedItems}
+              totalAmount={totalAmount}
+              onBack={() => router.push('/quotation-data-box')}
+            />
 
-                  {/* 納期 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>
-                      納期 <span style={{ color: COLORS.error }}>*</span>
-                    </label>
-                    <div>
-                      <input
-                        type="date"
-                        value={deliveryDeadline}
-                        onChange={(e) => {
-                          setDeliveryDeadline(e.target.value);
-                          if (e.target.value) setDeliveryDateError('');
-                        }}
-                        style={{
-                          ...inputStyle,
-                          width: '160px',
-                          borderColor: deliveryDateError ? COLORS.error : COLORS.border,
-                        }}
-                      />
-                      {deliveryDateError && (
-                        <p style={{ margin: '4px 0 0', fontSize: '12px', color: COLORS.error }}>
-                          {deliveryDateError}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* リース開始日・終了日（リース選択時のみ） */}
-                  {isLeaseType && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 16px',
-                      border: `1px solid ${COLORS.border}`,
-                      borderRadius: '4px',
-                      background: COLORS.white,
-                    }}>
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>リース</span>
-                      <label style={{ fontSize: '13px', color: COLORS.textSecondary, whiteSpace: 'nowrap' }}>開始日</label>
-                      <input type="date" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} style={{ ...inputStyle, width: '150px', fontSize: '13px' }} />
-                      <label style={{ fontSize: '13px', color: COLORS.textSecondary, whiteSpace: 'nowrap' }}>終了日</label>
-                      <input type="date" value={leaseEndDate} onChange={(e) => setLeaseEndDate(e.target.value)} style={{ ...inputStyle, width: '150px', fontSize: '13px' }} />
-                    </div>
-                  )}
-
-                  {/* リース非選択時のプレースホルダー */}
-                  {!isLeaseType && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '8px 16px',
-                      border: `1px solid ${COLORS.borderLight}`,
-                      borderRadius: '4px',
-                      background: COLORS.surfaceAlt,
-                      color: COLORS.textMuted,
-                      fontSize: '13px',
-                    }}>
-                      リースの場合：開始日・終了日
-                    </div>
-                  )}
-
-                </div>
-
-                {/* 2行目: 支払条件 / 支払方法 / 支払期日 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginTop: '12px', flexWrap: 'wrap' }}>
-                  {/* 支払条件 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払条件</label>
-                    <input
-                      type="date"
-                      value={paymentClosingDate}
-                      onChange={(e) => setPaymentClosingDate(e.target.value)}
-                      style={{ ...inputStyle, width: '160px' }}
-                    />
-                    <span style={{ fontSize: '14px', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>締め</span>
-                    <input
-                      type="date"
-                      value={paymentDate}
-                      onChange={(e) => setPaymentDate(e.target.value)}
-                      style={{ ...inputStyle, width: '160px' }}
-                    />
-                    <span style={{ fontSize: '14px', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払</span>
-                  </div>
-
-                  {/* 支払方法 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払方法</label>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                      style={{ ...inputStyle, width: '140px' }}
-                    >
-                      <option value="">選択してください</option>
-                      {PAYMENT_METHODS.map((m) => (<option key={m} value={m}>{m}</option>))}
-                    </select>
-                  </div>
-
-                  {/* 支払期日 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap' }}>支払期日</label>
-                    <input
-                      type="text"
-                      value={paymentSiteDays}
-                      onChange={(e) => setPaymentSiteDays(e.target.value)}
-                      placeholder=""
-                      style={{ ...inputStyle, width: '60px', textAlign: 'center' }}
-                    />
-                    <span style={{ fontSize: '14px', color: COLORS.textPrimary }}>日サイト</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 発注明細テーブル（登録済み見積明細より自動取得） */}
-            <div style={{
-              background: COLORS.white,
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: '4px',
-              marginBottom: '16px',
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 16px',
-                background: COLORS.primary,
-                color: COLORS.textOnColor,
-              }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>発注明細（登録済み見積明細より自動取得）</span>
-                <span style={{ fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>
-                  合計金額（税込）:
-                  <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px' }}>
-                    ¥{totalAmount.toLocaleString()}
-                  </span>
-                </span>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: Z_STICKY_HEADER }}>
-                    <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '40px' }}>No</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '140px' }}>メーカー</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '120px' }}>型式</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '60px' }}>数量</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold', width: '120px' }}>金額（税込）</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expandedItems.map((item, idx) => (
-                      <tr key={item._expandKey} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                        <td style={{ padding: '8px', fontVariantNumeric: 'tabular-nums' }}>{idx + 1}</td>
-                        <td style={{ padding: '8px', maxWidth: '200px', ...truncateStyle }}>{item.itemName || item.originalItemName}</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.manufacturer || item.originalManufacturer || '-'}</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.model || item.originalModel || '-'}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>1</td>
-                        <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>¥{(item.allocPriceUnit || 0).toLocaleString()}</td>
-                      </tr>
-                    ))}
-                    {expandedItems.length === 0 && (
-                      <tr>
-                        <td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
-                          <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px' }}>発注対象の見積明細がありません</p>
-                          <p style={{ fontSize: '12px', marginBottom: '16px' }}>見積登録を完了すると、明細が自動的に表示されます。</p>
-                          <button
-                            className="order-btn"
-                            onClick={() => router.push('/quotation-data-box')}
-                            style={{ padding: '8px 16px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-                          >
-                            ← 一覧画面に戻る
-                          </button>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+            <div className="flex justify-between items-center pt-2 gap-3">
               <button
-                className="order-btn-secondary"
                 onClick={() => router.push('/quotation-data-box')}
-                style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                className="h-12 min-w-[180px] px-6 rounded-lg bg-[#d6d6d6] text-content-primary text-base font-normal cursor-pointer transition-colors hover:bg-stroke-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-sub"
               >
-                ← 一覧画面に戻る
+                戻る
               </button>
               <button
-                className="order-btn"
                 onClick={handleShowPreview}
                 disabled={isSubmitting}
-                style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold', opacity: isSubmitting ? 0.7 : 1 }}
+                className="h-12 min-w-[200px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
               >
                 発注書プレビュー
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* 登録前プレビューモーダル */}
       {previewData && (
         <OrderPreviewModal
           isOpen={showPreview}
@@ -648,8 +309,6 @@ export default function OrderRegistrationPage() {
           onRegister={handleRegisterFromPreview}
         />
       )}
-
-      {/* 登録後プレビューモーダル（印刷用） */}
       {registrationComplete && (
         <OrderPreviewModal
           isOpen={showOrderPreview}
@@ -658,5 +317,410 @@ export default function OrderRegistrationPage() {
         />
       )}
     </div>
+  );
+}
+
+// ============================================================
+// Completion view
+// ============================================================
+function CompletionView({
+  orderNo,
+  itemCount,
+  totalAmount,
+  onPrint,
+  onMail,
+  onBack,
+}: {
+  orderNo: string;
+  itemCount: number;
+  totalAmount: number;
+  onPrint: () => void;
+  onMail: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="max-w-[560px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <div className="text-5xl mb-4 text-cta-primary leading-none">&#10003;</div>
+        <h2 className="text-lg font-bold text-content-primary mb-2 text-balance">
+          発注を登録しました
+        </h2>
+        <p className="text-sm text-content-sub mb-6 tabular-nums">
+          発注No. {orderNo}（{itemCount}品目 / ¥{totalAmount.toLocaleString()}）
+        </p>
+        <div className="flex flex-col gap-3 items-center">
+          <button
+            onClick={onPrint}
+            className="h-12 w-[260px] px-6 rounded-lg bg-cta-primary text-white text-base font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+          >
+            印刷する
+          </button>
+          <button
+            onClick={onMail}
+            className="h-12 w-[260px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+          >
+            mail送付
+          </button>
+          <button
+            onClick={onBack}
+            className="h-12 w-[260px] px-6 text-sm text-content-sub underline cursor-pointer hover:text-content-primary transition-colors bg-transparent border-0"
+          >
+            一覧画面に戻る
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotFoundView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="max-w-[480px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <p className="text-sm font-bold text-content-primary mb-2">
+          対象の見積依頼グループが見つかりません
+        </p>
+        <p className="text-xs text-content-sub mb-6 text-pretty">
+          URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-cta-primary text-white text-base font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InfoBanner({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-4 py-3 rounded-lg bg-surface-select border border-cta-primary text-sm text-cta-primary-dark text-pretty">
+      {children}
+    </div>
+  );
+}
+
+// ============================================================
+// Basic info card
+// ============================================================
+function BasicInfoCard({
+  rfqNo,
+  groupName,
+  vendorName,
+  personInCharge,
+  tel,
+  email,
+}: {
+  rfqNo: string;
+  groupName: string;
+  vendorName?: string;
+  personInCharge?: string;
+  tel?: string;
+  email?: string;
+}) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
+      <div className="border border-stroke-input">
+        <InfoRow>
+          <InfoCell label="見積依頼No." value={rfqNo} />
+          <InfoCell label="見積G名称" value={groupName} />
+        </InfoRow>
+        <InfoRow>
+          <InfoCell label="発注先" value={vendorName || '---'} />
+          <InfoCell label="担当" value={personInCharge || '---'} />
+        </InfoRow>
+        <InfoRow last>
+          <InfoCell label="連絡先(TEL)" value={tel || '---'} numeric />
+          <InfoCell label="mail" value={email || '---'} />
+        </InfoRow>
+      </div>
+    </section>
+  );
+}
+
+function InfoRow({ children, last }: { children: React.ReactNode; last?: boolean }) {
+  return (
+    <div className={`flex w-full ${last ? '' : 'border-b border-stroke-input'}`}>
+      {children}
+    </div>
+  );
+}
+
+function InfoCell({
+  label,
+  value,
+  numeric,
+}: {
+  label: string;
+  value: string;
+  numeric?: boolean;
+}) {
+  return (
+    <div className="flex items-stretch flex-1 min-w-0">
+      <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+        <p className="text-base text-content-primary whitespace-nowrap">{label}</p>
+      </div>
+      <div className="flex-1 min-w-0 flex items-center px-4 py-4 border-r border-stroke-input last:border-r-0">
+        <p className={`min-w-0 truncate text-base text-content-primary ${numeric ? 'tabular-nums' : ''}`}>
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Order form
+// ============================================================
+type OrderFormProps = {
+  inHouseSettlementNo: string;
+  setInHouseSettlementNo: (v: string) => void;
+  orderType: OrderType;
+  setOrderType: (v: OrderType) => void;
+  deliveryDeadline: string;
+  setDeliveryDeadline: (v: string) => void;
+  deliveryDateError: string;
+  isLeaseType: boolean;
+  leaseStartDate: string;
+  setLeaseStartDate: (v: string) => void;
+  leaseEndDate: string;
+  setLeaseEndDate: (v: string) => void;
+  paymentClosingDate: string;
+  setPaymentClosingDate: (v: string) => void;
+  paymentDate: string;
+  setPaymentDate: (v: string) => void;
+  paymentMethod: PaymentMethod | '';
+  setPaymentMethod: (v: PaymentMethod | '') => void;
+  paymentSiteDays: string;
+  setPaymentSiteDays: (v: string) => void;
+};
+
+function OrderForm(p: OrderFormProps) {
+  const inputBase =
+    'h-[42px] px-3 rounded-lg bg-surface-card border border-stroke-input text-base text-content-primary focus:outline-none focus:border-cta-primary transition-colors';
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-6">
+      <h2 className="text-base font-semibold text-content-primary mb-4">発注基本登録</h2>
+
+      <div className="flex flex-col gap-4">
+        {/* 1行目 */}
+        <div className="flex items-start gap-6 flex-wrap">
+          <Field label="院内決済No.">
+            <input
+              type="text"
+              value={p.inHouseSettlementNo}
+              onChange={(e) => p.setInHouseSettlementNo(e.target.value)}
+              className={`${inputBase} w-[180px]`}
+            />
+          </Field>
+          <Field label="発注形態">
+            <select
+              value={p.orderType}
+              onChange={(e) => p.setOrderType(e.target.value as OrderType)}
+              className={`${inputBase} w-[240px]`}
+            >
+              {ORDER_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            label={
+              <>
+                納期 <span className="text-content-alert">*</span>
+              </>
+            }
+            error={p.deliveryDateError}
+          >
+            <input
+              type="date"
+              value={p.deliveryDeadline}
+              onChange={(e) => p.setDeliveryDeadline(e.target.value)}
+              className={`${inputBase} w-[180px] tabular-nums ${p.deliveryDateError ? 'border-content-alert' : ''}`}
+            />
+          </Field>
+        </div>
+
+        {/* リース */}
+        {p.isLeaseType ? (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-stroke-input bg-surface-screen">
+            <span className="text-sm font-semibold text-content-primary whitespace-nowrap">リース</span>
+            <label className="text-sm text-content-sub whitespace-nowrap">開始日</label>
+            <input
+              type="date"
+              value={p.leaseStartDate}
+              onChange={(e) => p.setLeaseStartDate(e.target.value)}
+              className={`${inputBase} w-[170px] tabular-nums`}
+            />
+            <label className="text-sm text-content-sub whitespace-nowrap">終了日</label>
+            <input
+              type="date"
+              value={p.leaseEndDate}
+              onChange={(e) => p.setLeaseEndDate(e.target.value)}
+              className={`${inputBase} w-[170px] tabular-nums`}
+            />
+          </div>
+        ) : (
+          <div className="px-4 py-3 rounded-lg border border-stroke-input bg-stroke-card text-sm text-content-sub">
+            リースの場合：開始日・終了日
+          </div>
+        )}
+
+        {/* 2行目 */}
+        <div className="flex items-start gap-6 flex-wrap">
+          <Field label="支払条件">
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={p.paymentClosingDate}
+                onChange={(e) => p.setPaymentClosingDate(e.target.value)}
+                className={`${inputBase} w-[170px] tabular-nums`}
+              />
+              <span className="text-sm text-content-primary">締め</span>
+              <input
+                type="date"
+                value={p.paymentDate}
+                onChange={(e) => p.setPaymentDate(e.target.value)}
+                className={`${inputBase} w-[170px] tabular-nums`}
+              />
+              <span className="text-sm text-content-primary">支払</span>
+            </div>
+          </Field>
+          <Field label="支払方法">
+            <select
+              value={p.paymentMethod}
+              onChange={(e) => p.setPaymentMethod(e.target.value as PaymentMethod)}
+              className={`${inputBase} w-[160px]`}
+            >
+              <option value="">選択してください</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="支払期日">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={p.paymentSiteDays}
+                onChange={(e) => p.setPaymentSiteDays(e.target.value)}
+                className={`${inputBase} w-[80px] text-center tabular-nums`}
+              />
+              <span className="text-sm text-content-primary">日サイト</span>
+            </div>
+          </Field>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  children,
+  error,
+}: {
+  label: React.ReactNode;
+  children: React.ReactNode;
+  error?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-semibold text-content-primary whitespace-nowrap">
+        {label}
+      </label>
+      <div>{children}</div>
+      {error && <p className="text-xs text-content-alert">{error}</p>}
+    </div>
+  );
+}
+
+// ============================================================
+// Order items table
+// ============================================================
+type ExpandedItem = {
+  _expandKey: string;
+  itemName?: string;
+  originalItemName?: string;
+  manufacturer?: string;
+  originalManufacturer?: string;
+  model?: string;
+  originalModel?: string;
+  allocPriceUnit?: number;
+};
+
+function OrderItemsTable({
+  items,
+  totalAmount,
+  onBack,
+}: {
+  items: ExpandedItem[];
+  totalAmount: number;
+  onBack: () => void;
+}) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4 flex flex-col gap-3">
+      {/* タイトル + 合計 */}
+      <div className="border border-stroke-input flex">
+        <div className="bg-surface-select px-4 py-4 flex items-center">
+          <p className="text-base text-content-primary whitespace-nowrap">発注明細（登録済み見積明細より自動取得）</p>
+        </div>
+        <div className="flex-1 min-w-0 flex items-center justify-end px-4 py-4 gap-2">
+          <p className="text-content-primary leading-tight">
+            <span className="text-base font-semibold">合計金額</span>
+            <span className="text-xs font-semibold">（税込）</span>
+          </p>
+          <div className="bg-surface-card border border-stroke-input rounded-lg h-[42px] flex items-center px-3 min-w-[180px]">
+            <p className="flex-1 text-lg font-semibold text-content-alert tabular-nums text-right">
+              ¥{totalAmount.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* テーブル */}
+      <div className="border border-stroke-input overflow-x-auto">
+        <table className="w-full border-collapse min-w-[900px]">
+          <thead>
+            <tr className="bg-stroke-card border-b border-stroke-input text-left">
+              <th className="w-[56px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-center">No.</th>
+              <th className="px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">品名</th>
+              <th className="w-[200px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">メーカー</th>
+              <th className="w-[160px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">型式</th>
+              <th className="w-[80px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-right">数量</th>
+              <th className="w-[160px] px-4 py-2 text-sm font-normal text-content-primary text-right">金額（税込）</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, idx) => (
+              <tr key={item._expandKey} className="border-b border-stroke-input h-[58px]">
+                <td className="px-4 py-2 text-base text-content-primary border-r border-stroke-input text-center tabular-nums">{idx + 1}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input truncate max-w-[300px]">{item.itemName || item.originalItemName}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input truncate">{item.manufacturer || item.originalManufacturer || '---'}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input truncate">{item.model || item.originalModel || '---'}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input text-right tabular-nums font-semibold">1</td>
+                <td className="px-4 py-2 text-sm text-content-primary text-right tabular-nums font-semibold">¥{(item.allocPriceUnit || 0).toLocaleString()}</td>
+              </tr>
+            ))}
+            {items.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-content-sub">
+                  <p className="text-sm font-semibold text-content-primary mb-2 text-balance">発注対象の見積明細がありません</p>
+                  <p className="text-xs mb-4 text-pretty">見積登録を完了すると、明細が自動的に表示されます。</p>
+                  <button
+                    onClick={onBack}
+                    className="h-10 px-4 rounded-lg bg-cta-primary text-white text-sm font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark"
+                  >
+                    一覧画面に戻る
+                  </button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
