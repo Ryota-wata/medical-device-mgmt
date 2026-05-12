@@ -903,7 +903,7 @@ function AssetSurveyContent() {
         left: 0,
         width: '100%',
         backgroundColor: '#ffffff',
-        borderTop: '1px solid #ddd',
+        borderTop: '1px solid #E1E1E1',
         padding: isMobile ? '8px' : '10px',
         display: 'flex',
         justifyContent: 'space-around',

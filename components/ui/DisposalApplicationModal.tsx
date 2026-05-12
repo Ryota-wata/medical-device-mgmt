@@ -154,8 +154,8 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
   const themeColor = '#A30000';
 
   // 確認画面用テーブルスタイル
-  const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' };
-  const tdStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #ddd' };
+  const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' };
+  const tdStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #E1E1E1' };
 
   return (
     <div
@@ -254,7 +254,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 </tbody>
               </table>
               {assets.length > 1 && (
-                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#e65100' }}>
+                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#A35414' }}>
                   ※ {assets.length}件の資産が選択されています
                 </div>
               )}
@@ -269,7 +269,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 <thead>
                   <tr style={{ background: '#FAFAFA' }}>
                     {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
-                      <th key={label} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                      <th key={label} style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left', whiteSpace: 'nowrap' }}>
                         {label}
                       </th>
                     ))}
@@ -297,7 +297,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
                   コメント（廃棄理由他）
                 </div>
-                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #E1E1E1', whiteSpace: 'pre-wrap' }}>
                   {comment}
                 </div>
               </div>
@@ -418,7 +418,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 background: '#FDF1E5',
                 borderRadius: '4px',
                 fontSize: '13px',
-                color: '#e65100'
+                color: '#A35414'
               }}>
                 ※ {assets.length}件の資産が選択されています
               </div>
@@ -488,7 +488,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                   <thead>
                     <tr style={{ background: '#f0f0f0' }}>
                       {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
-                        <th key={label} style={{ padding: '8px 10px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap' }}>
+                        <th key={label} style={{ padding: '8px 10px', textAlign: 'left', border: '1px solid #E1E1E1', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap' }}>
                           {label}
                         </th>
                       ))}
@@ -497,13 +497,13 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                   <tbody>
                     {assets.map((asset, idx) => (
                       <tr key={idx} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.qrCode || '-'}</td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.name || '-'}</td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.maker || '-'}</td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.model || '-'}</td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd', textAlign: 'right' }}>{asset.quantity ?? '-'}</td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.serialNumber || '-'}</td>
-                        <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.deliveryDate || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1' }}>{asset.qrCode || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1' }}>{asset.name || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1' }}>{asset.maker || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1' }}>{asset.model || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1', textAlign: 'right' }}>{asset.quantity ?? '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1' }}>{asset.serialNumber || '-'}</td>
+                        <td style={{ padding: '7px 10px', border: '1px solid #E1E1E1' }}>{asset.deliveryDate || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -575,7 +575,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 style={{
                   padding: '6px 12px',
                   background: '#FAFAFA',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '13px',
                   cursor: 'pointer',

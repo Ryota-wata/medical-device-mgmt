@@ -268,7 +268,7 @@ export default function ItemAiMatchingPage() {
         {/* メインコンテンツ */}
         <div style={{
           background: 'white',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           marginBottom: '16px',
         }}>
@@ -287,7 +287,7 @@ export default function ItemAiMatchingPage() {
           </div>
 
           {/* 説明文 */}
-          <div style={{ padding: '12px 16px', background: '#f3e5f5', fontSize: '12px', color: '#7b1fa2', borderBottom: '1px solid #ce93d8' }}>
+          <div style={{ padding: '12px 16px', background: '#F1ECF7', fontSize: '12px', color: '#7b1fa2', borderBottom: '1px solid #ce93d8' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
               個体管理品目のAI判定を実施し確認・修正を実施してください
             </div>
@@ -298,7 +298,7 @@ export default function ItemAiMatchingPage() {
           </div>
 
           {/* 進捗状況 + フィルタ */}
-          <div style={{ padding: '12px 16px', display: 'flex', gap: '16px', alignItems: 'center', borderBottom: '1px solid #ddd' }}>
+          <div style={{ padding: '12px 16px', display: 'flex', gap: '16px', alignItems: 'center', borderBottom: '1px solid #E1E1E1' }}>
             <button
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
@@ -308,7 +308,7 @@ export default function ItemAiMatchingPage() {
                 borderRadius: '4px',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                color: showOnlyIndividual ? 'white' : '#2e7d32',
+                color: showOnlyIndividual ? 'white' : '#146E2E',
                 cursor: 'pointer',
               }}
             >
@@ -316,12 +316,12 @@ export default function ItemAiMatchingPage() {
             </button>
             <div style={{
               padding: '6px 14px',
-              background: confirmedCount === individualItems.length ? '#c8e6c9' : '#FDF1E5',
+              background: confirmedCount === individualItems.length ? '#EBF5EE' : '#FDF1E5',
               border: `1px solid ${confirmedCount === individualItems.length ? '#a5d6a7' : '#ffcc80'}`,
               borderRadius: '4px',
               fontSize: '12px',
               fontWeight: 'bold',
-              color: confirmedCount === individualItems.length ? '#2e7d32' : '#ef6c00',
+              color: confirmedCount === individualItems.length ? '#146E2E' : '#ef6c00',
             }}>
               紐付け済み: {confirmedCount}/{individualItems.length}件
             </div>
@@ -335,20 +335,20 @@ export default function ItemAiMatchingPage() {
                 <tr>
                   <th colSpan={5} style={{
                     padding: '6px', textAlign: 'center', borderBottom: '2px solid #333',
-                    fontWeight: 'bold', background: '#e8f4fc', fontSize: '11px'
+                    fontWeight: 'bold', background: '#EAF3FB', fontSize: '11px'
                   }}>
                     商品情報（原本情報）
                   </th>
                   <th colSpan={2} style={{
                     padding: '6px', textAlign: 'center', borderBottom: '2px solid #333',
                     borderRight: '1px solid #ccc',
-                    fontWeight: 'bold', background: '#e8f4fc', fontSize: '11px'
+                    fontWeight: 'bold', background: '#EAF3FB', fontSize: '11px'
                   }}>
                     STEP❸
                   </th>
                   <th colSpan={7} style={{
                     padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93',
-                    fontWeight: 'bold', color: '#5E3A93', background: '#f3e5f5', fontSize: '11px'
+                    fontWeight: 'bold', color: '#5E3A93', background: '#F1ECF7', fontSize: '11px'
                   }}>
                     STEP❹ 資産マスタ登録
                   </th>
@@ -384,7 +384,7 @@ export default function ItemAiMatchingPage() {
 
                   return (
                     <tr key={item.id} style={{
-                      borderBottom: '1px solid #ddd',
+                      borderBottom: '1px solid #E1E1E1',
                       background: isSelectingThisRow ? '#FDF1E5' : rowIsConfirmed ? '#EBF5EE' : 'transparent',
                     }}>
                       <td style={{ padding: '5px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.rowNo}</td>
@@ -406,26 +406,26 @@ export default function ItemAiMatchingPage() {
                         {item.category || ''}
                       </td>
                       {/* STEP4 columns */}
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
                         {displayData?.majorCategory || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', fontSize: '10px' }}>
                         {displayData?.middleCategory || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', fontWeight: isIndividual ? 'bold' : 'normal' }}>
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', fontWeight: isIndividual ? 'bold' : 'normal' }}>
                         {displayData?.assetName || item.itemName || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
                         {displayData?.manufacturer || ''}
                       </td>
-                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#c8e6c9' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
+                      <td style={{ padding: '5px', background: isIndividual ? (rowIsConfirmed ? '#EBF5EE' : '#fdfaff') : 'transparent', color: '#555', fontSize: '10px' }}>
                         {displayData?.model || ''}
                       </td>
                       <td style={{ padding: '5px', textAlign: 'center' }}>
                         {isIndividual ? (
                           rowIsConfirmed ? (
                             <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                              <span style={{ padding: '2px 5px', background: '#ff9800', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                              <span style={{ padding: '2px 5px', background: '#A66F1B', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
                                 {confirmedInfo?.status === 'asset_master_selected' ? 'AI適用' : 'AI適用'}
                               </span>
                               <span style={{ padding: '2px 5px', background: '#008C1D', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
@@ -439,13 +439,13 @@ export default function ItemAiMatchingPage() {
                               </span>
                             </div>
                           ) : isSelectingThisRow ? (
-                            <span style={{ padding: '3px 8px', background: '#ff9800', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
+                            <span style={{ padding: '3px 8px', background: '#A66F1B', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
                               選択中...
                             </span>
                           ) : (
                             <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', flexWrap: 'wrap' }}>
                               {aiJudgment && (
-                                <button onClick={() => handleApplyAI(item.id, aiJudgment)} style={{ padding: '2px 5px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>
+                                <button onClick={() => handleApplyAI(item.id, aiJudgment)} style={{ padding: '2px 5px', background: '#A66F1B', color: 'white', border: 'none', borderRadius: '3px', cursor: 'pointer', fontSize: '9px', fontWeight: 'bold' }}>
                                   AI適用
                                 </button>
                               )}

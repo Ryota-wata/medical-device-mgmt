@@ -443,7 +443,7 @@ export default function AssetSearchResultPage() {
                       transition: 'background 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      if (!resizingColumn) e.currentTarget.style.background = '#ddd';
+                      if (!resizingColumn) e.currentTarget.style.background = '#E1E1E1';
                     }}
                     onMouseLeave={(e) => {
                       if (!resizingColumn) e.currentTarget.style.background = 'transparent';
@@ -522,7 +522,7 @@ export default function AssetSearchResultPage() {
                         transition: 'background 0.2s',
                       }}
                       onMouseEnter={(e) => {
-                        if (!resizingColumn) e.currentTarget.style.background = '#ddd';
+                        if (!resizingColumn) e.currentTarget.style.background = '#E1E1E1';
                       }}
                       onMouseLeave={(e) => {
                         if (!resizingColumn) e.currentTarget.style.background = 'transparent';

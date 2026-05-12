@@ -981,7 +981,7 @@ function RepairTaskContent() {
                 borderRadius: '4px',
                 marginBottom: '16px',
                 fontSize: '13px',
-                color: '#1565c0',
+                color: '#1E5A9E',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -993,7 +993,7 @@ function RepairTaskContent() {
                   disabled={!isStepEnabled(1)}
                   style={{
                     padding: '4px 12px',
-                    background: '#1565c0',
+                    background: '#1E5A9E',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -1139,7 +1139,7 @@ function RepairTaskContent() {
             </button>
           }
         >
-          <div style={{ padding: '12px 16px', background: '#e8f5e9', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#2e7d32' }}>
+          <div style={{ padding: '12px 16px', background: '#e8f5e9', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#146E2E' }}>
             STEP1で取得した見積をフェーズごとに登録してください。発注用見積は必須です。
           </div>
 
@@ -1165,7 +1165,7 @@ function RepairTaskContent() {
                     {registeredQuotations.map((q) => (
                       <tr key={q.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                         <td style={{ padding: '8px' }}>
-                          <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold', background: q.phase === '発注用' ? '#e3f2fd' : q.phase === '参考' ? '#f3e5f5' : '#fff3e0', color: q.phase === '発注用' ? '#1565c0' : q.phase === '参考' ? '#7b1fa2' : '#e65100' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold', background: q.phase === '発注用' ? '#e3f2fd' : q.phase === '参考' ? '#F1ECF7' : '#fff3e0', color: q.phase === '発注用' ? '#1E5A9E' : q.phase === '参考' ? '#7b1fa2' : '#A35414' }}>
                             {q.phase === '発注用' ? '修理発注登録用' : q.phase === '参考' ? '参考' : '追加'}
                           </span>
                         </td>
@@ -1300,7 +1300,7 @@ function RepairTaskContent() {
               {/* REQ-069: 発注登録用見積を登録した場合のみ表示 */}
               {formData.quotationPhase === '発注用' && registeredQuotations.some((q) => q.phase === '発注用') && (
                 <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: `1px dashed ${COLORS.border}` }}>
-                  <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1565c0', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1E5A9E', marginBottom: '8px' }}>
                     発注登録用見積として登録済み — 発注登録に進めます
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -1353,7 +1353,7 @@ function RepairTaskContent() {
             borderRadius: '4px',
             marginBottom: '16px',
             fontSize: '13px',
-            color: '#e65100',
+            color: '#A35414',
           }}>
             対応区分を選択してください。外部発注の場合は発注書のプレビュー・出力ができます。
           </div>
@@ -1445,7 +1445,7 @@ function RepairTaskContent() {
             </button>
           }
         >
-          <div style={{ padding: '12px 16px', background: '#fff3e0', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#e65100' }}>
+          <div style={{ padding: '12px 16px', background: '#fff3e0', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#A35414' }}>
             納品日調整期限を登録し、検収を実施してください。
           </div>
 
@@ -1455,7 +1455,7 @@ function RepairTaskContent() {
               <span style={{ ...labelStyle, fontWeight: 'bold' }}>納品日</span>
               <input type="date" value={formData.deliveryDate} onChange={(e) => { updateFormData({ deliveryDate: e.target.value }); setIsDeliveryDateConfirmed(false); }} disabled={!isStepEnabled(3)} style={{ padding: '6px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', width: '160px' }} />
               {isDeliveryDateConfirmed && (
-                <span style={{ marginLeft: '12px', padding: '4px 12px', background: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
+                <span style={{ marginLeft: '12px', padding: '4px 12px', background: '#e8f5e9', color: '#146E2E', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
                   ✓ 確定済み
                 </span>
               )}
@@ -1492,7 +1492,7 @@ function RepairTaskContent() {
                         {registeredDocuments.map((d) => (
                           <tr key={d.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
                             <td style={{ padding: '8px' }}>
-                              <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold', background: d.documentType === '修理報告書' ? '#e3f2fd' : d.documentType === '納品書' ? '#fff3e0' : '#f3e5f5', color: d.documentType === '修理報告書' ? '#1565c0' : d.documentType === '納品書' ? '#e65100' : '#7b1fa2' }}>
+                              <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold', background: d.documentType === '修理報告書' ? '#e3f2fd' : d.documentType === '納品書' ? '#fff3e0' : '#F1ECF7', color: d.documentType === '修理報告書' ? '#1E5A9E' : d.documentType === '納品書' ? '#A35414' : '#7b1fa2' }}>
                                 {d.documentType}
                               </span>
                             </td>
@@ -1597,7 +1597,7 @@ function RepairTaskContent() {
             </button>
           }
         >
-          <div style={{ padding: '12px 16px', background: '#ffebee', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#c62828' }}>
+          <div style={{ padding: '12px 16px', background: '#ffebee', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#9A2333' }}>
             経理部にて固定資産番号、最終の勘定科目を登録してください。
           </div>
 
@@ -1625,7 +1625,7 @@ function RepairTaskContent() {
 
           {/* REQ-086: 完了登録の添付ファイル + ドキュメント種別 */}
           <div style={{ marginTop: '16px', padding: '12px', border: '1px solid #e74c3c', borderRadius: '4px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#c62828', marginBottom: '12px' }}>添付ファイル / ドキュメント種別</div>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#9A2333', marginBottom: '12px' }}>添付ファイル / ドキュメント種別</div>
             <FormRow>
               <span style={{ ...labelStyle, fontWeight: 'bold', minWidth: '110px' }}>添付ファイル</span>
               <label style={{ padding: '6px 16px', background: '#f5f5f5', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
@@ -1685,7 +1685,7 @@ function RepairTaskContent() {
           flex: 1,
           display: 'flex',
           flexDirection: 'row',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           overflow: 'hidden',
           background: 'white',
@@ -1884,7 +1884,7 @@ function RepairTaskContent() {
                 {/* 故障・不具合の内容 */}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{
-                    background: '#e65100',
+                    background: '#A35414',
                     color: 'white',
                     padding: '8px 12px',
                     fontSize: '13px',
@@ -1909,7 +1909,7 @@ function RepairTaskContent() {
                 <div style={{
                   padding: '12px 16px',
                   background: '#f5f5f5',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '12px',
                   color: '#666',
@@ -2152,7 +2152,7 @@ function RepairTaskContent() {
                       <span style={{
                         fontSize: '15px',
                         fontWeight: 'bold',
-                        color: '#e65100',
+                        color: '#A35414',
                         marginLeft: '8px',
                       }}>
                         {vendor?.deadline ? new Date(vendor.deadline).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '（別途ご相談）'}
@@ -2340,7 +2340,7 @@ function RepairTaskContent() {
                         </tr>
                         <tr>
                           <th style={{ padding: '8px 12px', background: '#e3f2fd', border: '1px solid #ccc', textAlign: 'left', fontWeight: 'bold' }}>発注金額</th>
-                          <td style={{ padding: '8px 12px', border: '1px solid #ccc', fontWeight: 'bold', fontSize: '15px', color: '#1565c0' }}>
+                          <td style={{ padding: '8px 12px', border: '1px solid #ccc', fontWeight: 'bold', fontSize: '15px', color: '#1E5A9E' }}>
                             ¥ ○○○,○○○-（税別）
                           </td>
                         </tr>
@@ -2421,7 +2421,7 @@ function RepairTaskContent() {
                         onClick={() => setPreviewVendorIndex(idx)}
                         style={{
                           padding: '12px 16px',
-                          background: '#f3e5f5',
+                          background: '#F1ECF7',
                           border: '1px solid #9c27b0',
                           borderRadius: '4px',
                           cursor: 'pointer',
@@ -2479,8 +2479,8 @@ function RepairTaskContent() {
                               padding: '2px 8px',
                               borderRadius: '10px',
                               fontSize: '11px',
-                              background: q.phase === '発注用' ? '#e3f2fd' : q.phase === '参考' ? '#fff8e1' : '#f3e5f5',
-                              color: q.phase === '発注用' ? '#1565c0' : q.phase === '参考' ? '#f57c00' : '#7b1fa2',
+                              background: q.phase === '発注用' ? '#e3f2fd' : q.phase === '参考' ? '#fff8e1' : '#F1ECF7',
+                              color: q.phase === '発注用' ? '#1E5A9E' : q.phase === '参考' ? '#f57c00' : '#7b1fa2',
                             }}>
                               {q.phase}
                             </span>
@@ -2600,7 +2600,7 @@ function RepairTaskContent() {
                               borderRadius: '10px',
                               fontSize: '11px',
                               background: d.documentType === '修理報告書' ? '#e3f2fd' : d.documentType === '納品書' ? '#e8f5e9' : '#f5f5f5',
-                              color: d.documentType === '修理報告書' ? '#1565c0' : d.documentType === '納品書' ? '#2e7d32' : '#616161',
+                              color: d.documentType === '修理報告書' ? '#1E5A9E' : d.documentType === '納品書' ? '#146E2E' : '#616161',
                             }}>
                               {d.documentType}
                             </span>
@@ -2701,8 +2701,8 @@ function RepairTaskContent() {
                       ['最終勘定科目', finalAccountType === 'その他' ? finalAccountOther || 'その他' : finalAccountType],
                     ].map(([label, value]) => (
                       <tr key={label}>
-                        <th style={{ padding: '8px 12px', textAlign: 'left', background: '#f5f5f5', border: '1px solid #ddd', width: '140px', fontWeight: 'bold' }}>{label}</th>
-                        <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{value}</td>
+                        <th style={{ padding: '8px 12px', textAlign: 'left', background: '#f5f5f5', border: '1px solid #E1E1E1', width: '140px', fontWeight: 'bold' }}>{label}</th>
+                        <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -2717,7 +2717,7 @@ function RepairTaskContent() {
             display: 'flex',
             flexDirection: 'column',
             background: '#f0f0f0',
-            borderLeft: '1px solid #ddd',
+            borderLeft: '1px solid #E1E1E1',
             width: '32px',
             flexShrink: 0,
           }}>
@@ -2744,7 +2744,7 @@ function RepairTaskContent() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     border: 'none',
-                    borderBottom: '1px solid #ddd',
+                    borderBottom: '1px solid #E1E1E1',
                     background: isActive ? '#f5c518' : 'transparent',
                     color: isActive ? '#333' : '#666',
                     cursor: 'pointer',

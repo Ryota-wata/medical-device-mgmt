@@ -809,7 +809,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   header: {
     padding: '16px 20px',
-    borderBottom: '1px solid #ddd',
+    borderBottom: '1px solid #E1E1E1',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -847,7 +847,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   th: {
     padding: '10px 8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     textAlign: 'left',
     whiteSpace: 'nowrap',
   },
@@ -856,11 +856,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   td: {
     padding: '8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
   },
   footer: {
     padding: '16px 20px',
-    borderTop: '1px solid #ddd',
+    borderTop: '1px solid #E1E1E1',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -936,7 +936,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   selectedAssetsBox: {
     backgroundColor: 'white',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     maxHeight: '150px',
     overflowY: 'auto',
@@ -984,7 +984,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   menuSection: {
     marginBottom: '20px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '6px',
     overflow: 'hidden',
   },
@@ -994,7 +994,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     fontWeight: 600,
     color: '#4A4A4A',
-    borderBottom: '1px solid #ddd',
+    borderBottom: '1px solid #E1E1E1',
   },
   menuContent: {
     padding: '16px',
@@ -1014,7 +1014,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   select: {
     flex: 1,
     padding: '8px 12px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
     backgroundColor: 'white',
@@ -1022,7 +1022,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   selectSmall: {
     flex: 1,
     padding: '8px 12px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
     backgroundColor: 'white',
@@ -1053,7 +1053,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   dateInput: {
     padding: '10px 12px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
     width: '200px',

@@ -354,7 +354,7 @@ export default function LedgerWindowPage() {
     switch (status) {
       case '完全一致': return '#4caf50';
       case '部分一致': return '#8bc34a';
-      case '数量不一致': return '#ff9800';
+      case '数量不一致': return '#A66F1B';
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
       case '未登録': return '#5E3A93';
@@ -428,7 +428,7 @@ export default function LedgerWindowPage() {
               padding: '4px 12px',
               backgroundColor: '#EBF5EE',
               borderRadius: '4px',
-              color: '#2e7d32',
+              color: '#146E2E',
               fontWeight: '600',
               fontSize: '13px'
             }}>

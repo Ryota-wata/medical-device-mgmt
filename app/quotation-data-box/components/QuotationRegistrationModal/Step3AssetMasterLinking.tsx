@@ -53,8 +53,8 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '20px', padding: '14px', background: '#EAF3FB', borderRadius: '6px', border: '1px solid #90caf9' }}>
-        <p style={{ margin: '0', fontSize: '12px', color: '#1565c0', lineHeight: '1.5' }}>
+      <div style={{ marginBottom: '20px', padding: '14px', background: '#EAF3FB', borderRadius: '6px', border: '1px solid #0092E6' }}>
+        <p style={{ margin: '0', fontSize: '12px', color: '#1E5A9E', lineHeight: '1.5' }}>
           以下の全ての明細が見積明細情報画面に登録されます。
         </p>
       </div>
@@ -74,7 +74,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
         <div style={{
           maxHeight: '150px',
           overflow: 'auto',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '6px',
           background: '#FAFAFA'
         }}>
@@ -137,7 +137,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
         }}>
           登録される見積明細（{ocrResult.items.length}件）
         </h4>
-        <div style={{ border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
+        <div style={{ border: '1px solid #E1E1E1', borderRadius: '6px', overflow: 'hidden' }}>
           <div style={{ maxHeight: '300px', overflowX: 'auto', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '900px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: '#FAFAFA' }}>

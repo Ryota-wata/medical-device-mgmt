@@ -32,14 +32,14 @@ const getHeaderTitle = (type: string): string => {
 const thStyle: React.CSSProperties = {
   padding: '8px 12px',
   background: '#FAFAFA',
-  border: '1px solid #ddd',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   width: '150px',
 };
 
 const tdStyle: React.CSSProperties = {
   padding: '8px 12px',
-  border: '1px solid #ddd',
+  border: '1px solid #E1E1E1',
 };
 
 const tableStyle: React.CSSProperties = {
@@ -194,21 +194,21 @@ export function ApplicationDetailModal({
             <table style={tableStyle}>
               <thead>
                 <tr style={{ background: '#FAFAFA' }}>
-                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
-                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
-                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
-                  <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                  <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', width: '80px' }}>希望順</th>
+                  <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left' }}>品目</th>
+                  <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left' }}>メーカー</th>
+                  <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left' }}>型式</th>
                 </tr>
               </thead>
               <tbody>
                 {application.assets.map((asset, index) => (
                   <tr key={index}>
-                    <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                    <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
                       {getHopeLabel(index)}
                     </td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.name || '-'}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.maker || '-'}</td>
-                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{asset.model || '-'}</td>
+                    <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{asset.name || '-'}</td>
+                    <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{asset.maker || '-'}</td>
+                    <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{asset.model || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -234,7 +234,7 @@ export function ApplicationDetailModal({
           {commentText && (
             <div style={sectionStyle}>
               <div style={sectionTitleStyle}>コメント（必要理由 他）</div>
-              <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+              <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #E1E1E1', whiteSpace: 'pre-wrap' }}>
                 {commentText}
               </div>
             </div>

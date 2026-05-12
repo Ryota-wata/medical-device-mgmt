@@ -351,7 +351,7 @@ function RepairRequestsContent() {
                 <div style={{ maxHeight: '300px', overflow: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                      <tr style={{ background: '#343a40', color: 'white' }}>
+                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
                         <th rowSpan={2} style={{ ...thGroupStyle, width: '36px', verticalAlign: 'middle' }}>
                           <input
                             type="checkbox"
@@ -462,14 +462,14 @@ function RepairRequestsContent() {
             flexDirection: 'column',
           }}>
             <div style={{
-              padding: '12px 16px',
-              background: '#d4a017',
+              padding: '10px 16px',
+              background: '#008C1D',
               color: 'white',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>修理 タスク管理リスト</span>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>修理 タスク管理リスト</span>
             </div>
 
             {/* ステップタブ */}
@@ -490,9 +490,9 @@ function RepairRequestsContent() {
                     onClick={() => setActiveStep(tab.key)}
                     style={{
                       padding: '10px 16px',
-                      background: isActive ? '#d4a017' : 'transparent',
+                      background: isActive ? '#A66F1B' : 'transparent',
                       border: 'none',
-                      borderBottom: isActive ? '2px solid #d4a017' : '2px solid transparent',
+                      borderBottom: isActive ? '2px solid #A66F1B' : '2px solid transparent',
                       cursor: 'pointer',
                       fontSize: '12px',
                       fontWeight: isActive ? 'bold' : 'normal',
@@ -530,7 +530,7 @@ function RepairRequestsContent() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  style={{ padding: '6px 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', minWidth: '120px' }}
+                  style={{ padding: '6px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', minWidth: '120px' }}
                 >
                   <option value="">すべて</option>
                   {repairCategories.map(c => (
@@ -553,7 +553,7 @@ function RepairRequestsContent() {
 
               <button
                 onClick={() => { setCategoryFilter(''); setAlternativeUnreturnedOnly(false); setActiveStep('all'); }}
-                style={{ padding: '6px 16px', background: '#f0f0f0', border: '1px solid #ddd', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: '#666' }}
+                style={{ padding: '6px 16px', background: '#f0f0f0', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: '#666' }}
               >
                 クリア
               </button>

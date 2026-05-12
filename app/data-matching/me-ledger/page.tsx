@@ -260,7 +260,7 @@ export default function MELedgerWindowPage() {
     switch (status) {
       case '完全一致': return '#4caf50';
       case '部分一致': return '#8bc34a';
-      case '数量不一致': return '#ff9800';
+      case '数量不一致': return '#A66F1B';
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
       case '未登録': return '#5E3A93';
@@ -297,7 +297,7 @@ export default function MELedgerWindowPage() {
           maxWidth: '1600px',
           margin: '0 auto'
         }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32', margin: 0 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#146E2E', margin: 0 }}>
             ME管理台帳（対応中）
           </h1>
           <div style={{ fontSize: '14px', color: '#8A8A8A' }}>
@@ -334,7 +334,7 @@ export default function MELedgerWindowPage() {
               padding: '4px 12px',
               backgroundColor: '#EBF5EE',
               borderRadius: '4px',
-              color: '#2e7d32',
+              color: '#146E2E',
               fontWeight: '600',
               fontSize: '13px'
             }}>
@@ -593,7 +593,7 @@ export default function MELedgerWindowPage() {
                           <span style={{ color: '#999', fontSize: '12px' }}>ー</span>
                         )}
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap', color: '#2e7d32', fontWeight: '600' }}>{row.meNo}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap', color: '#146E2E', fontWeight: '600' }}>{row.meNo}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
                       <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
@@ -623,7 +623,7 @@ export default function MELedgerWindowPage() {
             borderRadius: '8px',
             padding: '16px',
             fontSize: '14px',
-            color: '#2e7d32'
+            color: '#146E2E'
           }}>
             <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>使用方法</h3>
             <ul style={{ margin: 0, paddingLeft: '20px' }}>

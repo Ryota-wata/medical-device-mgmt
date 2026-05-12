@@ -147,7 +147,7 @@ export default function OcrConfirmPage() {
   // セルスタイル
   const cellStyle: React.CSSProperties = {
     padding: '8px 10px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     fontSize: '12px',
     verticalAlign: 'middle',
   };
@@ -164,7 +164,7 @@ export default function OcrConfirmPage() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '6px 8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '3px',
     fontSize: '12px',
   };
@@ -189,17 +189,17 @@ export default function OcrConfirmPage() {
             flexDirection: 'column',
             overflow: 'auto',
             background: 'white',
-            border: '1px solid #ddd',
+            border: '1px solid #E1E1E1',
             borderRadius: '4px',
           }}>
             {/* 基本情報セクション */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              borderBottom: '1px solid #ddd',
+              borderBottom: '1px solid #E1E1E1',
             }}>
               {/* 基本情報ヘッダー */}
-              <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
+              <div style={{ display: 'flex', borderBottom: '1px solid #E1E1E1' }}>
                 <div
                   style={{
                     padding: '12px 28px',
@@ -299,7 +299,7 @@ export default function OcrConfirmPage() {
               flex: 1,
             }}>
             {/* 見積明細チェックヘッダー */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #ddd', alignItems: 'center' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid #E1E1E1', alignItems: 'center' }}>
               <div
                 style={{
                   padding: '12px 28px',
@@ -321,7 +321,7 @@ export default function OcrConfirmPage() {
                   onChange={(e) => setTotalAmountInput(e.target.value)}
                   style={{
                     padding: '6px 12px',
-                    border: '1px solid #ddd',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
                     fontSize: '14px',
                     fontWeight: 'bold',
@@ -336,7 +336,7 @@ export default function OcrConfirmPage() {
 
             {/* 明細テーブル */}
             <div style={{ padding: '16px' }}>
-              <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'auto' }}>
+              <div style={{ border: '1px solid #E1E1E1', borderRadius: '4px', overflow: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '900px' }}>
                   <thead style={{ position: 'sticky', top: 0 }}>
                     {/* グループヘッダー行 */}
@@ -360,32 +360,32 @@ export default function OcrConfirmPage() {
                   <tbody>
                     {detailItems.map((item, index) => (
                       <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
-                        <td style={{ padding: '4px 6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #ddd' }}>{item.id}</td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #E1E1E1' }}>{item.id}</td>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.itemName}
                             onChange={(e) => handleDetailChange(index, 'itemName', e.target.value)}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.manufacturer}
                             onChange={(e) => handleDetailChange(index, 'manufacturer', e.target.value)}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.model}
                             onChange={(e) => handleDetailChange(index, 'model', e.target.value)}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                           <input
                             type="text"
                             value={item.quantity ?? ''}
@@ -393,10 +393,10 @@ export default function OcrConfirmPage() {
                               const value = e.target.value === '' ? null : parseInt(e.target.value, 10) || 0;
                               handleDetailChange(index, 'quantity', value as number);
                             }}
-                            style={{ width: '40px', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'center' }}
+                            style={{ width: '40px', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px', textAlign: 'center' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.listUnitPrice?.toLocaleString() ?? ''}
@@ -404,10 +404,10 @@ export default function OcrConfirmPage() {
                               const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                               handleDetailChange(index, 'listUnitPrice', value as number);
                             }}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.listPrice?.toLocaleString() ?? ''}
@@ -415,10 +415,10 @@ export default function OcrConfirmPage() {
                               const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                               handleDetailChange(index, 'listPrice', value as number);
                             }}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.purchaseUnitPrice?.toLocaleString() ?? ''}
@@ -426,10 +426,10 @@ export default function OcrConfirmPage() {
                               const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                               handleDetailChange(index, 'purchaseUnitPrice', value as number);
                             }}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
                           />
                         </td>
-                        <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px 6px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={item.purchaseAmount?.toLocaleString() ?? ''}
@@ -437,7 +437,7 @@ export default function OcrConfirmPage() {
                               const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                               handleDetailChange(index, 'purchaseAmount', value as number);
                             }}
-                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #ddd', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                            style={{ width: '100%', padding: '3px 5px', border: '1px solid #E1E1E1', borderRadius: '2px', fontSize: '11px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
                           />
                         </td>
                       </tr>
@@ -448,7 +448,7 @@ export default function OcrConfirmPage() {
             </div>
 
             {/* 注記 + Excel取込 */}
-            <div style={{ padding: '14px 16px', borderTop: '1px solid #ddd', background: '#FAFAFA', display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
+            <div style={{ padding: '14px 16px', borderTop: '1px solid #E1E1E1', background: '#FAFAFA', display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
               <div style={{ flex: 1, fontSize: '12px', color: '#666', lineHeight: 2 }}>
                 <div>① 読み込んだお見積もりと相違ないか確認・修正を行って下さい</div>
                 <div>② 金額は単価×数量にて登録されています</div>
@@ -503,7 +503,7 @@ export default function OcrConfirmPage() {
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            border: '1px solid #ddd',
+            border: '1px solid #E1E1E1',
             borderRadius: '4px',
             overflow: 'auto',
             background: 'white',
@@ -514,7 +514,7 @@ export default function OcrConfirmPage() {
               <img
                 src="/images/quotation-sample.png"
                 alt="見積書サンプル"
-                style={{ width: '100%', height: 'auto', border: '1px solid #ddd', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                style={{ width: '100%', height: 'auto', border: '1px solid #E1E1E1', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
               />
             </div>
           </div>

@@ -371,7 +371,7 @@ export default function UserManagementPage() {
                 style={{
                   width: '100%',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
@@ -391,7 +391,7 @@ export default function UserManagementPage() {
                 style={{
                   width: '100%',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
@@ -420,7 +420,7 @@ export default function UserManagementPage() {
                   width: '100%',
                   maxWidth: '220px',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                 }}
@@ -471,7 +471,7 @@ export default function UserManagementPage() {
                   width: '100%',
                   maxWidth: '200px',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
@@ -493,7 +493,7 @@ export default function UserManagementPage() {
                   width: '100%',
                   maxWidth: '160px',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
@@ -514,7 +514,7 @@ export default function UserManagementPage() {
                   width: '100%',
                   maxWidth: '200px',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
@@ -536,7 +536,7 @@ export default function UserManagementPage() {
                   width: '100%',
                   maxWidth: '180px',
                   padding: '10px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '14px',
                   boxSizing: 'border-box',
@@ -649,7 +649,7 @@ export default function UserManagementPage() {
                     borderRadius: '4px',
                     marginBottom: '12px',
                     fontSize: '12px',
-                    color: '#2e7d32',
+                    color: '#146E2E',
                   }}>
                     <strong>自施設（{formData.hospital || '未設定'}）</strong>の資産は自動的にアクセス可能です
                   </div>
@@ -730,7 +730,7 @@ export default function UserManagementPage() {
                     background: '#FDF1E5',
                     borderRadius: '4px',
                     fontSize: '12px',
-                    color: '#e65100',
+                    color: '#A35414',
                   }}>
                     <strong>所属施設（{formData.hospital || '未設定'}）</strong>の資産のみアクセス可能です
                   </div>

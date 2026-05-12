@@ -13,12 +13,12 @@ const ITEM_TYPE_LABELS: Record<QuotationItemType, string> = {
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
-  'A_表紙明細': { bg: '#EAF3FB', text: '#1565c0' },
-  'B_明細代表': { bg: '#f3e5f5', text: '#7b1fa2' },
-  'C_個体管理品目': { bg: '#EBF5EE', text: '#2e7d32' },
+  'A_表紙明細': { bg: '#EAF3FB', text: '#1E5A9E' },
+  'B_明細代表': { bg: '#F1ECF7', text: '#7b1fa2' },
+  'C_個体管理品目': { bg: '#EBF5EE', text: '#146E2E' },
   'D_付属品': { bg: '#FDF1E5', text: '#ef6c00' },
-  'E_その他役務': { bg: '#fce4ec', text: '#c2185b' },
-  'F_値引き': { bg: '#ffebee', text: '#c62828' },
+  'E_その他役務': { bg: '#FBE9EC', text: '#c2185b' },
+  'F_値引き': { bg: '#ffebee', text: '#9A2333' },
 };
 
 // 会計区分の選択肢
@@ -116,7 +116,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
     <div>
       {/* 説明 */}
       <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #a5d6a7' }}>
-        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2e7d32', marginBottom: '8px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#146E2E', marginBottom: '8px' }}>
           個体登録及び金額案分
         </div>
         <div style={{ fontSize: '12px', color: '#555', lineHeight: 1.6 }}>
@@ -131,7 +131,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
         <div style={{
           padding: '8px 16px',
           background: '#EAF3FB',
-          border: '1px solid #90caf9',
+          border: '1px solid #0092E6',
           borderRadius: '4px',
           fontSize: '13px',
         }}>
@@ -153,7 +153,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           borderRadius: '4px',
           fontSize: '13px',
           fontWeight: 'bold',
-          color: difference === 0 ? '#2e7d32' : '#c62828',
+          color: difference === 0 ? '#146E2E' : '#9A2333',
         }}>
           差額: ¥{difference.toLocaleString()}
           {difference === 0 && ' ✓'}
@@ -176,7 +176,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
       </div>
 
       {/* 明細テーブル */}
-      <div style={{ marginBottom: '16px', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
+      <div style={{ marginBottom: '16px', border: '1px solid #E1E1E1', borderRadius: '6px', overflow: 'hidden' }}>
         <div style={{ maxHeight: '400px', overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
             <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 2 }}>
@@ -228,7 +228,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                           padding: '3px',
                           fontSize: '11px',
                           textAlign: 'center',
-                          border: '1px solid #ddd',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '3px',
                           background: isIndividual ? '#FAFAFA' : 'white',
                         }}
@@ -244,7 +244,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                           padding: '3px',
                           fontSize: '11px',
                           textAlign: 'right',
-                          border: '1px solid #ddd',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '3px',
                         }}
                       />
@@ -257,7 +257,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                           width: '100%',
                           padding: '4px',
                           fontSize: '10px',
-                          border: '1px solid #ddd',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '3px',
                         }}
                       >
@@ -276,7 +276,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                             width: '100%',
                             padding: '4px',
                             fontSize: '10px',
-                            border: '1px solid #ddd',
+                            border: '1px solid #E1E1E1',
                             borderRadius: '3px',
                           }}
                         >

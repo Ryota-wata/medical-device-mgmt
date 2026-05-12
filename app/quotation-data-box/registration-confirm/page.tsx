@@ -160,12 +160,12 @@ export default function RegistrationConfirmPage() {
 
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {/* 確認メッセージ */}
-        <div style={{ padding: '12px 16px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#856404', fontWeight: 'bold' }}>
+        <div style={{ padding: '12px 16px', background: '#FDF1E5', border: '1px solid #A66F1B', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#A35414', fontWeight: 'bold' }}>
           下記の内容で見積Databaseへ登録を実施します。
         </div>
 
         {/* 基本情報 */}
-        <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
+        <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', marginBottom: '16px' }}>
           <div style={{ padding: '8px 16px', background: '#8A8A8A', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>基本情報</div>
           <div style={{ padding: '12px 16px' }}>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
@@ -206,11 +206,11 @@ export default function RegistrationConfirmPage() {
         </div>
 
         {/* 登録明細確認 */}
-        <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
+        <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', marginBottom: '16px' }}>
           {/* 上部バー */}
-          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #ddd' }}>
+          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #E1E1E1' }}>
             <button onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
-              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#EBF5EE', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer' }}>
+              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#EBF5EE', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#146E2E', cursor: 'pointer' }}>
               個体管理品目のみ表示
             </button>
             <div style={{ textAlign: 'center' }}>
@@ -226,10 +226,10 @@ export default function RegistrationConfirmPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1400px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                 <tr>
-                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❸</th>
-                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❹ 個体管理品目</th>
-                  <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❺ 個体登録／金額案分</th>
-                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❻ 設置情報</th>
+                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❸</th>
+                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❹ 個体管理品目</th>
+                  <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❺ 個体登録／金額案分</th>
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#F1ECF7', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❻ 設置情報</th>
                 </tr>
                 <tr style={{ background: '#FAFAFA' }}>
                   <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>No</th>
@@ -259,9 +259,9 @@ export default function RegistrationConfirmPage() {
                     <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
                       {showOriginal && (
                         <>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{row.rowNo}</td>
-                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #ddd' }}>{row.category}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #ddd', ...borderR }}>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{row.rowNo}</td>
+                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #E1E1E1' }}>{row.category}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #E1E1E1', ...borderR }}>
                             {row.detailClassification && (
                               <span style={{ padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', color: 'white', background: classColor(row.detailClassification) }}>{clsLabel}</span>
                             )}
@@ -276,8 +276,8 @@ export default function RegistrationConfirmPage() {
                       <td style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{row.seqId}</td>
                       {showOriginal && (
                         <>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.listPriceTotal)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #ddd', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.listPriceTotal)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #E1E1E1', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
                         </>
                       )}
                       <td style={{ ...tdBase, background: '#fdfaff' }}>

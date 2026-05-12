@@ -146,7 +146,7 @@ export default function CategoryRegistrationPage() {
         {/* メインコンテンツ */}
         <div style={{
           background: 'white',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           marginBottom: '16px',
         }}>
@@ -168,18 +168,18 @@ export default function CategoryRegistrationPage() {
           </div>
 
           {/* 説明文 */}
-          <div style={{ padding: '12px 16px', background: '#EAF3FB', fontSize: '12px', color: '#1565c0' }}>
+          <div style={{ padding: '12px 16px', background: '#EAF3FB', fontSize: '12px', color: '#1E5A9E' }}>
             登録区分をチェック・修正してください　※QRラベルを発行・除却が可能な単位にて登録を行います
           </div>
 
           {/* 明細テーブル */}
           <div style={{ padding: '16px' }}>
-            <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflowX: 'auto' }}>
+            <div style={{ border: '1px solid #E1E1E1', borderRadius: '4px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   <tr>
-                    <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', borderRight: '1px solid #ccc' }}>商品情報（原本情報）</th>
-                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❸ 明細区分登録</th>
+                    <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', borderRight: '1px solid #ccc' }}>商品情報（原本情報）</th>
+                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#F1ECF7', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❸ 明細区分登録</th>
                   </tr>
                   <tr>
                     <th style={{ padding: '8px 6px', textAlign: 'center', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '40px' }}>No.</th>
@@ -196,14 +196,14 @@ export default function CategoryRegistrationPage() {
                 <tbody>
                   {detailItems.map((item, index) => (
                     <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: item.isRegistered ? '#EBF5EE' : 'white' }}>
-                      <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #ddd' }}>{item.id}</td>
-                      <td style={{ padding: '6px', border: '1px solid #ddd' }}>
+                      <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #E1E1E1' }}>{item.id}</td>
+                      <td style={{ padding: '6px', border: '1px solid #E1E1E1' }}>
                         <div style={{ fontWeight: 'bold', fontSize: '11px' }}>{item.itemName}</div>
                       </td>
-                      <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px' }}>{item.manufacturer}</td>
-                      <td style={{ padding: '6px', border: '1px solid #ddd', fontSize: '11px' }}>{item.model}</td>
-                      <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center', fontSize: '11px' }}>{item.quantity ?? '-'}</td>
-                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #ddd' }}>
+                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', fontSize: '11px' }}>{item.manufacturer}</td>
+                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', fontSize: '11px' }}>{item.model}</td>
+                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', textAlign: 'center', fontSize: '11px' }}>{item.quantity ?? '-'}</td>
+                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #E1E1E1' }}>
                         <select
                           value={item.category}
                           onChange={(e) => handleCategoryChange(index, e.target.value)}
@@ -211,7 +211,7 @@ export default function CategoryRegistrationPage() {
                             width: '100%',
                             padding: '4px 6px',
                             fontSize: '11px',
-                            border: '1px solid #ddd',
+                            border: '1px solid #E1E1E1',
                             borderRadius: '3px',
                             background: 'white',
                           }}
@@ -221,7 +221,7 @@ export default function CategoryRegistrationPage() {
                           ))}
                         </select>
                       </td>
-                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #ddd' }}>
+                      <td style={{ padding: '6px', background: '#fdfaff', border: '1px solid #E1E1E1' }}>
                         <select
                           value={item.detailClassification}
                           onChange={(e) => handleClassificationChange(index, e.target.value as DetailClassification)}
@@ -229,7 +229,7 @@ export default function CategoryRegistrationPage() {
                             width: '100%',
                             padding: '4px 6px',
                             fontSize: '11px',
-                            border: '1px solid #ddd',
+                            border: '1px solid #E1E1E1',
                             borderRadius: '3px',
                             background: 'white',
                           }}
@@ -240,7 +240,7 @@ export default function CategoryRegistrationPage() {
                           ))}
                         </select>
                       </td>
-                      <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                         <span style={{
                           display: 'inline-block',
                           padding: '2px 8px',
@@ -253,7 +253,7 @@ export default function CategoryRegistrationPage() {
                           {item.isRegistered ? '登録済' : '未登録'}
                         </span>
                       </td>
-                      <td style={{ padding: '6px', border: '1px solid #ddd', textAlign: 'center' }}>
+                      <td style={{ padding: '6px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                         {item.isRegistered ? (
                           <button
                             onClick={() => handleUnregister(index)}

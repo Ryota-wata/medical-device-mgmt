@@ -242,7 +242,7 @@ export function MaintenanceContractRegistrationModal({
       cursor: 'pointer',
     },
     tableContainer: {
-      border: '1px solid #ddd',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       maxHeight: '300px',
       overflow: 'auto',
@@ -311,7 +311,7 @@ export function MaintenanceContractRegistrationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #ddd',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       fontSize: '14px',
       width: '300px',
@@ -526,7 +526,7 @@ export function MaintenanceContractRegistrationModal({
                 <textarea
                   style={{
                     padding: '12px',
-                    border: '1px solid #ddd',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
                     fontSize: '14px',
                     minHeight: '100px',

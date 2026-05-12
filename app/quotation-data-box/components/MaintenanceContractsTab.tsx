@@ -90,7 +90,7 @@ const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
     if (diffMonths <= 6) {
       return {
         label: `保証期間終了 ${diffMonths}ヶ月前`,
-        color: diffMonths <= 2 ? '#c62828' : '#e65100',
+        color: diffMonths <= 2 ? '#9A2333' : '#A35414',
         fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
         sortValue: diffDays,
       };
@@ -107,7 +107,7 @@ const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
     if (diffMonths <= 6) {
       return {
         label: `契約更新 ${diffMonths}ヶ月前`,
-        color: diffMonths <= 2 ? '#c62828' : '#1565c0',
+        color: diffMonths <= 2 ? '#9A2333' : '#1E5A9E',
         fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
         sortValue: diffDays,
       };
@@ -142,7 +142,7 @@ const calcDeadlineDisplay = (contract: MaintenanceContract): { label: string; co
   if (nearestDays < 0) {
     return { label: `${Math.abs(nearestDays)}日超過`, color: '#b71c1c' };
   }
-  return { label: `${nearestDays}日前`, color: nearestDays <= 30 ? '#c62828' : '#e65100' };
+  return { label: `${nearestDays}日前`, color: nearestDays <= 30 ? '#9A2333' : '#A35414' };
 };
 
 // モック契約データ
@@ -305,7 +305,7 @@ const thSubStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
   padding: '8px',
-  border: '1px solid #ddd',
+  border: '1px solid #E1E1E1',
   whiteSpace: 'nowrap',
   fontSize: '13px',
 };
@@ -411,7 +411,7 @@ const ContractGroupDetailModal = ({
   };
   const mTd: React.CSSProperties = {
     padding: '6px 8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     fontSize: '12px',
     whiteSpace: 'nowrap',
     verticalAlign: 'middle',
@@ -947,7 +947,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
-            <tr style={{ background: '#343a40', color: 'white' }}>
+            <tr style={{ background: '#4A4A4A', color: 'white' }}>
               <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>契約情報</th>
               <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>業者情報</th>
               <th
@@ -956,7 +956,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               >
                 契約検討開始
               </th>
-              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#ef5350', color: 'white', borderColor: '#c62828' }}>操作</th>
+              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#DA0000', color: 'white', borderColor: '#9A2333' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
@@ -971,8 +971,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約業者</th>
               <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>担当者</th>
               <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>連絡先</th>
-              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>登録</th>
-              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>フリーコメント</th>
+              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#9A2333' }}>登録</th>
+              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#9A2333' }}>フリーコメント</th>
             </tr>
           </thead>
           <tbody>
@@ -1076,7 +1076,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   minHeight: '100px',
                   padding: '10px',
                   fontSize: '13px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   resize: 'vertical',
                   boxSizing: 'border-box',
@@ -1086,7 +1086,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
             <div style={{ padding: '12px 20px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
                 onClick={() => { setShowCommentModal(false); setSelectedContract(null); }}
-                style={{ padding: '8px 16px', background: 'white', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                style={{ padding: '8px 16px', background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
               >
                 キャンセル
               </button>

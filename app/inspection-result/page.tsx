@@ -200,7 +200,7 @@ function InspectionResultContent() {
       case '修理申請':
         return { backgroundColor: '#ffebee', color: '#DA0000', borderColor: '#DA0000' };
       default:
-        return { backgroundColor: '#FAFAFA', color: '#666', borderColor: '#ddd' };
+        return { backgroundColor: '#FAFAFA', color: '#666', borderColor: '#E1E1E1' };
     }
   };
 

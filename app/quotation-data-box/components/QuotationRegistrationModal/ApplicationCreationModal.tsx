@@ -68,7 +68,7 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
   const inputStyle = {
     width: '100%',
     padding: '8px 12px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
     boxSizing: 'border-box' as const,
@@ -123,7 +123,7 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
 
         {/* 確定資産情報（assetInfoがある場合） */}
         {assetInfo && (
-          <div style={{ marginBottom: '20px', padding: '15px', background: '#f3e5f5', borderRadius: '4px', border: '1px solid #ce93d8' }}>
+          <div style={{ marginBottom: '20px', padding: '15px', background: '#F1ECF7', borderRadius: '4px', border: '1px solid #ce93d8' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '10px' }}>確定資産情報（Step2で確定）</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: '13px' }}>
               <span style={{ color: '#5E3A93' }}>category:</span>

@@ -149,16 +149,16 @@ export default function PriceAllocationPage() {
       <StepProgressBar currentStep={5} />
 
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
+        <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', marginBottom: '16px' }}>
 
           {/* 上部バー: フィルタ + 金額サマリ */}
-          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #ddd' }}>
+          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #E1E1E1' }}>
             <button
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
                 padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#EBF5EE',
                 border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
-                color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer',
+                color: showOnlyIndividual ? 'white' : '#146E2E', cursor: 'pointer',
               }}
             >
               個体管理品目のみ表示
@@ -172,8 +172,8 @@ export default function PriceAllocationPage() {
                 </div>
               </div>
               <div style={{ textAlign: 'right', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
-                <div>案分対象 <strong style={{ color: '#1565c0' }}>{totals.allocationTarget.toLocaleString()}</strong></div>
-                <div>案分除外 <strong style={{ color: '#1565c0' }}>{totals.allocationExcluded.toLocaleString()}</strong></div>
+                <div>案分対象 <strong style={{ color: '#1E5A9E' }}>{totals.allocationTarget.toLocaleString()}</strong></div>
+                <div>案分除外 <strong style={{ color: '#1E5A9E' }}>{totals.allocationExcluded.toLocaleString()}</strong></div>
                 <div>差額 <strong style={{ color: totals.difference !== 0 ? '#DA0000' : '#333' }}>{totals.difference.toLocaleString()}</strong></div>
               </div>
             </div>
@@ -185,16 +185,16 @@ export default function PriceAllocationPage() {
               <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                 {/* 1段目ヘッダー */}
                 <tr>
-                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
+                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
                     STEP❸
                   </th>
-                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
                     STEP❹ 資産マスタ登録
                   </th>
-                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
                     価格情報（原本情報）
                   </th>
-                  <th colSpan={8} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>
+                  <th colSpan={8} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#F1ECF7', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>
                     STEP❺ 個体登録／金額案分
                   </th>
                 </tr>
@@ -218,7 +218,7 @@ export default function PriceAllocationPage() {
                   <th style={{ ...thBase, width: '40px', textAlign: 'center', background: '#faf5fc' }}>単位</th>
                   <th style={{ ...thBase, width: '35px', textAlign: 'center', background: '#faf5fc' }}>親子<br />関</th>
                   <th style={{ ...thBase, width: '50px', textAlign: 'center', background: '#faf5fc' }}>価格案分<br />区分</th>
-                  <th style={{ ...thBase, width: '70px', textAlign: 'center', background: '#fce4ec', color: '#c62828', fontWeight: 'bold' }}>差額金額<br />を案分</th>
+                  <th style={{ ...thBase, width: '70px', textAlign: 'center', background: '#FBE9EC', color: '#9A2333', fontWeight: 'bold' }}>差額金額<br />を案分</th>
                   <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>定価金額</th>
                   <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>購入金額<br />(税別)</th>
                   <th style={{ ...thBase, width: '45px', textAlign: 'center', background: '#faf5fc' }}>税区分</th>
@@ -236,9 +236,9 @@ export default function PriceAllocationPage() {
                       {/* STEP3 (rowSpanで結合) */}
                       {showOriginal && (
                         <>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{row.rowNo}</td>
-                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #ddd' }}>{row.category}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #ddd', ...borderR }}>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{row.rowNo}</td>
+                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #E1E1E1' }}>{row.category}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #E1E1E1', ...borderR }}>
                             {row.detailClassification && (
                               <span style={{ padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', color: 'white', background: classColor(row.detailClassification) }}>
                                 {clsLabel}
@@ -255,52 +255,52 @@ export default function PriceAllocationPage() {
                       {/* 価格情報（原本）— rowSpan */}
                       {showOriginal && (
                         <>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.listPriceUnit)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.listPriceTotal)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #ddd' }}>{fmtNum(row.purchasePriceUnit)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #ddd', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.listPriceUnit)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.listPriceTotal)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.purchasePriceUnit)}</td>
+                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #E1E1E1', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
                         </>
                       )}
                       {/* STEP5 */}
                       <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff' }}>
                         <select value={row.unit} onChange={e => handleFieldChange(row.id, 'unit', e.target.value)}
-                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', width: '36px' }}>
+                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', width: '36px' }}>
                           {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
                       </td>
                       <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
                         <input type="text" value={row.seqId} onChange={e => handleFieldChange(row.id, 'seqId', e.target.value)}
-                          style={{ width: '28px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'center' }} />
+                          style={{ width: '28px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'center' }} />
                       </td>
                       <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff', fontSize: '9px' }}>
                         <select value={row.allocationCategory} onChange={e => handleFieldChange(row.id, 'allocationCategory', e.target.value)}
-                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', width: '44px' }}>
+                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', width: '44px' }}>
                           <option value="対象">対象</option>
                           <option value="-">-</option>
                         </select>
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'right', background: '#fce4ec' }}>
+                      <td style={{ ...tdBase, textAlign: 'right', background: '#FBE9EC' }}>
                         <input type="text" value={row.differenceAllocation} onChange={e => handleFieldChange(row.id, 'differenceAllocation', e.target.value)}
-                          style={{ width: '60px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }} />
+                          style={{ width: '60px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right' }} />
                       </td>
                       <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
                         <input type="text" value={fmtNum(row.allocListPrice)} onChange={e => handleFieldChange(row.id, 'allocListPrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
-                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }} />
+                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right' }} />
                       </td>
                       <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
                         <input type="text" value={fmtNum(row.allocPurchasePrice)} onChange={e => handleFieldChange(row.id, 'allocPurchasePrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
-                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right' }} />
+                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right' }} />
                       </td>
                       <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff' }}>
                         <select value={row.taxCategory} onChange={e => handleFieldChange(row.id, 'taxCategory', e.target.value)}
-                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', width: '42px' }}>
+                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', width: '42px' }}>
                           <option value="課税">課税</option>
                           <option value="非課税">非課税</option>
                         </select>
                       </td>
                       <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold' }}>
                         <input type="text" value={fmtNum(row.allocPurchaseTaxIncl)} onChange={e => handleFieldChange(row.id, 'allocPurchaseTaxIncl', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
-                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #ddd', borderRadius: '2px', textAlign: 'right', fontWeight: 'bold' }} />
+                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right', fontWeight: 'bold' }} />
                       </td>
                     </tr>
                   );

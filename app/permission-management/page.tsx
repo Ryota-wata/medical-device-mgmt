@@ -226,7 +226,7 @@ export default function PermissionManagementPage() {
                         <tr
                           key={unit.id}
                           className={`border-b border-[#F1F1F1] last:border-b-0 ${
-                            changed ? 'bg-[#fef3c7]' : !enabled ? 'bg-[#fef2f2]' : 'hover:bg-[#FAFAFA]'
+                            changed ? 'bg-[#FDF1E5]' : !enabled ? 'bg-[#fef2f2]' : 'hover:bg-[#FAFAFA]'
                           }`}
                         >
                           <td className="py-2.5 px-4 text-[#4A4A4A] align-top whitespace-nowrap">
@@ -313,7 +313,7 @@ export default function PermissionManagementPage() {
               onChange={(v) => setCopySourceFacility(v)}
               placeholder="コピー元施設を選択..."
             />
-            <div className="mt-4 px-3 py-2.5 bg-[#fef3c7] border border-[#fcd34d] rounded text-xs text-[#92400e]">
+            <div className="mt-4 px-3 py-2.5 bg-[#FDF1E5] border border-[#fcd34d] rounded text-xs text-[#92400e]">
               <strong>注意:</strong> {selectedFacility} の現在の設定はすべて上書きされ、元に戻すことはできません。
             </div>
             <div className="flex justify-end gap-2 mt-5">

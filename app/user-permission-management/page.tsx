@@ -256,7 +256,7 @@ export default function UserPermissionManagementPage() {
                                 locked
                                   ? 'bg-[#FAFAFA]'
                                   : changed
-                                    ? 'bg-[#fef3c7]'
+                                    ? 'bg-[#FDF1E5]'
                                     : !enabled
                                       ? 'bg-[#fef2f2]'
                                       : 'hover:bg-[#FAFAFA]'

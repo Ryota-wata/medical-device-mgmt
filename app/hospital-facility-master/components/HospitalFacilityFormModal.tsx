@@ -324,10 +324,10 @@ export function HospitalFacilityFormModal({
               style={{
                 fontSize: isMobile ? '14px' : '16px',
                 fontWeight: 600,
-                color: '#2e7d32',
+                color: '#146E2E',
                 marginBottom: '16px',
                 paddingBottom: '8px',
-                borderBottom: '2px solid #c8e6c9',
+                borderBottom: '2px solid #EBF5EE',
               }}
             >
               旧（現状）
@@ -336,7 +336,7 @@ export function HospitalFacilityFormModal({
             {/* 病院用ID */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '16px' }}>
               <div>
-                <label style={{ ...labelStyle, color: '#2e7d32' }}>部門ID</label>
+                <label style={{ ...labelStyle, color: '#146E2E' }}>部門ID</label>
                 <input
                   type="text"
                   value={formData.divisionId}
@@ -346,7 +346,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#2e7d32' }}>部署ID</label>
+                <label style={{ ...labelStyle, color: '#146E2E' }}>部署ID</label>
                 <input
                   type="text"
                   value={formData.departmentId}
@@ -356,7 +356,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#2e7d32' }}>諸室ID</label>
+                <label style={{ ...labelStyle, color: '#146E2E' }}>諸室ID</label>
                 <input
                   type="text"
                   value={formData.roomId}

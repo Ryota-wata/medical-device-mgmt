@@ -38,7 +38,7 @@ const thSubStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
   padding: '8px',
-  border: '1px solid #ddd',
+  border: '1px solid #E1E1E1',
   whiteSpace: 'nowrap',
 };
 
@@ -325,7 +325,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
           {/* グループヘッダー行 */}
-          <tr style={{ background: '#343a40', color: 'white' }}>
+          <tr style={{ background: '#4A4A4A', color: 'white' }}>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）依頼No,</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）グループ名称</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>業者情報</th>

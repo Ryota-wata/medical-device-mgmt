@@ -113,7 +113,7 @@ export function RfqGroupModal({
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '2px solid #ddd',
+                border: '2px solid #E1E1E1',
                 borderRadius: '6px',
                 fontSize: '14px',
                 background: '#FAFAFA',
@@ -136,7 +136,7 @@ export function RfqGroupModal({
               style={{
                 width: '100%',
                 padding: '12px',
-                border: '2px solid #ddd',
+                border: '2px solid #E1E1E1',
                 borderRadius: '6px',
                 fontSize: '14px',
                 boxSizing: 'border-box',
@@ -150,7 +150,7 @@ export function RfqGroupModal({
             padding: '12px',
             background: '#FAFAFA',
             borderRadius: '6px',
-            border: '1px solid #ddd',
+            border: '1px solid #E1E1E1',
           }}>
             <span style={{ color: '#666' }}>選択されたレコード: </span>
             <span style={{ fontWeight: 'bold', color: '#DA0000' }}>{selectedCount}件</span>

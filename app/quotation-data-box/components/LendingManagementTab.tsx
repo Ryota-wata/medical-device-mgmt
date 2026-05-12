@@ -198,19 +198,19 @@ const getStatusStyle = (status: LendingStatus): React.CSSProperties => {
   };
   switch (status) {
     case '待機中':
-      return { ...baseStyle, background: '#FDF1E5', color: '#e65100' };
+      return { ...baseStyle, background: '#FDF1E5', color: '#A35414' };
     case '貸出可':
-      return { ...baseStyle, background: '#EBF5EE', color: '#2e7d32' };
+      return { ...baseStyle, background: '#EBF5EE', color: '#146E2E' };
     case '貸出中':
-      return { ...baseStyle, background: '#EAF3FB', color: '#1565c0' };
+      return { ...baseStyle, background: '#EAF3FB', color: '#1E5A9E' };
     case '使用中':
       return { ...baseStyle, background: '#e8eaf6', color: '#283593' };
     case '使用済':
-      return { ...baseStyle, background: '#f3e5f5', color: '#6a1b9a' };
+      return { ...baseStyle, background: '#F1ECF7', color: '#6a1b9a' };
     case '返却済':
       return { ...baseStyle, background: '#e0f2f1', color: '#00695c' };
     case '使用不可':
-      return { ...baseStyle, background: '#fce4ec', color: '#b71c1c' };
+      return { ...baseStyle, background: '#FBE9EC', color: '#b71c1c' };
     default:
       return baseStyle;
   }
@@ -221,11 +221,11 @@ const getPeriodicInspectionStyle = (status: PeriodicInspectionStatus): React.CSS
   if (!status) return {};
   switch (status) {
     case '01点検週':
-      return { color: '#2e7d32' };
+      return { color: '#146E2E' };
     case '02点検月':
-      return { color: '#1565c0' };
+      return { color: '#1E5A9E' };
     case '03点検●ヶ月前':
-      return { color: '#e65100' };
+      return { color: '#A35414' };
     case '04点検月超過':
       return { color: '#b71c1c', fontWeight: 'bold' };
     default:
@@ -255,7 +255,7 @@ const thSubStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
   padding: '8px',
-  border: '1px solid #ddd',
+  border: '1px solid #E1E1E1',
   whiteSpace: 'nowrap',
   fontSize: '13px',
 };
@@ -413,7 +413,7 @@ export const LendingManagementTab: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span style={{ fontSize: '13px', color: '#333' }}>登録済み機器: <strong>{devices.length}件</strong></span>
           <span style={{
-            background: '#343a40',
+            background: '#4A4A4A',
             color: 'white',
             padding: '4px 14px',
             borderRadius: '4px',
@@ -429,7 +429,7 @@ export const LendingManagementTab: React.FC = () => {
       <div style={{
         padding: '10px 16px',
         background: 'white',
-        borderBottom: '1px solid #ddd',
+        borderBottom: '1px solid #E1E1E1',
         display: 'flex',
         gap: '12px',
         alignItems: 'center',
@@ -462,7 +462,7 @@ export const LendingManagementTab: React.FC = () => {
             value={filter.itemName}
             onChange={(e) => setFilter(prev => ({ ...prev, itemName: e.target.value }))}
             placeholder="品目名"
-            style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px', width: '120px' }}
+            style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px', width: '120px' }}
           />
         </div>
 
@@ -471,7 +471,7 @@ export const LendingManagementTab: React.FC = () => {
           <select
             value={filter.maker}
             onChange={(e) => setFilter(prev => ({ ...prev, maker: e.target.value }))}
-            style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}
+            style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}
           >
             <option value="">すべて</option>
             {uniqueMakers.map(m => (
@@ -486,7 +486,7 @@ export const LendingManagementTab: React.FC = () => {
             type="text"
             value={filter.model}
             onChange={(e) => setFilter(prev => ({ ...prev, model: e.target.value }))}
-            style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px', width: '100px' }}
+            style={{ padding: '5px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px', width: '100px' }}
           />
         </div>
 
@@ -554,10 +554,10 @@ export const LendingManagementTab: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
-            <tr style={{ background: '#343a40', color: 'white' }}>
-              <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#fce4ec', color: '#333', borderColor: '#e57373' }}>商品情報</th>
+            <tr style={{ background: '#4A4A4A', color: 'white' }}>
+              <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#FBE9EC', color: '#333', borderColor: '#e57373' }}>商品情報</th>
               <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>貸出機器状況</th>
-              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#f3e5f5', color: '#333', borderColor: '#ba68c8' }}>操作</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1ECF7', color: '#333', borderColor: '#ba68c8' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
@@ -705,7 +705,7 @@ export const LendingManagementTab: React.FC = () => {
                         type="text"
                         value={settingTypeName}
                         onChange={(e) => setSettingTypeName(e.target.value)}
-                        style={{ width: '100%', padding: '6px 8px', fontSize: '13px', border: '1px solid #ddd', borderRadius: '3px', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '6px 8px', fontSize: '13px', border: '1px solid #E1E1E1', borderRadius: '3px', boxSizing: 'border-box' }}
                       />
                     </td>
                   </tr>
@@ -718,7 +718,7 @@ export const LendingManagementTab: React.FC = () => {
                           value={settingAlertDays}
                           onChange={(e) => setSettingAlertDays(Number(e.target.value))}
                           min={0}
-                          style={{ width: '80px', padding: '6px 8px', fontSize: '13px', border: '1px solid #ddd', borderRadius: '3px', textAlign: 'right' }}
+                          style={{ width: '80px', padding: '6px 8px', fontSize: '13px', border: '1px solid #E1E1E1', borderRadius: '3px', textAlign: 'right' }}
                         />
                         <span style={{ fontSize: '13px', color: '#555' }}>日</span>
                       </div>
@@ -742,7 +742,7 @@ export const LendingManagementTab: React.FC = () => {
                           minHeight: '80px',
                           padding: '8px',
                           fontSize: '13px',
-                          border: '1px solid #ddd',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '3px',
                           resize: 'vertical',
                           boxSizing: 'border-box',
@@ -778,7 +778,7 @@ export const LendingManagementTab: React.FC = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   onClick={() => { setShowSettingModal(false); setSelectedDeviceForSetting(null); }}
-                  style={{ padding: '8px 16px', background: 'white', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                  style={{ padding: '8px 16px', background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
                 >
                   キャンセル
                 </button>

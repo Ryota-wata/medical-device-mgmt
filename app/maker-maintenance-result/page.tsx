@@ -205,7 +205,7 @@ export default function MakerMaintenanceResultPage() {
         {/* 対象機器情報 */}
         <div style={{
           background: 'white',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           padding: '12px 16px',
           marginBottom: '16px',
@@ -237,7 +237,7 @@ export default function MakerMaintenanceResultPage() {
             flexDirection: 'column',
             overflow: 'auto',
             background: 'white',
-            border: '1px solid #ddd',
+            border: '1px solid #E1E1E1',
             borderRadius: '4px',
           }}>
             {/* ヘッダー */}
@@ -247,7 +247,7 @@ export default function MakerMaintenanceResultPage() {
               color: 'white',
               fontSize: '14px',
               fontWeight: 'bold',
-              borderBottom: '1px solid #ddd',
+              borderBottom: '1px solid #E1E1E1',
             }}>
               点検結果登録（添付ドキュメントの登録）
             </div>
@@ -316,7 +316,7 @@ export default function MakerMaintenanceResultPage() {
                       placeholder="ファイル名を入力"
                       style={{
                         padding: '6px 12px',
-                        border: '1px solid #ddd',
+                        border: '1px solid #E1E1E1',
                         borderRadius: '4px',
                         fontSize: '13px',
                         width: '200px',
@@ -339,7 +339,7 @@ export default function MakerMaintenanceResultPage() {
 
               {/* 点検業者セクション */}
               <div style={{
-                border: '1px solid #ddd',
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 marginBottom: '20px',
                 overflow: 'hidden',
@@ -347,7 +347,7 @@ export default function MakerMaintenanceResultPage() {
                 <div style={{
                   padding: '10px 16px',
                   background: '#FAFAFA',
-                  borderBottom: '1px solid #ddd',
+                  borderBottom: '1px solid #E1E1E1',
                   fontSize: '14px',
                   fontWeight: 600,
                   color: '#4A4A4A',
@@ -397,7 +397,7 @@ export default function MakerMaintenanceResultPage() {
 
               {/* 発生費用セクション */}
               <div style={{
-                border: '1px solid #ddd',
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 marginBottom: '20px',
                 overflow: 'hidden',
@@ -408,7 +408,7 @@ export default function MakerMaintenanceResultPage() {
                   alignItems: 'center',
                   padding: '12px 16px',
                   background: '#FAFAFA',
-                  borderBottom: '1px solid #ddd',
+                  borderBottom: '1px solid #E1E1E1',
                 }}>
                   <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#4A4A4A' }}>
                     発生費用
@@ -433,7 +433,7 @@ export default function MakerMaintenanceResultPage() {
                 {/* 費用テーブル */}
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ background: '#e9ecef' }}>
+                    <tr style={{ background: '#F1F1F1' }}>
                       <th style={styles.th}>発生費用</th>
                       <th style={styles.th}>概要</th>
                       <th style={{ ...styles.th, width: '120px', textAlign: 'right' }}>金額</th>
@@ -452,7 +452,7 @@ export default function MakerMaintenanceResultPage() {
                             style={{
                               width: '100%',
                               padding: '8px',
-                              border: '1px solid #ddd',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               fontSize: '13px',
                               boxSizing: 'border-box',
@@ -468,7 +468,7 @@ export default function MakerMaintenanceResultPage() {
                             style={{
                               width: '100%',
                               padding: '8px',
-                              border: '1px solid #ddd',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               fontSize: '13px',
                               boxSizing: 'border-box',
@@ -485,7 +485,7 @@ export default function MakerMaintenanceResultPage() {
                               style={{
                                 width: '100%',
                                 padding: '8px',
-                                border: '1px solid #ddd',
+                                border: '1px solid #E1E1E1',
                                 borderRadius: '4px',
                                 fontSize: '13px',
                                 textAlign: 'right',
@@ -573,7 +573,7 @@ export default function MakerMaintenanceResultPage() {
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            border: '1px solid #ddd',
+            border: '1px solid #E1E1E1',
             borderRadius: '4px',
             overflow: 'hidden',
             background: 'white',
@@ -679,7 +679,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   input: {
     width: '100%',
     padding: '10px 12px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
     boxSizing: 'border-box',
@@ -697,7 +697,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '12px',
     fontWeight: 600,
     color: '#4A4A4A',
-    borderBottom: '1px solid #ddd',
+    borderBottom: '1px solid #E1E1E1',
   },
   td: {
     padding: '8px 12px',

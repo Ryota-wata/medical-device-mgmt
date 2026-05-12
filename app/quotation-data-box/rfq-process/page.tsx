@@ -441,13 +441,13 @@ function RfqProcessContent() {
 
             {/* 黄色ガイダンス */}
             <div style={{
-              background: '#fff3cd',
-              border: '1px solid #ffc107',
+              background: '#FDF1E5',
+              border: '1px solid #A66F1B',
               margin: '12px',
               padding: '10px 16px',
               borderRadius: '4px',
               fontSize: '13px',
-              color: '#856404',
+              color: '#A35414',
               fontWeight: 500,
             }}>
               業者を登録し見積依頼書を作成してください。複数業者への相見積もりが可能です。
@@ -792,7 +792,7 @@ function RfqProcessContent() {
           <div style={{
             width: '4px',
             height: '40px',
-            background: '#adb5bd',
+            background: '#8A8A8A',
             borderRadius: '2px',
           }} />
         </div>
@@ -803,12 +803,12 @@ function RfqProcessContent() {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          background: '#e9ecef',
+          background: '#F1F1F1',
         }}>
           {/* プレビューヘッダー */}
           <div style={{
             padding: '8px 16px',
-            background: '#343a40',
+            background: '#4A4A4A',
             color: 'white',
             display: 'flex',
             justifyContent: 'space-between',
@@ -929,8 +929,8 @@ function RfqProcessContent() {
                   <div style={{
                     marginBottom: '20px',
                     padding: '8px 12px',
-                    background: '#fff3cd',
-                    border: '1px solid #ffc107',
+                    background: '#FDF1E5',
+                    border: '1px solid #A66F1B',
                     borderRadius: '2px',
                     fontSize: '12px',
                   }}>
@@ -1019,7 +1019,7 @@ function RfqProcessContent() {
             </div>
           ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-              <div style={{ textAlign: 'center', color: '#adb5bd' }}>
+              <div style={{ textAlign: 'center', color: '#8A8A8A' }}>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#128196;</div>
                 <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>見積依頼書プレビュー</div>
                 <div style={{ fontSize: '12px' }}>左側の基本情報を入力し「プレビュー」ボタンを押すと、見積依頼書が表示されます</div>

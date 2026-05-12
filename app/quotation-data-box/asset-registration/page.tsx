@@ -238,7 +238,7 @@ export default function AssetRegistrationPage() {
                     <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
                       <th style={{ ...tableThStyle, textAlign: 'center' }} rowSpan={2}>No</th>
                       <th style={tableThStyle} colSpan={10}>商品分類</th>
-                      <th style={{ ...tableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={1}>入力項目</th>
+                      <th style={{ ...tableThStyle, background: '#FDF1E5', color: '#A35414' }} colSpan={1}>入力項目</th>
                     </tr>
                     {/* 個別ヘッダー行 */}
                     <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
@@ -252,7 +252,7 @@ export default function AssetRegistrationPage() {
                       <th style={tableThStyle}>型式</th>
                       <th style={{ ...tableThStyle, textAlign: 'right' }}>案分金額（税別）</th>
                       <th style={tableThStyle}>仮勘定科目</th>
-                      <th style={{ ...tableThStyle, background: '#fff7ed', color: '#c2410c' }}>固定資産番号</th>
+                      <th style={{ ...tableThStyle, background: '#FDF1E5', color: '#A35414' }}>固定資産番号</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -358,7 +358,7 @@ const tableTdStyle: React.CSSProperties = {
 
 const editCellStyle: React.CSSProperties = {
   ...tableTdStyle,
-  background: '#fff7ed',
+  background: '#FDF1E5',
 };
 
 const cellInputStyle: React.CSSProperties = {

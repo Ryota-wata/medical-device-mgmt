@@ -81,7 +81,7 @@ export function LendingRegistrationModal({
             {!isNewGroup ? (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <select
-                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '14px' }}
                   value={lendingGroupName}
                   onChange={(e) => setLendingGroupName(e.target.value)}
                 >
@@ -102,7 +102,7 @@ export function LendingRegistrationModal({
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input
                   type="text"
-                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px' }}
+                  style={{ flex: 1, padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '14px' }}
                   value={lendingGroupName}
                   onChange={(e) => setLendingGroupName(e.target.value)}
                   placeholder="新しいグループ名を入力"
@@ -126,7 +126,7 @@ export function LendingRegistrationModal({
                 type="number"
                 min="1"
                 max="365"
-                style={{ width: '80px', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', textAlign: 'right' }}
+                style={{ width: '80px', padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '14px', textAlign: 'right' }}
                 value={alertDays}
                 onChange={(e) => setAlertDays(e.target.value)}
               />
@@ -137,7 +137,7 @@ export function LendingRegistrationModal({
           {/* 対象資産一覧 */}
           <div>
             <label style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', display: 'block', marginBottom: '8px' }}>対象資産（{preSelectedAssets.length}件）</label>
-            <div style={{ border: '1px solid #ddd', borderRadius: '4px', maxHeight: '200px', overflow: 'auto' }}>
+            <div style={{ border: '1px solid #E1E1E1', borderRadius: '4px', maxHeight: '200px', overflow: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr>

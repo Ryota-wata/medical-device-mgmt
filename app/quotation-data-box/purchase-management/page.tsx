@@ -381,7 +381,7 @@ function PurchaseManagementContent() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                       {/* グループヘッダー行 */}
-                      <tr style={{ background: '#343a40', color: 'white' }}>
+                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
                         <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #4A4A4A', width: '36px', verticalAlign: 'middle' }}>
                           <input
                             type="checkbox"
@@ -666,7 +666,7 @@ function PurchaseManagementContent() {
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#EAF3FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128241;</span>
                 </div>
                 <div>
@@ -684,7 +684,7 @@ function PurchaseManagementContent() {
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#FDF1E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128187;</span>
                 </div>
                 <div>

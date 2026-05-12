@@ -307,7 +307,7 @@ export default function OrderRegistrationPage() {
                         <th style={thStyle}>申請者</th>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ padding: '6px 12px', background: '#FAFAFA', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', color: '#333' }}>
+                            <span style={{ padding: '6px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', color: '#333' }}>
                               {rfqGroup.email || user?.email || 'user@company.com'}
                             </span>
                             <span style={{ fontSize: '13px', color: '#333' }}>
@@ -422,12 +422,12 @@ export default function OrderRegistrationPage() {
                 {/* 確認メッセージ */}
                 <div style={{
                   padding: '12px 16px',
-                  background: '#fff3cd',
-                  border: '1px solid #ffc107',
+                  background: '#FDF1E5',
+                  border: '1px solid #A66F1B',
                   borderRadius: '4px',
                   marginBottom: '16px',
                   fontSize: '13px',
-                  color: '#856404',
+                  color: '#A35414',
                   fontWeight: 'bold'
                 }}>
                   下記の内容で発注Databaseへ登録を実施します。
@@ -436,7 +436,7 @@ export default function OrderRegistrationPage() {
                 {/* 基本情報サマリー（Step1入力値の表示） */}
                 <div style={{
                   background: 'white',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   marginBottom: '16px',
                 }}>

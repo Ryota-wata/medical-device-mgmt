@@ -140,7 +140,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
         {/* 基本情報サマリー */}
         <div style={{
           background: 'white',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           marginBottom: '16px',
         }}>
@@ -221,7 +221,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
         {/* 品目テーブル */}
         <div style={{
           background: 'white',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           marginBottom: '16px',
         }}>

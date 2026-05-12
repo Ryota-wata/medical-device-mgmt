@@ -113,7 +113,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
                 <span style={{
                   padding: '6px 12px',
                   background: '#FAFAFA',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '13px',
                   color: '#333',

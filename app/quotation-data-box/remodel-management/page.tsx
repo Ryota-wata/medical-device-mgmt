@@ -185,7 +185,7 @@ function RemodelManagementContent() {
           <div style={{
                 background: 'white',
                 padding: '12px 16px',
-                borderBottom: '1px solid #ddd',
+                borderBottom: '1px solid #E1E1E1',
                 display: 'flex',
                 gap: '16px',
                 alignItems: 'center',
@@ -193,7 +193,7 @@ function RemodelManagementContent() {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <label style={{ fontSize: '12px', color: '#555' }}>見積区分</label>
-                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}>
                     <option value="">すべて</option>
                     <option value="purchase">購入</option>
                     <option value="lease">リース</option>
@@ -209,7 +209,7 @@ function RemodelManagementContent() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <label style={{ fontSize: '12px', color: '#555' }}>見積フェーズ</label>
-                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}>
                     <option value="">すべて</option>
                     <option value="listPrice">定価</option>
                     <option value="estimate">概算</option>
@@ -218,7 +218,7 @@ function RemodelManagementContent() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <label style={{ fontSize: '12px', color: '#555' }}>ステータス</label>
-                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #ddd', borderRadius: '3px' }}>
+                  <select style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #E1E1E1', borderRadius: '3px' }}>
                     <option value="">すべて</option>
                     <option value="見積依頼">見積依頼</option>
                     <option value="見積依頼済">見積依頼済</option>
@@ -275,7 +275,7 @@ function RemodelManagementContent() {
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#EAF3FB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128241;</span>
                 </div>
                 <div>
@@ -293,7 +293,7 @@ function RemodelManagementContent() {
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#FDF1E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128187;</span>
                 </div>
                 <div>

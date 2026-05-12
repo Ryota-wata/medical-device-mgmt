@@ -265,7 +265,7 @@ function ShipAssetMasterContent() {
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
-          background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+          background: 'linear-gradient(135deg, #A66F1B 0%, #f57c00 100%)',
           color: 'white',
           padding: '12px 20px',
           textAlign: 'center',
@@ -607,7 +607,7 @@ function ShipAssetMasterContent() {
                       ))}
                       <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {isSelectMode ? (
-                          <button onClick={(e) => { e.stopPropagation(); handleSelect(asset); }} style={{ padding: '3px 10px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>選択</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleSelect(asset); }} style={{ padding: '3px 10px', background: '#A66F1B', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>選択</button>
                         ) : (
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                             <button onClick={() => handleEdit(asset)} style={{ padding: '3px 8px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>

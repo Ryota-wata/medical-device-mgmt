@@ -333,7 +333,7 @@ export default function AssetMatchingPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-[#8A8A8A] font-semibold">残：</span>
-              <span className="text-[#e65100] font-semibold">{remainingCount}件</span>
+              <span className="text-[#A35414] font-semibold">{remainingCount}件</span>
               <span className="text-[#d1d5db]">|</span>
               <span className="text-[#8A8A8A] font-semibold">完：</span>
               <span className="text-[#008C1D] font-semibold">{totalCount - remainingCount}件</span>
@@ -451,7 +451,7 @@ export default function AssetMatchingPage() {
               disabled={editingRow === null}
               className={`px-5 py-2.5 text-white border-none rounded text-sm font-semibold flex items-center gap-2 ${
                 editingRow !== null
-                  ? 'bg-[#1976d2] cursor-pointer opacity-100 hover:bg-[#1565c0]'
+                  ? 'bg-[#1976d2] cursor-pointer opacity-100 hover:bg-[#1E5A9E]'
                   : 'bg-[#b0bec5] cursor-not-allowed opacity-70'
               }`}
             >
@@ -650,7 +650,7 @@ export default function AssetMatchingPage() {
                           <button
                             onClick={() => handleApplyAIRecommendation(row.id)}
                             className={`px-2 py-1 text-[11px] text-white border-none rounded cursor-pointer whitespace-nowrap ${
-                              row.aiApplied ? 'bg-[#f44336] hover:bg-[#d32f2f]' : 'bg-[#ff9800] hover:bg-[#f57c00]'
+                              row.aiApplied ? 'bg-[#f44336] hover:bg-[#d32f2f]' : 'bg-[#A66F1B] hover:bg-[#f57c00]'
                             }`}
                           >
                             {row.aiApplied ? '解除' : '採用'}
@@ -777,14 +777,14 @@ export default function AssetMatchingPage() {
                           {isEditing ? (
                             <button
                               onClick={saveEdit}
-                              className="px-2 py-1 text-xs bg-[#1976d2] text-white border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#1565c0]"
+                              className="px-2 py-1 text-xs bg-[#1976d2] text-white border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#1E5A9E]"
                             >
                               保存
                             </button>
                           ) : (
                             <button
                               onClick={() => confirmRow(row.id)}
-                              className="px-2 py-1 text-xs bg-[#c8e6c9] text-[#2e7d32] border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#a5d6a7]"
+                              className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#146E2E] border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#a5d6a7]"
                             >
                               確定
                             </button>
@@ -826,7 +826,7 @@ export default function AssetMatchingPage() {
               </button>
               <button
                 onClick={handleLeaveWithSave}
-                className="px-6 py-2.5 bg-[#1976d2] text-white border-none rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#1565c0]"
+                className="px-6 py-2.5 bg-[#1976d2] text-white border-none rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#1E5A9E]"
               >
                 一時保存して戻る
               </button>

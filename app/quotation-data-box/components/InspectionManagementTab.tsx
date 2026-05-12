@@ -278,7 +278,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   const thSortable: React.CSSProperties = { ...thSub, cursor: 'pointer', userSelect: 'none' };
   const td: React.CSSProperties = {
     padding: '8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     whiteSpace: 'nowrap',
     fontSize: '13px',
   };
@@ -287,8 +287,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* ボタンバー */}
       <div style={{ padding: '10px 16px', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-        <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#5E3A93')}>点検メニュー登録</button>
-        <button onClick={handleExportSchedule} style={btnStyle('#0092E6')}>点検予定表の出力</button>
+        <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#008C1D')}>点検メニュー登録</button>
+        <button onClick={handleExportSchedule} style={btnStyle('#FFFFFF')}>点検予定表の出力</button>
       </div>
 
       {/* フィルターエリア（REQ-108: 4項目のみ） */}
@@ -326,7 +326,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
               <th colSpan={4} style={{ ...thGroup, background: '#fff9c4', color: '#333' }}>商品情報</th>
               <th style={{ ...thGroup, background: '#EAF3FB', color: '#333' }}>貸出状況</th>
               <th colSpan={6} style={{ ...thGroup, background: '#ffccbc', color: '#333' }}>定期点検情報</th>
-              <th colSpan={3} style={{ ...thGroup, background: '#f3e5f5', color: '#333' }}>操作</th>
+              <th colSpan={3} style={{ ...thGroup, background: '#F1ECF7', color: '#333' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr>
@@ -343,15 +343,15 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
               <th style={{ ...thSub, background: '#fbe9e7' }}>前回点検日</th>
               <th style={{ ...thSortable, background: '#fbe9e7' }} onClick={() => handleSortToggle('nextInspectionDate')}>次回点検予定{getSortArrow('nextInspectionDate')}</th>
               <th style={{ ...thSortable, background: '#fbe9e7' }} onClick={() => handleSortToggle('status')}>ステータス{getSortArrow('status')}</th>
-              <th style={{ ...thSub, background: '#f3e5f5', textAlign: 'center' }}>Action</th>
-              <th style={{ ...thSub, background: '#f3e5f5', textAlign: 'center' }}>設定変更</th>
-              <th style={{ ...thSub, background: '#f3e5f5', textAlign: 'center' }}>カルテ</th>
+              <th style={{ ...thSub, background: '#F1ECF7', textAlign: 'center' }}>Action</th>
+              <th style={{ ...thSub, background: '#F1ECF7', textAlign: 'center' }}>設定変更</th>
+              <th style={{ ...thSub, background: '#F1ECF7', textAlign: 'center' }}>カルテ</th>
             </tr>
           </thead>
           <tbody>
             {sortedTasks.length === 0 ? (
               <tr>
-                <td colSpan={16} style={{ padding: '48px', textAlign: 'center', color: '#8A8A8A', fontSize: '14px', border: '1px solid #ddd' }}>
+                <td colSpan={16} style={{ padding: '48px', textAlign: 'center', color: '#8A8A8A', fontSize: '14px', border: '1px solid #E1E1E1' }}>
                   点検タスクがありません。資産を選択して点検タスクを追加してください。
                 </td>
               </tr>
@@ -428,7 +428,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                             right: 0,
                             marginTop: '2px',
                             background: 'white',
-                            border: '1px solid #ddd',
+                            border: '1px solid #E1E1E1',
                             borderRadius: '4px',
                             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                             zIndex: 10,
@@ -532,7 +532,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                 type="date"
                 value={newDate}
                 onChange={(e) => setNewDate(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '14px', marginTop: '8px', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '14px', marginTop: '8px', boxSizing: 'border-box' }}
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
@@ -557,16 +557,17 @@ function FilterItem({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-// ヘルパー: ボタンスタイル
+// ヘルパー: ボタンスタイル（背景が白の場合はoutlineスタイル）
 function btnStyle(bg: string): React.CSSProperties {
+  const isWhite = bg === '#FFFFFF' || bg === '#fff' || bg === 'white';
   return {
     backgroundColor: bg,
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    padding: '8px 16px',
-    fontSize: '13px',
-    fontWeight: 600,
+    color: isWhite ? '#4A4A4A' : 'white',
+    border: isWhite ? '1px solid #E1E1E1' : 'none',
+    borderRadius: 6,
+    padding: '8px 14px',
+    fontSize: 13,
+    fontWeight: 500,
     cursor: 'pointer',
     whiteSpace: 'nowrap',
   };

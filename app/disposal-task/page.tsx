@@ -730,13 +730,13 @@ function DisposalTaskContent() {
           >
             {/* ガイドメッセージ */}
             <div style={{
-              background: '#fff3cd',
-              border: '1px solid #ffc107',
+              background: '#FDF1E5',
+              border: '1px solid #A66F1B',
               padding: '10px 16px',
               borderRadius: '4px',
               marginBottom: '16px',
               fontSize: '13px',
-              color: '#856404',
+              color: '#A35414',
               fontWeight: 500,
             }}>
               業者を登録し見積依頼書を作成してください。複数業者への相見積もりが可能です。
@@ -1064,7 +1064,7 @@ function DisposalTaskContent() {
               borderRadius: '4px',
               marginBottom: '16px',
               fontSize: '13px',
-              color: '#1565c0',
+              color: '#1E5A9E',
             }}>
               見積書をファイル選択して登録し、業者名と見積金額を入力してください。
             </div>
@@ -1333,7 +1333,7 @@ function DisposalTaskContent() {
                 {/* REQ-069: 発注登録用見積を登録した場合のみ表示 */}
                 {formData.quotationPhase === '発注用' && registeredQuotations.some((q) => q.phase === '発注用') && (
                   <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: `1px dashed ${COLORS.border}` }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1565c0', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1E5A9E', marginBottom: '8px' }}>
                       発注登録用見積として登録済み — 発注登録に進めます
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -1405,8 +1405,8 @@ function DisposalTaskContent() {
                               borderRadius: '10px',
                               fontSize: '11px',
                               fontWeight: 'bold',
-                              background: q.phase === '発注用' ? '#EAF3FB' : '#f3e5f5',
-                              color: q.phase === '発注用' ? '#1565c0' : '#7b1fa2',
+                              background: q.phase === '発注用' ? '#EAF3FB' : '#F1ECF7',
+                              color: q.phase === '発注用' ? '#1E5A9E' : '#7b1fa2',
                             }}>
                               {q.phase === '発注用' ? '発注登録用' : '参考'}
                             </span>
@@ -2280,7 +2280,7 @@ function DisposalTaskContent() {
           display: 'flex',
           flexDirection: 'column',
           background: '#f0f0f0',
-          borderLeft: '1px solid #ddd',
+          borderLeft: '1px solid #E1E1E1',
           width: '40px',
           flexShrink: 0,
         }}>
@@ -2301,7 +2301,7 @@ function DisposalTaskContent() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   border: 'none',
-                  borderBottom: '1px solid #ddd',
+                  borderBottom: '1px solid #E1E1E1',
                   background: isActive ? '#f5c518' : 'transparent',
                   color: isActive ? '#4A4A4A' : '#666',
                   cursor: 'pointer',

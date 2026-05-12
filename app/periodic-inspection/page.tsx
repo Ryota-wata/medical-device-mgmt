@@ -388,7 +388,7 @@ function PeriodicInspectionContent() {
                   width: '100%',
                   padding: '12px',
                   fontSize: '16px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '8px',
                   boxSizing: 'border-box'
                 }}
@@ -547,7 +547,7 @@ function PeriodicInspectionContent() {
                   placeholder="備考を入力"
                   style={{
                     width: '100%',
-                    border: '1px solid #ddd',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
                     padding: '8px 12px',
                     fontSize: '14px',
@@ -936,7 +936,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 500,
   },
   input: {
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     padding: '6px 10px',
     fontSize: '14px',
@@ -950,11 +950,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#008C1D',
   },
   notice: {
-    backgroundColor: '#fff3cd',
+    backgroundColor: '#FDF1E5',
     padding: '12px',
     borderRadius: '4px',
     fontSize: '13px',
-    color: '#856404',
+    color: '#A35414',
     marginBottom: '16px',
   },
   table: {
@@ -969,7 +969,7 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'left' as const,
     fontWeight: 500,
     color: '#4A4A4A',
-    borderBottom: '1px solid #ddd',
+    borderBottom: '1px solid #E1E1E1',
   },
   td: {
     padding: '10px 8px',
@@ -978,7 +978,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   resultButton: {
     padding: '6px 12px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     backgroundColor: 'white',
     cursor: 'pointer',
@@ -1009,7 +1009,7 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '32px',
   },
   numericInput: {
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     padding: '6px 8px',
     fontSize: '13px',

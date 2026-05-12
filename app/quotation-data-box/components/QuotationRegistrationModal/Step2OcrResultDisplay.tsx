@@ -138,7 +138,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   // セルスタイル
   const cellStyle: React.CSSProperties = {
     padding: '8px 10px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     fontSize: '12px',
     verticalAlign: 'middle',
   };
@@ -155,7 +155,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '6px 8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     borderRadius: '3px',
     fontSize: '12px',
   };
@@ -197,8 +197,8 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           </span>
         </div>
         <div style={{
-          background: '#fff3cd',
-          color: '#856404',
+          background: '#FDF1E5',
+          color: '#A35414',
           padding: '4px 12px',
           borderRadius: '4px',
           fontSize: '11px',
@@ -214,13 +214,13 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           flex: '0 0 55%',
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           overflow: 'hidden',
           background: 'white',
         }}>
           {/* タブヘッダー */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #ddd' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid #E1E1E1' }}>
             <button
               onClick={() => setActiveTab('basic')}
               style={{
@@ -228,7 +228,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                 background: activeTab === 'basic' ? '#4a6fa5' : '#FAFAFA',
                 color: activeTab === 'basic' ? 'white' : '#333',
                 border: 'none',
-                borderRight: '1px solid #ddd',
+                borderRight: '1px solid #E1E1E1',
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: 'bold',
@@ -258,7 +258,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                 background: '#FAFAFA',
                 color: '#333',
                 border: 'none',
-                borderLeft: '1px solid #ddd',
+                borderLeft: '1px solid #E1E1E1',
                 cursor: 'pointer',
                 fontSize: '13px',
                 fontWeight: 'bold',
@@ -415,14 +415,14 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
 
                 {/* 明細テーブル */}
                 <div style={{ marginBottom: '16px' }}>
-                  <div style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
+                  <div style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid #E1E1E1', borderRadius: '4px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                       <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA' }}>
                         <tr>
-                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>項目</th>
-                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>金額</th>
-                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>category</th>
-                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>会計区分</th>
+                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>項目</th>
+                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>金額</th>
+                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>category</th>
+                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>会計区分</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -439,7 +439,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                               <select
                                 value={item.category || ''}
                                 onChange={(e) => handleDetailChange(index, 'category', e.target.value as AssetCategory)}
-                                style={{ width: '100%', padding: '4px', fontSize: '10px', border: '1px solid #ddd', borderRadius: '3px' }}
+                                style={{ width: '100%', padding: '4px', fontSize: '10px', border: '1px solid #E1E1E1', borderRadius: '3px' }}
                               >
                                 <option value="">選択...</option>
                                 {ASSET_CATEGORY_OPTIONS.map(opt => (
@@ -451,7 +451,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                               <select
                                 value={item.accountingCategory || ''}
                                 onChange={(e) => handleDetailChange(index, 'accountingCategory', e.target.value as AccountingCategory)}
-                                style={{ width: '100%', padding: '4px', fontSize: '10px', border: '1px solid #ddd', borderRadius: '3px' }}
+                                style={{ width: '100%', padding: '4px', fontSize: '10px', border: '1px solid #E1E1E1', borderRadius: '3px' }}
                               >
                                 <option value="">選択...</option>
                                 {ACCOUNTING_CATEGORY_OPTIONS.map(opt => (
@@ -495,7 +495,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           </div>
 
           {/* 注記 */}
-          <div style={{ padding: '12px', borderTop: '1px solid #ddd', background: '#FAFAFA', fontSize: '11px', color: '#666', lineHeight: 1.8 }}>
+          <div style={{ padding: '12px', borderTop: '1px solid #E1E1E1', background: '#FAFAFA', fontSize: '11px', color: '#666', lineHeight: 1.8 }}>
             <div>✓ 読み込んだ見積PDFファイルと相違ないか確認・修正を行って下さい</div>
             <div>✓ 合計値が税抜か税込か確認して下さい</div>
             <div style={{ color: '#DA0000', fontWeight: 'bold' }}>
@@ -509,7 +509,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           flex: '0 0 43%',
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid #ddd',
+          border: '1px solid #E1E1E1',
           borderRadius: '4px',
           overflow: 'hidden',
           background: 'white',
@@ -544,7 +544,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           </div>
 
           {/* 登録ボタン */}
-          <div style={{ padding: '12px', borderTop: '1px solid #ddd', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '12px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end' }}>
             <button
               onClick={onNext}
               style={{

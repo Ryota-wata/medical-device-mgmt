@@ -159,7 +159,7 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
                   <div style={{
                     width: '20px',
                     height: '2px',
-                    background: step > s ? '#008C1D' : '#ddd',
+                    background: step > s ? '#008C1D' : '#E1E1E1',
                   }} />
                 )}
               </React.Fragment>

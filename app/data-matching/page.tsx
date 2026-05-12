@@ -583,7 +583,7 @@ export default function DataMatchingPage() {
     switch (status) {
       case '完全一致': return '#4caf50';
       case '部分一致': return '#8bc34a';
-      case '数量不一致': return '#ff9800';
+      case '数量不一致': return '#A66F1B';
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
       case '未登録': return '#5E3A93';
@@ -742,7 +742,7 @@ export default function DataMatchingPage() {
                     <span style={{
                       padding: '4px 12px',
                       backgroundColor: idx === 0 ? '#EAF3FB' : '#EBF5EE',
-                      color: idx === 0 ? '#008C1D' : '#2e7d32',
+                      color: idx === 0 ? '#008C1D' : '#146E2E',
                       borderRadius: '4px',
                       fontSize: '14px',
                       fontWeight: '500'
@@ -800,7 +800,7 @@ export default function DataMatchingPage() {
                   border: '1px solid #4caf50'
                 }}>
                   <div style={{ fontSize: '24px', marginBottom: '12px' }}>✓</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#2e7d32', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#146E2E', marginBottom: '8px' }}>
                     すべてのリストとの突合が完了しました
                   </div>
                   <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '16px' }}>
@@ -858,7 +858,7 @@ export default function DataMatchingPage() {
                               borderRadius: '4px',
                               fontSize: '12px',
                               backgroundColor: list.type === 'fixed-asset' ? '#EAF3FB' : list.type === 'me-ledger' ? '#EBF5EE' : '#FAFAFA',
-                              color: list.type === 'fixed-asset' ? '#008C1D' : list.type === 'me-ledger' ? '#2e7d32' : '#666'
+                              color: list.type === 'fixed-asset' ? '#008C1D' : list.type === 'me-ledger' ? '#146E2E' : '#666'
                             }}>
                               {list.type === 'fixed-asset' ? '固定資産台帳' : list.type === 'me-ledger' ? 'ME管理台帳' : 'その他'}
                             </span>
@@ -984,7 +984,7 @@ export default function DataMatchingPage() {
             <span style={{
               padding: '4px 12px',
               backgroundColor: currentList?.type === 'me-ledger' ? '#EBF5EE' : '#EAF3FB',
-              color: currentList?.type === 'me-ledger' ? '#2e7d32' : '#008C1D',
+              color: currentList?.type === 'me-ledger' ? '#146E2E' : '#008C1D',
               borderRadius: '4px',
               fontSize: '14px',
               fontWeight: '600'
@@ -1016,7 +1016,7 @@ export default function DataMatchingPage() {
               onClick={completeCurrentMatching}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#ff9800',
+                backgroundColor: '#A66F1B',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1166,7 +1166,7 @@ export default function DataMatchingPage() {
           <div style={{
             padding: '8px 16px',
             backgroundColor: '#EAF3FB',
-            borderBottom: '1px solid #90caf9',
+            borderBottom: '1px solid #0092E6',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -1280,7 +1280,7 @@ export default function DataMatchingPage() {
                   <span style={{ fontSize: '11px', color: '#8A8A8A', marginRight: '4px' }}>突合状況:</span>
                   {([
                     { status: '完全一致' as MatchingStatus, label: '完全一致', color: '#4caf50', needsBoth: true },
-                    { status: '数量不一致' as MatchingStatus, label: '数量不一致', color: '#ff9800', needsBoth: true },
+                    { status: '数量不一致' as MatchingStatus, label: '数量不一致', color: '#A66F1B', needsBoth: true },
                     { status: '部分一致' as MatchingStatus, label: '部分一致', color: '#8bc34a', needsBoth: true },
                     { status: '未確認' as MatchingStatus, label: '未確認(現場無)', color: '#f44336', needsBoth: false },
                     { status: '未登録' as MatchingStatus, label: '未登録(台帳無)', color: '#5E3A93', needsBoth: false },
@@ -1310,7 +1310,7 @@ export default function DataMatchingPage() {
                           padding: '4px 10px',
                           backgroundColor: isEnabled ? '#ffffff' : '#FAFAFA',
                           color: isEnabled ? color : '#bbb',
-                          border: `1px solid ${isEnabled ? color : '#ddd'}`,
+                          border: `1px solid ${isEnabled ? color : '#E1E1E1'}`,
                           borderRadius: '4px',
                           cursor: isEnabled ? 'pointer' : 'not-allowed',
                           fontSize: '11px',
@@ -1406,7 +1406,7 @@ export default function DataMatchingPage() {
                 {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length === 0 && (
                   <tr>
                     <td colSpan={16} style={{ padding: '24px', textAlign: 'center' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#2e7d32' }}>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#146E2E' }}>
                         すべての突合が完了しました
                       </div>
                       <button
@@ -1476,14 +1476,14 @@ export default function DataMatchingPage() {
           <div style={{
             padding: '8px 16px',
             backgroundColor: '#FDF1E5',
-            borderBottom: '1px solid #ffe0b2',
+            borderBottom: '1px solid #FDF1E5',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexShrink: 0
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#e65100' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#A35414' }}>
                 {currentList?.name}
               </span>
               <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
@@ -1494,7 +1494,7 @@ export default function DataMatchingPage() {
                   padding: '2px 8px',
                   backgroundColor: '#EBF5EE',
                   borderRadius: '4px',
-                  color: '#2e7d32',
+                  color: '#146E2E',
                   fontWeight: '600',
                   fontSize: '11px'
                 }}>

@@ -206,7 +206,7 @@ export default function AssetImportPage() {
                   作業を再開する
                 </button>
               </div>
-              <div className="flex flex-col gap-2 text-[13px] md:text-sm text-[#1565c0]">
+              <div className="flex flex-col gap-2 text-[13px] md:text-sm text-[#1E5A9E]">
                 <div>全体: {matchingProgress.totalRows} 件</div>
                 <div>完了: {matchingProgress.completedRows} 件 / 未処理: {matchingProgress.pendingRows} 件</div>
                 <div className="w-full h-2 bg-[#bbdefb] rounded mt-2 overflow-hidden">

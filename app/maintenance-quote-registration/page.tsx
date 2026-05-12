@@ -544,7 +544,7 @@ function MaintenanceQuoteRegistrationContent() {
   };
   const vendorTdStyle: React.CSSProperties = {
     padding: '6px 8px',
-    border: '1px solid #ddd',
+    border: '1px solid #E1E1E1',
     fontSize: '12px',
     verticalAlign: 'middle',
   };
@@ -1139,7 +1139,7 @@ function MaintenanceQuoteRegistrationContent() {
                 {/* REQ-069: 発注登録用見積を登録した場合のみ表示 */}
                 {quotationPhase === '発注登録用見積' && registeredQuotations.some((q) => q.phase === '発注登録用見積') && (
                   <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: `1px dashed ${COLORS.border}` }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1565c0', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1E5A9E', marginBottom: '8px' }}>
                       発注登録用見積として登録済み — 発注登録に進めます
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -1218,8 +1218,8 @@ function MaintenanceQuoteRegistrationContent() {
                               borderRadius: '10px',
                               fontSize: '11px',
                               fontWeight: 'bold',
-                              background: q.phase === '発注登録用見積' ? '#e3f2fd' : '#f3e5f5',
-                              color: q.phase === '発注登録用見積' ? '#1565c0' : '#7b1fa2',
+                              background: q.phase === '発注登録用見積' ? '#e3f2fd' : '#F1ECF7',
+                              color: q.phase === '発注登録用見積' ? '#1E5A9E' : '#7b1fa2',
                             }}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
                             </span>
@@ -1618,7 +1618,7 @@ function MaintenanceQuoteRegistrationContent() {
                               borderRadius: '10px',
                               fontSize: '10px',
                               background: q.phase === '発注登録用見積' ? '#e3f2fd' : '#fff8e1',
-                              color: q.phase === '発注登録用見積' ? '#1565c0' : '#f57c00',
+                              color: q.phase === '発注登録用見積' ? '#1E5A9E' : '#f57c00',
                             }}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
                             </span>
@@ -1815,7 +1815,7 @@ function MaintenanceQuoteRegistrationContent() {
                               borderRadius: '10px',
                               fontSize: '10px',
                               background: d.documentType === '契約書' ? '#e8f5e9' : '#fff8e1',
-                              color: d.documentType === '契約書' ? '#2e7d32' : '#f57c00',
+                              color: d.documentType === '契約書' ? '#146E2E' : '#f57c00',
                             }}>
                               {d.documentType === '契約書' ? '契約書' : 'その他'}
                             </span>
@@ -1927,7 +1927,7 @@ function MaintenanceQuoteRegistrationContent() {
           display: 'flex',
           flexDirection: 'column',
           background: '#f0f0f0',
-          borderLeft: '1px solid #ddd',
+          borderLeft: '1px solid #E1E1E1',
           width: '40px',
           flexShrink: 0,
         }}>
@@ -1945,7 +1945,7 @@ function MaintenanceQuoteRegistrationContent() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 border: 'none',
-                borderBottom: '1px solid #ddd',
+                borderBottom: '1px solid #E1E1E1',
                 background: previewTab === item.step ? item.color : 'transparent',
                 color: previewTab === item.step ? 'white' : '#666',
                 cursor: 'pointer',

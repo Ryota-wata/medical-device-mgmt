@@ -268,7 +268,7 @@ function HospitalFacilityMasterContent() {
     textAlign: 'left' as const,
     fontSize: isTab ? '12px' : '13px',
     fontWeight: 600,
-    color: '#2e7d32',
+    color: '#146E2E',
     whiteSpace: 'nowrap' as const,
     background: '#EBF5EE',
   });
@@ -462,9 +462,9 @@ function HospitalFacilityMasterContent() {
         <td style={tdBase(isTablet)}>{facility.oldShipRoomCategory}</td>
         <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.shipRoomCategory2}</td>
         {/* 旧（現状） (7列) */}
-        <td style={{ ...tdBase(isTablet), color: '#2e7d32', background: hospBg }}>{facility.divisionId}</td>
-        <td style={{ ...tdBase(isTablet), color: '#2e7d32', background: hospBg }}>{facility.departmentId}</td>
-        <td style={{ ...tdBase(isTablet), color: '#2e7d32', background: hospBg }}>{facility.roomId}</td>
+        <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.divisionId}</td>
+        <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.departmentId}</td>
+        <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.roomId}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldBuilding}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldDepartment}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldSection}</td>
@@ -485,7 +485,7 @@ function HospitalFacilityMasterContent() {
     const selectLabelStyle = { fontSize: '12px', color: '#8A8A8A', marginBottom: '4px' };
     const inputLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#4A4A4A', marginBottom: '4px' };
     const purpleLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#4527A0', marginBottom: '4px' };
-    const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#2e7d32', marginBottom: '4px' };
+    const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#146E2E', marginBottom: '4px' };
     return (
       <div key={key} style={{ background: '#fffde7', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', border: '2px solid #A66F1B' }}>
         {/* 共通マスタ */}
@@ -508,7 +508,7 @@ function HospitalFacilityMasterContent() {
         </div>
 
         {/* 旧（現状） */}
-        <div style={{ fontWeight: 600, color: '#2e7d32', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #c8e6c9', fontSize: '14px' }}>旧（現状）</div>
+        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>旧（現状）</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
           <div><div style={greenLabelStyle}>部門ID</div><input type="text" value={editForm.divisionId} onChange={(e) => updateField('divisionId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
           <div><div style={greenLabelStyle}>部署ID</div><input type="text" value={editForm.departmentId} onChange={(e) => updateField('departmentId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
@@ -551,7 +551,7 @@ function HospitalFacilityMasterContent() {
         </div>
         {/* 旧（現状） */}
         <div style={{ background: '#EBF5EE', padding: '12px', borderRadius: '6px' }}>
-          <div style={{ fontWeight: 600, color: '#2e7d32', marginBottom: '6px' }}>旧（現状）</div>
+          <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>旧（現状）</div>
           {(facility.divisionId || facility.departmentId || facility.roomId) && (
             <div style={{ marginBottom: '4px' }}><span style={{ color: '#66bb6a', fontSize: '12px' }}>ID: </span>{facility.divisionId} / {facility.departmentId} / {facility.roomId}</div>
           )}
@@ -709,7 +709,7 @@ function HospitalFacilityMasterContent() {
                     <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       共通マスタ
                     </th>
-                    <th colSpan={7} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#2e7d32', background: '#EBF5EE', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={7} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       旧（現状）
                     </th>
                     <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4527A0', background: '#ede7f6', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>

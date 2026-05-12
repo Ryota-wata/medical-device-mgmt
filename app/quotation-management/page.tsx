@@ -200,7 +200,7 @@ function QuotationManagementContent() {
               表示: <strong style={{ color: activeColor }} className="tabular-nums">{filteredItems.length}</strong>件
             </span>
             <span style={{ color: '#555' }}>
-              合計金額: <strong style={{ color: '#c62828' }} className="tabular-nums">{formatCurrency(totalAmount)}</strong>
+              合計金額: <strong style={{ color: '#9A2333' }} className="tabular-nums">{formatCurrency(totalAmount)}</strong>
             </span>
           </div>
         </div>

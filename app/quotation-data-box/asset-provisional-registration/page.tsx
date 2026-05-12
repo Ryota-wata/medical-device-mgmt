@@ -23,7 +23,7 @@ const C = {
   textDark: '#4A4A4A',
   textMuted: '#8A8A8A',
   border: '#ccc',
-  borderLight: '#ddd',
+  borderLight: '#E1E1E1',
   borderLighter: '#eee',
   divider: '#008C1D',
   green: '#008C1D',
@@ -32,7 +32,7 @@ const C = {
   red: '#DA0000',
   redLight: '#fadbd8',
   gray: '#ecf0f1',
-  accent: '#ff9800',
+  accent: '#A66F1B',
   white: '#ffffff',
   inputBg: '#f8f8f8',
   disabled: '#999',
@@ -559,7 +559,7 @@ export default function AssetProvisionalRegistrationPage() {
                       <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
                         <th style={{ ...pcTableThStyle, textAlign: 'center' }} rowSpan={2}>No</th>
                         <th style={pcTableThStyle} colSpan={7}>商品分類</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }} colSpan={7}>入力項目</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }} colSpan={7}>入力項目</th>
                       </tr>
                       {/* 個別ヘッダー行 */}
                       <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
@@ -570,13 +570,13 @@ export default function AssetProvisionalRegistrationPage() {
                         <th style={pcTableThStyle}>品名</th>
                         <th style={pcTableThStyle}>メーカー名</th>
                         <th style={pcTableThStyle}>型式</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>階</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>部門</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>部署</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>室名</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>QRコード</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>シリアルNo.</th>
-                        <th style={{ ...pcTableThStyle, background: '#fff7ed', color: '#c2410c' }}>写真撮影</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>階</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>部門</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>部署</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>室名</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>QRコード</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>シリアルNo.</th>
+                        <th style={{ ...pcTableThStyle, background: '#FDF1E5', color: '#A35414' }}>写真撮影</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -604,7 +604,7 @@ export default function AssetProvisionalRegistrationPage() {
                                 {r.photoFileName ? (
                                   <span style={{ fontSize: '11px', color: COLORS.green, fontWeight: 500 }}>{r.photoFileName}</span>
                                 ) : (
-                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', color: '#c2410c', whiteSpace: 'nowrap' }}>
+                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: '#FDF1E5', border: '1px solid #fdba74', borderRadius: '3px', cursor: 'pointer', fontSize: '11px', color: '#A35414', whiteSpace: 'nowrap' }}>
                                     <span>📷 アップロード</span>
                                     <input
                                       type="file"
@@ -1342,7 +1342,7 @@ const pcTableTdStyle: React.CSSProperties = {
 /** PC 明細テーブル: 編集可能セル */
 const pcEditCellStyle: React.CSSProperties = {
   ...pcTableTdStyle,
-  background: '#fff7ed',
+  background: '#FDF1E5',
 };
 
 /** PC 明細テーブル: セル内input */

@@ -496,9 +496,9 @@ export default function InventoryPage() {
     const styles: Record<InventoryStatus, { bg: string; color: string; text: string }> = {
       unchecked: { bg: '#e0e0e0', color: '#666', text: '未確認' },
       stock_ok: { bg: '#d4edda', color: '#155724', text: '確認済' },
-      location_changed: { bg: '#fff3cd', color: '#856404', text: '移動' },
+      location_changed: { bg: '#FDF1E5', color: '#A35414', text: '移動' },
       disposed: { bg: '#f8d7da', color: '#721c24', text: '廃棄' },
-      action_required: { bg: '#fce4ec', color: '#c62828', text: '要対応' }
+      action_required: { bg: '#FBE9EC', color: '#9A2333', text: '要対応' }
     };
     const style = styles[status];
     return (
@@ -844,7 +844,7 @@ export default function InventoryPage() {
                   <div style={{
                     width: '80px',
                     height: '80px',
-                    background: '#ddd',
+                    background: '#E1E1E1',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
@@ -919,11 +919,11 @@ export default function InventoryPage() {
                     <div style={{
                       marginTop: '8px',
                       padding: '8px 12px',
-                      background: '#fce4ec',
+                      background: '#FBE9EC',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      color: '#c62828',
-                      borderLeft: '3px solid #c62828',
+                      color: '#9A2333',
+                      borderLeft: '3px solid #9A2333',
                     }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>保留理由:</div>
                       {item.actionRequiredComment}

@@ -152,7 +152,7 @@ export default function ShipDepartmentMasterPage() {
                   value={f.value}
                   onChange={(e) => f.onChange(e.target.value)}
                   placeholder={f.placeholder}
-                  className="w-full px-3 py-2.5 border border-[#ddd] rounded text-sm"
+                  className="w-full px-3 py-2.5 border border-[#E1E1E1] rounded text-sm"
                 />
               </div>
             ))}
@@ -196,11 +196,11 @@ export default function ShipDepartmentMasterPage() {
       <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-[#E1E1E1] grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
         <div>
           <label className="text-sm font-semibold text-[#4A4A4A] block mb-2">部門</label>
-          <input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" className="px-3 py-2 border border-[#ddd] rounded text-sm w-full" />
+          <input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" className="px-3 py-2 border border-[#E1E1E1] rounded text-sm w-full" />
         </div>
         <div>
           <label className="text-sm font-semibold text-[#4A4A4A] block mb-2">部署</label>
-          <input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" className="px-3 py-2 border border-[#ddd] rounded text-sm w-full" />
+          <input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" className="px-3 py-2 border border-[#E1E1E1] rounded text-sm w-full" />
         </div>
       </div>
 
@@ -274,11 +274,11 @@ export default function ShipDepartmentMasterPage() {
       <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-[#E1E1E1] grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
         <div>
           <label className="text-sm font-semibold text-[#4A4A4A] block mb-2">諸室区分①</label>
-          <input type="text" value={filterRoomCategory1} onChange={(e) => setFilterRoomCategory1(e.target.value)} placeholder="手術室" className="px-3 py-2 border border-[#ddd] rounded text-sm w-full" />
+          <input type="text" value={filterRoomCategory1} onChange={(e) => setFilterRoomCategory1(e.target.value)} placeholder="手術室" className="px-3 py-2 border border-[#E1E1E1] rounded text-sm w-full" />
         </div>
         <div>
           <label className="text-sm font-semibold text-[#4A4A4A] block mb-2">諸室区分②</label>
-          <input type="text" value={filterRoomCategory2} onChange={(e) => setFilterRoomCategory2(e.target.value)} placeholder="オペ室1" className="px-3 py-2 border border-[#ddd] rounded text-sm w-full" />
+          <input type="text" value={filterRoomCategory2} onChange={(e) => setFilterRoomCategory2(e.target.value)} placeholder="オペ室1" className="px-3 py-2 border border-[#E1E1E1] rounded text-sm w-full" />
         </div>
       </div>
 

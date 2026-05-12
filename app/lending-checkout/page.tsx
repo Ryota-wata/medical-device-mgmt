@@ -92,10 +92,10 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
 
 // ステータスに応じたバッジスタイル
 const STATUS_STYLES: Record<DeviceStatus, string> = {
-  available: 'bg-[#e8f5e9] text-[#2e7d32] border-cta-primary',
-  lending: 'bg-[#e3f2fd] text-[#1565c0] border-[#42a5f5]',
-  in_use: 'bg-[#fff3e0] text-[#e65100] border-[#ff9800]',
-  used: 'bg-[#fce4ec] text-[#c62828] border-[#ef5350]',
+  available: 'bg-[#e8f5e9] text-[#146E2E] border-cta-primary',
+  lending: 'bg-[#e3f2fd] text-[#1E5A9E] border-[#0092E6]',
+  in_use: 'bg-[#fff3e0] text-[#A35414] border-[#A66F1B]',
+  used: 'bg-[#FBE9EC] text-[#9A2333] border-[#DA0000]',
 };
 
 export default function LendingCheckoutPage() {

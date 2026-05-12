@@ -372,7 +372,7 @@ export function PurchaseApplicationModal({
     },
     inputDisabled: {
       padding: '8px 12px',
-      border: '1px solid #ddd',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       fontSize: '14px',
       background: '#FAFAFA',
@@ -427,7 +427,7 @@ export function PurchaseApplicationModal({
       padding: '8px 16px',
       background: 'white',
       color: '#333',
-      border: '1px solid #ddd',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       cursor: 'pointer',
       fontSize: '13px',
@@ -471,7 +471,7 @@ export function PurchaseApplicationModal({
           /* 確認画面 */
           <div>
             <div style={{ background: '#EBF5EE', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
-              <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+              <span style={{ color: '#146E2E', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
             {/* 申請基本情報 */}
@@ -480,28 +480,28 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>管理部署</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{managementDepartment}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>申請者</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantName}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>管理部署</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{managementDepartment}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>申請者</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{applicantName}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>申請日</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicationDate}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>優先順位</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{priority}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>申請日</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{applicationDate}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>優先順位</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{priority}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置部門</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationDepartment || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationSection || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>設置部門</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{installationDepartment || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>設置部署</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{installationSection || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置室名</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationRoomName || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>設置室名</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{installationRoomName || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>希望納期</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
                   </tr>
                 </tbody>
               </table>
@@ -513,10 +513,10 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{basicItem || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>台数</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{basicQuantity}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>品目名</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{basicItem || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>台数</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1', fontVariantNumeric: 'tabular-nums' }}>{basicQuantity}</td>
                   </tr>
                 </tbody>
               </table>
@@ -528,19 +528,19 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#FAFAFA' }}>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', width: '80px' }}>希望順</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left' }}>品目</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left' }}>メーカー</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left' }}>型式</th>
                   </tr>
                 </thead>
                 <tbody>
                   {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>{getHopeLabel(index)}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.item}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.maker || '-'}</td>
-                      <td style={{ padding: '8px', border: '1px solid #ddd' }}>{equipment.model || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>{getHopeLabel(index)}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.item}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.maker || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.model || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -553,10 +553,10 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{usagePurpose || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>件数</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{caseCount ? `${caseCount} ${caseCountUnit}` : '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>用途</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{usagePurpose || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>件数</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{caseCount ? `${caseCount} ${caseCountUnit}` : '-'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -566,7 +566,7 @@ export function PurchaseApplicationModal({
             {comment && (
               <div style={styles.section}>
                 <div style={styles.sectionTitle}>コメント（必要理由 他）</div>
-                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #E1E1E1', whiteSpace: 'pre-wrap' }}>
                   {comment}
                 </div>
               </div>
@@ -590,10 +590,10 @@ export function PurchaseApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続要望</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>接続要望</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>接続先</th>
+                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{requestConnectionDestination || '-'}</td>
                   </tr>
                 </tbody>
               </table>
@@ -731,33 +731,33 @@ export function PurchaseApplicationModal({
               </button>
             </div>
 
-            <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ border: '1px solid #E1E1E1', borderRadius: '4px', overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
                   <tr style={{ background: '#FAFAFA' }}>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '80px' }}>希望順</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>順序</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>品目</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>メーカー</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>型式</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '120px' }}>選択</th>
-                    <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, width: '80px' }}>希望順</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, width: '50px' }}>順序</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600 }}>品目</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600 }}>メーカー</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600 }}>型式</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, width: '120px' }}>選択</th>
+                    <th style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, width: '50px' }}>削除</th>
                   </tr>
                 </thead>
                 <tbody>
                   {desiredEquipments.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #ddd' }}>
+                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #E1E1E1' }}>
                         「+ 資産を追加」ボタンで要望機器を追加してください
                       </td>
                     </tr>
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
                           {getHopeLabel(index)}
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <td style={{ padding: '4px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <button
                               onClick={() => handleMoveEquipment(index, 'up')}
@@ -793,7 +793,7 @@ export function PurchaseApplicationModal({
                             </button>
                           </div>
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={equipment.item}
@@ -802,14 +802,14 @@ export function PurchaseApplicationModal({
                             style={{
                               width: '100%',
                               padding: '4px 6px',
-                              border: '1px solid #ddd',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               fontSize: '12px',
                               boxSizing: 'border-box',
                             }}
                           />
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={equipment.maker}
@@ -818,14 +818,14 @@ export function PurchaseApplicationModal({
                             style={{
                               width: '100%',
                               padding: '4px 6px',
-                              border: '1px solid #ddd',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               fontSize: '12px',
                               boxSizing: 'border-box',
                             }}
                           />
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd' }}>
+                        <td style={{ padding: '4px', border: '1px solid #E1E1E1' }}>
                           <input
                             type="text"
                             value={equipment.model}
@@ -834,14 +834,14 @@ export function PurchaseApplicationModal({
                             style={{
                               width: '100%',
                               padding: '4px 6px',
-                              border: '1px solid #ddd',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               fontSize: '12px',
                               boxSizing: 'border-box',
                             }}
                           />
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <td style={{ padding: '4px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                           <button
                             onClick={() => handleOpenAssetMaster(index)}
                             style={{
@@ -858,7 +858,7 @@ export function PurchaseApplicationModal({
                             資産マスタから選択
                           </button>
                         </td>
-                        <td style={{ padding: '4px', border: '1px solid #ddd', textAlign: 'center' }}>
+                        <td style={{ padding: '4px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                           <button
                             onClick={() => handleRemoveEquipment(index)}
                             style={{

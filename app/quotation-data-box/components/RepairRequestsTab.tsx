@@ -86,7 +86,7 @@ const thSubStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
   padding: '8px',
-  border: '1px solid #ddd',
+  border: '1px solid #E1E1E1',
   whiteSpace: 'nowrap',
 };
 
@@ -189,7 +189,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
     <div style={{ flex: 1, overflow: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-          <tr style={{ background: '#343a40', color: 'white' }}>
+          <tr style={{ background: '#4A4A4A', color: 'white' }}>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>申請項目</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>品目情報</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>担当情報</th>
@@ -249,7 +249,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
                         fontSize: '10px',
                         fontWeight: 'bold',
                         background: '#ffebee',
-                        color: '#c62828',
+                        color: '#9A2333',
                         border: '1px solid #ef9a9a',
                         whiteSpace: 'nowrap',
                       }}>

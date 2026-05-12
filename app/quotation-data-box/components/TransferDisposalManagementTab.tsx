@@ -110,8 +110,8 @@ const STEP_TABS: { key: StepKey; label: string; statuses: DisposalRfqStatus[] }[
 
 // 申請種別バッジスタイル
 const getApplicationTypeStyle = (type: '移動申請' | '廃棄申請'): React.CSSProperties => ({
-  background: type === '移動申請' ? '#FDF1E5' : '#fce4ec',
-  color: type === '移動申請' ? '#e65100' : '#c62828',
+  background: type === '移動申請' ? '#FDF1E5' : '#FBE9EC',
+  color: type === '移動申請' ? '#A35414' : '#9A2333',
 });
 
 // --- モックデータ ---
@@ -446,7 +446,7 @@ export function TransferDisposalManagementTab() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                   {/* グループヘッダー行 */}
-                  <tr style={{ background: '#343a40', color: 'white' }}>
+                  <tr style={{ background: '#4A4A4A', color: 'white' }}>
                     <th rowSpan={2} style={{ ...thGroupStyle, width: '36px', verticalAlign: 'middle' }}>
                       <input
                         type="checkbox"
@@ -599,21 +599,21 @@ export function TransferDisposalManagementTab() {
       }}>
         {/* ヘッダー */}
         <div style={{
-          padding: '12px 16px',
-          background: '#0092E6',
+          padding: '10px 16px',
+          background: '#008C1D',
           color: 'white',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>廃棄依頼グループ</span>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>廃棄依頼グループ</span>
         </div>
 
         {/* ステップタブ */}
         <div style={{
-          borderBottom: '2px solid #E1E1E1',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
-          background: '#FAFAFA',
+          background: '#FFFFFF',
           overflowX: 'auto',
         }}>
           {STEP_TABS.map((tab) => {
@@ -627,15 +627,15 @@ export function TransferDisposalManagementTab() {
                 onClick={() => setActiveStep(tab.key)}
                 style={{
                   padding: '10px 16px',
-                  background: isActive ? '#0092E6' : 'transparent',
+                  background: 'transparent',
                   border: 'none',
-                  borderBottom: isActive ? '2px solid #0092E6' : '2px solid transparent',
+                  borderBottom: isActive ? '2px solid #008C1D' : '2px solid transparent',
                   cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: isActive ? 'bold' : 'normal',
-                  color: isActive ? 'white' : '#555',
+                  fontSize: 12,
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? '#146E2E' : '#4A4A4A',
                   whiteSpace: 'nowrap',
-                  marginBottom: '-2px',
+                  marginBottom: -1,
                 }}
               >
                 {tab.label}
@@ -668,7 +668,7 @@ export function TransferDisposalManagementTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                 {/* グループヘッダー行 */}
-                <tr style={{ background: '#343a40', color: 'white' }}>
+                <tr style={{ background: '#4A4A4A', color: 'white' }}>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>廃棄依頼No,</th>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>廃棄依頼グループ名称</th>
                   <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>廃棄業者情報</th>
@@ -688,17 +688,17 @@ export function TransferDisposalManagementTab() {
                   const deadlineMapping = STATUS_DEADLINE_MAP[group.status];
                   return (
                     <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', verticalAlign: 'top' }}>
-                      <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600, border: '1px solid #ddd' }}>
+                      <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600, border: '1px solid #E1E1E1' }}>
                         {group.rfqNo}
                       </td>
-                      <td style={{ ...tdStyle, border: '1px solid #ddd' }}>{group.groupName}</td>
-                      <td style={{ ...tdStyle, border: '1px solid #ddd' }}>{group.vendorName || '-'}</td>
-                      <td style={{ ...tdStyle, border: '1px solid #ddd' }}>{group.personInCharge || '-'}</td>
-                      <td style={{ ...tdStyle, border: '1px solid #ddd' }}>{group.tel || '-'}</td>
-                      <td style={{ ...tdStyle, textAlign: 'center', border: '1px solid #ddd' }}>
+                      <td style={{ ...tdStyle, border: '1px solid #E1E1E1' }}>{group.groupName}</td>
+                      <td style={{ ...tdStyle, border: '1px solid #E1E1E1' }}>{group.vendorName || '-'}</td>
+                      <td style={{ ...tdStyle, border: '1px solid #E1E1E1' }}>{group.personInCharge || '-'}</td>
+                      <td style={{ ...tdStyle, border: '1px solid #E1E1E1' }}>{group.tel || '-'}</td>
+                      <td style={{ ...tdStyle, textAlign: 'center', border: '1px solid #E1E1E1' }}>
                         {getStatusBadge(group.status)}
                       </td>
-                      <td style={{ ...tdStyle, verticalAlign: 'top', border: '1px solid #ddd' }}>
+                      <td style={{ ...tdStyle, verticalAlign: 'top', border: '1px solid #E1E1E1' }}>
                         {deadlineMapping && group[deadlineMapping.field] ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <span style={{ fontSize: '11px', color: '#8A8A8A', whiteSpace: 'nowrap' }}>
@@ -712,7 +712,7 @@ export function TransferDisposalManagementTab() {
                           <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>
                         )}
                       </td>
-                      <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'top', border: '1px solid #ddd' }}>
+                      <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'top', border: '1px solid #E1E1E1' }}>
                         {getActionButton(group)}
                       </td>
                     </tr>

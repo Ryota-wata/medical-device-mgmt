@@ -147,8 +147,8 @@ export function AddToEditListModal({
           {editLists.length === 0 && (
             <div
               style={{
-                background: '#fff3cd',
-                border: '1px solid #ffc107',
+                background: '#FDF1E5',
+                border: '1px solid #A66F1B',
                 borderRadius: '8px',
                 padding: '12px 16px',
                 marginBottom: '20px',
@@ -158,7 +158,7 @@ export function AddToEditListModal({
               }}
             >
               <span style={{ fontSize: '18px' }}>⚠️</span>
-              <span style={{ fontSize: '14px', color: '#856404' }}>
+              <span style={{ fontSize: '14px', color: '#A35414' }}>
                 編集リストがありません。新規作成してください。
               </span>
             </div>
