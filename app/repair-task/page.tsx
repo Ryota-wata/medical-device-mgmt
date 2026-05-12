@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthStore, useAssetStore } from '@/lib/stores';
+import { useAuthStore, useAssetStore, useLendingStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
@@ -343,6 +343,8 @@ function RepairTaskContent() {
   const repairCategory = searchParams.get('repairCategory') || ''; // REQ-076: 申請内容 (院内対応/外部依頼)
   const user = useAuthStore((s) => s.user);
   const { assets } = useAssetStore();
+  const lendingDevices = useLendingStore((s) => s.devices);
+  const updateLendingDevice = useLendingStore((s) => s.updateDevice);
   // REQ-084: 廃棄申請モーダル表示状態
   const [isDisposalModalOpen, setIsDisposalModalOpen] = useState(false);
   // REQ-086: STEP④ 完了登録の添付ファイル + ドキュメント種別
@@ -661,6 +663,15 @@ function RepairTaskContent() {
   const handleStep4Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
+      // REQ-129: 貸出機器の場合、修理完了で「使用不可 → 貸出可」へ自動復帰
+      // 判定基準: lendingStore に当該QRコードが存在 = 貸出機器
+      const qr = request?.qrLabel;
+      if (qr) {
+        const device = lendingDevices.find((d) => d.qrCode === qr);
+        if (device && device.status === '使用不可') {
+          updateLendingDevice(device.id, { status: '貸出可' });
+        }
+      }
       setRequest(prev => prev ? { ...prev, status: '完了' } : prev);
       alert('資産登録を完了しました。タスク管理画面に戻ります。');
       router.push('/quotation-data-box/repair-requests');

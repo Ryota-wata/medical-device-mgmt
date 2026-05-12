@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, Suspense, useMemo, useEffect } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { Asset } from '@/lib/types/asset';
-import { useInspectionStore, useAuthStore } from '@/lib/stores';
+import { useInspectionStore, useAuthStore, useLendingStore } from '@/lib/stores';
 import { QRCodePlaceholder } from '@/components/ui/QRCodePlaceholder';
 
 // モック: 原本資産データ（実際はIndexedDBまたはAPIから取得）
@@ -74,6 +74,8 @@ function DailyInspectionContent() {
   const { isMobile } = useResponsive();
   const { menus } = useInspectionStore();
   const { user } = useAuthStore();
+  const lendingDevices = useLendingStore((s) => s.devices);
+  const updateLendingDevice = useLendingStore((s) => s.updateDevice);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // ステップ管理
@@ -198,8 +200,22 @@ function DailyInspectionContent() {
     alert('点検結果報告書を出力しました');
   };
 
+  // REQ-129: 貸出機器の場合の貸出ステータス更新
+  // 判定基準: lendingStore に当該QRコードが存在 = 貸出機器（管理部署=ME系で貸出登録済）
+  // 合格 → 貸出可（slide66/67: 日常点検（使用後）完了で貸出可）
+  // 異常あり → 使用不可（4/30定例: 貸出機の異常時は「使用不可」共通）
+  const updateLendingStatusFromInspection = (result: '合格' | '異常あり') => {
+    if (!selectedAsset?.qrCode) return;
+    const device = lendingDevices.find((d) => d.qrCode === selectedAsset.qrCode);
+    if (!device) return;
+    updateLendingDevice(device.id, {
+      status: result === '合格' ? '貸出可' : '使用不可',
+    });
+  };
+
   // 完了
   const handleFinish = () => {
+    updateLendingStatusFromInspection('合格');
     console.log('点検完了:', {
       overallResult,
       qrCode: selectedAsset?.qrCode,
@@ -211,6 +227,7 @@ function DailyInspectionContent() {
 
   // 修理申請へ
   const handleRepairRequest = () => {
+    updateLendingStatusFromInspection('異常あり');
     sessionStorage.setItem('repairRequestData', JSON.stringify({
       qrCode: selectedAsset?.qrCode || '',
       largeClass: selectedAsset?.largeClass || '',

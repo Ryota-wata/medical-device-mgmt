@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, Suspense, useMemo, useEffect } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { InspectionTask } from '@/lib/types';
-import { useInspectionStore, useAuthStore } from '@/lib/stores';
+import { useInspectionStore, useAuthStore, useLendingStore } from '@/lib/stores';
 
 // REQ-103: 評価項目の入力形式 3 パターン（定例0413 確定: マルバツ二択 / 単位付き数値 / フリーテキスト）
 interface InspectionItemResult {
@@ -30,6 +30,8 @@ function PeriodicInspectionContent() {
   const { isMobile, isTablet } = useResponsive();
   const { menus, getMenuById, completeInspection, startInspection } = useInspectionStore();
   const { user } = useAuthStore();
+  const lendingDevices = useLendingStore((s) => s.devices);
+  const updateLendingDevice = useLendingStore((s) => s.updateDevice);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // タスク情報（sessionStorageから取得）
@@ -167,9 +169,23 @@ function PeriodicInspectionContent() {
     alert('点検結果報告書を出力しました');
   };
 
+  // REQ-129: 貸出機器の場合の貸出ステータス更新
+  // 判定基準: lendingStore に当該QRコードが存在 = 貸出機器（管理部署=ME系で貸出登録済）
+  // 合格 → 貸出可 / 異常あり → 使用不可（4/30定例: 貸出機の異常時は「使用不可」共通）
+  const updateLendingStatusFromInspection = (result: '合格' | '異常あり') => {
+    if (!task?.assetId) return;
+    const device = lendingDevices.find((d) => d.qrCode === task.assetId);
+    if (!device) return;
+    updateLendingDevice(device.id, {
+      status: result === '合格' ? '貸出可' : '使用不可',
+    });
+  };
+
   // 完了
   const handleFinish = () => {
     if (!task) return;
+
+    updateLendingStatusFromInspection('合格');
 
     // 点検実績を登録
     completeInspection(task.id, {
@@ -197,6 +213,7 @@ function PeriodicInspectionContent() {
   // 修理申請へ
   const handleRepairRequest = () => {
     if (!task) return;
+    updateLendingStatusFromInspection('異常あり');
     sessionStorage.setItem('repairRequestData', JSON.stringify({
       qrCode: task.assetId,
       largeClass: task.largeClass,
