@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
 import { useAuthStore, useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
@@ -113,7 +114,7 @@ export default function FacilitySelectPage() {
               >
                 <div className="flex items-center justify-between">
                   <span>{facilityName}</span>
-                  <span className="text-cta-primary text-xl">→</span>
+                  <ArrowRight className="w-5 h-5 text-cta-primary" aria-hidden />
                 </div>
               </button>
             ))}
