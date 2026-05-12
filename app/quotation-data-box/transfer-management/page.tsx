@@ -7,7 +7,7 @@ import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function TransferManagementContent() {
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-dvh flex flex-col bg-surface-screen">
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -16,7 +16,7 @@ function TransferManagementContent() {
         hideMenu={true}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="flex flex-1 overflow-hidden">
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflowY: 'auto', gap: '16px' }}>
           <SubTabNavigation activeTab="transferDisposalManagement" />
 
@@ -29,7 +29,7 @@ function TransferManagementContent() {
 
 export default function TransferManagementPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>読み込み中...</div>}>
+    <Suspense fallback={<div className="p-5 text-center text-content-sub">読み込み中...</div>}>
       <TransferManagementContent />
     </Suspense>
   );

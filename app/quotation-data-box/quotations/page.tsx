@@ -12,7 +12,7 @@ export default function QuotationsRedirectPage() {
   }, [router]);
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
+    <div className="p-5 text-center text-content-sub">
       リダイレクト中...
     </div>
   );

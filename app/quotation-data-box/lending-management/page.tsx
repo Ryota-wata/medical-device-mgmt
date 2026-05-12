@@ -7,7 +7,7 @@ import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function LendingManagementContent() {
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
+    <div className="min-h-dvh flex flex-col bg-surface-screen">
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -16,11 +16,11 @@ function LendingManagementContent() {
         hideMenu={true}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '16px', overflowY: 'auto' }}>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col p-4 overflow-y-auto">
           <SubTabNavigation activeTab="lendingManagement" />
 
-          <div style={{ flex: 1, background: 'white', overflow: 'auto' }}>
+          <div className="flex-1 bg-surface-card overflow-auto">
             <LendingManagementTab />
           </div>
         </div>
@@ -31,7 +31,7 @@ function LendingManagementContent() {
 
 export default function LendingManagementPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>読み込み中...</div>}>
+    <Suspense fallback={<div className="p-5 text-center text-content-sub">読み込み中...</div>}>
       <LendingManagementContent />
     </Suspense>
   );
