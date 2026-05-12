@@ -247,17 +247,18 @@ function PeriodicInspectionContent() {
 
   if (!task) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
         <header style={{
-          background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
-          color: 'white',
-          padding: '16px 24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          background: '#FFFFFF',
+          borderBottom: '1px solid #F1F1F1',
+          color: '#4A4A4A',
+          padding: '12px 20px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          gap: 12,
         }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>定期点検</h1>
+          <div style={{ width: 36, height: 36, background: '#008C1D', borderRadius: 6, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 0.4 }}>SHIP</div>
+          <h1 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>定期点検</h1>
         </header>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p>タスク情報を読み込み中...</p>
@@ -267,19 +268,20 @@ function PeriodicInspectionContent() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
-      {/* Header */}
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
+      {/* Header（Figma準拠: 白bg + 軽い罫線） */}
       <header style={{
-        background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
-        color: 'white',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        background: '#FFFFFF',
+        borderBottom: '1px solid #F1F1F1',
+        color: '#4A4A4A',
+        padding: isMobile ? '10px 14px' : '12px 20px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        gap: 12,
       }}>
-        <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0 }}>
-          定期点検 - {step === 'qr-scan' ? 'QRコード読み取り' : step === 'confirm' ? '確認' : '点検実施'}
+        <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, background: '#008C1D', borderRadius: 6, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, letterSpacing: 0.4 }}>SHIP</div>
+        <h1 style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, margin: 0 }}>
+          定期点検 <span style={{ color: '#8A8A8A', fontWeight: 500, marginLeft: 8, fontSize: isMobile ? 12 : 13 }}>{step === 'qr-scan' ? 'QRコード読み取り' : step === 'confirm' ? '確認' : '点検実施'}</span>
         </h1>
       </header>
 

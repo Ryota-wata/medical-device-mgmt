@@ -6,6 +6,7 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { ApplicationCompleteModal } from '@/components/ui/ApplicationCompleteModal';
 import { ApplicationCloseConfirmModal } from '@/components/ui/ApplicationCloseConfirmModal';
+import { Header } from '@/components/layouts';
 
 interface DeviceInfo {
   qrCode: string;
@@ -235,17 +236,14 @@ function RepairRequestContent() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-surface-screen">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-stroke-card px-4 py-3">
-        <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
-          <div className="size-10 bg-cta-primary rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-            logo
-          </div>
-          <div className="text-base font-bold text-content-primary text-balance">
-            {isConfirmView ? '修理依頼 - 内容確認' : '修理依頼'}
-          </div>
-        </div>
-      </header>
+      {/* 共通ヘッダー */}
+      <Header
+        title={isConfirmView ? '修理依頼 - 内容確認' : '修理依頼'}
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        hideMenu={true}
+      />
 
       {/* メインコンテンツ */}
       <div className="flex-1 w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">

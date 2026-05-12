@@ -575,44 +575,96 @@ export default function AssetSearchResultPage() {
         )}
 
         {currentView === 'card' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {filteredAssets.map((asset) => (
-              <div
-                key={asset.no}
-                style={{
-                  background: 'white',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-                onDoubleClick={() => router.push(`/asset-karte/${asset.no}`)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                }}
-              >
-                <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.has(asset.no)}
-                    onChange={() => handleSelectItem(asset.no)}
-                  />
-                  <strong style={{ color: '#4A4A4A' }}>No. {asset.no}</strong>
+          /* slide36 「カード表示」レイアウト準拠: 4列固定グリッド、写真+機器名+縦情報 */
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+              gap: '16px',
+              alignContent: 'start',
+            }}
+          >
+            {filteredAssets.map((asset) => {
+              const isSelected = selectedItems.has(asset.no);
+              // 写真プレースホルダー（asset.photos が無い場合は機器名で SVG 生成）
+              const photoUrl = asset.photos?.[0] || (() => {
+                const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 160" width="220" height="160"><rect width="220" height="160" fill="#EDEDED"/><text x="110" y="85" font-size="14" fill="#8A8A8A" font-family="sans-serif" text-anchor="middle">${asset.item || asset.name || '医療機器'}</text></svg>`;
+                return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+              })();
+              return (
+                <div
+                  key={asset.no}
+                  style={{
+                    background: '#FFFFFF',
+                    border: `1px solid ${isSelected ? '#008C1D' : '#E1E1E1'}`,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onDoubleClick={() => router.push(`/asset-detail?qrCode=${asset.qrCode}&from=asset-search`)}
+                  onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
+                >
+                  {/* チェックボックス（左上オーバーレイ） */}
+                  <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleSelectItem(asset.no)}
+                      style={{ position: 'absolute', top: 8, left: 8, accentColor: '#008C1D', cursor: 'pointer', zIndex: 1 }}
+                    />
+                    {/* 機器写真 */}
+                    <img
+                      src={photoUrl}
+                      alt={asset.name}
+                      style={{ width: '100%', height: 150, objectFit: 'contain', background: '#FAFAFA', display: 'block' }}
+                    />
+                  </div>
+
+                  {/* 機器名バー（slide36 のバー風）+ QRコード */}
+                  <div style={{ background: '#FAFAFA', borderTop: '1px solid #F1F1F1', borderBottom: '1px solid #F1F1F1', padding: '6px 10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8, minWidth: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {asset.item || asset.name}
+                      </span>
+                      <span style={{ fontSize: 10, color: '#8A8A8A', fontFamily: 'monospace', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {asset.qrCode || '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 縦並び情報（slide36: ラベル+値ペア） */}
+                  <div style={{ padding: '8px 10px', fontSize: 11, lineHeight: 1.5 }}>
+                    {[
+                      { label: '部署', value: `${asset.department || '—'}${asset.section ? '／' + asset.section : ''}` },
+                      { label: '場所', value: asset.roomName || '—' },
+                      { label: 'メーカー', value: asset.maker || '—' },
+                      { label: '型式', value: asset.model || '—' },
+                      { label: '備考', value: '—' },
+                      { label: '台帳番号', value: asset.assetNo || '—', mono: true },
+                    ].map((row, idx, arr) => (
+                      <div
+                        key={row.label}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '60px 1fr',
+                          gap: 6,
+                          padding: '4px 0',
+                          borderBottom: idx < arr.length - 1 ? '1px solid #F1F1F1' : 'none',
+                          alignItems: 'baseline',
+                        }}
+                      >
+                        <span style={{ color: '#8A8A8A', fontSize: 10 }}>{row.label}</span>
+                        <span style={{ color: '#4A4A4A', fontFamily: row.mono ? 'monospace' : 'inherit', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#4A4A4A' }}>{asset.name}</h3>
-                <div style={{ fontSize: '13px', color: '#5a6c7d', lineHeight: '1.6' }}>
-                  <div>施設: {asset.facility}</div>
-                  <div>場所: {asset.building} {asset.floor}</div>
-                  <div>部門: {asset.department}</div>
-                  <div>メーカー: {asset.maker}</div>
-                  <div>型式: {asset.model}</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         </div>

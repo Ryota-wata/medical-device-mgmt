@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useLendingStore } from '@/lib/stores';
+import { Header } from '@/components/layouts';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 
 export default function LendingAvailablePage() {
@@ -45,50 +46,55 @@ export default function LendingAvailablePage() {
         }
         return acc;
       }, {});
-    return Object.entries(grouped).map(([name, counts]) => ({
-      name,
-      ...counts,
-    }));
+    return Object.entries(grouped).map(([name, counts]) => ({ name, ...counts }));
   }, [devices, selectedGroup]);
 
-  // 選択機種の台数
   const selectedDeviceCounts = useMemo(() => {
     return deviceCounts.find(d => d.name === selectedDevice);
   }, [deviceCounts, selectedDevice]);
 
-  // グループ全体の貸出可能合計
-  const groupAvailableTotal = useMemo(() => {
-    return deviceCounts.reduce((sum, d) => sum + d.available, 0);
-  }, [deviceCounts]);
+  // 合計（機種選択時はその機種の数、未選択時はグループ全体）
+  const totalAvailable = selectedDeviceCounts
+    ? selectedDeviceCounts.available
+    : deviceCounts.reduce((sum, d) => sum + d.available, 0);
 
-  // グループ変更時：機種選択をクリア
+  // フィルター対象の機種リスト（選択された機種のみ表示 or 全機種）
+  const displayedDevices = selectedDevice && selectedDeviceCounts
+    ? [selectedDeviceCounts]
+    : deviceCounts;
+
   const handleGroupChange = (value: string) => {
     setSelectedGroup(value);
     setSelectedDevice('');
   };
 
+  // 機種が選択されたときの一覧（個別機器の台数）
+  const inventoryItems = useMemo(() => {
+    if (!selectedGroup) return [];
+    return devices
+      .filter(d => d.lendingGroupName === selectedGroup && (!selectedDevice || d.itemName === selectedDevice));
+  }, [devices, selectedGroup, selectedDevice]);
+
   return (
-    <div className="min-h-dvh flex flex-col bg-[#f9fafb]">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
-        <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
-          <div className="size-10 bg-cta-primary rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-            logo
-          </div>
-          <div className="text-base font-bold text-content-primary text-balance">
-            貸出可能機器閲覧
-          </div>
-        </div>
-      </header>
+    <div className="min-h-dvh flex flex-col bg-surface-screen">
+      {/* 共通ヘッダー */}
+      <Header
+        title="貸出可能機器閲覧"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        hideMenu={true}
+      />
 
       {/* メインコンテンツ */}
-      <div className="flex-1 w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
-        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-          {/* 貸出グループ */}
-          <div className="pb-6 border-b border-[#e5e7eb]">
-            <div style={{ maxWidth: '320px' }}>
+      <div className="flex-1 w-full max-w-[1080px] mx-auto px-4 py-6">
+        <div className="bg-surface-card rounded-lg border border-stroke-card overflow-hidden">
+
+          {/* 貸出種別名 */}
+          <section className="px-6 py-4 border-b border-stroke-card">
+            <h2 className="text-base font-bold text-content-primary mb-3">貸出種別名</h2>
+            <div className="max-w-[350px]">
               <SearchableSelect
-                label="貸出グループ"
                 value={selectedGroup}
                 onChange={handleGroupChange}
                 options={groupNames}
@@ -96,66 +102,76 @@ export default function LendingAvailablePage() {
                 isMobile={isMobile}
               />
             </div>
-          </div>
+          </section>
 
           {/* 貸出可能対象機種 */}
-          <div className="py-6 border-b border-[#e5e7eb]">
-            <div style={{ maxWidth: '320px' }}>
+          <section className="px-6 py-4 border-b border-stroke-card">
+            <h2 className="text-base font-bold text-content-primary mb-3">貸出可能対象機種</h2>
+            <div className="max-w-[350px]">
               <SearchableSelect
-                label="貸出可能対象機種"
                 value={selectedDevice}
                 onChange={setSelectedDevice}
                 options={deviceNames}
-                placeholder={selectedGroup ? '機種を選択' : 'グループを先に選択してください'}
+                placeholder={selectedGroup ? '機種を選択（未選択時は全機種）' : 'グループを先に選択してください'}
                 disabled={!selectedGroup}
                 isMobile={isMobile}
               />
             </div>
-          </div>
+          </section>
 
-          {/* 貸出可能合計 */}
-          <div className="pt-6 pb-6">
-            <h2 className="text-sm font-bold text-content-primary mb-3">貸出可能状況</h2>
-            {selectedGroup && deviceCounts.length > 0 ? (
-              <div>
-                {selectedDevice && selectedDeviceCounts ? (
-                  <p className="text-sm font-bold text-[#27ae60] mb-3">
-                    {selectedDevice}：貸出可能 {selectedDeviceCounts.available} 台 / 全 {selectedDeviceCounts.total} 台
-                  </p>
-                ) : null}
-                <div className="flex flex-col mb-4">
-                  {deviceCounts.map(device => (
-                    <div
-                      key={device.name}
-                      className={`flex items-baseline justify-between gap-2 py-2 border-b border-[#e5e7eb] min-w-[140px] ${
-                        selectedDevice === device.name ? 'bg-[#f0fdf4]' : ''
-                      }`}
-                    >
-                      <span className="text-sm text-[#4b5563]">{device.name}</span>
-                      <span className="text-sm font-semibold text-content-primary tabular-nums">
-                        {device.available} / {device.total} 台
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold text-content-primary">貸出可能合計</span>
-                  <span className="text-2xl font-bold text-[#27ae60] tabular-nums">{groupAvailableTotal}</span>
-                  <span className="text-sm text-[#4b5563]">台</span>
-                </div>
-              </div>
-            ) : selectedGroup ? (
-              <p className="text-sm text-[#9ca3af]">このグループに登録された機器はありません</p>
+          {/* 貸出可能台数 */}
+          <section className="px-6 py-4">
+            <h2 className="text-base font-bold text-content-primary mb-3">貸出可能台数</h2>
+
+            {!selectedGroup ? (
+              <p className="text-sm text-content-sub">貸出グループを選択すると、機器の貸出可能状況が表示されます</p>
+            ) : deviceCounts.length === 0 ? (
+              <p className="text-sm text-content-alert">選択した部署に在庫がありません</p>
             ) : (
-              <p className="text-sm text-[#9ca3af]">貸出グループを選択すると、機器の貸出可能状況が表示されます</p>
+              <>
+                {/* 機種ごとの台数（Figma準拠: 機種名 + チップ3つ並び） */}
+                <div className="space-y-4">
+                  {displayedDevices.map(device => {
+                    const itemDevices = inventoryItems.filter(d => d.itemName === device.name);
+                    return (
+                      <div key={device.name}>
+                        <h3 className="text-sm font-semibold text-content-primary mb-3">{device.name}</h3>
+                        <div className="grid grid-cols-3 gap-2">
+                          {itemDevices.map(d => (
+                            <div
+                              key={d.id}
+                              className={`flex items-center gap-2 px-3 py-2.5 rounded-md border text-xs ${
+                                d.status === '貸出可'
+                                  ? 'bg-surface-select border-cta-primary text-cta-primary-dark'
+                                  : 'bg-surface-card border-stroke-card text-content-sub'
+                              }`}
+                            >
+                              <span className="font-mono text-[10px] shrink-0">{d.qrCode}</span>
+                              <span className="flex-1 min-w-0 truncate">{d.model || '—'}</span>
+                              <span className="text-[10px] shrink-0">{d.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 合計 */}
+                <div className="mt-6 pt-4 border-t border-stroke-card flex items-baseline gap-3">
+                  <span className="text-sm font-semibold text-content-primary">合計</span>
+                  <span className="text-3xl font-bold text-cta-primary-dark tabular-nums">{totalAvailable}</span>
+                  <span className="text-sm text-content-sub">台</span>
+                </div>
+              </>
             )}
-          </div>
+          </section>
 
           {/* 戻るボタン */}
-          <div>
+          <div className="px-6 py-4 border-t border-stroke-card">
             <button
               onClick={() => router.push('/main')}
-              className="px-8 py-2.5 bg-[#e5e7eb] text-sm font-medium text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors"
+              className="px-6 py-2 bg-surface-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-sm font-medium hover:bg-surface-disabled transition-colors"
             >
               戻る
             </button>
@@ -164,7 +180,7 @@ export default function LendingAvailablePage() {
       </div>
 
       {/* フッター */}
-      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+      <footer className="py-3 text-center text-[10px] font-light text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
     </div>
