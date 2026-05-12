@@ -190,7 +190,7 @@ export function MaintenanceContractRegistrationModal({
     },
     header: {
       padding: '16px 24px',
-      borderBottom: '1px solid #e0e0e0',
+      borderBottom: '1px solid #E1E1E1',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -198,14 +198,14 @@ export function MaintenanceContractRegistrationModal({
     title: {
       fontSize: '18px',
       fontWeight: 600,
-      color: '#2c3e50',
+      color: '#4A4A4A',
     },
     closeButton: {
       background: 'none',
       border: 'none',
       fontSize: '24px',
       cursor: 'pointer',
-      color: '#7f8c8d',
+      color: '#8A8A8A',
     },
     body: {
       padding: '24px',
@@ -226,7 +226,7 @@ export function MaintenanceContractRegistrationModal({
     },
     filterLabel: {
       fontSize: '12px',
-      color: '#7f8c8d',
+      color: '#8A8A8A',
     },
     buttonRow: {
       display: 'flex',
@@ -235,7 +235,7 @@ export function MaintenanceContractRegistrationModal({
     },
     searchButton: {
       padding: '8px 16px',
-      backgroundColor: '#3498db',
+      backgroundColor: '#0092E6',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -253,7 +253,7 @@ export function MaintenanceContractRegistrationModal({
       fontSize: '13px',
     },
     th: {
-      backgroundColor: '#2c3e50',
+      backgroundColor: '#4A4A4A',
       color: 'white',
       padding: '8px 12px',
       textAlign: 'left' as const,
@@ -266,14 +266,14 @@ export function MaintenanceContractRegistrationModal({
     },
     footer: {
       padding: '16px 24px',
-      borderTop: '1px solid #e0e0e0',
+      borderTop: '1px solid #E1E1E1',
       display: 'flex',
       justifyContent: 'flex-end',
       gap: '8px',
     },
     cancelButton: {
       padding: '10px 20px',
-      backgroundColor: '#95a5a6',
+      backgroundColor: '#8A8A8A',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -281,7 +281,7 @@ export function MaintenanceContractRegistrationModal({
     },
     primaryButton: {
       padding: '10px 20px',
-      backgroundColor: '#27ae60',
+      backgroundColor: '#008C1D',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -296,7 +296,7 @@ export function MaintenanceContractRegistrationModal({
       width: '120px',
       fontSize: '14px',
       fontWeight: 600,
-      color: '#2c3e50',
+      color: '#4A4A4A',
       whiteSpace: 'nowrap' as const,
     },
     radioGroup: {
@@ -318,7 +318,7 @@ export function MaintenanceContractRegistrationModal({
     },
     selectedCount: {
       fontSize: '14px',
-      color: '#27ae60',
+      color: '#008C1D',
       fontWeight: 500,
     },
   };
@@ -432,7 +432,7 @@ export function MaintenanceContractRegistrationModal({
                         </tr>
                       ) : (
                         searchResults.map((asset) => (
-                          <tr key={asset.qrCode} style={{ backgroundColor: selectedAssetIds.has(asset.qrCode) ? '#e8f5e9' : 'white' }}>
+                          <tr key={asset.qrCode} style={{ backgroundColor: selectedAssetIds.has(asset.qrCode) ? '#EBF5EE' : 'white' }}>
                             <td style={styles.td}>
                               <input
                                 type="checkbox"
@@ -492,7 +492,7 @@ export function MaintenanceContractRegistrationModal({
               {/* その他の契約名称 */}
               {contractType === 'その他' && (
                 <div style={{ ...styles.formRow, paddingLeft: '136px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50', whiteSpace: 'nowrap' }}>その他の契約名称</label>
+                  <label style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>その他の契約名称</label>
                   <input
                     type="text"
                     style={{ ...styles.input, flex: 1 }}
@@ -515,7 +515,7 @@ export function MaintenanceContractRegistrationModal({
                     placeholder="例）yyyy/mm"
                   />
                 </div>
-                <p style={{ fontSize: '12px', color: '#95a5a6', marginTop: '4px', marginLeft: '136px' }}>
+                <p style={{ fontSize: '12px', color: '#8A8A8A', marginTop: '4px', marginLeft: '136px' }}>
                   ※新規導入機器の保証期間終了前など任意で保守等の検討開始時期を登録できます
                 </p>
               </div>

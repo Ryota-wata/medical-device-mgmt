@@ -45,7 +45,7 @@ const QUOTATION_COLUMNS: { key: string; label: string; align?: 'right' | 'center
 ];
 
 const GROUP_HEADERS = [
-  { label: '見積ヘッダー', span: 6, color: '#495057' },
+  { label: '見積ヘッダー', span: 6, color: '#4A4A4A' },
   { label: 'STEP② 商品情報', span: 5, color: '#0d6efd' },
   { label: 'STEP② 価格情報', span: 4, color: '#0d6efd' },
   { label: 'STEP③', span: 2, color: '#198754' },
@@ -90,15 +90,15 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
             {QUOTATION_COLUMNS.map(col => (
               <th key={col.key} style={{
                 padding: '4px 6px', textAlign: col.align || 'left', fontSize: '10px', fontWeight: 600,
-                color: 'white', background: '#374151',
-                borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap',
+                color: 'white', background: '#4A4A4A',
+                borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap',
               }}>{col.label}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {enrichedItems.map((item, index) => (
-            <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: index % 2 === 0 ? 'white' : '#f9fafb' }}>
+            <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
               {QUOTATION_COLUMNS.map(col => {
                 const val = (item as unknown as Record<string, unknown>)[col.key];
                 let display = '';
@@ -119,7 +119,7 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
       </table>
 
       {enrichedItems.length === 0 && (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
           <p className="text-pretty">該当する見積明細がありません</p>
           <p style={{ fontSize: '12px', marginTop: '8px' }} className="text-pretty">絞り込み条件を変更してください</p>
         </div>

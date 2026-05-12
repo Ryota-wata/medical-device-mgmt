@@ -67,7 +67,7 @@ export function RfqGroupModal({
         {/* モーダルヘッダー */}
         <div
           style={{
-            background: '#e74c3c',
+            background: '#DA0000',
             color: 'white',
             padding: '16px 20px',
             fontSize: '18px',
@@ -116,7 +116,7 @@ export function RfqGroupModal({
                 border: '2px solid #ddd',
                 borderRadius: '6px',
                 fontSize: '14px',
-                background: '#f8f9fa',
+                background: '#FAFAFA',
                 color: '#666',
                 boxSizing: 'border-box',
               }}
@@ -148,12 +148,12 @@ export function RfqGroupModal({
           <div style={{
             marginBottom: '20px',
             padding: '12px',
-            background: '#f8f9fa',
+            background: '#FAFAFA',
             borderRadius: '6px',
             border: '1px solid #ddd',
           }}>
             <span style={{ color: '#666' }}>選択されたレコード: </span>
-            <span style={{ fontWeight: 'bold', color: '#e74c3c' }}>{selectedCount}件</span>
+            <span style={{ fontWeight: 'bold', color: '#DA0000' }}>{selectedCount}件</span>
           </div>
 
           {/* ボタン */}
@@ -162,7 +162,7 @@ export function RfqGroupModal({
               onClick={handleCancel}
               style={{
                 padding: '10px 20px',
-                background: '#95a5a6',
+                background: '#8A8A8A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -178,7 +178,7 @@ export function RfqGroupModal({
               disabled={!rfqGroupName.trim()}
               style={{
                 padding: '10px 20px',
-                background: rfqGroupName.trim() ? '#e74c3c' : '#ccc',
+                background: rfqGroupName.trim() ? '#DA0000' : '#ccc',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',

@@ -194,13 +194,13 @@ function InspectionResultContent() {
   const getOverallResultStyle = (result: string) => {
     switch (result) {
       case '合格':
-        return { backgroundColor: '#e8f5e9', color: '#27ae60', borderColor: '#27ae60' };
+        return { backgroundColor: '#EBF5EE', color: '#008C1D', borderColor: '#008C1D' };
       case '再点検':
-        return { backgroundColor: '#fff3e0', color: '#f39c12', borderColor: '#f39c12' };
+        return { backgroundColor: '#FDF1E5', color: '#f39c12', borderColor: '#f39c12' };
       case '修理申請':
-        return { backgroundColor: '#ffebee', color: '#e74c3c', borderColor: '#e74c3c' };
+        return { backgroundColor: '#ffebee', color: '#DA0000', borderColor: '#DA0000' };
       default:
-        return { backgroundColor: '#f5f5f5', color: '#666', borderColor: '#ddd' };
+        return { backgroundColor: '#FAFAFA', color: '#666', borderColor: '#ddd' };
     }
   };
 
@@ -223,7 +223,7 @@ function InspectionResultContent() {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100dvh',
-        background: '#f5f5f5',
+        background: '#FAFAFA',
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px'
@@ -243,7 +243,7 @@ function InspectionResultContent() {
           <button
             onClick={() => router.push('/main')}
             style={{
-              backgroundColor: '#374151',
+              backgroundColor: '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -261,10 +261,10 @@ function InspectionResultContent() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+        background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
         color: 'white',
         padding: isMobile ? '16px' : '20px 24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -417,10 +417,10 @@ function InspectionResultContent() {
                 minWidth: '400px'
               }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #e0e0e0' }}>項目</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #e0e0e0' }}>点検内容</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderBottom: '2px solid #e0e0e0', width: '80px' }}>評価</th>
+                  <tr style={{ backgroundColor: '#FAFAFA' }}>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E1E1E1' }}>項目</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E1E1E1' }}>点検内容</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderBottom: '2px solid #E1E1E1', width: '80px' }}>評価</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -433,7 +433,7 @@ function InspectionResultContent() {
                         borderBottom: '1px solid #eee',
                         textAlign: 'center',
                         fontWeight: 600,
-                        color: item.result === '○' ? '#27ae60' : item.result === '×' ? '#e74c3c' : '#333'
+                        color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#333'
                       }}>
                         {item.unit ? `${item.result} ${item.unit}` : item.result}
                       </td>
@@ -479,7 +479,7 @@ function InspectionResultContent() {
         left: 0,
         right: 0,
         backgroundColor: '#ffffff',
-        borderTop: '1px solid #e0e0e0',
+        borderTop: '1px solid #E1E1E1',
         padding: isMobile ? '16px' : '20px 24px',
         boxShadow: '0 -2px 8px rgba(0,0,0,0.08)'
       }}>
@@ -497,7 +497,7 @@ function InspectionResultContent() {
             style={{
               flex: isMobile ? 'none' : '1',
               maxWidth: isMobile ? 'none' : '200px',
-              backgroundColor: '#27ae60',
+              backgroundColor: '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -524,7 +524,7 @@ function InspectionResultContent() {
               style={{
                 flex: isMobile ? 'none' : '1',
                 maxWidth: isMobile ? 'none' : '200px',
-                backgroundColor: '#27ae60',
+                backgroundColor: '#008C1D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -549,7 +549,7 @@ function InspectionResultContent() {
             style={{
               flex: isMobile ? 'none' : '1',
               maxWidth: isMobile ? 'none' : '200px',
-              backgroundColor: resultData?.overallResult === '修理申請' ? '#e74c3c' : '#374151',
+              backgroundColor: resultData?.overallResult === '修理申請' ? '#DA0000' : '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -576,7 +576,7 @@ function InspectionResultContent() {
 function InfoItem({ label, value, tabular }: { label: string; value: string; tabular?: boolean }) {
   return (
     <div style={{
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#FAFAFA',
       borderRadius: '6px',
       padding: '8px 12px'
     }}>
@@ -604,7 +604,7 @@ export default function InspectionResultPage() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100dvh',
-        background: '#f5f5f5'
+        background: '#FAFAFA'
       }}>
         <div>読み込み中...</div>
       </div>

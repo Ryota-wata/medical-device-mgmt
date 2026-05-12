@@ -72,11 +72,11 @@ export default function UserPermissionManagementPage() {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-white p-6">
         <div className="text-center">
-          <p className="text-base font-semibold text-[#e74c3c] mb-2">アクセス権限がありません</p>
-          <p className="text-sm text-[#6b7280] mb-4">この画面は施設管理者のみ利用できます</p>
+          <p className="text-base font-semibold text-[#DA0000] mb-2">アクセス権限がありません</p>
+          <p className="text-sm text-[#8A8A8A] mb-4">この画面は施設管理者のみ利用できます</p>
           <button
             onClick={() => router.push('/main')}
-            className="px-4 py-2 bg-[#6b7280] text-white rounded text-sm hover:bg-[#4b5563] transition-colors"
+            className="px-4 py-2 bg-[#8A8A8A] text-white rounded text-sm hover:bg-[#4b5563] transition-colors"
           >
             メイン画面へ戻る
           </button>
@@ -171,30 +171,30 @@ export default function UserPermissionManagementPage() {
   const totalCount = PERMISSION_UNITS.length;
 
   return (
-    <div className="min-h-dvh bg-[#f9fafb]">
-      <header className="bg-white border-b border-[#e5e7eb] px-5 py-4 flex justify-between items-center flex-wrap gap-3 sticky top-0 z-20">
+    <div className="min-h-dvh bg-[#FAFAFA]">
+      <header className="bg-white border-b border-[#E1E1E1] px-5 py-4 flex justify-between items-center flex-wrap gap-3 sticky top-0 z-20">
         <div className="flex items-center gap-3">
-          <span className="px-2.5 py-1 bg-[#2980b9] text-white rounded text-xs font-bold tracking-wider">病院</span>
-          <h1 className="text-base font-bold text-[#1f2937] m-0">ユーザー権限管理</h1>
-          <span className="px-2 py-0.5 bg-[#f3f4f6] text-[#6b7280] rounded text-xs">{totalCount}件</span>
+          <span className="px-2.5 py-1 bg-[#0073B8] text-white rounded text-xs font-bold tracking-wider">病院</span>
+          <h1 className="text-base font-bold text-[#4A4A4A] m-0">ユーザー権限管理</h1>
+          <span className="px-2 py-0.5 bg-[#F1F1F1] text-[#8A8A8A] rounded text-xs">{totalCount}件</span>
         </div>
         <button
           onClick={handleHomeClick}
-          className="px-4 py-2 bg-[#6b7280] text-white border-0 rounded text-sm font-semibold hover:bg-[#4b5563] transition-colors"
+          className="px-4 py-2 bg-[#8A8A8A] text-white border-0 rounded text-sm font-semibold hover:bg-[#4b5563] transition-colors"
         >
           メイン画面に戻る
         </button>
       </header>
 
       <div className="max-w-[1100px] mx-auto w-full px-5 py-6 pb-24">
-        <div className="bg-white border border-[#e5e7eb] rounded-md p-4 mb-4">
+        <div className="bg-white border border-[#E1E1E1] rounded-md p-4 mb-4">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#1f2937]">施設</label>
-              <span className="px-3 py-1.5 bg-[#f3f4f6] text-[#1f2937] rounded text-sm">{facilityName || '-'}</span>
+              <label className="text-xs font-semibold text-[#4A4A4A]">施設</label>
+              <span className="px-3 py-1.5 bg-[#F1F1F1] text-[#4A4A4A] rounded text-sm">{facilityName || '-'}</span>
             </div>
             <div className="flex flex-col gap-1.5 min-w-[260px]">
-              <label className="text-xs font-semibold text-[#1f2937]">対象ユーザー</label>
+              <label className="text-xs font-semibold text-[#4A4A4A]">対象ユーザー</label>
               <SearchableSelect
                 options={userOptions}
                 value={selectedLabel}
@@ -202,15 +202,15 @@ export default function UserPermissionManagementPage() {
                 placeholder="ユーザーを選択..."
               />
             </div>
-            <p className="text-xs text-[#6b7280] flex-1 min-w-[200px]">
+            <p className="text-xs text-[#8A8A8A] flex-1 min-w-[200px]">
               施設の管理者として、自施設ユーザーの機能ごとの利用可否を設定します。施設レベルでOFFの機能は変更できません。
             </p>
           </div>
         </div>
 
         {!selectedUser ? (
-          <div className="bg-white border border-[#e5e7eb] rounded-md p-10 text-center">
-            <p className="text-sm text-[#6b7280] m-0">対象ユーザーを選択してください。</p>
+          <div className="bg-white border border-[#E1E1E1] rounded-md p-10 text-center">
+            <p className="text-sm text-[#8A8A8A] m-0">対象ユーザーを選択してください。</p>
           </div>
         ) : (
           <>
@@ -224,14 +224,14 @@ export default function UserPermissionManagementPage() {
               )}
             </div>
 
-            <div className="bg-white border border-[#e5e7eb] rounded-md overflow-hidden">
+            <div className="bg-white border border-[#E1E1E1] rounded-md overflow-hidden">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                    <th className="text-left font-semibold text-[#6b7280] py-3 px-4 whitespace-nowrap">機能</th>
-                    <th className="text-left font-semibold text-[#6b7280] py-3 px-4">切替内容</th>
-                    <th className="text-center font-semibold text-[#6b7280] py-3 px-4 w-[90px]">施設設定</th>
-                    <th className="text-center font-semibold text-[#6b7280] py-3 px-4 w-[100px]">ユーザー</th>
+                  <tr className="bg-[#FAFAFA] border-b border-[#E1E1E1]">
+                    <th className="text-left font-semibold text-[#8A8A8A] py-3 px-4 whitespace-nowrap">機能</th>
+                    <th className="text-left font-semibold text-[#8A8A8A] py-3 px-4">切替内容</th>
+                    <th className="text-center font-semibold text-[#8A8A8A] py-3 px-4 w-[90px]">施設設定</th>
+                    <th className="text-center font-semibold text-[#8A8A8A] py-3 px-4 w-[100px]">ユーザー</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -239,7 +239,7 @@ export default function UserPermissionManagementPage() {
                     const units = grouped[category];
                     return (
                       <React.Fragment key={category}>
-                        <tr className="bg-[#f3f4f6] border-b border-[#e5e7eb]">
+                        <tr className="bg-[#F1F1F1] border-b border-[#E1E1E1]">
                           <td colSpan={4} className="py-2 px-4 text-xs font-semibold text-[#4b5563] tracking-wide">
                             {category}
                           </td>
@@ -252,17 +252,17 @@ export default function UserPermissionManagementPage() {
                           return (
                             <tr
                               key={unit.id}
-                              className={`border-b border-[#f3f4f6] last:border-b-0 ${
+                              className={`border-b border-[#F1F1F1] last:border-b-0 ${
                                 locked
-                                  ? 'bg-[#f9fafb]'
+                                  ? 'bg-[#FAFAFA]'
                                   : changed
                                     ? 'bg-[#fef3c7]'
                                     : !enabled
                                       ? 'bg-[#fef2f2]'
-                                      : 'hover:bg-[#f9fafb]'
+                                      : 'hover:bg-[#FAFAFA]'
                               }`}
                             >
-                              <td className="py-2.5 px-4 text-[#1f2937] align-top whitespace-nowrap">
+                              <td className="py-2.5 px-4 text-[#4A4A4A] align-top whitespace-nowrap">
                                 <div>{unit.displayName}</div>
                                 {changed && (
                                   <span className="inline-block mt-1 text-xs text-[#d97706] font-medium">変更あり</span>
@@ -273,20 +273,20 @@ export default function UserPermissionManagementPage() {
                               </td>
                               <td className="py-2.5 px-4 text-center text-xs align-top">
                                 {facilityEnabled ? (
-                                  <span className="text-[#27ae60] font-medium">ON</span>
+                                  <span className="text-[#008C1D] font-medium">ON</span>
                                 ) : (
-                                  <span className="text-[#e74c3c] font-medium">OFF</span>
+                                  <span className="text-[#DA0000] font-medium">OFF</span>
                                 )}
                               </td>
                               <td className="py-2.5 px-4 text-center align-top">
                                 {locked ? (
-                                  <span className="text-xs text-[#9ca3af]">-</span>
+                                  <span className="text-xs text-[#8A8A8A]">-</span>
                                 ) : (
                                   <button
                                     onClick={() => handleToggle(unit)}
                                     aria-label={`${unit.displayName} を${enabled ? 'OFF' : 'ON'}にする`}
                                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                                  enabled ? 'bg-[#27ae60]' : 'bg-[#d1d5db]'
+                                  enabled ? 'bg-[#008C1D]' : 'bg-[#d1d5db]'
                                 }`}
                               >
                                 <span
@@ -311,7 +311,7 @@ export default function UserPermissionManagementPage() {
       </div>
 
       {hasPendingChanges && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#1f2937] text-white px-5 py-3 shadow-lg z-30">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#4A4A4A] text-white px-5 py-3 shadow-lg z-30">
           <div className="max-w-[1100px] mx-auto flex items-center justify-between gap-4">
             <p className="text-sm m-0">
               {selectedUser?.username} : 未保存の変更が {pendingCount} 件あります
@@ -319,13 +319,13 @@ export default function UserPermissionManagementPage() {
             <div className="flex gap-2">
               <button
                 onClick={handleDiscard}
-                className="px-4 py-2 bg-[#4b5563] text-white border-0 rounded text-sm font-semibold hover:bg-[#374151] transition-colors"
+                className="px-4 py-2 bg-[#4b5563] text-white border-0 rounded text-sm font-semibold hover:bg-[#4A4A4A] transition-colors"
               >
                 変更を破棄
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-[#27ae60] text-white border-0 rounded text-sm font-semibold hover:bg-[#229954] transition-colors"
+                className="px-4 py-2 bg-[#008C1D] text-white border-0 rounded text-sm font-semibold hover:bg-[#0A6B17] transition-colors"
               >
                 保存する
               </button>

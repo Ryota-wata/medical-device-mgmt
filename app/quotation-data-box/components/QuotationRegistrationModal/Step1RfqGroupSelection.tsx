@@ -67,7 +67,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <label style={{
                   padding: '6px 16px',
-                  background: '#f5f5f5',
+                  background: '#FAFAFA',
                   border: '1px solid #ccc',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -112,7 +112,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{
                   padding: '6px 12px',
-                  background: '#f5f5f5',
+                  background: '#FAFAFA',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
                   fontSize: '13px',
@@ -241,7 +241,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           onClick={onCancel}
           style={{
             padding: '10px 20px',
-            background: '#95a5a6',
+            background: '#8A8A8A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -290,7 +290,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           onClick={() => {/* Excel取込処理 */}}
           style={{
             padding: '10px 20px',
-            background: '#27ae60',
+            background: '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -306,7 +306,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           disabled={ocrProcessing}
           style={{
             padding: '10px 20px',
-            background: ocrProcessing ? '#bdc3c7' : '#3498db',
+            background: ocrProcessing ? '#bdc3c7' : '#0092E6',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

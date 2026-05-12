@@ -131,20 +131,20 @@ export default function PriceAllocationPage() {
   const fmtNum = (n: number) => n ? n.toLocaleString() : '';
 
   const classColor = (cls: DetailClassification) => {
-    if (cls === '親明細') return '#e74c3c';
+    if (cls === '親明細') return '#DA0000';
     if (cls === '子明細') return '#2196f3';
-    if (cls === '孫明細') return '#9c27b0';
+    if (cls === '孫明細') return '#5E3A93';
     if (cls === '明細代表') return '#666';
     if (cls === 'その他') return '#888';
     return '#666';
   };
 
-  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #dee2e6', fontSize: '10px', whiteSpace: 'nowrap' };
+  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #E1E1E1', fontSize: '10px', whiteSpace: 'nowrap' };
   const tdBase: React.CSSProperties = { padding: '4px 5px', fontSize: '10px', verticalAlign: 'top' };
   const borderR: React.CSSProperties = { borderRight: '1px solid #ccc' };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       <Header title="見積登録（購入）個体登録及び金額按分" stepBadge="STEP 5" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={5} />
 
@@ -156,7 +156,7 @@ export default function PriceAllocationPage() {
             <button
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
-                padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#e8f5e9',
+                padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#EBF5EE',
                 border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
                 color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer',
               }}
@@ -167,14 +167,14 @@ export default function PriceAllocationPage() {
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#EBF5EE', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
                   {totals.total.toLocaleString()}
                 </div>
               </div>
               <div style={{ textAlign: 'right', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
                 <div>案分対象 <strong style={{ color: '#1565c0' }}>{totals.allocationTarget.toLocaleString()}</strong></div>
                 <div>案分除外 <strong style={{ color: '#1565c0' }}>{totals.allocationExcluded.toLocaleString()}</strong></div>
-                <div>差額 <strong style={{ color: totals.difference !== 0 ? '#e74c3c' : '#333' }}>{totals.difference.toLocaleString()}</strong></div>
+                <div>差額 <strong style={{ color: totals.difference !== 0 ? '#DA0000' : '#333' }}>{totals.difference.toLocaleString()}</strong></div>
               </div>
             </div>
           </div>
@@ -194,12 +194,12 @@ export default function PriceAllocationPage() {
                   <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
                     価格情報（原本情報）
                   </th>
-                  <th colSpan={8} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>
+                  <th colSpan={8} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>
                     STEP❺ 個体登録／金額案分
                   </th>
                 </tr>
                 {/* 2段目ヘッダー */}
-                <tr style={{ background: '#f8f9fa' }}>
+                <tr style={{ background: '#FAFAFA' }}>
                   {/* STEP3 */}
                   <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>No</th>
                   <th style={{ ...thBase, width: '90px' }}>カテゴリ</th>
@@ -313,11 +313,11 @@ export default function PriceAllocationPage() {
         {/* フッターボタン */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
           <button onClick={() => router.push('/quotation-data-box/item-ai-matching')}
-            style={{ padding: '12px 28px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            style={{ padding: '12px 28px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             一つ前のSTEPに戻る
           </button>
           <button onClick={() => router.push('/quotation-data-box/registration-confirm')}
-            style={{ padding: '12px 28px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            style={{ padding: '12px 28px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             登録確認
           </button>
         </div>

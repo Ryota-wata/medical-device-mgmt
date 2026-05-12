@@ -261,7 +261,7 @@ function ShipAssetMasterContent() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f9fafb' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
@@ -299,7 +299,7 @@ function ShipAssetMasterContent() {
       {/* Header */}
       <header style={{
         background: '#ffffff',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid #E1E1E1',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
         display: 'flex',
         alignItems: 'center',
@@ -308,12 +308,12 @@ function ShipAssetMasterContent() {
         gap: isMobile ? '12px' : '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#1f2937', margin: 0 }}>
+          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#4A4A4A', margin: 0 }}>
             SHIP資産マスタ
           </h1>
           <div style={{
-            background: '#f3f4f6',
-            color: '#6b7280',
+            background: '#F1F1F1',
+            color: '#8A8A8A',
             padding: isMobile ? '4px 12px' : '6px 16px',
             borderRadius: '20px',
             fontSize: isMobile ? '12px' : '14px',
@@ -327,7 +327,7 @@ function ShipAssetMasterContent() {
             onClick={handleExport}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#374151',
+              background: '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -343,7 +343,7 @@ function ShipAssetMasterContent() {
             onClick={() => fileInputRef.current?.click()}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#374151',
+              background: '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -366,7 +366,7 @@ function ShipAssetMasterContent() {
             onClick={() => setShowNewModal(true)}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -382,8 +382,8 @@ function ShipAssetMasterContent() {
             onClick={handleBack}
             style={{
               padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#e5e7eb',
-              color: '#374151',
+              background: '#E1E1E1',
+              color: '#4A4A4A',
               border: 'none',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
@@ -401,13 +401,13 @@ function ShipAssetMasterContent() {
       <div style={{
         background: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid #E1E1E1',
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
         gap: isMobile ? '12px' : '16px'
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
             Category
           </label>
           <input
@@ -425,7 +425,7 @@ function ShipAssetMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
             大分類
           </label>
           <input
@@ -443,7 +443,7 @@ function ShipAssetMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
             中分類
           </label>
           <input
@@ -461,7 +461,7 @@ function ShipAssetMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
             品目
           </label>
           <input
@@ -479,7 +479,7 @@ function ShipAssetMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#1f2937' }}>
+          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
             メーカー
           </label>
           <input
@@ -510,25 +510,25 @@ function ShipAssetMasterContent() {
                 padding: '16px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}>
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#1f2937', marginBottom: '4px' }}>
+                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #E1E1E1' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A', marginBottom: '4px' }}>
                     {asset.item}
                   </div>
-                  <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                  <div style={{ fontSize: '13px', color: '#8A8A8A' }}>
                     {asset.category} / {asset.largeClass}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#6b7280' }}>類別コード:</span> {asset.classificationCode}</div>
-                  <div><span style={{ color: '#6b7280' }}>類別名称:</span> {asset.classificationName}</div>
-                  <div><span style={{ color: '#6b7280' }}>一般的名称:</span> {asset.generalName}</div>
-                  <div><span style={{ color: '#6b7280' }}>JMDNコード:</span> {asset.jmdnCode}</div>
-                  <div><span style={{ color: '#6b7280' }}>販売名:</span> {asset.tradeName}</div>
-                  <div><span style={{ color: '#6b7280' }}>製造販売業者等:</span> {asset.manufacturer}</div>
-                  <div><span style={{ color: '#6b7280' }}>資産マスタID:</span> {asset.assetMasterId}</div>
-                  <div><span style={{ color: '#6b7280' }}>中分類:</span> {asset.mediumClass}</div>
-                  <div><span style={{ color: '#6b7280' }}>メーカー:</span> {asset.maker}</div>
-                  <div><span style={{ color: '#6b7280' }}>型式:</span> {asset.model}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>類別コード:</span> {asset.classificationCode}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>類別名称:</span> {asset.classificationName}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>一般的名称:</span> {asset.generalName}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>JMDNコード:</span> {asset.jmdnCode}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>販売名:</span> {asset.tradeName}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>製造販売業者等:</span> {asset.manufacturer}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>資産マスタID:</span> {asset.assetMasterId}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>中分類:</span> {asset.mediumClass}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>メーカー:</span> {asset.maker}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>型式:</span> {asset.model}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                   <button
@@ -536,7 +536,7 @@ function ShipAssetMasterContent() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#374151',
+                      background: '#4A4A4A',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -552,7 +552,7 @@ function ShipAssetMasterContent() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#e74c3c',
+                      background: '#DA0000',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -575,14 +575,14 @@ function ShipAssetMasterContent() {
                   {/* グループヘッダー */}
                   <tr>
                     {([
-                      { label: 'JMDN分類・一般名称', span: 8, color: '#495057' },
-                      { label: '薬事', span: 1, color: '#6c757d' },
+                      { label: 'JMDN分類・一般名称', span: 8, color: '#4A4A4A' },
+                      { label: '薬事', span: 1, color: '#8A8A8A' },
                       { label: 'SHIP_Master', span: 8, color: '#198754' },
                       { label: '設備情報', span: 22, color: '#0d6efd' },
                       { label: '資産情報', span: 8, color: '#6f42c1' },
                       { label: 'PMDA提供', span: 21, color: '#dc3545' },
-                      { label: '登録', span: 1, color: '#6c757d' },
-                      { label: '', span: 1, color: '#374151' },
+                      { label: '登録', span: 1, color: '#8A8A8A' },
+                      { label: '', span: 1, color: '#4A4A4A' },
                     ] as const).map((g, i) => (
                       <th key={i} colSpan={g.span} style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'white', background: g.color, borderRight: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}>{g.label}</th>
                     ))}
@@ -590,9 +590,9 @@ function ShipAssetMasterContent() {
                   {/* カラムヘッダー */}
                   <tr>
                     {ASSET_MASTER_COLUMNS.map(col => (
-                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#374151', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>{col.label}</th>
+                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
                     ))}
-                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#374151', borderBottom: '2px solid #dee2e6', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -600,18 +600,18 @@ function ShipAssetMasterContent() {
                     <tr
                       key={asset.id}
                       onClick={isSelectMode ? () => handleSelect(asset) : undefined}
-                      style={{ borderBottom: '1px solid #e5e7eb', background: index % 2 === 0 ? 'white' : '#f9fafb', cursor: isSelectMode ? 'pointer' : 'default' }}
+                      style={{ borderBottom: '1px solid #E1E1E1', background: index % 2 === 0 ? 'white' : '#FAFAFA', cursor: isSelectMode ? 'pointer' : 'default' }}
                     >
                       {ASSET_MASTER_COLUMNS.map(col => (
-                        <td key={col.key} style={{ padding: '4px 6px', fontSize: '11px', color: '#1f2937', whiteSpace: 'nowrap' }}>{String((asset as unknown as Record<string, unknown>)[col.key] || '')}</td>
+                        <td key={col.key} style={{ padding: '4px 6px', fontSize: '11px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>{String((asset as unknown as Record<string, unknown>)[col.key] || '')}</td>
                       ))}
                       <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {isSelectMode ? (
                           <button onClick={(e) => { e.stopPropagation(); handleSelect(asset); }} style={{ padding: '3px 10px', background: '#ff9800', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>選択</button>
                         ) : (
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                            <button onClick={() => handleEdit(asset)} style={{ padding: '3px 8px', background: '#374151', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>
-                            <button onClick={() => handleDelete(asset.id)} style={{ padding: '3px 8px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>削除</button>
+                            <button onClick={() => handleEdit(asset)} style={{ padding: '3px 8px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>
+                            <button onClick={() => handleDelete(asset.id)} style={{ padding: '3px 8px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>削除</button>
                           </div>
                         )}
                       </td>
@@ -626,7 +626,7 @@ function ShipAssetMasterContent() {
           <div style={{ textAlign: 'center', padding: '16px' }}>
             <button
               onClick={() => setDisplayLimit(prev => prev + DISPLAY_LIMIT)}
-              style={{ padding: '10px 24px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              style={{ padding: '10px 24px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
             >
               さらに{Math.min(DISPLAY_LIMIT, allFilteredAssets.length - displayLimit)}件を表示（残り{allFilteredAssets.length - displayLimit}件）
             </button>
@@ -639,7 +639,7 @@ function ShipAssetMasterContent() {
             borderRadius: '8px',
             padding: isMobile ? '40px 20px' : '60px 40px',
             textAlign: 'center',
-            color: '#6b7280',
+            color: '#8A8A8A',
             fontSize: isMobile ? '14px' : '16px'
           }}>
             {isLoading ? '資産マスタを読み込み中...' : '検索条件に一致する資産マスタがありません'}
@@ -647,7 +647,7 @@ function ShipAssetMasterContent() {
         )}
       </main>
 
-      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#9ca3af' }}>
+      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#8A8A8A' }}>
         &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
       </footer>
 

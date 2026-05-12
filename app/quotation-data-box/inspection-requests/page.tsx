@@ -7,7 +7,7 @@ import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function InspectionRequestsContent() {
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header
         title="タスク管理"
         showBackButton={true}

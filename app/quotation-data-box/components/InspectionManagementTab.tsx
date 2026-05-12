@@ -18,22 +18,22 @@ type SortField = 'maker' | 'model' | 'lendingStatus' | 'nextInspectionDate' | 's
 
 // 貸出ステータスの色
 const LENDING_STATUS_COLORS: Record<LendingStatus, string> = {
-  '待機中': '#95a5a6',
-  '貸出可': '#27ae60',
-  '貸出中': '#3498db',
+  '待機中': '#8A8A8A',
+  '貸出可': '#008C1D',
+  '貸出中': '#0092E6',
   '使用中': '#e67e22',
-  '使用済': '#7f8c8d',
+  '使用済': '#8A8A8A',
   '返却済': '#16a085',
-  '使用不可': '#e74c3c',
+  '使用不可': '#DA0000',
 };
 
 // 定期ステータスの色
 const getInspectionStatusColor = (status: string): string => {
-  if (status === '点検月超過') return '#e74c3c';
-  if (status === '点検週') return '#c0392b';
+  if (status === '点検月超過') return '#DA0000';
+  if (status === '点検週') return '#A30000';
   if (status === '点検月') return '#f39c12';
-  if (status.includes('ヶ月前')) return '#3498db';
-  return '#95a5a6';
+  if (status.includes('ヶ月前')) return '#0092E6';
+  return '#8A8A8A';
 };
 
 // 定期ステータスの行背景色
@@ -173,8 +173,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
 
   const getSortArrow = (field: SortField) => {
     const isActive = sortField === field;
-    const upColor = isActive && sortDirection === 'asc' ? '#c0392b' : '#aaa';
-    const downColor = isActive && sortDirection === 'desc' ? '#c0392b' : '#aaa';
+    const upColor = isActive && sortDirection === 'asc' ? '#A30000' : '#aaa';
+    const downColor = isActive && sortDirection === 'desc' ? '#A30000' : '#aaa';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '2px', lineHeight: 1, fontSize: '8px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -260,7 +260,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   // テーブルヘッダースタイル
   const thGroup: React.CSSProperties = {
     padding: '8px 6px',
-    border: '1px solid #495057',
+    border: '1px solid #4A4A4A',
     fontWeight: 600,
     fontSize: '12px',
     whiteSpace: 'nowrap',
@@ -269,7 +269,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   };
   const thSub: React.CSSProperties = {
     padding: '6px 8px',
-    border: '1px solid #6c757d',
+    border: '1px solid #8A8A8A',
     textAlign: 'left',
     fontWeight: 600,
     fontSize: '12px',
@@ -286,13 +286,13 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* ボタンバー */}
-      <div style={{ padding: '10px 16px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-        <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#9b59b6')}>点検メニュー登録</button>
-        <button onClick={handleExportSchedule} style={btnStyle('#3498db')}>点検予定表の出力</button>
+      <div style={{ padding: '10px 16px', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#5E3A93')}>点検メニュー登録</button>
+        <button onClick={handleExportSchedule} style={btnStyle('#0092E6')}>点検予定表の出力</button>
       </div>
 
       {/* フィルターエリア（REQ-108: 4項目のみ） */}
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', background: '#f8f9fa' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #E1E1E1', background: '#FAFAFA' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'nowrap' }}>
           <FilterItem label="点検日">
             <SearchableSelect value={filters.inspectionDate} onChange={(v) => handleFilterChange('inspectionDate', v)} options={['点検超過', '点検月', '点検１ヶ月前']} placeholder="全て" />
@@ -309,7 +309,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-          <button onClick={handleClearFilters} style={{ background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer' }}>
+          <button onClick={handleClearFilters} style={{ background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', padding: '6px 12px', fontSize: '12px', cursor: 'pointer' }}>
             フィルタークリア
           </button>
           <span style={{ fontSize: '13px', color: '#555' }}>{sortedTasks.length} 件</span>
@@ -322,21 +322,21 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
             <tr>
-              <th colSpan={2} style={{ ...thGroup, background: '#e8f5e9', color: '#333' }}>設置情報</th>
+              <th colSpan={2} style={{ ...thGroup, background: '#EBF5EE', color: '#333' }}>設置情報</th>
               <th colSpan={4} style={{ ...thGroup, background: '#fff9c4', color: '#333' }}>商品情報</th>
-              <th style={{ ...thGroup, background: '#e3f2fd', color: '#333' }}>貸出状況</th>
+              <th style={{ ...thGroup, background: '#EAF3FB', color: '#333' }}>貸出状況</th>
               <th colSpan={6} style={{ ...thGroup, background: '#ffccbc', color: '#333' }}>定期点検情報</th>
               <th colSpan={3} style={{ ...thGroup, background: '#f3e5f5', color: '#333' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr>
-              <th style={{ ...thSub, background: '#e8f5e9' }}>部門</th>
-              <th style={{ ...thSub, background: '#e8f5e9' }}>部署</th>
+              <th style={{ ...thSub, background: '#EBF5EE' }}>部門</th>
+              <th style={{ ...thSub, background: '#EBF5EE' }}>部署</th>
               <th style={{ ...thSub, background: '#fffde7' }}>QRコード</th>
               <th style={{ ...thSub, background: '#fffde7' }}>品目</th>
               <th style={{ ...thSortable, background: '#fffde7' }} onClick={() => handleSortToggle('maker')}>メーカー{getSortArrow('maker')}</th>
               <th style={{ ...thSortable, background: '#fffde7' }} onClick={() => handleSortToggle('model')}>型式{getSortArrow('model')}</th>
-              <th style={{ ...thSortable, background: '#e3f2fd' }} onClick={() => handleSortToggle('lendingStatus')}>ステータス{getSortArrow('lendingStatus')}</th>
+              <th style={{ ...thSortable, background: '#EAF3FB' }} onClick={() => handleSortToggle('lendingStatus')}>ステータス{getSortArrow('lendingStatus')}</th>
               <th style={{ ...thSub, background: '#fbe9e7' }}>種別</th>
               <th style={{ ...thSub, background: '#fbe9e7' }}>点検メニュー</th>
               <th style={{ ...thSub, background: '#fbe9e7' }}>点検周期</th>
@@ -351,20 +351,20 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
           <tbody>
             {sortedTasks.length === 0 ? (
               <tr>
-                <td colSpan={16} style={{ padding: '48px', textAlign: 'center', color: '#6c757d', fontSize: '14px', border: '1px solid #ddd' }}>
+                <td colSpan={16} style={{ padding: '48px', textAlign: 'center', color: '#8A8A8A', fontSize: '14px', border: '1px solid #ddd' }}>
                   点検タスクがありません。資産を選択して点検タスクを追加してください。
                 </td>
               </tr>
             ) : (
               sortedTasks.map((task, index) => {
-                const rowBg = getRowHighlight(task.status) || (index % 2 === 0 ? 'white' : '#fafafa');
+                const rowBg = getRowHighlight(task.status) || (index % 2 === 0 ? 'white' : '#FAFAFA');
                 return (
                   <tr key={task.id} style={{ background: rowBg }}>
                     {/* 設置情報 */}
                     <td style={td}>{task.managementDepartment}</td>
                     <td style={td}>{task.installedDepartment}</td>
                     {/* 商品情報 */}
-                    <td style={{ ...td, fontFamily: 'monospace', fontWeight: 600, color: '#3498db' }}>{task.assetId}</td>
+                    <td style={{ ...td, fontFamily: 'monospace', fontWeight: 600, color: '#0092E6' }}>{task.assetId}</td>
                     <td style={td}>{task.assetName}</td>
                     <td style={td}>{task.maker}</td>
                     <td style={td}>{task.model}</td>
@@ -376,7 +376,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                         borderRadius: '10px',
                         fontSize: '11px',
                         fontWeight: 600,
-                        background: LENDING_STATUS_COLORS[task.lendingStatus] || '#95a5a6',
+                        background: LENDING_STATUS_COLORS[task.lendingStatus] || '#8A8A8A',
                         color: 'white',
                         whiteSpace: 'nowrap',
                       }}>
@@ -410,7 +410,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                           onClick={() => setOpenActionId(openActionId === task.id ? null : task.id)}
                           style={{
                             padding: '4px 12px',
-                            background: '#2c3e50',
+                            background: '#4A4A4A',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
@@ -436,14 +436,14 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                           }}>
                             <button
                               onClick={() => handleOpenDateModal(task)}
-                              style={dropdownItemStyle('#3498db')}
+                              style={dropdownItemStyle('#0092E6')}
                             >
                               日程調整
                             </button>
                             {task.inspectionType !== 'メーカー保守' && (
                               <button
                                 onClick={() => handleStartInspection(task)}
-                                style={dropdownItemStyle('#27ae60')}
+                                style={dropdownItemStyle('#008C1D')}
                               >
                                 点検実施
                               </button>
@@ -451,14 +451,14 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                             {task.inspectionType === 'メーカー保守' && (
                               <button
                                 onClick={() => handleResultRegistration(task)}
-                                style={dropdownItemStyle('#8e44ad')}
+                                style={dropdownItemStyle('#4527A0')}
                               >
                                 結果登録
                               </button>
                             )}
                             <button
                               onClick={() => handleSkipInspection(task)}
-                              style={dropdownItemStyle('#7f8c8d')}
+                              style={dropdownItemStyle('#8A8A8A')}
                             >
                               スキップ
                             </button>
@@ -492,7 +492,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                           border: 'none',
                           cursor: 'pointer',
                           fontSize: '12px',
-                          color: '#3498db',
+                          color: '#0092E6',
                           textDecoration: 'underline',
                           padding: '4px 8px',
                         }}
@@ -524,8 +524,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
       {isDateModalOpen && selectedTaskForDate && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }} onClick={() => setIsDateModalOpen(false)}>
           <div style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '90%', maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600, color: '#2c3e50' }}>点検日程調整</h3>
-            <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#7f8c8d' }}>{selectedTaskForDate.assetName}</p>
+            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>点検日程調整</h3>
+            <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#8A8A8A' }}>{selectedTaskForDate.assetName}</p>
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '13px', color: '#333' }}>点検予定日</label>
               <input
@@ -536,8 +536,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button onClick={() => setIsDateModalOpen(false)} style={{ padding: '10px 20px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>キャンセル</button>
-              <button onClick={handleSetDate} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>設定</button>
+              <button onClick={() => setIsDateModalOpen(false)} style={{ padding: '10px 20px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>キャンセル</button>
+              <button onClick={handleSetDate} style={{ padding: '10px 20px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>設定</button>
             </div>
           </div>
         </div>

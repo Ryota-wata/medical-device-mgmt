@@ -83,7 +83,7 @@ function RemodelManagementContent() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -93,7 +93,7 @@ function RemodelManagementContent() {
         centerContent={
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              background: '#c0392b',
+              background: '#A30000',
               padding: '6px 16px',
               borderRadius: '4px',
               display: 'flex',
@@ -266,21 +266,21 @@ function RemodelManagementContent() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textWrap: 'balance' }}>資産仮登録の入力方法を選択</h2>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>登録作業の状況に応じて入力方法を選んでください。</p>
+            <p style={{ fontSize: 13, color: '#8A8A8A', marginBottom: 24 }}>登録作業の状況に応じて入力方法を選んでください。</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 onClick={() => handleModeSelected('mobile')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #e5e7eb', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
                 <div style={{ width: 48, height: 48, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128241;</span>
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>モバイル（現場作業）</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
                     現場でQRラベル貼付・写真撮影・シリアルNo.入力を行います。<br />
                     1品目ずつ登録する操作フローです。
                   </div>
@@ -289,16 +289,16 @@ function RemodelManagementContent() {
 
               <button
                 onClick={() => handleModeSelected('pc')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #e5e7eb', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
                 <div style={{ width: 48, height: 48, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128187;</span>
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>PC（手書き検収書から手入力）</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
                     手書き検収書の内容をテーブル形式で一括入力します。<br />
                     全品目を一覧しながら効率的に登録できます。
                   </div>
@@ -309,7 +309,7 @@ function RemodelManagementContent() {
             <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
-                style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#6b7280' }}
+                style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#8A8A8A' }}
               >
                 キャンセル
               </button>

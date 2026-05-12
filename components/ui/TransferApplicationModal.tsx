@@ -174,7 +174,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
   const themeColor = '#4a6741';
 
   // 確認画面用テーブルスタイル
-  const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' };
+  const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' };
   const tdStyle: React.CSSProperties = { padding: '8px 12px', border: '1px solid #ddd' };
 
   return (
@@ -242,7 +242,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
         {isConfirmView ? (
           /* ===== 確認画面 ===== */
           <div>
-            <div style={{ background: '#e8f5e9', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+            <div style={{ background: '#EBF5EE', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
               <span style={{ color: themeColor, fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
@@ -274,7 +274,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 </tbody>
               </table>
               {assets.length > 1 && (
-                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fff3e0', borderRadius: '4px', fontSize: '13px', color: '#e65100' }}>
+                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#e65100' }}>
                   ※ {assets.length}件の資産が選択されています
                 </div>
               )}
@@ -287,7 +287,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
+                  <tr style={{ background: '#FAFAFA' }}>
                     {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
                       <th key={label} style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', whiteSpace: 'nowrap' }}>
                         {label}
@@ -344,7 +344,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
                   コメント（移動理由他）
                 </div>
-                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
                   {comment}
                 </div>
               </div>
@@ -446,7 +446,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{
                 marginTop: '12px',
                 padding: '8px 12px',
-                background: '#fff3e0',
+                background: '#FDF1E5',
                 borderRadius: '4px',
                 fontSize: '13px',
                 color: '#e65100'
@@ -527,7 +527,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                   </thead>
                   <tbody>
                     {assets.map((asset, idx) => (
-                      <tr key={idx} style={{ background: idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                      <tr key={idx} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
                         <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.qrCode || '-'}</td>
                         <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.name || '-'}</td>
                         <td style={{ padding: '7px 10px', border: '1px solid #ddd' }}>{asset.maker || '-'}</td>
@@ -598,7 +598,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               gap: '12px 16px',
               alignItems: 'center'
             }}>
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部門 <span style={{ color: '#e74c3c' }}>*</span></div>
+              <div style={{ fontSize: '13px', color: '#666' }}>設置部門 <span style={{ color: '#DA0000' }}>*</span></div>
               <div style={{ position: 'relative', zIndex: 12 }}>
                 <SearchableSelect
                   value={destDepartment}
@@ -609,7 +609,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 />
               </div>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部署 <span style={{ color: '#e74c3c' }}>*</span></div>
+              <div style={{ fontSize: '13px', color: '#666' }}>設置部署 <span style={{ color: '#DA0000' }}>*</span></div>
               <div style={{ position: 'relative', zIndex: 11 }}>
                 <SearchableSelect
                   value={destSection}
@@ -620,7 +620,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 />
               </div>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>設置室名 <span style={{ color: '#e74c3c' }}>*</span></div>
+              <div style={{ fontSize: '13px', color: '#666' }}>設置室名 <span style={{ color: '#DA0000' }}>*</span></div>
               <input
                 type="text"
                 value={destRoomName}
@@ -673,10 +673,10 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
         {/* フッター */}
         <div style={{
           padding: '16px 24px',
-          borderTop: '1px solid #dee2e6',
+          borderTop: '1px solid #E1E1E1',
           display: 'flex',
           justifyContent: 'center',
-          background: '#f8f9fa',
+          background: '#FAFAFA',
         }}>
           {isConfirmView ? (
             <>

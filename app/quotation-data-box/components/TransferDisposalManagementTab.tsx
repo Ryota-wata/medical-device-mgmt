@@ -73,13 +73,13 @@ interface DisposalRfqGroup {
 
 // ステータスバッジ色
 const STATUS_BADGE_COLORS: Record<DisposalRfqStatus, string> = {
-  '見積依頼': '#95a5a6',
-  '見積依頼済': '#3498db',
-  '見積登録済': '#27ae60',
+  '見積依頼': '#8A8A8A',
+  '見積依頼済': '#0092E6',
+  '見積登録済': '#008C1D',
   '発注済': '#e67e22',
   '作業日確定': '#f1c40f',
-  '完了': '#8e44ad',
-  '申請を見送る': '#e74c3c',
+  '完了': '#4527A0',
+  '申請を見送る': '#DA0000',
 };
 
 // ステータス別の期限マッピング
@@ -110,7 +110,7 @@ const STEP_TABS: { key: StepKey; label: string; statuses: DisposalRfqStatus[] }[
 
 // 申請種別バッジスタイル
 const getApplicationTypeStyle = (type: '移動申請' | '廃棄申請'): React.CSSProperties => ({
-  background: type === '移動申請' ? '#fff3e0' : '#fce4ec',
+  background: type === '移動申請' ? '#FDF1E5' : '#fce4ec',
   color: type === '移動申請' ? '#e65100' : '#c62828',
 });
 
@@ -208,7 +208,7 @@ const MOCK_RFQ_GROUPS: DisposalRfqGroup[] = [
 // --- ヘッダースタイル ---
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #495057',
+  border: '1px solid #4A4A4A',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -217,7 +217,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #6c757d',
+  border: '1px solid #8A8A8A',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -226,7 +226,7 @@ const thSubStyle: React.CSSProperties = {
 
 const tdStyle: React.CSSProperties = {
   padding: '8px',
-  borderBottom: '1px solid #dee2e6',
+  borderBottom: '1px solid #E1E1E1',
   whiteSpace: 'nowrap',
 };
 
@@ -325,7 +325,7 @@ export function TransferDisposalManagementTab() {
 
   // ステータスバッジ
   const getStatusBadge = (status: DisposalRfqStatus) => {
-    const bg = STATUS_BADGE_COLORS[status] || '#95a5a6';
+    const bg = STATUS_BADGE_COLORS[status] || '#8A8A8A';
     const textColor = status === '作業日確定' ? '#333' : 'white';
     return (
       <span style={{
@@ -359,14 +359,14 @@ export function TransferDisposalManagementTab() {
     switch (group.status) {
       case '見積依頼':
         return (
-          <button style={{ ...btnBase, background: '#3498db' }}
+          <button style={{ ...btnBase, background: '#0092E6' }}
             onClick={navigateToTask}>
             業者選定
           </button>
         );
       case '見積依頼済':
         return (
-          <button style={{ ...btnBase, background: '#27ae60' }}
+          <button style={{ ...btnBase, background: '#008C1D' }}
             onClick={navigateToTask}>
             見積回収
           </button>
@@ -387,20 +387,20 @@ export function TransferDisposalManagementTab() {
         );
       case '作業日確定':
         return (
-          <button style={{ ...btnBase, background: '#8e44ad' }}
+          <button style={{ ...btnBase, background: '#4527A0' }}
             onClick={navigateToTask}>
             完了登録
           </button>
         );
       case '完了':
         return (
-          <button style={{ ...btnBase, background: '#e74c3c' }}
+          <button style={{ ...btnBase, background: '#DA0000' }}
             onClick={() => alert(`削除: ${group.groupName}`)}>
             完了登録
           </button>
         );
       default:
-        return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>;
+        return <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>;
     }
   };
 
@@ -411,13 +411,13 @@ export function TransferDisposalManagementTab() {
       <div style={{
         background: 'white',
         borderRadius: '8px',
-        border: '1px solid #dee2e6',
+        border: '1px solid #E1E1E1',
         overflow: 'hidden',
       }}>
         {/* ヘッダー */}
         <div style={{
           padding: '12px 16px',
-          background: '#27ae60',
+          background: '#008C1D',
           color: 'white',
           display: 'flex',
           justifyContent: 'space-between',
@@ -435,7 +435,7 @@ export function TransferDisposalManagementTab() {
         </div>
 
         {pendingApplications.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+          <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
             <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
             <div style={{ fontSize: '14px' }}>未処理の申請はありません</div>
           </div>
@@ -462,7 +462,7 @@ export function TransferDisposalManagementTab() {
                     <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center', verticalAlign: 'middle' }}></th>
                   </tr>
                   {/* サブカラムヘッダー行 */}
-                  <tr style={{ background: '#495057', color: 'white' }}>
+                  <tr style={{ background: '#4A4A4A', color: 'white' }}>
                     <th style={thSubStyle}>申請日</th>
                     <th style={thSubStyle}>申請No, 種別</th>
                     <th style={thSubStyle}>部門名</th>
@@ -485,8 +485,8 @@ export function TransferDisposalManagementTab() {
                       <tr
                         key={app.id}
                         style={{
-                          borderBottom: '1px solid #dee2e6',
-                          background: selectedApplicationIds.has(app.id) ? '#e3f2fd' : 'transparent',
+                          borderBottom: '1px solid #E1E1E1',
+                          background: selectedApplicationIds.has(app.id) ? '#EAF3FB' : 'transparent',
                           cursor: 'pointer',
                         }}
                         onClick={() => handleViewDetail(app)}
@@ -501,10 +501,10 @@ export function TransferDisposalManagementTab() {
                           />
                         </td>
                         {/* 申請項目: 申請日 */}
-                        <td style={{ ...tdStyle, color: '#5a6c7d' }}>{app.applicationDate}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A' }}>{app.applicationDate}</td>
                         {/* 申請項目: 申請No, 種別 */}
                         <td style={tdStyle}>
-                          <span style={{ color: '#3498db', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
+                          <span style={{ color: '#0092E6', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                           <span style={{
                             ...typeStyle,
                             padding: '2px 8px',
@@ -518,18 +518,18 @@ export function TransferDisposalManagementTab() {
                           </span>
                         </td>
                         {/* 設置情報: 部門名, 部署名, 室名 */}
-                        <td style={{ ...tdStyle, color: '#2c3e50' }}>{app.department}</td>
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
+                        <td style={{ ...tdStyle, color: '#4A4A4A' }}>{app.department}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.section || '-'}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.roomName || '-'}</td>
                         {/* 品目情報: QRコード, 品目名, メーカー名, 型式 */}
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.qrCode || '-'}</td>
-                        <td style={{ ...tdStyle, color: '#2c3e50' }}>{app.itemName}</td>
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.maker || '-'}</td>
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.model || '-'}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.qrCode || '-'}</td>
+                        <td style={{ ...tdStyle, color: '#4A4A4A' }}>{app.itemName}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.maker || '-'}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.model || '-'}</td>
                         {/* 院内担当情報: 所属部署, 氏名, 連絡先 */}
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                        <td style={{ ...tdStyle, color: '#2c3e50' }}>{app.applicantName}</td>
-                        <td style={{ ...tdStyle, color: '#5a6c7d', fontSize: '12px' }}>{app.applicantContact || '-'}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                        <td style={{ ...tdStyle, color: '#4A4A4A' }}>{app.applicantName}</td>
+                        <td style={{ ...tdStyle, color: '#8A8A8A', fontSize: '12px' }}>{app.applicantContact || '-'}</td>
                         {/* 操作 */}
                         <td style={{ ...tdStyle, textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                           <button
@@ -537,11 +537,11 @@ export function TransferDisposalManagementTab() {
                             style={{
                               padding: '6px 12px',
                               background: 'white',
-                              border: '1px solid #dee2e6',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               fontSize: '12px',
                               cursor: 'pointer',
-                              color: '#2c3e50',
+                              color: '#4A4A4A',
                             }}
                           >
                             申請内容
@@ -557,13 +557,13 @@ export function TransferDisposalManagementTab() {
             {/* アクションバー */}
             <div style={{
               padding: '12px 16px',
-              borderTop: '1px solid #dee2e6',
-              background: '#f8f9fa',
+              borderTop: '1px solid #E1E1E1',
+              background: '#FAFAFA',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              <span style={{ fontSize: '13px', color: '#5a6c7d' }}>
+              <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
                 選択した申請: {selectedApplicationIds.size}件
               </span>
               <button
@@ -571,7 +571,7 @@ export function TransferDisposalManagementTab() {
                 disabled={selectedApplicationIds.size === 0}
                 style={{
                   padding: '8px 16px',
-                  background: selectedApplicationIds.size === 0 ? '#bdc3c7' : '#27ae60',
+                  background: selectedApplicationIds.size === 0 ? '#bdc3c7' : '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -592,7 +592,7 @@ export function TransferDisposalManagementTab() {
         flex: 1,
         background: 'white',
         borderRadius: '8px',
-        border: '1px solid #dee2e6',
+        border: '1px solid #E1E1E1',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -600,7 +600,7 @@ export function TransferDisposalManagementTab() {
         {/* ヘッダー */}
         <div style={{
           padding: '12px 16px',
-          background: '#3498db',
+          background: '#0092E6',
           color: 'white',
           display: 'flex',
           justifyContent: 'space-between',
@@ -611,9 +611,9 @@ export function TransferDisposalManagementTab() {
 
         {/* ステップタブ */}
         <div style={{
-          borderBottom: '2px solid #dee2e6',
+          borderBottom: '2px solid #E1E1E1',
           display: 'flex',
-          background: '#fafafa',
+          background: '#FAFAFA',
           overflowX: 'auto',
         }}>
           {STEP_TABS.map((tab) => {
@@ -627,9 +627,9 @@ export function TransferDisposalManagementTab() {
                 onClick={() => setActiveStep(tab.key)}
                 style={{
                   padding: '10px 16px',
-                  background: isActive ? '#3498db' : 'transparent',
+                  background: isActive ? '#0092E6' : 'transparent',
                   border: 'none',
-                  borderBottom: isActive ? '2px solid #3498db' : '2px solid transparent',
+                  borderBottom: isActive ? '2px solid #0092E6' : '2px solid transparent',
                   cursor: 'pointer',
                   fontSize: '12px',
                   fontWeight: isActive ? 'bold' : 'normal',
@@ -641,7 +641,7 @@ export function TransferDisposalManagementTab() {
                 {tab.label}
                 <span style={{
                   marginLeft: '6px',
-                  background: isActive ? 'rgba(255,255,255,0.3)' : '#e0e0e0',
+                  background: isActive ? 'rgba(255,255,255,0.3)' : '#E1E1E1',
                   padding: '1px 6px',
                   borderRadius: '8px',
                   fontSize: '11px',
@@ -656,7 +656,7 @@ export function TransferDisposalManagementTab() {
         {/* テーブルエリア */}
         <div style={{ flex: 1, overflow: 'auto' }}>
           {filteredRfqGroups.length === 0 ? (
-            <div style={{ padding: '60px 40px', textAlign: 'center', color: '#7f8c8d' }}>
+            <div style={{ padding: '60px 40px', textAlign: 'center', color: '#8A8A8A' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
               <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>廃棄依頼グループがありません</div>
               <div style={{ fontSize: '13px', lineHeight: '1.6' }}>
@@ -677,7 +677,7 @@ export function TransferDisposalManagementTab() {
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
                 </tr>
                 {/* サブカラムヘッダー行 */}
-                <tr style={{ background: '#495057', color: 'white' }}>
+                <tr style={{ background: '#4A4A4A', color: 'white' }}>
                   <th style={thSubStyle}>業者名</th>
                   <th style={thSubStyle}>氏名</th>
                   <th style={thSubStyle}>連絡先</th>
@@ -687,7 +687,7 @@ export function TransferDisposalManagementTab() {
                 {filteredRfqGroups.map((group, index) => {
                   const deadlineMapping = STATUS_DEADLINE_MAP[group.status];
                   return (
-                    <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top' }}>
+                    <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', verticalAlign: 'top' }}>
                       <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600, border: '1px solid #ddd' }}>
                         {group.rfqNo}
                       </td>
@@ -701,15 +701,15 @@ export function TransferDisposalManagementTab() {
                       <td style={{ ...tdStyle, verticalAlign: 'top', border: '1px solid #ddd' }}>
                         {deadlineMapping && group[deadlineMapping.field] ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '11px', color: '#5a6c7d', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '11px', color: '#8A8A8A', whiteSpace: 'nowrap' }}>
                               {deadlineMapping.label}
                             </span>
-                            <span style={{ fontSize: '12px', color: '#2c3e50' }} className="tabular-nums">
+                            <span style={{ fontSize: '12px', color: '#4A4A4A' }} className="tabular-nums">
                               {group[deadlineMapping.field]}
                             </span>
                           </div>
                         ) : (
-                          <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>
+                          <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>
                         )}
                       </td>
                       <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'top', border: '1px solid #ddd' }}>
@@ -768,7 +768,7 @@ export function TransferDisposalManagementTab() {
                 display: 'flex', alignItems: 'center', gap: '12px',
               }}>
                 <span style={{
-                  background: '#fffde7', color: '#1f2937', padding: '4px 12px',
+                  background: '#fffde7', color: '#4A4A4A', padding: '4px 12px',
                   borderRadius: '4px', fontSize: '14px', fontWeight: 'bold',
                 }}>
                   {typeLabel} 内容確認
@@ -860,7 +860,7 @@ export function TransferDisposalManagementTab() {
                 {/* コメント（必要理由 他） */}
                 <div style={sectionLabel}>コメント（必要理由 他）</div>
                 <div style={{
-                  background: '#f8f9fa', padding: '10px 12px', borderRadius: '4px',
+                  background: '#FAFAFA', padding: '10px 12px', borderRadius: '4px',
                   fontSize: '13px', color: '#333', border: '1px solid #ccc',
                   marginBottom: '4px', minHeight: '40px',
                 }}>

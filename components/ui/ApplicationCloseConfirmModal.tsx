@@ -82,7 +82,7 @@ export function ApplicationCloseConfirmModal({
             onClick={onCancel}
             style={{
               padding: '10px 24px',
-              background: '#e0e0e0',
+              background: '#E1E1E1',
               color: '#333',
               border: 'none',
               borderRadius: '8px',

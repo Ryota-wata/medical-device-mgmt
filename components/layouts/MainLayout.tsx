@@ -25,7 +25,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   showHeader = true
 }) => {
   return (
-    <div className="min-h-screen" style={{ background: '#f5f5f5', padding: '20px' }}>
+    <div className="min-h-screen" style={{ background: '#FAFAFA', padding: '20px' }}>
       <div
         className="mx-auto bg-white rounded-lg"
         style={{

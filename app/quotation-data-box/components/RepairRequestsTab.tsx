@@ -42,13 +42,13 @@ interface RepairRequestsTabProps {
 
 // ステータスバッジ色
 const STATUS_BADGE_COLORS: Record<RepairStatus, string> = {
-  '見積依頼': '#95a5a6',
-  '見積依頼済': '#3498db',
-  '見積登録済': '#2980b9',
+  '見積依頼': '#8A8A8A',
+  '見積依頼済': '#0092E6',
+  '見積登録済': '#0073B8',
   '発注登録済': '#e67e22',
-  '作業日確定': '#27ae60',
-  '完了': '#7f8c8d',
-  '却下': '#e74c3c',
+  '作業日確定': '#008C1D',
+  '完了': '#8A8A8A',
+  '却下': '#DA0000',
 };
 
 // ステータスに紐づく期限
@@ -68,7 +68,7 @@ const STATUS_DEADLINE_MAP: Partial<Record<RepairStatus, DeadlineMapping>> = {
 
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #495057',
+  border: '1px solid #4A4A4A',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -77,7 +77,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #6c757d',
+  border: '1px solid #8A8A8A',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -101,7 +101,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
   onClickRequestNo,
 }) => {
   const getStatusBadge = (status: RepairStatus) => {
-    const bg = STATUS_BADGE_COLORS[status] || '#95a5a6';
+    const bg = STATUS_BADGE_COLORS[status] || '#8A8A8A';
     return (
       <span style={{
         padding: '4px 12px',
@@ -134,27 +134,27 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
     switch (req.status) {
       case '見積依頼':
         buttons.push(
-          <button key="rfq" onClick={() => onSendRfq(req.id)} style={{ ...btnBase, background: '#3498db' }}>
+          <button key="rfq" onClick={() => onSendRfq(req.id)} style={{ ...btnBase, background: '#0092E6' }}>
             見積依頼
           </button>
         );
         break;
       case '見積依頼済':
         buttons.push(
-          <button key="quote" onClick={() => onRegisterQuotation(req.id)} style={{ ...btnBase, background: '#3498db' }}>
+          <button key="quote" onClick={() => onRegisterQuotation(req.id)} style={{ ...btnBase, background: '#0092E6' }}>
             見積登録
           </button>
         );
         break;
       case '見積登録済':
         buttons.push(
-          <button key="order" onClick={() => onRegisterOrder(req.id)} style={{ ...btnBase, background: '#27ae60' }}>
+          <button key="order" onClick={() => onRegisterOrder(req.id)} style={{ ...btnBase, background: '#008C1D' }}>
             発注登録
           </button>
         );
         if (onDelete) {
           buttons.push(
-            <button key="delete" onClick={() => onDelete(req.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+            <button key="delete" onClick={() => onDelete(req.id)} style={{ ...btnBase, background: '#DA0000' }}>
               削除
             </button>
           );
@@ -162,14 +162,14 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
         break;
       case '発注登録済':
         buttons.push(
-          <button key="work" onClick={() => onRegisterWorkDate(req.id)} style={{ ...btnBase, background: '#27ae60' }}>
+          <button key="work" onClick={() => onRegisterWorkDate(req.id)} style={{ ...btnBase, background: '#008C1D' }}>
             作業日登録
           </button>
         );
         break;
       case '作業日確定':
         buttons.push(
-          <button key="complete" onClick={() => onComplete(req.id)} style={{ ...btnBase, background: '#2c3e50' }}>
+          <button key="complete" onClick={() => onComplete(req.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             完了登録
           </button>
         );
@@ -180,7 +180,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
     }
 
     if (buttons.length === 0) {
-      return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>;
+      return <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>;
     }
     return <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>{buttons}</div>;
   };
@@ -198,7 +198,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>期限</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
           </tr>
-          <tr style={{ background: '#495057', color: 'white' }}>
+          <tr style={{ background: '#4A4A4A', color: 'white' }}>
             <th style={thSubStyle}>修理区分</th>
             <th style={thSubStyle}>申請日</th>
             <th style={thSubStyle}>申請依頼No.</th>
@@ -217,20 +217,20 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
           {repairRequests.map((req, index) => {
             const deadlineMapping = STATUS_DEADLINE_MAP[req.status];
             return (
-              <tr key={req.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top' }}>
+              <tr key={req.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', verticalAlign: 'top' }}>
                 <td style={tdStyle}>{req.repairCategory}</td>
                 <td style={tdStyle}>{req.requestDate}</td>
                 <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>
                   {onClickRequestNo ? (
                     <span
-                      style={{ color: '#3498db', cursor: 'pointer', textDecoration: 'underline' }}
+                      style={{ color: '#0092E6', cursor: 'pointer', textDecoration: 'underline' }}
                       onClick={() => onClickRequestNo(req.id)}
                     >
                       {req.requestNo}
                     </span>
                   ) : req.requestNo}
                 </td>
-                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#3498db' }}>{req.qrLabel}</td>
+                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#0092E6' }}>{req.qrLabel}</td>
                 <td style={tdStyle}>{req.itemName}</td>
                 <td style={tdStyle}>{req.maker}</td>
                 <td style={tdStyle}>{req.applicantDepartment}</td>
@@ -261,15 +261,15 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
                 <td style={{ ...tdStyle, verticalAlign: 'top' }}>
                   {deadlineMapping && req[deadlineMapping.field] ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '11px', color: '#5a6c7d', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '11px', color: '#8A8A8A', whiteSpace: 'nowrap' }}>
                         {deadlineMapping.label}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#2c3e50' }} className="tabular-nums">
+                      <span style={{ fontSize: '12px', color: '#4A4A4A' }} className="tabular-nums">
                         {req[deadlineMapping.field]}
                       </span>
                     </div>
                   ) : (
-                    <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>
+                    <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>
                   )}
                 </td>
                 <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'top' }}>
@@ -282,7 +282,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
       </table>
 
       {repairRequests.length === 0 && (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
           該当する修理依頼がありません
         </div>
       )}

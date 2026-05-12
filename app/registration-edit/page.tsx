@@ -831,8 +831,8 @@ export default function RegistrationEditPage() {
 
   if (isMobile) {
     return (
-      <div className="p-4 bg-[#f9fafb] min-h-dvh">
-        <div className="mb-4 text-center text-lg font-bold text-[#1f2937]">
+      <div className="p-4 bg-[#FAFAFA] min-h-dvh">
+        <div className="mb-4 text-center text-lg font-bold text-[#4A4A4A]">
           現有品調査内容修正
         </div>
         <div className="text-red-600 mb-4 text-sm text-center">
@@ -840,7 +840,7 @@ export default function RegistrationEditPage() {
         </div>
         <button
           onClick={handleBack}
-          className="w-full py-3 bg-[#27ae60] text-white border-none rounded-lg cursor-pointer text-base"
+          className="w-full py-3 bg-[#008C1D] text-white border-none rounded-lg cursor-pointer text-base"
         >
           メイン画面に戻る
         </button>
@@ -849,27 +849,27 @@ export default function RegistrationEditPage() {
   }
 
   return (
-    <div className="flex flex-col h-dvh bg-[#f9fafb] overflow-hidden">
+    <div className="flex flex-col h-dvh bg-[#FAFAFA] overflow-hidden">
       {/* Header */}
-      <header className="bg-white border-b border-[#e5e7eb] px-6 py-4 flex justify-between items-center">
+      <header className="bg-white border-b border-[#E1E1E1] px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="bg-[#27ae60] text-white px-2 py-1 rounded font-bold text-sm">
+          <div className="bg-[#008C1D] text-white px-2 py-1 rounded font-bold text-sm">
             SHIP
           </div>
-          <h1 className="text-xl font-bold text-[#1f2937] m-0 text-balance">
+          <h1 className="text-xl font-bold text-[#4A4A4A] m-0 text-balance">
             現有品調査内容修正
           </h1>
         </div>
         <button
           onClick={handleBack}
-          className="px-4 py-2 bg-white border border-[#e5e7eb] rounded cursor-pointer text-sm text-[#6b7280] hover:bg-[#f9fafb]"
+          className="px-4 py-2 bg-white border border-[#E1E1E1] rounded cursor-pointer text-sm text-[#8A8A8A] hover:bg-[#FAFAFA]"
         >
           メイン画面に戻る
         </button>
       </header>
 
       {/* Filter Header */}
-      <div className="bg-white px-6 py-4 border-b border-[#e5e7eb]">
+      <div className="bg-white px-6 py-4 border-b border-[#E1E1E1]">
         <div className="flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[120px]">
             <SearchableSelect
@@ -961,7 +961,7 @@ export default function RegistrationEditPage() {
 
           <button
             onClick={handleClearFilters}
-            className="px-4 py-2 bg-[#1f2937] text-white border-none rounded cursor-pointer text-sm hover:bg-[#374151]"
+            className="px-4 py-2 bg-[#4A4A4A] text-white border-none rounded cursor-pointer text-sm hover:bg-[#4A4A4A]"
           >
             クリア
           </button>
@@ -970,19 +970,19 @@ export default function RegistrationEditPage() {
 
       {/* Linking Bar */}
       {linkingParent && (
-        <div className="bg-[#e8f5e9] border-b-2 border-[#66bb6a]">
+        <div className="bg-[#EBF5EE] border-b-2 border-[#66bb6a]">
           {/* ヘッダー行 */}
           <div className="px-6 py-2.5 flex justify-between items-center bg-[#c8e6c9]">
             <div className="flex items-center gap-3">
               <span className="bg-[#2e7d32] text-white px-2.5 py-0.5 rounded text-xs font-semibold">紐付け登録モード</span>
               <span className="font-semibold text-[#1b5e20] text-sm">
                 本体: {linkingParent.item}
-                <span className="text-[#6b7280] font-normal ml-2">({linkingParent.sealNo})</span>
+                <span className="text-[#8A8A8A] font-normal ml-2">({linkingParent.sealNo})</span>
               </span>
             </div>
             <button
               onClick={handleExitLinking}
-              className="px-4 py-1.5 bg-white text-[#6b7280] border border-[#e5e7eb] rounded cursor-pointer text-[13px]"
+              className="px-4 py-1.5 bg-white text-[#8A8A8A] border border-[#E1E1E1] rounded cursor-pointer text-[13px]"
             >
               モードを終了
             </button>
@@ -1051,17 +1051,17 @@ export default function RegistrationEditPage() {
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    className="px-2 py-3 border-b-2 border-[#e5e7eb] whitespace-nowrap cursor-pointer select-none sticky top-0 z-[2] bg-[#f9fafb] text-left text-[#1f2937] font-semibold text-xs"
+                    className="px-2 py-3 border-b-2 border-[#E1E1E1] whitespace-nowrap cursor-pointer select-none sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs"
                   >
                     {col.label}{getSortIcon(col.key)}
                   </th>
                 ))}
                 {/* 写真（ソートなし、sticky top のみ） */}
-                <th className="px-2 py-3 border-b-2 border-[#e5e7eb] whitespace-nowrap sticky top-0 z-[2] bg-[#f9fafb] text-left text-[#1f2937] font-semibold text-xs">写真</th>
+                <th className="px-2 py-3 border-b-2 border-[#E1E1E1] whitespace-nowrap sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs">写真</th>
                 {/* --- 操作（sticky top + right） --- */}
-                <th className="px-2 py-3 border-b-2 border-[#e5e7eb] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#f9fafb] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#1f2937] font-semibold text-xs">操作</th>
+                <th className="px-2 py-3 border-b-2 border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs">操作</th>
                 {/* --- チェックボックス（sticky top + right） --- */}
-                <th className="px-2 py-3 border-b-2 border-[#e5e7eb] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#f9fafb] w-12 min-w-[48px]">
+                <th className="px-2 py-3 border-b-2 border-[#E1E1E1] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#FAFAFA] w-12 min-w-[48px]">
                   <input
                     type="checkbox"
                     checked={selectedAll}
@@ -1075,53 +1075,53 @@ export default function RegistrationEditPage() {
                 const isChild = row.parentId !== null;
                 const isLinkingTarget = linkingParentId !== null && row.id === linkingParentId;
                 const parentRow = isChild ? data.find(r => r.id === row.parentId) : null;
-                const rowBgColor = isLinkingTarget ? '#e8f5e9' : isChild ? '#fafafa' : 'white';
+                const rowBgColor = isLinkingTarget ? '#EBF5EE' : isChild ? '#FAFAFA' : 'white';
                 return (
                 <tr key={row.id} style={{ backgroundColor: rowBgColor }}>
                   {/* ① QRコード */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {isChild && <span className="text-[#9e9e9e] mr-1">└</span>}
                     {row.sealNo}
                   </td>
                   {/* ② 階 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.floor}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.floor}</td>
                   {/* ③ 部門 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.department}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.department}</td>
                   {/* ④ 部署 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.section}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.section}</td>
                   {/* ⑤ 室名 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.roomName}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.roomName}</td>
                   {/* ⑥ Category */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.category}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.category}</td>
                   {/* ⑥ 大分類 */}
-                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.largeClass || ''}
                         onChange={(e) => setEditingData({ ...editingData, largeClass: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.largeClass}
                   </td>
                   {/* ⑥ 中分類 */}
-                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('mediumClass', editingRow === row.id && editingData ? editingData.mediumClass : row.mediumClass, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.mediumClass || ''}
                         onChange={(e) => setEditingData({ ...editingData, mediumClass: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.mediumClass}
                   </td>
                   {/* 明細区分 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.detailType}
                         onChange={(e) => setEditingData({ ...editingData, detailType: e.target.value as RegistrationData['detailType'] })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded text-xs"
+                        className="w-full p-1 border border-[#E1E1E1] rounded text-xs"
                       >
                         <option value="">未設定</option>
                         <option value="本体">本体</option>
@@ -1133,9 +1133,9 @@ export default function RegistrationEditPage() {
                         <div className="flex items-center gap-1">
                           <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
                             row.detailType === '本体'
-                              ? 'bg-[#e3f2fd] text-[#1565c0]'
+                              ? 'bg-[#EAF3FB] text-[#1565c0]'
                               : row.detailType === '明細'
-                                ? 'bg-[#fff3e0] text-[#e65100]'
+                                ? 'bg-[#FDF1E5] text-[#e65100]'
                                 : 'bg-[#f3e5f5] text-[#7b1fa2]'
                           }`}>
                             {row.detailType}
@@ -1145,145 +1145,145 @@ export default function RegistrationEditPage() {
                             <button
                               onClick={() => handleUnlinkSingle(row.id)}
                               aria-label={`${row.item}の紐付けを解除`}
-                              className="w-[18px] h-[18px] p-0 border border-[#e5e7eb] rounded bg-[#f9fafb] text-[#6b7280] text-[11px] leading-4 cursor-pointer inline-flex items-center justify-center shrink-0"
+                              className="w-[18px] h-[18px] p-0 border border-[#E1E1E1] rounded bg-[#FAFAFA] text-[#8A8A8A] text-[11px] leading-4 cursor-pointer inline-flex items-center justify-center shrink-0"
                             >
                               ✕
                             </button>
                           )}
                         </div>
                       ) : (
-                        <span className="text-[#e5e7eb] text-[11px]">ー</span>
+                        <span className="text-[#E1E1E1] text-[11px]">ー</span>
                       )
                     )}
                   </td>
                   {/* ⑥ 個体管理品目 */}
-                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.item || ''}
                         onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.item}
                   </td>
                   {/* ⑦ メーカー */}
-                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.manufacturer || ''}
                         onChange={(e) => setEditingData({ ...editingData, manufacturer: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.manufacturer}
                   </td>
                   {/* ⑧ 型式 */}
-                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' })}>
+                  <td style={getFreeInputCellStyle('model', editingRow === row.id && editingData ? editingData.model : row.model, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.model || ''}
                         onChange={(e) => setEditingData({ ...editingData, model: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.model}
                   </td>
                   {/* ⑩ W */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.width || ''}
                         onChange={(e) => setEditingData({ ...editingData, width: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.width}
                   </td>
                   {/* ⑩ D */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.depth || ''}
                         onChange={(e) => setEditingData({ ...editingData, depth: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.depth}
                   </td>
                   {/* ⑩ H */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.height || ''}
                         onChange={(e) => setEditingData({ ...editingData, height: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.height}
                   </td>
                   {/* ⑪ 資産番号 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.assetNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, assetNo: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.assetNo}
                   </td>
                   {/* ⑫ ME番号 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.equipmentNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, equipmentNo: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.equipmentNo}
                   </td>
                   {/* ⑬ シリアルNo */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.serialNo || ''}
                         onChange={(e) => setEditingData({ ...editingData, serialNo: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.serialNo}
                   </td>
                   {/* ⑭ 購入年月日 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="date"
                         value={editingData.purchaseDate || ''}
                         onChange={(e) => setEditingData({ ...editingData, purchaseDate: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.purchaseDate}
                   </td>
                   {/* ⑭ 備考 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
                         value={editingData.remarks || ''}
                         onChange={(e) => setEditingData({ ...editingData, remarks: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.remarks}
                   </td>
                   {/* ⑮ リース・借用 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.lease}
                         onChange={(e) => setEditingData({ ...editingData, lease: e.target.value })}
-                        className="w-full p-1 border border-[#e5e7eb] rounded"
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
                       >
                         <option value="あり">あり</option>
                         <option value="なし">なし</option>
@@ -1291,20 +1291,20 @@ export default function RegistrationEditPage() {
                     ) : row.lease}
                   </td>
                   {/* ⑯ 調査日付 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.surveyDate}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyDate}</td>
                   {/* ⑰ 担当者 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap text-[#1f2937]">{row.surveyor}</td>
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyor}</td>
                   {/* 写真 */}
-                  <td className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap">
+                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap">
                     <button
                       onClick={() => handlePhotoClick(row)}
-                      className="px-2 py-1 text-xs bg-[#e3f2fd] text-[#1565c0] border-none rounded cursor-pointer"
+                      className="px-2 py-1 text-xs bg-[#EAF3FB] text-[#1565c0] border-none rounded cursor-pointer"
                     >
                       {row.photoCount}枚
                     </button>
                   </td>
                   <td
-                    className="px-2 py-2 border-b border-[#e5e7eb] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)]"
+                    className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)]"
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <div className="flex gap-1 flex-wrap">
@@ -1312,19 +1312,19 @@ export default function RegistrationEditPage() {
                         <>
                           <button
                             onClick={handleOpenAssetMaster}
-                            className="px-2 py-1 text-xs bg-[#27ae60] text-white border-none rounded cursor-pointer whitespace-nowrap"
+                            className="px-2 py-1 text-xs bg-[#008C1D] text-white border-none rounded cursor-pointer whitespace-nowrap"
                           >
                             資産マスタを別ウィンドウで開く
                           </button>
                           <button
                             onClick={handleSave}
-                            className="px-2 py-1 text-xs bg-[#c8e6c9] text-[#1f2937] border-none rounded cursor-pointer"
+                            className="px-2 py-1 text-xs bg-[#c8e6c9] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
                             保存
                           </button>
                           <button
                             onClick={handleCancel}
-                            className="px-2 py-1 text-xs bg-[#ffcdd2] text-[#1f2937] border-none rounded cursor-pointer"
+                            className="px-2 py-1 text-xs bg-[#ffcdd2] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
                             キャンセル
                           </button>
@@ -1333,7 +1333,7 @@ export default function RegistrationEditPage() {
                         <>
                           <button
                             onClick={() => handleEdit(row.id)}
-                            className="px-2 py-1 text-xs bg-[#e3f2fd] text-[#1565c0] border-none rounded cursor-pointer"
+                            className="px-2 py-1 text-xs bg-[#EAF3FB] text-[#1565c0] border-none rounded cursor-pointer"
                           >
                             編集
                           </button>
@@ -1342,8 +1342,8 @@ export default function RegistrationEditPage() {
                             disabled={!row.masterId}
                             className={`px-2 py-1 text-xs border-none rounded ${
                               row.masterId
-                                ? 'bg-[#27ae60] text-white cursor-pointer opacity-100'
-                                : 'bg-[#f9fafb] text-[#6b7280] cursor-not-allowed opacity-50'
+                                ? 'bg-[#008C1D] text-white cursor-pointer opacity-100'
+                                : 'bg-[#FAFAFA] text-[#8A8A8A] cursor-not-allowed opacity-50'
                             }`}
                           >
                             確定
@@ -1363,7 +1363,7 @@ export default function RegistrationEditPage() {
                           )}
                           {/* 子行: 親レコードへの参照 */}
                           {isChild && parentRow && (
-                            <span className="text-[11px] text-[#1565c0] whitespace-nowrap bg-[#e3f2fd] px-1.5 py-0.5 rounded">
+                            <span className="text-[11px] text-[#1565c0] whitespace-nowrap bg-[#EAF3FB] px-1.5 py-0.5 rounded">
                               親: {parentRow.sealNo}
                             </span>
                           )}
@@ -1373,7 +1373,7 @@ export default function RegistrationEditPage() {
                   </td>
                   {/* チェックボックス */}
                   <td
-                    className="px-2 py-2 border-b border-[#e5e7eb] text-center sticky right-0 z-[1] w-12 min-w-[48px]"
+                    className="px-2 py-2 border-b border-[#E1E1E1] text-center sticky right-0 z-[1] w-12 min-w-[48px]"
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <input
@@ -1392,10 +1392,10 @@ export default function RegistrationEditPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-[#e5e7eb] px-6 py-4 flex justify-center gap-4">
+      <footer className="bg-white border-t border-[#E1E1E1] px-6 py-4 flex justify-center gap-4">
         <button
           onClick={handleBulkConfirm}
-          className="px-8 py-3 bg-[#27ae60] text-white border-none rounded-lg cursor-pointer text-base font-semibold hover:bg-[#219a52]"
+          className="px-8 py-3 bg-[#008C1D] text-white border-none rounded-lg cursor-pointer text-base font-semibold hover:bg-[#219a52]"
         >
           一括確定
         </button>
@@ -1409,13 +1409,13 @@ export default function RegistrationEditPage() {
         >
           <div
             onMouseDown={handleMouseDown}
-            className={`flex justify-between items-center px-6 py-4 border-b border-[#e5e7eb] select-none bg-[#f9fafb] rounded-t-xl ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            className={`flex justify-between items-center px-6 py-4 border-b border-[#E1E1E1] select-none bg-[#FAFAFA] rounded-t-xl ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           >
-            <h2 className="m-0 text-lg font-bold text-[#1f2937]">📷 写真一覧</h2>
+            <h2 className="m-0 text-lg font-bold text-[#4A4A4A]">📷 写真一覧</h2>
             <button
               onClick={handlePhotoModalClose}
               onMouseDown={(e) => e.stopPropagation()}
-              className="px-3 py-1.5 bg-white border border-[#e5e7eb] rounded cursor-pointer text-sm text-[#6b7280]"
+              className="px-3 py-1.5 bg-white border border-[#E1E1E1] rounded cursor-pointer text-sm text-[#8A8A8A]"
             >
               ✕
             </button>
@@ -1430,7 +1430,7 @@ export default function RegistrationEditPage() {
                   className={`rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
                     selectedPhoto === photo.id
                       ? 'border-[3px] border-[#1565c0]'
-                      : 'border border-[#e5e7eb]'
+                      : 'border border-[#E1E1E1]'
                   }`}
                   onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
                 >
@@ -1440,7 +1440,7 @@ export default function RegistrationEditPage() {
                     className="w-full h-[120px] object-cover"
                   />
                   <div className="p-2">
-                    <div className="text-xs font-bold mb-1 text-[#1f2937]">{photo.filename}</div>
+                    <div className="text-xs font-bold mb-1 text-[#4A4A4A]">{photo.filename}</div>
                     {selectedPhoto === photo.id && (
                       <button
                         onClick={(e) => {
@@ -1461,11 +1461,11 @@ export default function RegistrationEditPage() {
 
             {selectedPhoto && (
               <div className="mt-5">
-                <h3 className="text-base font-bold mb-3 text-[#1f2937]">拡大表示</h3>
+                <h3 className="text-base font-bold mb-3 text-[#4A4A4A]">拡大表示</h3>
                 <img
                   src={selectedRowForPhoto.photos.find(p => p.id === selectedPhoto)?.url}
                   alt="拡大写真"
-                  className="w-full max-h-[300px] object-contain border border-[#e5e7eb] rounded-lg"
+                  className="w-full max-h-[300px] object-contain border border-[#E1E1E1] rounded-lg"
                 />
               </div>
             )}

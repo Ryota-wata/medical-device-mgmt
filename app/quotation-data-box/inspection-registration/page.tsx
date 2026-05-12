@@ -13,22 +13,22 @@ const COLORS = {
   primary: '#4a6fa5',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
-  textOnAccent: '#1f2937',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textOnAccent: '#4A4A4A',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  borderLight: '#E1E1E1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4b5563',
   white: '#ffffff',
   error: '#dc2626',
   infoBg: '#eff6ff',
   infoBorder: '#93c5fd',
   infoText: '#1e40af',
-  disabled: '#9ca3af',
+  disabled: '#8A8A8A',
 } as const;
 
 const inputStyle: React.CSSProperties = {
@@ -140,7 +140,7 @@ export default function InspectionRegistrationPage() {
         .insp-btn:hover:not(:disabled) { filter: brightness(0.9); }
         .insp-btn:focus-visible { outline: 2px solid #4a6fa5; outline-offset: 2px; }
         .insp-btn-secondary { transition: background 150ms ease-out; }
-        .insp-btn-secondary:hover { background: #e5e7eb !important; }
+        .insp-btn-secondary:hover { background: #E1E1E1 !important; }
         .insp-btn-secondary:focus-visible { outline: 2px solid #d1d5db; outline-offset: 2px; }
         .insp-radio { cursor: pointer; }
         .insp-radio-label { cursor: pointer; user-select: none; }

@@ -84,7 +84,7 @@ export function AssetFormModal({
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    Category<span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>
+                    Category<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <select
                     style={styles.select}
@@ -103,7 +103,7 @@ export function AssetFormModal({
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    大分類<span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>
+                    大分類<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -120,7 +120,7 @@ export function AssetFormModal({
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    中分類<span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>
+                    中分類<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -137,7 +137,7 @@ export function AssetFormModal({
               <div style={styles.formRow}>
                 <div style={styles.formGroup}>
                   <label style={styles.label}>
-                    品目<span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>
+                    品目<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -154,7 +154,7 @@ export function AssetFormModal({
               <div style={{...styles.formRow, ...(isMobile && styles.formRowMobile)}}>
                 <div style={styles.formGroupHalf}>
                   <label style={styles.label}>
-                    メーカー<span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>
+                    メーカー<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -167,7 +167,7 @@ export function AssetFormModal({
                 </div>
                 <div style={styles.formGroupHalf}>
                   <label style={styles.label}>
-                    型式<span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>
+                    型式<span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -269,7 +269,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   sectionTitle: {
     fontSize: '16px',
     fontWeight: 700,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     marginBottom: '20px',
     paddingBottom: '8px',
     borderBottom: '2px solid #4CAF50'
@@ -303,7 +303,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   input: {
     padding: '10px 12px',
-    border: '2px solid #e0e0e0',
+    border: '2px solid #E1E1E1',
     borderRadius: '6px',
     fontSize: '14px',
     color: '#333',
@@ -312,7 +312,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   select: {
     padding: '10px 12px',
-    border: '2px solid #e0e0e0',
+    border: '2px solid #E1E1E1',
     borderRadius: '6px',
     fontSize: '14px',
     color: '#333',
@@ -332,7 +332,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'flex-end',
     gap: '12px',
-    background: '#f8f9fa'
+    background: '#FAFAFA'
   },
   formActionsMobile: {
     flexDirection: 'column',
@@ -349,7 +349,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     minWidth: '120px'
   },
   cancelButton: {
-    background: '#95a5a6',
+    background: '#8A8A8A',
     color: 'white'
   },
   submitButton: {

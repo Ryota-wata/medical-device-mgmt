@@ -170,7 +170,7 @@ export default function OcrConfirmPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FAFAFA' }}>
       <Header
         title="見積登録（購入）OCR明細確認"
         stepBadge="STEP 2"
@@ -360,7 +360,7 @@ export default function OcrConfirmPage() {
                   <tbody>
                     {detailItems.map((item, index) => (
                       <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
-                        <td style={{ padding: '4px 6px', textAlign: 'center', background: '#f8f9fa', border: '1px solid #ddd' }}>{item.id}</td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #ddd' }}>{item.id}</td>
                         <td style={{ padding: '4px 6px', border: '1px solid #ddd' }}>
                           <input
                             type="text"
@@ -448,7 +448,7 @@ export default function OcrConfirmPage() {
             </div>
 
             {/* 注記 + Excel取込 */}
-            <div style={{ padding: '14px 16px', borderTop: '1px solid #ddd', background: '#fafafa', display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
+            <div style={{ padding: '14px 16px', borderTop: '1px solid #ddd', background: '#FAFAFA', display: 'flex', alignItems: 'flex-end', gap: '16px' }}>
               <div style={{ flex: 1, fontSize: '12px', color: '#666', lineHeight: 2 }}>
                 <div>① 読み込んだお見積もりと相違ないか確認・修正を行って下さい</div>
                 <div>② 金額は単価×数量にて登録されています</div>
@@ -483,7 +483,7 @@ export default function OcrConfirmPage() {
             style={{
               width: '8px',
               cursor: 'col-resize',
-              background: '#e0e0e0',
+              background: '#E1E1E1',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -509,7 +509,7 @@ export default function OcrConfirmPage() {
             background: 'white',
           }}>
             {/* 見積書プレビュー */}
-            <div style={{ minHeight: '100%', position: 'relative', background: '#f5f5f5', padding: '8px' }}>
+            <div style={{ minHeight: '100%', position: 'relative', background: '#FAFAFA', padding: '8px' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/quotation-sample.png"
@@ -526,7 +526,7 @@ export default function OcrConfirmPage() {
             onClick={handleBack}
             style={{
               padding: '12px 28px',
-              background: '#95a5a6',
+              background: '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -541,7 +541,7 @@ export default function OcrConfirmPage() {
             onClick={handleAiJudgment}
             style={{
               padding: '12px 28px',
-              background: '#e74c3c',
+              background: '#DA0000',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

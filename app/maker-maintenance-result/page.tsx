@@ -180,7 +180,7 @@ export default function MakerMaintenanceResultPage() {
 
   if (!task) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
         <Header
           title="メーカー保守 点検結果登録"
           hideMenu={true}
@@ -194,7 +194,7 @@ export default function MakerMaintenanceResultPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       <Header
         title="メーカー保守 点検結果登録"
         hideMenu={true}
@@ -215,7 +215,7 @@ export default function MakerMaintenanceResultPage() {
           flexWrap: 'wrap',
           fontSize: '14px',
           fontWeight: 600,
-          color: '#1f2937',
+          color: '#4A4A4A',
         }}>
           <span>{task.inspectionGroupName || '保守・点検グループ名'}</span>
           <span style={{ color: '#aaa' }}>|</span>
@@ -243,7 +243,7 @@ export default function MakerMaintenanceResultPage() {
             {/* ヘッダー */}
             <div style={{
               padding: '12px 16px',
-              background: '#9b59b6',
+              background: '#5E3A93',
               color: 'white',
               fontSize: '14px',
               fontWeight: 'bold',
@@ -269,7 +269,7 @@ export default function MakerMaintenanceResultPage() {
                     htmlFor="file-input"
                     style={{
                       padding: '8px 16px',
-                      background: '#3498db',
+                      background: '#0092E6',
                       color: 'white',
                       borderRadius: '4px',
                       cursor: 'pointer',
@@ -346,11 +346,11 @@ export default function MakerMaintenanceResultPage() {
               }}>
                 <div style={{
                   padding: '10px 16px',
-                  background: '#f8f9fa',
+                  background: '#FAFAFA',
                   borderBottom: '1px solid #ddd',
                   fontSize: '14px',
                   fontWeight: 600,
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -407,10 +407,10 @@ export default function MakerMaintenanceResultPage() {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: '12px 16px',
-                  background: '#f8f9fa',
+                  background: '#FAFAFA',
                   borderBottom: '1px solid #ddd',
                 }}>
-                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1f2937' }}>
+                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#4A4A4A' }}>
                     発生費用
                   </h4>
                   <button
@@ -418,7 +418,7 @@ export default function MakerMaintenanceResultPage() {
                     onClick={handleAddCostItem}
                     style={{
                       padding: '4px 12px',
-                      background: '#3498db',
+                      background: '#0092E6',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -502,7 +502,7 @@ export default function MakerMaintenanceResultPage() {
                             onClick={() => handleRemoveCostItem(item.id)}
                             style={{
                               padding: '4px 8px',
-                              background: '#e74c3c',
+                              background: '#DA0000',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -525,7 +525,7 @@ export default function MakerMaintenanceResultPage() {
                     )}
                   </tbody>
                   <tfoot>
-                    <tr style={{ background: '#f8f9fa' }}>
+                    <tr style={{ background: '#FAFAFA' }}>
                       <td colSpan={2} style={{ ...styles.td, textAlign: 'right', fontWeight: 600 }}>
                         合計
                       </td>
@@ -533,7 +533,7 @@ export default function MakerMaintenanceResultPage() {
                         <span style={{
                           fontSize: '16px',
                           fontWeight: 'bold',
-                          color: '#1f2937',
+                          color: '#4A4A4A',
                           fontVariantNumeric: 'tabular-nums',
                         }}>
                           {totalCost.toLocaleString()} 円
@@ -553,7 +553,7 @@ export default function MakerMaintenanceResultPage() {
             style={{
               width: '8px',
               cursor: 'col-resize',
-              background: '#e0e0e0',
+              background: '#E1E1E1',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -595,7 +595,7 @@ export default function MakerMaintenanceResultPage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#f5f5f5',
+              background: '#FAFAFA',
               overflow: 'auto',
             }}>
               {previewUrl ? (
@@ -636,7 +636,7 @@ export default function MakerMaintenanceResultPage() {
             onClick={handleBack}
             style={{
               padding: '12px 28px',
-              background: '#95a5a6',
+              background: '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -651,7 +651,7 @@ export default function MakerMaintenanceResultPage() {
             onClick={handleSubmit}
             style={{
               padding: '12px 28px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -673,7 +673,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'block',
     fontSize: '13px',
     fontWeight: 600,
-    color: '#1f2937',
+    color: '#4A4A4A',
     marginBottom: '6px',
   },
   input: {
@@ -696,7 +696,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: 'left',
     fontSize: '12px',
     fontWeight: 600,
-    color: '#495057',
+    color: '#4A4A4A',
     borderBottom: '1px solid #ddd',
   },
   td: {

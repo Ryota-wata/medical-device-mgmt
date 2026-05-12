@@ -84,10 +84,10 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
     marginBottom: '6px',
     fontSize: '13px',
     fontWeight: 'bold' as const,
-    color: '#2c3e50',
+    color: '#4A4A4A',
   };
 
-  const requiredMark = <span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>;
+  const requiredMark = <span style={{ color: '#DA0000', marginLeft: '4px' }}>*</span>;
 
   return (
     <div
@@ -117,7 +117,7 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
+        <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#4A4A4A' }}>
           申請作成
         </h3>
 
@@ -126,33 +126,33 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
           <div style={{ marginBottom: '20px', padding: '15px', background: '#f3e5f5', borderRadius: '4px', border: '1px solid #ce93d8' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '10px' }}>確定資産情報（Step2で確定）</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: '13px' }}>
-              <span style={{ color: '#9c27b0' }}>category:</span>
+              <span style={{ color: '#5E3A93' }}>category:</span>
               <span>{assetInfo.category || '-'}</span>
-              <span style={{ color: '#9c27b0' }}>大分類:</span>
+              <span style={{ color: '#5E3A93' }}>大分類:</span>
               <span>{assetInfo.majorCategory || '-'}</span>
-              <span style={{ color: '#9c27b0' }}>中分類:</span>
+              <span style={{ color: '#5E3A93' }}>中分類:</span>
               <span>{assetInfo.middleCategory || '-'}</span>
-              <span style={{ color: '#9c27b0' }}>資産名:</span>
+              <span style={{ color: '#5E3A93' }}>資産名:</span>
               <span style={{ fontWeight: 'bold' }}>{assetInfo.assetName}</span>
-              <span style={{ color: '#9c27b0' }}>メーカー:</span>
+              <span style={{ color: '#5E3A93' }}>メーカー:</span>
               <span>{assetInfo.manufacturer || '-'}</span>
-              <span style={{ color: '#9c27b0' }}>型式:</span>
+              <span style={{ color: '#5E3A93' }}>型式:</span>
               <span>{assetInfo.model || '-'}</span>
             </div>
           </div>
         )}
 
         {/* 見積明細情報（原本） */}
-        <div style={{ marginBottom: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-          <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#495057', marginBottom: '10px' }}>見積明細情報（原本）</div>
+        <div style={{ marginBottom: '20px', padding: '15px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #E1E1E1' }}>
+          <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '10px' }}>見積明細情報（原本）</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: '13px' }}>
-            <span style={{ color: '#6c757d' }}>品名:</span>
+            <span style={{ color: '#8A8A8A' }}>品名:</span>
             <span style={{ fontWeight: 'bold' }}>{ocrItem.itemName}</span>
-            <span style={{ color: '#6c757d' }}>メーカー:</span>
+            <span style={{ color: '#8A8A8A' }}>メーカー:</span>
             <span>{ocrItem.manufacturer || '-'}</span>
-            <span style={{ color: '#6c757d' }}>型式:</span>
+            <span style={{ color: '#8A8A8A' }}>型式:</span>
             <span>{ocrItem.model || '-'}</span>
-            <span style={{ color: '#6c757d' }}>数量:</span>
+            <span style={{ color: '#8A8A8A' }}>数量:</span>
             <span>{ocrItem.quantity} {ocrItem.unit}</span>
           </div>
         </div>
@@ -283,7 +283,7 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
             onClick={onClose}
             style={{
               padding: '10px 20px',
-              background: '#95a5a6',
+              background: '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -298,7 +298,7 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
             onClick={handleSubmit}
             style={{
               padding: '10px 20px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

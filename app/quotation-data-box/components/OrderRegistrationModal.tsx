@@ -126,7 +126,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
       >
         {/* タイトル */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#4A4A4A' }}>
             発注登録
           </h2>
           <button
@@ -146,7 +146,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
         }}>
           <div style={{
             padding: '8px 16px',
-            background: '#6c757d',
+            background: '#8A8A8A',
             color: 'white',
             fontSize: '12px',
             fontWeight: 'bold',
@@ -157,16 +157,16 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
               <tbody>
                 <tr>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '120px', border: '1px solid #dee2e6' }}>見積依頼No.</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6', width: '150px' }}>{rfqGroup.rfqNo}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '120px', border: '1px solid #dee2e6' }}>見積G名称</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{rfqGroup.groupName}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '120px', border: '1px solid #E1E1E1' }}>見積依頼No.</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1', width: '150px' }}>{rfqGroup.rfqNo}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '120px', border: '1px solid #E1E1E1' }}>見積G名称</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{rfqGroup.groupName}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>発注先</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{rfqGroup.vendorName || '-'}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>担当</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{rfqGroup.personInCharge || '-'}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>発注先</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{rfqGroup.vendorName || '-'}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>担当</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{rfqGroup.personInCharge || '-'}</td>
                 </tr>
               </tbody>
             </table>
@@ -181,17 +181,17 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
           <div style={{ padding: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: '10px 20px', alignItems: 'center' }}>
               {/* 発注形態 */}
-              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>発注形態</label>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', whiteSpace: 'nowrap' }}>発注形態</label>
               <select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)} style={{ ...inputStyle, minWidth: '200px' }}>
                 {ORDER_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
               </select>
 
               {/* 納期 */}
-              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>納期</label>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', whiteSpace: 'nowrap' }}>納期</label>
               <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} style={inputStyle} />
 
               {/* 支払条件 */}
-              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#2c3e50', whiteSpace: 'nowrap' }}>支払条件</label>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', whiteSpace: 'nowrap' }}>支払条件</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value as PaymentTerms)} style={{ ...inputStyle, minWidth: '180px' }}>
                   {PAYMENT_TERMS.map((t) => (<option key={t} value={t}>{t}</option>))}
@@ -201,16 +201,16 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
               </div>
 
               {/* リース会社 */}
-              <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#2c3e50' : '#bbb', whiteSpace: 'nowrap' }}>リース会社</label>
-              <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#f5f5f5' }} />
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース会社</label>
+              <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
 
               {/* リース開始日 / 年数 */}
-              <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#2c3e50' : '#bbb', whiteSpace: 'nowrap' }}>リース開始日</label>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース開始日</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#f5f5f5' }} />
-                <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#2c3e50' : '#bbb', whiteSpace: 'nowrap' }}>年数</label>
+                <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>年数</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#f5f5f5' }} />
+                  <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
                   <span style={{ fontSize: '13px', color: isLeaseType ? '#333' : '#bbb' }}>年</span>
                 </div>
               </div>
@@ -268,13 +268,13 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
                         type="date"
                         value={itemDeliveryDates[item.id] || ''}
                         onChange={(e) => setItemDeliveryDates((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                        style={{ ...inputStyle, width: '140px', fontSize: '11px', padding: '3px 6px', color: itemDeliveryDates[item.id] ? '#2c3e50' : '#aaa' }}
+                        style={{ ...inputStyle, width: '140px', fontSize: '11px', padding: '3px 6px', color: itemDeliveryDates[item.id] ? '#4A4A4A' : '#aaa' }}
                       />
                     </td>
                   </tr>
                 ))}
                 {quotationItems.length === 0 && (
-                  <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#7f8c8d' }}>対象の見積明細がありません</td></tr>
+                  <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A' }}>対象の見積明細がありません</td></tr>
                 )}
               </tbody>
             </table>
@@ -283,10 +283,10 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
 
         {/* フッター */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #eee' }}>
-          <button onClick={onClose} style={{ padding: '10px 24px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+          <button onClick={onClose} style={{ padding: '10px 24px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
             キャンセル
           </button>
-          <button onClick={handleSubmitOrder} style={{ padding: '10px 24px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+          <button onClick={handleSubmitOrder} style={{ padding: '10px 24px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
             登録
           </button>
         </div>

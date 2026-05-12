@@ -81,7 +81,7 @@ export function VendorFormModal({
     fontSize: '13px',
     fontWeight: 600,
     marginBottom: '6px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
   };
 
   const inputStyle = {
@@ -124,7 +124,7 @@ export function VendorFormModal({
       >
         {/* Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)',
+          background: 'linear-gradient(135deg, #4A4A4A 0%, #34495e 100%)',
           color: 'white',
           padding: isMobile ? '16px' : '20px',
           borderTopLeftRadius: '12px',
@@ -141,7 +141,7 @@ export function VendorFormModal({
             {/* 担当施設名 */}
             <div>
               <label style={labelStyle}>
-                担当施設名 <span style={{ color: '#e74c3c' }}>*</span>
+                担当施設名 <span style={{ color: '#DA0000' }}>*</span>
               </label>
               <SearchableSelect
                 value={formData.facilityName || ''}
@@ -155,7 +155,7 @@ export function VendorFormModal({
             {/* インボイス登録番号 */}
             <div>
               <label style={labelStyle}>
-                インボイス登録番号 <span style={{ color: '#e74c3c' }}>*</span>
+                インボイス登録番号 <span style={{ color: '#DA0000' }}>*</span>
               </label>
               <input
                 type="text"
@@ -170,7 +170,7 @@ export function VendorFormModal({
             {/* 業者名 */}
             <div>
               <label style={labelStyle}>
-                業者名 <span style={{ color: '#e74c3c' }}>*</span>
+                業者名 <span style={{ color: '#DA0000' }}>*</span>
               </label>
               <input
                 type="text"
@@ -227,7 +227,7 @@ export function VendorFormModal({
             {/* 氏名 */}
             <div>
               <label style={labelStyle}>
-                氏名 <span style={{ color: '#e74c3c' }}>*</span>
+                氏名 <span style={{ color: '#DA0000' }}>*</span>
               </label>
               <input
                 type="text"
@@ -243,7 +243,7 @@ export function VendorFormModal({
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px' }}>
               <div>
                 <label style={labelStyle}>
-                  連絡先 <span style={{ color: '#e74c3c' }}>*</span>
+                  連絡先 <span style={{ color: '#DA0000' }}>*</span>
                 </label>
                 <input
                   type="tel"
@@ -256,7 +256,7 @@ export function VendorFormModal({
               </div>
               <div>
                 <label style={labelStyle}>
-                  メール <span style={{ color: '#e74c3c' }}>*</span>
+                  メール <span style={{ color: '#DA0000' }}>*</span>
                 </label>
                 <input
                   type="email"
@@ -278,7 +278,7 @@ export function VendorFormModal({
                   onChange={(e) => setFormData({ ...formData, isPrimaryContact: e.target.checked })}
                   style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                 />
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A' }}>
                   担当フラグ（該当病院のメイン担当者）
                 </span>
               </label>
@@ -297,7 +297,7 @@ export function VendorFormModal({
               onClick={onClose}
               style={{
                 padding: '10px 20px',
-                background: '#7f8c8d',
+                background: '#8A8A8A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -312,7 +312,7 @@ export function VendorFormModal({
               type="submit"
               style={{
                 padding: '10px 20px',
-                background: '#27ae60',
+                background: '#008C1D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',

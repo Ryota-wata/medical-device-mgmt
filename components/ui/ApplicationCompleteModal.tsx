@@ -57,7 +57,7 @@ export function ApplicationCompleteModal({
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: '#e8f5e9',
+            background: '#EBF5EE',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

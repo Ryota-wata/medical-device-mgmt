@@ -68,16 +68,16 @@ export function LendingRegistrationModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* ヘッダー */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '18px', fontWeight: 600, color: '#2c3e50' }}>貸出機器登録</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#7f8c8d' }} aria-label="閉じる">×</button>
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '18px', fontWeight: 600, color: '#4A4A4A' }}>貸出機器登録</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#8A8A8A' }} aria-label="閉じる">×</button>
         </div>
 
         {/* ボディ */}
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* 貸出グループ名 */}
           <div>
-            <label style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50', display: 'block', marginBottom: '8px' }}>貸出グループ名</label>
+            <label style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', display: 'block', marginBottom: '8px' }}>貸出グループ名</label>
             {!isNewGroup ? (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <select
@@ -93,7 +93,7 @@ export function LendingRegistrationModal({
                 <button
                   type="button"
                   onClick={() => { setIsNewGroup(true); setLendingGroupName(''); }}
-                  style={{ padding: '8px 14px', fontSize: '13px', background: '#27ae60', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ padding: '8px 14px', fontSize: '13px', background: '#008C1D', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
                   新規作成
                 </button>
@@ -110,7 +110,7 @@ export function LendingRegistrationModal({
                 <button
                   type="button"
                   onClick={() => { setIsNewGroup(false); setLendingGroupName(''); }}
-                  style={{ padding: '8px 14px', fontSize: '13px', background: '#6c757d', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ padding: '8px 14px', fontSize: '13px', background: '#8A8A8A', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
                   既存から選択
                 </button>
@@ -120,7 +120,7 @@ export function LendingRegistrationModal({
 
           {/* アラート期間 */}
           <div>
-            <label style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50', display: 'block', marginBottom: '8px' }}>アラート発生までの期間</label>
+            <label style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', display: 'block', marginBottom: '8px' }}>アラート発生までの期間</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input
                 type="number"
@@ -136,16 +136,16 @@ export function LendingRegistrationModal({
 
           {/* 対象資産一覧 */}
           <div>
-            <label style={{ fontSize: '14px', fontWeight: 600, color: '#2c3e50', display: 'block', marginBottom: '8px' }}>対象資産（{preSelectedAssets.length}件）</label>
+            <label style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', display: 'block', marginBottom: '8px' }}>対象資産（{preSelectedAssets.length}件）</label>
             <div style={{ border: '1px solid #ddd', borderRadius: '4px', maxHeight: '200px', overflow: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr>
-                    <th style={{ background: '#2c3e50', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>QRコード</th>
-                    <th style={{ background: '#2c3e50', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>品目</th>
-                    <th style={{ background: '#2c3e50', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>メーカー</th>
-                    <th style={{ background: '#2c3e50', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>型式</th>
-                    <th style={{ background: '#2c3e50', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>部署</th>
+                    <th style={{ background: '#4A4A4A', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>QRコード</th>
+                    <th style={{ background: '#4A4A4A', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>品目</th>
+                    <th style={{ background: '#4A4A4A', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>メーカー</th>
+                    <th style={{ background: '#4A4A4A', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>型式</th>
+                    <th style={{ background: '#4A4A4A', color: 'white', padding: '8px 12px', textAlign: 'left', position: 'sticky', top: 0 }}>部署</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -165,9 +165,9 @@ export function LendingRegistrationModal({
         </div>
 
         {/* フッター */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid #e0e0e0', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          <button onClick={onClose} style={{ padding: '10px 20px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>戻る</button>
-          <button onClick={handleSubmit} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>貸出管理に登録</button>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+          <button onClick={onClose} style={{ padding: '10px 20px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>戻る</button>
+          <button onClick={handleSubmit} style={{ padding: '10px 20px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>貸出管理に登録</button>
         </div>
       </div>
     </div>

@@ -262,13 +262,13 @@ function AssetSurveyContent() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#FAFAFA' }}>
       {/* Sticky Header */}
       <div style={{
         position: 'sticky',
         top: 0,
         zIndex: 9999,
-        background: '#27ae60',
+        background: '#008C1D',
         padding: isMobile ? '10px 12px' : isTablet ? '11px 16px' : '12px 20px',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)'
       }}>
@@ -351,7 +351,7 @@ function AssetSurveyContent() {
               <label style={{
                 fontSize: isMobile ? '13px' : '14px',
                 fontWeight: 600,
-                color: '#1f2937',
+                color: '#4A4A4A',
                 marginBottom: isMobile ? '6px' : '8px',
                 display: 'block'
               }}>
@@ -369,19 +369,19 @@ function AssetSurveyContent() {
                   一括登録モード
                 </label>
               </div>
-              <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#7f8c8d', marginTop: '4px', display: 'block' }}>
+              <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#8A8A8A', marginTop: '4px', display: 'block' }}>
                 同じ機器を複数個登録する場合にチェック
               </span>
             </div>
 
             {/* QR Code Display Area */}
             <div style={{ marginBottom: isMobile ? '16px' : '20px' }}>
-              <div style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: 600, color: '#374151', marginBottom: isMobile ? '6px' : '8px' }}>
+              <div style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', marginBottom: isMobile ? '6px' : '8px' }}>
                 読み取ったQRコード
               </div>
               <div style={{
-                background: '#f8f9fa',
-                border: '2px dashed #dee2e6',
+                background: '#FAFAFA',
+                border: '2px dashed #E1E1E1',
                 borderRadius: isMobile ? '6px' : '8px',
                 padding: isMobile ? '20px' : isTablet ? '25px' : '30px',
                 textAlign: 'center',
@@ -392,14 +392,14 @@ function AssetSurveyContent() {
                 justifyContent: 'center'
               }}>
                 <div style={{ fontSize: isMobile ? '36px' : '48px', marginBottom: isMobile ? '6px' : '8px' }}>📷</div>
-                <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#7f8c8d' }}>QRコードを読み取ってください</div>
+                <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#8A8A8A' }}>QRコードを読み取ってください</div>
               </div>
             </div>
 
             {/* Blue Section Bar */}
             <div style={{
               height: isMobile ? '3px' : '4px',
-              background: '#27ae60',
+              background: '#008C1D',
               borderRadius: '2px',
               marginTop: isMobile ? '20px' : '30px',
               marginBottom: isMobile ? '16px' : '20px'
@@ -416,7 +416,7 @@ function AssetSurveyContent() {
                 <label style={{
                   fontSize: isMobile ? '13px' : '14px',
                   fontWeight: 600,
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   marginBottom: isMobile ? '6px' : '8px'
                 }}>
                   資産番号
@@ -439,7 +439,7 @@ function AssetSurveyContent() {
                 <label style={{
                   fontSize: isMobile ? '13px' : '14px',
                   fontWeight: 600,
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   marginBottom: isMobile ? '6px' : '8px'
                 }}>
                   備品番号
@@ -462,7 +462,7 @@ function AssetSurveyContent() {
                 <label style={{
                   fontSize: isMobile ? '13px' : '14px',
                   fontWeight: 600,
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   marginBottom: isMobile ? '6px' : '8px'
                 }}>
                   シリアルNo.
@@ -493,7 +493,7 @@ function AssetSurveyContent() {
                 <label style={{
                   fontSize: isMobile ? '13px' : '14px',
                   fontWeight: 600,
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   marginBottom: isMobile ? '6px' : '8px'
                 }}>
                   購入年月日
@@ -511,7 +511,7 @@ function AssetSurveyContent() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     minHeight: '42px',
-                    color: purchaseYear ? '#1f2937' : '#999'
+                    color: purchaseYear ? '#4A4A4A' : '#999'
                   }}
                 >
                   <span>{formatDisplayDate()}</span>
@@ -523,7 +523,7 @@ function AssetSurveyContent() {
                 <label style={{
                   fontSize: isMobile ? '13px' : '14px',
                   fontWeight: 600,
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   marginBottom: isMobile ? '6px' : '8px'
                 }}>
                   その他
@@ -531,7 +531,7 @@ function AssetSurveyContent() {
                 <div style={{ display: 'flex', gap: isMobile ? '16px' : '20px', alignItems: 'center', paddingTop: '4px', flexWrap: 'wrap' }}>
                   {/* Lease Toggle */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '8px' }}>
-                    <label style={{ fontSize: isMobile ? '12px' : '13px', color: '#1f2937', whiteSpace: 'nowrap' }}>リース</label>
+                    <label style={{ fontSize: isMobile ? '12px' : '13px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>リース</label>
                     <button
                       type="button"
                       onClick={() => setIsLease(!isLease)}
@@ -540,7 +540,7 @@ function AssetSurveyContent() {
                         height: isMobile ? '22px' : '24px',
                         borderRadius: isMobile ? '11px' : '12px',
                         border: 'none',
-                        background: isLease ? '#27ae60' : '#bdc3c7',
+                        background: isLease ? '#008C1D' : '#bdc3c7',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background 0.3s',
@@ -559,12 +559,12 @@ function AssetSurveyContent() {
                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                       }}></div>
                     </button>
-                    <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#7f8c8d' }}>{isLease ? 'オン' : 'オフ'}</span>
+                    <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#8A8A8A' }}>{isLease ? 'オン' : 'オフ'}</span>
                   </div>
 
                   {/* Loan Toggle */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '8px' }}>
-                    <label style={{ fontSize: isMobile ? '12px' : '13px', color: '#1f2937', whiteSpace: 'nowrap' }}>貸出品</label>
+                    <label style={{ fontSize: isMobile ? '12px' : '13px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>貸出品</label>
                     <button
                       type="button"
                       onClick={() => setIsLoan(!isLoan)}
@@ -573,7 +573,7 @@ function AssetSurveyContent() {
                         height: isMobile ? '22px' : '24px',
                         borderRadius: isMobile ? '11px' : '12px',
                         border: 'none',
-                        background: isLoan ? '#27ae60' : '#bdc3c7',
+                        background: isLoan ? '#008C1D' : '#bdc3c7',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background 0.3s',
@@ -592,7 +592,7 @@ function AssetSurveyContent() {
                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                       }}></div>
                     </button>
-                    <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#7f8c8d' }}>{isLoan ? 'オン' : 'オフ'}</span>
+                    <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#8A8A8A' }}>{isLoan ? 'オン' : 'オフ'}</span>
                   </div>
                 </div>
               </div>
@@ -600,12 +600,12 @@ function AssetSurveyContent() {
 
             {/* Photo Display Area */}
             <div style={{ marginBottom: isMobile ? '16px' : '20px' }}>
-              <div style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: 600, color: '#374151', marginBottom: isMobile ? '6px' : '8px' }}>
+              <div style={{ fontSize: isMobile ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', marginBottom: isMobile ? '6px' : '8px' }}>
                 写真
               </div>
               <div style={{
-                background: '#f8f9fa',
-                border: '2px dashed #dee2e6',
+                background: '#FAFAFA',
+                border: '2px dashed #E1E1E1',
                 borderRadius: isMobile ? '6px' : '8px',
                 padding: isMobile ? '20px' : isTablet ? '25px' : '30px',
                 textAlign: 'center',
@@ -616,14 +616,14 @@ function AssetSurveyContent() {
                 justifyContent: 'center'
               }}>
                 <div style={{ fontSize: isMobile ? '36px' : '48px', marginBottom: isMobile ? '6px' : '8px' }}>📷</div>
-                <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#7f8c8d' }}>写真を撮影してください</div>
+                <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#8A8A8A' }}>写真を撮影してください</div>
               </div>
             </div>
 
             {/* Blue Section Bar */}
             <div style={{
               height: isMobile ? '3px' : '4px',
-              background: '#27ae60',
+              background: '#008C1D',
               borderRadius: '2px',
               marginTop: isMobile ? '20px' : '30px',
               marginBottom: isMobile ? '16px' : '20px'
@@ -635,7 +635,7 @@ function AssetSurveyContent() {
                 margin: isMobile ? '0 0 12px 0' : '0 0 15px 0',
                 fontSize: isMobile ? '14px' : '16px',
                 fontWeight: 600,
-                color: '#374151'
+                color: '#4A4A4A'
               }}>
                 品目情報
               </h3>
@@ -716,7 +716,7 @@ function AssetSurveyContent() {
                 margin: isMobile ? '0 0 12px 0' : '0 0 15px 0',
                 fontSize: isMobile ? '14px' : '16px',
                 fontWeight: 600,
-                color: '#374151'
+                color: '#4A4A4A'
               }}>
                 サイズ情報
               </h3>
@@ -726,7 +726,7 @@ function AssetSurveyContent() {
                   <label style={{
                     fontSize: isMobile ? '13px' : '14px',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: '#4A4A4A',
                     marginBottom: isMobile ? '6px' : '8px'
                   }}>
                     W (幅)
@@ -751,7 +751,7 @@ function AssetSurveyContent() {
                   <label style={{
                     fontSize: isMobile ? '13px' : '14px',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: '#4A4A4A',
                     marginBottom: isMobile ? '6px' : '8px'
                   }}>
                     D (奥行)
@@ -776,7 +776,7 @@ function AssetSurveyContent() {
                   <label style={{
                     fontSize: isMobile ? '13px' : '14px',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: '#4A4A4A',
                     marginBottom: isMobile ? '6px' : '8px'
                   }}>
                     H (高さ)
@@ -797,7 +797,7 @@ function AssetSurveyContent() {
                   />
                 </div>
               </div>
-              <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d' }}>単位: mm</span>
+              <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#8A8A8A' }}>単位: mm</span>
             </div>
 
             {/* Remarks */}
@@ -805,7 +805,7 @@ function AssetSurveyContent() {
               <label style={{
                 fontSize: isMobile ? '13px' : '14px',
                 fontWeight: 600,
-                color: '#1f2937',
+                color: '#4A4A4A',
                 marginBottom: isMobile ? '6px' : '8px'
               }}>
                 備考
@@ -831,7 +831,7 @@ function AssetSurveyContent() {
               <>
                 <div style={{
                   height: isMobile ? '3px' : '4px',
-                  background: '#27ae60',
+                  background: '#008C1D',
                   borderRadius: '2px',
                   marginTop: isMobile ? '20px' : '30px',
                   marginBottom: isMobile ? '16px' : '20px'
@@ -842,7 +842,7 @@ function AssetSurveyContent() {
                     <label style={{
                       fontSize: isMobile ? '13px' : '14px',
                       fontWeight: 600,
-                      color: '#1f2937',
+                      color: '#4A4A4A',
                       marginBottom: isMobile ? '6px' : '8px'
                     }}>
                       終了ラベル番号
@@ -858,10 +858,10 @@ function AssetSurveyContent() {
                         border: '1px solid #d0d0d0',
                         borderRadius: '6px',
                         fontSize: isMobile ? '14px' : '14px',
-                        background: '#f8f9fa'
+                        background: '#FAFAFA'
                       }}
                     />
-                    <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#7f8c8d', marginTop: '4px' }}>
+                    <span style={{ fontSize: isMobile ? '10px' : '11px', color: '#8A8A8A', marginTop: '4px' }}>
                       一括登録の終了ラベル番号
                     </span>
                   </div>
@@ -871,7 +871,7 @@ function AssetSurveyContent() {
                     onClick={handleEndQRScan}
                     style={{
                       padding: isMobile ? '12px 16px' : '12px 20px',
-                      background: '#27ae60',
+                      background: '#008C1D',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
@@ -947,12 +947,12 @@ function AssetSurveyContent() {
             <div style={{
               width: 0,
               height: 0,
-              borderRight: '10px solid #374151',
+              borderRight: '10px solid #4A4A4A',
               borderTop: '6px solid transparent',
               borderBottom: '6px solid transparent'
             }}></div>
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#1f2937' }}>メイン画面に戻る</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#4A4A4A' }}>メイン画面に戻る</span>
         </button>
 
         {/* History Button */}
@@ -990,7 +990,7 @@ function AssetSurveyContent() {
           }}>
             📋
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#1f2937' }}>履歴表示</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#4A4A4A' }}>履歴表示</span>
         </button>
 
         {/* QR Scan Button */}
@@ -1028,7 +1028,7 @@ function AssetSurveyContent() {
           }}>
             📷
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#1f2937' }}>QR読取</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#4A4A4A' }}>QR読取</span>
         </button>
 
         {/* Photo Capture Button */}
@@ -1066,7 +1066,7 @@ function AssetSurveyContent() {
           }}>
             📷
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#1f2937' }}>写真撮影</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#4A4A4A' }}>写真撮影</span>
         </button>
 
         {/* Register Button */}
@@ -1084,7 +1084,7 @@ function AssetSurveyContent() {
             borderRadius: '8px',
             transition: 'background 0.3s',
             minWidth: isMobile ? '60px' : '70px',
-            color: '#27ae60'
+            color: '#008C1D'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = '#d5f4e6';
@@ -1102,11 +1102,11 @@ function AssetSurveyContent() {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '20px',
-            color: '#27ae60'
+            color: '#008C1D'
           }}>
             ✓
           </div>
-          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#27ae60' }}>商品登録</span>
+          <span style={{ fontSize: isMobile ? '11px' : '12px', color: '#008C1D' }}>商品登録</span>
         </button>
       </footer>
 
@@ -1159,7 +1159,7 @@ function AssetSurveyContent() {
               >
                 キャンセル
               </button>
-              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>
+              <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A' }}>
                 購入年月日
               </span>
               <button
@@ -1168,7 +1168,7 @@ function AssetSurveyContent() {
                   background: 'none',
                   border: 'none',
                   fontSize: '16px',
-                  color: '#27ae60',
+                  color: '#008C1D',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   padding: '4px 8px'
@@ -1183,7 +1183,7 @@ function AssetSurveyContent() {
               display: 'flex',
               padding: '8px 10px',
               borderBottom: '1px solid #eee',
-              background: '#fafafa'
+              background: '#FAFAFA'
             }}>
               <div style={{ flex: 2, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>年</div>
               <div style={{ flex: 1, textAlign: 'center', fontSize: '13px', fontWeight: 'bold', color: '#666' }}>月</div>
@@ -1233,7 +1233,7 @@ function AssetSurveyContent() {
                       justifyContent: 'center',
                       scrollSnapAlign: 'center',
                       fontSize: '16px',
-                      color: !tempYear ? '#27ae60' : '#999',
+                      color: !tempYear ? '#008C1D' : '#999',
                       fontWeight: !tempYear ? 'bold' : 'normal',
                       position: 'relative',
                       zIndex: 2
@@ -1251,7 +1251,7 @@ function AssetSurveyContent() {
                         justifyContent: 'center',
                         scrollSnapAlign: 'center',
                         fontSize: '16px',
-                        color: tempYear === year ? '#27ae60' : '#1f2937',
+                        color: tempYear === year ? '#008C1D' : '#4A4A4A',
                         fontWeight: tempYear === year ? 'bold' : 'normal',
                         position: 'relative',
                         zIndex: 2
@@ -1285,7 +1285,7 @@ function AssetSurveyContent() {
                       justifyContent: 'center',
                       scrollSnapAlign: 'center',
                       fontSize: '18px',
-                      color: !tempMonth ? '#27ae60' : '#999',
+                      color: !tempMonth ? '#008C1D' : '#999',
                       fontWeight: !tempMonth ? 'bold' : 'normal',
                       position: 'relative',
                       zIndex: 2
@@ -1303,7 +1303,7 @@ function AssetSurveyContent() {
                         justifyContent: 'center',
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempMonth === month ? '#27ae60' : '#1f2937',
+                        color: tempMonth === month ? '#008C1D' : '#4A4A4A',
                         fontWeight: tempMonth === month ? 'bold' : 'normal',
                         position: 'relative',
                         zIndex: 2
@@ -1337,7 +1337,7 @@ function AssetSurveyContent() {
                       justifyContent: 'center',
                       scrollSnapAlign: 'center',
                       fontSize: '18px',
-                      color: !tempDay ? '#27ae60' : '#999',
+                      color: !tempDay ? '#008C1D' : '#999',
                       fontWeight: !tempDay ? 'bold' : 'normal',
                       position: 'relative',
                       zIndex: 2
@@ -1355,7 +1355,7 @@ function AssetSurveyContent() {
                         justifyContent: 'center',
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempDay === day ? '#27ae60' : '#1f2937',
+                        color: tempDay === day ? '#008C1D' : '#4A4A4A',
                         fontWeight: tempDay === day ? 'bold' : 'normal',
                         position: 'relative',
                         zIndex: 2
@@ -1383,7 +1383,7 @@ function AssetSurveyContent() {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  background: '#f5f5f5',
+                  background: '#FAFAFA',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '14px',

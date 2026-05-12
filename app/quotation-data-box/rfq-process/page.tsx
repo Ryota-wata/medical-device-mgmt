@@ -291,15 +291,15 @@ function RfqProcessContent() {
   // ── Not Found ──
   if (!rfqGroup) {
     return (
-      <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+      <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
         <Header title="見積依頼" showBackButton backHref="/quotation-data-box/purchase-management" backLabel="タスク管理に戻る" hideMenu />
-        <div style={{ padding: '60px 40px', textAlign: 'center', color: '#7f8c8d' }}>
+        <div style={{ padding: '60px 40px', textAlign: 'center', color: '#8A8A8A' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#128203;</div>
           <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>見積依頼グループが見つかりません</div>
           <div style={{ fontSize: '13px', marginBottom: '24px' }}>URLのパラメータを確認してください。</div>
           <button
             onClick={() => router.push('/quotation-data-box/purchase-management')}
-            style={{ padding: '8px 24px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+            style={{ padding: '8px 24px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
           >
             タスク管理に戻る
           </button>
@@ -315,10 +315,10 @@ function RfqProcessContent() {
   // Render
   // ──────────────────────────────────────────────
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       {/* ===== ヘッダー ===== */}
       <div style={{
-        background: '#2c3e50',
+        background: '#4A4A4A',
         color: 'white',
         padding: '8px 16px',
         display: 'flex',
@@ -326,7 +326,7 @@ function RfqProcessContent() {
         gap: '12px',
       }}>
         <span style={{
-          background: '#3498db',
+          background: '#0092E6',
           padding: '4px 10px',
           borderRadius: '4px',
           fontSize: '12px',
@@ -336,7 +336,7 @@ function RfqProcessContent() {
           見積依頼・見積登録
         </span>
         <span style={{
-          background: '#e74c3c',
+          background: '#DA0000',
           padding: '2px 10px',
           borderRadius: '4px',
           fontSize: '11px',
@@ -366,7 +366,7 @@ function RfqProcessContent() {
       <div style={{
         background: 'white',
         padding: '16px 32px',
-        borderBottom: '1px solid #dee2e6',
+        borderBottom: '1px solid #E1E1E1',
         display: 'flex',
         justifyContent: 'center',
       }}>
@@ -377,7 +377,7 @@ function RfqProcessContent() {
                 <div style={{
                   height: '2px',
                   width: '64px',
-                  background: step.num <= 1 ? '#3498db' : '#dee2e6',
+                  background: step.num <= 1 ? '#0092E6' : '#E1E1E1',
                   marginTop: '13px',
                 }} />
               )}
@@ -392,15 +392,15 @@ function RfqProcessContent() {
                   fontSize: '12px',
                   fontWeight: 'bold',
                   background: step.num < 1 ? '#008C1D'
-                    : step.num === 1 ? '#3498db'
-                    : '#dee2e6',
+                    : step.num === 1 ? '#0092E6'
+                    : '#E1E1E1',
                   color: step.num <= 1 ? 'white' : '#999',
                 }}>
                   {step.num < 1 ? '\u2713' : step.num}
                 </div>
                 <span style={{
                   fontSize: '11px',
-                  color: step.num === 1 ? '#2c3e50' : step.num < 1 ? '#008C1D' : '#999',
+                  color: step.num === 1 ? '#4A4A4A' : step.num < 1 ? '#008C1D' : '#999',
                   whiteSpace: 'nowrap',
                   fontWeight: step.num === 1 ? 600 : 400,
                 }}>
@@ -419,8 +419,8 @@ function RfqProcessContent() {
         <div style={{ width: `${leftPanelWidth}%`, display: 'flex', flexDirection: 'column', overflow: 'auto', padding: '16px', gap: '16px' }}>
 
           {/* ========== セクション1: 見積依頼 ========== */}
-          <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #dee2e6', overflow: 'hidden' }}>
-            <div style={{ background: '#3498db', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #E1E1E1', overflow: 'hidden' }}>
+            <div style={{ background: '#0092E6', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>見積依頼</span>
               <button
                 onClick={handleAddVendor}
@@ -457,11 +457,11 @@ function RfqProcessContent() {
             <div style={{ padding: '0 12px', display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
               <div style={{ width: '56px', flexShrink: 0 }} />
               <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: '#555' }}>
-                業者名 <span style={{ color: '#e74c3c' }}>*</span>
+                業者名 <span style={{ color: '#DA0000' }}>*</span>
               </div>
               <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: '#555' }}>担当者名</div>
               <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: '#555' }}>
-                メール <span style={{ color: '#e74c3c' }}>*</span>
+                メール <span style={{ color: '#DA0000' }}>*</span>
               </div>
               <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: '#555' }}>連絡先</div>
               <div style={{ width: '140px', fontSize: '12px', fontWeight: 600, color: '#555' }}>提出期限</div>
@@ -536,7 +536,7 @@ function RfqProcessContent() {
                       }}
                       style={{
                         padding: '6px 8px',
-                        background: activeVendorIndex === index && showPreview ? '#2c3e50' : '#6c757d',
+                        background: activeVendorIndex === index && showPreview ? '#4A4A4A' : '#8A8A8A',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -556,7 +556,7 @@ function RfqProcessContent() {
                         onClick={() => handleRemoveVendor(index)}
                         style={{
                           padding: '6px 8px',
-                          background: '#e74c3c',
+                          background: '#DA0000',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -572,7 +572,7 @@ function RfqProcessContent() {
                 {/* ご依頼事項（業者ごと） */}
                 <div style={{
                   margin: '0 12px 12px',
-                  border: '1px solid #dee2e6',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   overflow: 'hidden',
                 }}>
@@ -580,7 +580,7 @@ function RfqProcessContent() {
                     padding: '4px 12px',
                     fontSize: '12px',
                     color: '#555',
-                    background: '#f8f9fa',
+                    background: '#FAFAFA',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
@@ -598,7 +598,7 @@ function RfqProcessContent() {
                     disabled={vendor.isSent}
                     style={{
                       ...textareaStyle,
-                      ...(vendor.isSent ? { background: '#f8f9fa', color: '#999' } : {}),
+                      ...(vendor.isSent ? { background: '#FAFAFA', color: '#999' } : {}),
                     }}
                   />
                 </div>
@@ -608,7 +608,7 @@ function RfqProcessContent() {
             {/* 一括送信エリア */}
             <div style={{
               padding: '12px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
             }}>
@@ -617,7 +617,7 @@ function RfqProcessContent() {
                 disabled={unsentCount === 0}
                 style={{
                   padding: '8px 24px',
-                  background: unsentCount === 0 ? '#95a5a6' : '#e74c3c',
+                  background: unsentCount === 0 ? '#8A8A8A' : '#DA0000',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -635,7 +635,7 @@ function RfqProcessContent() {
           <div style={{
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #dee2e6',
+            border: '1px solid #E1E1E1',
             overflow: 'hidden',
             flex: 1,
             display: 'flex',
@@ -693,7 +693,7 @@ function RfqProcessContent() {
                           type="text"
                           defaultValue="user001"
                           readOnly
-                          style={{ ...inputStyleCompact, width: '100px', background: '#f8f9fa' }}
+                          style={{ ...inputStyleCompact, width: '100px', background: '#FAFAFA' }}
                         />
                         <span style={{ fontSize: '13px', color: '#555' }}>担当者名</span>
                       </div>
@@ -744,7 +744,7 @@ function RfqProcessContent() {
             {/* アクションエリア */}
             <div style={{
               padding: '12px 16px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -753,7 +753,7 @@ function RfqProcessContent() {
                 onClick={() => alert('Excel取込機能（モック）')}
                 style={{
                   padding: '8px 20px',
-                  background: '#3498db',
+                  background: '#0092E6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -782,7 +782,7 @@ function RfqProcessContent() {
           style={{
             width: '8px',
             cursor: 'col-resize',
-            background: '#dee2e6',
+            background: '#E1E1E1',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -819,7 +819,7 @@ function RfqProcessContent() {
               <span style={{ fontSize: '13px', fontWeight: 'bold' }}>見積依頼書 プレビュー</span>
               {showPreview && activeVendor && (
                 <span style={{
-                  background: '#3498db',
+                  background: '#0092E6',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   fontSize: '11px',
@@ -906,7 +906,7 @@ function RfqProcessContent() {
                 {/* 件名 */}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '12px', color: '#555', marginBottom: '4px' }}>件名</div>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', padding: '6px 10px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '2px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', padding: '6px 10px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '2px' }}>
                     {rfqGroup.groupName} に係るお見積りのお願い
                   </div>
                 </div>
@@ -943,12 +943,12 @@ function RfqProcessContent() {
 
                 {/* 依頼品目テーブル */}
                 <div style={{ marginBottom: '20px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', borderBottom: '1px solid #dee2e6', paddingBottom: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', borderBottom: '1px solid #E1E1E1', paddingBottom: '4px' }}>
                     依頼品目（{editListItems.length}件）
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                     <thead>
-                      <tr style={{ background: '#f8f9fa' }}>
+                      <tr style={{ background: '#FAFAFA' }}>
                         <th style={previewThStyle}>No.</th>
                         <th style={previewThStyle}>部署</th>
                         <th style={previewThStyle}>室名</th>
@@ -960,7 +960,7 @@ function RfqProcessContent() {
                     <tbody>
                       {editListItems.length === 0 ? (
                         <tr>
-                          <td colSpan={6} style={{ padding: '16px', textAlign: 'center', color: '#999', border: '1px solid #dee2e6' }}>
+                          <td colSpan={6} style={{ padding: '16px', textAlign: 'center', color: '#999', border: '1px solid #E1E1E1' }}>
                             品目が登録されていません
                           </td>
                         </tr>
@@ -983,13 +983,13 @@ function RfqProcessContent() {
                 {/* ご依頼事項 */}
                 {activeVendor.requestNote && (
                   <div style={{ marginBottom: '20px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', borderBottom: '1px solid #dee2e6', paddingBottom: '4px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px', borderBottom: '1px solid #E1E1E1', paddingBottom: '4px' }}>
                       ご依頼事項
                     </div>
                     <div style={{
                       padding: '10px 12px',
-                      background: '#f8f9fa',
-                      border: '1px solid #dee2e6',
+                      background: '#FAFAFA',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '2px',
                       fontSize: '12px',
                       whiteSpace: 'pre-wrap',
@@ -1004,7 +1004,7 @@ function RfqProcessContent() {
                 <div style={{
                   marginTop: '24px',
                   paddingTop: '12px',
-                  borderTop: '1px solid #dee2e6',
+                  borderTop: '1px solid #E1E1E1',
                   fontSize: '11px',
                   color: '#555',
                 }}>
@@ -1033,7 +1033,7 @@ function RfqProcessContent() {
       <div style={{
         padding: '12px 16px',
         background: 'white',
-        borderTop: '1px solid #dee2e6',
+        borderTop: '1px solid #E1E1E1',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -1043,7 +1043,7 @@ function RfqProcessContent() {
           onClick={handleCancel}
           style={{
             padding: '8px 16px',
-            background: '#6c757d',
+            background: '#8A8A8A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1060,7 +1060,7 @@ function RfqProcessContent() {
           disabled={ocrProcessing}
           style={{
             padding: '8px 20px',
-            background: ocrProcessing ? '#95a5a6' : '#008C1D',
+            background: ocrProcessing ? '#8A8A8A' : '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1092,10 +1092,10 @@ function RfqProcessContent() {
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           }}>
             <div style={{ fontSize: '32px', marginBottom: '12px' }}>&#9203;</div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '8px' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
               OCR処理中...
             </div>
-            <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
+            <div style={{ fontSize: '13px', color: '#8A8A8A' }}>
               見積書のAI読み取りを実行しています
             </div>
           </div>
@@ -1118,7 +1118,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 const disabledInputStyle: React.CSSProperties = {
-  background: '#f8f9fa',
+  background: '#FAFAFA',
   color: '#999',
 };
 
@@ -1141,7 +1141,7 @@ const textareaStyle: React.CSSProperties = {
 
 const accentBtnSmall: React.CSSProperties = {
   padding: '6px 10px',
-  background: '#8e44ad',
+  background: '#4527A0',
   color: 'white',
   border: 'none',
   borderRadius: '4px',
@@ -1155,9 +1155,9 @@ const formLabelTd: React.CSSProperties = {
   padding: '10px 16px',
   fontSize: '13px',
   fontWeight: 'bold',
-  color: '#2c3e50',
-  background: '#f8f9fa',
-  border: '1px solid #dee2e6',
+  color: '#4A4A4A',
+  background: '#FAFAFA',
+  border: '1px solid #E1E1E1',
   whiteSpace: 'nowrap',
   verticalAlign: 'top',
   width: '120px',
@@ -1165,13 +1165,13 @@ const formLabelTd: React.CSSProperties = {
 
 const formValueTd: React.CSSProperties = {
   padding: '10px 16px',
-  border: '1px solid #dee2e6',
+  border: '1px solid #E1E1E1',
   verticalAlign: 'top',
 };
 
 const previewThStyle: React.CSSProperties = {
   padding: '6px 10px',
-  border: '1px solid #dee2e6',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -1180,7 +1180,7 @@ const previewThStyle: React.CSSProperties = {
 
 const previewTdStyle: React.CSSProperties = {
   padding: '6px 10px',
-  border: '1px solid #dee2e6',
+  border: '1px solid #E1E1E1',
   fontSize: '12px',
 };
 

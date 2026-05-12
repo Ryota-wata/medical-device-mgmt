@@ -201,7 +201,7 @@ export function ContractReviewModal({
     },
     header: {
       padding: '16px 24px',
-      backgroundColor: '#e74c3c',
+      backgroundColor: '#DA0000',
       color: 'white',
       display: 'flex',
       justifyContent: 'space-between',
@@ -232,13 +232,13 @@ export function ContractReviewModal({
     sectionTitle: {
       fontSize: '14px',
       fontWeight: 'bold',
-      color: '#2c3e50',
+      color: '#4A4A4A',
       marginBottom: '12px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #3498db',
+      borderBottom: '2px solid #0092E6',
     },
     infoBox: {
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#FAFAFA',
       borderRadius: '8px',
       padding: '16px',
       display: 'grid',
@@ -252,15 +252,15 @@ export function ContractReviewModal({
     },
     infoLabel: {
       fontSize: '12px',
-      color: '#7f8c8d',
+      color: '#8A8A8A',
     },
     infoValue: {
       fontSize: '14px',
-      color: '#2c3e50',
+      color: '#4A4A4A',
       fontWeight: 500,
     },
     tableContainer: {
-      border: '1px solid #dee2e6',
+      border: '1px solid #E1E1E1',
       borderRadius: '8px',
       overflow: 'hidden',
     },
@@ -270,12 +270,12 @@ export function ContractReviewModal({
       fontSize: '13px',
     },
     th: {
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#FAFAFA',
       padding: '10px 8px',
       textAlign: 'left',
       fontWeight: 600,
       whiteSpace: 'nowrap',
-      borderBottom: '1px solid #dee2e6',
+      borderBottom: '1px solid #E1E1E1',
     },
     td: {
       padding: '10px 8px',
@@ -289,7 +289,7 @@ export function ContractReviewModal({
     selectedCount: {
       marginTop: '8px',
       fontSize: '13px',
-      color: '#e74c3c',
+      color: '#DA0000',
       fontWeight: 500,
     },
     formGroup: {
@@ -299,11 +299,11 @@ export function ContractReviewModal({
       display: 'block',
       fontSize: '14px',
       fontWeight: 600,
-      color: '#2c3e50',
+      color: '#4A4A4A',
       marginBottom: '8px',
     },
     required: {
-      color: '#e74c3c',
+      color: '#DA0000',
       marginLeft: '4px',
     },
     input: {
@@ -332,8 +332,8 @@ export function ContractReviewModal({
       transition: 'border-color 0.2s, background-color 0.2s',
     },
     dropZoneActive: {
-      borderColor: '#3498db',
-      backgroundColor: '#e3f2fd',
+      borderColor: '#0092E6',
+      backgroundColor: '#EAF3FB',
     },
     dropZoneIcon: {
       fontSize: '32px',
@@ -341,12 +341,12 @@ export function ContractReviewModal({
     },
     dropZoneText: {
       fontSize: '14px',
-      color: '#5a6c7d',
+      color: '#8A8A8A',
       marginBottom: '4px',
     },
     dropZoneHint: {
       fontSize: '12px',
-      color: '#95a5a6',
+      color: '#8A8A8A',
     },
     fileList: {
       marginTop: '12px',
@@ -356,7 +356,7 @@ export function ContractReviewModal({
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '8px 12px',
-      backgroundColor: '#e3f2fd',
+      backgroundColor: '#EAF3FB',
       borderRadius: '4px',
       marginBottom: '8px',
     },
@@ -370,22 +370,22 @@ export function ContractReviewModal({
     removeFileButton: {
       background: 'none',
       border: 'none',
-      color: '#e74c3c',
+      color: '#DA0000',
       fontSize: '18px',
       cursor: 'pointer',
       padding: '0 4px',
     },
     footer: {
       padding: '16px 24px',
-      borderTop: '1px solid #dee2e6',
+      borderTop: '1px solid #E1E1E1',
       display: 'flex',
       justifyContent: 'flex-end',
       gap: '12px',
-      backgroundColor: '#f8f9fa',
+      backgroundColor: '#FAFAFA',
     },
     cancelButton: {
       padding: '10px 20px',
-      backgroundColor: '#95a5a6',
+      backgroundColor: '#8A8A8A',
       color: 'white',
       border: 'none',
       borderRadius: '6px',
@@ -395,7 +395,7 @@ export function ContractReviewModal({
     },
     submitButton: {
       padding: '10px 20px',
-      backgroundColor: '#27ae60',
+      backgroundColor: '#008C1D',
       color: 'white',
       border: 'none',
       borderRadius: '6px',
@@ -462,7 +462,7 @@ export function ContractReviewModal({
           {/* 廃棄対象資産の選択 */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>廃棄対象資産の選択</div>
-            <p style={{ fontSize: '13px', color: '#5a6c7d', marginBottom: '12px' }}>
+            <p style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '12px' }}>
               契約から除外する資産にチェックを入れてください
             </p>
             <div style={styles.tableContainer}>
@@ -489,7 +489,7 @@ export function ContractReviewModal({
                     <tr
                       key={asset.qrLabel}
                       style={{
-                        backgroundColor: index % 2 === 0 ? 'white' : '#fafafa',
+                        backgroundColor: index % 2 === 0 ? 'white' : '#FAFAFA',
                         cursor: 'pointer',
                       }}
                       onClick={() => handleAssetToggle(asset.qrLabel)}
@@ -525,7 +525,7 @@ export function ContractReviewModal({
                 見直し後契約金額<span style={styles.required}>*</span>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px', color: '#2c3e50' }}>¥</span>
+                <span style={{ fontSize: '14px', color: '#4A4A4A' }}>¥</span>
                 <input
                   type="number"
                   style={styles.input}
@@ -534,7 +534,7 @@ export function ContractReviewModal({
                   min="0"
                   max={contract.contractAmount}
                 />
-                <span style={{ fontSize: '14px', color: '#7f8c8d' }}>（税別）</span>
+                <span style={{ fontSize: '14px', color: '#8A8A8A' }}>（税別）</span>
               </div>
             </div>
             <div style={styles.formGroup}>
@@ -553,7 +553,7 @@ export function ContractReviewModal({
           {/* 関連ドキュメント */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>関連ドキュメント</div>
-            <p style={{ fontSize: '13px', color: '#5a6c7d', marginBottom: '12px' }}>
+            <p style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '12px' }}>
               契約変更覚書等をアップロードしてください
             </p>
             <div
@@ -591,7 +591,7 @@ export function ContractReviewModal({
 
             {uploadedFiles.length > 0 && (
               <div style={styles.fileList}>
-                <div style={{ fontSize: '13px', color: '#5a6c7d', marginBottom: '8px' }}>
+                <div style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '8px' }}>
                   アップロード済み:
                 </div>
                 {uploadedFiles.map((file, index) => (

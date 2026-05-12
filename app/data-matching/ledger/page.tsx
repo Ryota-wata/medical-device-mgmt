@@ -357,7 +357,7 @@ export default function LedgerWindowPage() {
       case '数量不一致': return '#ff9800';
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
-      case '未登録': return '#9c27b0';
+      case '未登録': return '#5E3A93';
       default: return '#999';
     }
   };
@@ -376,12 +376,12 @@ export default function LedgerWindowPage() {
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#FAFAFA'
     }}>
       {/* Header */}
       <header style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '16px 24px'
       }}>
         <div style={{
@@ -391,10 +391,10 @@ export default function LedgerWindowPage() {
           maxWidth: '1600px',
           margin: '0 auto'
         }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#4A4A4A', margin: 0 }}>
             固定資産台帳（対応中）
           </h1>
-          <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
+          <div style={{ fontSize: '14px', color: '#8A8A8A' }}>
             ※フィルターは現有品調査リストと連動
           </div>
         </div>
@@ -403,7 +403,7 @@ export default function LedgerWindowPage() {
       {/* Progress Bar */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '12px 24px'
       }}>
         <div style={{
@@ -414,8 +414,8 @@ export default function LedgerWindowPage() {
           gap: '16px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>資産台帳:</span>
-          <span style={{ fontSize: '14px', color: '#1f2937' }}>
+          <span style={{ fontSize: '14px', color: '#8A8A8A', fontWeight: '600' }}>資産台帳:</span>
+          <span style={{ fontSize: '14px', color: '#4A4A4A' }}>
             全{stats.total}件 |
             <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
             <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
@@ -426,7 +426,7 @@ export default function LedgerWindowPage() {
           {stats.対応中 === 0 && (
             <span style={{
               padding: '4px 12px',
-              backgroundColor: '#e8f5e9',
+              backgroundColor: '#EBF5EE',
               borderRadius: '4px',
               color: '#2e7d32',
               fontWeight: '600',
@@ -452,16 +452,16 @@ export default function LedgerWindowPage() {
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#27ae60', fontWeight: '600' }}>
+          <span style={{ fontSize: '14px', color: '#008C1D', fontWeight: '600' }}>
             一致検索（現有品との照合）:
           </span>
           <button
             onClick={() => handleMatchFilterClick('category')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'category' ? '#27ae60' : '#ffffff',
-              color: matchFilter === 'category' ? '#ffffff' : '#27ae60',
-              border: '1px solid #27ae60',
+              backgroundColor: matchFilter === 'category' ? '#008C1D' : '#ffffff',
+              color: matchFilter === 'category' ? '#ffffff' : '#008C1D',
+              border: '1px solid #008C1D',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -475,9 +475,9 @@ export default function LedgerWindowPage() {
             onClick={() => handleMatchFilterClick('assetNo')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'assetNo' ? '#27ae60' : '#ffffff',
-              color: matchFilter === 'assetNo' ? '#ffffff' : '#27ae60',
-              border: '1px solid #27ae60',
+              backgroundColor: matchFilter === 'assetNo' ? '#008C1D' : '#ffffff',
+              color: matchFilter === 'assetNo' ? '#ffffff' : '#008C1D',
+              border: '1px solid #008C1D',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -491,9 +491,9 @@ export default function LedgerWindowPage() {
             onClick={() => handleMatchFilterClick('item')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'item' ? '#27ae60' : '#ffffff',
-              color: matchFilter === 'item' ? '#ffffff' : '#27ae60',
-              border: '1px solid #27ae60',
+              backgroundColor: matchFilter === 'item' ? '#008C1D' : '#ffffff',
+              color: matchFilter === 'item' ? '#ffffff' : '#008C1D',
+              border: '1px solid #008C1D',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -507,9 +507,9 @@ export default function LedgerWindowPage() {
             onClick={() => handleMatchFilterClick('manufacturer')}
             style={{
               padding: '6px 16px',
-              backgroundColor: matchFilter === 'manufacturer' ? '#27ae60' : '#ffffff',
-              color: matchFilter === 'manufacturer' ? '#ffffff' : '#27ae60',
-              border: '1px solid #27ae60',
+              backgroundColor: matchFilter === 'manufacturer' ? '#008C1D' : '#ffffff',
+              color: matchFilter === 'manufacturer' ? '#ffffff' : '#008C1D',
+              border: '1px solid #008C1D',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px',
@@ -524,7 +524,7 @@ export default function LedgerWindowPage() {
               onClick={resetMatchFilter}
               style={{
                 padding: '6px 12px',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#FAFAFA',
                 color: '#666',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
@@ -537,7 +537,7 @@ export default function LedgerWindowPage() {
             </button>
           )}
           {matchFilter !== 'none' && (
-            <span style={{ fontSize: '13px', color: '#27ae60', marginLeft: '8px' }}>
+            <span style={{ fontSize: '13px', color: '#008C1D', marginLeft: '8px' }}>
               ※ 未突合の現有品と{matchFilter === 'category' ? 'カテゴリ' : matchFilter === 'assetNo' ? '資産番号' : matchFilter === 'item' ? '品目' : 'メーカー'}が一致するレコードを表示中
             </span>
           )}
@@ -547,7 +547,7 @@ export default function LedgerWindowPage() {
       {/* Filter Panel */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '16px 24px'
       }}>
         <div style={{
@@ -587,7 +587,7 @@ export default function LedgerWindowPage() {
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 fontSize: '14px',
-                backgroundColor: filters.department ? 'white' : '#f5f5f5'
+                backgroundColor: filters.department ? 'white' : '#FAFAFA'
               }}
             >
               <option value="">部署: 全て</option>
@@ -666,7 +666,7 @@ export default function LedgerWindowPage() {
               onClick={resetFilters}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#FAFAFA',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -696,11 +696,11 @@ export default function LedgerWindowPage() {
               marginBottom: '12px',
               gap: '12px'
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#4A4A4A', margin: 0 }}>
                 固定資産台帳リスト（対応中）
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+                <span style={{ fontSize: '14px', color: '#8A8A8A' }}>
                   選択: {selectedIds.size}件
                 </span>
                 <button
@@ -735,10 +735,10 @@ export default function LedgerWindowPage() {
               </div>
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+              <span style={{ fontSize: '14px', color: '#8A8A8A' }}>
                 表示: {matchFilteredData.length}件 / 対応中全体: {unmatchedData.length}件
                 {matchFilter !== 'none' && (
-                  <span style={{ color: '#27ae60', marginLeft: '8px' }}>
+                  <span style={{ color: '#008C1D', marginLeft: '8px' }}>
                     （一致検索適用中）
                   </span>
                 )}
@@ -752,8 +752,8 @@ export default function LedgerWindowPage() {
                 fontSize: '13px'
               }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f5f5f5' }}>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', width: '50px' }}>
+                  <tr style={{ backgroundColor: '#FAFAFA' }}>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', width: '50px' }}>
                       <input
                         type="checkbox"
                         checked={selectedIds.size === matchFilteredData.length && matchFilteredData.length > 0}
@@ -761,24 +761,24 @@ export default function LedgerWindowPage() {
                         style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     </th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>資産番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部門</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>部署</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>諸室名称</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>大分類</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>中分類</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>型式</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>数量</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap' }}>取得年月日</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>突合状況</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>資産番号</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>部門</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>部署</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>諸室名称</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>大分類</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>中分類</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>品目</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>メーカー</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>型式</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>数量</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>取得年月日</th>
                   </tr>
                 </thead>
                 <tbody>
                   {matchFilteredData.map((row) => (
-                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#e3f2fd' : 'transparent' }}>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#EAF3FB' : 'transparent' }}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(row.id)}
@@ -786,7 +786,7 @@ export default function LedgerWindowPage() {
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0' }}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1' }}>
                         {row.matchingStatus ? (
                           <span style={{
                             padding: '4px 8px',
@@ -802,17 +802,17 @@ export default function LedgerWindowPage() {
                           <span style={{ color: '#999', fontSize: '12px' }}>ー</span>
                         )}
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.roomName || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>{row.quantity}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.acquisitionDate}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.roomName || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.item}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>{row.quantity}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.acquisitionDate}</td>
                     </tr>
                   ))}
                   {matchFilteredData.length === 0 && (
@@ -829,11 +829,11 @@ export default function LedgerWindowPage() {
 
           {/* 使用方法の説明 */}
           <div style={{
-            backgroundColor: '#e3f2fd',
+            backgroundColor: '#EAF3FB',
             borderRadius: '8px',
             padding: '16px',
             fontSize: '14px',
-            color: '#27ae60'
+            color: '#008C1D'
           }}>
             <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>使用方法</h3>
             <ul style={{ margin: 0, paddingLeft: '20px' }}>

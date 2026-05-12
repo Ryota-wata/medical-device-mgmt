@@ -89,13 +89,13 @@ function QRPrintContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+    <div className="flex flex-col min-h-dvh bg-[#FAFAFA]">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+      <header className="bg-white border-b border-[#E1E1E1] px-4 py-3">
         <div className="flex items-center gap-3 max-w-[800px] mx-auto">
           <button
             onClick={() => router.push('/qr-issue')}
-            className="text-sm text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors flex items-center gap-1"
+            className="text-sm text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors flex items-center gap-1"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
@@ -104,7 +104,7 @@ function QRPrintContent() {
           </button>
           <button
             onClick={handleHomeClick}
-            className="ml-auto text-xs text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            className="ml-auto text-xs text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors"
           >
             メイン画面に戻る
           </button>
@@ -113,12 +113,12 @@ function QRPrintContent() {
 
       {/* メインコンテンツ */}
       <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
-        <h1 className="text-base font-bold text-[#1f2937] mb-4 text-balance">QRコード印刷プレビュー</h1>
+        <h1 className="text-base font-bold text-[#4A4A4A] mb-4 text-balance">QRコード印刷プレビュー</h1>
 
-        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-[#E1E1E1] p-4 sm:p-6">
           {/* プレビュー */}
-          <div className="pb-6 border-b border-[#e5e7eb]">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-4">プレビュー</h2>
+          <div className="pb-6 border-b border-[#E1E1E1]">
+            <h2 className="text-sm font-bold text-[#4A4A4A] mb-4">プレビュー</h2>
 
             <div className={`flex gap-6 ${isMobile ? 'flex-col items-center' : 'items-start'}`}>
               {/* QRコード画像 */}
@@ -126,11 +126,11 @@ function QRPrintContent() {
                 <div className="w-[100px] h-[100px] border border-[#d1d5db] rounded bg-white flex items-center justify-center p-2">
                   <QRCodePlaceholder size={80} />
                 </div>
-                <span className="text-xs font-bold text-[#27ae60] tabular-nums">
+                <span className="text-xs font-bold text-[#008C1D] tabular-nums">
                   {qrNumbers.length > 0 ? qrNumbers[0] : ''}
                 </span>
                 {footerText && (
-                  <span className="text-[10px] text-[#6b7280] text-center max-w-[120px] truncate">
+                  <span className="text-[10px] text-[#8A8A8A] text-center max-w-[120px] truncate">
                     {footerText}
                   </span>
                 )}
@@ -139,22 +139,22 @@ function QRPrintContent() {
               {/* 設定 */}
               <div className={`flex flex-col gap-4 ${isMobile ? 'w-full' : 'flex-1'}`}>
                 <div>
-                  <label className="block text-xs font-bold text-[#1f2937] mb-1">プリンタ</label>
+                  <label className="block text-xs font-bold text-[#4A4A4A] mb-1">プリンタ</label>
                   <select
                     value={printer}
                     onChange={(e) => setPrinter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] bg-white cursor-pointer"
+                    className="w-full px-3 py-2 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#008C1D] bg-white cursor-pointer"
                   >
                     <option value="sr5900p">TEPRA SR5900P (USB接続)</option>
                     <option value="sr970">TEPRA SR970 (Bluetooth)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#1f2937] mb-1">シールサイズ</label>
-                  <div className="w-full px-3 py-2 text-sm border border-[#e5e7eb] rounded-md bg-[#f9fafb] text-[#1f2937]">
+                  <label className="block text-xs font-bold text-[#4A4A4A] mb-1">シールサイズ</label>
+                  <div className="w-full px-3 py-2 text-sm border border-[#E1E1E1] rounded-md bg-[#FAFAFA] text-[#4A4A4A]">
                     {getSealSizeFromTemplate(template)}
                   </div>
-                  <p className="text-[10px] text-[#9ca3af] mt-1">
+                  <p className="text-[10px] text-[#8A8A8A] mt-1">
                     ※前の画面で設定したテンプレートに基づいて表示されます
                   </p>
                 </div>
@@ -164,29 +164,29 @@ function QRPrintContent() {
 
           {/* 印刷対象リスト */}
           <div className="pt-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">印刷対象リスト</h2>
+            <h2 className="text-sm font-bold text-[#4A4A4A] mb-3">印刷対象リスト</h2>
 
-            <div className="border border-[#e5e7eb] rounded-md overflow-hidden">
+            <div className="border border-[#E1E1E1] rounded-md overflow-hidden">
               <div className="max-h-[300px] overflow-y-auto">
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="bg-[#f9fafb]">
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] sticky top-0 bg-[#f9fafb] w-[60px]">No.</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] sticky top-0 bg-[#f9fafb]">QR番号</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] sticky top-0 bg-[#f9fafb]">ステータス</th>
+                    <tr className="bg-[#FAFAFA]">
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#8A8A8A] border-b border-[#E1E1E1] sticky top-0 bg-[#FAFAFA] w-[60px]">No.</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#8A8A8A] border-b border-[#E1E1E1] sticky top-0 bg-[#FAFAFA]">QR番号</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[#8A8A8A] border-b border-[#E1E1E1] sticky top-0 bg-[#FAFAFA]">ステータス</th>
                     </tr>
                   </thead>
                   <tbody>
                     {qrNumbers.map((number, index) => (
-                      <tr key={index} className={index < qrNumbers.length - 1 ? 'border-b border-[#f3f4f6]' : ''}>
-                        <td className="px-3 py-2 text-xs text-[#6b7280] tabular-nums">{index + 1}</td>
-                        <td className="px-3 py-2 text-xs font-semibold text-[#27ae60] tabular-nums font-mono">{number}</td>
-                        <td className="px-3 py-2 text-xs text-[#6b7280]">印刷待機中</td>
+                      <tr key={index} className={index < qrNumbers.length - 1 ? 'border-b border-[#F1F1F1]' : ''}>
+                        <td className="px-3 py-2 text-xs text-[#8A8A8A] tabular-nums">{index + 1}</td>
+                        <td className="px-3 py-2 text-xs font-semibold text-[#008C1D] tabular-nums font-mono">{number}</td>
+                        <td className="px-3 py-2 text-xs text-[#8A8A8A]">印刷待機中</td>
                       </tr>
                     ))}
                     {qrNumbers.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="px-3 py-6 text-center text-xs text-[#9ca3af]">
+                        <td colSpan={3} className="px-3 py-6 text-center text-xs text-[#8A8A8A]">
                           印刷対象がありません
                         </td>
                       </tr>
@@ -202,13 +202,13 @@ function QRPrintContent() {
         <div className={`mt-4 flex gap-3 ${isMobile ? 'flex-col' : 'justify-end'}`}>
           <button
             onClick={handleCancel}
-            className={`py-2.5 text-sm font-bold text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors ${isMobile ? 'w-full order-2' : 'px-8'}`}
+            className={`py-2.5 text-sm font-bold text-[#4b5563] bg-[#E1E1E1] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors ${isMobile ? 'w-full order-2' : 'px-8'}`}
           >
             キャンセル
           </button>
           <button
             onClick={handlePrintStart}
-            className={`py-2.5 text-sm font-bold text-white bg-[#27ae60] border-0 rounded-md cursor-pointer hover:bg-[#229954] transition-colors ${isMobile ? 'w-full order-1' : 'px-8'}`}
+            className={`py-2.5 text-sm font-bold text-white bg-[#008C1D] border-0 rounded-md cursor-pointer hover:bg-[#0A6B17] transition-colors ${isMobile ? 'w-full order-1' : 'px-8'}`}
           >
             印刷を開始
           </button>
@@ -216,7 +216,7 @@ function QRPrintContent() {
       </div>
 
       {/* フッター */}
-      <footer className="mt-auto py-3 text-center text-xs text-[#9ca3af]">
+      <footer className="mt-auto py-3 text-center text-xs text-[#8A8A8A]">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 
@@ -236,7 +236,7 @@ function QRPrintContent() {
 
 export default function QRPrintPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#8A8A8A]">読み込み中...</div>}>
       <QRPrintContent />
     </Suspense>
   );

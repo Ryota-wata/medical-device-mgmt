@@ -324,7 +324,7 @@ function PurchaseManagementContent() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -343,7 +343,7 @@ function PurchaseManagementContent() {
           <div style={{
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #E1E1E1',
             overflow: 'hidden',
           }}>
             <div style={{
@@ -369,7 +369,7 @@ function PurchaseManagementContent() {
               <div style={{
                 padding: '40px',
                 textAlign: 'center',
-                color: '#7f8c8d',
+                color: '#8A8A8A',
               }}>
                 <div style={{ fontSize: '32px', marginBottom: '12px' }}>📋</div>
                 <div style={{ fontSize: '14px' }}>未処理の申請はありません</div>
@@ -382,30 +382,30 @@ function PurchaseManagementContent() {
                     <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                       {/* グループヘッダー行 */}
                       <tr style={{ background: '#343a40', color: 'white' }}>
-                        <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #495057', width: '36px', verticalAlign: 'middle' }}>
+                        <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #4A4A4A', width: '36px', verticalAlign: 'middle' }}>
                           <input
                             type="checkbox"
                             checked={pendingApplications.length > 0 && selectedApplicationIds.size === pendingApplications.length}
                             onChange={(e) => handleSelectAllApplications(e.target.checked)}
                           />
                         </th>
-                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請情報</th>
-                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>品目情報</th>
-                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
-                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #495057', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}></th>
+                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請情報</th>
+                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>品目情報</th>
+                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
+                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}></th>
                       </tr>
                       {/* サブカラムヘッダー行 */}
-                      <tr style={{ background: '#495057', color: 'white' }}>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請日</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No, 種別</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>室名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>品目名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>所属部署</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>氏名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #6c757d', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>連絡先</th>
+                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請日</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No, 種別</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>室名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>品目名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>所属部署</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>氏名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>連絡先</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -415,13 +415,13 @@ function PurchaseManagementContent() {
                           <tr
                             key={app.id}
                             style={{
-                              borderBottom: '1px solid #e5e7eb',
-                              background: selectedApplicationIds.has(app.id) ? '#e3f2fd' : 'transparent',
+                              borderBottom: '1px solid #E1E1E1',
+                              background: selectedApplicationIds.has(app.id) ? '#EAF3FB' : 'transparent',
                               cursor: 'pointer',
                             }}
                             onClick={() => handleViewApplicationDetail(app)}
                           >
-                            <td style={{ padding: '8px 6px', borderBottom: '1px solid #e5e7eb' }} onClick={(e) => e.stopPropagation()}>
+                            <td style={{ padding: '8px 6px', borderBottom: '1px solid #E1E1E1' }} onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="checkbox"
                                 checked={selectedApplicationIds.has(app.id)}
@@ -429,8 +429,8 @@ function PurchaseManagementContent() {
                               />
                             </td>
                             {/* 申請情報: 申請日, 申請No/種別 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap' }}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>
                               <span style={{ color: '#008C1D', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                               <span style={{
                                 ...typeStyle,
@@ -445,30 +445,30 @@ function PurchaseManagementContent() {
                               </span>
                             </td>
                             {/* 設置情報: 部門名, 部署名, 室名 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937' }}>{app.department}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.department}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.section || '-'}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.roomName || '-'}</td>
                             {/* 品目名 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937', fontSize: '12px' }}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A', fontSize: '12px' }}>
                               {app.assets.map(a => a.name).join(', ')}
                             </td>
                             {/* 院内担当情報: 所属部署, 氏名, 連絡先 */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#1f2937' }}>{app.applicantName}</td>
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', color: '#5a6c7d', fontSize: '12px' }}>-</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.applicantName}</td>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>-</td>
                             {/* 申請内容ボタン */}
-                            <td style={{ padding: '8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                            <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => handleViewApplicationDetail(app)}
                                 style={{
                                   padding: '6px 12px',
                                   background: 'white',
-                                  border: '1px solid #e5e7eb',
+                                  border: '1px solid #E1E1E1',
                                   borderRadius: '4px',
                                   fontSize: '12px',
                                   cursor: 'pointer',
                                   whiteSpace: 'nowrap',
-                                  color: '#1f2937',
+                                  color: '#4A4A4A',
                                 }}
                               >
                                 申請内容
@@ -484,13 +484,13 @@ function PurchaseManagementContent() {
                 {/* アクションバー */}
                 <div style={{
                   padding: '12px 16px',
-                  borderTop: '1px solid #e5e7eb',
-                  background: '#f8f9fa',
+                  borderTop: '1px solid #E1E1E1',
+                  background: '#FAFAFA',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                  <span style={{ fontSize: '13px', color: '#5a6c7d' }}>
+                  <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
                     選択した申請: {selectedApplicationIds.size}件
                   </span>
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -521,7 +521,7 @@ function PurchaseManagementContent() {
             flex: 1,
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #e5e7eb',
+            border: '1px solid #E1E1E1',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -539,9 +539,9 @@ function PurchaseManagementContent() {
 
             {/* ステップタブ */}
             <div style={{
-              borderBottom: '2px solid #e5e7eb',
+              borderBottom: '2px solid #E1E1E1',
               display: 'flex',
-              background: '#fafafa',
+              background: '#FAFAFA',
               overflowX: 'auto',
             }}>
               {STEP_TABS.map((tab) => {
@@ -569,7 +569,7 @@ function PurchaseManagementContent() {
                     {tab.label}
                     <span style={{
                       marginLeft: '6px',
-                      background: isActive ? 'rgba(255,255,255,0.3)' : '#e0e0e0',
+                      background: isActive ? 'rgba(255,255,255,0.3)' : '#E1E1E1',
                       padding: '1px 6px',
                       borderRadius: '8px',
                       fontSize: '11px',
@@ -587,7 +587,7 @@ function PurchaseManagementContent() {
                 <div style={{
                   padding: '60px 40px',
                   textAlign: 'center',
-                  color: '#7f8c8d',
+                  color: '#8A8A8A',
                 }}>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
                   <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>見積依頼グループがありません</div>
@@ -657,21 +657,21 @@ function PurchaseManagementContent() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8, textWrap: 'balance' }}>検収登録の入力方法を選択</h2>
-            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>検収登録の作業状況に応じて入力方法を選んでください。</p>
+            <p style={{ fontSize: 13, color: '#8A8A8A', marginBottom: 24 }}>検収登録の作業状況に応じて入力方法を選んでください。</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 onClick={() => handleModeSelected('mobile')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #e5e7eb', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
                 <div style={{ width: 48, height: 48, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128241;</span>
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>モバイル（現場作業）</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
                     現場で納品確認・検収日入力を行います。<br />
                     1品目ずつ確認する操作フローです。
                   </div>
@@ -680,16 +680,16 @@ function PurchaseManagementContent() {
 
               <button
                 onClick={() => handleModeSelected('pc')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #e5e7eb', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563eb'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
                 <div style={{ width: 48, height: 48, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 24 }}>&#128187;</span>
                 </div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>PC（一括入力）</div>
-                  <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
                     納品日・検収日をテーブル形式で一括入力します。<br />
                     全品目を一覧しながら効率的に登録できます。
                   </div>
@@ -700,7 +700,7 @@ function PurchaseManagementContent() {
             <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
-                style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#6b7280' }}
+                style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #d1d5db', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#8A8A8A' }}
               >
                 キャンセル
               </button>

@@ -183,8 +183,8 @@ export function AdditionApplicationModal({
   };
 
   // テーマカラー（増設申請用：青系）
-  const themeColor = '#2980b9';
-  const themeLightBg = '#e3f2fd';
+  const themeColor = '#0073B8';
+  const themeLightBg = '#EAF3FB';
   const themeBorder = '#90caf9';
 
   const styles: Record<string, React.CSSProperties> = {
@@ -280,7 +280,7 @@ export function AdditionApplicationModal({
       border: '1px solid #ddd',
       borderRadius: '4px',
       fontSize: '14px',
-      background: '#f5f5f5',
+      background: '#FAFAFA',
       color: '#666',
     },
     select: {
@@ -314,10 +314,10 @@ export function AdditionApplicationModal({
     },
     footer: {
       padding: '16px 24px',
-      borderTop: '1px solid #dee2e6',
+      borderTop: '1px solid #E1E1E1',
       display: 'flex',
       justifyContent: 'center',
-      background: '#f8f9fa',
+      background: '#FAFAFA',
     },
     confirmButton: {
       padding: '12px 48px',
@@ -355,33 +355,33 @@ export function AdditionApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>管理部署</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>管理部署</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{managementDepartment}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>申請者</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>申請者</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantName}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請日</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>申請日</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicationDate}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>優先順位</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>優先順位</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{priority}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部門</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置部門</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationDepartment || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationSection || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置室名</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置室名</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationRoomName || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.item || assets[0]?.name || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>台数</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>台数</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd', fontVariantNumeric: 'tabular-nums' }}>{additionQuantity} 台</td>
                   </tr>
                 </tbody>
@@ -394,13 +394,13 @@ export function AdditionApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.item || assets[0]?.name || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>メーカー</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>メーカー</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.maker || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
                     <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.model || '-'}</td>
                   </tr>
                 </tbody>
@@ -429,9 +429,9 @@ export function AdditionApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{usagePurpose || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>症例数</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>症例数</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{caseCount ? `${caseCount} ${caseCountUnit}` : '-'}</td>
                   </tr>
                 </tbody>
@@ -442,7 +442,7 @@ export function AdditionApplicationModal({
             {comment && (
               <div style={styles.section}>
                 <div style={styles.sectionTitle}>コメント（必要理由 他）</div>
-                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
                   {comment}
                 </div>
               </div>
@@ -466,15 +466,15 @@ export function AdditionApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'wired' ? '有線接続' : currentConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionDestination || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
                   </tr>
                 </tbody>
@@ -502,7 +502,7 @@ export function AdditionApplicationModal({
               </div>
               <div></div>
               <div style={styles.formItem}>
-                <label style={styles.label}>設置部門 <span style={{ color: '#e74c3c' }}>*</span></label>
+                <label style={styles.label}>設置部門 <span style={{ color: '#DA0000' }}>*</span></label>
                 <SearchableSelect
                   value={installationDepartment}
                   onChange={setInstallationDepartment}
@@ -511,7 +511,7 @@ export function AdditionApplicationModal({
                 />
               </div>
               <div style={styles.formItem}>
-                <label style={styles.label}>設置部署 <span style={{ color: '#e74c3c' }}>*</span></label>
+                <label style={styles.label}>設置部署 <span style={{ color: '#DA0000' }}>*</span></label>
                 <SearchableSelect
                   value={installationSection}
                   onChange={setInstallationSection}
@@ -566,7 +566,7 @@ export function AdditionApplicationModal({
                 <input style={styles.inputDisabled} value={assets[0]?.item || assets[0]?.name || '-'} disabled />
               </div>
               <div style={styles.formItem}>
-                <label style={styles.label}>台数 <span style={{ color: '#e74c3c' }}>*</span></label>
+                <label style={styles.label}>台数 <span style={{ color: '#DA0000' }}>*</span></label>
                 <input
                   type="number"
                   value={additionQuantity}
@@ -746,7 +746,7 @@ export function AdditionApplicationModal({
                     {file.name}
                     <button
                       onClick={() => handleRemoveFile(index)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e74c3c' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA0000' }}
                     >
                       ×
                     </button>

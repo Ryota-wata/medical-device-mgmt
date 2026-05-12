@@ -166,7 +166,7 @@ function QuotationProcessingContent() {
       {/* ヘッダー */}
       <header
         style={{
-          background: '#374151',
+          background: '#4A4A4A',
           color: 'white',
           padding: '15px 20px',
           display: 'flex',
@@ -195,7 +195,7 @@ function QuotationProcessingContent() {
             <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>見積処理</h1>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ background: '#374151', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold' }}>
+            <span style={{ background: '#4A4A4A', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold' }}>
               {rfqNo}
             </span>
             <span style={{ color: '#bdc3c7', fontSize: '14px' }}>業者: 〇〇〇〇商事</span>
@@ -204,7 +204,7 @@ function QuotationProcessingContent() {
         <button
           onClick={() => router.push('/quotation-data-box')}
           style={{
-            background: '#374151',
+            background: '#4A4A4A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -221,7 +221,7 @@ function QuotationProcessingContent() {
       <div
         style={{
           background: 'white',
-          borderBottom: '1px solid #dee2e6',
+          borderBottom: '1px solid #E1E1E1',
           padding: '30px 20px',
           display: 'flex',
           justifyContent: 'center',
@@ -236,7 +236,7 @@ function QuotationProcessingContent() {
               width: '50px',
               height: '50px',
               borderRadius: '50%',
-              background: currentStep === 1 ? '#27ae60' : currentStep > 1 ? '#27ae60' : '#dee2e6',
+              background: currentStep === 1 ? '#008C1D' : currentStep > 1 ? '#008C1D' : '#E1E1E1',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -249,15 +249,15 @@ function QuotationProcessingContent() {
             {currentStep > 1 ? '✓' : '1'}
           </div>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentStep === 1 ? '#27ae60' : currentStep > 1 ? '#27ae60' : '#5a6c7d' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentStep === 1 ? '#008C1D' : currentStep > 1 ? '#008C1D' : '#8A8A8A' }}>
               AI-OCR抽出
             </div>
-            <div style={{ fontSize: '12px', color: '#5a6c7d' }}>🤖</div>
+            <div style={{ fontSize: '12px', color: '#8A8A8A' }}>🤖</div>
           </div>
         </div>
 
         {/* Connector */}
-        <div style={{ width: '80px', height: '2px', background: currentStep > 1 ? '#27ae60' : '#dee2e6' }}></div>
+        <div style={{ width: '80px', height: '2px', background: currentStep > 1 ? '#008C1D' : '#E1E1E1' }}></div>
 
         {/* Step 2 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -266,7 +266,7 @@ function QuotationProcessingContent() {
               width: '50px',
               height: '50px',
               borderRadius: '50%',
-              background: currentStep === 2 ? '#27ae60' : '#dee2e6',
+              background: currentStep === 2 ? '#008C1D' : '#E1E1E1',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
@@ -279,10 +279,10 @@ function QuotationProcessingContent() {
             2
           </div>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentStep === 2 ? '#27ae60' : '#5a6c7d' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentStep === 2 ? '#008C1D' : '#8A8A8A' }}>
               資産マスタ突き合わせ & 申請紐付け
             </div>
-            <div style={{ fontSize: '12px', color: '#5a6c7d' }}>🔍</div>
+            <div style={{ fontSize: '12px', color: '#8A8A8A' }}>🔍</div>
           </div>
         </div>
       </div>
@@ -293,35 +293,35 @@ function QuotationProcessingContent() {
         {currentStep === 1 && (
           <div>
             <div style={{ marginBottom: '30px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
                 Step 1: AI-OCR抽出
               </h2>
-              <p style={{ color: '#5a6c7d', fontSize: '14px' }}>見積書PDFから明細情報を自動抽出します</p>
+              <p style={{ color: '#8A8A8A', fontSize: '14px' }}>見積書PDFから明細情報を自動抽出します</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px', marginBottom: '30px' }}>
               {/* PDF表示エリア */}
               <div style={{ background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '15px' }}>
                   📄 見積書PDF
                 </div>
                 <div
                   style={{
-                    border: '2px dashed #dee2e6',
+                    border: '2px dashed #E1E1E1',
                     borderRadius: '8px',
                     padding: '60px 20px',
                     textAlign: 'center',
-                    background: '#f8f9fa',
+                    background: '#FAFAFA',
                   }}
                 >
                   <div style={{ fontSize: '64px', marginBottom: '15px' }}>📑</div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '10px' }}>
                     見積書.pdf
                   </div>
                   <button
                     onClick={() => alert('PDFプレビュー機能は実装予定です')}
                     style={{
-                      background: '#27ae60',
+                      background: '#008C1D',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -337,7 +337,7 @@ function QuotationProcessingContent() {
 
               {/* OCR抽出結果エリア */}
               <div style={{ background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '15px' }}>
                   🤖 OCR抽出結果
                 </div>
 
@@ -347,7 +347,7 @@ function QuotationProcessingContent() {
                       onClick={handleStartOcr}
                       disabled={isOcrExtracting}
                       style={{
-                        background: isOcrExtracting ? '#95a5a6' : '#27ae60',
+                        background: isOcrExtracting ? '#8A8A8A' : '#008C1D',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -366,28 +366,28 @@ function QuotationProcessingContent() {
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                          <th style={{ padding: '10px', textAlign: 'left', fontSize: '13px', color: '#1f2937', width: '40px' }}>No</th>
-                          <th style={{ padding: '10px', textAlign: 'left', fontSize: '13px', color: '#1f2937' }}>品目名</th>
-                          <th style={{ padding: '10px', textAlign: 'right', fontSize: '13px', color: '#1f2937', width: '60px' }}>数量</th>
-                          <th style={{ padding: '10px', textAlign: 'right', fontSize: '13px', color: '#1f2937', width: '120px' }}>単価</th>
-                          <th style={{ padding: '10px', textAlign: 'right', fontSize: '13px', color: '#1f2937', width: '120px' }}>金額</th>
-                          <th style={{ padding: '10px', textAlign: 'left', fontSize: '13px', color: '#1f2937', width: '100px' }}>備考</th>
+                        <tr style={{ background: '#FAFAFA', borderBottom: '2px solid #E1E1E1' }}>
+                          <th style={{ padding: '10px', textAlign: 'left', fontSize: '13px', color: '#4A4A4A', width: '40px' }}>No</th>
+                          <th style={{ padding: '10px', textAlign: 'left', fontSize: '13px', color: '#4A4A4A' }}>品目名</th>
+                          <th style={{ padding: '10px', textAlign: 'right', fontSize: '13px', color: '#4A4A4A', width: '60px' }}>数量</th>
+                          <th style={{ padding: '10px', textAlign: 'right', fontSize: '13px', color: '#4A4A4A', width: '120px' }}>単価</th>
+                          <th style={{ padding: '10px', textAlign: 'right', fontSize: '13px', color: '#4A4A4A', width: '120px' }}>金額</th>
+                          <th style={{ padding: '10px', textAlign: 'left', fontSize: '13px', color: '#4A4A4A', width: '100px' }}>備考</th>
                         </tr>
                       </thead>
                       <tbody>
                         {ocrResults.map((item) => (
-                          <tr key={item.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                            <td style={{ padding: '10px', color: '#5a6c7d', fontSize: '13px' }}>{item.id}</td>
-                            <td style={{ padding: '10px', color: '#1f2937', fontSize: '13px' }}>{item.itemName}</td>
-                            <td style={{ padding: '10px', textAlign: 'right', color: '#5a6c7d', fontSize: '13px' }}>{item.quantity}</td>
-                            <td style={{ padding: '10px', textAlign: 'right', color: '#5a6c7d', fontSize: '13px' }}>
+                          <tr key={item.id} style={{ borderBottom: '1px solid #E1E1E1' }}>
+                            <td style={{ padding: '10px', color: '#8A8A8A', fontSize: '13px' }}>{item.id}</td>
+                            <td style={{ padding: '10px', color: '#4A4A4A', fontSize: '13px' }}>{item.itemName}</td>
+                            <td style={{ padding: '10px', textAlign: 'right', color: '#8A8A8A', fontSize: '13px' }}>{item.quantity}</td>
+                            <td style={{ padding: '10px', textAlign: 'right', color: '#8A8A8A', fontSize: '13px' }}>
                               ¥{item.unitPrice.toLocaleString()}
                             </td>
-                            <td style={{ padding: '10px', textAlign: 'right', color: '#5a6c7d', fontSize: '13px' }}>
+                            <td style={{ padding: '10px', textAlign: 'right', color: '#8A8A8A', fontSize: '13px' }}>
                               ¥{item.amount.toLocaleString()}
                             </td>
-                            <td style={{ padding: '10px', color: '#5a6c7d', fontSize: '13px' }}>{item.note}</td>
+                            <td style={{ padding: '10px', color: '#8A8A8A', fontSize: '13px' }}>{item.note}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -402,7 +402,7 @@ function QuotationProcessingContent() {
               <button
                 onClick={() => router.push('/quotation-data-box')}
                 style={{
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -418,7 +418,7 @@ function QuotationProcessingContent() {
                 onClick={handleGoToStep2}
                 disabled={!isOcrComplete}
                 style={{
-                  background: isOcrComplete ? '#27ae60' : '#ccc',
+                  background: isOcrComplete ? '#008C1D' : '#ccc',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -438,10 +438,10 @@ function QuotationProcessingContent() {
         {currentStep === 2 && (
           <div>
             <div style={{ marginBottom: '30px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
                 Step 2: 資産マスタ突き合わせ & 申請紐付け
               </h2>
-              <p style={{ color: '#5a6c7d', fontSize: '14px' }}>
+              <p style={{ color: '#8A8A8A', fontSize: '14px' }}>
                 抽出した明細を資産マスタの個体管理品目と突き合わせ、申請に紐付けます
               </p>
             </div>
@@ -449,15 +449,15 @@ function QuotationProcessingContent() {
             {/* サマリー */}
             <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
               <div style={{ flex: 1, background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '14px', color: '#5a6c7d', marginBottom: '8px' }}>抽出明細数</div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>{matchingResults.length}</div>
+                <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '8px' }}>抽出明細数</div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#4A4A4A' }}>{matchingResults.length}</div>
               </div>
               <div style={{ flex: 1, background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '14px', color: '#5a6c7d', marginBottom: '8px' }}>確定済み</div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#27ae60' }}>{confirmedCount}</div>
+                <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '8px' }}>確定済み</div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#008C1D' }}>{confirmedCount}</div>
               </div>
               <div style={{ flex: 1, background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '14px', color: '#5a6c7d', marginBottom: '8px' }}>未確定</div>
+                <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '8px' }}>未確定</div>
                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#f39c12' }}>{unconfirmedCount}</div>
               </div>
             </div>
@@ -468,30 +468,30 @@ function QuotationProcessingContent() {
                 <div
                   key={item.id}
                   style={{
-                    borderBottom: '1px solid #dee2e6',
+                    borderBottom: '1px solid #E1E1E1',
                     padding: '20px 0',
                     background: item.isConfirmed ? '#f0f9f4' : 'transparent',
                   }}
                 >
                   <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr', gap: '20px' }}>
                     {/* No */}
-                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#4A4A4A', textAlign: 'center' }}>
                       {item.id}
                     </div>
 
                     <div>
                       {/* OCR抽出品目 */}
                       <div style={{ marginBottom: '15px' }}>
-                        <div style={{ fontSize: '12px', color: '#5a6c7d', marginBottom: '5px' }}>OCR抽出品目</div>
-                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>{item.ocrItemName}</div>
-                        <div style={{ fontSize: '14px', color: '#5a6c7d', marginTop: '5px' }}>
+                        <div style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '5px' }}>OCR抽出品目</div>
+                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A' }}>{item.ocrItemName}</div>
+                        <div style={{ fontSize: '14px', color: '#8A8A8A', marginTop: '5px' }}>
                           数量: {item.quantity} / 単価: ¥{item.unitPrice.toLocaleString()}
                         </div>
                       </div>
 
                       {/* 資産マスタ候補 */}
                       <div style={{ marginBottom: '15px' }}>
-                        <div style={{ fontSize: '12px', color: '#5a6c7d', marginBottom: '10px' }}>資産マスタ候補</div>
+                        <div style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '10px' }}>資産マスタ候補</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                           {item.candidates.map((candidate, index) => (
                             <label
@@ -503,8 +503,8 @@ function QuotationProcessingContent() {
                                 padding: '12px',
                                 border:
                                   item.selectedCandidate?.itemId === candidate.itemId
-                                    ? '2px solid #27ae60'
-                                    : '1px solid #dee2e6',
+                                    ? '2px solid #008C1D'
+                                    : '1px solid #E1E1E1',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 background:
@@ -522,7 +522,7 @@ function QuotationProcessingContent() {
                                 <span
                                   style={{
                                     display: 'inline-block',
-                                    background: '#27ae60',
+                                    background: '#008C1D',
                                     color: 'white',
                                     padding: '2px 8px',
                                     borderRadius: '10px',
@@ -533,7 +533,7 @@ function QuotationProcessingContent() {
                                 >
                                   候補{index + 1}
                                 </span>
-                                <span style={{ color: '#5a6c7d', fontSize: '13px' }}>
+                                <span style={{ color: '#8A8A8A', fontSize: '13px' }}>
                                   {candidate.largeName} › {candidate.mediumName} › {candidate.itemName}
                                 </span>
                               </div>
@@ -556,7 +556,7 @@ function QuotationProcessingContent() {
 
                       {/* 申請紐付け */}
                       <div style={{ marginBottom: '15px' }}>
-                        <div style={{ fontSize: '12px', color: '#5a6c7d', marginBottom: '10px' }}>申請紐付け</div>
+                        <div style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '10px' }}>申請紐付け</div>
                         {item.selectedCandidate ? (
                           item.linkedApplication ? (
                             <div
@@ -565,23 +565,23 @@ function QuotationProcessingContent() {
                                 alignItems: 'center',
                                 gap: '10px',
                                 padding: '12px',
-                                border: '1px solid #dee2e6',
+                                border: '1px solid #E1E1E1',
                                 borderRadius: '6px',
-                                background: '#f8f9fa',
+                                background: '#FAFAFA',
                               }}
                             >
                               <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1f2937' }}>
+                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#4A4A4A' }}>
                                   {item.linkedApplication.applicationNo}
                                 </div>
-                                <div style={{ fontSize: '12px', color: '#5a6c7d' }}>
+                                <div style={{ fontSize: '12px', color: '#8A8A8A' }}>
                                   {item.linkedApplication.asset.name} {item.linkedApplication.asset.model}
                                 </div>
                               </div>
                               <button
                                 onClick={() => handleSelectApplication(item.id)}
                                 style={{
-                                  background: '#95a5a6',
+                                  background: '#8A8A8A',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '4px',
@@ -597,7 +597,7 @@ function QuotationProcessingContent() {
                             <button
                               onClick={() => handleSelectApplication(item.id)}
                               style={{
-                                background: '#27ae60',
+                                background: '#008C1D',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -611,7 +611,7 @@ function QuotationProcessingContent() {
                             </button>
                           )
                         ) : (
-                          <div style={{ color: '#95a5a6', fontSize: '14px' }}>候補を選択してください</div>
+                          <div style={{ color: '#8A8A8A', fontSize: '14px' }}>候補を選択してください</div>
                         )}
                       </div>
 
@@ -624,7 +624,7 @@ function QuotationProcessingContent() {
                             borderRadius: '20px',
                             fontSize: '13px',
                             fontWeight: 'bold',
-                            background: item.isConfirmed ? '#27ae60' : '#f39c12',
+                            background: item.isConfirmed ? '#008C1D' : '#f39c12',
                             color: 'white',
                           }}
                         >
@@ -634,7 +634,7 @@ function QuotationProcessingContent() {
                           <button
                             onClick={() => handleUnconfirmItem(item.id)}
                             style={{
-                              background: '#95a5a6',
+                              background: '#8A8A8A',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -650,7 +650,7 @@ function QuotationProcessingContent() {
                           <button
                             onClick={() => handleConfirmItem(item.id)}
                             style={{
-                              background: '#27ae60',
+                              background: '#008C1D',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -691,7 +691,7 @@ function QuotationProcessingContent() {
               <button
                 onClick={handleBackToStep1}
                 style={{
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -706,7 +706,7 @@ function QuotationProcessingContent() {
               <button
                 onClick={handleCompleteProcessing}
                 style={{
-                  background: '#27ae60',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

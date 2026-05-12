@@ -173,7 +173,7 @@ const editTd: React.CSSProperties = {
   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
 };
 const quotTh: React.CSSProperties = {
-  padding: '5px 6px', textAlign: 'center', borderBottom: '1px solid #e0e0e0',
+  padding: '5px 6px', textAlign: 'center', borderBottom: '1px solid #E1E1E1',
   fontSize: 11, fontWeight: 700, color: '#555', whiteSpace: 'nowrap',
 };
 const quotTd: React.CSSProperties = {
@@ -647,17 +647,17 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         const hasLinkable = linkableCols.length > 0;
         const allChecked = hasLinkable && linkableCols.every(c => checked.has(c.sourceKey));
         return (
-          <div key={group} style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
+          <div key={group} style={{ border: '1px solid #E1E1E1', borderRadius: 8, overflow: 'hidden' }}>
             <div onClick={() => hasLinkable && handleToggleGroup(group)} style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-              background: allChecked ? '#eaf7ed' : hasLinkable ? '#fafafa' : '#f5f5f5',
-              cursor: hasLinkable ? 'pointer' : 'default', borderBottom: '1px solid #e0e0e0', userSelect: 'none',
+              background: allChecked ? '#eaf7ed' : hasLinkable ? '#FAFAFA' : '#FAFAFA',
+              cursor: hasLinkable ? 'pointer' : 'default', borderBottom: '1px solid #E1E1E1', userSelect: 'none',
             }}>
               <input type="checkbox" checked={allChecked} disabled={!hasLinkable}
                 onChange={() => handleToggleGroup(group)} onClick={(e) => e.stopPropagation()}
-                style={{ width: 16, height: 16, accentColor: '#27ae60' }} />
+                style={{ width: 16, height: 16, accentColor: '#008C1D' }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>{group}</span>
-              <span style={{ fontSize: 12, color: counts.checked > 0 ? '#27ae60' : '#999', fontWeight: counts.checked > 0 ? 600 : 400 }}>
+              <span style={{ fontSize: 12, color: counts.checked > 0 ? '#008C1D' : '#999', fontWeight: counts.checked > 0 ? 600 : 400 }}>
                 ({counts.checked}/{counts.total})
               </span>
             </div>
@@ -674,10 +674,10 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                   }}>
                     <input type="checkbox" checked={isChecked} disabled={!isLinkable}
                       onChange={() => handleToggleColumn(col.sourceKey)}
-                      style={{ width: 14, height: 14, accentColor: '#27ae60' }} />
+                      style={{ width: 14, height: 14, accentColor: '#008C1D' }} />
                     <span>{col.label}</span>
                     {isLinkable && isChecked && col.targetKey && (
-                      <span style={{ color: '#27ae60', fontSize: 11 }}>→ {col.targetKey}</span>
+                      <span style={{ color: '#008C1D', fontSize: 11 }}>→ {col.targetKey}</span>
                     )}
                   </label>
                 );
@@ -690,41 +690,41 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
       {/* 紐付けプレビュー */}
       {copyPreview && (
         <div style={{ marginTop: 16, border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden' }}>
-          <div style={{ padding: '10px 16px', background: '#f8f9fa', display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, borderBottom: '1px solid #ddd' }}>
+          <div style={{ padding: '10px 16px', background: '#FAFAFA', display: 'flex', gap: 16, alignItems: 'center', fontSize: 13, borderBottom: '1px solid #ddd' }}>
             <span style={{ fontWeight: 700 }}>紐付けプレビュー</span>
-            <span style={{ color: '#27ae60', fontWeight: 600 }}>マッチ: {copyPreview.matchedCount}件</span>
-            <span style={{ color: '#e74c3c', fontWeight: 600 }}>未マッチ: {copyPreview.unmatchedCount}件</span>
+            <span style={{ color: '#008C1D', fontWeight: 600 }}>マッチ: {copyPreview.matchedCount}件</span>
+            <span style={{ color: '#DA0000', fontWeight: 600 }}>未マッチ: {copyPreview.unmatchedCount}件</span>
             <span style={{ color: '#2196f3', fontWeight: 600 }}>変更あり: {copyPreview.changedCount}件</span>
           </div>
           <div style={{ maxHeight: 300, overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-              <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa' }}>
+              <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA' }}>
                 <tr>
-                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>No</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>品目 / メーカー</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>状態</th>
-                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>変更内容</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>No</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #E1E1E1' }}>品目 / メーカー</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>状態</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', borderBottom: '1px solid #E1E1E1' }}>変更内容</th>
                 </tr>
               </thead>
               <tbody>
                 {copyPreview.rows.map(row => (
-                  <tr key={row.assetNo} style={{ borderBottom: '1px solid #eee', background: row.matched ? (row.changes.length > 0 ? '#e8f5e9' : '#fff') : '#fff3e0' }}>
+                  <tr key={row.assetNo} style={{ borderBottom: '1px solid #eee', background: row.matched ? (row.changes.length > 0 ? '#EBF5EE' : '#fff') : '#FDF1E5' }}>
                     <td style={{ padding: '4px 8px', fontVariantNumeric: 'tabular-nums' }}>{row.assetNo}</td>
                     <td style={{ padding: '4px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{row.assetLabel}</td>
                     <td style={{ padding: '4px 8px', textAlign: 'center' }}>
                       {row.matched ? (
-                        <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, color: 'white', background: row.changes.length > 0 ? '#27ae60' : '#9e9e9e' }}>
+                        <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, color: 'white', background: row.changes.length > 0 ? '#008C1D' : '#9e9e9e' }}>
                           {row.changes.length > 0 ? `${row.changes.length}件変更` : 'マッチ(変更なし)'}
                         </span>
                       ) : (
-                        <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, color: 'white', background: '#e74c3c' }}>未マッチ</span>
+                        <span style={{ padding: '1px 6px', borderRadius: 3, fontSize: 10, fontWeight: 600, color: 'white', background: '#DA0000' }}>未マッチ</span>
                       )}
                     </td>
                     <td style={{ padding: '4px 8px' }}>
                       {row.changes.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                           {row.changes.slice(0, 3).map((c, i) => (
-                            <span key={i} style={{ fontSize: 10, padding: '1px 4px', background: '#e3f2fd', borderRadius: 2 }}>
+                            <span key={i} style={{ fontSize: 10, padding: '1px 4px', background: '#EAF3FB', borderRadius: 2 }}>
                               {c.label}: <span style={{ color: '#999', textDecoration: 'line-through' }}>{c.before || '(空)'}</span> → <span style={{ fontWeight: 600 }}>{c.after}</span>
                             </span>
                           ))}
@@ -754,14 +754,14 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
         <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 540, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <div style={{ background: '#8e44ad', color: 'white', padding: '16px 24px', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: '#4527A0', color: 'white', padding: '16px 24px', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Data Link</h2>
             <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
           </div>
           <div style={{ padding: '40px 24px', textAlign: 'center' }}>
             <div style={{
               width: 64, height: 64, borderRadius: '50%', margin: '0 auto 20px',
-              background: result.matched > 0 || result.added > 0 ? '#27ae60' : '#f39c12',
+              background: result.matched > 0 || result.added > 0 ? '#008C1D' : '#f39c12',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <span style={{ fontSize: 32, color: 'white' }}>{result.matched > 0 || result.added > 0 ? '\u2713' : '!'}</span>
@@ -769,10 +769,10 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
             <h3 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: '#111827' }}>
               {isQuotationMode ? '見積データの適用が完了しました' : 'カラムコピーが完了しました'}
             </h3>
-            <div style={{ width: '100%', maxWidth: 360, margin: '0 auto', border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', textAlign: 'left' }}>
+            <div style={{ width: '100%', maxWidth: 360, margin: '0 auto', border: '1px solid #E1E1E1', borderRadius: 8, overflow: 'hidden', textAlign: 'left' }}>
               <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 14, color: '#555' }}>更新件数</span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#27ae60', fontVariantNumeric: 'tabular-nums' }}>{result.matched}件</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>{result.matched}件</span>
               </div>
               {result.unmatched > 0 && (
                 <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between' }}>
@@ -788,14 +788,14 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               )}
             </div>
           </div>
-          <div style={{ padding: '16px 24px', borderTop: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ padding: '16px 24px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <button onClick={() => { setResult(null); setQStep(1); }} style={{
               padding: '10px 24px', fontSize: 14, fontWeight: 600,
               background: 'transparent', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', color: '#666',
             }}>続けて操作</button>
             <button onClick={onClose} style={{
               padding: '10px 28px', fontSize: 14, fontWeight: 700,
-              background: '#8e44ad', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer',
+              background: '#4527A0', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer',
             }}>閉じる</button>
           </div>
         </div>
@@ -807,13 +807,13 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
   // ステップインジケーター
   // ============================
   const renderStepIndicator = () => (
-    <div style={{ display: 'flex', alignItems: 'center', padding: '12px 24px', background: '#f8f9fa', borderBottom: '1px solid #e0e0e0', gap: 4 }}>
+    <div style={{ display: 'flex', alignItems: 'center', padding: '12px 24px', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', gap: 4 }}>
       {STEPS.map((step, i) => {
         const isActive = qStep === step.id;
         const isDone = qStep > step.id;
         return (
           <React.Fragment key={step.id}>
-            {i > 0 && <div style={{ flex: 1, height: 2, background: isDone ? '#27ae60' : '#dee2e6', maxWidth: 40 }} />}
+            {i > 0 && <div style={{ flex: 1, height: 2, background: isDone ? '#008C1D' : '#E1E1E1', maxWidth: 40 }} />}
             <div
               onClick={() => {
                 if (isDone || isActive) setQStep(step.id);
@@ -821,21 +821,21 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '6px 14px', borderRadius: 8,
-                background: isActive ? '#8e44ad' : isDone ? '#eaf7ed' : 'white',
-                border: `1px solid ${isActive ? '#8e44ad' : isDone ? '#27ae60' : '#dee2e6'}`,
+                background: isActive ? '#4527A0' : isDone ? '#eaf7ed' : 'white',
+                border: `1px solid ${isActive ? '#4527A0' : isDone ? '#008C1D' : '#E1E1E1'}`,
                 cursor: (isDone || isActive) ? 'pointer' : 'default',
               }}
             >
               <div style={{
                 width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 700, flexShrink: 0,
-                background: isActive ? 'white' : isDone ? '#27ae60' : '#e0e0e0',
-                color: isActive ? '#8e44ad' : isDone ? 'white' : '#666',
+                background: isActive ? 'white' : isDone ? '#008C1D' : '#E1E1E1',
+                color: isActive ? '#4527A0' : isDone ? 'white' : '#666',
               }}>
                 {isDone ? '\u2713' : step.id}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? 'white' : isDone ? '#27ae60' : '#333' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? 'white' : isDone ? '#008C1D' : '#333' }}>
                   {step.label}
                 </div>
                 <div style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.8)' : '#888' }}>{step.desc}</div>
@@ -861,7 +861,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
       }}>
         {/* ヘッダー */}
         <div style={{
-          background: '#8e44ad', color: 'white', padding: '16px 24px',
+          background: '#4527A0', color: 'white', padding: '16px 24px',
           borderRadius: '12px 12px 0 0',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
@@ -892,7 +892,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         {isQuotationMode && (
           <>
             <div style={{
-              display: 'flex', alignItems: 'stretch', borderBottom: '1px solid #e0e0e0', background: '#f8f9fa',
+              display: 'flex', alignItems: 'stretch', borderBottom: '1px solid #E1E1E1', background: '#FAFAFA',
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 {renderStepIndicator()}
@@ -900,7 +900,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               <div style={{
                 display: 'grid', gridTemplateColumns: 'auto 1fr',
                 columnGap: 8, rowGap: 4, padding: '8px 16px',
-                alignItems: 'center', borderLeft: '1px solid #e0e0e0', background: 'white',
+                alignItems: 'center', borderLeft: '1px solid #E1E1E1', background: 'white',
                 fontSize: 12, minWidth: 320,
               }}>
                 <label style={{ color: '#555', fontWeight: 600 }}>見積依頼No.</label>
@@ -932,11 +932,11 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
 
         {/* コピーモード: 紐づけキー帯 */}
         {dataSource && !isQuotationMode && (
-          <div style={{ padding: '12px 24px', borderBottom: '1px solid #e0e0e0', background: '#f8f9fa', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ padding: '12px 24px', borderBottom: '1px solid #E1E1E1', background: '#FAFAFA', display: 'flex', gap: 12, alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <label style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>紐づけキー</label>
               <select value={linkKey} onChange={(e) => setLinkKey(e.target.value as LinkKey | '')} style={{
-                padding: '6px 12px', fontSize: 13, border: '2px solid #8e44ad', borderRadius: 4, minWidth: 160, fontWeight: 600,
+                padding: '6px 12px', fontSize: 13, border: '2px solid #4527A0', borderRadius: 4, minWidth: 160, fontWeight: 600,
               }}>
                 <option value="">選択してください</option>
                 {SOURCE_AVAILABLE_KEYS[dataSource as Exclude<DataSource, '見積DB'>].map(k => (
@@ -977,15 +977,15 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                             左の行をクリック → 右の見積明細をクリックで紐付け
                           </span>
                         </div>
-                        <span style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: pairings.size > 0 ? '#27ae60' : '#999' }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: pairings.size > 0 ? '#008C1D' : '#999' }}>
                           {pairings.size} / {linkedAssets.length} 紐付け済み
                         </span>
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(380px, 0.9fr) minmax(680px, 1.6fr)', gap: 8, alignItems: 'start' }}>
                         {/* 左: 編集リスト テーブル */}
-                        <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ padding: '8px 12px', background: '#e3f2fd', borderBottom: '1px solid #e0e0e0', fontSize: 13, fontWeight: 700, color: '#1565c0' }}>
+                        <div style={{ border: '1px solid #E1E1E1', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ padding: '8px 12px', background: '#EAF3FB', borderBottom: '1px solid #E1E1E1', fontSize: 13, fontWeight: 700, color: '#1565c0' }}>
                             編集リスト
                           </div>
                           <div style={{ overflow: 'auto', maxHeight: 480 }}>
@@ -1046,15 +1046,15 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                         </div>
 
                         {/* 右: 見積データ側 + (新)設置情報 */}
-                        <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ display: 'flex', borderBottom: '1px solid #e0e0e0' }}>
+                        <div style={{ border: '1px solid #E1E1E1', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', borderBottom: '1px solid #E1E1E1' }}>
                             <div style={{ flex: 1, padding: '8px 12px', background: '#fce4ec', display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                               <span style={{ fontSize: 13, fontWeight: 700, color: '#c62828' }}>見積データ側</span>
                               <span style={{ marginLeft: 'auto', fontSize: 13, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: '#c62828' }}>
                                 ¥{quotationTotalAmount.toLocaleString()}
                               </span>
                             </div>
-                            <div style={{ width: 286, padding: '8px 12px', background: '#e8f5e9', borderLeft: '1px solid #e0e0e0', fontSize: 13, fontWeight: 700, color: '#1b5e20' }}>
+                            <div style={{ width: 286, padding: '8px 12px', background: '#EBF5EE', borderLeft: '1px solid #E1E1E1', fontSize: 13, fontWeight: 700, color: '#1b5e20' }}>
                               （新）設置情報
                             </div>
                           </div>
@@ -1074,7 +1074,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                                 <col style={{ width: 60 }} />
                                 <col style={{ width: 80 }} />
                               </colgroup>
-                              <thead style={{ position: 'sticky', top: 0, background: '#fafafa', zIndex: 1 }}>
+                              <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 1 }}>
                                 <tr>
                                   <th style={{ ...quotTh, textAlign: 'left' }}>品目（個体管理品目名）</th>
                                   <th style={quotTh}>メーカー</th>
@@ -1102,7 +1102,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                                     const isClickable = activeLeftNo !== null && !isPaired;
                                     const price = rec.qi.allocTaxTotal ?? rec.qi.purchasePriceTotal ?? rec.qi.listPriceTotal ?? null;
                                     const rowBg = isPaired ? pair!.color : 'white';
-                                    const installBg = isPaired ? pair!.color : '#fafafa';
+                                    const installBg = isPaired ? pair!.color : '#FAFAFA';
                                     return (
                                       <tr key={rec.id} onClick={() => {
                                         if (!isClickable) return;
@@ -1135,7 +1135,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                                                 setPairings(prev => { const next = new Map(prev); next.delete(pairedAssetNo); return next; });
                                               }}
                                               aria-label="紐付け解除"
-                                              style={{ marginLeft: 6, padding: '0 5px', fontSize: 10, fontWeight: 700, background: '#e74c3c', color: 'white', border: 'none', borderRadius: 3, cursor: 'pointer' }}
+                                              style={{ marginLeft: 6, padding: '0 5px', fontSize: 10, fontWeight: 700, background: '#DA0000', color: 'white', border: 'none', borderRadius: 3, cursor: 'pointer' }}
                                             >×</button>
                                           )}
                                         </td>
@@ -1176,7 +1176,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                     </div>
                   </div>
 
-                  <div style={{ border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
+                  <div style={{ border: '1px solid #E1E1E1', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
                     {unpairedQuotationRecords.length === 0 ? (
                       <div style={{ padding: 24, textAlign: 'center', color: '#999', fontSize: 13 }}>
                         未紐付けの見積明細はありません
@@ -1188,7 +1188,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                           <div key={rec.id} style={{
                             padding: '12px 14px', borderBottom: '1px solid #f0f0f0',
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            background: isAdding ? '#e8f5e9' : 'white',
+                            background: isAdding ? '#EBF5EE' : 'white',
                           }}>
                             <div>
                               <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{rec.displayLabel}</div>
@@ -1198,7 +1198,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                               setAddTargets(prev => { const next = new Set(prev); if (next.has(rec.id)) next.delete(rec.id); else next.add(rec.id); return next; });
                             }} style={{
                               padding: '6px 16px', fontSize: 13, fontWeight: 600,
-                              background: isAdding ? '#e74c3c' : '#1565c0',
+                              background: isAdding ? '#DA0000' : '#1565c0',
                               color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', whiteSpace: 'nowrap',
                             }}>
                               {isAdding ? '取り消す' : '追加する'}
@@ -1236,15 +1236,15 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={handleSelectAll} style={{
                     padding: '6px 14px', fontSize: 13, fontWeight: 600,
-                    background: dataSource ? '#27ae60' : '#ccc', color: 'white',
+                    background: dataSource ? '#008C1D' : '#ccc', color: 'white',
                     border: 'none', borderRadius: 4, cursor: dataSource ? 'pointer' : 'default',
                   }}>全て選択</button>
                   <button onClick={handleDeselectAll} style={{
                     padding: '6px 14px', fontSize: 13, fontWeight: 600,
-                    background: '#f5f5f5', color: '#333', border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer',
+                    background: '#FAFAFA', color: '#333', border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer',
                   }}>全て解除</button>
                 </div>
-                <div style={{ padding: '8px 12px', background: '#f8f9fa', borderRadius: 4, fontSize: 13, color: '#555' }}>
+                <div style={{ padding: '8px 12px', background: '#FAFAFA', borderRadius: 4, fontSize: 13, color: '#555' }}>
                   対象レコード: <strong>{selectedAssets.length}件</strong>
                   {!linkKey && <span style={{ marginLeft: 12, color: '#999' }}>紐づけキーを選択してください</span>}
                 </div>
@@ -1255,7 +1255,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         </div>
 
         {/* フッター */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
           {isQuotationMode ? (
             <>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1274,7 +1274,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 {qStep === 1 && (
                   <button onClick={goNext} disabled={!selectedQuotationGroup} style={{
                     padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                    background: selectedQuotationGroup ? '#8e44ad' : '#ccc',
+                    background: selectedQuotationGroup ? '#4527A0' : '#ccc',
                     color: 'white',
                     border: 'none', borderRadius: 6, cursor: selectedQuotationGroup ? 'pointer' : 'default',
                   }}>
@@ -1301,7 +1301,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               }}>閉じる</button>
               <button onClick={handleCopyExecute} disabled={!canCopyExecute} style={{
                 padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                background: canCopyExecute ? '#8e44ad' : '#ccc',
+                background: canCopyExecute ? '#4527A0' : '#ccc',
                 color: canCopyExecute ? 'white' : '#999',
                 border: 'none', borderRadius: 6, cursor: canCopyExecute ? 'pointer' : 'default', minWidth: 140,
               }}>{executing ? '実行中...' : 'コピー実行'}</button>

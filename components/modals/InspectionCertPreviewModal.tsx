@@ -16,14 +16,14 @@ interface InspectionCertPreviewModalProps {
 const COLORS = {
   primary: '#4a6fa5',
   primaryDark: '#3d5a80',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
+  borderLight: '#E1E1E1',
   white: '#ffffff',
-  surfaceHeader: '#f8f9fa',
+  surfaceHeader: '#FAFAFA',
   accentBlueLight: '#e0f2fe',
   successBg: '#f0fdf4',
   successText: '#166534',
@@ -77,7 +77,7 @@ export const InspectionCertPreviewModal: React.FC<InspectionCertPreviewModalProp
         .cert-btn:hover:not(:disabled) { filter: brightness(0.9); }
         .cert-btn:focus-visible { outline: 2px solid ${COLORS.primary}; outline-offset: 2px; }
         .cert-btn-secondary { transition: background 150ms ease-out; }
-        .cert-btn-secondary:hover { background: #e5e7eb !important; }
+        .cert-btn-secondary:hover { background: #E1E1E1 !important; }
         .cert-btn-secondary:focus-visible { outline: 2px solid ${COLORS.border}; outline-offset: 2px; }
       `}</style>
 

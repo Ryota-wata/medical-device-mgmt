@@ -263,7 +263,7 @@ export default function MELedgerWindowPage() {
       case '数量不一致': return '#ff9800';
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
-      case '未登録': return '#9c27b0';
+      case '未登録': return '#5E3A93';
       default: return '#999';
     }
   };
@@ -282,11 +282,11 @@ export default function MELedgerWindowPage() {
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#FAFAFA'
     }}>
       {/* Header */}
       <header style={{
-        backgroundColor: '#e8f5e9',
+        backgroundColor: '#EBF5EE',
         borderBottom: '1px solid #a5d6a7',
         padding: '16px 24px'
       }}>
@@ -300,7 +300,7 @@ export default function MELedgerWindowPage() {
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32', margin: 0 }}>
             ME管理台帳（対応中）
           </h1>
-          <div style={{ fontSize: '14px', color: '#5a6c7d' }}>
+          <div style={{ fontSize: '14px', color: '#8A8A8A' }}>
             ※フィルターは現有品調査リストと連動
           </div>
         </div>
@@ -309,7 +309,7 @@ export default function MELedgerWindowPage() {
       {/* Progress Bar */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '12px 24px'
       }}>
         <div style={{
@@ -320,8 +320,8 @@ export default function MELedgerWindowPage() {
           gap: '16px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#5a6c7d', fontWeight: '600' }}>ME管理台帳:</span>
-          <span style={{ fontSize: '14px', color: '#1f2937' }}>
+          <span style={{ fontSize: '14px', color: '#8A8A8A', fontWeight: '600' }}>ME管理台帳:</span>
+          <span style={{ fontSize: '14px', color: '#4A4A4A' }}>
             全{stats.total}件 |
             <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
             <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
@@ -332,7 +332,7 @@ export default function MELedgerWindowPage() {
           {stats.対応中 === 0 && (
             <span style={{
               padding: '4px 12px',
-              backgroundColor: '#e8f5e9',
+              backgroundColor: '#EBF5EE',
               borderRadius: '4px',
               color: '#2e7d32',
               fontWeight: '600',
@@ -358,7 +358,7 @@ export default function MELedgerWindowPage() {
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '14px', color: '#27ae60', fontWeight: '600' }}>
+          <span style={{ fontSize: '14px', color: '#008C1D', fontWeight: '600' }}>
             一致検索（現有品との照合）:
           </span>
           {['category', 'assetNo', 'item', 'manufacturer'].map((type) => (
@@ -367,9 +367,9 @@ export default function MELedgerWindowPage() {
               onClick={() => handleMatchFilterClick(type as MatchFilterType)}
               style={{
                 padding: '6px 16px',
-                backgroundColor: matchFilter === type ? '#27ae60' : '#ffffff',
-                color: matchFilter === type ? '#ffffff' : '#27ae60',
-                border: '1px solid #27ae60',
+                backgroundColor: matchFilter === type ? '#008C1D' : '#ffffff',
+                color: matchFilter === type ? '#ffffff' : '#008C1D',
+                border: '1px solid #008C1D',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '13px',
@@ -385,7 +385,7 @@ export default function MELedgerWindowPage() {
               onClick={resetMatchFilter}
               style={{
                 padding: '6px 12px',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#FAFAFA',
                 color: '#666',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
@@ -403,7 +403,7 @@ export default function MELedgerWindowPage() {
       {/* Filter Panel */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '16px 24px'
       }}>
         <div style={{
@@ -435,7 +435,7 @@ export default function MELedgerWindowPage() {
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 fontSize: '14px',
-                backgroundColor: filters.department ? 'white' : '#f5f5f5'
+                backgroundColor: filters.department ? 'white' : '#FAFAFA'
               }}
             >
               <option value="">部署: 全て</option>
@@ -467,7 +467,7 @@ export default function MELedgerWindowPage() {
               onClick={resetFilters}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#f5f5f5',
+                backgroundColor: '#FAFAFA',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -497,11 +497,11 @@ export default function MELedgerWindowPage() {
               marginBottom: '12px',
               gap: '12px'
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', margin: 0 }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#4A4A4A', margin: 0 }}>
                 ME管理台帳リスト（対応中）
               </h2>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+                <span style={{ fontSize: '14px', color: '#8A8A8A' }}>
                   選択: {selectedIds.size}件
                 </span>
                 <button
@@ -536,7 +536,7 @@ export default function MELedgerWindowPage() {
               </div>
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <span style={{ fontSize: '14px', color: '#5a6c7d' }}>
+              <span style={{ fontSize: '14px', color: '#8A8A8A' }}>
                 表示: {filteredData.length}件 / 対応中全体: {unmatchedData.length}件
               </span>
             </div>
@@ -544,7 +544,7 @@ export default function MELedgerWindowPage() {
             <div style={{ overflow: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#e8f5e9' }}>
+                  <tr style={{ backgroundColor: '#EBF5EE' }}>
                     <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', width: '50px' }}>
                       <input
                         type="checkbox"
@@ -568,8 +568,8 @@ export default function MELedgerWindowPage() {
                 </thead>
                 <tbody>
                   {filteredData.map((row) => (
-                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#e8f5e9' : 'transparent' }}>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>
+                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#EBF5EE' : 'transparent' }}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(row.id)}
@@ -577,7 +577,7 @@ export default function MELedgerWindowPage() {
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0' }}>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1' }}>
                         {row.matchingStatus ? (
                           <span style={{
                             padding: '4px 8px',
@@ -593,16 +593,16 @@ export default function MELedgerWindowPage() {
                           <span style={{ color: '#999', fontSize: '12px' }}>ー</span>
                         )}
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', color: '#2e7d32', fontWeight: '600' }}>{row.meNo}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.department}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.section}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.item}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.serialNo || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', textAlign: 'center' }}>{row.quantity}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap' }}>{row.inspectionDate || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap', color: '#2e7d32', fontWeight: '600' }}>{row.meNo}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.item}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.serialNo || '-'}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>{row.quantity}</td>
+                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.inspectionDate || '-'}</td>
                     </tr>
                   ))}
                   {filteredData.length === 0 && (
@@ -619,7 +619,7 @@ export default function MELedgerWindowPage() {
 
           {/* 使用方法 */}
           <div style={{
-            backgroundColor: '#e8f5e9',
+            backgroundColor: '#EBF5EE',
             borderRadius: '8px',
             padding: '16px',
             fontSize: '14px',

@@ -23,10 +23,10 @@ const ITEM_TYPE_DESCRIPTIONS: Record<QuotationItemType, string> = {
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string; border: string }> = {
-  'A_表紙明細': { bg: '#e3f2fd', text: '#1565c0', border: '#90caf9' },
+  'A_表紙明細': { bg: '#EAF3FB', text: '#1565c0', border: '#90caf9' },
   'B_明細代表': { bg: '#f3e5f5', text: '#7b1fa2', border: '#ce93d8' },
-  'C_個体管理品目': { bg: '#e8f5e9', text: '#2e7d32', border: '#a5d6a7' },
-  'D_付属品': { bg: '#fff3e0', text: '#ef6c00', border: '#ffcc80' },
+  'C_個体管理品目': { bg: '#EBF5EE', text: '#2e7d32', border: '#a5d6a7' },
+  'D_付属品': { bg: '#FDF1E5', text: '#ef6c00', border: '#ffcc80' },
   'E_その他役務': { bg: '#fce4ec', text: '#c2185b', border: '#f48fb1' },
   'F_値引き': { bg: '#ffebee', text: '#c62828', border: '#ef9a9a' },
 };
@@ -112,7 +112,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '16px', padding: '14px', background: '#e3f2fd', borderRadius: '6px', border: '1px solid #90caf9' }}>
+      <div style={{ marginBottom: '16px', padding: '14px', background: '#EAF3FB', borderRadius: '6px', border: '1px solid #90caf9' }}>
         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1565c0', marginBottom: '8px' }}>
           ① 登録区分をチェック・修正してください
         </div>
@@ -147,7 +147,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
       </div>
 
       {/* 凡例 */}
-      <div style={{ marginBottom: '16px', padding: '10px', background: '#fafafa', borderRadius: '4px', fontSize: '10px' }}>
+      <div style={{ marginBottom: '16px', padding: '10px', background: '#FAFAFA', borderRadius: '4px', fontSize: '10px' }}>
         <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#555' }}>■ 登録区分について</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px' }}>
           {(Object.keys(ITEM_TYPE_DESCRIPTIONS) as QuotationItemType[]).map(type => (
@@ -174,16 +174,16 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
       <div style={{ marginBottom: '16px', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
         <div style={{ maxHeight: '400px', overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-            <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa', zIndex: 2 }}>
+            <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 2 }}>
               <tr>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '40px' }}>No</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', minWidth: '150px' }}>品名</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', width: '100px' }}>メーカー</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', width: '100px' }}>型式</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '50px' }}>数量</th>
-                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', width: '100px' }}>購入金額</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '100px', background: '#e8f5e9' }}>AI判定</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '150px', background: '#fff3e0' }}>登録区分</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '40px' }}>No</th>
+                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', minWidth: '150px' }}>品名</th>
+                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', width: '100px' }}>メーカー</th>
+                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', width: '100px' }}>型式</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '50px' }}>数量</th>
+                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '100px' }}>購入金額</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '100px', background: '#EBF5EE' }}>AI判定</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '150px', background: '#FDF1E5' }}>登録区分</th>
               </tr>
             </thead>
             <tbody>
@@ -261,7 +261,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
           onClick={onBack}
           style={{
             padding: '10px 24px',
-            background: '#95a5a6',
+            background: '#8A8A8A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -276,7 +276,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
           onClick={handleNext}
           style={{
             padding: '10px 24px',
-            background: '#9c27b0',
+            background: '#5E3A93',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

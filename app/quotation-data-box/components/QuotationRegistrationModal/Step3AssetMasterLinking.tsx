@@ -53,7 +53,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '20px', padding: '14px', background: '#e3f2fd', borderRadius: '6px', border: '1px solid #90caf9' }}>
+      <div style={{ marginBottom: '20px', padding: '14px', background: '#EAF3FB', borderRadius: '6px', border: '1px solid #90caf9' }}>
         <p style={{ margin: '0', fontSize: '12px', color: '#1565c0', lineHeight: '1.5' }}>
           以下の全ての明細が見積明細情報画面に登録されます。
         </p>
@@ -65,8 +65,8 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
           margin: '0 0 10px 0',
           fontSize: '14px',
           fontWeight: 'bold',
-          color: '#2c3e50',
-          borderLeft: '4px solid #27ae60',
+          color: '#4A4A4A',
+          borderLeft: '4px solid #008C1D',
           paddingLeft: '10px'
         }}>
           紐づく申請（{linkedApplications.length}件）
@@ -76,27 +76,27 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
           overflow: 'auto',
           border: '1px solid #ddd',
           borderRadius: '6px',
-          background: '#fafafa'
+          background: '#FAFAFA'
         }}>
           {linkedApplications.length === 0 ? (
-            <div style={{ padding: '16px', textAlign: 'center', color: '#95a5a6', fontSize: '13px' }}>
+            <div style={{ padding: '16px', textAlign: 'center', color: '#8A8A8A', fontSize: '13px' }}>
               紐づいた申請がありません
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-              <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa', zIndex: 1 }}>
+              <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 1 }}>
                 <tr>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '100px' }}>申請No</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '80px' }}>種別</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>品目</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>型式</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>設置場所</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '100px' }}>申請No</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '80px' }}>種別</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>品目</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>型式</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>設置場所</th>
                 </tr>
               </thead>
               <tbody>
                 {linkedApplications.map((app) => (
                   <tr key={app.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '8px', fontWeight: 'bold', color: '#27ae60' }}>{app.applicationNo}</td>
+                    <td style={{ padding: '8px', fontWeight: 'bold', color: '#008C1D' }}>{app.applicationNo}</td>
                     <td style={{ padding: '8px' }}>
                       <span style={{
                         display: 'inline-block',
@@ -104,9 +104,9 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
                         borderRadius: '3px',
                         fontSize: '10px',
                         fontWeight: 'bold',
-                        background: app.applicationType === '新規申請' ? '#27ae60' :
+                        background: app.applicationType === '新規申請' ? '#008C1D' :
                                    app.applicationType === '更新申請' ? '#e67e22' :
-                                   app.applicationType === '増設申請' ? '#3498db' : '#95a5a6',
+                                   app.applicationType === '増設申請' ? '#0092E6' : '#8A8A8A',
                         color: 'white',
                       }}>
                         {app.applicationType}
@@ -131,8 +131,8 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
           margin: '0 0 10px 0',
           fontSize: '14px',
           fontWeight: 'bold',
-          color: '#2c3e50',
-          borderLeft: '4px solid #9c27b0',
+          color: '#4A4A4A',
+          borderLeft: '4px solid #5E3A93',
           paddingLeft: '10px'
         }}>
           登録される見積明細（{ocrResult.items.length}件）
@@ -140,15 +140,15 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
         <div style={{ border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
           <div style={{ maxHeight: '300px', overflowX: 'auto', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '900px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: '#f8f9fa' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: '#FAFAFA' }}>
                 <tr>
-                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '40px' }}>No</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50' }}>品名</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>メーカー</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '120px' }}>型式</th>
-                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '60px' }}>数量</th>
-                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '100px' }}>税込金額</th>
-                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', fontWeight: 'bold', color: '#2c3e50', width: '80px' }}>操作</th>
+                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '40px' }}>No</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>品名</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '120px' }}>メーカー</th>
+                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '120px' }}>型式</th>
+                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '60px' }}>数量</th>
+                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '100px' }}>税込金額</th>
+                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '80px' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,7 +165,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
                         onClick={() => handleOpenApplicationModal(item)}
                         style={{
                           padding: '4px 10px',
-                          background: '#9c27b0',
+                          background: '#5E3A93',
                           color: 'white',
                           border: 'none',
                           borderRadius: '3px',
@@ -190,7 +190,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
           onClick={onBack}
           style={{
             padding: '10px 24px',
-            background: '#95a5a6',
+            background: '#8A8A8A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -205,7 +205,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
           onClick={onSubmit}
           style={{
             padding: '10px 24px',
-            background: '#27ae60',
+            background: '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

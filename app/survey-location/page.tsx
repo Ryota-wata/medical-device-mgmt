@@ -97,23 +97,23 @@ function SurveyLocationContent() {
   };
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+    <div className="flex flex-col min-h-dvh bg-[#FAFAFA]">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+      <header className="bg-white border-b border-[#E1E1E1] px-4 py-3">
         <div className="flex items-center justify-between max-w-[800px] mx-auto">
           <button
             onClick={handleBack}
-            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            className="size-10 flex items-center justify-center text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors"
             aria-label="戻る"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>
-          <span className="text-sm font-bold text-[#1f2937] text-balance">HEALTHCARE 医療機器管理システム</span>
+          <span className="text-sm font-bold text-[#4A4A4A] text-balance">HEALTHCARE 医療機器管理システム</span>
           <button
             onClick={handleHomeClick}
-            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            className="size-10 flex items-center justify-center text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors"
             aria-label="閉じる"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,13 +126,13 @@ function SurveyLocationContent() {
 
       {/* メインコンテンツ */}
       <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6 flex-1">
-        <h1 className="text-lg font-bold text-[#1f2937] mb-4 text-balance">現有資産調査</h1>
+        <h1 className="text-lg font-bold text-[#4A4A4A] mb-4 text-balance">現有資産調査</h1>
 
-        <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-[#E1E1E1] p-4 sm:p-6">
           {/* 調査日 */}
           <div className="mb-6">
-            <label className="block text-sm font-bold text-[#1f2937] mb-2">調査日</label>
-            <div className="px-3 py-2.5 text-sm text-[#1f2937] border border-[#d1d5db] rounded-md bg-[#f9fafb] tabular-nums">
+            <label className="block text-sm font-bold text-[#4A4A4A] mb-2">調査日</label>
+            <div className="px-3 py-2.5 text-sm text-[#4A4A4A] border border-[#d1d5db] rounded-md bg-[#FAFAFA] tabular-nums">
               {surveyDate}
             </div>
           </div>
@@ -175,13 +175,13 @@ function SurveyLocationContent() {
 
           {/* 諸室 */}
           <div>
-            <label className="block text-sm font-bold text-[#1f2937] mb-2">諸室</label>
+            <label className="block text-sm font-bold text-[#4A4A4A] mb-2">諸室</label>
             <input
               type="text"
               value={room}
               onChange={(e) => setRoom(e.target.value)}
               placeholder="諸室名を入力"
-              className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors"
+              className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#008C1D] transition-colors"
             />
           </div>
         </div>
@@ -190,13 +190,13 @@ function SurveyLocationContent() {
         <div className="mt-6 flex gap-3">
           <button
             onClick={handleBack}
-            className="flex-1 py-3 text-sm font-bold text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors"
+            className="flex-1 py-3 text-sm font-bold text-[#4b5563] bg-[#E1E1E1] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors"
           >
             戻る
           </button>
           <button
             onClick={handleNext}
-            className="flex-1 py-3 text-sm font-bold text-[#27ae60] bg-white border border-[#27ae60] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors"
+            className="flex-1 py-3 text-sm font-bold text-[#008C1D] bg-white border border-[#008C1D] rounded-md cursor-pointer hover:bg-[#f0fdf4] transition-colors"
           >
             次へ
           </button>
@@ -204,7 +204,7 @@ function SurveyLocationContent() {
       </div>
 
       {/* フッター */}
-      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+      <footer className="py-3 text-center text-xs text-[#8A8A8A]">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 
@@ -224,7 +224,7 @@ function SurveyLocationContent() {
 
 export default function SurveyLocationPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#8A8A8A]">読み込み中...</div>}>
       <SurveyLocationContent />
     </Suspense>
   );

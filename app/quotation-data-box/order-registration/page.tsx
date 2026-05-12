@@ -17,15 +17,15 @@ const COLORS = {
   primary: '#008C1D',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
-  textOnAccent: '#1f2937',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textOnAccent: '#4A4A4A',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  borderLight: '#E1E1E1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4b5563',
   white: '#ffffff',
   error: '#dc2626',
@@ -284,7 +284,7 @@ export default function OrderRegistrationPage() {
         .order-btn:hover:not(:disabled) { filter: brightness(0.9); }
         .order-btn:focus-visible { outline: 2px solid #008C1D; outline-offset: 2px; }
         .order-btn-secondary { transition: background 150ms ease-out; }
-        .order-btn-secondary:hover { background: #e5e7eb !important; }
+        .order-btn-secondary:hover { background: #E1E1E1 !important; }
         .order-btn-secondary:focus-visible { outline: 2px solid #d1d5db; outline-offset: 2px; }
       `}</style>
 

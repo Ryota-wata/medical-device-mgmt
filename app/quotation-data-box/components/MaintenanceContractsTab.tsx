@@ -287,7 +287,7 @@ const MOCK_GROUP_ASSETS: Record<string, ContractGroupAsset[]> = {
 // テーブルスタイル
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #495057',
+  border: '1px solid #4A4A4A',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -296,7 +296,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #6c757d',
+  border: '1px solid #8A8A8A',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -426,7 +426,7 @@ const ContractGroupDetailModal = ({
 
   // ○/× 表示
   const boolDisplay = (val: boolean) => (
-    <span style={{ color: val ? '#27ae60' : '#999', fontWeight: val ? 'bold' : 'normal' }}>
+    <span style={{ color: val ? '#008C1D' : '#999', fontWeight: val ? 'bold' : 'normal' }}>
       {val ? '○' : '×'}
     </span>
   );
@@ -540,7 +540,7 @@ const ContractGroupDetailModal = ({
               onClick={handleAddAsset}
               style={{
                 padding: '6px 14px',
-                background: '#2c3e50',
+                background: '#4A4A4A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -574,10 +574,10 @@ const ContractGroupDetailModal = ({
             <thead>
               {/* グループヘッダー行 */}
               <tr>
-                <th colSpan={2} style={{ ...mThGroup, background: '#e0e0e0', color: '#333' }}>部署情報</th>
-                <th colSpan={4} style={{ ...mThGroup, background: '#e0e0e0', color: '#333' }}>商品情報</th>
+                <th colSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>部署情報</th>
+                <th colSpan={4} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>商品情報</th>
                 <th colSpan={10} style={{ ...mThGroup, background: '#fff176', color: '#333' }}>点検情報</th>
-                <th rowSpan={2} style={{ ...mThGroup, background: '#e0e0e0', color: '#333' }}>操作</th>
+                <th rowSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>操作</th>
               </tr>
               {/* サブカラムヘッダー行 */}
               <tr>
@@ -606,7 +606,7 @@ const ContractGroupDetailModal = ({
                 const isEditing = editingId === asset.id;
                 const isNewAsset = !asset.qrLabel && !asset.itemName;
                 return (
-                <tr key={asset.id} style={{ background: isEditing ? '#fffde7' : idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                <tr key={asset.id} style={{ background: isEditing ? '#fffde7' : idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
                   {/* 部署情報（新規追加時は編集可能） */}
                   {isEditing && isNewAsset ? (
                     <>
@@ -629,7 +629,7 @@ const ContractGroupDetailModal = ({
                     </>
                   ) : (
                     <>
-                      <td style={{ ...mTd, background: '#f9f9f9', fontFamily: 'monospace', fontWeight: 600, color: '#3498db' }}>{asset.qrLabel || '-'}</td>
+                      <td style={{ ...mTd, background: '#f9f9f9', fontFamily: 'monospace', fontWeight: 600, color: '#0092E6' }}>{asset.qrLabel || '-'}</td>
                       <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.itemName || '-'}</td>
                       <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.maker || '-'}</td>
                       <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.model || '-'}</td>
@@ -645,7 +645,7 @@ const ContractGroupDetailModal = ({
                           onClick={() => handleSaveRow(asset.id)}
                           style={{
                             padding: '4px 10px',
-                            background: '#27ae60',
+                            background: '#008C1D',
                             color: 'white',
                             border: 'none',
                             borderRadius: '3px',
@@ -660,7 +660,7 @@ const ContractGroupDetailModal = ({
                           onClick={() => handleCancelEdit(asset.id)}
                           style={{
                             padding: '4px 10px',
-                            background: '#95a5a6',
+                            background: '#8A8A8A',
                             color: 'white',
                             border: 'none',
                             borderRadius: '3px',
@@ -676,7 +676,7 @@ const ContractGroupDetailModal = ({
                         onClick={() => setEditingId(asset.id)}
                         style={{
                           padding: '4px 10px',
-                          background: '#3498db',
+                          background: '#0092E6',
                           color: 'white',
                           border: 'none',
                           borderRadius: '3px',
@@ -707,7 +707,7 @@ const ContractGroupDetailModal = ({
             onClick={() => setShowReviewModal(true)}
             style={{
               padding: '10px 20px',
-              background: '#c0392b',
+              background: '#A30000',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -723,7 +723,7 @@ const ContractGroupDetailModal = ({
               onClick={handleRegister}
               style={{
                 padding: '10px 20px',
-                background: '#27ae60',
+                background: '#008C1D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -859,8 +859,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   };
 
   const getSortArrow = () => {
-    const upColor = sortDirection === 'asc' ? '#c0392b' : '#aaa';
-    const downColor = sortDirection === 'desc' ? '#c0392b' : '#aaa';
+    const upColor = sortDirection === 'asc' ? '#A30000' : '#aaa';
+    const downColor = sortDirection === 'desc' ? '#A30000' : '#aaa';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '4px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -905,11 +905,11 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   // 契約種別バッジ色
   const getContractTypeBadge = (type: ContractType) => {
     const colors: Record<ContractType, string> = {
-      '保守契約': '#2980b9',
-      '定期点検': '#27ae60',
+      '保守契約': '#0073B8',
+      '定期点検': '#008C1D',
       'スポット契約': '#e67e22',
-      '借用契約': '#8e44ad',
-      'その他': '#7f8c8d',
+      '借用契約': '#4527A0',
+      'その他': '#8A8A8A',
     };
     return (
       <span style={{
@@ -917,7 +917,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         borderRadius: '10px',
         fontSize: '11px',
         fontWeight: 'bold',
-        background: colors[type] || '#95a5a6',
+        background: colors[type] || '#8A8A8A',
         color: 'white',
         whiteSpace: 'nowrap',
       }}>
@@ -931,8 +931,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       {/* 情報バー */}
       <div style={{
         padding: '12px 16px',
-        background: '#f8f9fa',
-        borderBottom: '1px solid #dee2e6',
+        background: '#FAFAFA',
+        borderBottom: '1px solid #E1E1E1',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -948,8 +948,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
             <tr style={{ background: '#343a40', color: 'white' }}>
-              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>契約情報</th>
-              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>業者情報</th>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>契約情報</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>業者情報</th>
               <th
                 rowSpan={2}
                 style={{ ...thGroupStyle, textAlign: 'center', background: '#ffcc80', color: '#333', borderColor: '#ef6c00' }}
@@ -959,18 +959,18 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#ef5350', color: 'white', borderColor: '#c62828' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
-            <tr style={{ background: '#495057', color: 'white' }}>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>申請No.</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約グループ名</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約種別</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>種別備考</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約日</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約期間</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約金額</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>単年度金額</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>契約業者</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>担当者</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>連絡先</th>
+            <tr style={{ background: '#4A4A4A', color: 'white' }}>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>申請No.</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約グループ名</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約種別</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>種別備考</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約日</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約期間</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約金額</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>単年度金額</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約業者</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>担当者</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>連絡先</th>
               <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>登録</th>
               <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#c62828' }}>フリーコメント</th>
             </tr>
@@ -980,7 +980,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               return (
                 <tr
                   key={contract.id}
-                  style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top', cursor: 'pointer' }}
+                  style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', verticalAlign: 'top', cursor: 'pointer' }}
                   onDoubleClick={() => handleRowDoubleClick(contract)}
                 >
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{contract.applicationNo}</td>
@@ -1014,11 +1014,11 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                       const stepConfig: Record<number, { label: string; color: string }> = {
                         1: { label: '見積依頼', color: '#7c3aed' },
                         2: { label: '見積登録', color: '#d97706' },
-                        3: { label: '契約登録', color: '#3498db' },
-                        4: { label: '完了登録', color: '#27ae60' },
+                        3: { label: '契約登録', color: '#0092E6' },
+                        4: { label: '完了登録', color: '#008C1D' },
                       };
                       if (contract.currentStep === 'completed') {
-                        return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>完了</span>;
+                        return <span style={{ color: '#8A8A8A', fontSize: '12px' }}>完了</span>;
                       }
                       const cfg = stepConfig[contract.currentStep];
                       return (
@@ -1050,7 +1050,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         </table>
 
         {sortedContracts.length === 0 && (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+          <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
             該当する保守契約がありません
           </div>
         )}
@@ -1092,7 +1092,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               </button>
               <button
                 onClick={handleSaveComment}
-                style={{ padding: '8px 16px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                style={{ padding: '8px 16px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
               >
                 保存
               </button>

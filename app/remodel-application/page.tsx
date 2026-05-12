@@ -473,7 +473,7 @@ function RemodelApplicationContent() {
         spans.push({
           groupId: gid,
           label: groupDef?.label || gid,
-          color: groupDef?.color || '#6c757d',
+          color: groupDef?.color || '#8A8A8A',
           colSpan: 1,
         });
         currentGroupId = gid;
@@ -1193,25 +1193,25 @@ function RemodelApplicationContent() {
       {isEditListMode && editList && (
         editList.mode === 'remodel' ? (
           <div className="px-4 py-1.5 bg-emerald-50 border-b border-emerald-200 flex items-center gap-2 flex-wrap">
-            <span className="px-2 py-0.5 bg-[#27ae60] text-white rounded-full text-xs font-semibold whitespace-nowrap">
+            <span className="px-2 py-0.5 bg-[#008C1D] text-white rounded-full text-xs font-semibold whitespace-nowrap">
               リモデル
             </span>
-            <span className="text-xs text-[#1f2937] flex-1 truncate" title="ヒアリング・5方針振り分け（新規／更新／増設／廃棄／移動）・新設置場所入力を行います">
+            <span className="text-xs text-[#4A4A4A] flex-1 truncate" title="ヒアリング・5方針振り分け（新規／更新／増設／廃棄／移動）・新設置場所入力を行います">
               ヒアリング・5方針振り分け・新設置場所入力
             </span>
             <button
               onClick={() => router.push(`/quotation-data-box/remodel-dashboard?editListId=${editList.id}`)}
-              className="px-3 py-1 bg-[#27ae60] hover:bg-[#229954] text-white rounded font-medium text-xs transition-colors border-0 cursor-pointer whitespace-nowrap"
+              className="px-3 py-1 bg-[#008C1D] hover:bg-[#0A6B17] text-white rounded font-medium text-xs transition-colors border-0 cursor-pointer whitespace-nowrap"
             >
               ダッシュボードへ
             </button>
           </div>
         ) : (
-          <div className="px-4 py-1.5 bg-[#f3f4f6] border-b border-[#e5e7eb] flex items-center gap-2 flex-wrap">
+          <div className="px-4 py-1.5 bg-[#F1F1F1] border-b border-[#E1E1E1] flex items-center gap-2 flex-wrap">
             <span className="px-2 py-0.5 bg-[#4b5563] text-white rounded-full text-xs font-semibold whitespace-nowrap">
               通常
             </span>
-            <span className="text-xs text-[#1f2937] flex-1 truncate" title="見積依頼グループを作成して購入管理画面でタスクを進めてください">
+            <span className="text-xs text-[#4A4A4A] flex-1 truncate" title="見積依頼グループを作成して購入管理画面でタスクを進めてください">
               見積依頼グループを作成して購入管理へ
             </span>
           </div>
@@ -1222,7 +1222,7 @@ function RemodelApplicationContent() {
       <div style={{
         background: '#fff',
         padding: '6px 12px',
-        borderBottom: '1px solid #dee2e6',
+        borderBottom: '1px solid #E1E1E1',
         display: 'flex',
         gap: '6px',
         alignItems: 'center',
@@ -1234,7 +1234,7 @@ function RemodelApplicationContent() {
           onClick={() => alert('API連携機能（開発中）')}
           style={{
             padding: '8px 16px',
-            background: '#27ae60',
+            background: '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1243,8 +1243,8 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#0A6B17'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#008C1D'; }}
         >
           API連携
         </button>
@@ -1259,7 +1259,7 @@ function RemodelApplicationContent() {
           }}
           style={{
             padding: '8px 16px',
-            background: '#e74c3c',
+            background: '#DA0000',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1268,8 +1268,8 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#A30000'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#DA0000'; }}
         >
           Data Link
         </button>
@@ -1280,7 +1280,7 @@ function RemodelApplicationContent() {
           }}
           style={{
             padding: '8px 16px',
-            background: '#e74c3c',
+            background: '#DA0000',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1289,8 +1289,8 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#c0392b'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#e74c3c'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#A30000'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#DA0000'; }}
         >
           見積DB Link
         </button>
@@ -1307,7 +1307,7 @@ function RemodelApplicationContent() {
           disabled={selectedItems.size === 0}
           style={{
             padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#bdc3c7' : '#27ae60',
+            background: selectedItems.size === 0 ? '#bdc3c7' : '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1329,7 +1329,7 @@ function RemodelApplicationContent() {
           style={{
             padding: '8px 16px',
             background: '#fff',
-            color: '#6c757d',
+            color: '#8A8A8A',
             border: '1px dashed #adb5bd',
             borderRadius: '4px',
             cursor: 'pointer',
@@ -1337,7 +1337,7 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'all 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#FAFAFA'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; }}
         >
           + フリーカラム追加{freeColumns.length > 0 ? `（${freeColumns.length}）` : ''}
@@ -1373,7 +1373,7 @@ function RemodelApplicationContent() {
         })()}
 
         {/* 新規要望ボタン (REQ-139⑤) — 編集リスト内に無い資産を新たに購入要望として追加。クリックでインライン編集行を追加し、複数まとめて登録できる */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #dee2e6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #E1E1E1' }}>
           <button
             onClick={handleStartInlineNew}
             title="編集リストに無い資産の購入要望を追加します。クリックで編集行が1行追加され、複数行まとめてインライン編集→一括登録できます。"
@@ -1402,15 +1402,15 @@ function RemodelApplicationContent() {
                   padding: '8px 16px',
                   fontSize: '13px',
                   fontWeight: 600,
-                  backgroundColor: '#27ae60',
+                  backgroundColor: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   transition: 'background 0.2s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#229954'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = '#27ae60'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#0A6B17'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#008C1D'; }}
               >
                 全て登録（{inlineNewRows.length}件）
               </button>
@@ -1422,7 +1422,7 @@ function RemodelApplicationContent() {
                   fontSize: '13px',
                   fontWeight: 600,
                   backgroundColor: '#fff',
-                  color: '#e74c3c',
+                  color: '#DA0000',
                   border: '1px solid #f5b7b1',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -1457,8 +1457,8 @@ function RemodelApplicationContent() {
             style={{
               padding: '4px 10px',
               background: 'transparent',
-              color: '#27ae60',
-              border: '1px solid #27ae60',
+              color: '#008C1D',
+              border: '1px solid #008C1D',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '12px',
@@ -1466,26 +1466,26 @@ function RemodelApplicationContent() {
               whiteSpace: 'nowrap',
               transition: 'all 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#27ae60'; e.currentTarget.style.color = 'white'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#27ae60'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#008C1D'; e.currentTarget.style.color = 'white'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#008C1D'; }}
           >
             タスク管理 &rarr;
           </button>
           {/* 数量・金額合計を1つのコンパクトな枠に統合 */}
           <div style={{
             padding: '4px 10px',
-            background: '#f8f9fa',
+            background: '#FAFAFA',
             borderRadius: '4px',
-            border: '1px solid #dee2e6',
+            border: '1px solid #E1E1E1',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
             fontSize: '12px',
             whiteSpace: 'nowrap',
           }}>
-            <span><span style={{ color: '#666' }}>件数</span> <strong style={{ color: '#1f2937', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
-            <span style={{ color: '#dee2e6' }}>|</span>
-            <span><span style={{ color: '#666' }}>金額</span> <strong style={{ color: '#27ae60', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
+            <span><span style={{ color: '#666' }}>件数</span> <strong style={{ color: '#4A4A4A', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
+            <span style={{ color: '#E1E1E1' }}>|</span>
+            <span><span style={{ color: '#666' }}>金額</span> <strong style={{ color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
               const amount = asset.rfqAmount;
               if (typeof amount === 'number') return sum + amount;
               if (typeof amount === 'string' && amount) {
@@ -1499,7 +1499,7 @@ function RemodelApplicationContent() {
       </div>
 
       {/* フィルターヘッダー（コンパクト・全体検索を同列配置） */}
-      <div style={{ background: '#f8f9fa', padding: '6px 12px', borderBottom: '1px solid #dee2e6' }}>
+      <div style={{ background: '#FAFAFA', padding: '6px 12px', borderBottom: '1px solid #E1E1E1' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* 全体検索 (REQ-140④) */}
           <input
@@ -1590,7 +1590,7 @@ function RemodelApplicationContent() {
         {selectedItems.size > 1 && editingCell !== null && selectedItems.has(editingCell.rowNo) && (
           <div style={{
             padding: '8px 16px',
-            background: '#e3f2fd',
+            background: '#EAF3FB',
             border: '1px solid #90caf9',
             borderRadius: '4px',
             marginBottom: '8px',
@@ -1639,8 +1639,8 @@ function RemodelApplicationContent() {
                     zIndex: 103,
                     background: '#343a40',
                     boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
-                    borderRight: '1px solid #495057',
-                    borderBottom: '2px solid #dee2e6',
+                    borderRight: '1px solid #4A4A4A',
+                    borderBottom: '2px solid #E1E1E1',
                   }}
                 >
                   <input
@@ -1697,11 +1697,11 @@ function RemodelApplicationContent() {
                     textAlign: 'center',
                     fontSize: '11px',
                     fontWeight: 700,
-                    color: '#1f2937',
-                    background: '#f8f9fa',
-                    borderRight: '1px solid #dee2e6',
-                    borderBottom: '2px solid #dee2e6',
-                    borderTop: '2px solid #6c757d',
+                    color: '#4A4A4A',
+                    background: '#FAFAFA',
+                    borderRight: '1px solid #E1E1E1',
+                    borderBottom: '2px solid #E1E1E1',
+                    borderTop: '2px solid #8A8A8A',
                     width: '120px',
                   }}
                 >
@@ -1716,7 +1716,7 @@ function RemodelApplicationContent() {
                   const hasFilter = columnFilters[col.key]?.length > 0;
                   const uniqueValues = getColumnUniqueValues(col.key);
                   const groupDef = REMODEL_COLUMN_GROUPS.find(g => g.id === col.group);
-                  const groupColor = groupDef?.color || '#6c757d';
+                  const groupColor = groupDef?.color || '#8A8A8A';
 
                   return (
                     <th
@@ -1729,15 +1729,15 @@ function RemodelApplicationContent() {
                         padding: '8px',
                         textAlign: 'left',
                         fontWeight: 'bold',
-                        color: '#1f2937',
+                        color: '#4A4A4A',
                         width: `${columnWidths[col.key]}px`,
                         position: 'relative',
                         whiteSpace: 'nowrap',
                         overflow: 'visible',
-                        background: draggedColumn === col.key ? '#e3f2fd' : '#f8f9fa',
+                        background: draggedColumn === col.key ? '#EAF3FB' : '#FAFAFA',
                         zIndex: openFilterColumn === col.key ? 100 : 1,
-                        borderRight: '1px solid #dee2e6',
-                        borderBottom: '2px solid #dee2e6',
+                        borderRight: '1px solid #E1E1E1',
+                        borderBottom: '2px solid #E1E1E1',
                         borderTop: `2px solid ${groupColor}`,
                         cursor: 'grab',
                       }}
@@ -1754,7 +1754,7 @@ function RemodelApplicationContent() {
                           </span>
                           <span
                             onClick={() => handleSort(col.key)}
-                            style={{ cursor: 'pointer', fontSize: '10px', color: isSorted ? '#27ae60' : '#aaa' }}
+                            style={{ cursor: 'pointer', fontSize: '10px', color: isSorted ? '#008C1D' : '#aaa' }}
                           >
                             {isSorted ? (sortConfig.direction === 'asc' ? '\u25B2' : '\u25BC') : '\u21C5'}
                           </span>
@@ -1766,7 +1766,7 @@ function RemodelApplicationContent() {
                             style={{
                               cursor: 'pointer',
                               fontSize: '10px',
-                              color: hasFilter ? '#e74c3c' : '#aaa',
+                              color: hasFilter ? '#DA0000' : '#aaa',
                               padding: '2px',
                             }}
                           >
@@ -1783,7 +1783,7 @@ function RemodelApplicationContent() {
                               top: '100%',
                               left: 0,
                               background: 'white',
-                              border: '1px solid #dee2e6',
+                              border: '1px solid #E1E1E1',
                               borderRadius: '4px',
                               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                               zIndex: 1000,
@@ -1795,7 +1795,7 @@ function RemodelApplicationContent() {
                             <div
                               style={{
                                 padding: '8px',
-                                borderBottom: '1px solid #dee2e6',
+                                borderBottom: '1px solid #E1E1E1',
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
@@ -1805,13 +1805,13 @@ function RemodelApplicationContent() {
                               <div style={{ display: 'flex', gap: '4px' }}>
                                 <button
                                   onClick={() => selectAllColumnFilter(col.key, uniqueValues)}
-                                  style={{ fontSize: '10px', padding: '2px 6px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
+                                  style={{ fontSize: '10px', padding: '2px 6px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
                                 >
                                   全選択
                                 </button>
                                 <button
                                   onClick={() => clearColumnFilter(col.key)}
-                                  style={{ fontSize: '10px', padding: '2px 6px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
+                                  style={{ fontSize: '10px', padding: '2px 6px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '2px', cursor: 'pointer' }}
                                 >
                                   クリア
                                 </button>
@@ -1855,7 +1855,7 @@ function RemodelApplicationContent() {
                           bottom: 0,
                           width: '4px',
                           cursor: 'col-resize',
-                          background: resizingColumn === col.key ? '#27ae60' : 'transparent',
+                          background: resizingColumn === col.key ? '#008C1D' : 'transparent',
                           transition: 'background 0.2s',
                         }}
                         onMouseEnter={(e) => {
@@ -1876,11 +1876,11 @@ function RemodelApplicationContent() {
                       padding: '8px',
                       textAlign: 'left',
                       fontWeight: 'bold',
-                      color: '#1f2937',
+                      color: '#4A4A4A',
                       whiteSpace: 'nowrap',
                       background: '#fff8e1',
-                      borderRight: '1px solid #dee2e6',
-                      borderBottom: '2px solid #dee2e6',
+                      borderRight: '1px solid #E1E1E1',
+                      borderBottom: '2px solid #E1E1E1',
                       borderTop: '2px solid #f39c12',
                     }}
                   >
@@ -1911,8 +1911,8 @@ function RemodelApplicationContent() {
               {displayedAssets.map((asset) => {
                 // 行ステータスの左ボーダー色
                 const getRowBorderColor = () => {
-                  if (errorRows.has(asset.no)) return '#e74c3c';
-                  if (appliedRows.has(asset.no)) return '#27ae60';
+                  if (errorRows.has(asset.no)) return '#DA0000';
+                  if (appliedRows.has(asset.no)) return '#008C1D';
                   if (asset.purchaseCategory) return '#f39c12';
                   return 'transparent';
                 };
@@ -1928,10 +1928,10 @@ function RemodelApplicationContent() {
                     position: 'sticky',
                     left: 0,
                     zIndex: 100,
-                    background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white',
+                    background: selectedItems.has(asset.no) ? '#EAF3FB' : 'white',
                     boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
-                    borderRight: '1px solid #dee2e6',
-                    borderBottom: '1px solid #dee2e6',
+                    borderRight: '1px solid #E1E1E1',
+                    borderBottom: '1px solid #E1E1E1',
                   }}>
                     <input
                       type="checkbox"
@@ -1965,7 +1965,7 @@ function RemodelApplicationContent() {
                       // 一括適用対象行の通常ハイライト
                       if (isBulkEditTarget) return '#fffde7';
                       // デフォルトは行の背景色に合わせる
-                      return isRowSelected ? '#e3f2fd' : 'white';
+                      return isRowSelected ? '#EAF3FB' : 'white';
                     };
 
                     return (
@@ -1973,7 +1973,7 @@ function RemodelApplicationContent() {
                         key={col.key}
                         style={{
                           padding: isEditing ? '4px' : '12px 8px',
-                          color: '#1f2937',
+                          color: '#4A4A4A',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -1982,8 +1982,8 @@ function RemodelApplicationContent() {
                           transition: 'background 0.15s',
                           position: 'relative',
                           zIndex: 0,
-                          borderRight: '1px solid #dee2e6',
-                          borderBottom: '1px solid #dee2e6',
+                          borderRight: '1px solid #E1E1E1',
+                          borderBottom: '1px solid #E1E1E1',
                         }}
                         onMouseEnter={() => isEditable && setHoveredCell({ rowNo: asset.no, colKey: col.key })}
                         onMouseLeave={() => setHoveredCell(null)}
@@ -1993,18 +1993,18 @@ function RemodelApplicationContent() {
                           (() => {
                             const currentVal = asset.purchaseCategory || '';
                             const categoryColors: Record<string, string> = {
-                              '新規': '#27ae60',
+                              '新規': '#008C1D',
                               '更新': '#e67e22',
-                              '移設': '#27ae60',
-                              '増設': '#8e44ad',
-                              '廃棄予定': '#e74c3c',
+                              '移設': '#008C1D',
+                              '増設': '#4527A0',
+                              '廃棄予定': '#DA0000',
                             };
                             // 新規追加レコード（sourceType === 'added' かつ purchaseCategory === '新規'）はバッジ固定
                             if (currentVal === '新規') {
                               return (
                                 <span style={{
                                   padding: '2px 8px',
-                                  background: '#27ae60',
+                                  background: '#008C1D',
                                   color: 'white',
                                   borderRadius: '12px',
                                   fontSize: '11px',
@@ -2033,7 +2033,7 @@ function RemodelApplicationContent() {
                                   fontWeight: 'bold',
                                   cursor: 'pointer',
                                   background: currentVal ? categoryColors[currentVal] || '#f0f0f0' : 'transparent',
-                                  color: currentVal ? 'white' : '#95a5a6',
+                                  color: currentVal ? 'white' : '#8A8A8A',
                                   appearance: 'auto',
                                 }}
                               >
@@ -2059,7 +2059,7 @@ function RemodelApplicationContent() {
                             style={{
                               width: '100%',
                               padding: '6px 8px',
-                              border: '2px solid #27ae60',
+                              border: '2px solid #008C1D',
                               borderRadius: '4px',
                               fontSize: '13px',
                               boxSizing: 'border-box',
@@ -2079,9 +2079,9 @@ function RemodelApplicationContent() {
                         key={`fc-${fc.key}-${asset.no}`}
                         style={{
                           padding: '4px 6px',
-                          background: selectedItems.has(asset.no) ? '#e3f2fd' : '#fffdf2',
-                          borderRight: '1px solid #dee2e6',
-                          borderBottom: '1px solid #dee2e6',
+                          background: selectedItems.has(asset.no) ? '#EAF3FB' : '#fffdf2',
+                          borderRight: '1px solid #E1E1E1',
+                          borderBottom: '1px solid #E1E1E1',
                         }}
                       >
                         <input
@@ -2098,7 +2098,7 @@ function RemodelApplicationContent() {
                           style={{
                             width: '100%',
                             padding: '6px',
-                            border: '1px solid #e5e7eb',
+                            border: '1px solid #E1E1E1',
                             borderRadius: '3px',
                             fontSize: '13px',
                             background: 'white',
@@ -2114,9 +2114,9 @@ function RemodelApplicationContent() {
                       padding: '4px',
                       textAlign: 'center',
                       whiteSpace: 'nowrap',
-                      background: selectedItems.has(asset.no) ? '#e3f2fd' : 'white',
-                      borderRight: '1px solid #dee2e6',
-                      borderBottom: '1px solid #dee2e6',
+                      background: selectedItems.has(asset.no) ? '#EAF3FB' : 'white',
+                      borderRight: '1px solid #E1E1E1',
+                      borderBottom: '1px solid #E1E1E1',
                     }}
                   >
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
@@ -2144,8 +2144,8 @@ function RemodelApplicationContent() {
                         style={{
                           padding: '8px 10px',
                           background: '#fff',
-                          color: '#495057',
-                          border: '1px solid #dee2e6',
+                          color: '#4A4A4A',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '3px',
                           cursor: 'pointer',
                           fontSize: '14px',
@@ -2178,8 +2178,8 @@ function RemodelApplicationContent() {
                         style={{
                           padding: '8px 10px',
                           background: '#fff',
-                          color: '#495057',
-                          border: '1px solid #dee2e6',
+                          color: '#4A4A4A',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '3px',
                           cursor: 'pointer',
                           fontSize: '14px',
@@ -2196,7 +2196,7 @@ function RemodelApplicationContent() {
                         style={{
                           padding: '8px 10px',
                           background: '#fff',
-                          color: '#e74c3c',
+                          color: '#DA0000',
                           border: '1px solid #f5b7b1',
                           borderRadius: '3px',
                           cursor: 'pointer',
@@ -2226,16 +2226,16 @@ function RemodelApplicationContent() {
                 };
 
                 return inlineNewRows.map((row, rowIdx) => (
-                  <tr key={row.id} ref={rowIdx === inlineNewRows.length - 1 ? inlineNewRowRef : undefined} style={{ background: '#e8f5e9' }}>
+                  <tr key={row.id} ref={rowIdx === inlineNewRows.length - 1 ? inlineNewRowRef : undefined} style={{ background: '#EBF5EE' }}>
                     {/* ★ アクションセル（行削除のみ） */}
                     <td style={{
                       padding: '6px 4px',
                       position: 'sticky',
                       left: 0,
                       zIndex: 100,
-                      background: '#e8f5e9',
+                      background: '#EBF5EE',
                       boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
-                      borderRight: '1px solid #dee2e6',
+                      borderRight: '1px solid #E1E1E1',
                       borderBottom: '2px solid #4caf50',
                       textAlign: 'center',
                       verticalAlign: 'middle',
@@ -2248,7 +2248,7 @@ function RemodelApplicationContent() {
                           aria-label={`新規要望行 ${rowIdx + 1} を削除`}
                           style={{
                             width: '24px', height: '24px',
-                            background: '#e74c3c', color: 'white',
+                            background: '#DA0000', color: 'white',
                             border: 'none', borderRadius: '4px',
                             cursor: 'pointer', fontSize: '14px', fontWeight: 'bold',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -2275,10 +2275,10 @@ function RemodelApplicationContent() {
                           key={col.key}
                           style={{
                             padding: isInlineEditing ? '4px' : '8px 8px',
-                            background: isInlineEditing ? '#fff3cd' : isEditable ? '#f1f8e9' : '#e8f5e9',
+                            background: isInlineEditing ? '#fff3cd' : isEditable ? '#f1f8e9' : '#EBF5EE',
                             borderTop: 'none',
                             borderLeft: 'none',
-                            borderRight: '1px solid #dee2e6',
+                            borderRight: '1px solid #E1E1E1',
                             borderBottom: '2px solid #4caf50',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -2292,7 +2292,7 @@ function RemodelApplicationContent() {
                           {col.key === 'purchaseCategory' ? (
                             <span style={{
                               padding: '2px 8px',
-                              background: '#27ae60',
+                              background: '#008C1D',
                               color: 'white',
                               borderRadius: '12px',
                               fontSize: '11px',
@@ -2361,7 +2361,7 @@ function RemodelApplicationContent() {
                                 flex: 1,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                color: cellValue ? '#1f2937' : '#a5d6a7',
+                                color: cellValue ? '#4A4A4A' : '#a5d6a7',
                                 fontStyle: cellValue ? 'normal' : 'italic',
                                 fontSize: '13px',
                               }}>
@@ -2372,7 +2372,7 @@ function RemodelApplicationContent() {
                                 title="資産マスタから選択"
                                 style={{
                                   padding: '2px 6px',
-                                  background: '#27ae60',
+                                  background: '#008C1D',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '3px',
@@ -2390,7 +2390,7 @@ function RemodelApplicationContent() {
                           /* 通常表示 */
                           ) : (
                             <span style={{
-                              color: cellValue ? '#1f2937' : (isEditable ? '#a5d6a7' : '#bbb'),
+                              color: cellValue ? '#4A4A4A' : (isEditable ? '#a5d6a7' : '#bbb'),
                               fontStyle: isEditable && !cellValue ? 'italic' : 'normal',
                               fontSize: '13px',
                             }}>
@@ -2406,9 +2406,9 @@ function RemodelApplicationContent() {
                         key={`fc-new-${fc.key}`}
                         style={{
                           padding: '4px 6px',
-                          background: '#e8f5e9',
-                          borderRight: '1px solid #dee2e6',
-                          borderBottom: '1px solid #dee2e6',
+                          background: '#EBF5EE',
+                          borderRight: '1px solid #E1E1E1',
+                          borderBottom: '1px solid #E1E1E1',
                         }}
                       >
                         <span style={{ color: '#999', fontSize: '12px' }}>-</span>
@@ -2419,9 +2419,9 @@ function RemodelApplicationContent() {
                       style={{
                         padding: '4px',
                         textAlign: 'center',
-                        background: '#e8f5e9',
-                        borderRight: '1px solid #dee2e6',
-                        borderBottom: '1px solid #dee2e6',
+                        background: '#EBF5EE',
+                        borderRight: '1px solid #E1E1E1',
+                        borderBottom: '1px solid #E1E1E1',
                       }}
                     >
                       <span style={{ color: '#999', fontSize: '12px' }}>-</span>
@@ -2440,7 +2440,7 @@ function RemodelApplicationContent() {
                 key={asset.no}
                 style={{
                   background: 'white',
-                  border: '1px solid #dee2e6',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '8px',
                   padding: '20px',
                   cursor: 'pointer',
@@ -2460,10 +2460,10 @@ function RemodelApplicationContent() {
                     checked={selectedItems.has(asset.no)}
                     onChange={() => handleSelectItem(asset.no)}
                   />
-                  <strong style={{ color: '#1f2937' }}>No. {asset.no}</strong>
+                  <strong style={{ color: '#4A4A4A' }}>No. {asset.no}</strong>
                 </div>
-                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#1f2937' }}>{asset.name}</h3>
-                <div style={{ fontSize: '13px', color: '#5a6c7d', lineHeight: '1.6' }}>
+                <h3 style={{ fontSize: '16px', marginBottom: '10px', color: '#4A4A4A' }}>{asset.name}</h3>
+                <div style={{ fontSize: '13px', color: '#8A8A8A', lineHeight: '1.6' }}>
                   <div>施設: {asset.facility}</div>
                   <div>場所: {asset.building} {asset.floor}</div>
                   <div>部門: {asset.department}</div>
@@ -2564,12 +2564,12 @@ function RemodelApplicationContent() {
             </div>
             <div style={{ padding: '20px' }}>
               {/* 種別ごとの件数 */}
-              <p style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#1f2937' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#4A4A4A' }}>
                 以下の廃棄・移設申請を作成します:
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
                 {Object.entries(applicationBreakdown).map(([type, count]) => (
-                  <div key={type} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#1f2937' }}>
+                  <div key={type} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#4A4A4A' }}>
                     <span>{type}</span>
                     <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{count}件</span>
                   </div>
@@ -2588,7 +2588,7 @@ function RemodelApplicationContent() {
             </div>
             <div style={{
               padding: '12px 20px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '10px',
@@ -2597,7 +2597,7 @@ function RemodelApplicationContent() {
                 onClick={() => setShowApplicationConfirm(false)}
                 style={{
                   padding: '8px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -2660,7 +2660,7 @@ function RemodelApplicationContent() {
             {/* モーダルヘッダー */}
             <div
               style={{
-                background: '#374151',
+                background: '#4A4A4A',
                 color: 'white',
                 padding: '20px 24px',
                 fontSize: '18px',
@@ -2708,7 +2708,7 @@ function RemodelApplicationContent() {
               </div>
 
               <div style={{
-                background: '#e8f5e9',
+                background: '#EBF5EE',
                 border: '1px solid #a5d6a7',
                 borderRadius: '8px',
                 padding: '16px',
@@ -2726,18 +2726,18 @@ function RemodelApplicationContent() {
             <div
               style={{
                 padding: '16px 24px',
-                borderTop: '1px solid #dee2e6',
+                borderTop: '1px solid #E1E1E1',
                 display: 'flex',
                 justifyContent: 'flex-end',
                 gap: '12px',
-                background: '#f8f9fa'
+                background: '#FAFAFA'
               }}
             >
               <button
                 onClick={() => setShowCloseConfirmModal(false)}
                 style={{
                   padding: '10px 24px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -2752,7 +2752,7 @@ function RemodelApplicationContent() {
                 onClick={handleCloseProject}
                 style={{
                   padding: '10px 24px',
-                  background: '#374151',
+                  background: '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -2839,10 +2839,10 @@ function RemodelApplicationContent() {
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
             }}
           >
-            <h2 id="add-free-col-title" style={{ margin: 0, marginBottom: '8px', fontSize: '16px', fontWeight: 700, color: '#1f2937' }}>
+            <h2 id="add-free-col-title" style={{ margin: 0, marginBottom: '8px', fontSize: '16px', fontWeight: 700, color: '#4A4A4A' }}>
               フリーカラム追加
             </h2>
-            <p style={{ margin: 0, marginBottom: '16px', fontSize: '12px', color: '#6c757d' }}>
+            <p style={{ margin: 0, marginBottom: '16px', fontSize: '12px', color: '#8A8A8A' }}>
               マスタにない情報を行ごとに記録するための列を追加します。
             </p>
             <input
@@ -2874,7 +2874,7 @@ function RemodelApplicationContent() {
                 disabled={!freeColumnLabelDraft.trim()}
                 style={{
                   padding: '8px 16px',
-                  background: freeColumnLabelDraft.trim() ? '#27ae60' : '#bdc3c7',
+                  background: freeColumnLabelDraft.trim() ? '#008C1D' : '#bdc3c7',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -3002,7 +3002,7 @@ function RemodelApplicationContent() {
               更新レコードの作成確認
             </div>
             <div style={{ padding: '20px' }}>
-              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1f2937' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#4A4A4A' }}>
                 以下の処理が実行されます:
               </p>
               <ul style={{ margin: '0 0 16px 0', paddingLeft: '20px', fontSize: '14px', color: '#555', lineHeight: 1.8 }}>
@@ -3012,7 +3012,7 @@ function RemodelApplicationContent() {
             </div>
             <div style={{
               padding: '12px 20px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '10px',
@@ -3021,7 +3021,7 @@ function RemodelApplicationContent() {
                 onClick={() => setShowUpdateConfirm(null)}
                 style={{
                   padding: '8px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -3078,7 +3078,7 @@ function RemodelApplicationContent() {
             }}
           >
             <div style={{
-              background: '#8e44ad',
+              background: '#4527A0',
               color: 'white',
               padding: '16px 20px',
               fontSize: '16px',
@@ -3087,7 +3087,7 @@ function RemodelApplicationContent() {
               増設数量の入力
             </div>
             <div style={{ padding: '20px' }}>
-              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#1f2937' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#4A4A4A' }}>
                 追加するレコード数を入力してください:
               </p>
               <input
@@ -3110,7 +3110,7 @@ function RemodelApplicationContent() {
             </div>
             <div style={{
               padding: '12px 20px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '10px',
@@ -3119,7 +3119,7 @@ function RemodelApplicationContent() {
                 onClick={() => setShowAdditionInput(null)}
                 style={{
                   padding: '8px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -3134,7 +3134,7 @@ function RemodelApplicationContent() {
                 onClick={handleAdditionConfirm}
                 style={{
                   padding: '8px 20px',
-                  background: '#8e44ad',
+                  background: '#4527A0',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

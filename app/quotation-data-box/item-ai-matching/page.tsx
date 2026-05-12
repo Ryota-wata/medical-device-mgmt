@@ -255,7 +255,7 @@ export default function ItemAiMatchingPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FAFAFA' }}>
       <Header
         title="見積登録（購入）個体品目AI判定"
         stepBadge="STEP 4"
@@ -278,7 +278,7 @@ export default function ItemAiMatchingPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 16px',
-            background: '#374151',
+            background: '#4A4A4A',
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -303,7 +303,7 @@ export default function ItemAiMatchingPage() {
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
               style={{
                 padding: '6px 14px',
-                background: showOnlyIndividual ? '#008C1D' : '#e8f5e9',
+                background: showOnlyIndividual ? '#008C1D' : '#EBF5EE',
                 border: '1px solid #a5d6a7',
                 borderRadius: '4px',
                 fontSize: '12px',
@@ -316,7 +316,7 @@ export default function ItemAiMatchingPage() {
             </button>
             <div style={{
               padding: '6px 14px',
-              background: confirmedCount === individualItems.length ? '#c8e6c9' : '#fff3e0',
+              background: confirmedCount === individualItems.length ? '#c8e6c9' : '#FDF1E5',
               border: `1px solid ${confirmedCount === individualItems.length ? '#a5d6a7' : '#ffcc80'}`,
               borderRadius: '4px',
               fontSize: '12px',
@@ -347,26 +347,26 @@ export default function ItemAiMatchingPage() {
                     STEP❸
                   </th>
                   <th colSpan={7} style={{
-                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0',
-                    fontWeight: 'bold', color: '#9c27b0', background: '#f3e5f5', fontSize: '11px'
+                    padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93',
+                    fontWeight: 'bold', color: '#5E3A93', background: '#f3e5f5', fontSize: '11px'
                   }}>
                     STEP❹ 資産マスタ登録
                   </th>
                 </tr>
-                <tr style={{ background: '#f8f9fa' }}>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '30px' }}>No</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', minWidth: '140px' }}>品名（見積名称）</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '100px' }}>型式（見積名称）</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '40px' }}>数量</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '60px' }}>明細区分</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #ccc', width: '90px' }}>カテゴリ</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '130px', background: '#faf5fc' }}>大分類</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '90px', background: '#faf5fc' }}>中分類</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', minWidth: '140px', background: '#faf5fc' }}>個体管理品目</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '80px', background: '#faf5fc' }}>メーカー</th>
-                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #dee2e6', width: '100px', background: '#faf5fc' }}>型式</th>
-                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #dee2e6', width: '180px', background: '#faf5fc' }}>操作</th>
+                <tr style={{ background: '#FAFAFA' }}>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '30px' }}>No</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', minWidth: '140px' }}>品名（見積名称）</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px' }}>メーカー</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '100px' }}>型式（見積名称）</th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '40px' }}>数量</th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '60px' }}>明細区分</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', borderRight: '1px solid #ccc', width: '90px' }}>カテゴリ</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '130px', background: '#faf5fc' }}>大分類</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '90px', background: '#faf5fc' }}>中分類</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', minWidth: '140px', background: '#faf5fc' }}>個体管理品目</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', background: '#faf5fc' }}>メーカー</th>
+                  <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '100px', background: '#faf5fc' }}>型式</th>
+                  <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '180px', background: '#faf5fc' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -377,15 +377,15 @@ export default function ItemAiMatchingPage() {
                   const aiJudgment = item.aiJudgment;
                   const displayData = confirmedInfo?.assetInfo || aiJudgment;
                   const isIndividual = item.detailClassification === '親明細' || item.detailClassification === '子明細';
-                  const classColor = item.detailClassification === '親明細' ? '#e74c3c'
+                  const classColor = item.detailClassification === '親明細' ? '#DA0000'
                     : item.detailClassification === '子明細' ? '#2196f3'
-                    : item.detailClassification === '孫明細' ? '#9c27b0'
+                    : item.detailClassification === '孫明細' ? '#5E3A93'
                     : '#666';
 
                   return (
                     <tr key={item.id} style={{
                       borderBottom: '1px solid #ddd',
-                      background: isSelectingThisRow ? '#fff3e0' : rowIsConfirmed ? '#e8f5e9' : 'transparent',
+                      background: isSelectingThisRow ? '#FDF1E5' : rowIsConfirmed ? '#EBF5EE' : 'transparent',
                     }}>
                       <td style={{ padding: '5px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{item.rowNo}</td>
                       <td style={{ padding: '5px' }} title={item.itemName}>{item.itemName}</td>
@@ -434,7 +434,7 @@ export default function ItemAiMatchingPage() {
                               <span style={{ padding: '2px 5px', background: '#2196f3', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold' }}>
                                 紐付済
                               </span>
-                              <span style={{ padding: '2px 5px', background: '#e74c3c', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleUnconfirm(item.id)}>
+                              <span style={{ padding: '2px 5px', background: '#DA0000', color: 'white', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => handleUnconfirm(item.id)}>
                                 解除
                               </span>
                             </div>
@@ -471,7 +471,7 @@ export default function ItemAiMatchingPage() {
             onClick={handleBack}
             style={{
               padding: '12px 28px',
-              background: '#95a5a6',
+              background: '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -486,7 +486,7 @@ export default function ItemAiMatchingPage() {
             onClick={handleNext}
             style={{
               padding: '12px 28px',
-              background: '#e74c3c',
+              background: '#DA0000',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

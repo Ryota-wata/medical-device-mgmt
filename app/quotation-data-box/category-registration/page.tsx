@@ -133,7 +133,7 @@ export default function CategoryRegistrationPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FAFAFA' }}>
       <Header
         title="見積登録（購入）AI判定確認"
         stepBadge="STEP 3"
@@ -156,7 +156,7 @@ export default function CategoryRegistrationPage() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 16px',
-            background: '#374151',
+            background: '#4A4A4A',
             color: 'white',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -168,7 +168,7 @@ export default function CategoryRegistrationPage() {
           </div>
 
           {/* 説明文 */}
-          <div style={{ padding: '12px 16px', background: '#e3f2fd', fontSize: '12px', color: '#1565c0' }}>
+          <div style={{ padding: '12px 16px', background: '#EAF3FB', fontSize: '12px', color: '#1565c0' }}>
             登録区分をチェック・修正してください　※QRラベルを発行・除却が可能な単位にて登録を行います
           </div>
 
@@ -179,24 +179,24 @@ export default function CategoryRegistrationPage() {
                 <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   <tr>
                     <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', borderRight: '1px solid #ccc' }}>商品情報（原本情報）</th>
-                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>STEP❸ 明細区分登録</th>
+                    <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❸ 明細区分登録</th>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '40px' }}>No.</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#f8f9fa', borderBottom: '1px solid #dee2e6' }}>品名（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '100px' }}>メーカー</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', width: '120px' }}>型式（見積名称）</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#f8f9fa', borderBottom: '1px solid #dee2e6', borderRight: '1px solid #ccc', width: '50px' }}>数量</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '160px', fontWeight: 'bold' }}>カテゴリ</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '200px', fontWeight: 'bold' }}>明細区分</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '80px' }}>ステータス</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #dee2e6', width: '80px' }}>アクション</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '40px' }}>No.</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1' }}>品名（見積名称）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '100px' }}>メーカー</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', width: '120px' }}>型式（見積名称）</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', borderRight: '1px solid #ccc', width: '50px' }}>数量</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '160px', fontWeight: 'bold' }}>カテゴリ</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '200px', fontWeight: 'bold' }}>明細区分</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '80px' }}>ステータス</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', background: '#faf5fc', borderBottom: '1px solid #E1E1E1', width: '80px' }}>アクション</th>
                   </tr>
                 </thead>
                 <tbody>
                   {detailItems.map((item, index) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: item.isRegistered ? '#e8f5e9' : 'white' }}>
-                      <td style={{ padding: '6px', textAlign: 'center', background: '#f8f9fa', border: '1px solid #ddd' }}>{item.id}</td>
+                    <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: item.isRegistered ? '#EBF5EE' : 'white' }}>
+                      <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA', border: '1px solid #ddd' }}>{item.id}</td>
                       <td style={{ padding: '6px', border: '1px solid #ddd' }}>
                         <div style={{ fontWeight: 'bold', fontSize: '11px' }}>{item.itemName}</div>
                       </td>
@@ -259,7 +259,7 @@ export default function CategoryRegistrationPage() {
                             onClick={() => handleUnregister(index)}
                             style={{
                               padding: '4px 12px',
-                              background: '#e74c3c',
+                              background: '#DA0000',
                               color: 'white',
                               border: 'none',
                               borderRadius: '3px',
@@ -304,7 +304,7 @@ export default function CategoryRegistrationPage() {
             onClick={handleBack}
             style={{
               padding: '12px 28px',
-              background: '#95a5a6',
+              background: '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -319,7 +319,7 @@ export default function CategoryRegistrationPage() {
             onClick={handleNext}
             style={{
               padding: '12px 28px',
-              background: '#e74c3c',
+              background: '#DA0000',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

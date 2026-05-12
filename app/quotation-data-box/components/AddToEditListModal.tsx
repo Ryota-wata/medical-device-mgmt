@@ -110,7 +110,7 @@ export function AddToEditListModal({
         {/* ヘッダー */}
         <div
           style={{
-            background: '#27ae60',
+            background: '#008C1D',
             color: 'white',
             padding: '16px 24px',
             fontSize: '18px',
@@ -167,7 +167,7 @@ export function AddToEditListModal({
           {/* モード選択 */}
           {editLists.length > 0 && (
             <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '12px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '12px' }}>
                 追加先を選択してください:
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -179,8 +179,8 @@ export function AddToEditListModal({
                     cursor: 'pointer',
                     padding: '8px',
                     borderRadius: '6px',
-                    background: mode === 'existing' ? '#e8f5e9' : 'transparent',
-                    border: mode === 'existing' ? '1px solid #27ae60' : '1px solid transparent',
+                    background: mode === 'existing' ? '#EBF5EE' : 'transparent',
+                    border: mode === 'existing' ? '1px solid #008C1D' : '1px solid transparent',
                   }}
                 >
                   <input
@@ -189,7 +189,7 @@ export function AddToEditListModal({
                     onChange={() => setMode('existing')}
                     style={{ cursor: 'pointer' }}
                   />
-                  <span style={{ fontSize: '14px', color: '#2c3e50' }}>既存の編集リストに追加</span>
+                  <span style={{ fontSize: '14px', color: '#4A4A4A' }}>既存の編集リストに追加</span>
                 </label>
                 <label
                   style={{
@@ -199,8 +199,8 @@ export function AddToEditListModal({
                     cursor: 'pointer',
                     padding: '8px',
                     borderRadius: '6px',
-                    background: mode === 'new' ? '#e8f5e9' : 'transparent',
-                    border: mode === 'new' ? '1px solid #27ae60' : '1px solid transparent',
+                    background: mode === 'new' ? '#EBF5EE' : 'transparent',
+                    border: mode === 'new' ? '1px solid #008C1D' : '1px solid transparent',
                   }}
                 >
                   <input
@@ -209,7 +209,7 @@ export function AddToEditListModal({
                     onChange={() => setMode('new')}
                     style={{ cursor: 'pointer' }}
                   />
-                  <span style={{ fontSize: '14px', color: '#2c3e50' }}>新規編集リストを作成</span>
+                  <span style={{ fontSize: '14px', color: '#4A4A4A' }}>新規編集リストを作成</span>
                 </label>
               </div>
             </div>
@@ -220,7 +220,7 @@ export function AddToEditListModal({
             <div style={{ marginBottom: '24px' }}>
               <div
                 style={{
-                  border: '1px solid #dee2e6',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '8px',
                   maxHeight: '200px',
                   overflow: 'auto',
@@ -236,7 +236,7 @@ export function AddToEditListModal({
                       padding: '12px 16px',
                       cursor: 'pointer',
                       borderBottom: '1px solid #f0f0f0',
-                      background: selectedEditListId === list.id ? '#e3f2fd' : 'transparent',
+                      background: selectedEditListId === list.id ? '#EAF3FB' : 'transparent',
                     }}
                   >
                     <input
@@ -247,10 +247,10 @@ export function AddToEditListModal({
                       style={{ cursor: 'pointer' }}
                     />
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c3e50' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#4A4A4A' }}>
                         {list.name}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                      <div style={{ fontSize: '12px', color: '#8A8A8A' }}>
                         施設: {list.facilities.join(', ')}
                       </div>
                     </div>
@@ -264,10 +264,10 @@ export function AddToEditListModal({
           {(mode === 'new' || editLists.length === 0) && (
             <div
               style={{
-                border: '1px solid #dee2e6',
+                border: '1px solid #E1E1E1',
                 borderRadius: '8px',
                 padding: '16px',
-                background: '#f8f9fa',
+                background: '#FAFAFA',
               }}
             >
               <div style={{ marginBottom: '16px' }}>
@@ -276,11 +276,11 @@ export function AddToEditListModal({
                     display: 'block',
                     fontSize: '14px',
                     fontWeight: 600,
-                    color: '#2c3e50',
+                    color: '#4A4A4A',
                     marginBottom: '8px',
                   }}
                 >
-                  編集リスト名 <span style={{ color: '#e74c3c' }}>*</span>
+                  編集リスト名 <span style={{ color: '#DA0000' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -303,12 +303,12 @@ export function AddToEditListModal({
                     display: 'block',
                     fontSize: '14px',
                     fontWeight: 600,
-                    color: '#2c3e50',
+                    color: '#4A4A4A',
                     marginBottom: '8px',
                   }}
                 >
-                  対象施設 <span style={{ color: '#e74c3c' }}>*</span>
-                  <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#7f8c8d', marginLeft: '8px' }}>
+                  対象施設 <span style={{ color: '#DA0000' }}>*</span>
+                  <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#8A8A8A', marginLeft: '8px' }}>
                     （複数選択可）
                   </span>
                 </label>
@@ -336,7 +336,7 @@ export function AddToEditListModal({
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: '#3498db',
+                      color: '#0092E6',
                       fontSize: '12px',
                       cursor: 'pointer',
                       padding: '4px 0',
@@ -344,7 +344,7 @@ export function AddToEditListModal({
                   >
                     {selectedFacilities.length === facilityOptions.length ? '全解除' : '全選択'}
                   </button>
-                  <span style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                  <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
                     {selectedFacilities.length}件選択中
                   </span>
                 </div>
@@ -359,7 +359,7 @@ export function AddToEditListModal({
                   }}
                 >
                   {filteredFacilities.length === 0 ? (
-                    <div style={{ padding: '12px', textAlign: 'center', color: '#7f8c8d', fontSize: '13px' }}>
+                    <div style={{ padding: '12px', textAlign: 'center', color: '#8A8A8A', fontSize: '13px' }}>
                       該当する施設がありません
                     </div>
                   ) : (
@@ -373,7 +373,7 @@ export function AddToEditListModal({
                           padding: '10px 12px',
                           cursor: 'pointer',
                           borderBottom: '1px solid #f0f0f0',
-                          background: selectedFacilities.includes(facility) ? '#e8f5e9' : 'transparent',
+                          background: selectedFacilities.includes(facility) ? '#EBF5EE' : 'transparent',
                         }}
                       >
                         <input
@@ -382,7 +382,7 @@ export function AddToEditListModal({
                           onChange={() => handleFacilityToggle(facility)}
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
-                        <span style={{ fontSize: '13px', color: '#2c3e50' }}>{facility}</span>
+                        <span style={{ fontSize: '13px', color: '#4A4A4A' }}>{facility}</span>
                       </label>
                     ))
                   )}
@@ -393,7 +393,7 @@ export function AddToEditListModal({
 
           {/* 対象申請 */}
           <div style={{ marginTop: '20px', padding: '12px', background: '#f0f0f0', borderRadius: '6px' }}>
-            <span style={{ fontSize: '13px', color: '#5a6c7d' }}>
+            <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
               対象申請: {selectedApplicationIds.length}件
             </span>
           </div>
@@ -403,11 +403,11 @@ export function AddToEditListModal({
         <div
           style={{
             padding: '16px 24px',
-            borderTop: '1px solid #dee2e6',
+            borderTop: '1px solid #E1E1E1',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '12px',
-            background: '#f8f9fa',
+            background: '#FAFAFA',
             borderBottomLeftRadius: '12px',
             borderBottomRightRadius: '12px',
           }}
@@ -416,7 +416,7 @@ export function AddToEditListModal({
             onClick={onClose}
             style={{
               padding: '10px 20px',
-              background: '#95a5a6',
+              background: '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -431,7 +431,7 @@ export function AddToEditListModal({
             onClick={handleSubmit}
             style={{
               padding: '10px 20px',
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '6px',

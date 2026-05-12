@@ -12,15 +12,15 @@ const COLORS = {
   primary: '#008C1D',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
-  textOnAccent: '#1f2937',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textOnAccent: '#4A4A4A',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  borderLight: '#E1E1E1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4b5563',
   white: '#ffffff',
   green: '#008C1D',
@@ -327,16 +327,16 @@ export default function AssetRegistrationPage() {
 
 const thStyle: React.CSSProperties = {
   padding: '4px 8px',
-  background: '#f3f4f6',
+  background: '#F1F1F1',
   fontWeight: 'bold',
   width: '120px',
-  border: '1px solid #e5e7eb',
+  border: '1px solid #E1E1E1',
   fontSize: '12px',
 };
 
 const tdStyle: React.CSSProperties = {
   padding: '4px 8px',
-  border: '1px solid #e5e7eb',
+  border: '1px solid #E1E1E1',
   fontSize: '12px',
 };
 
@@ -352,7 +352,7 @@ const tableThStyle: React.CSSProperties = {
 const tableTdStyle: React.CSSProperties = {
   padding: '6px 8px',
   fontSize: '12px',
-  color: '#1f2937',
+  color: '#4A4A4A',
   verticalAlign: 'middle',
 };
 

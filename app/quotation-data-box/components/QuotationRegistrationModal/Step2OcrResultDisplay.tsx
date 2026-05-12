@@ -166,7 +166,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
     borderRadius: '3px',
     fontSize: '10px',
     fontWeight: 'bold',
-    background: filled ? '#27ae60' : '#e74c3c',
+    background: filled ? '#008C1D' : '#DA0000',
     color: 'white',
   });
 
@@ -174,7 +174,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* ヘッダー */}
       <div style={{
-        background: '#2c3e50',
+        background: '#4A4A4A',
         color: 'white',
         padding: '10px 16px',
         marginBottom: '12px',
@@ -186,7 +186,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '14px', fontWeight: 'bold' }}>見積登録（購入）OCR明細確認</span>
           <span style={{
-            background: '#e74c3c',
+            background: '#DA0000',
             color: 'white',
             padding: '2px 12px',
             borderRadius: '4px',
@@ -225,7 +225,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               onClick={() => setActiveTab('basic')}
               style={{
                 padding: '10px 24px',
-                background: activeTab === 'basic' ? '#4a6fa5' : '#f5f5f5',
+                background: activeTab === 'basic' ? '#4a6fa5' : '#FAFAFA',
                 color: activeTab === 'basic' ? 'white' : '#333',
                 border: 'none',
                 borderRight: '1px solid #ddd',
@@ -240,7 +240,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               onClick={() => setActiveTab('category')}
               style={{
                 padding: '10px 24px',
-                background: activeTab === 'category' ? '#4a6fa5' : '#f5f5f5',
+                background: activeTab === 'category' ? '#4a6fa5' : '#FAFAFA',
                 color: activeTab === 'category' ? 'white' : '#333',
                 border: 'none',
                 cursor: 'pointer',
@@ -255,7 +255,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               onClick={() => setActiveTab('category')}
               style={{
                 padding: '10px 24px',
-                background: '#f5f5f5',
+                background: '#FAFAFA',
                 color: '#333',
                 border: 'none',
                 borderLeft: '1px solid #ddd',
@@ -400,7 +400,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                     onClick={handleAssetInfoCheck}
                     style={{
                       padding: '8px 20px',
-                      background: '#9b59b6',
+                      background: '#5E3A93',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -417,7 +417,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ maxHeight: '200px', overflow: 'auto', border: '1px solid #ddd', borderRadius: '4px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                      <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa' }}>
+                      <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA' }}>
                         <tr>
                           <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>項目</th>
                           <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #ddd', whiteSpace: 'nowrap' }}>金額</th>
@@ -473,12 +473,12 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                   alignItems: 'center',
                   gap: '12px',
                   padding: '10px',
-                  background: '#f8f9fa',
+                  background: '#FAFAFA',
                   borderRadius: '4px',
                   marginBottom: '16px',
                 }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>合計金額（税抜）</span>
-                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#2c3e50' }}>
+                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#4A4A4A' }}>
                     ¥{totalAmount.toLocaleString()}
                   </span>
                 </div>
@@ -495,10 +495,10 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           </div>
 
           {/* 注記 */}
-          <div style={{ padding: '12px', borderTop: '1px solid #ddd', background: '#fafafa', fontSize: '11px', color: '#666', lineHeight: 1.8 }}>
+          <div style={{ padding: '12px', borderTop: '1px solid #ddd', background: '#FAFAFA', fontSize: '11px', color: '#666', lineHeight: 1.8 }}>
             <div>✓ 読み込んだ見積PDFファイルと相違ないか確認・修正を行って下さい</div>
             <div>✓ 合計値が税抜か税込か確認して下さい</div>
-            <div style={{ color: '#e74c3c', fontWeight: 'bold' }}>
+            <div style={{ color: '#DA0000', fontWeight: 'bold' }}>
               ★ 全てのcategory、会計区分を登録して下さい
             </div>
           </div>
@@ -523,7 +523,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                   width: '100%',
                   height: '100%',
                   border: 'none',
-                  background: '#f5f5f5'
+                  background: '#FAFAFA'
                 }}
                 title="見積書PDF"
               />
@@ -534,7 +534,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: '#f5f5f5',
+                background: '#FAFAFA',
                 color: '#999',
                 fontSize: '13px',
               }}>
@@ -549,7 +549,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               onClick={onNext}
               style={{
                 padding: '10px 24px',
-                background: '#e74c3c',
+                background: '#DA0000',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -570,7 +570,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           onClick={onBack}
           style={{
             padding: '10px 24px',
-            background: '#95a5a6',
+            background: '#8A8A8A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

@@ -376,7 +376,7 @@ export function InspectionRegistrationModal({
         {step === 'search' ? (
           <>
             {/* 検索フィルター（貸出機器を追加モーダルと同じレイアウト） */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee', backgroundColor: '#FAFAFA' }}>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-end' }}>
                 <div style={{ width: '120px' }}>
                   <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>棟</label>
@@ -454,7 +454,7 @@ export function InspectionRegistrationModal({
                   onClick={handleAssetSearch}
                   style={{
                     padding: '8px 24px',
-                    backgroundColor: '#3498db',
+                    backgroundColor: '#0092E6',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -505,7 +505,7 @@ export function InspectionRegistrationModal({
                         key={asset.qrCode}
                         style={{
                           ...styles.tableRow,
-                          backgroundColor: selectedAssetIds.has(asset.qrCode) ? '#e3f2fd' : (index % 2 === 0 ? 'white' : '#fafafa'),
+                          backgroundColor: selectedAssetIds.has(asset.qrCode) ? '#EAF3FB' : (index % 2 === 0 ? 'white' : '#FAFAFA'),
                         }}
                         onClick={() => toggleAssetSelection(asset.qrCode)}
                       >
@@ -710,7 +710,7 @@ export function InspectionRegistrationModal({
                       style={{
                         padding: '8px 14px',
                         fontSize: '13px',
-                        background: '#27ae60',
+                        background: '#008C1D',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '6px',
@@ -736,7 +736,7 @@ export function InspectionRegistrationModal({
                       style={{
                         padding: '8px 14px',
                         fontSize: '13px',
-                        background: '#6c757d',
+                        background: '#8A8A8A',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '6px',
@@ -843,7 +843,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '12px',
   },
   tableHeaderRow: {
-    background: '#f8f9fa',
+    background: '#FAFAFA',
   },
   th: {
     padding: '10px 8px',
@@ -864,7 +864,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
   },
   footerLeft: {
     fontSize: '13px',
@@ -885,7 +885,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   proceedButton: {
     padding: '8px 20px',
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -900,15 +900,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   backButton: {
     padding: '8px 16px',
     backgroundColor: 'transparent',
-    color: '#3498db',
-    border: '1px solid #3498db',
+    color: '#0092E6',
+    border: '1px solid #0092E6',
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '13px',
   },
   submitButton: {
     padding: '8px 24px',
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -928,11 +928,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'block',
     fontSize: '14px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     marginBottom: '8px',
   },
   required: {
-    color: '#e74c3c',
+    color: '#DA0000',
   },
   selectedAssetsBox: {
     backgroundColor: 'white',
@@ -950,17 +950,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '13px',
   },
   assetQr: {
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     fontFamily: 'monospace',
     minWidth: '80px',
   },
   assetName: {
     fontWeight: 500,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     flex: 1,
   },
   assetMeta: {
-    color: '#95a5a6',
+    color: '#8A8A8A',
     fontSize: '12px',
   },
   checkboxGroup: {
@@ -973,14 +973,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '14px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
     cursor: 'pointer',
   },
   checkbox: {
     width: '18px',
     height: '18px',
     cursor: 'pointer',
-    accentColor: '#3498db',
+    accentColor: '#0092E6',
   },
   menuSection: {
     marginBottom: '20px',
@@ -993,7 +993,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '10px 16px',
     fontSize: '14px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     borderBottom: '1px solid #ddd',
   },
   menuContent: {
@@ -1008,7 +1008,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   menuLabel: {
     fontSize: '14px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
     minWidth: '60px',
   },
   select: {
@@ -1042,14 +1042,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     gap: '8px',
     fontSize: '14px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
     cursor: 'pointer',
   },
   radio: {
     width: '18px',
     height: '18px',
     cursor: 'pointer',
-    accentColor: '#3498db',
+    accentColor: '#0092E6',
   },
   dateInput: {
     padding: '10px 12px',

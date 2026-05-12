@@ -8,31 +8,31 @@ import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
 /** カラートークン */
 const COLORS = {
-  primary: '#27ae60',
+  primary: '#008C1D',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  borderLight: '#E1E1E1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4b5563',
   white: '#ffffff',
   error: '#dc2626',
-  success: '#27ae60',
-  successLight: '#e8f5e9',
+  success: '#008C1D',
+  successLight: '#EBF5EE',
   warning: '#f59e0b',
   warningBg: '#fffbeb',
   warningBorder: '#f59e0b',
   warningText: '#92400e',
-  disabled: '#9ca3af',
-  disabledBg: '#f3f4f6',
-  stepActive: '#3498db',
-  stepCompleted: '#27ae60',
-  stepPending: '#dee2e6',
+  disabled: '#8A8A8A',
+  disabledBg: '#F1F1F1',
+  stepActive: '#0092E6',
+  stepCompleted: '#008C1D',
+  stepPending: '#E1E1E1',
 } as const;
 
 // ──────────────────────────────────────────────
@@ -724,7 +724,7 @@ function DisposalTaskContent() {
           <Section
             step={1}
             title="STEP①．見積依頼"
-            accentColor="#3498db"
+            accentColor="#0092E6"
             enabled={isStepEnabled(1)}
             completed={1 < activeStep}
           >
@@ -793,7 +793,7 @@ function DisposalTaskContent() {
                   disabled={1 < activeStep}
                   style={{
                     padding: '4px 12px',
-                    background: '#3498db',
+                    background: '#0092E6',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -811,15 +811,15 @@ function DisposalTaskContent() {
                 <div key={vendor.localId} style={{
                   padding: '8px',
                   marginBottom: '8px',
-                  border: '1px solid #dee2e6',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
-                  background: vendor.isSent ? '#f8f9fa' : 'white',
+                  background: vendor.isSent ? '#FAFAFA' : 'white',
                   opacity: vendor.isSent ? 0.8 : 1,
                 }}>
                   {/* 1行目: バッジ + 業者名 + 担当者名 + アクション */}
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
                     <span style={{
-                      background: vendor.isSent ? '#27ae60' : '#f39c12',
+                      background: vendor.isSent ? '#008C1D' : '#f39c12',
                       color: 'white',
                       padding: '4px 6px',
                       borderRadius: '4px',
@@ -834,7 +834,7 @@ function DisposalTaskContent() {
                     </span>
                     <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>業者名 <span style={{ color: '#e74c3c' }}>*</span></div>
+                        <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>業者名 <span style={{ color: '#DA0000' }}>*</span></div>
                         <input
                           value={vendor.vendorName}
                           onChange={(e) => updateVendorField(index, 'vendorName', e.target.value)}
@@ -863,7 +863,7 @@ function DisposalTaskContent() {
                         }}
                         style={{
                           padding: '6px 8px',
-                          background: previewVendorIndex === index ? '#374151' : '#6c757d',
+                          background: previewVendorIndex === index ? '#4A4A4A' : '#8A8A8A',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -896,7 +896,7 @@ function DisposalTaskContent() {
                           onClick={() => handleRemoveVendor(index)}
                           style={{
                             padding: '6px 8px',
-                            background: '#e74c3c',
+                            background: '#DA0000',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
@@ -912,7 +912,7 @@ function DisposalTaskContent() {
                   {/* 2行目: メール + 連絡先 + 提出期限 */}
                   <div style={{ display: 'flex', gap: '8px', marginLeft: '56px' }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>メール <span style={{ color: '#e74c3c' }}>*</span></div>
+                      <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>メール <span style={{ color: '#DA0000' }}>*</span></div>
                       <input
                         value={vendor.email}
                         onChange={(e) => updateVendorField(index, 'email', e.target.value)}
@@ -947,7 +947,7 @@ function DisposalTaskContent() {
                   <div style={{
                     marginTop: '8px',
                     marginLeft: '56px',
-                    border: '1px solid #dee2e6',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
                     overflow: 'hidden',
                   }}>
@@ -955,7 +955,7 @@ function DisposalTaskContent() {
                       padding: '4px 12px',
                       fontSize: '12px',
                       color: '#555',
-                      background: '#f8f9fa',
+                      background: '#FAFAFA',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -973,7 +973,7 @@ function DisposalTaskContent() {
                         width: '100%',
                         boxSizing: 'border-box',
                         border: 'none',
-                        borderTop: '1px solid #dee2e6',
+                        borderTop: '1px solid #E1E1E1',
                         borderRadius: 0,
                         resize: 'vertical',
                         minHeight: '48px',
@@ -987,7 +987,7 @@ function DisposalTaskContent() {
               {/* 一括送信エリア */}
               <div style={{
                 padding: '12px 4px',
-                borderTop: '1px solid #dee2e6',
+                borderTop: '1px solid #E1E1E1',
                 display: 'flex',
                 justifyContent: 'flex-end',
               }}>
@@ -997,7 +997,7 @@ function DisposalTaskContent() {
                   disabled={unsentCount === 0 || 1 < activeStep}
                   style={{
                     padding: '8px 24px',
-                    background: unsentCount === 0 || 1 < activeStep ? '#95a5a6' : '#e74c3c',
+                    background: unsentCount === 0 || 1 < activeStep ? '#8A8A8A' : '#DA0000',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -1035,7 +1035,7 @@ function DisposalTaskContent() {
                 disabled={1 < activeStep || isSubmitting}
                 style={{
                   padding: '10px 24px',
-                  background: '#3498db',
+                  background: '#0092E6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1053,14 +1053,14 @@ function DisposalTaskContent() {
           <Section
             step={2}
             title="STEP②．見積登録/発注登録"
-            accentColor="#2980b9"
+            accentColor="#0073B8"
             enabled={isStepEnabled(2)}
             completed={2 < activeStep}
           >
             {/* ガイドメッセージ */}
             <div style={{
               padding: '12px 16px',
-              background: '#e3f2fd',
+              background: '#EAF3FB',
               borderRadius: '4px',
               marginBottom: '16px',
               fontSize: '13px',
@@ -1074,19 +1074,19 @@ function DisposalTaskContent() {
               <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
                 見積を追加
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #2980b9' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #0073B8' }}>
                 <tbody>
                   {/* 添付ファイル */}
                   <tr>
                     <th style={{
-                      background: '#2980b9',
+                      background: '#0073B8',
                       color: 'white',
                       padding: '10px 12px',
                       fontSize: '13px',
                       fontWeight: 'bold',
                       textAlign: 'left',
                       width: '120px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                       whiteSpace: 'nowrap',
                     }}>
                       添付ファイル
@@ -1094,12 +1094,12 @@ function DisposalTaskContent() {
                     <td style={{
                       background: 'white',
                       padding: '10px 12px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <label style={{
                           padding: '6px 16px',
-                          background: '#f5f5f5',
+                          background: '#FAFAFA',
                           border: '1px solid #ccc',
                           borderRadius: '4px',
                           cursor: isStepEnabled(2) && activeStep <= 2 ? 'pointer' : 'not-allowed',
@@ -1129,14 +1129,14 @@ function DisposalTaskContent() {
                   {/* 業者名 */}
                   <tr>
                     <th style={{
-                      background: '#2980b9',
+                      background: '#0073B8',
                       color: 'white',
                       padding: '10px 12px',
                       fontSize: '13px',
                       fontWeight: 'bold',
                       textAlign: 'left',
                       width: '120px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                       whiteSpace: 'nowrap',
                     }}>
                       業者名
@@ -1144,7 +1144,7 @@ function DisposalTaskContent() {
                     <td style={{
                       background: 'white',
                       padding: '10px 12px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                     }}>
                       <input
                         type="text"
@@ -1166,14 +1166,14 @@ function DisposalTaskContent() {
                   {/* 見積フェーズ */}
                   <tr>
                     <th style={{
-                      background: '#2980b9',
+                      background: '#0073B8',
                       color: 'white',
                       padding: '10px 12px',
                       fontSize: '13px',
                       fontWeight: 'bold',
                       textAlign: 'left',
                       width: '120px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                       whiteSpace: 'nowrap',
                       verticalAlign: 'top',
                     }}>
@@ -1182,7 +1182,7 @@ function DisposalTaskContent() {
                     <td style={{
                       background: 'white',
                       padding: '10px 12px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -1212,14 +1212,14 @@ function DisposalTaskContent() {
                   {/* 保存形式 */}
                   <tr>
                     <th style={{
-                      background: '#2980b9',
+                      background: '#0073B8',
                       color: 'white',
                       padding: '10px 12px',
                       fontSize: '13px',
                       fontWeight: 'bold',
                       textAlign: 'left',
                       width: '120px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                       whiteSpace: 'nowrap',
                       verticalAlign: 'top',
                     }}>
@@ -1228,7 +1228,7 @@ function DisposalTaskContent() {
                     <td style={{
                       background: 'white',
                       padding: '10px 12px',
-                      border: '1px solid #2980b9',
+                      border: '1px solid #0073B8',
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
@@ -1251,8 +1251,8 @@ function DisposalTaskContent() {
             </div>
 
             {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
-            <div style={{ marginBottom: '20px', border: `2px solid #27ae60`, borderRadius: '8px', padding: '16px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#27ae60', marginBottom: '12px' }}>
+            <div style={{ marginBottom: '20px', border: `2px solid #008C1D`, borderRadius: '8px', padding: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#008C1D', marginBottom: '12px' }}>
                 見積登録業者
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1317,7 +1317,7 @@ function DisposalTaskContent() {
                     disabled={!isStepEnabled(2) || isSubmitting || !selectedFileName || !quotationVendorName || 2 < activeStep}
                     style={{
                       padding: '8px 20px',
-                      background: selectedFileName && quotationVendorName ? '#27ae60' : COLORS.disabledBg,
+                      background: selectedFileName && quotationVendorName ? '#008C1D' : COLORS.disabledBg,
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -1405,7 +1405,7 @@ function DisposalTaskContent() {
                               borderRadius: '10px',
                               fontSize: '11px',
                               fontWeight: 'bold',
-                              background: q.phase === '発注用' ? '#e3f2fd' : '#f3e5f5',
+                              background: q.phase === '発注用' ? '#EAF3FB' : '#f3e5f5',
                               color: q.phase === '発注用' ? '#1565c0' : '#7b1fa2',
                             }}>
                               {q.phase === '発注用' ? '発注登録用' : '参考'}
@@ -1568,7 +1568,7 @@ function DisposalTaskContent() {
                 style={{
                   padding: '12px 48px',
                   background: '#fffde7',
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   border: '1px solid #e0d6a8',
                   borderRadius: '4px',
                   cursor: formData.deliveryDate ? 'pointer' : 'not-allowed',
@@ -1632,7 +1632,7 @@ function DisposalTaskContent() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <label style={{
                           padding: '6px 16px',
-                          background: '#f5f5f5',
+                          background: '#FAFAFA',
                           border: '1px solid #ccc',
                           borderRadius: '4px',
                           cursor: isStepEnabled(5) ? 'pointer' : 'not-allowed',
@@ -1962,17 +1962,17 @@ function DisposalTaskContent() {
                 borderRadius: '8px',
                 padding: '16px',
               }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#2980b9' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#0073B8' }}>
                   登録済み見積書一覧
                 </h4>
                 {registeredQuotations.length > 0 ? (
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                     <thead>
-                      <tr style={{ background: '#2980b9', color: 'white' }}>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #2980b9' }}>業者名</th>
-                        <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #2980b9' }}>見積金額</th>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #2980b9' }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #2980b9', width: '80px' }}>操作</th>
+                      <tr style={{ background: '#0073B8', color: 'white' }}>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #0073B8' }}>業者名</th>
+                        <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #0073B8' }}>見積金額</th>
+                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #0073B8' }}>ファイル名</th>
+                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #0073B8', width: '80px' }}>操作</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1988,7 +1988,7 @@ function DisposalTaskContent() {
                               onClick={() => setPreviewQuotationIndex(idx)}
                               style={{
                                 padding: '4px 8px',
-                                background: '#2980b9',
+                                background: '#0073B8',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -2066,7 +2066,7 @@ function DisposalTaskContent() {
                           ['保存形式', q.saveFormat],
                         ].map(([label, value]) => (
                           <tr key={label}>
-                            <td style={{ padding: '8px', background: '#2980b9', color: 'white', fontWeight: 'bold', width: '120px' }}>{label}</td>
+                            <td style={{ padding: '8px', background: '#0073B8', color: 'white', fontWeight: 'bold', width: '120px' }}>{label}</td>
                             <td style={{ padding: '8px', border: '1px solid #ccc' }}>{value}</td>
                           </tr>
                         ))}
@@ -2303,7 +2303,7 @@ function DisposalTaskContent() {
                   border: 'none',
                   borderBottom: '1px solid #ddd',
                   background: isActive ? '#f5c518' : 'transparent',
-                  color: isActive ? '#1f2937' : '#666',
+                  color: isActive ? '#4A4A4A' : '#666',
                   cursor: 'pointer',
                   fontSize: '10px',
                   fontWeight: isActive ? 'bold' : 'normal',

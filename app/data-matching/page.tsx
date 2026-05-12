@@ -586,7 +586,7 @@ export default function DataMatchingPage() {
       case '数量不一致': return '#ff9800';
       case '再確認': return '#2196f3';
       case '未確認': return '#f44336';
-      case '未登録': return '#9c27b0';
+      case '未登録': return '#5E3A93';
       default: return '#999';
     }
   };
@@ -641,7 +641,7 @@ export default function DataMatchingPage() {
 
   if (isMobile) {
     return (
-      <div style={{ padding: '16px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+      <div style={{ padding: '16px', backgroundColor: '#FAFAFA', minHeight: '100vh' }}>
         <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }}>
           データ統合
         </div>
@@ -653,7 +653,7 @@ export default function DataMatchingPage() {
           style={{
             width: '100%',
             padding: '12px',
-            backgroundColor: '#27ae60',
+            backgroundColor: '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -674,12 +674,12 @@ export default function DataMatchingPage() {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5'
+        backgroundColor: '#FAFAFA'
       }}>
         {/* Header */}
         <header style={{
           backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid #E1E1E1',
           padding: '16px 24px'
         }}>
           <div style={{
@@ -706,7 +706,7 @@ export default function DataMatchingPage() {
               >
                 <span>←</span> メイン画面に戻る
               </button>
-              <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#4A4A4A', margin: 0 }}>
                 データ統合
               </h1>
             </div>
@@ -724,13 +724,13 @@ export default function DataMatchingPage() {
               padding: '24px',
               marginBottom: '24px'
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#4A4A4A', marginBottom: '16px' }}>
                 現在の統合リスト
               </h2>
 
               <div style={{
                 padding: '16px',
-                backgroundColor: '#f8f9fa',
+                backgroundColor: '#FAFAFA',
                 borderRadius: '8px',
                 marginBottom: '16px'
               }}>
@@ -741,8 +741,8 @@ export default function DataMatchingPage() {
                     )}
                     <span style={{
                       padding: '4px 12px',
-                      backgroundColor: idx === 0 ? '#e3f2fd' : '#e8f5e9',
-                      color: idx === 0 ? '#27ae60' : '#2e7d32',
+                      backgroundColor: idx === 0 ? '#EAF3FB' : '#EBF5EE',
+                      color: idx === 0 ? '#008C1D' : '#2e7d32',
                       borderRadius: '4px',
                       fontSize: '14px',
                       fontWeight: '500'
@@ -762,10 +762,10 @@ export default function DataMatchingPage() {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span style={{ fontWeight: '600', color: '#1f2937' }}>=</span>
+                  <span style={{ fontWeight: '600', color: '#4A4A4A' }}>=</span>
                   <span style={{
                     padding: '6px 16px',
-                    backgroundColor: '#374151',
+                    backgroundColor: '#4A4A4A',
                     color: 'white',
                     borderRadius: '4px',
                     fontSize: '16px',
@@ -784,10 +784,10 @@ export default function DataMatchingPage() {
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               padding: '24px'
             }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#4A4A4A', marginBottom: '8px' }}>
                 次に突合するリストを選択
               </h2>
-              <p style={{ fontSize: '14px', color: '#5a6c7d', marginBottom: '24px' }}>
+              <p style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '24px' }}>
                 統合リストと突合するリストを選択してください
               </p>
 
@@ -795,7 +795,7 @@ export default function DataMatchingPage() {
                 <div style={{
                   padding: '32px',
                   textAlign: 'center',
-                  backgroundColor: '#e8f5e9',
+                  backgroundColor: '#EBF5EE',
                   borderRadius: '8px',
                   border: '1px solid #4caf50'
                 }}>
@@ -803,7 +803,7 @@ export default function DataMatchingPage() {
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#2e7d32', marginBottom: '8px' }}>
                     すべてのリストとの突合が完了しました
                   </div>
-                  <div style={{ fontSize: '14px', color: '#5a6c7d', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '16px' }}>
                     統合リストを原本リストとして確定できます
                   </div>
                   <button
@@ -832,12 +832,12 @@ export default function DataMatchingPage() {
                         key={list.id}
                         style={{
                           padding: '16px',
-                          border: selectedListId === list.id ? '2px solid #27ae60' : '1px solid #e0e0e0',
+                          border: selectedListId === list.id ? '2px solid #008C1D' : '1px solid #E1E1E1',
                           borderRadius: '8px',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '16px',
-                          backgroundColor: selectedListId === list.id ? '#e3f2fd' : 'white',
+                          backgroundColor: selectedListId === list.id ? '#EAF3FB' : 'white',
                           cursor: 'pointer'
                         }}
                       >
@@ -850,20 +850,20 @@ export default function DataMatchingPage() {
                         />
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>
+                            <span style={{ fontSize: '16px', fontWeight: '600', color: '#4A4A4A' }}>
                               {list.name}
                             </span>
                             <span style={{
                               padding: '2px 8px',
                               borderRadius: '4px',
                               fontSize: '12px',
-                              backgroundColor: list.type === 'fixed-asset' ? '#e3f2fd' : list.type === 'me-ledger' ? '#e8f5e9' : '#f5f5f5',
-                              color: list.type === 'fixed-asset' ? '#27ae60' : list.type === 'me-ledger' ? '#2e7d32' : '#666'
+                              backgroundColor: list.type === 'fixed-asset' ? '#EAF3FB' : list.type === 'me-ledger' ? '#EBF5EE' : '#FAFAFA',
+                              color: list.type === 'fixed-asset' ? '#008C1D' : list.type === 'me-ledger' ? '#2e7d32' : '#666'
                             }}>
                               {list.type === 'fixed-asset' ? '固定資産台帳' : list.type === 'me-ledger' ? 'ME管理台帳' : 'その他'}
                             </span>
                           </div>
-                          <div style={{ fontSize: '13px', color: '#5a6c7d' }}>
+                          <div style={{ fontSize: '13px', color: '#8A8A8A' }}>
                             {list.recordCount}件 | 作成: {list.createdAt} | 作成者: {list.createdBy}
                           </div>
                         </div>
@@ -896,7 +896,7 @@ export default function DataMatchingPage() {
                       disabled={!selectedListId}
                       style={{
                         padding: '12px 24px',
-                        backgroundColor: selectedListId ? '#27ae60' : '#cccccc',
+                        backgroundColor: selectedListId ? '#008C1D' : '#cccccc',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -920,8 +920,8 @@ export default function DataMatchingPage() {
   // === 突合作業モード（上下分割） ===
 
   // セルスタイルの共通定義
-  const thStyle: React.CSSProperties = { padding: '10px 6px', borderBottom: '2px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '12px', textAlign: 'left' };
-  const tdStyle: React.CSSProperties = { padding: '6px', borderBottom: '1px solid #e0e0e0', whiteSpace: 'nowrap', fontSize: '12px' };
+  const thStyle: React.CSSProperties = { padding: '10px 6px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap', fontSize: '12px', textAlign: 'left' };
+  const tdStyle: React.CSSProperties = { padding: '6px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap', fontSize: '12px' };
 
   // REQ-037: 上下リストのカラム幅を完全一致させるための共通定義
   const matchColWidth = {
@@ -947,12 +947,12 @@ export default function DataMatchingPage() {
       display: 'flex',
       flexDirection: 'column',
       height: '100dvh',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#FAFAFA'
     }}>
       {/* Header */}
       <header style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '12px 24px',
         flexShrink: 0
       }}>
@@ -978,13 +978,13 @@ export default function DataMatchingPage() {
             >
               <span>←</span> リスト選択に戻る
             </button>
-            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#4A4A4A', margin: 0 }}>
               データ統合
             </h1>
             <span style={{
               padding: '4px 12px',
-              backgroundColor: currentList?.type === 'me-ledger' ? '#e8f5e9' : '#e3f2fd',
-              color: currentList?.type === 'me-ledger' ? '#2e7d32' : '#27ae60',
+              backgroundColor: currentList?.type === 'me-ledger' ? '#EBF5EE' : '#EAF3FB',
+              color: currentList?.type === 'me-ledger' ? '#2e7d32' : '#008C1D',
               borderRadius: '4px',
               fontSize: '14px',
               fontWeight: '600'
@@ -994,20 +994,20 @@ export default function DataMatchingPage() {
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {/* 進捗 */}
-            <span style={{ fontSize: '13px', color: '#5a6c7d', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ fontSize: '13px', color: '#8A8A8A', fontVariantNumeric: 'tabular-nums' }}>
               {completedCount}/{totalItems}件 ({progressPercent}%)
             </span>
             <div style={{
               width: '120px',
               height: '8px',
-              backgroundColor: '#e0e0e0',
+              backgroundColor: '#E1E1E1',
               borderRadius: '4px',
               overflow: 'hidden'
             }}>
               <div style={{
                 width: `${progressPercent}%`,
                 height: '100%',
-                backgroundColor: progressPercent === 100 ? '#4caf50' : '#27ae60',
+                backgroundColor: progressPercent === 100 ? '#4caf50' : '#008C1D',
                 borderRadius: '4px',
                 transition: 'width 0.3s ease'
               }} />
@@ -1034,7 +1034,7 @@ export default function DataMatchingPage() {
       {/* 共通フィルター */}
       <div style={{
         backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e0e0e0',
+        borderBottom: '1px solid #E1E1E1',
         padding: '8px 24px',
         flexShrink: 0
       }}>
@@ -1064,7 +1064,7 @@ export default function DataMatchingPage() {
               border: '1px solid #ccc',
               borderRadius: '4px',
               fontSize: '13px',
-              backgroundColor: filters.department ? 'white' : '#f5f5f5'
+              backgroundColor: filters.department ? 'white' : '#FAFAFA'
             }}
           >
             <option value="">共通部署</option>
@@ -1146,7 +1146,7 @@ export default function DataMatchingPage() {
             }}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#f5f5f5',
+              backgroundColor: '#FAFAFA',
               border: '1px solid #ccc',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -1165,7 +1165,7 @@ export default function DataMatchingPage() {
           {/* 上パネル ヘッダー */}
           <div style={{
             padding: '8px 16px',
-            backgroundColor: '#e3f2fd',
+            backgroundColor: '#EAF3FB',
             borderBottom: '1px solid #90caf9',
             display: 'flex',
             justifyContent: 'space-between',
@@ -1173,7 +1173,7 @@ export default function DataMatchingPage() {
             flexShrink: 0
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#27ae60' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#008C1D' }}>
                 {mergedListNames.length === 1 ? '現有品調査リスト' : '統合リスト'}
               </span>
 
@@ -1183,9 +1183,9 @@ export default function DataMatchingPage() {
                   onClick={() => handleTabChange('pending')}
                   style={{
                     padding: '4px 12px',
-                    backgroundColor: activeTab === 'pending' ? '#27ae60' : 'transparent',
-                    color: activeTab === 'pending' ? 'white' : '#27ae60',
-                    border: activeTab === 'pending' ? 'none' : '1px solid #27ae60',
+                    backgroundColor: activeTab === 'pending' ? '#008C1D' : 'transparent',
+                    color: activeTab === 'pending' ? 'white' : '#008C1D',
+                    border: activeTab === 'pending' ? 'none' : '1px solid #008C1D',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -1213,7 +1213,7 @@ export default function DataMatchingPage() {
 
               {/* 一致検索ボタン */}
               <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#5a6c7d', marginRight: '4px' }}>一致検索:</span>
+                <span style={{ fontSize: '11px', color: '#8A8A8A', marginRight: '4px' }}>一致検索:</span>
                 {([
                   { value: 'category' as MatchFilterType, label: 'カテゴリ' },
                   { value: 'assetNo' as MatchFilterType, label: '資産番号' },
@@ -1226,9 +1226,9 @@ export default function DataMatchingPage() {
                     onClick={() => handleMatchFilterClick(value)}
                     style={{
                       padding: '4px 10px',
-                      backgroundColor: matchFilter === value ? '#27ae60' : '#ffffff',
-                      color: matchFilter === value ? '#ffffff' : '#27ae60',
-                      border: '1px solid #27ae60',
+                      backgroundColor: matchFilter === value ? '#008C1D' : '#ffffff',
+                      color: matchFilter === value ? '#ffffff' : '#008C1D',
+                      border: '1px solid #008C1D',
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '11px',
@@ -1243,7 +1243,7 @@ export default function DataMatchingPage() {
                     onClick={() => setMatchFilter('none')}
                     style={{
                       padding: '4px 8px',
-                      backgroundColor: '#f5f5f5',
+                      backgroundColor: '#FAFAFA',
                       color: '#666',
                       border: '1px solid #ccc',
                       borderRadius: '4px',
@@ -1258,7 +1258,7 @@ export default function DataMatchingPage() {
             </div>
             {activeTab === 'pending' && (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
+                <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
                   選択: {selectedMergedIds.size}件
                 </span>
                 <button
@@ -1277,13 +1277,13 @@ export default function DataMatchingPage() {
 
                 {/* 突合状況アクションボタン */}
                 <div style={{ display: 'flex', gap: '2px', alignItems: 'center', borderLeft: '1px solid #ccc', paddingLeft: '8px' }}>
-                  <span style={{ fontSize: '11px', color: '#5a6c7d', marginRight: '4px' }}>突合状況:</span>
+                  <span style={{ fontSize: '11px', color: '#8A8A8A', marginRight: '4px' }}>突合状況:</span>
                   {([
                     { status: '完全一致' as MatchingStatus, label: '完全一致', color: '#4caf50', needsBoth: true },
                     { status: '数量不一致' as MatchingStatus, label: '数量不一致', color: '#ff9800', needsBoth: true },
                     { status: '部分一致' as MatchingStatus, label: '部分一致', color: '#8bc34a', needsBoth: true },
                     { status: '未確認' as MatchingStatus, label: '未確認(現場無)', color: '#f44336', needsBoth: false },
-                    { status: '未登録' as MatchingStatus, label: '未登録(台帳無)', color: '#9c27b0', needsBoth: false },
+                    { status: '未登録' as MatchingStatus, label: '未登録(台帳無)', color: '#5E3A93', needsBoth: false },
                     { status: '再確認' as MatchingStatus, label: '再確認', color: '#2196f3', needsBoth: true },
                   ]).map(({ status, label, color, needsBoth }) => {
                     const isEnabled = needsBoth
@@ -1308,7 +1308,7 @@ export default function DataMatchingPage() {
                         disabled={!isEnabled}
                         style={{
                           padding: '4px 10px',
-                          backgroundColor: isEnabled ? '#ffffff' : '#f5f5f5',
+                          backgroundColor: isEnabled ? '#ffffff' : '#FAFAFA',
                           color: isEnabled ? color : '#bbb',
                           border: `1px solid ${isEnabled ? color : '#ddd'}`,
                           borderRadius: '4px',
@@ -1330,7 +1330,7 @@ export default function DataMatchingPage() {
           <div style={{ flex: 1, overflow: 'auto' }}>
             <table style={{ width: activeTab === 'pending' ? '1590px' : '1550px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f5f5f5', position: 'sticky', top: 0, zIndex: 1 }}>
+                <tr style={{ backgroundColor: '#FAFAFA', position: 'sticky', top: 0, zIndex: 1 }}>
                   {activeTab === 'pending' && (
                     <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>
                       <input
@@ -1360,7 +1360,7 @@ export default function DataMatchingPage() {
               </thead>
               <tbody>
                 {matchFilteredData.map((row) => (
-                  <tr key={row.id} style={{ backgroundColor: selectedMergedIds.has(row.id) && activeTab === 'pending' ? '#e3f2fd' : 'transparent' }}>
+                  <tr key={row.id} style={{ backgroundColor: selectedMergedIds.has(row.id) && activeTab === 'pending' ? '#EAF3FB' : 'transparent' }}>
                     {activeTab === 'pending' && (
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <input
@@ -1452,7 +1452,7 @@ export default function DataMatchingPage() {
           onMouseDown={handleMouseDown}
           style={{
             height: '6px',
-            backgroundColor: '#e0e0e0',
+            backgroundColor: '#E1E1E1',
             cursor: 'row-resize',
             flexShrink: 0,
             display: 'flex',
@@ -1475,7 +1475,7 @@ export default function DataMatchingPage() {
           {/* 下パネル ヘッダー */}
           <div style={{
             padding: '8px 16px',
-            backgroundColor: '#fff3e0',
+            backgroundColor: '#FDF1E5',
             borderBottom: '1px solid #ffe0b2',
             display: 'flex',
             justifyContent: 'space-between',
@@ -1486,13 +1486,13 @@ export default function DataMatchingPage() {
               <span style={{ fontSize: '14px', fontWeight: '600', color: '#e65100' }}>
                 {currentList?.name}
               </span>
-              <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
+              <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
                 対応中 {ledgerUnmatchedCount}件 / 突合済 {ledgerMatchedCount}件 / 全{currentLedgerData.length}件
               </span>
               {ledgerUnmatchedCount === 0 && (
                 <span style={{
                   padding: '2px 8px',
-                  backgroundColor: '#e8f5e9',
+                  backgroundColor: '#EBF5EE',
                   borderRadius: '4px',
                   color: '#2e7d32',
                   fontWeight: '600',
@@ -1503,7 +1503,7 @@ export default function DataMatchingPage() {
               )}
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', color: '#5a6c7d' }}>
+              <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
                 選択: {selectedLedgerIds.size}件
               </span>
               <button
@@ -1554,7 +1554,7 @@ export default function DataMatchingPage() {
               </thead>
               <tbody>
                 {ledgerMatchFilteredData.map((row) => (
-                  <tr key={row.id} style={{ backgroundColor: selectedLedgerIds.has(row.id) ? '#fff3e0' : 'transparent' }}>
+                  <tr key={row.id} style={{ backgroundColor: selectedLedgerIds.has(row.id) ? '#FDF1E5' : 'transparent' }}>
                     <td style={{ ...tdStyle, textAlign: 'center' }}>
                       <input
                         type="checkbox"
@@ -1634,16 +1634,16 @@ export default function DataMatchingPage() {
           }}>
             <div style={{
               padding: '20px',
-              borderBottom: '1px solid #e0e0e0',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#4A4A4A' }}>
                   統合リスト
                 </h3>
-                <div style={{ fontSize: '13px', color: '#5a6c7d', marginTop: '4px' }}>
+                <div style={{ fontSize: '13px', color: '#8A8A8A', marginTop: '4px' }}>
                   統合元: {mergedListNames.join(' + ')} = {mergedList.length}件
                 </div>
               </div>
@@ -1666,7 +1666,7 @@ export default function DataMatchingPage() {
               <div style={{ overflow: 'auto', maxHeight: '500px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f5f5f5', position: 'sticky', top: 0 }}>
+                    <tr style={{ backgroundColor: '#FAFAFA', position: 'sticky', top: 0 }}>
                       <th style={thStyle}>突合状況</th>
                       <th style={thStyle}>QRコード</th>
                       <th style={thStyle}>資産番号</th>
@@ -1722,7 +1722,7 @@ export default function DataMatchingPage() {
 
             <div style={{
               padding: '20px',
-              borderTop: '1px solid #e0e0e0',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'

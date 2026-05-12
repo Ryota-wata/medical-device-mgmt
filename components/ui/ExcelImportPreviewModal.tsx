@@ -47,12 +47,12 @@ export function ExcelImportPreviewModal({
         {/* ヘッダー */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#2c3e50' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#4A4A4A' }}>
             インポートプレビュー
           </h2>
           <button
@@ -60,8 +60,8 @@ export function ExcelImportPreviewModal({
             style={{
               padding: '6px 12px',
               background: 'transparent',
-              color: '#2980b9',
-              border: '1px solid #2980b9',
+              color: '#0073B8',
+              border: '1px solid #0073B8',
               borderRadius: '4px',
               fontSize: '12px',
               fontWeight: 600,
@@ -87,27 +87,27 @@ export function ExcelImportPreviewModal({
               borderRadius: '8px',
               textAlign: 'center',
             }}>
-              <div style={{ fontSize: '28px', fontWeight: 700, color: '#27ae60', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>
                 {importableCount}
               </div>
-              <div style={{ fontSize: '13px', color: '#2c3e50', marginTop: '4px' }}>取込可能件数</div>
+              <div style={{ fontSize: '13px', color: '#4A4A4A', marginTop: '4px' }}>取込可能件数</div>
             </div>
             <div style={{
               flex: 1,
               padding: '16px',
-              background: errors.length > 0 ? '#fdecea' : '#f5f5f5',
+              background: errors.length > 0 ? '#fdecea' : '#FAFAFA',
               borderRadius: '8px',
               textAlign: 'center',
             }}>
               <div style={{
                 fontSize: '28px',
                 fontWeight: 700,
-                color: errors.length > 0 ? '#e74c3c' : '#7f8c8d',
+                color: errors.length > 0 ? '#DA0000' : '#8A8A8A',
                 fontVariantNumeric: 'tabular-nums',
               }}>
                 {errors.length}
               </div>
-              <div style={{ fontSize: '13px', color: '#2c3e50', marginTop: '4px' }}>エラー件数</div>
+              <div style={{ fontSize: '13px', color: '#4A4A4A', marginTop: '4px' }}>エラー件数</div>
             </div>
           </div>
 
@@ -120,7 +120,7 @@ export function ExcelImportPreviewModal({
               padding: '16px',
               marginBottom: '16px',
             }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#e74c3c', marginBottom: '8px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#DA0000', marginBottom: '8px' }}>
                 エラー詳細
               </div>
               <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#721c24' }}>
@@ -132,7 +132,7 @@ export function ExcelImportPreviewModal({
           )}
 
           {importableCount === 0 && errors.length === 0 && (
-            <div style={{ textAlign: 'center', color: '#7f8c8d', padding: '20px', fontSize: '14px' }}>
+            <div style={{ textAlign: 'center', color: '#8A8A8A', padding: '20px', fontSize: '14px' }}>
               取込可能なデータがありません
             </div>
           )}
@@ -141,7 +141,7 @@ export function ExcelImportPreviewModal({
         {/* フッター */}
         <div style={{
           padding: '16px 24px',
-          borderTop: '1px solid #e0e0e0',
+          borderTop: '1px solid #E1E1E1',
           display: 'flex',
           gap: '12px',
           justifyContent: 'flex-end',
@@ -150,8 +150,8 @@ export function ExcelImportPreviewModal({
             onClick={onCancel}
             style={{
               padding: '10px 20px',
-              background: '#f5f5f5',
-              color: '#2c3e50',
+              background: '#FAFAFA',
+              color: '#4A4A4A',
               border: '1px solid #d0d0d0',
               borderRadius: '6px',
               fontSize: '14px',
@@ -182,7 +182,7 @@ export function ExcelImportPreviewModal({
             disabled={disabled}
             style={{
               padding: '10px 20px',
-              background: disabled ? '#bdc3c7' : '#27ae60',
+              background: disabled ? '#bdc3c7' : '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '6px',

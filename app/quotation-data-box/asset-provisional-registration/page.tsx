@@ -17,19 +17,19 @@ import { OrderItem } from '@/lib/types';
 // カラートークン（survey-location / asset-survey-integrated 準拠）
 // ============================================================
 const C = {
-  headerBg: '#374151',
-  bg: '#f5f5f5',
+  headerBg: '#4A4A4A',
+  bg: '#FAFAFA',
   card: '#ffffff',
-  textDark: '#1f2937',
-  textMuted: '#5a6c7d',
+  textDark: '#4A4A4A',
+  textMuted: '#8A8A8A',
   border: '#ccc',
   borderLight: '#ddd',
   borderLighter: '#eee',
   divider: '#008C1D',
   green: '#008C1D',
   greenLight: '#d5f4e6',
-  greenBg: '#e8f5e9',
-  red: '#e74c3c',
+  greenBg: '#EBF5EE',
+  red: '#DA0000',
   redLight: '#fadbd8',
   gray: '#ecf0f1',
   accent: '#ff9800',
@@ -45,20 +45,20 @@ const COLORS = {
   primary: '#008C1D',
   primaryDark: '#3d5a80',
   accent: '#e67e22',
-  textOnAccent: '#1f2937',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textOnAccent: '#4A4A4A',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  borderLight: '#E1E1E1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4b5563',
   white: '#ffffff',
-  disabled: '#9ca3af',
+  disabled: '#8A8A8A',
   green: '#008C1D',
-  greenBg: '#e8f5e9',
+  greenBg: '#EBF5EE',
 } as const;
 
 // ============================================================
@@ -1000,7 +1000,7 @@ export default function AssetProvisionalRegistrationPage() {
                 </span>
                 <span style={{ fontSize: '12px', color: C.textMuted, fontVariantNumeric: 'tabular-nums' }}>{progressPercent}%</span>
               </div>
-              <div style={{ height: 6, background: '#e0e0e0', borderRadius: 9999, overflow: 'hidden' }}>
+              <div style={{ height: 6, background: '#E1E1E1', borderRadius: 9999, overflow: 'hidden' }}>
                 <div style={{
                   height: '100%',
                   width: `${progressPercent}%`,
@@ -1284,7 +1284,7 @@ const labelStyle: React.CSSProperties = {
 
 const readOnlyStyle: React.CSSProperties = {
   backgroundColor: C.inputBg,
-  border: `1px solid #e0e0e0`,
+  border: `1px solid #E1E1E1`,
   borderRadius: '4px',
   padding: '10px',
   fontSize: '14px',

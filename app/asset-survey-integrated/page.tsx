@@ -222,26 +222,26 @@ function AssetSurveyIntegratedContent() {
   const handlePhotoCapture = () => { setPhotoTaken(true); alert('写真を撮影しました'); };
   const handleAssetRegistration = () => alert('商品を登録しました');
 
-  const inputClass = 'w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors';
+  const inputClass = 'w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#008C1D] transition-colors';
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+    <div className="flex flex-col min-h-dvh bg-[#FAFAFA]">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3 sticky top-0 z-50">
+      <header className="bg-white border-b border-[#E1E1E1] px-4 py-3 sticky top-0 z-50">
         <div className="flex items-center justify-between max-w-[800px] mx-auto">
           <button
             onClick={handleBack}
-            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            className="size-10 flex items-center justify-center text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors"
             aria-label="戻る"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>
-          <span className="text-sm font-bold text-[#1f2937] text-balance">HEALTHCARE 医療機器管理システム</span>
+          <span className="text-sm font-bold text-[#4A4A4A] text-balance">HEALTHCARE 医療機器管理システム</span>
           <button
             onClick={handleHomeClick}
-            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer hover:text-[#1f2937] transition-colors"
+            className="size-10 flex items-center justify-center text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors"
             aria-label="閉じる"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -253,14 +253,14 @@ function AssetSurveyIntegratedContent() {
       </header>
 
       {/* QRコード + 室名（sticky） */}
-      <div className="sticky top-[53px] z-40 bg-white border-b border-[#e5e7eb] px-4 py-3">
+      <div className="sticky top-[53px] z-40 bg-white border-b border-[#E1E1E1] px-4 py-3">
         <div className="max-w-[800px] mx-auto grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-[#1f2937] mb-1.5">QRコード</label>
+            <label className="block text-sm text-[#4A4A4A] mb-1.5">QRコード</label>
             <input type="text" placeholder="入力してください" className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm text-[#1f2937] mb-1.5">室名</label>
+            <label className="block text-sm text-[#4A4A4A] mb-1.5">室名</label>
             <input type="text" placeholder="入力してください" className={inputClass} />
           </div>
         </div>
@@ -271,63 +271,63 @@ function AssetSurveyIntegratedContent() {
         <div className="max-w-[800px] mx-auto px-3 py-4 sm:px-6">
 
           {/* カード2: メインフォーム */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] mt-3">
+          <div className="bg-white rounded-lg shadow-sm border border-[#E1E1E1] mt-3">
             {/* 登録モード */}
             <div className="p-4">
-              <h2 className="text-sm font-bold text-[#1f2937] mb-2">登録モード</h2>
+              <h2 className="text-sm font-bold text-[#4A4A4A] mb-2">登録モード</h2>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={bulkMode}
                   onChange={(e) => setBulkMode(e.target.checked)}
-                  className="size-[18px] accent-[#27ae60] cursor-pointer"
+                  className="size-[18px] accent-[#008C1D] cursor-pointer"
                 />
-                <span className="text-sm text-[#1f2937]">一括登録モード</span>
+                <span className="text-sm text-[#4A4A4A]">一括登録モード</span>
               </label>
-              <p className="text-xs text-[#9ca3af] mt-1 ml-[26px]">同じ機器を複数個登録する場合にチェック</p>
+              <p className="text-xs text-[#8A8A8A] mt-1 ml-[26px]">同じ機器を複数個登録する場合にチェック</p>
             </div>
 
-            <div className="border-t border-[#e5e7eb]" />
+            <div className="border-t border-[#E1E1E1]" />
 
             {/* 読み取ったQRコード */}
             <div className="p-4">
-              <h2 className="text-sm font-bold text-[#1f2937] mb-3">読み取ったQRコード</h2>
-              <div className={`border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center ${qrScanned ? 'border-[#27ae60] bg-[#f0fdf4]' : 'border-[#d1d5db] bg-[#f9fafb]'}`}>
-                <QRCodePlaceholder size={32} color={qrScanned ? '#27ae60' : '#9ca3af'} />
-                <p className={`text-sm mt-2 ${qrScanned ? 'text-[#27ae60]' : 'text-[#9ca3af]'}`}>
+              <h2 className="text-sm font-bold text-[#4A4A4A] mb-3">読み取ったQRコード</h2>
+              <div className={`border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center ${qrScanned ? 'border-[#008C1D] bg-[#f0fdf4]' : 'border-[#d1d5db] bg-[#FAFAFA]'}`}>
+                <QRCodePlaceholder size={32} color={qrScanned ? '#008C1D' : '#8A8A8A'} />
+                <p className={`text-sm mt-2 ${qrScanned ? 'text-[#008C1D]' : 'text-[#8A8A8A]'}`}>
                   {qrScanned ? 'QRコード読み取り済み' : 'QRコードを読んでください'}
                 </p>
               </div>
             </div>
 
-            <div className="border-t border-[#e5e7eb]" />
+            <div className="border-t border-[#E1E1E1]" />
 
             {/* 資産番号・備品番号・シリアルNo + 購入年月日 */}
             <div className="p-4">
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <div>
-                  <label className="block text-sm text-[#1f2937] mb-1.5">資産番号</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">資産番号</label>
                   <input type="text" placeholder="入力してください" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm text-[#1f2937] mb-1.5">備品番号</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">備品番号</label>
                   <input type="text" placeholder="入力してください" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm text-[#1f2937] mb-1.5">シリアルNo.</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">シリアルNo.</label>
                   <input type="text" placeholder="入力してください" className={inputClass} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm text-[#1f2937] mb-1.5">購入年月日</label>
+                <label className="block text-sm text-[#4A4A4A] mb-1.5">購入年月日</label>
                 <button
                   type="button"
                   onClick={openDatePicker}
-                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md bg-white text-left flex items-center justify-between cursor-pointer hover:border-[#27ae60] transition-colors"
+                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md bg-white text-left flex items-center justify-between cursor-pointer hover:border-[#008C1D] transition-colors"
                 >
-                  <span className={purchaseYear ? 'text-[#1f2937]' : 'text-[#9ca3af]'}>{formatDisplayDate()}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <span className={purchaseYear ? 'text-[#4A4A4A]' : 'text-[#8A8A8A]'}>{formatDisplayDate()}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                     <line x1="16" y1="2" x2="16" y2="6" />
                     <line x1="8" y1="2" x2="8" y2="6" />
@@ -337,28 +337,28 @@ function AssetSurveyIntegratedContent() {
               </div>
             </div>
 
-            <div className="border-t border-[#e5e7eb]" />
+            <div className="border-t border-[#E1E1E1]" />
 
             {/* 写真 */}
             <div className="p-4">
-              <h2 className="text-sm font-bold text-[#1f2937] mb-3">写真</h2>
-              <div className={`border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center ${photoTaken ? 'border-[#27ae60] bg-[#f0fdf4]' : 'border-[#d1d5db] bg-[#f9fafb]'}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={photoTaken ? '#27ae60' : '#9ca3af'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <h2 className="text-sm font-bold text-[#4A4A4A] mb-3">写真</h2>
+              <div className={`border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center ${photoTaken ? 'border-[#008C1D] bg-[#f0fdf4]' : 'border-[#d1d5db] bg-[#FAFAFA]'}`}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={photoTaken ? '#008C1D' : '#8A8A8A'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <p className={`text-sm mt-2 ${photoTaken ? 'text-[#27ae60]' : 'text-[#9ca3af]'}`}>
+                <p className={`text-sm mt-2 ${photoTaken ? 'text-[#008C1D]' : 'text-[#8A8A8A]'}`}>
                   {photoTaken ? '写真撮影済み' : '写真をアップしてください'}
                 </p>
               </div>
             </div>
 
-            <div className="border-t border-[#e5e7eb]" />
+            <div className="border-t border-[#E1E1E1]" />
 
             {/* 分類情報 */}
             <div className="p-4">
-              <h2 className="text-sm font-bold text-[#1f2937] mb-4">分類情報</h2>
+              <h2 className="text-sm font-bold text-[#4A4A4A] mb-4">分類情報</h2>
 
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <SearchableSelect label="大分類" value={largeClass} onChange={(v) => handleClassFieldChange('largeClass', v)} options={['', ...largeClassOptions]} placeholder="選択してください" isMobile={isMobile} />
@@ -371,46 +371,46 @@ function AssetSurveyIntegratedContent() {
                 <SearchableSelect label="型式" value={model} onChange={(v) => handleClassFieldChange('model', v)} options={['', ...modelOptions]} placeholder="選択してください" isMobile={isMobile} />
               </div>
 
-              <h2 className="text-sm font-bold text-[#1f2937] mb-4 mt-2">サイズ情報</h2>
+              <h2 className="text-sm font-bold text-[#4A4A4A] mb-4 mt-2">サイズ情報</h2>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm text-[#1f2937] mb-1.5">W (幅)</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">W (幅)</label>
                   <input type="text" placeholder="0mm" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm text-[#1f2937] mb-1.5">D (奥行)</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">D (奥行)</label>
                   <input type="text" placeholder="0mm" className={inputClass} />
                 </div>
                 <div>
-                  <label className="block text-sm text-[#1f2937] mb-1.5">H (高さ)</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">H (高さ)</label>
                   <input type="text" placeholder="0mm" className={inputClass} />
                 </div>
               </div>
-              <p className="text-xs text-[#9ca3af] mt-2">単位: mm</p>
+              <p className="text-xs text-[#8A8A8A] mt-2">単位: mm</p>
             </div>
 
-            <div className="border-t border-[#e5e7eb]" />
+            <div className="border-t border-[#E1E1E1]" />
 
             {/* 備考 */}
             <div className="p-4">
-              <label className="block text-sm text-[#1f2937] mb-1.5">備考</label>
+              <label className="block text-sm text-[#4A4A4A] mb-1.5">備考</label>
               <input type="text" placeholder="入力してください" className={inputClass} />
             </div>
           </div>
 
           {/* 一括登録モード: 終了QR */}
           {bulkMode && (
-            <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] mt-3 p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-[#E1E1E1] mt-3 p-4">
               <div className="flex items-end gap-3 flex-wrap">
                 <div className="flex-1 min-w-[160px]">
-                  <label className="block text-sm text-[#1f2937] mb-1.5">終了QRコード</label>
+                  <label className="block text-sm text-[#4A4A4A] mb-1.5">終了QRコード</label>
                   <input
                     type="text"
                     placeholder="終了QRコードを入力"
                     readOnly
-                    className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md bg-[#f9fafb] outline-none"
+                    className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md bg-[#FAFAFA] outline-none"
                   />
-                  <p className="text-xs text-[#9ca3af] mt-1">一括登録の終了QRコード</p>
+                  <p className="text-xs text-[#8A8A8A] mt-1">一括登録の終了QRコード</p>
                 </div>
                 <button
                   onClick={() => alert('終了QRコードを読み取りました')}
@@ -425,11 +425,11 @@ function AssetSurveyIntegratedContent() {
       </div>
 
       {/* ボトムナビバー */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e7eb] z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E1E1E1] z-50">
         <div className="max-w-[800px] mx-auto flex justify-around pt-2 pb-1">
           <button
             onClick={handleShowHistory}
-            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#6b7280] hover:text-[#1f2937] transition-colors"
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#8A8A8A] hover:text-[#4A4A4A] transition-colors"
             aria-label="履歴表示"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -441,7 +441,7 @@ function AssetSurveyIntegratedContent() {
 
           <button
             onClick={handleQRScan}
-            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#6b7280] hover:text-[#1f2937] transition-colors"
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#8A8A8A] hover:text-[#4A4A4A] transition-colors"
             aria-label="QR読取"
           >
             <QRCodePlaceholder size={22} color="currentColor" />
@@ -450,7 +450,7 @@ function AssetSurveyIntegratedContent() {
 
           <button
             onClick={handlePhotoCapture}
-            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#6b7280] hover:text-[#1f2937] transition-colors"
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#8A8A8A] hover:text-[#4A4A4A] transition-colors"
             aria-label="写真撮影"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -462,7 +462,7 @@ function AssetSurveyIntegratedContent() {
 
           <button
             onClick={handleAssetRegistration}
-            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#27ae60] transition-colors"
+            className="flex flex-col items-center gap-1 bg-transparent border-0 cursor-pointer p-2 min-w-[60px] text-[#008C1D] transition-colors"
             aria-label="商品登録"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -472,7 +472,7 @@ function AssetSurveyIntegratedContent() {
             <span className="text-[11px] font-bold">商品登録</span>
           </button>
         </div>
-        <div className="text-center text-[10px] text-[#9ca3af] pb-2">
+        <div className="text-center text-[10px] text-[#8A8A8A] pb-2">
           &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
         </div>
       </nav>
@@ -488,27 +488,27 @@ function AssetSurveyIntegratedContent() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* ヘッダー */}
-            <div className="flex justify-between items-center px-5 py-4 border-b border-[#e5e7eb]">
+            <div className="flex justify-between items-center px-5 py-4 border-b border-[#E1E1E1]">
               <button
                 onClick={() => setShowDatePicker(false)}
-                className="bg-transparent border-0 text-base text-[#9ca3af] cursor-pointer px-2 py-1"
+                className="bg-transparent border-0 text-base text-[#8A8A8A] cursor-pointer px-2 py-1"
               >
                 キャンセル
               </button>
-              <span className="text-base font-bold text-[#1f2937]">購入年月日</span>
+              <span className="text-base font-bold text-[#4A4A4A]">購入年月日</span>
               <button
                 onClick={confirmDatePicker}
-                className="bg-transparent border-0 text-base text-[#27ae60] font-bold cursor-pointer px-2 py-1"
+                className="bg-transparent border-0 text-base text-[#008C1D] font-bold cursor-pointer px-2 py-1"
               >
                 完了
               </button>
             </div>
 
             {/* ラベル行 */}
-            <div className="flex px-2.5 py-2 border-b border-[#e5e7eb] bg-[#fafafa]">
-              <div className="flex-[2] text-center text-[13px] font-bold text-[#6b7280]">年</div>
-              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">月</div>
-              <div className="flex-1 text-center text-[13px] font-bold text-[#6b7280]">日</div>
+            <div className="flex px-2.5 py-2 border-b border-[#E1E1E1] bg-[#FAFAFA]">
+              <div className="flex-[2] text-center text-[13px] font-bold text-[#8A8A8A]">年</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-[#8A8A8A]">月</div>
+              <div className="flex-1 text-center text-[13px] font-bold text-[#8A8A8A]">日</div>
             </div>
 
             {/* ドラムロール */}
@@ -527,11 +527,11 @@ function AssetSurveyIntegratedContent() {
                   className="h-full overflow-y-auto"
                   style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch', paddingTop: (200 - ITEM_HEIGHT) / 2, paddingBottom: (200 - ITEM_HEIGHT) / 2 }}
                 >
-                  <div className="h-[44px] flex items-center justify-center text-base relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempYear ? '#27ae60' : '#9ca3af', fontWeight: !tempYear ? 'bold' : 'normal' }}>
+                  <div className="h-[44px] flex items-center justify-center text-base relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempYear ? '#008C1D' : '#8A8A8A', fontWeight: !tempYear ? 'bold' : 'normal' }}>
                     未選択
                   </div>
                   {yearOptions.map(y => (
-                    <div key={y} className="h-[44px] flex items-center justify-center text-base relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempYear === y ? '#27ae60' : '#1f2937', fontWeight: tempYear === y ? 'bold' : 'normal' }}>
+                    <div key={y} className="h-[44px] flex items-center justify-center text-base relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempYear === y ? '#008C1D' : '#4A4A4A', fontWeight: tempYear === y ? 'bold' : 'normal' }}>
                       {y}（{toWareki(parseInt(y, 10))}）
                     </div>
                   ))}
@@ -546,11 +546,11 @@ function AssetSurveyIntegratedContent() {
                   className="h-full overflow-y-auto"
                   style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch', paddingTop: (200 - ITEM_HEIGHT) / 2, paddingBottom: (200 - ITEM_HEIGHT) / 2 }}
                 >
-                  <div className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempMonth ? '#27ae60' : '#9ca3af', fontWeight: !tempMonth ? 'bold' : 'normal' }}>
+                  <div className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempMonth ? '#008C1D' : '#8A8A8A', fontWeight: !tempMonth ? 'bold' : 'normal' }}>
                     --
                   </div>
                   {monthOptions.map(m => (
-                    <div key={m} className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempMonth === m ? '#27ae60' : '#1f2937', fontWeight: tempMonth === m ? 'bold' : 'normal' }}>
+                    <div key={m} className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempMonth === m ? '#008C1D' : '#4A4A4A', fontWeight: tempMonth === m ? 'bold' : 'normal' }}>
                       {m}
                     </div>
                   ))}
@@ -565,11 +565,11 @@ function AssetSurveyIntegratedContent() {
                   className="h-full overflow-y-auto"
                   style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch', paddingTop: (200 - ITEM_HEIGHT) / 2, paddingBottom: (200 - ITEM_HEIGHT) / 2 }}
                 >
-                  <div className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempDay ? '#27ae60' : '#9ca3af', fontWeight: !tempDay ? 'bold' : 'normal' }}>
+                  <div className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: !tempDay ? '#008C1D' : '#8A8A8A', fontWeight: !tempDay ? 'bold' : 'normal' }}>
                     --
                   </div>
                   {dayOptions.map(d => (
-                    <div key={d} className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempDay === d ? '#27ae60' : '#1f2937', fontWeight: tempDay === d ? 'bold' : 'normal' }}>
+                    <div key={d} className="h-[44px] flex items-center justify-center text-lg relative z-[2]" style={{ scrollSnapAlign: 'center', color: tempDay === d ? '#008C1D' : '#4A4A4A', fontWeight: tempDay === d ? 'bold' : 'normal' }}>
                       {d}
                     </div>
                   ))}
@@ -578,7 +578,7 @@ function AssetSurveyIntegratedContent() {
             </div>
 
             {/* クリアボタン */}
-            <div className="px-5 py-3 border-t border-[#e5e7eb]">
+            <div className="px-5 py-3 border-t border-[#E1E1E1]">
               <button
                 onClick={() => {
                   setTempYear(''); setTempMonth(''); setTempDay('');
@@ -586,7 +586,7 @@ function AssetSurveyIntegratedContent() {
                   if (monthScrollRef.current) monthScrollRef.current.scrollTop = 0;
                   if (dayScrollRef.current) dayScrollRef.current.scrollTop = 0;
                 }}
-                className="w-full py-3 bg-[#f3f4f6] border-0 rounded-lg text-sm text-[#6b7280] cursor-pointer hover:bg-[#e5e7eb] transition-colors"
+                className="w-full py-3 bg-[#F1F1F1] border-0 rounded-lg text-sm text-[#8A8A8A] cursor-pointer hover:bg-[#E1E1E1] transition-colors"
               >
                 クリア
               </button>

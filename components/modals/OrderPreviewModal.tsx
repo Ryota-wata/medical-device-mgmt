@@ -49,15 +49,15 @@ interface OrderPreviewModalProps {
 const COLORS = {
   primary: '#4a6fa5',
   primaryDark: '#3d5a80',
-  textPrimary: '#1f2937',
-  textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textPrimary: '#4A4A4A',
+  textSecondary: '#4A4A4A',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#d1d5db',
-  borderLight: '#e5e7eb',
+  borderLight: '#E1E1E1',
   white: '#ffffff',
   accent: '#e67e22',
-  accentText: '#1f2937',
+  accentText: '#4A4A4A',
 } as const;
 
 const PRINT_STYLE_ID = 'order-preview-print-style';

@@ -198,11 +198,11 @@ const getStatusStyle = (status: LendingStatus): React.CSSProperties => {
   };
   switch (status) {
     case '待機中':
-      return { ...baseStyle, background: '#fff3e0', color: '#e65100' };
+      return { ...baseStyle, background: '#FDF1E5', color: '#e65100' };
     case '貸出可':
-      return { ...baseStyle, background: '#e8f5e9', color: '#2e7d32' };
+      return { ...baseStyle, background: '#EBF5EE', color: '#2e7d32' };
     case '貸出中':
-      return { ...baseStyle, background: '#e3f2fd', color: '#1565c0' };
+      return { ...baseStyle, background: '#EAF3FB', color: '#1565c0' };
     case '使用中':
       return { ...baseStyle, background: '#e8eaf6', color: '#283593' };
     case '使用済':
@@ -236,7 +236,7 @@ const getPeriodicInspectionStyle = (status: PeriodicInspectionStatus): React.CSS
 // テーブルスタイル
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #495057',
+  border: '1px solid #4A4A4A',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -245,7 +245,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #6c757d',
+  border: '1px solid #8A8A8A',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -346,8 +346,8 @@ export const LendingManagementTab: React.FC = () => {
   // ソート矢印の表示
   const getSortArrow = (field: SortableField) => {
     const isActive = sortState.field === field;
-    const upColor = isActive && sortState.direction === 'asc' ? '#c0392b' : '#aaa';
-    const downColor = isActive && sortState.direction === 'desc' ? '#c0392b' : '#aaa';
+    const upColor = isActive && sortState.direction === 'asc' ? '#A30000' : '#aaa';
+    const downColor = isActive && sortState.direction === 'desc' ? '#A30000' : '#aaa';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '2px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -404,8 +404,8 @@ export const LendingManagementTab: React.FC = () => {
       {/* 情報バー */}
       <div style={{
         padding: '12px 16px',
-        background: '#f8f9fa',
-        borderBottom: '1px solid #dee2e6',
+        background: '#FAFAFA',
+        borderBottom: '1px solid #E1E1E1',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -537,7 +537,7 @@ export const LendingManagementTab: React.FC = () => {
           onClick={clearFilter}
           style={{
             padding: '5px 12px',
-            background: '#f5f5f5',
+            background: '#FAFAFA',
             border: '1px solid #ccc',
             borderRadius: '3px',
             cursor: 'pointer',
@@ -556,11 +556,11 @@ export const LendingManagementTab: React.FC = () => {
             {/* グループヘッダー */}
             <tr style={{ background: '#343a40', color: 'white' }}>
               <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#fce4ec', color: '#333', borderColor: '#e57373' }}>商品情報</th>
-              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#f9a825' }}>貸出機器状況</th>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>貸出機器状況</th>
               <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#f3e5f5', color: '#333', borderColor: '#ba68c8' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
-            <tr style={{ background: '#495057', color: 'white' }}>
+            <tr style={{ background: '#4A4A4A', color: 'white' }}>
               {/* 商品情報 */}
               <th style={{ ...thSubStyle, background: '#ffcdd2', color: '#333', borderColor: '#e57373' }}>QRコード</th>
               <th style={{ ...thSubStyle, background: '#ffcdd2', color: '#333', borderColor: '#e57373' }}>品目</th>
@@ -577,30 +577,30 @@ export const LendingManagementTab: React.FC = () => {
                 型式{getSortArrow('model')}
               </th>
               {/* 貸出機器状況 */}
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>ステータス</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>設置部署</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>ステータス</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>設置部署</th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
                 onClick={() => handleSort('lendingDate')}
               >
                 貸出日{getSortArrow('lendingDate')}
               </th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>超過日数</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825' }}>日常点検メニュー</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>超過日数</th>
+              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>日常点検メニュー</th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
                 onClick={() => handleSort('dailyInspectionDate')}
               >
                 日常点検日{getSortArrow('dailyInspectionDate')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
                 onClick={() => handleSort('periodicInspectionStatus')}
               >
                 定期点検予定{getSortArrow('periodicInspectionStatus')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#f9a825', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
                 onClick={() => handleSort('lendingCount')}
               >
                 貸出回数累計{getSortArrow('lendingCount')}
@@ -618,11 +618,11 @@ export const LendingManagementTab: React.FC = () => {
               const isOverdue = device.overdueDays > 0;
               return (
                 <tr key={device.id} style={{
-                  background: isOverdue ? '#fff5f5' : (index % 2 === 0 ? 'white' : '#fafafa'),
+                  background: isOverdue ? '#fff5f5' : (index % 2 === 0 ? 'white' : '#FAFAFA'),
                   verticalAlign: 'top',
                 }}>
                   {/* 商品情報 */}
-                  <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#3498db' }}>{device.qrCode}</td>
+                  <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#0092E6' }}>{device.qrCode}</td>
                   <td style={tdStyle}>{device.itemName}</td>
                   <td style={tdStyle}>{device.maker}</td>
                   <td style={tdStyle}>{device.model}</td>
@@ -634,9 +634,9 @@ export const LendingManagementTab: React.FC = () => {
                   <td style={tdStyle} className="tabular-nums">{device.lendingDate || '-'}</td>
                   <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">
                     {isOverdue ? (
-                      <span style={{ color: '#c0392b', fontWeight: 'bold' }}>{device.overdueDays}日</span>
+                      <span style={{ color: '#A30000', fontWeight: 'bold' }}>{device.overdueDays}日</span>
                     ) : (
-                      <span style={{ color: '#7f8c8d' }}>-</span>
+                      <span style={{ color: '#8A8A8A' }}>-</span>
                     )}
                   </td>
                   <td style={{ ...tdStyle, fontSize: '11px', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -679,7 +679,7 @@ export const LendingManagementTab: React.FC = () => {
         </table>
 
         {sortedDevices.length === 0 && (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+          <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
             該当する貸出機器がありません
           </div>
         )}
@@ -699,8 +699,8 @@ export const LendingManagementTab: React.FC = () => {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '10px 12px', background: '#f8f9fa', border: '1px solid #dee2e6', textAlign: 'left', width: '140px', fontWeight: 600 }}>貸出グループ名</th>
-                    <td style={{ padding: '10px 12px', border: '1px solid #dee2e6' }}>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600 }}>貸出グループ名</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                       <input
                         type="text"
                         value={settingTypeName}
@@ -710,8 +710,8 @@ export const LendingManagementTab: React.FC = () => {
                     </td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '10px 12px', background: '#f8f9fa', border: '1px solid #dee2e6', textAlign: 'left', fontWeight: 600 }}>アラート発生日数</th>
-                    <td style={{ padding: '10px 12px', border: '1px solid #dee2e6' }}>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600 }}>アラート発生日数</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <input
                           type="number"
@@ -725,14 +725,14 @@ export const LendingManagementTab: React.FC = () => {
                     </td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '10px 12px', background: '#f8f9fa', border: '1px solid #dee2e6', textAlign: 'left', fontWeight: 600 }}>現在のステータス</th>
-                    <td style={{ padding: '10px 12px', border: '1px solid #dee2e6' }}>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600 }}>現在のステータス</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                       <span style={getStatusStyle(selectedDeviceForSetting.status)}>{selectedDeviceForSetting.status}</span>
                     </td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '10px 12px', background: '#f8f9fa', border: '1px solid #dee2e6', textAlign: 'left', fontWeight: 600, verticalAlign: 'top' }}>フリーコメント</th>
-                    <td style={{ padding: '10px 12px', border: '1px solid #dee2e6' }}>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, verticalAlign: 'top' }}>フリーコメント</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                       <textarea
                         value={settingComment}
                         onChange={(e) => setSettingComment(e.target.value)}
@@ -765,8 +765,8 @@ export const LendingManagementTab: React.FC = () => {
                 style={{
                   padding: '8px 16px',
                   background: 'white',
-                  color: '#e74c3c',
-                  border: '1px solid #e74c3c',
+                  color: '#DA0000',
+                  border: '1px solid #DA0000',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '12px',
@@ -784,7 +784,7 @@ export const LendingManagementTab: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSaveSetting}
-                  style={{ padding: '8px 16px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                  style={{ padding: '8px 16px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
                 >
                   設定を保存
                 </button>

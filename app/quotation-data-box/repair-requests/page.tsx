@@ -187,7 +187,7 @@ const STEP_TABS: { key: StepKey; label: string; statuses: RepairStatus[] }[] = [
 // ========== テーブルヘッダースタイル ==========
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #495057',
+  border: '1px solid #4A4A4A',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -196,7 +196,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #6c757d',
+  border: '1px solid #8A8A8A',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -303,7 +303,7 @@ function RepairRequestsContent() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -320,7 +320,7 @@ function RepairRequestsContent() {
           <div style={{
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #dee2e6',
+            border: '1px solid #E1E1E1',
             overflow: 'hidden',
           }}>
             <div style={{
@@ -343,7 +343,7 @@ function RepairRequestsContent() {
             </div>
 
             {pendingApplications.length === 0 ? (
-              <div style={{ padding: '16px', textAlign: 'center', color: '#7f8c8d', fontSize: '13px' }}>
+              <div style={{ padding: '16px', textAlign: 'center', color: '#8A8A8A', fontSize: '13px' }}>
                 新たな申請がありません
               </div>
             ) : (
@@ -365,7 +365,7 @@ function RepairRequestsContent() {
                         <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>院内担当情報</th>
                         <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center', verticalAlign: 'middle' }}></th>
                       </tr>
-                      <tr style={{ background: '#495057', color: 'white' }}>
+                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
                         <th style={thSubStyle}>申請日</th>
                         <th style={thSubStyle}>申請依頼No.</th>
                         <th style={thSubStyle}>部門名</th>
@@ -385,47 +385,47 @@ function RepairRequestsContent() {
                         <tr
                           key={app.id}
                           style={{
-                            borderBottom: '1px solid #dee2e6',
-                            background: selectedApplicationIds.has(app.id) ? '#e3f2fd' : 'transparent',
+                            borderBottom: '1px solid #E1E1E1',
+                            background: selectedApplicationIds.has(app.id) ? '#EAF3FB' : 'transparent',
                             cursor: 'pointer',
                           }}
                           onClick={() => handleViewDetail(app)}
                         >
-                          <td style={{ padding: '8px 6px', borderBottom: '1px solid #dee2e6' }} onClick={(e) => e.stopPropagation()}>
+                          <td style={{ padding: '8px 6px', borderBottom: '1px solid #E1E1E1' }} onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={selectedApplicationIds.has(app.id)}
                               onChange={() => handleSelectApplication(app.id)}
                             />
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>
                             <span style={{ color: '#008C1D', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.department}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.section || '-'}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.roomName || '-'}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', fontFamily: 'monospace', color: '#008C1D', fontSize: '12px' }}>{app.qrCode}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.itemName}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.maker}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.model}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#1f2937' }}>{app.applicantName}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', color: '#5a6c7d', fontSize: '12px' }}>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.department}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.section || '-'}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.roomName || '-'}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', fontFamily: 'monospace', color: '#008C1D', fontSize: '12px' }}>{app.qrCode}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.itemName}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.maker}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.model}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.applicantName}</td>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>
                             {app.applicantContact}
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #dee2e6', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleViewDetail(app)}
                               style={{
                                 padding: '6px 12px',
                                 background: 'white',
-                                border: '1px solid #dee2e6',
+                                border: '1px solid #E1E1E1',
                                 borderRadius: '4px',
                                 fontSize: '12px',
                                 cursor: 'pointer',
                                 whiteSpace: 'nowrap',
-                                color: '#1f2937',
+                                color: '#4A4A4A',
                               }}
                             >
                               申請内容
@@ -440,10 +440,10 @@ function RepairRequestsContent() {
                 {/* 選択件数 */}
                 <div style={{
                   padding: '12px 16px',
-                  borderTop: '1px solid #dee2e6',
-                  background: '#f8f9fa',
+                  borderTop: '1px solid #E1E1E1',
+                  background: '#FAFAFA',
                   fontSize: '13px',
-                  color: '#5a6c7d',
+                  color: '#8A8A8A',
                 }}>
                   選択した申請: {selectedApplicationIds.size}件
                 </div>
@@ -456,7 +456,7 @@ function RepairRequestsContent() {
             flex: 1,
             background: 'white',
             borderRadius: '8px',
-            border: '1px solid #dee2e6',
+            border: '1px solid #E1E1E1',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -474,9 +474,9 @@ function RepairRequestsContent() {
 
             {/* ステップタブ */}
             <div style={{
-              borderBottom: '2px solid #dee2e6',
+              borderBottom: '2px solid #E1E1E1',
               display: 'flex',
-              background: '#fafafa',
+              background: '#FAFAFA',
               overflowX: 'auto',
             }}>
               {STEP_TABS.map((tab) => {
@@ -504,7 +504,7 @@ function RepairRequestsContent() {
                     {tab.label}
                     <span style={{
                       marginLeft: '6px',
-                      background: isActive ? 'rgba(255,255,255,0.3)' : '#e0e0e0',
+                      background: isActive ? 'rgba(255,255,255,0.3)' : '#E1E1E1',
                       padding: '1px 6px',
                       borderRadius: '8px',
                       fontSize: '11px',
@@ -519,14 +519,14 @@ function RepairRequestsContent() {
             {/* フィルター行 */}
             <div style={{
               padding: '10px 16px',
-              borderBottom: '1px solid #dee2e6',
-              background: '#fafafa',
+              borderBottom: '1px solid #E1E1E1',
+              background: '#FAFAFA',
               display: 'flex',
               gap: '16px',
               alignItems: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '13px', color: '#5a6c7d', whiteSpace: 'nowrap' }}>修理区分</label>
+                <label style={{ fontSize: '13px', color: '#8A8A8A', whiteSpace: 'nowrap' }}>修理区分</label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
@@ -541,7 +541,7 @@ function RepairRequestsContent() {
 
               <div style={{ flex: 1 }} />
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#5a6c7d', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#8A8A8A', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={alternativeUnreturnedOnly}
@@ -578,17 +578,17 @@ function RepairRequestsContent() {
       {/* ========== 修理申請 内容確認モーダル ========== */}
       {showDetailModal && selectedApplication && (() => {
         const modalThStyle: React.CSSProperties = {
-          padding: '10px 16px', background: '#f9fafb', border: '1px solid #dee2e6',
-          fontWeight: 600, fontSize: 13, color: '#1f2937', textAlign: 'left', whiteSpace: 'nowrap', width: '120px',
+          padding: '10px 16px', background: '#FAFAFA', border: '1px solid #E1E1E1',
+          fontWeight: 600, fontSize: 13, color: '#4A4A4A', textAlign: 'left', whiteSpace: 'nowrap', width: '120px',
         };
         const modalTdStyle: React.CSSProperties = {
-          padding: '10px 16px', border: '1px solid #dee2e6', fontSize: 13, color: '#374151',
+          padding: '10px 16px', border: '1px solid #E1E1E1', fontSize: 13, color: '#4A4A4A',
         };
         const sectionStyle: React.CSSProperties = {
           borderRadius: 8, padding: '20px 24px', marginBottom: 16,
         };
         const sectionTitleStyle: React.CSSProperties = {
-          fontSize: 14, fontWeight: 700, color: '#1f2937', marginBottom: 12,
+          fontSize: 14, fontWeight: 700, color: '#4A4A4A', marginBottom: 12,
           borderBottom: '2px solid #d1d5db', paddingBottom: 6,
         };
         return (
@@ -689,17 +689,17 @@ function RepairRequestsContent() {
               </div>
 
               {/* フッター */}
-              <div style={{ padding: '16px 24px', background: '#f8f9fa', borderTop: '1px solid #dee2e6' }}>
+              <div style={{ padding: '16px 24px', background: '#FAFAFA', borderTop: '1px solid #E1E1E1' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     onClick={() => window.print()}
-                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600 }}
+                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
                   >
                     印刷
                   </button>
                   <button
                     onClick={() => { setShowDetailModal(false); setSelectedApplication(null); }}
-                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600 }}
+                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
                   >
                     キャンセル
                   </button>
@@ -717,7 +717,7 @@ function RepairRequestsContent() {
                     外部依頼
                   </button>
                 </div>
-                <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: '#6b7280', background: '#f3f4f6', padding: '4px 12px', borderRadius: 4, border: '1px solid #e5e7eb' }}>
+                <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: '#8A8A8A', background: '#F1F1F1', padding: '4px 12px', borderRadius: 4, border: '1px solid #E1E1E1' }}>
                   上記の修理区分でタスク管理リストに追加されます
                 </div>
               </div>

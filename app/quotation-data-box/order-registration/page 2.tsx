@@ -55,16 +55,16 @@ const ORDER_PROGRESS_STEPS = [
   { step: 6, label: '発注基本登録' },
 ];
 
-// 共通テーブルスタイル（#27ae60）
+// 共通テーブルスタイル（#008C1D）
 const thStyle: React.CSSProperties = {
-  background: '#27ae60',
+  background: '#008C1D',
   color: 'white',
   padding: '10px 12px',
   fontSize: '13px',
   fontWeight: 'bold',
   textAlign: 'left',
   width: '120px',
-  border: '1px solid #27ae60',
+  border: '1px solid #008C1D',
   whiteSpace: 'nowrap',
 };
 
@@ -76,7 +76,7 @@ const thStyleTop: React.CSSProperties = {
 const tdStyle: React.CSSProperties = {
   background: 'white',
   padding: '10px 12px',
-  border: '1px solid #27ae60',
+  border: '1px solid #008C1D',
 };
 
 const inputStyle: React.CSSProperties = {
@@ -216,7 +216,7 @@ export default function OrderRegistrationPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#FAFAFA' }}>
       {/* SearchParams読み取り */}
       <Suspense fallback={null}>
         <RfqGroupIdReader onRead={setRfqGroupId} />
@@ -231,11 +231,11 @@ export default function OrderRegistrationPage() {
       />
 
       {/* タブ */}
-      <div style={{ display: 'flex', gap: '0', background: '#f8f9fa', paddingLeft: '16px', paddingTop: '8px' }}>
+      <div style={{ display: 'flex', gap: '0', background: '#FAFAFA', paddingLeft: '16px', paddingTop: '8px' }}>
         <div
           style={{
             padding: '10px 20px',
-            background: '#27ae60',
+            background: '#008C1D',
             color: 'white',
             fontSize: '13px',
             fontWeight: 'bold',
@@ -286,28 +286,28 @@ export default function OrderRegistrationPage() {
                 <div style={{ display: 'flex', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ flex: 1, padding: '10px 14px', borderRight: '1px solid #ccc' }}>
                     <div style={{ fontSize: '10px', color: '#888', marginBottom: '2px' }}>見積依頼No.</div>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937' }}>{rfqGroup.rfqNo}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A' }}>{rfqGroup.rfqNo}</div>
                   </div>
                   <div style={{ flex: 2, padding: '10px 14px', borderRight: '1px solid #ccc' }}>
                     <div style={{ fontSize: '10px', color: '#888', marginBottom: '2px' }}>見積グループ名称</div>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937' }}>{rfqGroup.groupName}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A' }}>{rfqGroup.groupName}</div>
                   </div>
                   <div style={{ flex: 1, padding: '10px 14px' }}>
                     <div style={{ fontSize: '10px', color: '#888', marginBottom: '2px' }}>発注先</div>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937' }}>{rfqGroup.vendorName || '-'}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A' }}>{rfqGroup.vendorName || '-'}</div>
                   </div>
                 </div>
 
                 {/* フォームテーブル + プレビューボタン */}
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <table style={{ flex: 1, borderCollapse: 'collapse', border: '1px solid #27ae60' }}>
+                  <table style={{ flex: 1, borderCollapse: 'collapse', border: '1px solid #008C1D' }}>
                     <tbody>
                       {/* 申請者 */}
                       <tr>
                         <th style={thStyle}>申請者</th>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ padding: '6px 12px', background: '#f5f5f5', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', color: '#333' }}>
+                            <span style={{ padding: '6px 12px', background: '#FAFAFA', border: '1px solid #ddd', borderRadius: '4px', fontSize: '13px', color: '#333' }}>
                               {rfqGroup.email || user?.email || 'user@company.com'}
                             </span>
                             <span style={{ fontSize: '13px', color: '#333' }}>
@@ -344,7 +344,7 @@ export default function OrderRegistrationPage() {
                         <th style={thStyle}>添付ファイル</th>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <label style={{ padding: '6px 16px', background: '#f5f5f5', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                            <label style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
                               ファイルの選択
                               <input type="file" onChange={handleFileChange} style={{ display: 'none' }} />
                             </label>
@@ -373,7 +373,7 @@ export default function OrderRegistrationPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '160px' }}>
                     <button
                       onClick={() => alert('プレビューを出力します（実装予定）')}
-                      style={{ padding: '14px 20px', background: 'white', color: '#1f2937', border: '2px solid #1f2937', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                      style={{ padding: '14px 20px', background: 'white', color: '#4A4A4A', border: '2px solid #4A4A4A', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
                     >
                       プレビュー⇒出力
                     </button>
@@ -382,11 +382,11 @@ export default function OrderRegistrationPage() {
 
                 {/* フッターボタン */}
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', alignItems: 'center', marginTop: '20px' }}>
-                  <button onClick={handleBackToList} style={{ padding: '10px 20px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                  <button onClick={handleBackToList} style={{ padding: '10px 20px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                     キャンセル
                   </button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button onClick={() => alert('SHIPへ依頼処理（実装予定）')} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                    <button onClick={() => alert('SHIPへ依頼処理（実装予定）')} style={{ padding: '10px 20px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                       SHIPへ依頼
                     </button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -394,7 +394,7 @@ export default function OrderRegistrationPage() {
                       <input type="date" value={registrationDeadline} onChange={(e) => setRegistrationDeadline(e.target.value)} style={inputStyle} />
                     </div>
                   </div>
-                  <button onClick={() => alert('Excel取込処理（実装予定）')} style={{ padding: '10px 20px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                  <button onClick={() => alert('Excel取込処理（実装予定）')} style={{ padding: '10px 20px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                     Excel取込
                   </button>
                   <button onClick={handleGoToStep2} style={{ padding: '10px 20px', background: '#e67e22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
@@ -442,7 +442,7 @@ export default function OrderRegistrationPage() {
                 }}>
                   <div style={{
                     padding: '8px 16px',
-                    background: '#6c757d',
+                    background: '#8A8A8A',
                     color: 'white',
                     fontSize: '12px',
                     fontWeight: 'bold',
@@ -453,22 +453,22 @@ export default function OrderRegistrationPage() {
                     <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
                       <tbody>
                         <tr>
-                          <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '120px', border: '1px solid #dee2e6' }}>見積依頼No.</td>
-                          <td style={{ padding: '4px 8px', border: '1px solid #dee2e6', width: '150px' }}>{rfqGroup.rfqNo}</td>
-                          <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '120px', border: '1px solid #dee2e6' }}>見積G名称</td>
-                          <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{rfqGroup.groupName}</td>
+                          <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '120px', border: '1px solid #E1E1E1' }}>見積依頼No.</td>
+                          <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1', width: '150px' }}>{rfqGroup.rfqNo}</td>
+                          <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '120px', border: '1px solid #E1E1E1' }}>見積G名称</td>
+                          <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{rfqGroup.groupName}</td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>発注先</td>
-                          <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{rfqGroup.vendorName || '-'}</td>
-                          <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>検収書</td>
-                          <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{inspectionCertType}</td>
+                          <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>発注先</td>
+                          <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{rfqGroup.vendorName || '-'}</td>
+                          <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>検収書</td>
+                          <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{inspectionCertType}</td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>保存形式</td>
-                          <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{SAVE_FORMAT_MAP[saveFormat]}</td>
-                          <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>納品日</td>
-                          <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{deliveryDate || '未設定'}</td>
+                          <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>保存形式</td>
+                          <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{SAVE_FORMAT_MAP[saveFormat]}</td>
+                          <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>納品日</td>
+                          <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{deliveryDate || '未設定'}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -483,17 +483,17 @@ export default function OrderRegistrationPage() {
                   <div style={{ padding: '16px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: '10px 20px', alignItems: 'center' }}>
                       {/* 発注形態 */}
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937', whiteSpace: 'nowrap' }}>発注形態</label>
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', whiteSpace: 'nowrap' }}>発注形態</label>
                       <select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)} style={{ ...inputStyle, minWidth: '200px' }}>
                         {ORDER_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
                       </select>
 
                       {/* 納期 */}
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937', whiteSpace: 'nowrap' }}>納期</label>
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', whiteSpace: 'nowrap' }}>納期</label>
                       <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} style={inputStyle} />
 
                       {/* 支払条件 */}
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937', whiteSpace: 'nowrap' }}>支払条件</label>
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', whiteSpace: 'nowrap' }}>支払条件</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value as PaymentTerms)} style={{ ...inputStyle, minWidth: '180px' }}>
                           {PAYMENT_TERMS.map((t) => (<option key={t} value={t}>{t}</option>))}
@@ -503,16 +503,16 @@ export default function OrderRegistrationPage() {
                       </div>
 
                       {/* リース会社 */}
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#1f2937' : '#bbb', whiteSpace: 'nowrap' }}>リース会社</label>
-                      <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#f5f5f5' }} />
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース会社</label>
+                      <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
 
                       {/* リース開始日 / 年数 */}
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#1f2937' : '#bbb', whiteSpace: 'nowrap' }}>リース開始日</label>
+                      <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース開始日</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#f5f5f5' }} />
-                        <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#1f2937' : '#bbb', whiteSpace: 'nowrap' }}>年数</label>
+                        <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                        <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>年数</label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#f5f5f5' }} />
+                          <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
                           <span style={{ fontSize: '13px', color: isLeaseType ? '#333' : '#bbb' }}>年</span>
                         </div>
                       </div>
@@ -521,9 +521,9 @@ export default function OrderRegistrationPage() {
                 </div>
 
                 {/* 管理情報欄 */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 14px', background: '#f0f0f0', borderRadius: '4px', marginBottom: '16px', border: '1px solid #dee2e6' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 14px', background: '#f0f0f0', borderRadius: '4px', marginBottom: '16px', border: '1px solid #E1E1E1' }}>
                   <span style={{ fontSize: '13px', color: '#555', marginRight: '8px' }}>合計金額（税込）:</span>
-                  <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#1f2937' }}>
+                  <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#4A4A4A' }}>
                     ¥{totalAmount.toLocaleString()}
                   </span>
                 </div>
@@ -532,17 +532,17 @@ export default function OrderRegistrationPage() {
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
                   {/* 左注釈 */}
                   <div style={{ minWidth: '200px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f2937', marginBottom: '6px' }}>■納入期限</div>
-                    <div style={{ fontSize: '11px', color: '#e74c3c', lineHeight: '1.6' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '6px' }}>■納入期限</div>
+                    <div style={{ fontSize: '11px', color: '#DA0000', lineHeight: '1.6' }}>
                       発注時に支払い条件と納期は確定
                     </div>
                   </div>
 
                   {/* テーブル */}
-                  <div style={{ flex: 1, border: '1px solid #dee2e6', borderRadius: '4px', overflow: 'auto', maxHeight: '320px' }}>
+                  <div style={{ flex: 1, border: '1px solid #E1E1E1', borderRadius: '4px', overflow: 'auto', maxHeight: '320px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                       <thead>
-                        <tr style={{ background: '#27ae60', color: 'white', position: 'sticky', top: 0 }}>
+                        <tr style={{ background: '#008C1D', color: 'white', position: 'sticky', top: 0 }}>
                           <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #3d5a80', whiteSpace: 'nowrap', fontWeight: 'bold' }}>No</th>
                           <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #3d5a80', whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
                           <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #3d5a80', whiteSpace: 'nowrap', fontWeight: 'bold' }}>メーカー</th>
@@ -566,13 +566,13 @@ export default function OrderRegistrationPage() {
                                 type="date"
                                 value={itemDeliveryDates[item.id] || ''}
                                 onChange={(e) => setItemDeliveryDates((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                                style={{ ...inputStyle, width: '140px', fontSize: '11px', padding: '3px 6px', color: itemDeliveryDates[item.id] ? '#1f2937' : '#aaa' }}
+                                style={{ ...inputStyle, width: '140px', fontSize: '11px', padding: '3px 6px', color: itemDeliveryDates[item.id] ? '#4A4A4A' : '#aaa' }}
                               />
                             </td>
                           </tr>
                         ))}
                         {targetQuotationItems.length === 0 && (
-                          <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#7f8c8d' }}>対象の見積明細がありません</td></tr>
+                          <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A' }}>対象の見積明細がありません</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -585,7 +585,7 @@ export default function OrderRegistrationPage() {
                     onClick={() => setInternalStep(1)}
                     style={{
                       padding: '12px 28px',
-                      background: '#95a5a6',
+                      background: '#8A8A8A',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -600,7 +600,7 @@ export default function OrderRegistrationPage() {
                     onClick={handleSubmitOrder}
                     style={{
                       padding: '12px 28px',
-                      background: '#27ae60',
+                      background: '#008C1D',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',

@@ -201,7 +201,7 @@ export function HospitalFacilityFormModal({
     fontSize: isMobile ? '13px' : '14px',
     fontWeight: 600 as const,
     marginBottom: '6px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
   };
 
   const sectionGrid = {
@@ -212,7 +212,7 @@ export function HospitalFacilityFormModal({
 
   const subInfoStyle = {
     fontSize: '12px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     marginTop: '4px',
   };
 
@@ -244,7 +244,7 @@ export function HospitalFacilityFormModal({
         {/* Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
+            background: 'linear-gradient(135deg, #4527A0, #5E3A93)',
             color: 'white',
             padding: isMobile ? '16px' : '20px',
             borderRadius: '12px 12px 0 0',
@@ -266,7 +266,7 @@ export function HospitalFacilityFormModal({
                 color: '#546e7a',
                 marginBottom: '16px',
                 paddingBottom: '8px',
-                borderBottom: '2px solid #e0e0e0',
+                borderBottom: '2px solid #E1E1E1',
               }}
             >
               共通マスタ
@@ -413,7 +413,7 @@ export function HospitalFacilityFormModal({
 
             {/* 補助情報: 階 */}
             <div style={{ marginTop: '12px' }}>
-              <label style={{ ...labelStyle, fontSize: '12px', color: '#7f8c8d' }}>階（補助情報）</label>
+              <label style={{ ...labelStyle, fontSize: '12px', color: '#8A8A8A' }}>階（補助情報）</label>
               <input
                 type="text"
                 value={formData.oldFloor}
@@ -431,7 +431,7 @@ export function HospitalFacilityFormModal({
               style={{
                 fontSize: isMobile ? '14px' : '16px',
                 fontWeight: 600,
-                color: '#8e44ad',
+                color: '#4527A0',
                 marginBottom: '16px',
                 paddingBottom: '8px',
                 borderBottom: '2px solid #e8daef',
@@ -442,7 +442,7 @@ export function HospitalFacilityFormModal({
 
             <div style={sectionGrid}>
               <div>
-                <label style={{ ...labelStyle, color: '#8e44ad' }}>棟</label>
+                <label style={{ ...labelStyle, color: '#4527A0' }}>棟</label>
                 <input
                   type="text"
                   value={formData.newBuilding}
@@ -452,7 +452,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#8e44ad' }}>部門</label>
+                <label style={{ ...labelStyle, color: '#4527A0' }}>部門</label>
                 <input
                   type="text"
                   value={formData.newDepartment}
@@ -462,7 +462,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#8e44ad' }}>部署</label>
+                <label style={{ ...labelStyle, color: '#4527A0' }}>部署</label>
                 <input
                   type="text"
                   value={formData.newSection}
@@ -472,7 +472,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#8e44ad' }}>諸室</label>
+                <label style={{ ...labelStyle, color: '#4527A0' }}>諸室</label>
                 <input
                   type="text"
                   value={formData.newRoomName}
@@ -486,7 +486,7 @@ export function HospitalFacilityFormModal({
             {/* 補助情報 */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '16px', marginTop: '12px' }}>
               <div>
-                <label style={{ ...labelStyle, fontSize: '12px', color: '#7f8c8d' }}>階（補助情報）</label>
+                <label style={{ ...labelStyle, fontSize: '12px', color: '#8A8A8A' }}>階（補助情報）</label>
                 <input
                   type="text"
                   value={formData.newFloor}
@@ -496,7 +496,7 @@ export function HospitalFacilityFormModal({
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, fontSize: '12px', color: '#7f8c8d' }}>室数（補助情報）</label>
+                <label style={{ ...labelStyle, fontSize: '12px', color: '#8A8A8A' }}>室数（補助情報）</label>
                 <input
                   type="text"
                   value={formData.newRoomCount}
@@ -509,8 +509,8 @@ export function HospitalFacilityFormModal({
             <div style={subInfoStyle}>※ テーブル非表示項目（データは保持されます）</div>
 
             {/* SHIP連携（新）補助情報 */}
-            <div style={{ marginTop: '16px', padding: '12px', background: '#fafafa', borderRadius: '6px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#7f8c8d', marginBottom: '12px' }}>SHIP連携（新）- 補助情報</div>
+            <div style={{ marginTop: '16px', padding: '12px', background: '#FAFAFA', borderRadius: '6px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#8A8A8A', marginBottom: '12px' }}>SHIP連携（新）- 補助情報</div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '16px' }}>
                 <div>
                   <SearchableSelect
@@ -547,7 +547,7 @@ export function HospitalFacilityFormModal({
               <div style={subInfoStyle}>※ テーブル非表示項目（データは保持されます）</div>
             </div>
 
-            <p style={{ marginTop: '8px', fontSize: '12px', color: '#7f8c8d' }}>
+            <p style={{ marginTop: '8px', fontSize: '12px', color: '#8A8A8A' }}>
               ※ 新居の設置場所は後から入力できます。全て入力するとステータスが「マッピング済」になります。
             </p>
           </div>
@@ -560,7 +560,7 @@ export function HospitalFacilityFormModal({
               style={{
                 padding: isMobile ? '10px 20px' : '12px 24px',
                 background: '#ecf0f1',
-                color: '#2c3e50',
+                color: '#4A4A4A',
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: isMobile ? '14px' : '15px',
@@ -574,7 +574,7 @@ export function HospitalFacilityFormModal({
               type="submit"
               style={{
                 padding: isMobile ? '10px 20px' : '12px 24px',
-                background: 'linear-gradient(135deg, #8e44ad, #9b59b6)',
+                background: 'linear-gradient(135deg, #4527A0, #5E3A93)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',

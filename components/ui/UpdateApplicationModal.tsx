@@ -412,7 +412,7 @@ export function UpdateApplicationModal({
       border: '1px solid #ddd',
       borderRadius: '4px',
       fontSize: '14px',
-      background: '#f5f5f5',
+      background: '#FAFAFA',
       color: '#666',
     },
     select: {
@@ -446,10 +446,10 @@ export function UpdateApplicationModal({
     },
     footer: {
       padding: '16px 24px',
-      borderTop: '1px solid #dee2e6',
+      borderTop: '1px solid #E1E1E1',
       display: 'flex',
       justifyContent: 'center',
-      background: '#f8f9fa',
+      background: '#FAFAFA',
     },
     confirmButton: {
       padding: '12px 48px',
@@ -477,7 +477,7 @@ export function UpdateApplicationModal({
         {isConfirmView ? (
           /* 確認画面 */
           <div>
-            <div style={{ background: '#fff3e0', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+            <div style={{ background: '#FDF1E5', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
               <span style={{ color: '#e65100', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
@@ -487,27 +487,27 @@ export function UpdateApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>管理部署</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>管理部署</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{managementDepartment}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>申請者</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>申請者</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicantName}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>申請日</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>申請日</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{applicationDate}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>優先順位</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>優先順位</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{priority}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部門</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置部門</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationDepartment || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置部署</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationSection || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>設置室名</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>設置室名</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{installationRoomName || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>希望納期</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{desiredDeliveryYear}年{desiredDeliveryMonth}月</td>
                   </tr>
                 </tbody>
@@ -520,13 +520,13 @@ export function UpdateApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>品目名</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.item || assets[0]?.name || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>メーカー</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>メーカー</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.maker || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>型式</th>
                     <td colSpan={3} style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{assets[0]?.model || '-'}</td>
                   </tr>
                 </tbody>
@@ -535,7 +535,7 @@ export function UpdateApplicationModal({
 
             {/* 更新対象機器 */}
             <div style={styles.section}>
-              <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>更新対象機器</div>
+              <div style={{ ...styles.sectionTitle, color: '#A30000', borderBottomColor: '#A30000' }}>更新対象機器</div>
               <div style={{ background: '#ffebee', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '13px' }}>
                   <div><span style={{ color: '#666' }}>QRコード:</span> {assets[0]?.qrCode || '-'}</div>
@@ -550,7 +550,7 @@ export function UpdateApplicationModal({
               <div style={styles.sectionTitle}>要望機器（新規購入希望）</div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
+                  <tr style={{ background: '#FAFAFA' }}>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
@@ -580,9 +580,9 @@ export function UpdateApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>用途</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{usagePurpose || '-'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>症例数</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>症例数</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{caseCount ? `${caseCount} ${caseCountUnit}` : '-'}</td>
                   </tr>
                 </tbody>
@@ -593,7 +593,7 @@ export function UpdateApplicationModal({
             {comment && (
               <div style={styles.section}>
                 <div style={styles.sectionTitle}>コメント（必要理由 他）</div>
-                <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+                <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
                   {comment}
                 </div>
               </div>
@@ -617,15 +617,15 @@ export function UpdateApplicationModal({
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionStatus === 'wired' ? '有線接続' : currentConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left', width: '150px' }}>接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{currentConnectionDestination || '-'}</td>
                   </tr>
                   <tr>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続要望</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#f8f9fa', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
+                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #ddd', textAlign: 'left' }}>要望機器の接続先</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #ddd' }}>{requestConnectionDestination || '-'}</td>
                   </tr>
                 </tbody>
@@ -653,7 +653,7 @@ export function UpdateApplicationModal({
               </div>
               <div></div>
               <div style={styles.formItem}>
-                <label style={styles.label}>設置部門 <span style={{ color: '#e74c3c' }}>*</span></label>
+                <label style={styles.label}>設置部門 <span style={{ color: '#DA0000' }}>*</span></label>
                 <SearchableSelect
                   value={installationDepartment}
                   onChange={setInstallationDepartment}
@@ -662,7 +662,7 @@ export function UpdateApplicationModal({
                 />
               </div>
               <div style={styles.formItem}>
-                <label style={styles.label}>設置部署 <span style={{ color: '#e74c3c' }}>*</span></label>
+                <label style={styles.label}>設置部署 <span style={{ color: '#DA0000' }}>*</span></label>
                 <SearchableSelect
                   value={installationSection}
                   onChange={setInstallationSection}
@@ -718,7 +718,7 @@ export function UpdateApplicationModal({
           {/* 申請品目 */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>申請品目</div>
-            <div style={{ background: '#fff3e0', border: '1px solid #ffcc80', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ background: '#FDF1E5', border: '1px solid #ffcc80', borderRadius: '8px', padding: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
                 <div>
                   <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>品目名</div>
@@ -741,7 +741,7 @@ export function UpdateApplicationModal({
 
           {/* 更新対象機器 */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>
+            <div style={{ ...styles.sectionTitle, color: '#A30000', borderBottomColor: '#A30000' }}>
               更新対象機器
             </div>
             <div style={{ background: '#fff8f8', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
@@ -786,7 +786,7 @@ export function UpdateApplicationModal({
             <div style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
+                  <tr style={{ background: '#FAFAFA' }}>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '80px' }}>希望順</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, width: '50px' }}>順序</th>
                     <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left', fontWeight: 600 }}>品目</th>
@@ -807,7 +807,7 @@ export function UpdateApplicationModal({
                     </tr>
                   ) : (
                     desiredEquipments.map((equipment, index) => (
-                      <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#fafafa' }}>
+                      <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
                         <td style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>
                           {getHopeLabel(index)}
                         </td>
@@ -818,7 +818,7 @@ export function UpdateApplicationModal({
                               disabled={index === 0}
                               style={{
                                 padding: '2px 6px',
-                                background: index === 0 ? '#ccc' : '#6c757d',
+                                background: index === 0 ? '#ccc' : '#8A8A8A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '2px',
@@ -834,7 +834,7 @@ export function UpdateApplicationModal({
                               disabled={index === desiredEquipments.length - 1}
                               style={{
                                 padding: '2px 6px',
-                                background: index === desiredEquipments.length - 1 ? '#ccc' : '#6c757d',
+                                background: index === desiredEquipments.length - 1 ? '#ccc' : '#8A8A8A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '2px',
@@ -955,7 +955,7 @@ export function UpdateApplicationModal({
                             onClick={() => handleRemoveEquipment(index)}
                             style={{
                               padding: '4px 8px',
-                              background: '#e74c3c',
+                              background: '#DA0000',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -1073,7 +1073,7 @@ export function UpdateApplicationModal({
                       alignItems: 'center',
                       gap: '6px',
                       padding: '4px 10px',
-                      background: '#fff3e0',
+                      background: '#FDF1E5',
                       borderRadius: '4px',
                       fontSize: '12px',
                     }}
@@ -1081,7 +1081,7 @@ export function UpdateApplicationModal({
                     {file.name}
                     <button
                       onClick={() => handleRemoveFile(index)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e74c3c' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DA0000' }}
                     >
                       ×
                     </button>
@@ -1089,7 +1089,7 @@ export function UpdateApplicationModal({
                 ))}
               </div>
             )}
-            <div style={{ fontSize: '12px', color: '#e74c3c', marginTop: '8px' }}>
+            <div style={{ fontSize: '12px', color: '#DA0000', marginTop: '8px' }}>
               見積書・修理不能証明など手持ちの書類を添付してください
             </div>
           </div>
@@ -1179,8 +1179,8 @@ export function UpdateApplicationModal({
 
           {/* 更新対象機器の確認 */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#c0392b', borderBottomColor: '#c0392b' }}>
-              更新対象機器の確認 <span style={{ color: '#e74c3c', fontSize: '12px' }}>*</span>
+            <div style={{ ...styles.sectionTitle, color: '#A30000', borderBottomColor: '#A30000' }}>
+              更新対象機器の確認 <span style={{ color: '#DA0000', fontSize: '12px' }}>*</span>
             </div>
             <div style={{
               padding: '16px',
@@ -1282,7 +1282,7 @@ export function UpdateApplicationModal({
                 </label>
               </div>
             </div>
-            <div style={{ marginTop: '8px', padding: '12px', background: '#f5f5f5', borderRadius: '4px', fontSize: '12px', color: '#666', lineHeight: '1.6' }}>
+            <div style={{ marginTop: '8px', padding: '12px', background: '#FAFAFA', borderRadius: '4px', fontSize: '12px', color: '#666', lineHeight: '1.6' }}>
               廃棄・移動にチェックした上記「更新対象機器」に記載された「{assets[0]?.name}」は、本更新申請の承認後に申請処理されます。
               事務処理が完了すると、当該資産は資産台帳から除外・移動されます。
             </div>

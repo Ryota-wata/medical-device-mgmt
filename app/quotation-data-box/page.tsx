@@ -24,7 +24,7 @@ export default function QuotationDataBoxRedirect() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100dvh',
-      background: '#f5f5f5'
+      background: '#FAFAFA'
     }}>
       <p>リダイレクト中...</p>
     </div>

@@ -90,7 +90,7 @@ export function SearchableSelect({
           display: 'block',
           fontSize: isMobile ? '13px' : '14px',
           fontWeight: 600,
-          color: '#2c3e50',
+          color: '#4A4A4A',
           marginBottom: isMobile ? '6px' : '8px'
         }}>
           {label}
@@ -114,7 +114,7 @@ export function SearchableSelect({
             border: '1px solid #d0d0d0',
             borderRadius: '6px',
             fontSize: '14px',
-            background: disabled ? '#f8f9fa' : 'white',
+            background: disabled ? '#FAFAFA' : 'white',
             cursor: disabled ? 'not-allowed' : 'text',
             boxSizing: 'border-box'
           }}
@@ -126,7 +126,7 @@ export function SearchableSelect({
             top: '50%',
             transform: 'translateY(-50%)',
             pointerEvents: 'none',
-            color: '#7f8c8d',
+            color: '#8A8A8A',
             fontSize: '12px'
           }}
         >
@@ -163,7 +163,7 @@ export function SearchableSelect({
               transition: 'background 0.15s',
               whiteSpace: 'nowrap'
             }}
-            onMouseEnter={(e) => { if (value !== '') e.currentTarget.style.background = '#f8f9fa'; }}
+            onMouseEnter={(e) => { if (value !== '') e.currentTarget.style.background = '#FAFAFA'; }}
             onMouseLeave={(e) => { if (value !== '') e.currentTarget.style.background = 'white'; }}
           >
             すべて選択
@@ -176,7 +176,7 @@ export function SearchableSelect({
                 padding: isMobile ? '10px 12px' : '12px 14px',
                 cursor: 'pointer',
                 fontSize: isMobile ? '13px' : '14px',
-                color: '#2c3e50',
+                color: '#4A4A4A',
                 background: option === value ? '#e8f4f8' : 'white',
                 borderBottom: index < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
                 transition: 'background 0.15s',
@@ -184,7 +184,7 @@ export function SearchableSelect({
               }}
               onMouseEnter={(e) => {
                 if (option !== value) {
-                  e.currentTarget.style.background = '#f8f9fa';
+                  e.currentTarget.style.background = '#FAFAFA';
                 }
               }}
               onMouseLeave={(e) => {
@@ -212,7 +212,7 @@ export function SearchableSelect({
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           padding: isMobile ? '12px' : '16px',
           textAlign: 'center',
-          color: '#7f8c8d',
+          color: '#8A8A8A',
           fontSize: isMobile ? '13px' : '14px',
           zIndex: 9999
         }}>

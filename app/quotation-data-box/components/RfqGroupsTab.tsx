@@ -20,7 +20,7 @@ interface RfqGroupsTabProps {
 
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #495057',
+  border: '1px solid #4A4A4A',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -29,7 +29,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #6c757d',
+  border: '1px solid #8A8A8A',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -44,24 +44,24 @@ const tdStyle: React.CSSProperties = {
 
 // ステータス別のバッジ色
 const STATUS_BADGE_COLORS: Record<RfqGroupStatus, string> = {
-  '見積依頼': '#95a5a6',
-  '見積依頼済': '#3498db',
-  '見積DB登録済': '#2980b9',
+  '見積依頼': '#8A8A8A',
+  '見積依頼済': '#0092E6',
+  '見積DB登録済': '#0073B8',
   '見積登録依頼中': '#f39c12',
-  '発注用見積依頼済': '#8e44ad',
-  '発注見積登録済': '#9b59b6',
+  '発注用見積依頼済': '#4527A0',
+  '発注見積登録済': '#5E3A93',
   '発注済': '#e67e22',
-  '納期確定': '#27ae60',
+  '納期確定': '#008C1D',
   '検収済': '#16a085',
-  '完了': '#7f8c8d',
-  '申請を見送る': '#e74c3c',
+  '完了': '#8A8A8A',
+  '申請を見送る': '#DA0000',
   // 廃棄ワークフロー
   '廃棄承認待ち': '#f39c12',
-  '廃棄承認済み': '#27ae60',
+  '廃棄承認済み': '#008C1D',
   '廃棄完了': '#7b1fa2',
   // 移設ワークフロー
   '移動承認待ち': '#f39c12',
-  '移動承認済み': '#27ae60',
+  '移動承認済み': '#008C1D',
   '移動完了': '#3f51b5',
 };
 
@@ -88,7 +88,7 @@ const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
 };
 
 // グルーピング色（同一rfqNoが複数ある場合の左ボーダー）
-const GROUP_BORDER_COLORS = ['#3498db', '#e67e22', '#27ae60', '#8e44ad', '#e74c3c', '#16a085'];
+const GROUP_BORDER_COLORS = ['#0092E6', '#e67e22', '#008C1D', '#4527A0', '#DA0000', '#16a085'];
 
 export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   rfqGroups,
@@ -149,7 +149,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
     return result;
   }, [rfqGroups]);
   const getStatusBadge = (status: RfqGroupStatus) => {
-    const bg = STATUS_BADGE_COLORS[status] || '#95a5a6';
+    const bg = STATUS_BADGE_COLORS[status] || '#8A8A8A';
     return (
       <span style={{
         padding: '4px 12px',
@@ -184,7 +184,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 見積依頼 → 見積依頼（送信） → 見積依頼済へ
       case '見積依頼':
         buttons.push(
-          <button key="rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#3498db' }}>
+          <button key="rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#0092E6' }}>
             見積依頼
           </button>
         );
@@ -192,7 +192,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 見積依頼済 → 見積登録
       case '見積依頼済':
         buttons.push(
-          <button key="quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#3498db' }}>
+          <button key="quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#0092E6' }}>
             見積登録
           </button>
         );
@@ -201,7 +201,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '見積DB登録済':
         if (onDelete) {
           buttons.push(
-            <button key="delete" onClick={() => onDelete(group.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+            <button key="delete" onClick={() => onDelete(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
               削除
             </button>
           );
@@ -213,7 +213,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
         break;
       case '発注用見積依頼済':
         buttons.push(
-          <button key="order-rfq-reg" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#8e44ad' }}>
+          <button key="order-rfq-reg" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#4527A0' }}>
             発注見積登録
           </button>
         );
@@ -229,7 +229,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ④納品日登録
       case '発注済':
         buttons.push(
-          <button key="delivery" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
+          <button key="delivery" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
             納品日登録
           </button>
         );
@@ -245,7 +245,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ⑥資産登録
       case '検収済':
         buttons.push(
-          <button key="asset" onClick={() => onRegisterAsset(group.id)} style={{ ...btnBase, background: '#2c3e50' }}>
+          <button key="asset" onClick={() => onRegisterAsset(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             資産登録
           </button>
         );
@@ -259,14 +259,14 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '廃棄承認待ち':
         if (onApprove) {
           buttons.push(
-            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
+            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
               承認
             </button>
           );
         }
         if (onReject) {
           buttons.push(
-            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
               却下
             </button>
           );
@@ -288,14 +288,14 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '移動承認待ち':
         if (onApprove) {
           buttons.push(
-            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#27ae60' }}>
+            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
               承認
             </button>
           );
         }
         if (onReject) {
           buttons.push(
-            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#e74c3c' }}>
+            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
               却下
             </button>
           );
@@ -315,7 +315,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
     }
 
     if (buttons.length === 0) {
-      return <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>;
+      return <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>;
     }
     return <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>{buttons}</div>;
   };
@@ -334,7 +334,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
           </tr>
           {/* サブカラムヘッダー行 */}
-          <tr style={{ background: '#495057', color: 'white' }}>
+          <tr style={{ background: '#4A4A4A', color: 'white' }}>
             <th style={thSubStyle}>業者名</th>
             <th style={thSubStyle}>氏名</th>
             <th style={thSubStyle}>連絡先</th>
@@ -346,7 +346,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
             const groupColor = rfqNoColorMap[group.rfqNo];
             const hasMultiple = rfqNoCountMap[group.rfqNo] > 1;
             return (
-              <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#fafafa', verticalAlign: 'top' }}>
+              <tr key={group.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', verticalAlign: 'top' }}>
                 <td style={{
                   ...tdStyle,
                   fontFamily: 'monospace',
@@ -359,7 +359,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                     {group.rfqNo}
                     {hasMultiple && (
                       <span style={{
-                        background: groupColor || '#95a5a6',
+                        background: groupColor || '#8A8A8A',
                         color: 'white',
                         padding: '1px 6px',
                         borderRadius: '8px',
@@ -382,15 +382,15 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
                 <td style={{ ...tdStyle, verticalAlign: 'top' }}>
                   {deadlineMapping && group[deadlineMapping.field] ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '11px', color: '#5a6c7d', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '11px', color: '#8A8A8A', whiteSpace: 'nowrap' }}>
                         {deadlineMapping.label}
                       </span>
-                      <span style={{ fontSize: '12px', color: '#2c3e50' }} className="tabular-nums">
+                      <span style={{ fontSize: '12px', color: '#4A4A4A' }} className="tabular-nums">
                         {group[deadlineMapping.field]}
                       </span>
                     </div>
                   ) : (
-                    <span style={{ color: '#7f8c8d', fontSize: '12px' }}>-</span>
+                    <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>
                   )}
                 </td>
                 <td style={{ ...tdStyle, textAlign: 'center', verticalAlign: 'top' }}>
@@ -403,7 +403,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       </table>
 
       {rfqGroups.length === 0 && (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#7f8c8d' }}>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
           該当する見積依頼グループがありません
         </div>
       )}

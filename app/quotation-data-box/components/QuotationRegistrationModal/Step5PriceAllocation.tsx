@@ -13,10 +13,10 @@ const ITEM_TYPE_LABELS: Record<QuotationItemType, string> = {
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
-  'A_表紙明細': { bg: '#e3f2fd', text: '#1565c0' },
+  'A_表紙明細': { bg: '#EAF3FB', text: '#1565c0' },
   'B_明細代表': { bg: '#f3e5f5', text: '#7b1fa2' },
-  'C_個体管理品目': { bg: '#e8f5e9', text: '#2e7d32' },
-  'D_付属品': { bg: '#fff3e0', text: '#ef6c00' },
+  'C_個体管理品目': { bg: '#EBF5EE', text: '#2e7d32' },
+  'D_付属品': { bg: '#FDF1E5', text: '#ef6c00' },
   'E_その他役務': { bg: '#fce4ec', text: '#c2185b' },
   'F_値引き': { bg: '#ffebee', text: '#c62828' },
 };
@@ -115,7 +115,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '16px', padding: '14px', background: '#e8f5e9', borderRadius: '6px', border: '1px solid #a5d6a7' }}>
+      <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #a5d6a7' }}>
         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2e7d32', marginBottom: '8px' }}>
           個体登録及び金額案分
         </div>
@@ -130,7 +130,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
       <div style={{ marginBottom: '16px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{
           padding: '8px 16px',
-          background: '#e3f2fd',
+          background: '#EAF3FB',
           border: '1px solid #90caf9',
           borderRadius: '4px',
           fontSize: '13px',
@@ -139,7 +139,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
         </div>
         <div style={{
           padding: '8px 16px',
-          background: '#fff3e0',
+          background: '#FDF1E5',
           border: '1px solid #ffcc80',
           borderRadius: '4px',
           fontSize: '13px',
@@ -148,7 +148,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
         </div>
         <div style={{
           padding: '8px 16px',
-          background: difference === 0 ? '#e8f5e9' : '#ffebee',
+          background: difference === 0 ? '#EBF5EE' : '#ffebee',
           border: `1px solid ${difference === 0 ? '#a5d6a7' : '#ef9a9a'}`,
           borderRadius: '4px',
           fontSize: '13px',
@@ -162,7 +162,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           onClick={handleAutoAllocate}
           style={{
             padding: '8px 16px',
-            background: '#9c27b0',
+            background: '#5E3A93',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -179,16 +179,16 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
       <div style={{ marginBottom: '16px', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
         <div style={{ maxHeight: '400px', overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-            <thead style={{ position: 'sticky', top: 0, background: '#f8f9fa', zIndex: 2 }}>
+            <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 2 }}>
               <tr>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '50px' }}>区分</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #dee2e6', minWidth: '150px' }}>品名</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '50px' }}>原数量</th>
-                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', width: '100px' }}>原価格</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '60px', background: '#fff3e0' }}>案分数量</th>
-                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #dee2e6', width: '120px', background: '#fff3e0' }}>案分金額</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '120px', background: '#e3f2fd' }}>会計区分</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '120px' }}>親品目</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '50px' }}>区分</th>
+                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', minWidth: '150px' }}>品名</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '50px' }}>原数量</th>
+                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '100px' }}>原価格</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '60px', background: '#FDF1E5' }}>案分数量</th>
+                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#FDF1E5' }}>案分金額</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#EAF3FB' }}>会計区分</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px' }}>親品目</th>
               </tr>
             </thead>
             <tbody>
@@ -230,7 +230,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                           textAlign: 'center',
                           border: '1px solid #ddd',
                           borderRadius: '3px',
-                          background: isIndividual ? '#f5f5f5' : 'white',
+                          background: isIndividual ? '#FAFAFA' : 'white',
                         }}
                       />
                     </td>
@@ -300,18 +300,18 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
       </div>
 
       {/* 登録後のアクション */}
-      <div style={{ marginBottom: '16px', padding: '12px', background: '#f5f5f5', borderRadius: '6px' }}>
+      <div style={{ marginBottom: '16px', padding: '12px', background: '#FAFAFA', borderRadius: '6px' }}>
         <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', marginBottom: '8px' }}>
           登録後に実行可能なアクション
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ padding: '4px 8px', background: '#e3f2fd', borderRadius: '3px', fontSize: '11px' }}>
+          <span style={{ padding: '4px 8px', background: '#EAF3FB', borderRadius: '3px', fontSize: '11px' }}>
             テンプレート発行（発注書・検収書）
           </span>
-          <span style={{ padding: '4px 8px', background: '#e8f5e9', borderRadius: '3px', fontSize: '11px' }}>
+          <span style={{ padding: '4px 8px', background: '#EBF5EE', borderRadius: '3px', fontSize: '11px' }}>
             QRコード発行画面へ遷移
           </span>
-          <span style={{ padding: '4px 8px', background: '#fff3e0', borderRadius: '3px', fontSize: '11px' }}>
+          <span style={{ padding: '4px 8px', background: '#FDF1E5', borderRadius: '3px', fontSize: '11px' }}>
             ドキュメント追加登録
           </span>
         </div>
@@ -322,7 +322,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           onClick={onBack}
           style={{
             padding: '10px 24px',
-            background: '#95a5a6',
+            background: '#8A8A8A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -338,7 +338,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           disabled={difference !== 0}
           style={{
             padding: '10px 24px',
-            background: difference !== 0 ? '#bdc3c7' : '#27ae60',
+            background: difference !== 0 ? '#bdc3c7' : '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

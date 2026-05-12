@@ -84,18 +84,18 @@ function QuotationManagementContent() {
   const tabs = useMemo(() => {
     const items: { key: QuotationTabType; label: string; color: string }[] = [];
     if (canViewRemodel) {
-      items.push({ key: 'remodel', label: 'リモデル見積明細', color: '#c0392b' });
+      items.push({ key: 'remodel', label: 'リモデル見積明細', color: '#A30000' });
     }
     if (canViewPurchase) {
-      items.push({ key: 'purchase', label: '購入見積明細', color: '#27ae60' });
+      items.push({ key: 'purchase', label: '購入見積明細', color: '#008C1D' });
     }
     return items;
   }, [canViewRemodel, canViewPurchase]);
 
-  const activeColor = tabs.find(t => t.key === activeTab)?.color || '#3498db';
+  const activeColor = tabs.find(t => t.key === activeTab)?.color || '#0092E6';
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f5f5' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header
         title="見積管理"
         showBackButton={true}
@@ -108,7 +108,7 @@ function QuotationManagementContent() {
         {/* タブ */}
         <div style={{
           background: 'white',
-          borderBottom: '2px solid #dee2e6',
+          borderBottom: '2px solid #E1E1E1',
           display: 'flex',
           borderRadius: '4px 4px 0 0',
         }}>
@@ -135,7 +135,7 @@ function QuotationManagementContent() {
         {/* 絞り込みエリア */}
         <div style={{
           background: 'white',
-          borderBottom: '1px solid #dee2e6',
+          borderBottom: '1px solid #E1E1E1',
           padding: '16px 20px',
           display: 'flex',
           alignItems: 'center',

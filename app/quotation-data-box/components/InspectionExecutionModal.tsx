@@ -239,7 +239,7 @@ export function InspectionExecutionModal({
           <div style={styles.infoRow}>
             <div style={styles.infoItem}>
               <span style={styles.infoLabel}>点検種別</span>
-              <span style={{ ...styles.infoValue, color: '#27ae60' }}>
+              <span style={{ ...styles.infoValue, color: '#008C1D' }}>
                 {mode === 'daily' ? '日常点検' : '定期点検'}
               </span>
             </div>
@@ -416,12 +416,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: {
     padding: '16px',
-    borderBottom: '1px solid #e0e0e0',
+    borderBottom: '1px solid #E1E1E1',
   },
   title: {
     fontSize: '18px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     marginBottom: '16px',
   },
   infoRow: {
@@ -434,17 +434,17 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '4px',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
     padding: '6px 12px',
     borderRadius: '4px',
     fontSize: '13px',
   },
   infoLabel: {
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     fontSize: '12px',
   },
   infoValue: {
-    color: '#2c3e50',
+    color: '#4A4A4A',
     fontWeight: 500,
   },
   input: {
@@ -463,11 +463,11 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: 'white',
   },
   dateDisplay: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#EBF5EE',
     padding: '6px 12px',
     borderRadius: '4px',
     fontSize: '13px',
-    color: '#27ae60',
+    color: '#008C1D',
   },
   tabGroup: {
     display: 'flex',
@@ -483,12 +483,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabActive: {
     padding: '6px 12px',
-    border: '1px solid #27ae60',
+    border: '1px solid #008C1D',
     borderRadius: '4px',
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#EBF5EE',
     cursor: 'pointer',
     fontSize: '13px',
-    color: '#27ae60',
+    color: '#008C1D',
   },
   warning: {
     backgroundColor: '#fff3cd',
@@ -517,11 +517,11 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '16px',
   },
   th: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#EBF5EE',
     padding: '10px 12px',
     textAlign: 'left' as const,
     fontWeight: 500,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     borderBottom: '1px solid #ddd',
   },
   td: {
@@ -545,23 +545,23 @@ const styles: Record<string, React.CSSProperties> = {
   },
   resultButtonActive: {
     padding: '6px 12px',
-    border: '1px solid #27ae60',
+    border: '1px solid #008C1D',
     borderRadius: '4px',
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#EBF5EE',
     cursor: 'pointer',
     fontSize: '12px',
-    color: '#27ae60',
+    color: '#008C1D',
     minWidth: '44px',
     minHeight: '32px',
   },
   resultButtonNg: {
     padding: '6px 12px',
-    border: '1px solid #e74c3c',
+    border: '1px solid #DA0000',
     borderRadius: '4px',
     backgroundColor: '#fdecea',
     cursor: 'pointer',
     fontSize: '12px',
-    color: '#e74c3c',
+    color: '#DA0000',
     minWidth: '44px',
     minHeight: '32px',
   },
@@ -575,7 +575,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   unit: {
     fontSize: '12px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     marginLeft: '4px',
   },
   remarksSection: {
@@ -583,7 +583,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   remarksLabel: {
     fontSize: '13px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     marginBottom: '4px',
   },
   remarksInput: {
@@ -596,7 +596,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   footer: {
     padding: '16px',
-    borderTop: '1px solid #e0e0e0',
+    borderTop: '1px solid #E1E1E1',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -605,7 +605,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   footerLabel: {
     fontSize: '13px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
   },
   footerButtons: {
     display: 'flex',
@@ -614,7 +614,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   passButton: {
     padding: '12px 24px',
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -635,7 +635,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   repairButton: {
     padding: '12px 16px',
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#DA0000',
     color: 'white',
     border: 'none',
     borderRadius: '4px',

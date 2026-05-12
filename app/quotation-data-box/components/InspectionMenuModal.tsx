@@ -528,7 +528,7 @@ export function InspectionMenuModal({
           {/* 新たな点検項目 */}
           <div style={{
             ...styles.section,
-            ...(editingItemIndex >= 0 ? { border: '2px solid #3498db', backgroundColor: '#f8fbff' } : {})
+            ...(editingItemIndex >= 0 ? { border: '2px solid #0092E6', backgroundColor: '#f8fbff' } : {})
           }}>
             <h3 style={styles.sectionTitle}>
               {editingItemIndex >= 0 ? `点検項目の編集（${editingItemIndex + 1}行目）` : '新たな点検項目'}
@@ -638,7 +638,7 @@ export function InspectionMenuModal({
               <tbody>
                 {formData.inspectionItems.length === 0 ? (
                   <tr>
-                    <td colSpan={4} style={{ ...styles.td, textAlign: 'center', color: '#7f8c8d', padding: '20px' }}>
+                    <td colSpan={4} style={{ ...styles.td, textAlign: 'center', color: '#8A8A8A', padding: '20px' }}>
                       点検項目がありません
                     </td>
                   </tr>
@@ -659,7 +659,7 @@ export function InspectionMenuModal({
                           <button
                             style={{
                               ...styles.editButton,
-                              ...(editingItemIndex === index ? { backgroundColor: '#2980b9' } : {})
+                              ...(editingItemIndex === index ? { backgroundColor: '#0073B8' } : {})
                             }}
                             onClick={() => handleEditItem(index)}
                             aria-label="編集"
@@ -754,10 +754,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     fontSize: '16px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#4A4A4A',
   },
   modeBadgeNew: {
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     padding: '4px 10px',
     borderRadius: '12px',
@@ -765,7 +765,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 500,
   },
   modeBadgeEdit: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#0092E6',
     color: 'white',
     padding: '4px 10px',
     borderRadius: '12px',
@@ -802,12 +802,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   hint: {
     fontSize: '12px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     margin: '0 0 16px 0',
   },
   hintSmall: {
     fontSize: '11px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     margin: '4px 0 0 0',
   },
   planRow: {
@@ -832,7 +832,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
   },
   newButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#0092E6',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -846,9 +846,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '24px',
     marginBottom: '16px',
     padding: '12px 16px',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
     borderRadius: '6px',
-    border: '1px solid #e0e0e0',
+    border: '1px solid #E1E1E1',
   },
   existingPlanSelect: {
     marginTop: '12px',
@@ -876,14 +876,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     gap: '6px',
     fontSize: '13px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
     cursor: 'pointer',
   },
   radioInput: {
     width: '16px',
     height: '16px',
     cursor: 'pointer',
-    accentColor: '#3498db',
+    accentColor: '#0092E6',
   },
   cycleInputInline: {
     display: 'flex',
@@ -891,7 +891,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '4px',
     marginLeft: '8px',
     paddingLeft: '8px',
-    borderLeft: '1px solid #e0e0e0',
+    borderLeft: '1px solid #E1E1E1',
   },
   cycleNumberSmall: {
     width: '50px',
@@ -903,27 +903,27 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   cycleUnitSmall: {
     fontSize: '13px',
-    color: '#2c3e50',
+    color: '#4A4A4A',
   },
   timingGroup: {
     display: 'flex',
     gap: '16px',
     marginLeft: '24px',
     paddingLeft: '16px',
-    borderLeft: '2px solid #e0e0e0',
+    borderLeft: '2px solid #E1E1E1',
   },
   label: {
     display: 'block',
     fontSize: '12px',
     fontWeight: 500,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     marginBottom: '4px',
   },
   labelSmall: {
     display: 'block',
     fontSize: '11px',
     fontWeight: 500,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     marginBottom: '4px',
   },
   section: {
@@ -936,9 +936,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: '0 0 12px 0',
     fontSize: '13px',
     fontWeight: 600,
-    color: '#2c3e50',
+    color: '#4A4A4A',
     paddingBottom: '8px',
-    borderBottom: '1px solid #e0e0e0',
+    borderBottom: '1px solid #E1E1E1',
   },
   newItemRow: {
     display: 'flex',
@@ -993,7 +993,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: 'white',
   },
   addButton: {
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1007,7 +1007,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '6px',
   },
   cancelEditButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: '#8A8A8A',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1022,16 +1022,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '13px',
   },
   th: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FAFAFA',
     padding: '8px 10px',
     textAlign: 'left',
     fontWeight: 500,
-    color: '#2c3e50',
-    borderBottom: '1px solid #e0e0e0',
+    color: '#4A4A4A',
+    borderBottom: '1px solid #E1E1E1',
   },
   td: {
     padding: '8px 10px',
-    borderBottom: '1px solid #e0e0e0',
+    borderBottom: '1px solid #E1E1E1',
     verticalAlign: 'middle',
   },
   actionButtons: {
@@ -1052,7 +1052,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   editButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#0092E6',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1061,7 +1061,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   deleteButton: {
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#DA0000',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1079,7 +1079,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '0 0 8px 8px',
   },
   cancelButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: '#8A8A8A',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1088,7 +1088,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   submitButton: {
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '4px',

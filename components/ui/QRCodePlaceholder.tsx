@@ -4,7 +4,7 @@
  */
 export function QRCodePlaceholder({
   size = 80,
-  color = '#1f2937',
+  color = '#4A4A4A',
   className,
 }: {
   size?: number;

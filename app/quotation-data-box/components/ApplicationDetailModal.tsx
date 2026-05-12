@@ -31,7 +31,7 @@ const getHeaderTitle = (type: string): string => {
 
 const thStyle: React.CSSProperties = {
   padding: '8px 12px',
-  background: '#f8f9fa',
+  background: '#FAFAFA',
   border: '1px solid #ddd',
   textAlign: 'left',
   width: '150px',
@@ -193,7 +193,7 @@ export function ApplicationDetailModal({
             <div style={sectionTitleStyle}>要望機器</div>
             <table style={tableStyle}>
               <thead>
-                <tr style={{ background: '#f8f9fa' }}>
+                <tr style={{ background: '#FAFAFA' }}>
                   <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'center', width: '80px' }}>希望順</th>
                   <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>品目</th>
                   <th style={{ padding: '8px', border: '1px solid #ddd', textAlign: 'left' }}>メーカー</th>
@@ -234,7 +234,7 @@ export function ApplicationDetailModal({
           {commentText && (
             <div style={sectionStyle}>
               <div style={sectionTitleStyle}>コメント（必要理由 他）</div>
-              <div style={{ padding: '12px', background: '#f8f9fa', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
+              <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #ddd', whiteSpace: 'pre-wrap' }}>
                 {commentText}
               </div>
             </div>
@@ -278,11 +278,11 @@ export function ApplicationDetailModal({
         <div
           style={{
             padding: '16px 24px',
-            borderTop: '1px solid #dee2e6',
+            borderTop: '1px solid #E1E1E1',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: '#f8f9fa',
+            background: '#FAFAFA',
           }}
         >
           <div>
@@ -294,7 +294,7 @@ export function ApplicationDetailModal({
                 }}
                 style={{
                   padding: '10px 20px',
-                  background: '#e74c3c',
+                  background: '#DA0000',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -327,7 +327,7 @@ export function ApplicationDetailModal({
               onClick={() => alert('添付ファイルダウンロード機能は今後実装予定です')}
               style={{
                 padding: '10px 20px',
-                background: '#2c3e50',
+                background: '#4A4A4A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -345,7 +345,7 @@ export function ApplicationDetailModal({
               }}
               style={{
                 padding: '10px 20px',
-                background: '#2c3e50',
+                background: '#4A4A4A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',

@@ -63,7 +63,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
           boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
         }}
       >
-        <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700, color: '#1f2937' }}>
+        <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700, color: '#4A4A4A' }}>
           発注登録
         </h3>
         <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#4b5563' }}>
@@ -94,8 +94,8 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
             onClick={onClose}
             style={{
               padding: '8px 16px',
-              background: '#e5e7eb',
-              color: '#1f2937',
+              background: '#E1E1E1',
+              color: '#4A4A4A',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -108,7 +108,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
             onClick={handleConfirm}
             style={{
               padding: '8px 16px',
-              background: '#3498db',
+              background: '#0092E6',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

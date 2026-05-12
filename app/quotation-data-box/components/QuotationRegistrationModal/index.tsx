@@ -119,7 +119,7 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
       >
         {/* ヘッダー */}
         <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', fontWeight: 'bold', color: '#2c3e50' }}>
+          <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', fontWeight: 'bold', color: '#4A4A4A' }}>
             見積登録（購入）
           </h2>
 
@@ -134,8 +134,8 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
                     gap: '6px',
                     padding: '6px 12px',
                     borderRadius: '4px',
-                    background: step === s ? '#3498db' : step > s ? '#27ae60' : '#ecf0f1',
-                    color: step >= s ? 'white' : '#95a5a6',
+                    background: step === s ? '#0092E6' : step > s ? '#008C1D' : '#ecf0f1',
+                    color: step >= s ? 'white' : '#8A8A8A',
                     fontSize: '11px',
                     fontWeight: step === s ? 'bold' : 'normal',
                   }}
@@ -159,7 +159,7 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
                   <div style={{
                     width: '20px',
                     height: '2px',
-                    background: step > s ? '#27ae60' : '#ddd',
+                    background: step > s ? '#008C1D' : '#ddd',
                   }} />
                 )}
               </React.Fragment>

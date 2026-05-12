@@ -141,20 +141,20 @@ export default function RegistrationConfirmPage() {
 
   const fmtNum = (n: number) => n ? n.toLocaleString() : '';
   const classColor = (cls: DetailClassification) => {
-    if (cls === '親明細') return '#e74c3c';
+    if (cls === '親明細') return '#DA0000';
     if (cls === '子明細') return '#2196f3';
-    if (cls === '孫明細') return '#9c27b0';
+    if (cls === '孫明細') return '#5E3A93';
     if (cls === '明細代表') return '#666';
     return '#888';
   };
 
-  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #dee2e6', fontSize: '10px', whiteSpace: 'nowrap' };
+  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #E1E1E1', fontSize: '10px', whiteSpace: 'nowrap' };
   const tdBase: React.CSSProperties = { padding: '4px 5px', fontSize: '10px', verticalAlign: 'top' };
   const borderR: React.CSSProperties = { borderRight: '1px solid #ccc' };
   const inputStyle: React.CSSProperties = { width: '100%', fontSize: '10px', padding: '3px 4px', border: '1px solid #ccc', borderRadius: '2px', boxSizing: 'border-box' as const };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#f5f5f5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       <Header title="見積登録（購入）登録確認へ" stepBadge="STEP 6" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={6} />
 
@@ -166,39 +166,39 @@ export default function RegistrationConfirmPage() {
 
         {/* 基本情報 */}
         <div style={{ background: 'white', border: '1px solid #ddd', borderRadius: '4px', marginBottom: '16px' }}>
-          <div style={{ padding: '8px 16px', background: '#6c757d', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>基本情報</div>
+          <div style={{ padding: '8px 16px', background: '#8A8A8A', color: 'white', fontSize: '12px', fontWeight: 'bold' }}>基本情報</div>
           <div style={{ padding: '12px 16px' }}>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
               <tbody>
                 <tr>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '100px', border: '1px solid #dee2e6' }}>見積日付</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6', width: '120px' }}>{basicInfo.quotationDate}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '100px', border: '1px solid #dee2e6' }}>見積フェーズ</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6', width: '80px' }}>{basicInfo.quotationPhase}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', width: '120px', border: '1px solid #dee2e6' }}>見積依頼G名称</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }} colSpan={3}>{basicInfo.rfqGroupName}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '100px', border: '1px solid #E1E1E1' }}>見積日付</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1', width: '120px' }}>{basicInfo.quotationDate}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '100px', border: '1px solid #E1E1E1' }}>見積フェーズ</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1', width: '80px' }}>{basicInfo.quotationPhase}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', width: '120px', border: '1px solid #E1E1E1' }}>見積依頼G名称</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }} colSpan={3}>{basicInfo.rfqGroupName}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>見積依頼No.</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{basicInfo.rfqNo}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>宛先（施設名）</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }} colSpan={5}>{basicInfo.facilityName}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>見積依頼No.</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{basicInfo.rfqNo}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>宛先（施設名）</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }} colSpan={5}>{basicInfo.facilityName}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>業者・メーカー</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{basicInfo.vendorName}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>連絡先</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{basicInfo.contact}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>mail</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }} colSpan={3}>{basicInfo.mail}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>業者・メーカー</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{basicInfo.vendorName}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>連絡先</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{basicInfo.contact}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>mail</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }} colSpan={3}>{basicInfo.mail}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>納期</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{basicInfo.deliveryPeriod}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>見積有効期限</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }}>{basicInfo.validityPeriod}</td>
-                  <td style={{ padding: '4px 8px', background: '#f8f9fa', fontWeight: 'bold', border: '1px solid #dee2e6' }}>インボイス</td>
-                  <td style={{ padding: '4px 8px', border: '1px solid #dee2e6' }} colSpan={3}>{basicInfo.invoiceNo}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>納期</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{basicInfo.deliveryPeriod}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>見積有効期限</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }}>{basicInfo.validityPeriod}</td>
+                  <td style={{ padding: '4px 8px', background: '#FAFAFA', fontWeight: 'bold', border: '1px solid #E1E1E1' }}>インボイス</td>
+                  <td style={{ padding: '4px 8px', border: '1px solid #E1E1E1' }} colSpan={3}>{basicInfo.invoiceNo}</td>
                 </tr>
               </tbody>
             </table>
@@ -210,12 +210,12 @@ export default function RegistrationConfirmPage() {
           {/* 上部バー */}
           <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #ddd' }}>
             <button onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
-              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#e8f5e9', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer' }}>
+              style={{ padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#EBF5EE', border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', color: showOnlyIndividual ? 'white' : '#2e7d32', cursor: 'pointer' }}>
               個体管理品目のみ表示
             </button>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#e8f5e9', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#EBF5EE', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
                 ¥{totalAmount.toLocaleString()}
               </div>
             </div>
@@ -229,9 +229,9 @@ export default function RegistrationConfirmPage() {
                   <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❸</th>
                   <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❹ 個体管理品目</th>
                   <th colSpan={5} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#e8f4fc', fontSize: '11px', fontWeight: 'bold', ...borderR }}>STEP❺ 個体登録／金額案分</th>
-                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #9c27b0', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#9c27b0' }}>STEP❻ 設置情報</th>
+                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#f3e5f5', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>STEP❻ 設置情報</th>
                 </tr>
-                <tr style={{ background: '#f8f9fa' }}>
+                <tr style={{ background: '#FAFAFA' }}>
                   <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>No</th>
                   <th style={{ ...thBase, width: '90px' }}>カテゴリ</th>
                   <th style={{ ...thBase, width: '55px', textAlign: 'center', ...borderR }}>明細区分</th>
@@ -303,11 +303,11 @@ export default function RegistrationConfirmPage() {
         {/* フッターボタン */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
           <button onClick={() => router.push('/quotation-data-box/price-allocation')}
-            style={{ padding: '12px 28px', background: '#95a5a6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            style={{ padding: '12px 28px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             一つ前のSTEPに戻る
           </button>
           <button onClick={handleRegister}
-            style={{ padding: '12px 28px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            style={{ padding: '12px 28px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
             見積情報Databaseに登録
           </button>
         </div>
