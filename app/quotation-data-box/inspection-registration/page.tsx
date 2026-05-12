@@ -8,43 +8,12 @@ import { useOrderStore } from '@/lib/stores/orderStore';
 import { InspectionCertType } from '@/lib/types/order';
 import { InspectionCertPreviewModal } from '@/components/modals/InspectionCertPreviewModal';
 
-/** カラートークン */
-const COLORS = {
-  primary: '#4a6fa5',
-  primaryDark: '#146E2E',
-  accent: '#A35414',
-  textOnAccent: '#4A4A4A',
-  textPrimary: '#4A4A4A',
-  textSecondary: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textOnColor: '#ffffff',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  surface: '#FAFAFA',
-  surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4A4A4A',
-  white: '#ffffff',
-  error: '#dc2626',
-  infoBg: '#eff6ff',
-  infoBorder: '#93c5fd',
-  infoText: '#1e40af',
-  disabled: '#8A8A8A',
-} as const;
-
-const inputStyle: React.CSSProperties = {
-  padding: '6px 10px',
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: '4px',
-  fontSize: '14px',
-};
-
 /** 検収書の発行: 内部値 → 表示ラベル */
 const CERT_TYPE_LABELS: Record<InspectionCertType, string> = {
   '本体のみ': '資産登録単位',
   '付属品含む': '附属品を含む',
 };
 
-/** SearchParams 読み取り */
 function RfqGroupIdReader({ onRead }: { onRead: (id: number | null) => void }) {
   const searchParams = useSearchParams();
   const rfqGroupIdParam = searchParams.get('rfqGroupId');
@@ -62,16 +31,13 @@ export default function InspectionRegistrationPage() {
   const [rfqGroupId, setRfqGroupId] = useState<number | null>(null);
   const handleRfqGroupIdRead = useCallback((id: number | null) => setRfqGroupId(id), []);
 
-  // --- フォーム項目 ---
   const [inspectionDate, setInspectionDate] = useState('');
   const [inspectionCertType, setInspectionCertType] = useState<InspectionCertType>('本体のみ');
   const [itemDeliveryDates, setItemDeliveryDates] = useState<Record<number, string>>({});
 
-  // --- バリデーション ---
   const [inspectionDateError, setInspectionDateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- 登録完了状態 ---
   const [registrationComplete, setRegistrationComplete] = useState<{
     itemCount: number;
     totalAmount: number;
@@ -81,7 +47,6 @@ export default function InspectionRegistrationPage() {
   } | null>(null);
   const [showCertPreview, setShowCertPreview] = useState(false);
 
-  // データ取得
   const rfqGroup = useMemo(() => {
     if (!rfqGroupId) return undefined;
     return rfqGroups.find(g => g.id === rfqGroupId);
@@ -101,7 +66,6 @@ export default function InspectionRegistrationPage() {
     return orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
   }, [orderItems]);
 
-  // 登録処理
   const handleSubmitInspection = () => {
     if (!rfqGroup || !orderGroup) return;
     if (!inspectionDate) {
@@ -109,14 +73,12 @@ export default function InspectionRegistrationPage() {
       return;
     }
     setInspectionDateError('');
-
     setIsSubmitting(true);
 
     updateOrderGroup(orderGroup.id, {
       inspectionDate,
       inspectionCertType,
     });
-
     updateRfqGroup(rfqGroupId!, {
       status: '検収済',
       inspectionDate,
@@ -133,281 +95,80 @@ export default function InspectionRegistrationPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-      {/* ホバー・フォーカス状態 */}
-      <style>{`
-        .insp-btn { transition: filter 150ms ease-out; }
-        .insp-btn:hover:not(:disabled) { filter: brightness(0.9); }
-        .insp-btn:focus-visible { outline: 2px solid #4a6fa5; outline-offset: 2px; }
-        .insp-btn-secondary { transition: background 150ms ease-out; }
-        .insp-btn-secondary:hover { background: #E1E1E1 !important; }
-        .insp-btn-secondary:focus-visible { outline: 2px solid #d1d5db; outline-offset: 2px; }
-        .insp-radio { cursor: pointer; }
-        .insp-radio-label { cursor: pointer; user-select: none; }
-      `}</style>
-
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Suspense fallback={null}>
         <RfqGroupIdReader onRead={handleRfqGroupIdRead} />
       </Suspense>
 
-      {/* ヘッダー */}
       <Header
         title={registrationComplete ? '納品検収日登録完了' : '納品日登録（検収準備）'}
         hideMenu={true}
         showBackButton={false}
       />
 
-      {/* ページ全体スクロール */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {/* 登録完了画面 */}
+      <div className="flex-1 overflow-auto p-6">
         {registrationComplete ? (
-          <div style={{ maxWidth: '560px', margin: '40px auto', textAlign: 'center' }}>
-            <div style={{
-              background: COLORS.white,
-              border: `1px solid ${COLORS.borderLight}`,
-              borderRadius: '8px',
-              padding: '32px',
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px', textWrap: 'balance' }}>
-                納品検収日を登録しました
-              </h2>
-              <p style={{ fontSize: '14px', color: COLORS.textSecondary, marginBottom: '24px', fontVariantNumeric: 'tabular-nums', textWrap: 'pretty' }}>
-                {registrationComplete.itemCount}品目
-                <br />
-                検収日: {registrationComplete.inspectionDate}
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                <button
-                  className="insp-btn"
-                  onClick={() => setShowCertPreview(true)}
-                  style={{ padding: '12px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px', minHeight: '44px' }}
-                >
-                  検収書をExcel出力する
-                </button>
-                <button
-                  className="insp-btn-secondary"
-                  onClick={() => router.push('/qr-issue?from=inspection')}
-                  style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.primary, border: `1px solid ${COLORS.primary}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px', minHeight: '44px' }}
-                >
-                  QRラベルを発行する
-                </button>
-                <button
-                  className="insp-btn-secondary"
-                  onClick={() => router.push('/quotation-data-box')}
-                  style={{ padding: '12px 24px', background: 'transparent', color: COLORS.textMuted, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', width: '240px', minHeight: '44px', textDecoration: 'underline' }}
-                >
-                  一覧画面に戻る
-                </button>
-              </div>
-            </div>
-          </div>
+          <CompletionView
+            itemCount={registrationComplete.itemCount}
+            inspectionDate={registrationComplete.inspectionDate}
+            onCertOutput={() => setShowCertPreview(true)}
+            onQrIssue={() => router.push('/qr-issue?from=inspection')}
+            onBack={() => router.push('/quotation-data-box')}
+          />
         ) : !rfqGroup || !orderGroup ? (
-          <div style={{ maxWidth: '480px', margin: '40px auto', textAlign: 'center', color: COLORS.textMuted }}>
-            <p style={{ fontSize: '14px', marginBottom: '8px', fontWeight: 'bold', color: COLORS.textSecondary }}>対象の発注データが見つかりません</p>
-            <p style={{ fontSize: '12px', marginBottom: '16px', textWrap: 'pretty' }}>URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。</p>
-            <button
-              className="insp-btn"
-              onClick={() => router.push('/quotation-data-box')}
-              style={{ padding: '8px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-            >
-              ← 一覧画面に戻る
-            </button>
-          </div>
+          <NotFoundView onBack={() => router.push('/quotation-data-box')} />
         ) : (
-          <>
-            {/* 確認メッセージ */}
-            <div style={{
-              padding: '12px 16px',
-              background: COLORS.infoBg,
-              border: `1px solid ${COLORS.infoBorder}`,
-              borderRadius: '4px',
-              marginBottom: '24px',
-              fontSize: '14px',
-              color: COLORS.infoText,
-              textWrap: 'pretty',
-            }}>
+          <div className="flex flex-col gap-6">
+            <InfoBanner>
               検収日を入力し「納品検収日を登録」を押してください。
-            </div>
+            </InfoBanner>
 
-            {/* 基本情報セクション */}
-            <div style={{
-              background: COLORS.white,
-              borderRadius: '4px',
-              marginBottom: '24px',
-              overflow: 'hidden',
-            }}>
-              <div style={{ padding: '8px 16px', background: COLORS.sectionHeader, color: COLORS.textOnColor, fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>
-                基本情報
-              </div>
-              <div style={{ padding: '12px 16px' }}>
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', width: '120px', border: `1px solid ${COLORS.borderLight}` }}>見積依頼No.</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}`, width: '150px' }}>{rfqGroup.rfqNo}</td>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', width: '120px', border: `1px solid ${COLORS.borderLight}` }}>見積G名称</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{rfqGroup.groupName}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>発注先</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{orderGroup.vendorName || '-'}</td>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>申請者</td>
-                      <td style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}` }}>{orderGroup.applicant || '-'}</td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: '4px 8px', background: COLORS.surfaceAlt, fontWeight: 'bold', border: `1px solid ${COLORS.borderLight}` }}>納品日</td>
-                      <td colSpan={3} style={{ padding: '4px 8px', border: `1px solid ${COLORS.borderLight}`, fontVariantNumeric: 'tabular-nums' }}>{rfqGroup.deadline || '-'}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <BasicInfoCard
+              rfqNo={rfqGroup.rfqNo}
+              groupName={rfqGroup.groupName}
+              vendorName={orderGroup.vendorName}
+              applicant={orderGroup.applicant}
+              deadline={rfqGroup.deadline}
+            />
 
-            {/* 検収登録セクション */}
-            <div style={{ border: `2px solid ${COLORS.accent}`, borderRadius: '8px', marginBottom: '24px' }}>
-              <div style={{ background: COLORS.accent, color: COLORS.textOnAccent, padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', textWrap: 'balance' }}>
-                検収登録
-              </div>
-              <div style={{ padding: '16px' }}>
-                {/* 検収日 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap', width: '120px', flexShrink: 0 }}>
-                    検収日 <span style={{ color: COLORS.error }}>*</span>
-                  </label>
-                  <div>
-                    <input
-                      type="date"
-                      value={inspectionDate}
-                      onChange={(e) => {
-                        setInspectionDate(e.target.value);
-                        if (e.target.value) setInspectionDateError('');
-                      }}
-                      style={{
-                        ...inputStyle,
-                        width: '180px',
-                        borderColor: inspectionDateError ? COLORS.error : COLORS.border,
-                      }}
-                    />
-                    {inspectionDateError && (
-                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: COLORS.error }}>
-                        {inspectionDateError}
-                      </p>
-                    )}
-                  </div>
-                </div>
+            <InspectionForm
+              inspectionDate={inspectionDate}
+              inspectionDateError={inspectionDateError}
+              onInspectionDateChange={(v) => {
+                setInspectionDate(v);
+                if (v) setInspectionDateError('');
+              }}
+              inspectionCertType={inspectionCertType}
+              onInspectionCertTypeChange={setInspectionCertType}
+            />
 
-                {/* 検収書の発行 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <label style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textPrimary, whiteSpace: 'nowrap', width: '120px', flexShrink: 0 }}>
-                    検収書の発行
-                  </label>
-                  <div style={{ display: 'flex', gap: '24px' }}>
-                    {(['本体のみ', '付属品含む'] as InspectionCertType[]).map((type) => (
-                      <label key={type} className="insp-radio-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: COLORS.textPrimary }}>
-                        <input
-                          type="radio"
-                          name="inspectionCertType"
-                          className="insp-radio"
-                          checked={inspectionCertType === type}
-                          onChange={() => setInspectionCertType(type)}
-                          style={{ width: '16px', height: '16px', accentColor: COLORS.accent }}
-                        />
-                        {CERT_TYPE_LABELS[type]}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <OrderItemsTable
+              orderItems={orderItems}
+              itemDeliveryDates={itemDeliveryDates}
+              onChangeDeliveryDate={(id, v) =>
+                setItemDeliveryDates(prev => ({ ...prev, [id]: v }))
+              }
+            />
 
-            {/* 発注明細テーブル */}
-            <div style={{
-              background: COLORS.white,
-              border: `1px solid ${COLORS.border}`,
-              borderRadius: '4px',
-              marginBottom: '24px',
-            }}>
-              <div style={{
-                padding: '8px 16px',
-                background: COLORS.primary,
-                color: COLORS.textOnColor,
-              }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>発注明細</span>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                  <thead>
-                    <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>No</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>部門</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>部署</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>室名</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>メーカー</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>型式</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>数量</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.primaryDark}`, whiteSpace: 'nowrap', fontWeight: 'bold' }}>納品日登録</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderItems.map((item, idx) => (
-                      <tr key={item.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                        <td style={{ padding: '8px', fontVariantNumeric: 'tabular-nums' }}>{idx + 1}</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>-</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>-</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>-</td>
-                        <td style={{ padding: '8px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.itemName}</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.manufacturer || '-'}</td>
-                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.model || '-'}</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{item.quantity}</td>
-                        <td style={{ padding: '8px' }}>
-                          <input
-                            type="date"
-                            value={itemDeliveryDates[item.id] || ''}
-                            onChange={(e) => setItemDeliveryDates(prev => ({ ...prev, [item.id]: e.target.value }))}
-                            style={{ ...inputStyle, fontSize: '11px', padding: '4px 6px', width: '150px' }}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                    {orderItems.length === 0 && (
-                      <tr>
-                        <td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
-                          <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px', textWrap: 'balance' }}>発注明細がありません</p>
-                          <p style={{ fontSize: '12px', textWrap: 'pretty' }}>発注登録を完了すると、明細が自動的に表示されます。</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
+            <div className="flex justify-between items-center pt-2 gap-3">
               <button
-                className="insp-btn-secondary"
                 onClick={() => router.push('/quotation-data-box')}
-                style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                className="h-12 min-w-[180px] px-6 rounded-lg bg-[#d6d6d6] text-content-primary text-base font-normal cursor-pointer transition-colors hover:bg-stroke-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-sub"
               >
-                ← 一覧画面に戻る
+                戻る
               </button>
               <button
-                className="insp-btn"
                 onClick={handleSubmitInspection}
                 disabled={isSubmitting}
-                style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold', opacity: isSubmitting ? 0.7 : 1 }}
+                className="h-12 min-w-[200px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
               >
                 {isSubmitting ? '登録中...' : '納品検収日を登録'}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* 検収書プレビューモーダル */}
       {registrationComplete && (
         <InspectionCertPreviewModal
           isOpen={showCertPreview}
@@ -417,5 +178,297 @@ export default function InspectionRegistrationPage() {
         />
       )}
     </div>
+  );
+}
+
+// ============================================================
+// Sub views
+// ============================================================
+function CompletionView({
+  itemCount,
+  inspectionDate,
+  onCertOutput,
+  onQrIssue,
+  onBack,
+}: {
+  itemCount: number;
+  inspectionDate: string;
+  onCertOutput: () => void;
+  onQrIssue: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="max-w-[560px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <div className="text-5xl mb-4 text-cta-primary leading-none">&#10003;</div>
+        <h2 className="text-lg font-bold text-content-primary mb-2 text-balance">
+          納品検収日を登録しました
+        </h2>
+        <p className="text-sm text-content-sub mb-6 text-pretty tabular-nums">
+          {itemCount}品目
+          <br />
+          検収日: {inspectionDate}
+        </p>
+        <div className="flex flex-col gap-3 items-center">
+          <button
+            onClick={onCertOutput}
+            className="h-12 w-[260px] px-6 rounded-lg bg-cta-primary text-white text-base font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+          >
+            検収書をExcel出力する
+          </button>
+          <button
+            onClick={onQrIssue}
+            className="h-12 w-[260px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+          >
+            QRラベルを発行する
+          </button>
+          <button
+            onClick={onBack}
+            className="h-12 w-[260px] px-6 text-sm text-content-sub underline cursor-pointer hover:text-content-primary transition-colors bg-transparent border-0"
+          >
+            一覧画面に戻る
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotFoundView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="max-w-[480px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <p className="text-sm font-bold text-content-primary mb-2">
+          対象の発注データが見つかりません
+        </p>
+        <p className="text-xs text-content-sub mb-6 text-pretty">
+          URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-cta-primary text-white text-base font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function InfoBanner({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="px-4 py-3 rounded-lg bg-surface-select border border-cta-primary text-sm text-cta-primary-dark text-pretty">
+      {children}
+    </div>
+  );
+}
+
+// ============================================================
+// Basic info card
+// ============================================================
+function BasicInfoCard({
+  rfqNo,
+  groupName,
+  vendorName,
+  applicant,
+  deadline,
+}: {
+  rfqNo: string;
+  groupName: string;
+  vendorName?: string;
+  applicant?: string;
+  deadline?: string;
+}) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
+      <div className="border border-stroke-input">
+        <InfoRow>
+          <InfoCell label="見積依頼No." value={rfqNo} />
+          <InfoCell label="見積G名称" value={groupName} />
+        </InfoRow>
+        <InfoRow>
+          <InfoCell label="発注先" value={vendorName || '---'} />
+          <InfoCell label="申請者" value={applicant || '---'} />
+        </InfoRow>
+        <InfoRow last>
+          <InfoCell label="納品日" value={deadline || '---'} wide numeric />
+        </InfoRow>
+      </div>
+    </section>
+  );
+}
+
+function InfoRow({ children, last }: { children: React.ReactNode; last?: boolean }) {
+  return (
+    <div className={`flex w-full ${last ? '' : 'border-b border-stroke-input'}`}>
+      {children}
+    </div>
+  );
+}
+
+function InfoCell({
+  label,
+  value,
+  wide,
+  numeric,
+}: {
+  label: string;
+  value: string;
+  wide?: boolean;
+  numeric?: boolean;
+}) {
+  return (
+    <div className={`flex items-stretch ${wide ? 'w-full' : 'flex-1 min-w-0'}`}>
+      <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+        <p className="text-base text-content-primary whitespace-nowrap">{label}</p>
+      </div>
+      <div className={`flex-1 min-w-0 flex items-center px-4 py-4 ${wide ? '' : 'border-r border-stroke-input last:border-r-0'}`}>
+        <p className={`min-w-0 truncate text-base text-content-primary ${numeric ? 'tabular-nums' : ''}`}>
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Inspection form
+// ============================================================
+function InspectionForm({
+  inspectionDate,
+  inspectionDateError,
+  onInspectionDateChange,
+  inspectionCertType,
+  onInspectionCertTypeChange,
+}: {
+  inspectionDate: string;
+  inspectionDateError: string;
+  onInspectionDateChange: (value: string) => void;
+  inspectionCertType: InspectionCertType;
+  onInspectionCertTypeChange: (value: InspectionCertType) => void;
+}) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
+      <div className="border border-stroke-input">
+        {/* 検収日 */}
+        <div className="flex w-full border-b border-stroke-input">
+          <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+            <p className="text-base text-content-primary whitespace-nowrap">
+              検収日 <span className="text-content-alert">*</span>
+            </p>
+          </div>
+          <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-4 gap-1">
+            <input
+              type="date"
+              value={inspectionDate}
+              onChange={(e) => onInspectionDateChange(e.target.value)}
+              className={`w-[180px] h-[42px] px-3 rounded-lg bg-surface-card border text-base text-content-primary tabular-nums focus:outline-none focus:border-cta-primary transition-colors ${
+                inspectionDateError ? 'border-content-alert' : 'border-stroke-input'
+              }`}
+            />
+            {inspectionDateError && (
+              <p className="text-xs text-content-alert">{inspectionDateError}</p>
+            )}
+          </div>
+        </div>
+        {/* 検収書の発行 */}
+        <div className="flex w-full">
+          <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+            <p className="text-base text-content-primary whitespace-nowrap">検収書の発行</p>
+          </div>
+          <div className="flex-1 min-w-0 flex items-center px-4 py-4 gap-8">
+            {(['本体のみ', '付属品含む'] as InspectionCertType[]).map((type) => (
+              <label
+                key={type}
+                className="flex items-center gap-2 text-base text-content-primary cursor-pointer select-none"
+              >
+                <input
+                  type="radio"
+                  name="inspectionCertType"
+                  checked={inspectionCertType === type}
+                  onChange={() => onInspectionCertTypeChange(type)}
+                  className="w-4 h-4 cursor-pointer accent-cta-primary"
+                />
+                {CERT_TYPE_LABELS[type]}
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// Order items table
+// ============================================================
+type OrderItemLite = {
+  id: number;
+  itemName: string;
+  manufacturer?: string;
+  model?: string;
+  quantity: number;
+};
+
+function OrderItemsTable({
+  orderItems,
+  itemDeliveryDates,
+  onChangeDeliveryDate,
+}: {
+  orderItems: OrderItemLite[];
+  itemDeliveryDates: Record<number, string>;
+  onChangeDeliveryDate: (id: number, value: string) => void;
+}) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
+      <h2 className="text-base font-semibold text-content-primary mb-3">発注明細</h2>
+      <div className="border border-stroke-input overflow-x-auto">
+        <table className="w-full border-collapse min-w-[1200px]">
+          <thead>
+            <tr className="bg-stroke-card border-b border-stroke-input text-left">
+              <th className="w-[56px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-center">No.</th>
+              <th className="w-[130px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">部門</th>
+              <th className="w-[130px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">部署</th>
+              <th className="w-[130px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">室名</th>
+              <th className="w-[280px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">品名</th>
+              <th className="w-[260px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">メーカー</th>
+              <th className="w-[180px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">型式</th>
+              <th className="w-[80px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-right">数量</th>
+              <th className="w-[200px] px-4 py-2 text-sm font-normal text-content-primary bg-[#fffbe3]">納品日</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderItems.map((item, idx) => (
+              <tr key={item.id} className="border-b border-stroke-input h-[58px]">
+                <td className="px-4 py-2 text-base text-content-primary border-r border-stroke-input text-center tabular-nums">{idx + 1}</td>
+                <td className="px-4 py-2 text-sm text-content-sub border-r border-stroke-input">---</td>
+                <td className="px-4 py-2 text-sm text-content-sub border-r border-stroke-input">---</td>
+                <td className="px-4 py-2 text-sm text-content-sub border-r border-stroke-input">---</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input truncate max-w-[280px]">{item.itemName}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input truncate">{item.manufacturer || '---'}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input">{item.model || '---'}</td>
+                <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input text-right tabular-nums font-semibold">{item.quantity}</td>
+                <td className="px-4 py-2 align-middle">
+                  <input
+                    type="date"
+                    value={itemDeliveryDates[item.id] || ''}
+                    onChange={(e) => onChangeDeliveryDate(item.id, e.target.value)}
+                    className="w-full h-[42px] px-3 rounded-lg bg-surface-card border border-stroke-input text-base text-content-primary tabular-nums focus:outline-none focus:border-cta-primary transition-colors"
+                  />
+                </td>
+              </tr>
+            ))}
+            {orderItems.length === 0 && (
+              <tr>
+                <td colSpan={9} className="px-4 py-12 text-center text-content-sub">
+                  <p className="text-sm font-semibold text-content-primary mb-2 text-balance">発注明細がありません</p>
+                  <p className="text-xs text-pretty">発注登録を完了すると、明細が自動的に表示されます。</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
