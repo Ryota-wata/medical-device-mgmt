@@ -249,7 +249,7 @@ function PeriodicInspectionContent() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
         <header style={{
-          background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+          background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
           color: 'white',
           padding: '16px 24px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -270,7 +270,7 @@ function PeriodicInspectionContent() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#f5f5f5' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+        background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
         color: 'white',
         padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -307,9 +307,9 @@ function PeriodicInspectionContent() {
               padding: '12px 16px',
               marginBottom: '20px',
               fontSize: '13px',
-              color: '#1f2937',
+              color: '#4A4A4A',
             }}>
-              <div style={{ fontWeight: 600, marginBottom: '8px', color: '#27ae60' }}>点検対象機器</div>
+              <div style={{ fontWeight: 600, marginBottom: '8px', color: '#008C1D' }}>点検対象機器</div>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <span><span style={{ color: '#7f8c8d' }}>QRコード:</span> {task.assetId}</span>
                 <span><span style={{ color: '#7f8c8d' }}>品目:</span> {task.assetName}</span>
@@ -351,7 +351,7 @@ function PeriodicInspectionContent() {
                 fontSize: '15px',
                 fontWeight: 600,
                 color: '#ffffff',
-                backgroundColor: isCameraActive ? '#e74c3c' : '#27ae60',
+                backgroundColor: isCameraActive ? '#e74c3c' : '#008C1D',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -401,7 +401,7 @@ function PeriodicInspectionContent() {
                 fontSize: '15px',
                 fontWeight: 600,
                 color: '#ffffff',
-                backgroundColor: '#27ae60',
+                backgroundColor: '#008C1D',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -458,7 +458,7 @@ function PeriodicInspectionContent() {
               <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
                 <div style={styles.infoItem}>
                   <span style={styles.infoLabel}>点検種別</span>
-                  <span style={{ ...styles.infoValue, color: '#27ae60' }}>定期点検</span>
+                  <span style={{ ...styles.infoValue, color: '#008C1D' }}>定期点検</span>
                 </div>
               </div>
 
@@ -584,7 +584,7 @@ function PeriodicInspectionContent() {
           }}>
             {/* 案内バナー */}
             <div style={{
-              background: 'linear-gradient(135deg, #27ae60 0%, #229954 100%)',
+              background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
               borderRadius: '8px',
               padding: '16px',
               marginBottom: '16px',
@@ -617,7 +617,7 @@ function PeriodicInspectionContent() {
                 borderRadius: '12px',
                 border: '2px solid',
                 ...(overallResult === '合格'
-                  ? { backgroundColor: '#e8f5e9', color: '#27ae60', borderColor: '#27ae60' }
+                  ? { backgroundColor: '#e8f5e9', color: '#008C1D', borderColor: '#008C1D' }
                   : { backgroundColor: '#ffebee', color: '#e74c3c', borderColor: '#e74c3c' }
                 )
               }}>
@@ -700,7 +700,7 @@ function PeriodicInspectionContent() {
                           borderBottom: '1px solid #eee',
                           textAlign: 'center',
                           fontWeight: 600,
-                          color: item.result === '○' ? '#27ae60' : item.result === '×' ? '#e74c3c' : '#333'
+                          color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#e74c3c' : '#333'
                         }}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
@@ -735,7 +735,7 @@ function PeriodicInspectionContent() {
               disabled={isExporting}
               style={{
                 width: '100%',
-                backgroundColor: '#27ae60',
+                backgroundColor: '#008C1D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -780,7 +780,7 @@ function PeriodicInspectionContent() {
               style={{
                 flex: 1,
                 backgroundColor: '#ecf0f1',
-                color: '#1f2937',
+                color: '#4A4A4A',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '14px 16px',
@@ -882,7 +882,7 @@ function PeriodicInspectionContent() {
                 borderBottom: '5px solid transparent'
               }}></div>
             </div>
-            <span style={{ fontSize: '11px', color: '#1f2937' }}>
+            <span style={{ fontSize: '11px', color: '#4A4A4A' }}>
               {step === 'inspection' ? 'QR読取に戻る' : '戻る'}
             </span>
           </button>
@@ -930,7 +930,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
   },
   infoValue: {
-    color: '#1f2937',
+    color: '#4A4A4A',
     fontWeight: 500,
   },
   input: {
@@ -945,7 +945,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '6px 12px',
     borderRadius: '4px',
     fontSize: '13px',
-    color: '#27ae60',
+    color: '#008C1D',
   },
   notice: {
     backgroundColor: '#fff3cd',
@@ -966,7 +966,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 8px',
     textAlign: 'left' as const,
     fontWeight: 500,
-    color: '#1f2937',
+    color: '#4A4A4A',
     borderBottom: '1px solid #ddd',
   },
   td: {
@@ -986,12 +986,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   resultButtonActive: {
     padding: '6px 12px',
-    border: '1px solid #27ae60',
+    border: '1px solid #008C1D',
     borderRadius: '4px',
     backgroundColor: '#e8f5e9',
     cursor: 'pointer',
     fontSize: '12px',
-    color: '#27ae60',
+    color: '#008C1D',
     minWidth: '44px',
     minHeight: '32px',
   },
@@ -1022,7 +1022,7 @@ const styles: Record<string, React.CSSProperties> = {
   passButton: {
     width: '100%',
     padding: '14px 24px',
-    backgroundColor: '#27ae60',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '8px',

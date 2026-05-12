@@ -231,17 +231,17 @@ function RepairRequestContent() {
   const alternativeLabel = alternativeDevice === 'needed' ? '必要' : alternativeDevice === 'requested' ? '依頼済' : '不要';
 
   // 共通の入力クラス
-  const inputClass = 'w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors';
+  const inputClass = 'w-full px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-cta-primary/20 transition-colors';
 
   return (
-    <div className="min-h-dvh flex flex-col bg-[#f9fafb]">
+    <div className="min-h-dvh flex flex-col bg-surface-screen">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+      <header className="bg-white border-b border-stroke-card px-4 py-3">
         <div className="flex items-center gap-2.5 max-w-[800px] mx-auto">
-          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+          <div className="size-10 bg-cta-primary rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
             logo
           </div>
-          <div className="text-base font-bold text-[#1f2937] text-balance">
+          <div className="text-base font-bold text-content-primary text-balance">
             {isConfirmView ? '修理依頼 - 内容確認' : '修理依頼'}
           </div>
         </div>
@@ -253,81 +253,81 @@ function RepairRequestContent() {
           /* ========== 確認画面 ========== */
           <>
             <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-3 mb-4 text-center">
-              <span className="text-sm font-bold text-[#27ae60]">
+              <span className="text-sm font-bold text-cta-primary-dark">
                 以下の内容で送信します。内容をご確認ください。
               </span>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
               {/* 依頼情報 */}
-              <div className="pb-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">依頼情報</h2>
+              <div className="pb-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">依頼情報</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">修理依頼No.</div>
-                    <div className="text-sm font-semibold text-[#1f2937] tabular-nums">{requestNo}</div>
+                    <div className="text-xs text-content-sub mb-0.5">修理依頼No.</div>
+                    <div className="text-sm font-semibold text-content-primary tabular-nums">{requestNo}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">依頼日</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{requestDate} {requestTime}</div>
+                    <div className="text-xs text-content-sub mb-0.5">依頼日</div>
+                    <div className="text-sm font-semibold text-content-primary">{requestDate} {requestTime}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">申請部署</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{applicantDepartment}</div>
+                    <div className="text-xs text-content-sub mb-0.5">申請部署</div>
+                    <div className="text-sm font-semibold text-content-primary">{applicantDepartment}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">申請者</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{applicantName}</div>
+                    <div className="text-xs text-content-sub mb-0.5">申請者</div>
+                    <div className="text-sm font-semibold text-content-primary">{applicantName}</div>
                   </div>
                 </div>
               </div>
 
               {/* 機器情報 */}
-              <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">
+              <div className="py-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">
                   機器情報
-                  <span className="ml-2 text-xs font-normal text-[#6b7280]">
+                  <span className="ml-2 text-xs font-normal text-content-sub">
                     ({isRegisteredAsset ? '登録済み資産' : '未登録資産'})
                   </span>
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {isRegisteredAsset && (
                     <div className="sm:col-span-2">
-                      <div className="text-xs text-[#6b7280] mb-0.5">QRラベル</div>
-                      <div className="text-sm font-semibold text-[#1f2937]">{qrCode}</div>
+                      <div className="text-xs text-content-sub mb-0.5">QRラベル</div>
+                      <div className="text-sm font-semibold text-content-primary">{qrCode}</div>
                     </div>
                   )}
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">品目</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceName()}</div>
+                    <div className="text-xs text-content-sub mb-0.5">品目</div>
+                    <div className="text-sm font-semibold text-content-primary">{getDeviceName()}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">メーカー</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceMaker()}</div>
+                    <div className="text-xs text-content-sub mb-0.5">メーカー</div>
+                    <div className="text-sm font-semibold text-content-primary">{getDeviceMaker()}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">型式</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceModel()}</div>
+                    <div className="text-xs text-content-sub mb-0.5">型式</div>
+                    <div className="text-sm font-semibold text-content-primary">{getDeviceModel()}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">シリアルNo.</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceSerial()}</div>
+                    <div className="text-xs text-content-sub mb-0.5">シリアルNo.</div>
+                    <div className="text-sm font-semibold text-content-primary">{getDeviceSerial()}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">設置部署</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceDepartment()}</div>
+                    <div className="text-xs text-content-sub mb-0.5">設置部署</div>
+                    <div className="text-sm font-semibold text-content-primary">{getDeviceDepartment()}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">室名</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{getDeviceRoom()}</div>
+                    <div className="text-xs text-content-sub mb-0.5">室名</div>
+                    <div className="text-sm font-semibold text-content-primary">{getDeviceRoom()}</div>
                   </div>
                 </div>
                 {capturedPhotos.length > 0 && (
                   <div className="mt-4">
-                    <div className="text-xs text-[#6b7280] mb-2">添付写真（{capturedPhotos.length}枚）</div>
+                    <div className="text-xs text-content-sub mb-2">添付写真（{capturedPhotos.length}枚）</div>
                     <div className="flex gap-2 flex-wrap">
                       {capturedPhotos.map((photo, i) => (
-                        <div key={i} className="w-20 h-20 rounded-lg overflow-hidden border border-[#e5e7eb]">
+                        <div key={i} className="w-20 h-20 rounded-lg overflow-hidden border border-stroke-card">
                           <img src={photo} alt={`写真${i + 1}`} className="w-full h-full object-cover" />
                         </div>
                       ))}
@@ -337,21 +337,21 @@ function RepairRequestContent() {
               </div>
 
               {/* 症状・代替機 */}
-              <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">症状・代替機</h2>
+              <div className="py-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">症状・代替機</h2>
                 <div className="space-y-3">
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">症状</div>
-                    <div className="text-sm text-[#1f2937] whitespace-pre-wrap">{symptoms}</div>
+                    <div className="text-xs text-content-sub mb-0.5">症状</div>
+                    <div className="text-sm text-content-primary whitespace-pre-wrap">{symptoms}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-[#6b7280] mb-0.5">代替機</div>
-                    <div className="text-sm font-semibold text-[#1f2937]">{alternativeLabel}</div>
+                    <div className="text-xs text-content-sub mb-0.5">代替機</div>
+                    <div className="text-sm font-semibold text-content-primary">{alternativeLabel}</div>
                   </div>
                   {freeComment && (
                     <div>
-                      <div className="text-xs text-[#6b7280] mb-0.5">フリーコメント</div>
-                      <div className="text-sm text-[#1f2937] whitespace-pre-wrap">{freeComment}</div>
+                      <div className="text-xs text-content-sub mb-0.5">フリーコメント</div>
+                      <div className="text-sm text-content-primary whitespace-pre-wrap">{freeComment}</div>
                     </div>
                   )}
                 </div>
@@ -371,7 +371,7 @@ function RepairRequestContent() {
                   className={`px-8 py-3 text-sm font-bold text-white rounded-md border-0 transition-colors min-h-[48px] ${
                     isSubmitting
                       ? 'bg-[#9ca3af] cursor-not-allowed'
-                      : 'bg-[#27ae60] cursor-pointer hover:bg-[#219a52]'
+                      : 'bg-cta-primary cursor-pointer hover:bg-[#219a52]'
                   }`}
                 >
                   {isSubmitting ? '送信中...' : '修理依頼を送信する'}
@@ -382,34 +382,34 @@ function RepairRequestContent() {
         ) : (
           /* ========== 入力画面 ========== */
           <>
-            <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
 
               {/* ① 依頼情報 */}
-              <div className="pb-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">依頼情報</h2>
+              <div className="pb-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">依頼情報</h2>
                 <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
                   <div>
-                    <label className="block text-xs text-[#6b7280] mb-1">修理依頼No.</label>
-                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-[#1f2937] tabular-nums">
+                    <label className="block text-xs text-content-sub mb-1">修理依頼No.</label>
+                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-content-primary tabular-nums">
                       {requestNo}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-[#6b7280] mb-1">依頼日</label>
-                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-[#1f2937]">
+                    <label className="block text-xs text-content-sub mb-1">依頼日</label>
+                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-content-primary">
                       {requestDate}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-[#6b7280] mb-1">依頼時間</label>
-                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-[#1f2937]">
+                    <label className="block text-xs text-content-sub mb-1">依頼時間</label>
+                    <div className="px-3 py-2 bg-[#f3f4f6] rounded-md text-sm font-semibold text-content-primary">
                       {requestTime}
                     </div>
                   </div>
                 </div>
                 <div className={`grid gap-3 mt-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   <div>
-                    <label className="block text-xs text-[#6b7280] mb-1">
+                    <label className="block text-xs text-content-sub mb-1">
                       申請部署 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -421,7 +421,7 @@ function RepairRequestContent() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-[#6b7280] mb-1">
+                    <label className="block text-xs text-content-sub mb-1">
                       申請者 <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -436,8 +436,8 @@ function RepairRequestContent() {
               </div>
 
               {/* ② 機器情報 */}
-              <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">機器情報</h2>
+              <div className="py-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">機器情報</h2>
 
                 {/* 登録済み/未登録切り替え（ラジオボタン） */}
                 <div className="flex flex-wrap gap-x-5 gap-y-2 mb-4">
@@ -447,9 +447,9 @@ function RepairRequestContent() {
                       name="asset-type"
                       checked={isRegisteredAsset}
                       onChange={() => setIsRegisteredAsset(true)}
-                      className="size-4 accent-[#27ae60] cursor-pointer"
+                      className="size-4 accent-cta-primary cursor-pointer"
                     />
-                    <span className={`text-sm ${isRegisteredAsset ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                    <span className={`text-sm ${isRegisteredAsset ? 'font-semibold text-content-primary' : 'text-[#4b5563]'}`}>
                       登録済み資産
                     </span>
                   </label>
@@ -459,9 +459,9 @@ function RepairRequestContent() {
                       name="asset-type"
                       checked={!isRegisteredAsset}
                       onChange={() => setIsRegisteredAsset(false)}
-                      className="size-4 accent-[#27ae60] cursor-pointer"
+                      className="size-4 accent-cta-primary cursor-pointer"
                     />
-                    <span className={`text-sm ${!isRegisteredAsset ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                    <span className={`text-sm ${!isRegisteredAsset ? 'font-semibold text-content-primary' : 'text-[#4b5563]'}`}>
                       未登録資産
                     </span>
                   </label>
@@ -471,7 +471,7 @@ function RepairRequestContent() {
                   <>
                     {/* QRコード読み取り */}
                     <div className="mb-4">
-                      <label className="block text-xs text-[#6b7280] mb-1">QRラベル</label>
+                      <label className="block text-xs text-content-sub mb-1">QRラベル</label>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -486,7 +486,7 @@ function RepairRequestContent() {
                           className={`px-4 py-2.5 text-white text-sm font-medium border-0 rounded-md whitespace-nowrap transition-colors ${
                             isQrScanning
                               ? 'bg-[#9ca3af] cursor-not-allowed'
-                              : 'bg-[#27ae60] cursor-pointer hover:bg-[#219a52]'
+                              : 'bg-cta-primary cursor-pointer hover:bg-[#219a52]'
                           }`}
                         >
                           {isQrScanning ? '読取中...' : 'QR読取'}
@@ -500,7 +500,7 @@ function RepairRequestContent() {
                         <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-[120px_1fr]'}`}>
                           {/* 機器写真プレースホルダー */}
                           <div className={`${isMobile ? 'w-full h-[150px]' : 'w-[120px] h-[120px]'} bg-[#e5e7eb] rounded-lg flex items-center justify-center`}>
-                            <svg className="w-10 h-10 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-10 h-10 text-content-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
@@ -508,28 +508,28 @@ function RepairRequestContent() {
                           {/* 機器詳細 */}
                           <div className="grid grid-cols-2 gap-2">
                             <div>
-                              <span className="text-[11px] text-[#6b7280]">品目</span>
-                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.itemName}</div>
+                              <span className="text-[11px] text-content-sub">品目</span>
+                              <div className="text-sm font-semibold text-content-primary">{deviceInfo.itemName}</div>
                             </div>
                             <div>
-                              <span className="text-[11px] text-[#6b7280]">メーカー</span>
-                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.maker}</div>
+                              <span className="text-[11px] text-content-sub">メーカー</span>
+                              <div className="text-sm font-semibold text-content-primary">{deviceInfo.maker}</div>
                             </div>
                             <div>
-                              <span className="text-[11px] text-[#6b7280]">型式</span>
-                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.model}</div>
+                              <span className="text-[11px] text-content-sub">型式</span>
+                              <div className="text-sm font-semibold text-content-primary">{deviceInfo.model}</div>
                             </div>
                             <div>
-                              <span className="text-[11px] text-[#6b7280]">シリアルNo.</span>
-                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.serialNo}</div>
+                              <span className="text-[11px] text-content-sub">シリアルNo.</span>
+                              <div className="text-sm font-semibold text-content-primary">{deviceInfo.serialNo}</div>
                             </div>
                             <div>
-                              <span className="text-[11px] text-[#6b7280]">設置部署</span>
-                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.department}</div>
+                              <span className="text-[11px] text-content-sub">設置部署</span>
+                              <div className="text-sm font-semibold text-content-primary">{deviceInfo.department}</div>
                             </div>
                             <div>
-                              <span className="text-[11px] text-[#6b7280]">室名</span>
-                              <div className="text-sm font-semibold text-[#1f2937]">{deviceInfo.roomName}</div>
+                              <span className="text-[11px] text-content-sub">室名</span>
+                              <div className="text-sm font-semibold text-content-primary">{deviceInfo.roomName}</div>
                             </div>
                           </div>
                         </div>
@@ -540,27 +540,27 @@ function RepairRequestContent() {
                   /* 未登録資産の場合 */
                   <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     <div>
-                      <label className="block text-xs text-[#6b7280] mb-1">品目</label>
+                      <label className="block text-xs text-content-sub mb-1">品目</label>
                       <input type="text" value={manualItemName} onChange={(e) => setManualItemName(e.target.value)} placeholder="例: 人工呼吸器" className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6b7280] mb-1">メーカー</label>
+                      <label className="block text-xs text-content-sub mb-1">メーカー</label>
                       <input type="text" value={manualMaker} onChange={(e) => setManualMaker(e.target.value)} placeholder="例: フクダ電子" className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6b7280] mb-1">型式</label>
+                      <label className="block text-xs text-content-sub mb-1">型式</label>
                       <input type="text" value={manualModel} onChange={(e) => setManualModel(e.target.value)} placeholder="例: RES-500" className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6b7280] mb-1">シリアルNo.</label>
+                      <label className="block text-xs text-content-sub mb-1">シリアルNo.</label>
                       <input type="text" value={manualSerialNo} onChange={(e) => setManualSerialNo(e.target.value)} placeholder="例: SN-2024-001" className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6b7280] mb-1">設置部署</label>
+                      <label className="block text-xs text-content-sub mb-1">設置部署</label>
                       <input type="text" value={manualDepartment} onChange={(e) => setManualDepartment(e.target.value)} placeholder="例: 外科病棟" className={inputClass} />
                     </div>
                     <div>
-                      <label className="block text-xs text-[#6b7280] mb-1">室名</label>
+                      <label className="block text-xs text-content-sub mb-1">室名</label>
                       <input type="text" value={manualRoomName} onChange={(e) => setManualRoomName(e.target.value)} placeholder="例: 301号室" className={inputClass} />
                     </div>
                   </div>
@@ -568,7 +568,7 @@ function RepairRequestContent() {
 
                 {/* 機器写真 */}
                 <div className="mt-4">
-                  <label className="block text-xs text-[#6b7280] mb-2">機器写真</label>
+                  <label className="block text-xs text-content-sub mb-2">機器写真</label>
                   <input
                     ref={photoInputRef}
                     type="file"
@@ -580,7 +580,7 @@ function RepairRequestContent() {
                   {capturedPhotos.length > 0 && (
                     <div className="flex gap-2 flex-wrap mb-3">
                       {capturedPhotos.map((photo, i) => (
-                        <div key={i} className="relative w-[100px] h-[100px] rounded-lg overflow-hidden border border-[#e5e7eb]">
+                        <div key={i} className="relative w-[100px] h-[100px] rounded-lg overflow-hidden border border-stroke-card">
                           <img src={photo} alt={`写真${i + 1}`} className="w-full h-full object-cover" />
                           <button
                             onClick={() => handlePhotoRemove(i)}
@@ -595,13 +595,13 @@ function RepairRequestContent() {
                   )}
                   <button
                     onClick={() => photoInputRef.current?.click()}
-                    className="w-full py-4 bg-[#f3f4f6] border-2 border-dashed border-[#d1d5db] rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:border-[#27ae60] transition-colors"
+                    className="w-full py-4 bg-[#f3f4f6] border-2 border-dashed border-stroke-input rounded-lg cursor-pointer flex items-center justify-center gap-2 hover:border-cta-primary transition-colors"
                   >
-                    <svg className="w-5 h-5 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-content-sub" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="text-sm text-[#6b7280]">
+                    <span className="text-sm text-content-sub">
                       {isMobile ? '写真を撮影・選択して添付' : '写真を選択して添付'}
                     </span>
                   </button>
@@ -609,8 +609,8 @@ function RepairRequestContent() {
               </div>
 
               {/* ③ 症状 */}
-              <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">
+              <div className="py-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">
                   症状 <span className="text-red-500">*</span>
                 </h2>
                 <textarea
@@ -618,13 +618,13 @@ function RepairRequestContent() {
                   onChange={(e) => setSymptoms(e.target.value)}
                   placeholder="機器の症状や不具合の詳細を入力してください"
                   rows={4}
-                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors resize-y"
+                  className="w-full px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-cta-primary/20 transition-colors resize-y"
                 />
               </div>
 
               {/* ④ 代替機（ラジオボタン） */}
-              <div className="py-6 border-b border-[#e5e7eb]">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">代替機</h2>
+              <div className="py-6 border-b border-stroke-card">
+                <h2 className="text-sm font-bold text-content-primary mb-3">代替機</h2>
                 <div className="flex flex-wrap gap-x-5 gap-y-2">
                   {[
                     { value: 'not_needed' as const, label: '不要' },
@@ -638,9 +638,9 @@ function RepairRequestContent() {
                         value={option.value}
                         checked={alternativeDevice === option.value}
                         onChange={() => setAlternativeDevice(option.value)}
-                        className="size-4 accent-[#27ae60] cursor-pointer"
+                        className="size-4 accent-cta-primary cursor-pointer"
                       />
-                      <span className={`text-sm ${alternativeDevice === option.value ? 'font-semibold text-[#1f2937]' : 'text-[#4b5563]'}`}>
+                      <span className={`text-sm ${alternativeDevice === option.value ? 'font-semibold text-content-primary' : 'text-[#4b5563]'}`}>
                         {option.label}
                       </span>
                     </label>
@@ -650,13 +650,13 @@ function RepairRequestContent() {
 
               {/* ⑤ フリーコメント */}
               <div className="py-6">
-                <h2 className="text-sm font-bold text-[#1f2937] mb-3">フリーコメント</h2>
+                <h2 className="text-sm font-bold text-content-primary mb-3">フリーコメント</h2>
                 <textarea
                   value={freeComment}
                   onChange={(e) => setFreeComment(e.target.value)}
                   placeholder="その他連絡事項があれば入力してください"
                   rows={3}
-                  className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] focus:ring-1 focus:ring-[#27ae60]/20 transition-colors resize-y"
+                  className="w-full px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-cta-primary/20 transition-colors resize-y"
                 />
               </div>
             </div>
@@ -665,7 +665,7 @@ function RepairRequestContent() {
             <div className="mt-4">
               <button
                 onClick={handleConfirm}
-                className="w-full py-3.5 bg-[#27ae60] text-white text-base font-bold border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors"
+                className="w-full py-3.5 bg-cta-primary text-white text-base font-bold border-0 rounded-md cursor-pointer hover:bg-[#219a52] transition-colors"
               >
                 記載内容を確認する
               </button>
@@ -685,7 +685,7 @@ function RepairRequestContent() {
       </div>
 
       {/* フッター */}
-      <footer className="py-3 text-center text-xs text-[#9ca3af]">
+      <footer className="py-3 text-center text-xs text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 

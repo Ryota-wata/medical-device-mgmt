@@ -9,33 +9,33 @@ import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 import { Header } from '@/components/layouts/Header';
 
-/** カラートークン（order-registration準拠） */
+/** カラートークン（Figma準拠 Step ② 反映） */
 const COLORS = {
-  primary: '#27ae60',
-  primaryDark: '#3d5a80',
+  primary: '#008C1D',
+  primaryDark: '#146E2E',
   accent: '#e67e22',
-  textOnAccent: '#1f2937',
-  textPrimary: '#1f2937',
+  textOnAccent: '#4A4A4A',
+  textPrimary: '#4A4A4A',
   textSecondary: '#374151',
-  textMuted: '#6b7280',
+  textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
-  border: '#d1d5db',
-  borderLight: '#e5e7eb',
-  surface: '#f9fafb',
-  surfaceAlt: '#f3f4f6',
+  border: '#E1E1E1',
+  borderLight: '#F1F1F1',
+  surface: '#FAFAFA',
+  surfaceAlt: '#F1F1F1',
   sectionHeader: '#4b5563',
   white: '#ffffff',
-  error: '#dc2626',
-  success: '#27ae60',
-  successLight: '#e8f5e9',
+  error: '#DA0000',
+  success: '#008C1D',
+  successLight: '#EBF5EE',
   warning: '#f59e0b',
   warningBg: '#fffbeb',
   warningBorder: '#f59e0b',
   warningText: '#92400e',
-  disabled: '#9ca3af',
-  disabledBg: '#f3f4f6',
+  disabled: '#D6D6D6',
+  disabledBg: '#F1F1F1',
   stepActive: '#3498db',
-  stepCompleted: '#27ae60',
+  stepCompleted: '#008C1D',
   stepPending: '#dee2e6',
 } as const;
 
@@ -1041,7 +1041,7 @@ function RepairTaskContent() {
                               display: 'inline-block',
                               padding: '2px 6px',
                               borderRadius: '4px',
-                              background: isSent ? '#27ae60' : '#f39c12',
+                              background: isSent ? '#008C1D' : '#f39c12',
                               color: 'white',
                               fontWeight: 'bold',
                               fontSize: '11px',
@@ -1130,11 +1130,11 @@ function RepairTaskContent() {
         <Section
           step={2}
           title="STEP2. 見積書登録・発注"
-          accentColor="#27ae60"
+          accentColor="#008C1D"
           enabled={isStepEnabled(2)}
           completed={2 < activeStep}
           headerAction={
-            <button className="repair-btn" onClick={() => { setPreviewTab('見積書'); setPreviewQuotationIndex(null); }} disabled={!isStepEnabled(2)} style={{ padding: '4px 12px', background: 'rgba(255,255,255,0.9)', color: '#27ae60', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+            <button className="repair-btn" onClick={() => { setPreviewTab('見積書'); setPreviewQuotationIndex(null); }} disabled={!isStepEnabled(2)} style={{ padding: '4px 12px', background: 'rgba(255,255,255,0.9)', color: '#008C1D', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
               一覧表示
             </button>
           }
@@ -1196,11 +1196,11 @@ function RepairTaskContent() {
           {/* 見積入力フォーム */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>見積を追加</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #27ae60' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #008C1D' }}>
               <tbody>
                 <tr>
-                  <th style={{ background: '#27ae60', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #27ae60', whiteSpace: 'nowrap' }}>添付ファイル</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #27ae60' }}>
+                  <th style={{ background: '#008C1D', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #008C1D', whiteSpace: 'nowrap' }}>添付ファイル</th>
+                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #008C1D' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <label style={{ padding: '6px 16px', background: '#f5f5f5', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
                         ファイルの選択
@@ -1213,8 +1213,8 @@ function RepairTaskContent() {
                   </td>
                 </tr>
                 <tr>
-                  <th style={{ background: '#27ae60', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #27ae60', whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #27ae60' }}>
+                  <th style={{ background: '#008C1D', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #008C1D', whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
+                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #008C1D' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '発注用'} onChange={() => updateFormData({ quotationPhase: '発注用' })} disabled={!isStepEnabled(2)} /> 修理発注登録用見積</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '参考'} onChange={() => updateFormData({ quotationPhase: '参考' })} disabled={!isStepEnabled(2)} /> 参考見積</label>
@@ -1223,8 +1223,8 @@ function RepairTaskContent() {
                   </td>
                 </tr>
                 <tr>
-                  <th style={{ background: '#27ae60', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #27ae60', whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #27ae60' }}>
+                  <th style={{ background: '#008C1D', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #008C1D', whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
+                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #008C1D' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === '電子取引'} onChange={() => updateFormData({ saveFormat: '電子取引' })} disabled={!isStepEnabled(2)} /> 電子取引</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === 'スキャナ保存'} onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })} disabled={!isStepEnabled(2)} /> スキャナ保存</label>
@@ -1237,8 +1237,8 @@ function RepairTaskContent() {
           </div>
 
           {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
-          <div style={{ marginBottom: '20px', border: `2px solid #27ae60`, borderRadius: '8px', padding: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#27ae60', marginBottom: '12px' }}>
+          <div style={{ marginBottom: '20px', border: `2px solid #008C1D`, borderRadius: '8px', padding: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#008C1D', marginBottom: '12px' }}>
               見積登録業者
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1284,7 +1284,7 @@ function RepairTaskContent() {
                   disabled={!isStepEnabled(2) || isSubmitting || !selectedFileName || !quotationVendorName}
                   style={{
                     padding: '8px 20px',
-                    background: selectedFileName && quotationVendorName ? '#27ae60' : COLORS.disabledBg,
+                    background: selectedFileName && quotationVendorName ? '#008C1D' : COLORS.disabledBg,
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',

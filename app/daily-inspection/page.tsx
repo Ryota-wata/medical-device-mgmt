@@ -285,20 +285,20 @@ function DailyInspectionContent() {
 
   // 共通ヘッダー
   const PageHeader = ({ showClose = false }: { showClose?: boolean }) => (
-    <header className="bg-white border-b border-[#e5e7eb] px-4 py-3">
+    <header className="bg-white border-b border-stroke-card px-4 py-3">
       <div className="flex items-center justify-between max-w-[800px] mx-auto">
         <div className="flex items-center gap-2.5">
-          <div className="size-10 bg-[#27ae60] rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+          <div className="size-10 bg-cta-primary rounded-lg flex items-center justify-center text-white font-bold text-[10px] shrink-0">
             logo
           </div>
-          <div className="text-sm font-bold text-[#1f2937] text-balance">
+          <div className="text-sm font-bold text-content-primary text-balance">
             HEALTHCARE 医療機器管理システム
           </div>
         </div>
         {showClose && isMobile && (
           <button
             onClick={handleClose}
-            className="size-10 flex items-center justify-center text-[#6b7280] bg-transparent border-0 cursor-pointer"
+            className="size-10 flex items-center justify-center text-content-sub bg-transparent border-0 cursor-pointer"
             aria-label="閉じる"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -313,7 +313,7 @@ function DailyInspectionContent() {
 
   // 共通フッター（コピーライト）
   const PageFooter = () => (
-    <footer className="py-3 text-center text-xs text-[#9ca3af]">
+    <footer className="py-3 text-center text-xs text-content-sub">
       &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
     </footer>
   );
@@ -325,25 +325,25 @@ function DailyInspectionContent() {
   // ========== QRスキャンステップ（Figma再現） ==========
   if (step === 'qr-scan') {
     return (
-      <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <PageHeader showClose />
 
         {/* メインコンテンツ */}
         <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
-          <h1 className="text-lg font-bold text-[#1f2937] mb-4 text-balance">
+          <h1 className="text-lg font-bold text-content-primary mb-4 text-balance">
             日常点検：QRコード読み取り
           </h1>
 
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
             {/* QRコード表示エリア */}
-            <div className="bg-[#f3f4f6] rounded-md flex flex-col items-center justify-center py-10 mb-6">
+            <div className="bg-surface-disabled rounded-md flex flex-col items-center justify-center py-10 mb-6">
               <QRCodePlaceholder size={48} color="#9ca3af" />
-              <p className="text-sm text-[#9ca3af] mt-2">QRコードを読んでください</p>
+              <p className="text-sm text-content-sub mt-2">QRコードを読んでください</p>
             </div>
 
             {/* QRコード手入力 */}
             <div className="mb-2">
-              <label className="block text-sm font-medium text-[#1f2937] mb-2">
+              <label className="block text-sm font-medium text-content-primary mb-2">
                 QRコードを手入力
               </label>
               <div className="relative">
@@ -352,13 +352,13 @@ function DailyInspectionContent() {
                   value={qrCode}
                   onChange={(e) => setQrCode(e.target.value)}
                   placeholder="例: QR-001"
-                  className="w-full px-3 py-2.5 pr-10 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors text-[#1f2937]"
+                  className="w-full px-3 py-2.5 pr-10 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary transition-colors text-content-primary"
                 />
                 {/* QRアイコンボタン */}
                 <button
                   type="button"
                   onClick={() => setShowQrMenu(!showQrMenu)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 size-8 flex items-center justify-center text-[#9ca3af] hover:text-[#6b7280] bg-transparent border-0 cursor-pointer rounded transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-8 flex items-center justify-center text-content-sub hover:text-content-sub bg-transparent border-0 cursor-pointer rounded transition-colors"
                   aria-label="QR読み取りメニュー"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -379,7 +379,7 @@ function DailyInspectionContent() {
                       className="fixed inset-0 z-10"
                       onClick={() => setShowQrMenu(false)}
                     />
-                    <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-[#e5e7eb] rounded-md shadow-md py-1 min-w-[180px]">
+                    <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-stroke-card rounded-md shadow-md py-1 min-w-[180px]">
                       <button
                         type="button"
                         onClick={() => {
@@ -390,14 +390,14 @@ function DailyInspectionContent() {
                             handleStartCamera();
                           }
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#1f2937] bg-transparent border-0 cursor-pointer hover:bg-[#f3f4f6] transition-colors"
+                        className="w-full text-left px-4 py-2.5 text-sm text-content-primary bg-transparent border-0 cursor-pointer hover:bg-surface-disabled transition-colors"
                       >
                         {isCameraActive ? 'カメラを停止' : 'カメラを起動'}
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowQrMenu(false)}
-                        className="w-full text-left px-4 py-2.5 text-sm text-[#1f2937] bg-transparent border-0 cursor-pointer hover:bg-[#f3f4f6] transition-colors"
+                        className="w-full text-left px-4 py-2.5 text-sm text-content-primary bg-transparent border-0 cursor-pointer hover:bg-surface-disabled transition-colors"
                       >
                         ライブラリから読み込み
                       </button>
@@ -433,8 +433,8 @@ function DailyInspectionContent() {
               disabled={!isQrEntered}
               className={`${isMobile ? 'w-full order-1' : 'flex-1'} py-3 text-sm font-bold rounded-md transition-colors ${
                 isQrEntered
-                  ? 'text-[#27ae60] bg-white border border-[#27ae60] cursor-pointer hover:bg-[#f0fdf4]'
-                  : 'text-[#9ca3af] bg-[#f3f4f6] border border-[#d1d5db] cursor-default'
+                  ? 'text-cta-primary-dark bg-white border border-cta-primary cursor-pointer hover:bg-[#f0fdf4]'
+                  : 'text-content-sub bg-surface-disabled border border-stroke-input cursor-default'
               }`}
             >
               検索して点検開始する
@@ -450,48 +450,48 @@ function DailyInspectionContent() {
   // ========== 点検実施ステップ ==========
   if (step === 'inspection') {
     return (
-      <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <PageHeader />
 
         <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
-          <h1 className="text-lg font-bold text-[#1f2937] mb-1 text-balance">
+          <h1 className="text-lg font-bold text-content-primary mb-1 text-balance">
             日常点検：QRコード読み取り
           </h1>
-          <p className="text-sm text-[#6b7280] mb-4">{formattedDate}</p>
+          <p className="text-sm text-content-sub mb-4">{formattedDate}</p>
 
           {/* 基本情報カード */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6 mb-4">
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6 mb-4">
             {/* QRコード・実施者名 */}
             <div className="flex flex-wrap gap-4 mb-4">
               <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs text-[#6b7280] mb-1">QRコード</label>
+                <label className="block text-xs text-content-sub mb-1">QRコード</label>
                 <input
                   type="text"
                   value={selectedAsset?.qrCode || ''}
                   readOnly
-                  className="w-full px-3 py-2 text-sm bg-[#f3f4f6] border border-[#d1d5db] rounded-md text-[#1f2937] tabular-nums outline-none"
+                  className="w-full px-3 py-2 text-sm bg-surface-disabled border border-stroke-input rounded-md text-content-primary tabular-nums outline-none"
                 />
               </div>
               <div className="flex-1 min-w-[140px]">
-                <label className="block text-xs text-[#6b7280] mb-1">実施者名</label>
+                <label className="block text-xs text-content-sub mb-1">実施者名</label>
                 <input
                   type="text"
                   value={inspectorName}
                   readOnly
-                  className="w-full px-3 py-2 text-sm bg-[#f3f4f6] border border-[#d1d5db] rounded-md text-[#1f2937] outline-none"
+                  className="w-full px-3 py-2 text-sm bg-surface-disabled border border-stroke-input rounded-md text-content-primary outline-none"
                 />
               </div>
             </div>
 
             {/* 機器タグバッジ */}
             <div className="flex flex-wrap gap-2 mb-6">
-              <span className="px-2.5 py-1 text-xs border border-[#d1d5db] rounded-full text-[#4b5563] bg-white">{selectedAsset?.largeClass}</span>
-              <span className="px-2.5 py-1 text-xs border border-[#d1d5db] rounded-full text-[#4b5563] bg-white">{selectedAsset?.mediumClass}</span>
-              <span className="px-2.5 py-1 text-xs border border-[#d1d5db] rounded-full text-[#4b5563] bg-white">{selectedAsset?.item}/{selectedAsset?.maker}/ {selectedAsset?.model}</span>
+              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4b5563] bg-white">{selectedAsset?.largeClass}</span>
+              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4b5563] bg-white">{selectedAsset?.mediumClass}</span>
+              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4b5563] bg-white">{selectedAsset?.item}/{selectedAsset?.maker}/ {selectedAsset?.model}</span>
             </div>
 
             {/* タイミング点検 */}
-            <h3 className="text-sm font-bold text-[#1f2937] mb-2">タイミング点検</h3>
+            <h3 className="text-sm font-bold text-content-primary mb-2">タイミング点検</h3>
             <div className="flex gap-4 mb-6">
               {(['使用前', '使用中', '使用後'] as const).map((timing) => (
                 <label key={timing} className="flex items-center gap-1.5 cursor-pointer">
@@ -501,22 +501,22 @@ function DailyInspectionContent() {
                     value={timing}
                     checked={usageTiming === timing}
                     onChange={() => setUsageTiming(timing)}
-                    className="accent-[#27ae60] size-4 cursor-pointer"
+                    className="accent-cta-primary size-4 cursor-pointer"
                   />
-                  <span className="text-sm text-[#1f2937]">{timing}</span>
+                  <span className="text-sm text-content-primary">{timing}</span>
                 </label>
               ))}
             </div>
 
             {/* 点検メニュー */}
-            <h3 className="text-sm font-bold text-[#1f2937] mb-2">点検メニュー</h3>
+            <h3 className="text-sm font-bold text-content-primary mb-2">点検メニュー</h3>
             <select
               value={selectedMenuId}
               onChange={(e) => setSelectedMenuId(e.target.value)}
               className={`w-full px-3 py-2.5 text-sm rounded-md outline-none transition-colors bg-white cursor-pointer ${
                 filteredMenus.length === 0
                   ? 'border-2 border-[#dc2626] text-[#dc2626]'
-                  : 'border border-[#d1d5db] text-[#1f2937] focus:border-[#27ae60]'
+                  : 'border border-stroke-input text-content-primary focus:border-cta-primary'
               }`}
             >
               <option value="">選択してください</option>
@@ -532,44 +532,44 @@ function DailyInspectionContent() {
           </div>
 
           {/* 点検実施カード */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-            <p className="text-sm text-[#1f2937] mb-4 text-pretty">
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
+            <p className="text-sm text-content-primary mb-4 text-pretty">
               対象点検、点検メニューにまちがないか確認して点検を実施してください
             </p>
 
             {/* 点検項目テーブル */}
-            <div className="border border-[#e5e7eb] rounded-md overflow-hidden mb-4">
+            <div className="border border-stroke-card rounded-md overflow-hidden mb-4">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[400px]">
                   <thead>
-                    <tr className="bg-[#f9fafb]">
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb]">項目</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] border-l border-[#e5e7eb]">内容点検</th>
-                      <th className="px-3 py-2.5 border-b border-[#e5e7eb] border-l border-[#e5e7eb] w-[100px]"></th>
+                    <tr className="bg-surface-screen">
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-content-sub border-b border-stroke-card">項目</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-content-sub border-b border-stroke-card border-l border-stroke-card">内容点検</th>
+                      <th className="px-3 py-2.5 border-b border-stroke-card border-l border-stroke-card w-[100px]"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {itemResults.map((item, index) => (
-                      <tr key={index} className="border-b border-[#e5e7eb] last:border-b-0">
-                        <td className="px-3 py-2.5 text-sm text-[#1f2937]">{item.itemName}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#1f2937] border-l border-[#e5e7eb]">{item.content}</td>
-                        <td className="px-3 py-2.5 border-l border-[#e5e7eb]">
+                      <tr key={index} className="border-b border-stroke-card last:border-b-0">
+                        <td className="px-3 py-2.5 text-sm text-content-primary">{item.itemName}</td>
+                        <td className="px-3 py-2.5 text-sm text-content-primary border-l border-stroke-card">{item.content}</td>
+                        <td className="px-3 py-2.5 border-l border-stroke-card">
                           {/* REQ-103: 評価項目の入力形式を 3 パターンで切替（定例0413 確定） */}
                           {item.evaluationType === '単位' ? (
                             <div className="flex items-center gap-1">
                               <input
                                 type="number"
-                                className="w-[60px] px-2 py-1 text-sm text-right border border-[#d1d5db] rounded outline-none focus:border-[#27ae60] tabular-nums"
+                                className="w-[60px] px-2 py-1 text-sm text-right border border-stroke-input rounded outline-none focus:border-cta-primary tabular-nums"
                                 value={item.result}
                                 onChange={(e) => handleItemResultChange(index, e.target.value)}
                                 placeholder="入力し..."
                               />
-                              <span className="text-xs text-[#6b7280]">{item.unit}</span>
+                              <span className="text-xs text-content-sub">{item.unit}</span>
                             </div>
                           ) : item.evaluationType === 'フリー入力' ? (
                             <input
                               type="text"
-                              className="w-[200px] px-2 py-1 text-sm border border-[#d1d5db] rounded outline-none focus:border-[#27ae60]"
+                              className="w-[200px] px-2 py-1 text-sm border border-stroke-input rounded outline-none focus:border-cta-primary"
                               value={item.result}
                               onChange={(e) => handleItemResultChange(index, e.target.value)}
                               placeholder="自由記述"
@@ -581,12 +581,12 @@ function DailyInspectionContent() {
                                 const base = 'px-3 py-1.5 text-xs rounded border cursor-pointer transition-colors min-w-[44px] min-h-[32px]';
                                 const active = item.result === val;
                                 const color = val === '○'
-                                  ? 'border-[#27ae60] bg-[#f0fdf4] text-[#27ae60]'
+                                  ? 'border-cta-primary bg-[#f0fdf4] text-cta-primary-dark'
                                   : 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626]';
                                 return (
                                   <button
                                     key={val}
-                                    className={`${base} ${active ? color : 'border-[#d1d5db] bg-white text-[#1f2937] hover:bg-[#f9fafb]'}`}
+                                    className={`${base} ${active ? color : 'border-stroke-input bg-white text-content-primary hover:bg-surface-screen'}`}
                                     onClick={() => handleItemResultChange(index, val)}
                                   >
                                     {val}
@@ -605,22 +605,22 @@ function DailyInspectionContent() {
 
             {/* 備考 */}
             <div className="mb-6">
-              <label className="block text-xs text-[#6b7280] mb-1">備考（部品交換等）</label>
+              <label className="block text-xs text-content-sub mb-1">備考（部品交換等）</label>
               <input
                 type="text"
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder="入力してください"
-                className="w-full px-3 py-2.5 text-sm border border-[#d1d5db] rounded-md outline-none focus:border-[#27ae60] transition-colors text-[#1f2937]"
+                className="w-full px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary transition-colors text-content-primary"
               />
             </div>
 
             {/* 総合評価 */}
-            <h3 className="text-sm font-bold text-[#1f2937] mb-3">総合評価</h3>
+            <h3 className="text-sm font-bold text-content-primary mb-3">総合評価</h3>
             <div className="flex gap-3">
               <button
                 onClick={() => handleShowConfirm('合格')}
-                className="flex-1 py-3 text-sm font-bold text-white bg-[#27ae60] border-0 rounded-md cursor-pointer hover:bg-[#229954] transition-colors"
+                className="flex-1 py-3 text-sm font-bold text-white bg-cta-primary border-0 rounded-md cursor-pointer hover:opacity-90 transition-colors"
               >
                 合格（使用可）
               </button>
@@ -652,110 +652,110 @@ function DailyInspectionContent() {
   // ========== 確認ステップ ==========
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#f9fafb]">
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <PageHeader />
 
       <div className="w-full max-w-[800px] mx-auto px-3 py-6 sm:px-6">
-        <h1 className="text-lg font-bold text-[#1f2937] mb-4 text-balance">
+        <h1 className="text-lg font-bold text-content-primary mb-4 text-balance">
           点検完了
         </h1>
 
         <div className="space-y-4">
           {/* 総合評価カード */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-2">総合評価</h2>
-            <div className={`text-2xl font-bold ${overallResult === '合格' ? 'text-[#27ae60]' : 'text-[#dc2626]'}`}>
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
+            <h2 className="text-sm font-bold text-content-primary mb-2">総合評価</h2>
+            <div className={`text-2xl font-bold ${overallResult === '合格' ? 'text-cta-primary-dark' : 'text-[#dc2626]'}`}>
               {overallResult}
             </div>
           </div>
 
           {/* 点検対象機器カード */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">点検対象機器</h2>
-            <div className="border border-[#e5e7eb] rounded-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
+            <h2 className="text-sm font-bold text-content-primary mb-3">点検対象機器</h2>
+            <div className="border border-stroke-card rounded-md overflow-hidden">
               <div className="grid grid-cols-3">
-                <div className="px-3 py-2 border-b border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">QRコード</div>
-                  <div className="text-sm font-semibold text-[#1f2937] tabular-nums">{selectedAsset?.qrCode}</div>
+                <div className="px-3 py-2 border-b border-stroke-card">
+                  <div className="text-[10px] text-content-sub">QRコード</div>
+                  <div className="text-sm font-semibold text-content-primary tabular-nums">{selectedAsset?.qrCode}</div>
                 </div>
-                <div className="px-3 py-2 border-b border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">大分類</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{selectedAsset?.largeClass}</div>
+                <div className="px-3 py-2 border-b border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">大分類</div>
+                  <div className="text-sm font-semibold text-content-primary">{selectedAsset?.largeClass}</div>
                 </div>
-                <div className="px-3 py-2 border-b border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">中分類</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{selectedAsset?.mediumClass}</div>
+                <div className="px-3 py-2 border-b border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">中分類</div>
+                  <div className="text-sm font-semibold text-content-primary">{selectedAsset?.mediumClass}</div>
                 </div>
               </div>
               <div className="grid grid-cols-3">
                 <div className="px-3 py-2">
-                  <div className="text-[10px] text-[#6b7280]">品目</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{selectedAsset?.item}</div>
+                  <div className="text-[10px] text-content-sub">品目</div>
+                  <div className="text-sm font-semibold text-content-primary">{selectedAsset?.item}</div>
                 </div>
-                <div className="px-3 py-2 border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">メーカー</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{selectedAsset?.maker}</div>
+                <div className="px-3 py-2 border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">メーカー</div>
+                  <div className="text-sm font-semibold text-content-primary">{selectedAsset?.maker}</div>
                 </div>
-                <div className="px-3 py-2 border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">形式</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{selectedAsset?.model}</div>
+                <div className="px-3 py-2 border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">形式</div>
+                  <div className="text-sm font-semibold text-content-primary">{selectedAsset?.model}</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* 点検情報カード */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">点検情報</h2>
-            <div className="border border-[#e5e7eb] rounded-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
+            <h2 className="text-sm font-bold text-content-primary mb-3">点検情報</h2>
+            <div className="border border-stroke-card rounded-md overflow-hidden">
               <div className="grid grid-cols-3">
-                <div className="px-3 py-2 border-b border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">種類検査</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">日常点検</div>
+                <div className="px-3 py-2 border-b border-stroke-card">
+                  <div className="text-[10px] text-content-sub">種類検査</div>
+                  <div className="text-sm font-semibold text-content-primary">日常点検</div>
                 </div>
-                <div className="px-3 py-2 border-b border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">タイミング</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{usageTiming}</div>
+                <div className="px-3 py-2 border-b border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">タイミング</div>
+                  <div className="text-sm font-semibold text-content-primary">{usageTiming}</div>
                 </div>
-                <div className="px-3 py-2 border-b border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">点検メニュー</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{selectedMenu?.name || '（メニュー未選択）'}</div>
+                <div className="px-3 py-2 border-b border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">点検メニュー</div>
+                  <div className="text-sm font-semibold text-content-primary">{selectedMenu?.name || '（メニュー未選択）'}</div>
                 </div>
               </div>
               <div className="grid grid-cols-3">
                 <div className="px-3 py-2">
-                  <div className="text-[10px] text-[#6b7280]">実施者</div>
-                  <div className="text-sm font-semibold text-[#1f2937]">{inspectorName}</div>
+                  <div className="text-[10px] text-content-sub">実施者</div>
+                  <div className="text-sm font-semibold text-content-primary">{inspectorName}</div>
                 </div>
-                <div className="px-3 py-2 border-l border-[#e5e7eb]">
-                  <div className="text-[10px] text-[#6b7280]">実施日</div>
-                  <div className="text-sm font-semibold text-[#1f2937] tabular-nums">{today}</div>
+                <div className="px-3 py-2 border-l border-stroke-card">
+                  <div className="text-[10px] text-content-sub">実施日</div>
+                  <div className="text-sm font-semibold text-content-primary tabular-nums">{today}</div>
                 </div>
-                <div className="px-3 py-2 border-l border-[#e5e7eb]"></div>
+                <div className="px-3 py-2 border-l border-stroke-card"></div>
               </div>
             </div>
           </div>
 
           {/* 点検項目結果カード */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e5e7eb] p-4 sm:p-6">
-            <h2 className="text-sm font-bold text-[#1f2937] mb-3">点検項目結果</h2>
-            <div className="border border-[#e5e7eb] rounded-md overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
+            <h2 className="text-sm font-bold text-content-primary mb-3">点検項目結果</h2>
+            <div className="border border-stroke-card rounded-md overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[400px]">
                   <thead>
-                    <tr className="bg-[#f9fafb]">
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb]">項目</th>
-                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-[#6b7280] border-b border-[#e5e7eb] border-l border-[#e5e7eb]">内容点検</th>
-                      <th className="px-3 py-2.5 border-b border-[#e5e7eb] border-l border-[#e5e7eb] w-[100px]"></th>
+                    <tr className="bg-surface-screen">
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-content-sub border-b border-stroke-card">項目</th>
+                      <th className="px-3 py-2.5 text-left text-xs font-semibold text-content-sub border-b border-stroke-card border-l border-stroke-card">内容点検</th>
+                      <th className="px-3 py-2.5 border-b border-stroke-card border-l border-stroke-card w-[100px]"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {itemResults.map((item, index) => (
-                      <tr key={index} className="border-b border-[#e5e7eb] last:border-b-0">
-                        <td className="px-3 py-2.5 text-sm text-[#1f2937]">{item.itemName}</td>
-                        <td className="px-3 py-2.5 text-sm text-[#1f2937] border-l border-[#e5e7eb]">{item.content}</td>
-                        <td className={`px-3 py-2.5 text-sm text-center font-semibold border-l border-[#e5e7eb] ${
-                          item.result === '○' ? 'text-[#27ae60]' : item.result === '×' ? 'text-[#dc2626]' : 'text-[#1f2937]'
+                      <tr key={index} className="border-b border-stroke-card last:border-b-0">
+                        <td className="px-3 py-2.5 text-sm text-content-primary">{item.itemName}</td>
+                        <td className="px-3 py-2.5 text-sm text-content-primary border-l border-stroke-card">{item.content}</td>
+                        <td className={`px-3 py-2.5 text-sm text-center font-semibold border-l border-stroke-card ${
+                          item.result === '○' ? 'text-cta-primary-dark' : item.result === '×' ? 'text-[#dc2626]' : 'text-content-primary'
                         }`}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
@@ -772,13 +772,13 @@ function DailyInspectionContent() {
         <div className="mt-6 space-y-3">
           <button
             onClick={overallResult === '異常あり' ? handleRepairRequest : handleFinish}
-            className="w-full py-3 text-sm font-bold text-white bg-[#27ae60] border-0 rounded-md cursor-pointer hover:bg-[#229954] transition-colors"
+            className="w-full py-3 text-sm font-bold text-white bg-cta-primary border-0 rounded-md cursor-pointer hover:opacity-90 transition-colors"
           >
             完了
           </button>
           <button
             onClick={handleNextInspection}
-            className="w-full py-3 text-sm font-bold text-[#1f2937] bg-white border border-[#e5e7eb] rounded-md cursor-pointer hover:bg-[#f9fafb] transition-colors"
+            className="w-full py-3 text-sm font-bold text-content-primary bg-white border border-stroke-card rounded-md cursor-pointer hover:bg-surface-screen transition-colors"
           >
             次の点検
           </button>
@@ -791,8 +791,8 @@ function DailyInspectionContent() {
             disabled={isExporting}
             className={`w-full py-3 text-sm font-bold rounded-md transition-colors ${
               isExporting
-                ? 'text-[#9ca3af] bg-[#f3f4f6] border border-[#d1d5db] cursor-not-allowed'
-                : 'text-[#27ae60] bg-white border border-[#27ae60] cursor-pointer hover:bg-[#f0fdf4]'
+                ? 'text-content-sub bg-surface-disabled border border-stroke-input cursor-not-allowed'
+                : 'text-cta-primary-dark bg-white border border-cta-primary cursor-pointer hover:bg-[#f0fdf4]'
             }`}
           >
             {isExporting ? '出力中...' : '修理申請へ'}
@@ -807,7 +807,7 @@ function DailyInspectionContent() {
 
 export default function DailyInspectionPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#9ca3af]">読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <DailyInspectionContent />
     </Suspense>
   );

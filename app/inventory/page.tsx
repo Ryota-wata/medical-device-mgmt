@@ -543,7 +543,7 @@ export default function InventoryPage() {
       {/* 進捗バー */}
       <div style={{ background: 'white', padding: '20px', borderBottom: '1px solid #dee2e6' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1f2937' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A' }}>
             棚卸し進捗: {progress.checked} / {progress.total} 件 ({progress.percentage}%)
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -555,7 +555,7 @@ export default function InventoryPage() {
               disabled={progress.percentage < 100}
               style={{
                 padding: '8px 20px',
-                background: progress.percentage < 100 ? '#ccc' : '#27ae60',
+                background: progress.percentage < 100 ? '#ccc' : '#008C1D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -592,7 +592,7 @@ export default function InventoryPage() {
           <div style={{
             width: `${progress.percentage}%`,
             height: '100%',
-            background: progress.percentage === 100 ? '#27ae60' : '#27ae60',
+            background: progress.percentage === 100 ? '#008C1D' : '#008C1D',
             borderRadius: '10px',
             transition: 'width 0.3s ease'
           }} />
@@ -704,7 +704,7 @@ export default function InventoryPage() {
               onChange={handleSelectAll}
               style={{ width: '18px', height: '18px', cursor: 'pointer' }}
             />
-            <span style={{ fontSize: '14px', color: '#1f2937', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '14px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>
               全選択 ({selectedItems.size}/{filteredItems.filter(item => item.status === 'unchecked').length})
             </span>
           </label>
@@ -713,7 +713,7 @@ export default function InventoryPage() {
             onClick={handleBulkStockOkClick}
             style={{
               padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#27ae60',
+              background: selectedItems.size === 0 ? '#ccc' : '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -806,7 +806,7 @@ export default function InventoryPage() {
                   overflow: 'hidden',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   border: item.status === 'unchecked' ? '1px solid #dee2e6' :
-                         item.status === 'stock_ok' ? '2px solid #27ae60' :
+                         item.status === 'stock_ok' ? '2px solid #008C1D' :
                          item.status === 'location_changed' ? '2px solid #f39c12' :
                          '2px solid #e74c3c'
                 }}
@@ -893,7 +893,7 @@ export default function InventoryPage() {
                     style={{
                       fontSize: '15px',
                       fontWeight: 'bold',
-                      color: '#1f2937',
+                      color: '#4A4A4A',
                       margin: '0 0 8px 0'
                     }}
                   >
@@ -1011,7 +1011,7 @@ export default function InventoryPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#1f2937', marginBottom: '8px' }}>
+                  <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#4A4A4A', marginBottom: '8px' }}>
                     諸室名
                   </label>
                   <input
@@ -1170,7 +1170,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -1181,7 +1181,7 @@ export default function InventoryPage() {
               棚卸し完了確認
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ marginBottom: '16px', color: '#1f2937', fontWeight: 'bold' }}>
+              <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
                 棚卸しを完了してよろしいですか？
               </p>
               <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
@@ -1204,7 +1204,7 @@ export default function InventoryPage() {
                   marginTop: '16px',
                   padding: '10px 20px',
                   background: 'white',
-                  color: '#1f2937',
+                  color: '#4A4A4A',
                   border: '1px solid #374151',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -1241,7 +1241,7 @@ export default function InventoryPage() {
                 onClick={handleComplete}
                 style={{
                   padding: '10px 20px',
-                  background: '#27ae60',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1296,7 +1296,7 @@ export default function InventoryPage() {
               棚卸しリセット確認
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ color: '#1f2937' }}>
+              <p style={{ color: '#4A4A4A' }}>
                 棚卸しの作業内容をすべてリセットします。<br />
                 この操作は取り消せません。よろしいですか？
               </p>
@@ -1370,7 +1370,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -1381,7 +1381,7 @@ export default function InventoryPage() {
               在庫あり確認
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ marginBottom: '16px', color: '#1f2937', fontWeight: 'bold' }}>
+              <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
                 以下の資産を「在庫あり（現状維持）」で確定しますか？
               </p>
               <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '16px' }}>
@@ -1421,7 +1421,7 @@ export default function InventoryPage() {
                 onClick={handleStockOkConfirm}
                 style={{
                   padding: '10px 20px',
-                  background: '#27ae60',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1465,7 +1465,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#27ae60',
+              background: '#008C1D',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -1476,7 +1476,7 @@ export default function InventoryPage() {
               一括確定確認
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ marginBottom: '16px', color: '#1f2937', fontWeight: 'bold' }}>
+              <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
                 選択した資産を一括で「在庫あり（現状維持）」で確定しますか？
               </p>
               <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '16px' }}>
@@ -1520,7 +1520,7 @@ export default function InventoryPage() {
                 onClick={handleBulkStockOkConfirm}
                 style={{
                   padding: '10px 20px',
-                  background: '#27ae60',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1577,11 +1577,11 @@ export default function InventoryPage() {
               要対応（保留）理由
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ marginBottom: '16px', color: '#1f2937' }}>
+              <p style={{ marginBottom: '16px', color: '#4A4A4A' }}>
                 選択した {selectedItems.size} 件を「要対応（保留）」にします。
               </p>
               <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#1f2937', marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#4A4A4A', marginBottom: '8px' }}>
                   保留理由（任意）
                 </label>
                 <textarea
