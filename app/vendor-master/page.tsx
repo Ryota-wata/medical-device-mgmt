@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, Suspense } from 'react';
+import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { VendorMaster } from '@/lib/types/master';
@@ -13,10 +14,7 @@ function VendorMasterContent() {
   const { isMobile, isTablet } = useResponsive();
   const { vendors, facilities, addVendor, updateVendor, deleteVendor } = useMasterStore();
 
-  // 施設マスタから施設名オプションを生成
-  const facilityOptions = useMemo(() => {
-    return facilities.map(f => f.facilityName);
-  }, [facilities]);
+  const facilityOptions = useMemo(() => facilities.map(f => f.facilityName), [facilities]);
 
   const [filterFacilityName, setFilterFacilityName] = useState('');
   const [filterVendorName, setFilterVendorName] = useState('');
@@ -25,7 +23,6 @@ function VendorMasterContent() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<VendorMaster | null>(null);
 
-  // フィルタリング処理
   const filteredVendors = vendors.filter((vendor) => {
     const matchFacilityName = !filterFacilityName || vendor.facilityName.toLowerCase().includes(filterFacilityName.toLowerCase());
     const matchVendorName = !filterVendorName || vendor.vendorName.toLowerCase().includes(filterVendorName.toLowerCase());
@@ -42,10 +39,6 @@ function VendorMasterContent() {
       vendor.email.toLowerCase().includes(kw)
     );
   });
-
-  const handleBack = () => {
-    router.push('/main');
-  };
 
   const handleEdit = (vendor: VendorMaster) => {
     setSelectedVendor(vendor);
@@ -73,113 +66,43 @@ function VendorMasterContent() {
       isPrimaryContact: data.isPrimaryContact || false,
       status: 'active',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     addVendor(newVendor);
   };
 
   const handleEditSubmit = (data: Partial<VendorMaster>) => {
-    if (selectedVendor) {
-      updateVendor(selectedVendor.id, data);
-    }
+    if (selectedVendor) updateVendor(selectedVendor.id, data);
   };
 
-  const thStyle = (align: 'left' | 'center' = 'left'): React.CSSProperties => ({
-    padding: isTablet ? '12px' : '14px',
-    textAlign: align,
-    fontSize: isTablet ? '13px' : '14px',
-    fontWeight: 600,
-    color: '#4A4A4A',
-    whiteSpace: 'nowrap',
-  });
-
-  const tdStyle = (): React.CSSProperties => ({
-    padding: isTablet ? '12px' : '14px',
-    fontSize: isTablet ? '13px' : '14px',
-    color: '#4A4A4A',
-    whiteSpace: 'nowrap',
-  });
+  const thCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-left font-semibold text-content-primary whitespace-nowrap`;
+  const tdCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-content-primary whitespace-nowrap`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
-      {/* Header */}
-      <header style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #E1E1E1',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: isMobile ? '12px' : '16px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#4A4A4A', margin: 0 }}>
-            業者マスタ
-          </h1>
-          <div style={{
-            background: '#F1F1F1',
-            color: '#8A8A8A',
-            padding: isMobile ? '4px 12px' : '6px 16px',
-            borderRadius: '20px',
-            fontSize: isMobile ? '12px' : '14px',
-            fontWeight: 600
-          }}>
-            {filteredVendors.length}件
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => setShowNewModal(true)}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#008C1D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            新規作成
-          </button>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#E1E1E1',
-              color: '#4A4A4A',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            メイン画面に戻る
-          </button>
-        </div>
-      </header>
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
+      <Header
+        title="業者マスタ"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+        resultCount={filteredVendors.length}
+        showOriginalLabel={false}
+      >
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="inline-flex items-center justify-center h-9 px-4 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-sm font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors"
+        >
+          新規作成
+        </button>
+      </Header>
 
-      {/* Filter Header */}
-      <div style={{
-        background: 'white',
-        padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
-        borderBottom: '1px solid #E1E1E1',
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, minmax(180px, 1fr))',
-        gap: isMobile ? '12px' : '16px'
-      }}>
+      {/* Filter */}
+      <div className={`bg-surface-card border-b border-stroke-input ${isMobile ? 'px-4 py-3' : isTablet ? 'px-5 py-4' : 'px-6 py-5'} grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[repeat(3,minmax(180px,1fr))]'} gap-4`}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            施設名
-          </label>
+          <label className={`block ${isMobile ? 'text-xs' : 'text-[13px]'} font-semibold mb-1.5 text-content-primary`}>施設名</label>
           <SearchableSelect
             value={filterFacilityName}
             onChange={setFilterFacilityName}
@@ -189,183 +112,89 @@ function VendorMasterContent() {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            業者名
-          </label>
+          <label className={`block ${isMobile ? 'text-xs' : 'text-[13px]'} font-semibold mb-1.5 text-content-primary`}>業者名</label>
           <input
             type="text"
             value={filterVendorName}
             onChange={(e) => setFilterVendorName(e.target.value)}
             placeholder="業者名で検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              boxSizing: 'border-box'
-            }}
+            className={`w-full ${isMobile ? 'p-2 text-[13px]' : 'p-2.5 text-sm'} border border-stroke-input rounded-md box-border bg-surface-card focus:outline-none focus:border-cta-primary transition-colors`}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            キーワード検索
-          </label>
+          <label className={`block ${isMobile ? 'text-xs' : 'text-[13px]'} font-semibold mb-1.5 text-content-primary`}>キーワード検索</label>
           <input
             type="text"
             value={filterKeyword}
             onChange={(e) => setFilterKeyword(e.target.value)}
             placeholder="登録番号・住所・氏名・連絡先など"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              boxSizing: 'border-box'
-            }}
+            className={`w-full ${isMobile ? 'p-2 text-[13px]' : 'p-2.5 text-sm'} border border-stroke-input rounded-md box-border bg-surface-card focus:outline-none focus:border-cta-primary transition-colors`}
           />
         </div>
       </div>
 
-      {/* Main Content */}
-      <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflowY: 'auto' }}>
+      <main className={`flex-1 overflow-y-auto ${isMobile ? 'p-4' : isTablet ? 'p-5' : 'p-6'}`}>
         {isMobile ? (
-          // カード表示 (モバイル)
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="flex flex-col gap-3">
             {filteredVendors.map((vendor) => (
-              <div key={vendor.id} style={{
-                background: 'white',
-                borderRadius: '8px',
-                padding: '16px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #E1E1E1' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A', marginBottom: '4px' }}>
-                    {vendor.vendorName}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#8A8A8A' }}>
-                    {vendor.invoiceNumber}
-                  </div>
+              <div key={vendor.id} className="bg-surface-card rounded-lg p-4 shadow-sm">
+                <div className="mb-3 pb-3 border-b border-stroke-input">
+                  <p className="text-base font-semibold text-content-primary mb-1">{vendor.vendorName}</p>
+                  <p className="text-xs text-content-sub tabular-nums">{vendor.invoiceNumber}</p>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#8A8A8A' }}>担当施設:</span> {vendor.facilityName}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>住所:</span> {vendor.address}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>役職:</span> {vendor.position}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>役割:</span> {vendor.role}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>氏名:</span> {vendor.contactPerson}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>連絡先:</span> {vendor.phone}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>メール:</span> {vendor.email}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>担当フラグ:</span> {vendor.isPrimaryContact ? '○' : 'ー'}</div>
+                <div className="flex flex-col gap-2 text-[13px]">
+                  <div><span className="text-content-sub">担当施設:</span> {vendor.facilityName}</div>
+                  <div><span className="text-content-sub">住所:</span> {vendor.address}</div>
+                  <div><span className="text-content-sub">役職:</span> {vendor.position}</div>
+                  <div><span className="text-content-sub">役割:</span> {vendor.role}</div>
+                  <div><span className="text-content-sub">氏名:</span> {vendor.contactPerson}</div>
+                  <div><span className="text-content-sub">連絡先:</span> {vendor.phone}</div>
+                  <div><span className="text-content-sub">メール:</span> {vendor.email}</div>
+                  <div><span className="text-content-sub">担当フラグ:</span> {vendor.isPrimaryContact ? '○' : '---'}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button
-                    onClick={() => handleEdit(vendor)}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: '#4A4A4A',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={() => handleDelete(vendor.id)}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: '#DA0000',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    削除
-                  </button>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => handleEdit(vendor)} className="flex-1 py-2 bg-content-primary text-white border-0 rounded text-[13px] font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors">編集</button>
+                  <button onClick={() => handleDelete(vendor.id)} className="flex-1 py-2 bg-content-alert text-white border-0 rounded text-[13px] font-semibold cursor-pointer hover:opacity-90 transition-colors">削除</button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          // テーブル表示 (PC/タブレット)
-          <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#FAFAFA', borderBottom: '1px solid #E1E1E1' }}>
+          <div className="bg-surface-card rounded-lg overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-surface-screen border-b border-stroke-input">
                   <tr>
-                    <th style={thStyle()}>担当施設名</th>
-                    <th style={thStyle()}>インボイス登録番号</th>
-                    <th style={thStyle()}>業者名</th>
-                    <th style={thStyle()}>住所</th>
-                    <th style={thStyle()}>役職</th>
-                    <th style={thStyle()}>役割</th>
-                    <th style={thStyle()}>氏名</th>
-                    <th style={thStyle()}>連絡先</th>
-                    <th style={thStyle()}>メール</th>
-                    <th style={thStyle('center')}>担当フラグ</th>
-                    <th style={thStyle('center')}>操作</th>
+                    <th className={thCls}>担当施設名</th>
+                    <th className={thCls}>インボイス登録番号</th>
+                    <th className={thCls}>業者名</th>
+                    <th className={thCls}>住所</th>
+                    <th className={thCls}>役職</th>
+                    <th className={thCls}>役割</th>
+                    <th className={thCls}>氏名</th>
+                    <th className={thCls}>連絡先</th>
+                    <th className={thCls}>メール</th>
+                    <th className={`${thCls} text-center`}>担当フラグ</th>
+                    <th className={`${thCls} text-center`}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredVendors.map((vendor, index) => (
-                    <tr
-                      key={vendor.id}
-                      style={{
-                        borderBottom: '1px solid #E1E1E1',
-                        background: index % 2 === 0 ? 'white' : '#FAFAFA',
-                      }}
-                    >
-                      <td style={tdStyle()}>{vendor.facilityName}</td>
-                      <td style={{ ...tdStyle(), fontVariantNumeric: 'tabular-nums' }}>{vendor.invoiceNumber}</td>
-                      <td style={tdStyle()}>{vendor.vendorName}</td>
-                      <td style={tdStyle()}>{vendor.address}</td>
-                      <td style={tdStyle()}>{vendor.position}</td>
-                      <td style={tdStyle()}>{vendor.role}</td>
-                      <td style={tdStyle()}>{vendor.contactPerson}</td>
-                      <td style={{ ...tdStyle(), fontVariantNumeric: 'tabular-nums' }}>{vendor.phone}</td>
-                      <td style={tdStyle()}>{vendor.email}</td>
-                      <td style={{ ...tdStyle(), textAlign: 'center' }}>{vendor.isPrimaryContact ? '○' : 'ー'}</td>
-                      <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                          <button
-                            onClick={() => handleEdit(vendor)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#4A4A4A',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: isTablet ? '12px' : '13px',
-                              fontWeight: 600,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            編集
-                          </button>
-                          <button
-                            onClick={() => handleDelete(vendor.id)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#DA0000',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              fontSize: isTablet ? '12px' : '13px',
-                              fontWeight: 600,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            削除
-                          </button>
+                    <tr key={vendor.id} className={`border-b border-stroke-input ${index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}`}>
+                      <td className={tdCls}>{vendor.facilityName}</td>
+                      <td className={`${tdCls} tabular-nums`}>{vendor.invoiceNumber}</td>
+                      <td className={tdCls}>{vendor.vendorName}</td>
+                      <td className={tdCls}>{vendor.address}</td>
+                      <td className={tdCls}>{vendor.position}</td>
+                      <td className={tdCls}>{vendor.role}</td>
+                      <td className={tdCls}>{vendor.contactPerson}</td>
+                      <td className={`${tdCls} tabular-nums`}>{vendor.phone}</td>
+                      <td className={tdCls}>{vendor.email}</td>
+                      <td className={`${tdCls} text-center`}>{vendor.isPrimaryContact ? '○' : '---'}</td>
+                      <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap`}>
+                        <div className="flex gap-2 justify-center">
+                          <button onClick={() => handleEdit(vendor)} className={`px-3 py-1.5 bg-content-primary text-white border-0 rounded ${isTablet ? 'text-xs' : 'text-[13px]'} font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors`}>編集</button>
+                          <button onClick={() => handleDelete(vendor.id)} className={`px-3 py-1.5 bg-content-alert text-white border-0 rounded ${isTablet ? 'text-xs' : 'text-[13px]'} font-semibold cursor-pointer hover:opacity-90 transition-colors`}>削除</button>
                         </div>
                       </td>
                     </tr>
@@ -377,61 +206,31 @@ function VendorMasterContent() {
         )}
 
         {filteredVendors.length === 0 && (
-          <div style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: isMobile ? '40px 20px' : '60px 40px',
-            textAlign: 'center',
-            color: '#8A8A8A',
-            fontSize: isMobile ? '14px' : '16px'
-          }}>
-            <div style={{ marginBottom: '16px' }}>
-              検索条件に一致する業者マスタがありません
-            </div>
-            <button
-              onClick={() => setShowNewModal(true)}
-              style={{
-                padding: '10px 20px',
-                background: '#008C1D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
+          <div className={`bg-surface-card rounded-lg ${isMobile ? 'px-5 py-10' : 'px-10 py-14'} text-center text-content-sub ${isMobile ? 'text-sm' : 'text-base'}`}>
+            <p className="mb-4">検索条件に一致する業者マスタがありません</p>
+            <button onClick={() => setShowNewModal(true)} className="h-10 px-5 bg-cta-primary text-white border-0 rounded-md text-sm font-semibold cursor-pointer hover:bg-cta-primary-dark transition-colors">
               新規作成
             </button>
           </div>
         )}
       </main>
 
-      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#8A8A8A' }}>
+      <footer className="py-3 text-center text-xs text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
       </footer>
 
-      {/* 新規作成モーダル */}
       <VendorFormModal
         isOpen={showNewModal}
         mode="create"
-        onClose={() => {
-          setShowNewModal(false);
-          setSelectedVendor(null);
-        }}
+        onClose={() => { setShowNewModal(false); setSelectedVendor(null); }}
         onSubmit={handleNewSubmit}
         isMobile={isMobile}
       />
-
-      {/* 編集モーダル */}
       <VendorFormModal
         isOpen={showEditModal}
         mode="edit"
         vendor={selectedVendor || undefined}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedVendor(null);
-        }}
+        onClose={() => { setShowEditModal(false); setSelectedVendor(null); }}
         onSubmit={handleEditSubmit}
         isMobile={isMobile}
       />
@@ -441,7 +240,7 @@ function VendorMasterContent() {
 
 export default function VendorMasterPage() {
   return (
-    <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>読み込み中...</div>}>
+    <Suspense fallback={<div className="p-5 text-center text-content-sub">読み込み中...</div>}>
       <VendorMasterContent />
     </Suspense>
   );
