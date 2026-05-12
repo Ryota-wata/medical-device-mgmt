@@ -7,25 +7,6 @@ import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useOrderStore } from '@/lib/stores/orderStore';
 import { useIndividualStore } from '@/lib/stores/individualStore';
 
-/** カラートークン（Figma 準拠） */
-const COLORS = {
-  primary: '#008C1D',
-  primaryDark: '#146E2E',
-  accent: '#A35414',
-  textOnAccent: '#4A4A4A',
-  textPrimary: '#4A4A4A',
-  textSecondary: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textOnColor: '#ffffff',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  surface: '#FAFAFA',
-  surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4A4A4A',
-  white: '#ffffff',
-  green: '#008C1D',
-} as const;
-
 /** SearchParams 読み取り */
 function RfqGroupIdReader({ onRead }: { onRead: (id: number | null) => void }) {
   const searchParams = useSearchParams();
@@ -45,17 +26,14 @@ export default function AssetRegistrationPage() {
   const [rfqGroupId, setRfqGroupId] = useState<number | null>(null);
   const handleRfqGroupIdRead = useCallback((id: number | null) => setRfqGroupId(id), []);
 
-  // 固定資産番号の入力状態
   const [fixedAssetNos, setFixedAssetNos] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 登録完了状態
   const [registrationComplete, setRegistrationComplete] = useState<{
     groupName: string;
     itemCount: number;
   } | null>(null);
 
-  // データ取得
   const rfqGroup = useMemo(() => {
     if (!rfqGroupId) return undefined;
     return rfqGroups.find(g => g.id === rfqGroupId);
@@ -75,18 +53,14 @@ export default function AssetRegistrationPage() {
     return orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
   }, [orderItems]);
 
-  // 検収登録で登録された個体データを取得
   const getIndividualForItem = useCallback((orderItemId: number) => {
     return individuals.find(ind => ind.orderItemId === orderItemId);
   }, [individuals]);
 
-  // 登録処理
   const handleRegister = () => {
     if (!rfqGroup || !orderGroup || !rfqGroupId) return;
     setIsSubmitting(true);
-
     updateRfqGroup(rfqGroupId, { status: '完了' });
-
     setRegistrationComplete({
       groupName: rfqGroup.groupName,
       itemCount: orderItems.length,
@@ -95,18 +69,7 @@ export default function AssetRegistrationPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-      <style>{`
-        .asset-reg-btn { transition: filter 150ms ease-out; }
-        .asset-reg-btn:hover:not(:disabled) { filter: brightness(0.9); }
-        .asset-reg-btn:focus-visible { outline: 2px solid ${COLORS.primary}; outline-offset: 2px; }
-        .asset-reg-btn-secondary { transition: background 150ms ease-out; }
-        .asset-reg-btn-secondary:hover { background: ${COLORS.borderLight} !important; }
-        .asset-reg-btn-secondary:focus-visible { outline: 2px solid ${COLORS.border}; outline-offset: 2px; }
-        .asset-reg-cell-input { transition: border-color 150ms ease-out; }
-        .asset-reg-cell-input:focus { border-color: ${COLORS.primary} !important; outline: none; }
-      `}</style>
-
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Suspense fallback={null}>
         <RfqGroupIdReader onRead={handleRfqGroupIdRead} />
       </Suspense>
@@ -117,204 +80,57 @@ export default function AssetRegistrationPage() {
         showBackButton={false}
       />
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        {/* 登録完了画面 */}
+      <div className="flex-1 overflow-auto p-6">
         {registrationComplete ? (
-          <div style={{ maxWidth: '560px', margin: '40px auto', textAlign: 'center' }}>
-            <div style={{
-              background: COLORS.white,
-              border: `1px solid ${COLORS.borderLight}`,
-              borderRadius: '8px',
-              padding: '32px',
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#10003;</div>
-              <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px', textWrap: 'balance' }}>
-                原本リストへ登録しました
-              </h2>
-              <p style={{ fontSize: '14px', color: COLORS.textSecondary, marginBottom: '24px', textWrap: 'pretty' }}>
-                {registrationComplete.groupName}（{registrationComplete.itemCount}品目）
-              </p>
-              <button
-                className="asset-reg-btn"
-                onClick={() => router.push('/quotation-data-box')}
-                style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', width: '240px' }}
-              >
-                一覧画面に戻る
-              </button>
-            </div>
-          </div>
-
+          <CompletionView
+            groupName={registrationComplete.groupName}
+            itemCount={registrationComplete.itemCount}
+            onBack={() => router.push('/quotation-data-box')}
+          />
         ) : !rfqGroup || !orderGroup ? (
-          <div style={{ maxWidth: '480px', margin: '40px auto', textAlign: 'center', color: COLORS.textMuted }}>
-            <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px' }}>対象の発注データが見つかりません</p>
-            <p style={{ fontSize: '12px', marginBottom: '16px', textWrap: 'pretty' }}>URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。</p>
-            <button
-              className="asset-reg-btn"
-              onClick={() => router.push('/quotation-data-box')}
-              style={{ padding: '8px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-            >
-              ← 一覧画面に戻る
-            </button>
-          </div>
-
+          <NotFoundView onBack={() => router.push('/quotation-data-box')} />
         ) : (
-          <>
-            {/* 基本情報セクション */}
-            <div style={{ background: COLORS.white, borderRadius: '4px', marginBottom: '16px', overflow: 'hidden' }}>
-              <div style={{ padding: '8px 16px', background: COLORS.sectionHeader, color: COLORS.textOnColor, fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>
-                基本情報
-              </div>
-              <div style={{ padding: '12px 16px' }}>
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      <td style={thStyle}>見積依頼No.</td>
-                      <td style={tdStyle}>{rfqGroup.rfqNo}</td>
-                      <td style={thStyle}>見積依頼G名称</td>
-                      <td style={tdStyle}>{rfqGroup.groupName}</td>
-                    </tr>
-                    <tr>
-                      <td style={thStyle}>発注先</td>
-                      <td style={tdStyle}>{orderGroup.vendorName}</td>
-                      <td style={thStyle}>担当</td>
-                      <td style={tdStyle}>{rfqGroup.personInCharge || '-'}</td>
-                    </tr>
-                    <tr>
-                      <td style={thStyle}>発注形態</td>
-                      <td style={tdStyle}>{orderGroup.orderType}</td>
-                      <td style={thStyle}>見積日付</td>
-                      <td style={{ ...tdStyle, fontVariantNumeric: 'tabular-nums' }}>{rfqGroup.createdDate || '-'}</td>
-                    </tr>
-                    <tr>
-                      <td style={thStyle}>発注日</td>
-                      <td style={{ ...tdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.orderDate || '-'}</td>
-                      <td style={thStyle}>納品日</td>
-                      <td style={{ ...tdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.deliveryDate || '-'}</td>
-                    </tr>
-                    <tr>
-                      <td style={thStyle}>検収日</td>
-                      <td style={{ ...tdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.inspectionDate || '-'}</td>
-                      <td style={thStyle}>合計金額</td>
-                      <td style={{ ...tdStyle, fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>¥{totalAmount.toLocaleString()}</td>
-                    </tr>
-                    <tr>
-                      <td style={thStyle}>院内決済No.</td>
-                      <td style={{ ...tdStyle, fontVariantNumeric: 'tabular-nums' }}>{orderGroup.inHouseSettlementNo || '-'}</td>
-                      <td style={thStyle} />
-                      <td style={tdStyle} />
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div className="flex flex-col gap-6">
+            <BasicInfoCard
+              rfqNo={rfqGroup.rfqNo}
+              groupName={rfqGroup.groupName}
+              vendorName={orderGroup.vendorName}
+              personInCharge={rfqGroup.personInCharge}
+              orderType={orderGroup.orderType}
+              quoteDate={rfqGroup.createdDate}
+              orderDate={orderGroup.orderDate}
+              deliveryDate={orderGroup.deliveryDate}
+              inspectionDate={orderGroup.inspectionDate}
+              totalAmount={totalAmount}
+              inHouseSettlementNo={orderGroup.inHouseSettlementNo}
+            />
 
-            {/* 明細テーブル */}
-            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: '4px', marginBottom: '16px' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 16px',
-                background: COLORS.primary,
-                color: COLORS.textOnColor,
-              }}>
-                <span style={{ fontSize: '12px', fontWeight: 'bold', textWrap: 'balance' }}>
-                  明細に対する基本情報
-                  <span style={{ fontSize: '11px', fontWeight: 400, marginLeft: '12px', opacity: 0.9 }}>
-                    【オレンジ列 = 入力項目】
-                  </span>
-                </span>
-                <span style={{ fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>
-                  合計金額（税別）:
-                  <span style={{ fontWeight: 'bold', fontSize: '16px', marginLeft: '8px' }}>
-                    ¥{totalAmount.toLocaleString()}
-                  </span>
-                </span>
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: 1200 }}>
-                  <thead>
-                    {/* グループヘッダー行 */}
-                    <tr style={{ background: COLORS.sectionHeader, color: COLORS.textOnColor }}>
-                      <th style={{ ...tableThStyle, textAlign: 'center' }} rowSpan={2}>No</th>
-                      <th style={tableThStyle} colSpan={10}>商品分類</th>
-                      <th style={{ ...tableThStyle, background: '#FDF1E5', color: '#A35414' }} colSpan={1}>入力項目</th>
-                    </tr>
-                    {/* 個別ヘッダー行 */}
-                    <tr style={{ background: COLORS.primary, color: COLORS.textOnColor }}>
-                      <th style={tableThStyle}>QRコード</th>
-                      <th style={tableThStyle}>階</th>
-                      <th style={tableThStyle}>部門</th>
-                      <th style={tableThStyle}>部署</th>
-                      <th style={tableThStyle}>室名</th>
-                      <th style={tableThStyle}>品目</th>
-                      <th style={tableThStyle}>メーカー</th>
-                      <th style={tableThStyle}>型式</th>
-                      <th style={{ ...tableThStyle, textAlign: 'right' }}>案分金額（税別）</th>
-                      <th style={tableThStyle}>仮勘定科目</th>
-                      <th style={{ ...tableThStyle, background: '#FDF1E5', color: '#A35414' }}>固定資産番号</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderItems.map((item, index) => {
-                      const ind = getIndividualForItem(item.id);
-                      return (
-                        <tr key={item.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                          <td style={{ ...tableTdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{index + 1}</td>
-                          <td style={{ ...tableTdStyle, fontFamily: 'monospace', fontSize: '10px' }}>{ind?.qrCode || '-'}</td>
-                          <td style={tableTdStyle}>{ind?.location?.floor || '-'}</td>
-                          <td style={tableTdStyle}>{ind?.location?.department || '-'}</td>
-                          <td style={tableTdStyle}>{ind?.location?.section || '-'}</td>
-                          <td style={tableTdStyle}>-</td>
-                          <td style={{ ...tableTdStyle, maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>{item.itemName}</td>
-                          <td style={{ ...tableTdStyle, whiteSpace: 'nowrap' }}>{item.manufacturer}</td>
-                          <td style={{ ...tableTdStyle, fontFamily: 'monospace', fontSize: '10px' }}>{item.model}</td>
-                          <td style={{ ...tableTdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600, whiteSpace: 'nowrap' }}>¥{item.totalPrice.toLocaleString()}</td>
-                          <td style={tableTdStyle}>-</td>
-                          <td style={editCellStyle}>
-                            <input
-                              className="asset-reg-cell-input"
-                              type="text"
-                              value={fixedAssetNos[item.id] || ''}
-                              onChange={(e) => setFixedAssetNos(prev => ({ ...prev, [item.id]: e.target.value }))}
-                              placeholder="入力"
-                              style={cellInputStyle}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {orderItems.length === 0 && (
-                      <tr>
-                        <td colSpan={12} style={{ padding: '32px', textAlign: 'center', color: COLORS.textMuted }}>
-                          <p style={{ fontSize: '14px', fontWeight: 'bold', color: COLORS.textSecondary, marginBottom: '8px', textWrap: 'balance' }}>明細がありません</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <DetailTableCard
+              totalAmount={totalAmount}
+              orderItems={orderItems}
+              getIndividualForItem={getIndividualForItem}
+              fixedAssetNos={fixedAssetNos}
+              onChangeFixedAssetNo={(id, v) =>
+                setFixedAssetNos(prev => ({ ...prev, [id]: v }))
+              }
+            />
 
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+            <div className="flex justify-between items-center gap-3 pt-2">
               <button
-                className="asset-reg-btn-secondary"
                 onClick={() => router.push('/quotation-data-box')}
-                style={{ padding: '12px 24px', background: COLORS.white, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                className="h-12 min-w-[180px] px-6 rounded-lg bg-[#d6d6d6] text-content-primary text-base font-normal cursor-pointer transition-colors hover:bg-stroke-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-sub"
               >
-                ← 一覧画面に戻る
+                戻る
               </button>
               <button
-                className="asset-reg-btn"
                 onClick={handleRegister}
                 disabled={isSubmitting}
-                style={{ padding: '12px 24px', background: COLORS.accent, color: COLORS.textOnAccent, border: 'none', borderRadius: '4px', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 'bold', minHeight: '44px', opacity: isSubmitting ? 0.7 : 1 }}
+                className="h-12 min-w-[200px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
               >
                 {isSubmitting ? '登録中...' : '原本リストへ登録'}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -322,52 +138,305 @@ export default function AssetRegistrationPage() {
 }
 
 // ============================================================
-// Style constants
+// Completion view
 // ============================================================
+function CompletionView({
+  groupName,
+  itemCount,
+  onBack,
+}: {
+  groupName: string;
+  itemCount: number;
+  onBack: () => void;
+}) {
+  return (
+    <div className="max-w-[560px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <div className="text-5xl mb-4 text-cta-primary leading-none">&#10003;</div>
+        <h2 className="text-lg font-bold text-content-primary mb-2 text-balance">
+          原本リストへ登録しました
+        </h2>
+        <p className="text-sm text-content-sub mb-6 text-pretty">
+          {groupName}（{itemCount}品目）
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select min-w-[240px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
 
-const thStyle: React.CSSProperties = {
-  padding: '4px 8px',
-  background: '#F1F1F1',
-  fontWeight: 'bold',
-  width: '120px',
-  border: '1px solid #E1E1E1',
-  fontSize: '12px',
+// ============================================================
+// Not found view
+// ============================================================
+function NotFoundView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="max-w-[480px] mx-auto mt-10 text-center">
+      <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
+        <p className="text-sm font-bold text-content-primary mb-2">
+          対象の発注データが見つかりません
+        </p>
+        <p className="text-xs text-content-sub mb-6 text-pretty">
+          URLのパラメータが正しいか確認するか、一覧画面から対象を選択してください。
+        </p>
+        <button
+          onClick={onBack}
+          className="h-12 px-6 rounded-lg bg-cta-primary text-white text-base font-medium cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+        >
+          一覧画面に戻る
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Basic info card
+// ============================================================
+type BasicInfoCardProps = {
+  rfqNo: string;
+  groupName: string;
+  vendorName: string;
+  personInCharge?: string;
+  orderType: string;
+  quoteDate?: string;
+  orderDate?: string;
+  deliveryDate?: string;
+  inspectionDate?: string;
+  totalAmount: number;
+  inHouseSettlementNo?: string;
 };
 
-const tdStyle: React.CSSProperties = {
-  padding: '4px 8px',
-  border: '1px solid #E1E1E1',
-  fontSize: '12px',
+function BasicInfoCard(p: BasicInfoCardProps) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
+      <div className="border border-stroke-input">
+        <InfoRow>
+          <InfoCell label="見積依頼No." value={p.rfqNo} />
+          <InfoCell label="見積G名称" value={p.groupName} />
+        </InfoRow>
+        <InfoRow>
+          <InfoCell label="発注先" value={p.vendorName} />
+          <InfoCell label="担当" value={p.personInCharge || '---'} />
+        </InfoRow>
+        <InfoRow>
+          <InfoCell label="発注形態" value={p.orderType} />
+          <InfoCell label="見積日付" value={p.quoteDate || '---'} numeric />
+        </InfoRow>
+        <InfoRow>
+          <InfoCell label="発注日" value={p.orderDate || '---'} numeric />
+          <InfoCell label="納品日" value={p.deliveryDate || '---'} numeric />
+        </InfoRow>
+        <InfoRow>
+          <InfoCell label="検収日" value={p.inspectionDate || '---'} numeric />
+          <InfoCell
+            label="合計金額"
+            value={`¥${p.totalAmount.toLocaleString()}`}
+            labelBold
+            valueBold
+            valueLarge
+            numeric
+          />
+        </InfoRow>
+        <InfoRow last>
+          <InfoCell
+            label="院内決済No."
+            value={p.inHouseSettlementNo || '---'}
+            wide
+            numeric
+            valueMuted={!p.inHouseSettlementNo}
+          />
+        </InfoRow>
+      </div>
+    </section>
+  );
+}
+
+function InfoRow({ children, last }: { children: React.ReactNode; last?: boolean }) {
+  return (
+    <div className={`flex w-full ${last ? '' : 'border-b border-stroke-input'}`}>
+      {children}
+    </div>
+  );
+}
+
+type InfoCellProps = {
+  label: string;
+  value: string;
+  labelBold?: boolean;
+  valueBold?: boolean;
+  valueLarge?: boolean;
+  valueMuted?: boolean;
+  numeric?: boolean;
+  wide?: boolean;
 };
 
-const tableThStyle: React.CSSProperties = {
-  padding: '8px',
-  textAlign: 'left',
-  whiteSpace: 'nowrap',
-  fontWeight: 'bold',
-  fontSize: '11px',
-  borderBottom: '1px solid #3d5a80',
+function InfoCell(p: InfoCellProps) {
+  return (
+    <div className={`flex items-stretch ${p.wide ? 'w-full' : 'flex-1 min-w-0'}`}>
+      <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+        <p className={`text-base text-content-primary whitespace-nowrap ${p.labelBold ? 'font-semibold' : 'font-normal'}`}>
+          {p.label}
+        </p>
+      </div>
+      <div className={`flex-1 min-w-0 flex items-center px-4 py-4 ${p.wide ? '' : 'border-r border-stroke-input last:border-r-0'}`}>
+        <p
+          className={`min-w-0 truncate ${p.valueLarge ? 'text-lg' : 'text-base'} ${p.valueBold ? 'font-semibold' : 'font-normal'} ${p.valueMuted ? 'text-content-sub' : 'text-content-primary'} ${p.numeric ? 'tabular-nums' : ''}`}
+        >
+          {p.value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Detail table card
+// ============================================================
+type OrderItemLite = {
+  id: number;
+  itemName: string;
+  manufacturer: string;
+  model: string;
+  totalPrice: number;
 };
 
-const tableTdStyle: React.CSSProperties = {
-  padding: '6px 8px',
-  fontSize: '12px',
-  color: '#4A4A4A',
-  verticalAlign: 'middle',
+type IndividualLite = {
+  qrCode?: string;
+  location?: { floor?: string; department?: string; section?: string };
+} | undefined;
+
+type DetailTableCardProps = {
+  totalAmount: number;
+  orderItems: OrderItemLite[];
+  getIndividualForItem: (orderItemId: number) => IndividualLite;
+  fixedAssetNos: Record<number, string>;
+  onChangeFixedAssetNo: (id: number, value: string) => void;
 };
 
-const editCellStyle: React.CSSProperties = {
-  ...tableTdStyle,
-  background: '#FDF1E5',
-};
+const COL = {
+  no: 'w-[56px]',
+  qr: 'w-[150px]',
+  floor: 'w-[60px]',
+  dept: 'w-[200px]',
+  section: 'w-[200px]',
+  room: 'w-[130px]',
+  item: 'w-[180px]',
+  maker: 'w-[180px]',
+  model: 'w-[140px]',
+  amount: 'w-[150px]',
+  account: 'w-[150px]',
+  fixedAsset: 'w-[220px]',
+} as const;
 
-const cellInputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '4px 6px',
-  fontSize: '12px',
-  border: '1px solid #fdba74',
-  borderRadius: '3px',
-  fontFamily: 'inherit',
-  background: '#ffffff',
-  boxSizing: 'border-box' as const,
-};
+function DetailTableCard({
+  totalAmount,
+  orderItems,
+  getIndividualForItem,
+  fixedAssetNos,
+  onChangeFixedAssetNo,
+}: DetailTableCardProps) {
+  return (
+    <section className="bg-surface-card border border-stroke-card rounded-2xl p-4 flex flex-col gap-4">
+      {/* タイトル行 + 合計 */}
+      <div className="border border-stroke-input flex">
+        <div className="bg-surface-select px-4 py-4 flex items-center">
+          <p className="text-base text-content-primary whitespace-nowrap">明細に対する基本情報</p>
+        </div>
+        <div className="flex-1 min-w-0 flex items-center justify-end px-4 py-4 gap-2">
+          <p className="text-content-primary leading-tight">
+            <span className="text-base font-semibold">合計金額</span>
+            <span className="text-xs font-semibold">（税抜）</span>
+          </p>
+          <div className="bg-surface-card border border-stroke-input rounded-lg h-[42px] flex items-center px-3 min-w-[180px]">
+            <p className="flex-1 text-lg font-semibold text-content-alert tabular-nums text-right">
+              ¥{totalAmount.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 明細テーブル */}
+      <div className="border border-stroke-input overflow-x-auto">
+        <table className="w-full border-collapse min-w-[1640px]">
+          <thead>
+            {/* グループ行 */}
+            <tr className="bg-stroke-card border-b border-stroke-input text-left">
+              <th className="px-4 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input" colSpan={11}>
+                商品分類
+              </th>
+              <th className="px-4 py-2 text-sm font-semibold text-content-primary bg-[#fffbe3]">
+                入力項目
+              </th>
+            </tr>
+            {/* 個別ヘッダー */}
+            <tr className="bg-stroke-card border-b border-stroke-input text-left">
+              <th className={`${COL.no} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-center`}>No.</th>
+              <th className={`${COL.qr} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>QRコード</th>
+              <th className={`${COL.floor} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>階</th>
+              <th className={`${COL.dept} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>部門</th>
+              <th className={`${COL.section} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>部署</th>
+              <th className={`${COL.room} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>室名</th>
+              <th className={`${COL.item} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>品目</th>
+              <th className={`${COL.maker} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>メーカー名</th>
+              <th className={`${COL.model} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>型式</th>
+              <th className={`${COL.amount} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-right`}>案分金額（税別）</th>
+              <th className={`${COL.account} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>仮勘定科目</th>
+              <th className={`${COL.fixedAsset} px-4 py-2 text-sm font-normal text-content-primary bg-[#fffdf5]`}>固定資産番号</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderItems.map((item, index) => {
+              const ind = getIndividualForItem(item.id);
+              return (
+                <tr key={item.id} className="border-b border-stroke-input h-[58px]">
+                  <td className="px-4 py-2 text-base text-content-primary border-r border-stroke-input text-center tabular-nums">{index + 1}</td>
+                  <Cell muted={!ind?.qrCode}>{ind?.qrCode || '---'}</Cell>
+                  <Cell muted={!ind?.location?.floor}>{ind?.location?.floor || '---'}</Cell>
+                  <Cell muted={!ind?.location?.department}>{ind?.location?.department || '---'}</Cell>
+                  <Cell muted={!ind?.location?.section}>{ind?.location?.section || '---'}</Cell>
+                  <Cell muted>---</Cell>
+                  <Cell>{item.itemName}</Cell>
+                  <Cell>{item.manufacturer}</Cell>
+                  <Cell>{item.model}</Cell>
+                  <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input text-right tabular-nums font-semibold">
+                    ¥{item.totalPrice.toLocaleString()}
+                  </td>
+                  <Cell muted>---</Cell>
+                  <td className="px-4 py-2 align-middle">
+                    <input
+                      type="text"
+                      value={fixedAssetNos[item.id] || ''}
+                      onChange={(e) => onChangeFixedAssetNo(item.id, e.target.value)}
+                      placeholder="入力してください"
+                      className="w-full h-[42px] px-3 rounded-lg bg-surface-card border border-stroke-input text-base text-content-primary placeholder:text-content-placeholder focus:border-cta-primary focus:outline-none transition-colors"
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+            {orderItems.length === 0 && (
+              <tr>
+                <td colSpan={12} className="px-4 py-12 text-center text-content-sub">
+                  <p className="text-sm font-semibold text-content-primary mb-2 text-balance">明細がありません</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function Cell({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
+  return (
+    <td className={`px-4 py-2 text-sm border-r border-stroke-input truncate ${muted ? 'text-content-sub' : 'text-content-primary'}`}>
+      {children}
+    </td>
+  );
+}
