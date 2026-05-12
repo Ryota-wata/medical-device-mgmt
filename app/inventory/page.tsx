@@ -865,13 +865,13 @@ export default function InventoryPage() {
                       position: 'absolute',
                       bottom: '10px',
                       right: '10px',
-                      background: 'rgba(52, 152, 219, 0.9)',
-                      color: 'white',
+                      background: '#FFFFFF',
+                      color: '#146E2E',
                       padding: '6px 12px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      border: 'none',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      border: '1px solid #008C1D',
                       cursor: 'pointer'
                     }}
                   >
