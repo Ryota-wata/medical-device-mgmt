@@ -2,6 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useCallback, useEffect } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  BarChart3,
+  Check,
+  Pin,
+  Upload,
+  X,
+} from 'lucide-react';
+import { Header } from '@/components/layouts/Header';
 
 type FileType = 'fixed-asset' | 'me-ledger';
 
@@ -169,49 +179,42 @@ export default function AssetImportPage() {
   const hasMELedgerFile = uploadedFiles.some(f => f.type === 'me-ledger');
 
   return (
-    <div className="min-h-dvh bg-[#FAFAFA] flex flex-col">
-      {/* Header */}
-      <header className="bg-[#FAFAFA] border-b border-[#E1E1E1] px-5 py-4 md:px-6 md:py-5 lg:px-8 lg:py-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push('/main')}
-            className="text-[#8A8A8A] hover:text-[#4A4A4A] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label="戻る"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-[#4A4A4A] text-balance">
-            台帳取込
-          </h1>
-        </div>
-      </header>
+    <div className="min-h-dvh bg-surface-screen flex flex-col">
+      <Header
+        title="台帳取込"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+      />
 
       {/* Main Content */}
       <main className="flex-1 px-5 py-5 md:px-8 md:py-8 lg:px-12 lg:py-12 w-full max-w-[1000px] mx-auto box-border">
-        <div className="bg-white rounded-xl p-6 md:p-8 lg:p-10 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+        <div className="bg-surface-card rounded-xl p-6 md:p-8 lg:p-10 shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
 
           {/* Matching Progress - if there's ongoing matching */}
           {matchingProgress && (
-            <div className="bg-[#EAF3FB] border border-[#2196f3] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+            <div className="bg-surface-select border border-cta-primary rounded-lg p-4 md:p-5 mb-6 md:mb-8">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[15px] md:text-base font-bold text-[#1976d2]">
-                  📊 突き合わせ作業が途中です
+                <h3 className="inline-flex items-center gap-2 text-[15px] md:text-base font-bold text-cta-primary-dark">
+                  <BarChart3 className="w-4 h-4" aria-hidden />
+                  突き合わせ作業が途中です
                 </h3>
                 <button
                   onClick={handleResumeMatching}
-                  className="px-5 py-2 bg-[#2196f3] text-white border-none rounded-md text-[13px] md:text-sm font-semibold cursor-pointer hover:bg-[#1976d2] transition-colors min-h-[44px]"
+                  className="px-5 py-2 bg-cta-primary text-white border-none rounded-md text-[13px] md:text-sm font-semibold cursor-pointer hover:bg-cta-primary-dark transition-colors min-h-[44px]"
                 >
                   作業を再開する
                 </button>
               </div>
-              <div className="flex flex-col gap-2 text-[13px] md:text-sm text-[#1E5A9E]">
+              <div className="flex flex-col gap-2 text-[13px] md:text-sm text-cta-primary-dark">
                 <div>全体: {matchingProgress.totalRows} 件</div>
                 <div>完了: {matchingProgress.completedRows} 件 / 未処理: {matchingProgress.pendingRows} 件</div>
-                <div className="w-full h-2 bg-[#bbdefb] rounded mt-2 overflow-hidden">
+                <div className="w-full h-2 bg-stroke-card rounded mt-2 overflow-hidden">
                   <div
-                    className="h-full bg-[#1976d2] transition-[width] duration-300"
+                    className="h-full bg-cta-primary-dark transition-[width] duration-300"
                     style={{ width: `${(matchingProgress.completedRows / matchingProgress.totalRows) * 100}%` }}
                   />
                 </div>
@@ -221,27 +224,28 @@ export default function AssetImportPage() {
 
           {/* Uploaded Files Status */}
           {uploadedFiles.length > 0 && (
-            <div className="bg-[#f1f8e9] border border-[#8bc34a] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
-              <h3 className="text-[15px] md:text-base font-bold text-[#558b2f] mb-3">
-                ✓ アップロード済みファイル
+            <div className="bg-surface-select border border-cta-primary rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+              <h3 className="inline-flex items-center gap-2 text-[15px] md:text-base font-bold text-cta-primary-dark mb-3">
+                <Check className="w-4 h-4" aria-hidden />
+                アップロード済みファイル
               </h3>
               <div className="flex flex-col gap-3">
                 {uploadedFiles.map((file, index) => (
-                  <div key={index} className="bg-white border border-[#c5e1a5] rounded-md p-3 flex justify-between items-center">
+                  <div key={index} className="bg-surface-card border border-stroke-input rounded-md p-3 flex justify-between items-center">
                     <div className="flex-1">
-                      <div className="text-[13px] md:text-sm font-semibold text-[#4A4A4A] mb-1">
+                      <div className="text-[13px] md:text-sm font-semibold text-content-primary mb-1">
                         {getFileTypeLabel(file.type)}
                       </div>
-                      <div className="text-xs md:text-[13px] text-[#8A8A8A]">
+                      <div className="text-xs md:text-[13px] text-content-sub">
                         {file.name} ({file.size} / {file.rows})
                       </div>
-                      <div className="text-[11px] md:text-xs text-[#8A8A8A] mt-1">
+                      <div className="text-[11px] md:text-xs text-content-sub mt-1">
                         アップロード日時: {file.uploadedAt}
                       </div>
                     </div>
                     <button
                       onClick={() => handleRemoveUploadedFile(index)}
-                      className="bg-[#DA0000] text-white border-none rounded px-3 py-1.5 text-xs cursor-pointer hover:bg-[#A30000] transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                      className="bg-content-alert text-white border-none rounded px-3 py-1.5 text-xs cursor-pointer hover:opacity-90 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                     >
                       削除
                     </button>
@@ -253,43 +257,43 @@ export default function AssetImportPage() {
 
           {/* Instruction */}
           <div className="mb-6 md:mb-8">
-            <h2 className="text-lg md:text-xl font-bold text-[#4A4A4A] mb-3 text-balance">
+            <h2 className="text-lg md:text-xl font-bold text-content-primary mb-3 text-balance">
               {uploadedFiles.length === 0 ? 'Excelファイルをアップロードしてください' : '追加のファイルをアップロード'}
             </h2>
-            <p className="text-sm md:text-[15px] text-[#8A8A8A] leading-relaxed text-pretty">
+            <p className="text-sm md:text-[15px] text-content-sub leading-relaxed text-pretty">
               固定資産管理台帳またはその他台帳のExcelファイル（.xlsx, .xls）またはCSVファイル（.csv）をアップロードできます。
             </p>
           </div>
 
           {/* File Type Selection */}
           <div className="mb-6 md:mb-8">
-            <h3 className="text-[15px] md:text-base font-bold text-[#4A4A4A] mb-3">
+            <h3 className="text-[15px] md:text-base font-bold text-content-primary mb-3">
               アップロードするファイルの種類を選択
             </h3>
             <div className="flex gap-6 flex-wrap">
-              <label className="flex items-center gap-2 cursor-pointer text-sm md:text-[15px] text-[#4A4A4A]">
+              <label className="flex items-center gap-2 cursor-pointer text-sm md:text-[15px] text-content-primary">
                 <input
                   type="radio"
                   name="fileType"
                   value="fixed-asset"
                   checked={selectedFileType === 'fixed-asset'}
                   onChange={(e) => setSelectedFileType(e.target.value as FileType)}
-                  className="cursor-pointer accent-[#008C1D]"
+                  className="cursor-pointer accent-cta-primary"
                 />
                 <span>固定資産管理台帳</span>
-                {hasFixedAssetFile && <span className="text-[#4caf50] text-xs">✓ 済</span>}
+                {hasFixedAssetFile && <span className="inline-flex items-center gap-0.5 text-cta-primary text-xs"><Check className="w-3 h-3" aria-hidden />済</span>}
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm md:text-[15px] text-[#4A4A4A]">
+              <label className="flex items-center gap-2 cursor-pointer text-sm md:text-[15px] text-content-primary">
                 <input
                   type="radio"
                   name="fileType"
                   value="me-ledger"
                   checked={selectedFileType === 'me-ledger'}
                   onChange={(e) => setSelectedFileType(e.target.value as FileType)}
-                  className="cursor-pointer accent-[#008C1D]"
+                  className="cursor-pointer accent-cta-primary"
                 />
                 <span>その他台帳</span>
-                {hasMELedgerFile && <span className="text-[#4caf50] text-xs">✓ 済</span>}
+                {hasMELedgerFile && <span className="inline-flex items-center gap-0.5 text-cta-primary text-xs"><Check className="w-3 h-3" aria-hidden />済</span>}
               </label>
             </div>
           </div>
@@ -301,23 +305,17 @@ export default function AssetImportPage() {
             onDragLeave={handleDragLeave}
             className={`border-2 border-dashed rounded-xl text-center transition-all duration-300 mb-6 md:mb-8 px-5 py-10 md:px-10 md:py-16 lg:px-10 lg:py-20 ${
               isDragOver
-                ? 'border-[#008C1D] bg-[#f0f8f4]'
-                : 'border-[#E1E1E1] bg-[#FAFAFA]'
+                ? 'border-cta-primary bg-surface-select'
+                : 'border-stroke-input bg-surface-screen'
             }`}
           >
-            {/* Upload SVG icon */}
             <div className="mb-4 flex justify-center">
-              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="text-[#8A8A8A] md:w-16 md:h-16">
-                <path d="M16 32L24 24L32 32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M24 24V42" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M40.28 36.28A10 10 0 0 0 36 18H33.48A16 16 0 1 0 8 30.78" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 32L24 24L32 32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <Upload className="w-12 h-12 md:w-16 md:h-16 text-content-sub" strokeWidth={2.5} aria-hidden />
             </div>
-            <p className="text-[15px] md:text-[17px] font-semibold text-[#4A4A4A] mb-2">
+            <p className="text-[15px] md:text-[17px] font-semibold text-content-primary mb-2">
               ここにファイルをドラッグ&ドロップ
             </p>
-            <p className="text-[13px] md:text-sm text-[#8A8A8A] mb-5">または</p>
+            <p className="text-[13px] md:text-sm text-content-sub mb-5">または</p>
             <input
               type="file"
               id="fileInput"
@@ -327,52 +325,54 @@ export default function AssetImportPage() {
             />
             <button
               onClick={() => document.getElementById('fileInput')?.click()}
-              className="px-7 py-3 md:px-8 md:py-3.5 bg-[#008C1D] text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer hover:bg-[#0A6B17] transition-colors mb-4 min-h-[44px]"
+              className="px-7 py-3 md:px-8 md:py-3.5 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer hover:bg-cta-primary-dark transition-colors mb-4 min-h-[44px]"
             >
               ファイルを選択
             </button>
-            <p className="text-xs md:text-[13px] text-[#8A8A8A]">
+            <p className="text-xs md:text-[13px] text-content-sub">
               対応形式: .xlsx, .xls, .csv （最大サイズ: 10MB）
             </p>
           </div>
 
           {/* File Info */}
           {fileInfo && (
-            <div className="bg-[#FAFAFA] border border-[#E1E1E1] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+            <div className="bg-surface-screen border border-stroke-input rounded-lg p-4 md:p-5 mb-6 md:mb-8">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[15px] md:text-base font-bold text-[#4A4A4A]">
+                <h3 className="text-[15px] md:text-base font-bold text-content-primary">
                   選択済みファイル
                 </h3>
                 <button
                   onClick={removeFile}
-                  className="bg-[#DA0000] text-white border-none rounded-full w-7 h-7 text-lg cursor-pointer flex items-center justify-center hover:bg-[#A30000] transition-colors min-w-[44px] min-h-[44px]"
+                  aria-label="ファイル選択を解除"
+                  className="bg-content-alert text-white border-none rounded-full cursor-pointer flex items-center justify-center hover:opacity-90 transition-colors min-w-[44px] min-h-[44px]"
                 >
-                  ×
+                  <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-[13px] md:text-sm text-[#8A8A8A] font-semibold">ファイル名:</span>
-                  <span className="text-[13px] md:text-sm text-[#4A4A4A]">{fileInfo.name}</span>
+                  <span className="text-[13px] md:text-sm text-content-sub font-semibold">ファイル名:</span>
+                  <span className="text-[13px] md:text-sm text-content-primary">{fileInfo.name}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-[13px] md:text-sm text-[#8A8A8A] font-semibold">ファイルサイズ:</span>
-                  <span className="text-[13px] md:text-sm text-[#4A4A4A]">{fileInfo.size}</span>
+                  <span className="text-[13px] md:text-sm text-content-sub font-semibold">ファイルサイズ:</span>
+                  <span className="text-[13px] md:text-sm text-content-primary">{fileInfo.size}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="text-[13px] md:text-sm text-[#8A8A8A] font-semibold">データ件数:</span>
-                  <span className="text-[13px] md:text-sm text-[#4A4A4A]">{fileInfo.rows}</span>
+                  <span className="text-[13px] md:text-sm text-content-sub font-semibold">データ件数:</span>
+                  <span className="text-[13px] md:text-sm text-content-primary">{fileInfo.rows}</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Notice */}
-          <div className="bg-[#fff9e6] border border-[#ffd966] rounded-lg p-4 md:p-5 mb-6 md:mb-8">
-            <h3 className="text-sm md:text-[15px] font-bold text-[#d68910] mb-3">
-              📌 アップロード時の注意事項
+          <div className="bg-surface-select border border-cta-primary rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+            <h3 className="inline-flex items-center gap-2 text-sm md:text-[15px] font-bold text-cta-primary-dark mb-3">
+              <Pin className="w-4 h-4" aria-hidden />
+              アップロード時の注意事項
             </h3>
-            <ul className="text-[13px] md:text-sm text-[#8A8A8A] leading-[1.8] pl-5 m-0">
+            <ul className="text-[13px] md:text-sm text-content-sub leading-[1.8] pl-5 m-0">
               <li>Excelファイルの1行目はヘッダー行として認識されます</li>
               <li>データは2行目から読み込まれます</li>
               <li>空白行は自動的にスキップされます</li>
@@ -384,34 +384,34 @@ export default function AssetImportPage() {
           <div className="flex gap-4 flex-col md:flex-row justify-between">
             <button
               onClick={() => router.push('/main')}
-              className="md:flex-1 px-6 py-3.5 bg-[#E1E1E1] text-[#4A4A4A] border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#d1d5db] transition-colors min-h-[44px]"
+              className="md:flex-1 px-6 py-3.5 bg-surface-negative text-content-primary border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-stroke-input transition-colors min-h-[44px]"
             >
-              <span>←</span>
+              <ArrowLeft className="w-4 h-4" aria-hidden />
               <span>メイン画面に戻る</span>
             </button>
             {selectedFile && fileInfo ? (
               <button
                 onClick={handleUploadAndProceed}
-                className="md:flex-1 px-6 py-3.5 bg-white text-[#008C1D] border-2 border-[#008C1D] rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#f0f8f4] transition-colors min-h-[44px]"
+                className="md:flex-1 px-6 py-3.5 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-cta-primary-dark transition-colors min-h-[44px]"
               >
                 <span>アップロードして突き合わせへ</span>
-                <span>→</span>
+                <ArrowRight className="w-4 h-4" aria-hidden />
               </button>
             ) : uploadedFiles.length > 0 ? (
               <button
                 onClick={handleResumeMatching}
-                className="md:flex-1 px-6 py-3.5 bg-[#2196f3] text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#1976d2] transition-colors min-h-[44px]"
+                className="md:flex-1 px-6 py-3.5 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-cta-primary-dark transition-colors min-h-[44px]"
               >
                 <span>突き合わせ画面へ</span>
-                <span>→</span>
+                <ArrowRight className="w-4 h-4" aria-hidden />
               </button>
             ) : (
               <button
                 onClick={() => router.push('/asset-matching')}
-                className="md:flex-1 px-6 py-3.5 bg-white text-[#008C1D] border-2 border-[#008C1D] rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-[#f0f8f4] transition-colors min-h-[44px]"
+                className="md:flex-1 px-6 py-3.5 bg-surface-card text-cta-primary border-2 border-cta-primary rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-surface-select transition-colors min-h-[44px]"
               >
                 <span>次へ</span>
-                <span>→</span>
+                <ArrowRight className="w-4 h-4" aria-hidden />
               </button>
             )}
           </div>
