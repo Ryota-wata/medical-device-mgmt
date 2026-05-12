@@ -54,16 +54,17 @@ const MOCK_ORIGINAL_ASSETS: Asset[] = [
 interface InspectionItemResult {
   itemName: string;
   content: string;
-  result: '合' | '否' | '交換' | string;
+  result: '○' | '×' | string;  // REQ-103: 合否は ○/× で記録（定例0413 でマルバツ化）
   unit?: string;
+  evaluationType?: '合否' | '単位' | 'フリー入力';
 }
 
 const DEFAULT_ITEMS: InspectionItemResult[] = [
-  { itemName: '清掃', content: '本体の清掃', result: '' },
-  { itemName: '外装点検', content: 'ACインレット', result: '' },
-  { itemName: '外装点検', content: 'スライダー', result: '' },
-  { itemName: '性能点検', content: '閉塞圧測定', result: '', unit: 'kPa' },
-  { itemName: '性能点検', content: '流量測定', result: '', unit: 'ml' },
+  { itemName: '清掃', content: '本体の清掃', result: '', evaluationType: '合否' },
+  { itemName: '外装点検', content: 'ACインレット', result: '', evaluationType: '合否' },
+  { itemName: '外装点検', content: 'スライダー', result: '', evaluationType: '合否' },
+  { itemName: '性能点検', content: '閉塞圧測定', result: '', unit: 'kPa', evaluationType: '単位' },
+  { itemName: '性能点検', content: '流量測定', result: '', unit: 'ml', evaluationType: '単位' },
 ];
 
 type Step = 'qr-scan' | 'inspection' | 'confirm';
@@ -117,6 +118,7 @@ function DailyInspectionContent() {
           content: item.content,
           result: '',
           unit: item.evaluationType === '単位' ? item.unitValue : undefined,
+          evaluationType: item.evaluationType,
         }))
       );
     } else {
@@ -535,7 +537,8 @@ function DailyInspectionContent() {
                         <td className="px-3 py-2.5 text-sm text-[#1f2937]">{item.itemName}</td>
                         <td className="px-3 py-2.5 text-sm text-[#1f2937] border-l border-[#e5e7eb]">{item.content}</td>
                         <td className="px-3 py-2.5 border-l border-[#e5e7eb]">
-                          {item.unit ? (
+                          {/* REQ-103: 評価項目の入力形式を 3 パターンで切替（定例0413 確定） */}
+                          {item.evaluationType === '単位' ? (
                             <div className="flex items-center gap-1">
                               <input
                                 type="number"
@@ -546,14 +549,23 @@ function DailyInspectionContent() {
                               />
                               <span className="text-xs text-[#6b7280]">{item.unit}</span>
                             </div>
+                          ) : item.evaluationType === 'フリー入力' ? (
+                            <input
+                              type="text"
+                              className="w-[200px] px-2 py-1 text-sm border border-[#d1d5db] rounded outline-none focus:border-[#27ae60]"
+                              value={item.result}
+                              onChange={(e) => handleItemResultChange(index, e.target.value)}
+                              placeholder="自由記述"
+                            />
                           ) : (
+                            // 合否（マルバツ） — デフォルト
                             <div className="flex gap-1">
-                              {['合', '否', '交換'].map((val) => {
+                              {['○', '×'].map((val) => {
                                 const base = 'px-3 py-1.5 text-xs rounded border cursor-pointer transition-colors min-w-[44px] min-h-[32px]';
                                 const active = item.result === val;
-                                const color = val === '合' ? 'border-[#27ae60] bg-[#f0fdf4] text-[#27ae60]'
-                                  : val === '否' ? 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626]'
-                                  : 'border-[#f59e0b] bg-[#fffbeb] text-[#f59e0b]';
+                                const color = val === '○'
+                                  ? 'border-[#27ae60] bg-[#f0fdf4] text-[#27ae60]'
+                                  : 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626]';
                                 return (
                                   <button
                                     key={val}
@@ -726,7 +738,7 @@ function DailyInspectionContent() {
                         <td className="px-3 py-2.5 text-sm text-[#1f2937]">{item.itemName}</td>
                         <td className="px-3 py-2.5 text-sm text-[#1f2937] border-l border-[#e5e7eb]">{item.content}</td>
                         <td className={`px-3 py-2.5 text-sm text-center font-semibold border-l border-[#e5e7eb] ${
-                          item.result === '合' ? 'text-[#27ae60]' : item.result === '否' ? 'text-[#dc2626]' : item.result === '交換' ? 'text-[#f59e0b]' : 'text-[#1f2937]'
+                          item.result === '○' ? 'text-[#27ae60]' : item.result === '×' ? 'text-[#dc2626]' : 'text-[#1f2937]'
                         }`}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>

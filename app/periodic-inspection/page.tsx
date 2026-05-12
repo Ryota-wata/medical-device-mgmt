@@ -6,19 +6,21 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { InspectionTask } from '@/lib/types';
 import { useInspectionStore, useAuthStore } from '@/lib/stores';
 
+// REQ-103: 評価項目の入力形式 3 パターン（定例0413 確定: マルバツ二択 / 単位付き数値 / フリーテキスト）
 interface InspectionItemResult {
   itemName: string;
   content: string;
-  result: '合' | '否' | string;
+  result: '○' | '×' | string;
   unit?: string;
+  evaluationType?: '合否' | '単位' | 'フリー入力';
 }
 
 const DEFAULT_ITEMS: InspectionItemResult[] = [
-  { itemName: '清掃', content: '本体の清掃', result: '' },
-  { itemName: '外装点検', content: 'ACインレット', result: '' },
-  { itemName: '外装点検', content: 'スライダー', result: '' },
-  { itemName: '性能点検', content: '閉塞圧測定', result: '', unit: 'kPa' },
-  { itemName: '性能点検', content: '流量測定', result: '', unit: 'ml' },
+  { itemName: '清掃', content: '本体の清掃', result: '', evaluationType: '合否' },
+  { itemName: '外装点検', content: 'ACインレット', result: '', evaluationType: '合否' },
+  { itemName: '外装点検', content: 'スライダー', result: '', evaluationType: '合否' },
+  { itemName: '性能点検', content: '閉塞圧測定', result: '', unit: 'kPa', evaluationType: '単位' },
+  { itemName: '性能点検', content: '流量測定', result: '', unit: 'ml', evaluationType: '単位' },
 ];
 
 type Step = 'qr-scan' | 'inspection' | 'confirm';
@@ -474,7 +476,8 @@ function PeriodicInspectionContent() {
                       <td style={styles.td}>{item.itemName}</td>
                       <td style={styles.td}>{item.content}</td>
                       <td style={styles.td}>
-                        {item.unit ? (
+                        {/* REQ-103: 評価項目の入力形式を 3 パターンで切替（定例0413 確定） */}
+                        {item.evaluationType === '単位' ? (
                           <div style={{ display: 'flex', alignItems: 'center' }}>
                             <input
                               type="number"
@@ -484,19 +487,28 @@ function PeriodicInspectionContent() {
                             />
                             <span style={styles.unit}>{item.unit}</span>
                           </div>
+                        ) : item.evaluationType === 'フリー入力' ? (
+                          <input
+                            type="text"
+                            style={{ ...styles.numericInput, width: '200px' }}
+                            value={item.result}
+                            onChange={(e) => handleItemResultChange(index, e.target.value)}
+                            placeholder="自由記述"
+                          />
                         ) : (
+                          // 合否（マルバツ） — デフォルト
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <button
-                              style={item.result === '合' ? styles.resultButtonActive : styles.resultButton}
-                              onClick={() => handleItemResultChange(index, '合')}
+                              style={item.result === '○' ? styles.resultButtonActive : styles.resultButton}
+                              onClick={() => handleItemResultChange(index, '○')}
                             >
-                              合
+                              ○
                             </button>
                             <button
-                              style={item.result === '否' ? styles.resultButtonNg : styles.resultButton}
-                              onClick={() => handleItemResultChange(index, '否')}
+                              style={item.result === '×' ? styles.resultButtonNg : styles.resultButton}
+                              onClick={() => handleItemResultChange(index, '×')}
                             >
-                              否
+                              ×
                             </button>
                           </div>
                         )}
@@ -671,7 +683,7 @@ function PeriodicInspectionContent() {
                           borderBottom: '1px solid #eee',
                           textAlign: 'center',
                           fontWeight: 600,
-                          color: item.result === '合' ? '#27ae60' : item.result === '否' ? '#e74c3c' : '#333'
+                          color: item.result === '○' ? '#27ae60' : item.result === '×' ? '#e74c3c' : '#333'
                         }}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
