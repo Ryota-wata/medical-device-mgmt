@@ -7,54 +7,45 @@ import { StepProgressBar } from '../components/StepProgressBar';
 import { customerStep5Items } from '@/lib/data/customer/step5-individual';
 import { customerStep4Items } from '@/lib/data/customer/step4-asset-master';
 
-// 明細区分の型
 type DetailClassification = '明細代表' | '内訳代表' | '親明細' | '子明細' | '孫明細' | 'その他' | '値引き' | '';
 const UNIT_OPTIONS = ['台', '個', '本', '枚', '組', 'セット', '式'];
 
-// 明細区分マッピング
 const classMap: Record<string, DetailClassification> = {
   '代表明細': '明細代表', '親': '親明細', '子': '子明細', '孫': '孫明細',
   'その他': 'その他', '文字列': 'その他', '値引き': '値引き',
 };
 
-// --- 行データ型（親明細は数量分展開される） ---
 interface Row {
   id: string;
-  rowNo: number;              // 元No
-  category: string;           // STEP3: カテゴリ
-  detailClassification: DetailClassification; // STEP3: 明細区分
-  itemName: string;           // STEP4: 個体管理品目
-  manufacturer: string;       // STEP4: メーカー
-  model: string;              // STEP4: 型式(見積名称)
-  quantity: number;           // STEP4: 数量（展開後は1）
-  // 価格情報（原本）
-  listPriceUnit: number;      // 定価単価
-  listPriceTotal: number;     // 定価金額
-  purchasePriceUnit: number;  // 購入単価(税別)
-  purchasePriceTotal: number; // 購入金額(税別)
-  // STEP5
+  rowNo: number;
+  category: string;
+  detailClassification: DetailClassification;
+  itemName: string;
+  manufacturer: string;
+  model: string;
+  quantity: number;
+  listPriceUnit: number;
+  listPriceTotal: number;
+  purchasePriceUnit: number;
+  purchasePriceTotal: number;
   unit: string;
-  seqId: string;              // 親子関係
-  allocationCategory: string; // 価格案分区分: 対象 / -
-  differenceAllocation: string; // 差額金額を案分
-  allocListPrice: number;     // 定価金額（案分後）
-  allocPurchasePrice: number; // 購入金額(税別)（案分後）
-  taxCategory: string;        // 税区分
-  allocPurchaseTaxIncl: number; // 購入金額(税込)
-  isFirstOfGroup: boolean;    // 同一rowNoの最初の行か
-  groupRowCount: number;      // 同一rowNoの行数
+  seqId: string;
+  allocationCategory: string;
+  differenceAllocation: string;
+  allocListPrice: number;
+  allocPurchasePrice: number;
+  taxCategory: string;
+  allocPurchaseTaxIncl: number;
+  isFirstOfGroup: boolean;
+  groupRowCount: number;
 }
 
-// --- 顧客データから行を生成 ---
-// STEP4のquantityを使って親明細を数量分展開
 function buildRows(): Row[] {
   const rows: Row[] = [];
   let seqCounter = 1;
-
   for (const item of customerStep5Items) {
     const cls = (classMap[item.itemType] || item.itemType || '') as DetailClassification;
     const isParent = cls === '親明細';
-    // 親明細の展開数量はSTEP4データから取得（STEP5では1になっている）
     const step4Item = customerStep4Items.find(s4 => s4.rowNo === item.rowNo);
     const expandCount = isParent ? (step4Item?.quantity || item.quantity || 1) : 1;
 
@@ -88,9 +79,7 @@ function buildRows(): Row[] {
   return rows;
 }
 
-// --- 金額計算 ---
 function calcTotals(rows: Row[]) {
-  // 元明細ベース（rowNoでユニーク）で集計
   const seen = new Set<number>();
   let total = 0;
   let allocationTarget = 0;
@@ -109,6 +98,17 @@ function calcTotals(rows: Row[]) {
   }
   return { total, allocationTarget, allocationExcluded, difference: 0 };
 }
+
+const classLabelStyleMap: Record<DetailClassification, string> = {
+  '親明細': 'bg-content-alert text-white',
+  '子明細': 'bg-content-link text-white',
+  '孫明細': 'bg-content-primary text-white',
+  '明細代表': 'bg-content-sub text-white',
+  '内訳代表': 'bg-content-sub text-white',
+  'その他': 'bg-content-sub text-white',
+  '値引き': 'bg-content-sub text-white',
+  '': '',
+};
 
 export default function PriceAllocationPage() {
   const router = useRouter();
@@ -130,99 +130,73 @@ export default function PriceAllocationPage() {
 
   const fmtNum = (n: number) => n ? n.toLocaleString() : '';
 
-  const classColor = (cls: DetailClassification) => {
-    if (cls === '親明細') return '#DA0000';
-    if (cls === '子明細') return '#2196f3';
-    if (cls === '孫明細') return '#5E3A93';
-    if (cls === '明細代表') return '#666';
-    if (cls === 'その他') return '#888';
-    return '#666';
-  };
-
-  const thBase: React.CSSProperties = { padding: '5px', borderBottom: '1px solid #E1E1E1', fontSize: '10px', whiteSpace: 'nowrap' };
-  const tdBase: React.CSSProperties = { padding: '4px 5px', fontSize: '10px', verticalAlign: 'top' };
-  const borderR: React.CSSProperties = { borderRight: '1px solid #ccc' };
+  const cellInputCls = 'w-full text-[9px] px-1 py-0.5 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Header title="見積登録（購入）個体登録及び金額按分" stepBadge="STEP 5" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={5} />
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-        <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', marginBottom: '16px' }}>
-
-          {/* 上部バー: フィルタ + 金額サマリ */}
-          <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', borderBottom: '1px solid #E1E1E1' }}>
+      <div className="flex-1 overflow-auto p-4">
+        <section className="bg-surface-card border border-stroke-input rounded-lg mb-4">
+          {/* 上部バー */}
+          <div className="px-4 py-3 flex justify-between items-center flex-wrap gap-3 border-b border-stroke-input">
             <button
               onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
-              style={{
-                padding: '6px 14px', background: showOnlyIndividual ? '#008C1D' : '#EBF5EE',
-                border: '1px solid #a5d6a7', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
-                color: showOnlyIndividual ? 'white' : '#146E2E', cursor: 'pointer',
-              }}
+              className={`px-3.5 py-1.5 border rounded-md text-xs font-bold cursor-pointer transition-colors ${
+                showOnlyIndividual
+                  ? 'bg-cta-primary text-white border-cta-primary hover:bg-cta-primary-dark'
+                  : 'bg-surface-select text-cta-primary-dark border-cta-primary hover:bg-stroke-card'
+              }`}
             >
               個体管理品目のみ表示
             </button>
 
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '10px', color: '#666' }}>合計金額（税抜）</div>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#008C1D', background: '#EBF5EE', padding: '4px 12px', borderRadius: '4px', fontVariantNumeric: 'tabular-nums' }}>
+            <div className="flex gap-4 items-center flex-wrap">
+              <div className="text-center">
+                <div className="text-[10px] text-content-sub">合計金額（税抜）</div>
+                <div className="text-base font-bold text-cta-primary bg-surface-select px-3 py-1 rounded-md tabular-nums">
                   {totals.total.toLocaleString()}
                 </div>
               </div>
-              <div style={{ textAlign: 'right', fontSize: '11px', fontVariantNumeric: 'tabular-nums' }}>
-                <div>案分対象 <strong style={{ color: '#1E5A9E' }}>{totals.allocationTarget.toLocaleString()}</strong></div>
-                <div>案分除外 <strong style={{ color: '#1E5A9E' }}>{totals.allocationExcluded.toLocaleString()}</strong></div>
-                <div>差額 <strong style={{ color: totals.difference !== 0 ? '#DA0000' : '#333' }}>{totals.difference.toLocaleString()}</strong></div>
+              <div className="text-right text-xs tabular-nums">
+                <div>案分対象 <strong className="text-cta-primary-dark">{totals.allocationTarget.toLocaleString()}</strong></div>
+                <div>案分除外 <strong className="text-cta-primary-dark">{totals.allocationExcluded.toLocaleString()}</strong></div>
+                <div>差額 <strong className={totals.difference !== 0 ? 'text-content-alert' : 'text-content-primary'}>{totals.difference.toLocaleString()}</strong></div>
               </div>
             </div>
           </div>
 
           {/* テーブル */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', minWidth: '1500px' }}>
-              <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                {/* 1段目ヘッダー */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[10px] min-w-[1500px]">
+              <thead className="sticky top-0 z-[2]">
                 <tr>
-                  <th colSpan={3} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
-                    STEP❸
-                  </th>
-                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
-                    STEP❹ 資産マスタ登録
-                  </th>
-                  <th colSpan={4} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #333', background: '#EAF3FB', fontSize: '11px', fontWeight: 'bold', ...borderR }}>
-                    価格情報（原本情報）
-                  </th>
-                  <th colSpan={8} style={{ padding: '6px', textAlign: 'center', borderBottom: '2px solid #5E3A93', background: '#F1ECF7', fontSize: '11px', fontWeight: 'bold', color: '#5E3A93' }}>
-                    STEP❺ 個体登録／金額案分
-                  </th>
+                  <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❸</th>
+                  <th colSpan={4} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❹ 資産マスタ登録</th>
+                  <th colSpan={4} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">価格情報（原本情報）</th>
+                  <th colSpan={8} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-surface-select text-xs font-bold text-cta-primary-dark">STEP❺ 個体登録／金額案分</th>
                 </tr>
-                {/* 2段目ヘッダー */}
-                <tr style={{ background: '#FAFAFA' }}>
-                  {/* STEP3 */}
-                  <th style={{ ...thBase, width: '30px', textAlign: 'center' }}>No</th>
-                  <th style={{ ...thBase, width: '90px' }}>カテゴリ</th>
-                  <th style={{ ...thBase, width: '55px', textAlign: 'center', ...borderR }}>明細区分</th>
-                  {/* STEP4 */}
-                  <th style={{ ...thBase, whiteSpace: 'nowrap' }}>個体管理品目</th>
-                  <th style={{ ...thBase, width: '80px' }}>メーカー</th>
-                  <th style={{ ...thBase, width: '100px' }}>型式（見積名称）</th>
-                  <th style={{ ...thBase, width: '35px', textAlign: 'center', ...borderR }}>数量</th>
-                  {/* 価格情報（原本） */}
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>定価単価</th>
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>定価金額</th>
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right' }}>購入単価<br />(税別)</th>
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right', ...borderR }}>購入金額<br />(税別)</th>
-                  {/* STEP5 */}
-                  <th style={{ ...thBase, width: '40px', textAlign: 'center', background: '#faf5fc' }}>単位</th>
-                  <th style={{ ...thBase, width: '35px', textAlign: 'center', background: '#faf5fc' }}>親子<br />関</th>
-                  <th style={{ ...thBase, width: '50px', textAlign: 'center', background: '#faf5fc' }}>価格案分<br />区分</th>
-                  <th style={{ ...thBase, width: '70px', textAlign: 'center', background: '#FBE9EC', color: '#9A2333', fontWeight: 'bold' }}>差額金額<br />を案分</th>
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>定価金額</th>
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>購入金額<br />(税別)</th>
-                  <th style={{ ...thBase, width: '45px', textAlign: 'center', background: '#faf5fc' }}>税区分</th>
-                  <th style={{ ...thBase, width: '80px', textAlign: 'right', background: '#faf5fc' }}>購入金額<br />(税込)</th>
+                <tr className="bg-surface-screen">
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[30px] text-center font-normal text-content-primary">No</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[90px] text-left font-normal text-content-primary">カテゴリ</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[55px] text-center font-normal text-content-primary border-r border-stroke-input">明細区分</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap text-left font-normal text-content-primary">個体管理品目</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-left font-normal text-content-primary">メーカー</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[100px] text-left font-normal text-content-primary">型式（見積名称）</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[35px] text-center font-normal text-content-primary border-r border-stroke-input">数量</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary">定価単価</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary">定価金額</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary">購入単価<br />(税別)</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary border-r border-stroke-input">購入金額<br />(税別)</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[40px] text-center font-normal text-content-primary bg-surface-select">単位</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[35px] text-center font-normal text-content-primary bg-surface-select">親子<br />関</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[50px] text-center font-normal text-content-primary bg-surface-select">価格案分<br />区分</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[70px] text-center font-bold text-content-alert bg-stroke-card">差額金額<br />を案分</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary bg-surface-select">定価金額</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary bg-surface-select">購入金額<br />(税別)</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[45px] text-center font-normal text-content-primary bg-surface-select">税区分</th>
+                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary bg-surface-select">購入金額<br />(税込)</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,75 +206,61 @@ export default function PriceAllocationPage() {
                   const clsLabel = row.detailClassification.replace('明細', '');
 
                   return (
-                    <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
-                      {/* STEP3 (rowSpanで結合) */}
+                    <tr key={row.id} className="border-b border-stroke-card">
                       {showOriginal && (
                         <>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{row.rowNo}</td>
-                          <td rowSpan={span} style={{ ...tdBase, borderBottom: '1px solid #E1E1E1' }}>{row.category}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'center', borderBottom: '1px solid #E1E1E1', ...borderR }}>
+                          <td rowSpan={span} className="px-1.5 py-1 text-center tabular-nums align-top border-b border-stroke-input text-content-primary">{row.rowNo}</td>
+                          <td rowSpan={span} className="px-1.5 py-1 align-top border-b border-stroke-input text-content-primary">{row.category}</td>
+                          <td rowSpan={span} className="px-1.5 py-1 text-center align-top border-b border-stroke-input border-r border-stroke-input">
                             {row.detailClassification && (
-                              <span style={{ padding: '1px 5px', borderRadius: '3px', fontSize: '9px', fontWeight: 'bold', color: 'white', background: classColor(row.detailClassification) }}>
-                                {clsLabel}
-                              </span>
+                              <span className={`inline-block px-1.5 py-px rounded text-[9px] font-bold ${classLabelStyleMap[row.detailClassification]}`}>{clsLabel}</span>
                             )}
                           </td>
                         </>
                       )}
-                      {/* STEP4 */}
-                      <td style={{ ...tdBase, whiteSpace: 'nowrap' }}>{row.itemName}</td>
-                      <td style={{ ...tdBase, color: '#555' }}>{row.manufacturer}</td>
-                      <td style={{ ...tdBase, color: '#555' }}>{row.model}</td>
-                      <td style={{ ...tdBase, textAlign: 'center', fontVariantNumeric: 'tabular-nums', ...borderR }}>{row.quantity || '-'}</td>
-                      {/* 価格情報（原本）— rowSpan */}
+                      <td className="px-1.5 py-1 whitespace-nowrap align-top text-content-primary">{row.itemName}</td>
+                      <td className="px-1.5 py-1 align-top text-content-primary">{row.manufacturer}</td>
+                      <td className="px-1.5 py-1 align-top text-content-primary">{row.model}</td>
+                      <td className="px-1.5 py-1 text-center tabular-nums align-top text-content-primary border-r border-stroke-input">{row.quantity || '-'}</td>
                       {showOriginal && (
                         <>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.listPriceUnit)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.listPriceTotal)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', borderBottom: '1px solid #E1E1E1' }}>{fmtNum(row.purchasePriceUnit)}</td>
-                          <td rowSpan={span} style={{ ...tdBase, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold', borderBottom: '1px solid #E1E1E1', ...borderR }}>{fmtNum(row.purchasePriceTotal)}</td>
+                          <td rowSpan={span} className="px-1.5 py-1 text-right tabular-nums align-top border-b border-stroke-input text-content-primary">{fmtNum(row.listPriceUnit)}</td>
+                          <td rowSpan={span} className="px-1.5 py-1 text-right tabular-nums align-top border-b border-stroke-input text-content-primary">{fmtNum(row.listPriceTotal)}</td>
+                          <td rowSpan={span} className="px-1.5 py-1 text-right tabular-nums align-top border-b border-stroke-input text-content-primary">{fmtNum(row.purchasePriceUnit)}</td>
+                          <td rowSpan={span} className="px-1.5 py-1 text-right tabular-nums align-top border-b border-stroke-input border-r border-stroke-input font-bold text-content-primary">{fmtNum(row.purchasePriceTotal)}</td>
                         </>
                       )}
-                      {/* STEP5 */}
-                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff' }}>
-                        <select value={row.unit} onChange={e => handleFieldChange(row.id, 'unit', e.target.value)}
-                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', width: '36px' }}>
+                      <td className="px-1.5 py-1 text-center align-top bg-surface-select">
+                        <select value={row.unit} onChange={e => handleFieldChange(row.id, 'unit', e.target.value)} className="px-0.5 py-0.5 text-[9px] border border-stroke-input rounded-sm w-9 bg-surface-card focus:outline-none focus:border-cta-primary">
                           {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                         </select>
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
-                        <input type="text" value={row.seqId} onChange={e => handleFieldChange(row.id, 'seqId', e.target.value)}
-                          style={{ width: '28px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'center' }} />
+                      <td className="px-1.5 py-1 text-center align-top bg-surface-select tabular-nums">
+                        <input type="text" value={row.seqId} onChange={e => handleFieldChange(row.id, 'seqId', e.target.value)} className="w-7 px-0.5 py-0.5 text-[9px] border border-stroke-input rounded-sm text-center bg-surface-card focus:outline-none focus:border-cta-primary" />
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff', fontSize: '9px' }}>
-                        <select value={row.allocationCategory} onChange={e => handleFieldChange(row.id, 'allocationCategory', e.target.value)}
-                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', width: '44px' }}>
+                      <td className="px-1.5 py-1 text-center align-top bg-surface-select text-[9px]">
+                        <select value={row.allocationCategory} onChange={e => handleFieldChange(row.id, 'allocationCategory', e.target.value)} className="px-0.5 py-0.5 text-[9px] border border-stroke-input rounded-sm w-11 bg-surface-card focus:outline-none focus:border-cta-primary">
                           <option value="対象">対象</option>
                           <option value="-">-</option>
                         </select>
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'right', background: '#FBE9EC' }}>
-                        <input type="text" value={row.differenceAllocation} onChange={e => handleFieldChange(row.id, 'differenceAllocation', e.target.value)}
-                          style={{ width: '60px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right' }} />
+                      <td className="px-1.5 py-1 text-right align-top bg-stroke-card">
+                        <input type="text" value={row.differenceAllocation} onChange={e => handleFieldChange(row.id, 'differenceAllocation', e.target.value)} className="w-[60px] px-0.5 py-0.5 text-[9px] border border-stroke-input rounded-sm text-right bg-surface-card focus:outline-none focus:border-cta-primary" />
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
-                        <input type="text" value={fmtNum(row.allocListPrice)} onChange={e => handleFieldChange(row.id, 'allocListPrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
-                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right' }} />
+                      <td className="px-1.5 py-1 text-right align-top bg-surface-select tabular-nums">
+                        <input type="text" value={fmtNum(row.allocListPrice)} onChange={e => handleFieldChange(row.id, 'allocListPrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)} className={`${cellInputCls} text-right w-[68px]`} />
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums' }}>
-                        <input type="text" value={fmtNum(row.allocPurchasePrice)} onChange={e => handleFieldChange(row.id, 'allocPurchasePrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
-                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right' }} />
+                      <td className="px-1.5 py-1 text-right align-top bg-surface-select tabular-nums">
+                        <input type="text" value={fmtNum(row.allocPurchasePrice)} onChange={e => handleFieldChange(row.id, 'allocPurchasePrice', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)} className={`${cellInputCls} text-right w-[68px]`} />
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'center', background: '#fdfaff' }}>
-                        <select value={row.taxCategory} onChange={e => handleFieldChange(row.id, 'taxCategory', e.target.value)}
-                          style={{ padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', width: '42px' }}>
+                      <td className="px-1.5 py-1 text-center align-top bg-surface-select">
+                        <select value={row.taxCategory} onChange={e => handleFieldChange(row.id, 'taxCategory', e.target.value)} className="px-0.5 py-0.5 text-[9px] border border-stroke-input rounded-sm w-[42px] bg-surface-card focus:outline-none focus:border-cta-primary">
                           <option value="課税">課税</option>
                           <option value="非課税">非課税</option>
                         </select>
                       </td>
-                      <td style={{ ...tdBase, textAlign: 'right', background: '#fdfaff', fontVariantNumeric: 'tabular-nums', fontWeight: 'bold' }}>
-                        <input type="text" value={fmtNum(row.allocPurchaseTaxIncl)} onChange={e => handleFieldChange(row.id, 'allocPurchaseTaxIncl', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)}
-                          style={{ width: '68px', padding: '1px 2px', fontSize: '9px', border: '1px solid #E1E1E1', borderRadius: '2px', textAlign: 'right', fontWeight: 'bold' }} />
+                      <td className="px-1.5 py-1 text-right align-top bg-surface-select tabular-nums font-bold">
+                        <input type="text" value={fmtNum(row.allocPurchaseTaxIncl)} onChange={e => handleFieldChange(row.id, 'allocPurchaseTaxIncl', parseInt(e.target.value.replace(/,/g, ''), 10) || 0)} className={`${cellInputCls} text-right w-[68px] font-bold`} />
                       </td>
                     </tr>
                   );
@@ -308,16 +268,20 @@ export default function PriceAllocationPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
         {/* フッターボタン */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', marginTop: '16px' }}>
-          <button onClick={() => router.push('/quotation-data-box/item-ai-matching')}
-            style={{ padding: '12px 28px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+        <div className="flex gap-3 justify-between mt-4">
+          <button
+            onClick={() => router.push('/quotation-data-box/item-ai-matching')}
+            className="h-12 px-7 bg-surface-negative text-content-primary border-0 rounded-lg cursor-pointer text-sm font-bold hover:bg-stroke-input transition-colors"
+          >
             一つ前のSTEPに戻る
           </button>
-          <button onClick={() => router.push('/quotation-data-box/registration-confirm')}
-            style={{ padding: '12px 28px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+          <button
+            onClick={() => router.push('/quotation-data-box/registration-confirm')}
+            className="h-12 px-7 bg-cta-primary text-white border-0 rounded-lg cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
+          >
             登録確認
           </button>
         </div>
