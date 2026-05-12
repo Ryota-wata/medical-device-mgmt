@@ -2,15 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { FacilityMaster } from '@/lib/types/master';
 import { FacilityFormModal } from '@/components/modals/FacilityFormModal';
 import { exportFacilitiesToExcel } from '@/lib/utils/excel-facility-master';
 
-// Excelフルカラム定義（44列）
 const FACILITY_COLUMNS: { key: string; label: string }[] = [
-  // 基本情報
   { key: 'facilityCode', label: '医療機関コード' },
   { key: 'facilityName', label: '施設名' },
   { key: 'foundingBody', label: '経営主体' },
@@ -19,14 +18,12 @@ const FACILITY_COLUMNS: { key: string; label: string }[] = [
   { key: 'secondaryMedicalArea', label: '二次医療圏名' },
   { key: 'rebuildYear', label: '建替年度' },
   { key: 'buildingArea', label: '建物面積' },
-  // 認定情報
   { key: 'emergencyCenter', label: '救命救急センター' },
   { key: 'secondaryEmergency', label: '2次/3次救急' },
   { key: 'perinatalCenter', label: '周産期母子医療' },
   { key: 'disasterHospital', label: '災害拠点病院' },
   { key: 'cancerHospital', label: 'がん診療拠点' },
   { key: 'regionalSupport', label: '地域医療支援' },
-  // 諸室情報
   { key: 'erRooms', label: '救急初療室数' },
   { key: 'centralTreatmentBeds', label: '中央処置ベッド数' },
   { key: 'chemotherapyBeds', label: '化学療法ベッド数' },
@@ -35,7 +32,6 @@ const FACILITY_COLUMNS: { key: string; label: string }[] = [
   { key: 'dialysisBeds', label: '人工透析ベッド数' },
   { key: 'operatingRooms', label: '手術室数' },
   { key: 'bloodCollectionUnits', label: '中央採血台数' },
-  // 病床情報
   { key: 'totalBeds', label: '総病床数' },
   { key: 'emergencyWard', label: '救急病棟' },
   { key: 'eICU', label: 'E-ICU' },
@@ -70,7 +66,6 @@ export default function ShipFacilityMasterPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<FacilityMaster | null>(null);
 
-  // 顧客施設マスタを遅延ロード
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     if (facilities.length < 1000) {
@@ -95,8 +90,6 @@ export default function ShipFacilityMasterPage() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-
-  // フィルタリング処理
   const filteredFacilities = facilities.filter((facility) => {
     const matchFacilityCode = !filterFacilityCode || facility.facilityCode.includes(filterFacilityCode);
     const matchFacilityName = !filterFacilityName || facility.facilityName.toLowerCase().includes(filterFacilityName.toLowerCase());
@@ -104,10 +97,6 @@ export default function ShipFacilityMasterPage() {
     const matchFoundingBody = !filterFoundingBody || (facility.foundingBody && facility.foundingBody.includes(filterFoundingBody));
     return matchFacilityCode && matchFacilityName && matchPrefecture && matchFoundingBody;
   });
-
-  const handleBack = () => {
-    router.push('/main');
-  };
 
   const handleEdit = (facility: FacilityMaster) => {
     setSelectedFacility(facility);
@@ -140,329 +129,160 @@ export default function ShipFacilityMasterPage() {
       bedCount: 0,
       status: 'active',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     addFacility(newFacility);
   };
 
   const handleEditSubmit = (data: Partial<FacilityMaster>) => {
-    if (selectedFacility) {
-      updateFacility(selectedFacility.id, data);
-    }
+    if (selectedFacility) updateFacility(selectedFacility.id, data);
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
-      {/* Header */}
-      <header style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #E1E1E1',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: isMobile ? '12px' : '16px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#4A4A4A', margin: 0 }}>
-            SHIP施設マスタ
-          </h1>
-          <div style={{
-            background: '#F1F1F1',
-            color: '#8A8A8A',
-            padding: isMobile ? '4px 12px' : '6px 16px',
-            borderRadius: '20px',
-            fontSize: isMobile ? '12px' : '14px',
-            fontWeight: 600
-          }}>
-            {filteredFacilities.length}件
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => exportFacilitiesToExcel(filteredFacilities)}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#4A4A4A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            エクスポート
-          </button>
-          <button
-            onClick={() => setShowNewModal(true)}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#008C1D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            新規作成
-          </button>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#E1E1E1',
-              color: '#4A4A4A',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            メイン画面に戻る
-          </button>
-        </div>
-      </header>
+  const filterInputCls = `w-full ${isMobile ? 'p-2 text-[13px]' : 'p-2.5 text-sm'} border border-stroke-input rounded-md box-border bg-surface-card focus:outline-none focus:border-cta-primary transition-colors`;
+  const filterLabelCls = `block ${isMobile ? 'text-xs' : 'text-[13px]'} font-semibold mb-1.5 text-content-primary`;
 
-      {/* Filter Header */}
-      <div style={{
-        background: 'white',
-        padding: isMobile ? '12px 16px' : isTablet ? '16px 20px' : '20px 24px',
-        borderBottom: '1px solid #E1E1E1',
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: isMobile ? '12px' : '16px'
-      }}>
+  return (
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
+      <Header
+        title="SHIP施設マスタ"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+        resultCount={filteredFacilities.length}
+        showOriginalLabel={false}
+      >
+        <button
+          onClick={() => exportFacilitiesToExcel(filteredFacilities)}
+          className={`inline-flex items-center justify-center h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-content-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-content-primary/90 transition-colors`}
+        >
+          エクスポート
+        </button>
+        <button
+          onClick={() => setShowNewModal(true)}
+          className={`inline-flex items-center justify-center h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
+        >
+          新規作成
+        </button>
+      </Header>
+
+      <div className={`bg-surface-card border-b border-stroke-input ${isMobile ? 'px-4 py-3' : isTablet ? 'px-5 py-4' : 'px-6 py-5'} grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[repeat(auto-fit,minmax(200px,1fr))]'} gap-4`}>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            都道府県
-          </label>
-          <input
-            type="text"
-            value={filterPrefecture}
-            onChange={(e) => setFilterPrefecture(e.target.value)}
-            placeholder="東京都"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
+          <label className={filterLabelCls}>都道府県</label>
+          <input type="text" value={filterPrefecture} onChange={(e) => setFilterPrefecture(e.target.value)} placeholder="東京都" className={filterInputCls} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            設立母体
-          </label>
-          <input
-            type="text"
-            value={filterFoundingBody}
-            onChange={(e) => setFilterFoundingBody(e.target.value)}
-            placeholder="国立、公立、医療法人"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
+          <label className={filterLabelCls}>設立母体</label>
+          <input type="text" value={filterFoundingBody} onChange={(e) => setFilterFoundingBody(e.target.value)} placeholder="国立、公立、医療法人" className={filterInputCls} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            施設コード
-          </label>
-          <input
-            type="text"
-            value={filterFacilityCode}
-            onChange={(e) => setFilterFacilityCode(e.target.value)}
-            placeholder="F001"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
+          <label className={filterLabelCls}>施設コード</label>
+          <input type="text" value={filterFacilityCode} onChange={(e) => setFilterFacilityCode(e.target.value)} placeholder="F001" className={filterInputCls} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            施設名
-          </label>
-          <input
-            type="text"
-            value={filterFacilityName}
-            onChange={(e) => setFilterFacilityName(e.target.value)}
-            placeholder="施設名で検索"
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px'
-            }}
-          />
+          <label className={filterLabelCls}>施設名</label>
+          <input type="text" value={filterFacilityName} onChange={(e) => setFilterFacilityName(e.target.value)} placeholder="施設名で検索" className={filterInputCls} />
         </div>
       </div>
 
-      {/* Main Content */}
-      <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflowY: 'auto' }}>
+      <main className={`flex-1 overflow-y-auto ${isMobile ? 'p-4' : isTablet ? 'p-5' : 'p-6'}`}>
+        {isLoading && (
+          <div className="bg-surface-card rounded-lg p-6 text-center text-content-sub text-sm mb-4">
+            読み込み中...
+          </div>
+        )}
+
         {isMobile ? (
-          // カード表示 (モバイル)
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="flex flex-col gap-3">
             {filteredFacilities.map((facility) => (
-              <div key={facility.id} style={{
-                background: 'white',
-                borderRadius: '8px',
-                padding: '16px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #E1E1E1' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A', marginBottom: '4px' }}>
-                    {facility.facilityName}
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#8A8A8A' }}>
-                    {facility.facilityCode}
-                  </div>
+              <div key={facility.id} className="bg-surface-card rounded-lg p-4 shadow-sm">
+                <div className="mb-3 pb-3 border-b border-stroke-input">
+                  <p className="text-base font-semibold text-content-primary mb-1">{facility.facilityName}</p>
+                  <p className="text-[13px] text-content-sub tabular-nums">{facility.facilityCode}</p>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#8A8A8A' }}>都道府県:</span> {facility.prefecture}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>設立母体:</span> {facility.foundingBody}</div>
-                  <div><span style={{ color: '#8A8A8A' }}>病床数:</span> {facility.bedCount}床</div>
+                <div className="flex flex-col gap-2 text-[13px] text-content-primary">
+                  <div><span className="text-content-sub">都道府県:</span> {facility.prefecture}</div>
+                  <div><span className="text-content-sub">設立母体:</span> {facility.foundingBody}</div>
+                  <div><span className="text-content-sub">病床数:</span> <span className="tabular-nums">{facility.bedCount}</span>床</div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  <button
-                    onClick={() => handleEdit(facility)}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: '#4A4A4A',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={() => handleDelete(facility.id)}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      background: '#DA0000',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    削除
-                  </button>
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => handleEdit(facility)} className="flex-1 py-2 bg-content-primary text-white border-0 rounded text-[13px] font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors">編集</button>
+                  <button onClick={() => handleDelete(facility.id)} className="flex-1 py-2 bg-content-alert text-white border-0 rounded text-[13px] font-semibold cursor-pointer hover:opacity-90 transition-colors">削除</button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          // テーブル表示 (PC/タブレット)
-          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', overflow: 'auto', maxHeight: 'calc(100vh - 220px)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                  <tr>
-                    {([
-                      { label: '基本情報', span: 8, color: '#4A4A4A' },
-                      { label: '認定情報', span: 6, color: '#0d6efd' },
-                      { label: '諸室情報', span: 8, color: '#198754' },
-                      { label: '病床情報', span: 19, color: '#6f42c1' },
-                      { label: '', span: 1, color: '#4A4A4A' },
-                    ] as const).map((g, i) => (
-                      <th key={i} colSpan={g.span} style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'white', background: g.color, borderRight: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}>{g.label}</th>
-                    ))}
-                  </tr>
-                  <tr>
-                    {FACILITY_COLUMNS.map(col => (
-                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
-                    ))}
-                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFacilities.map((facility, index) => (
-                    <tr key={facility.id} style={{ borderBottom: '1px solid #E1E1E1', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                      {FACILITY_COLUMNS.map(col => (
-                        <td key={col.key} style={{ padding: '4px 6px', fontSize: '11px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>
-                          {String((facility as unknown as Record<string, unknown>)[col.key] || '')}
-                        </td>
-                      ))}
-                      <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                          <button onClick={() => handleEdit(facility)} style={{ padding: '3px 8px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>
-                          <button onClick={() => handleDelete(facility.id)} style={{ padding: '3px 8px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>削除</button>
-                        </div>
-                      </td>
-                    </tr>
+          <div className="bg-surface-card rounded-lg shadow-sm overflow-auto max-h-[calc(100vh-220px)]">
+            <table className="w-full border-collapse">
+              <thead className="sticky top-0 z-[2]">
+                <tr>
+                  {([
+                    { label: '基本情報', span: 8 },
+                    { label: '認定情報', span: 6 },
+                    { label: '諸室情報', span: 8 },
+                    { label: '病床情報', span: 19 },
+                    { label: '', span: 1 },
+                  ] as const).map((g, i) => (
+                    <th key={i} colSpan={g.span} className="px-1.5 py-1 text-center text-[10px] font-bold text-white bg-content-primary border-r border-white/20 whitespace-nowrap">
+                      {g.label}
+                    </th>
                   ))}
-                </tbody>
-              </table>
+                </tr>
+                <tr>
+                  {FACILITY_COLUMNS.map(col => (
+                    <th key={col.key} className="px-1.5 py-1 text-left text-[10px] font-semibold text-white bg-content-primary border-b-2 border-stroke-input whitespace-nowrap">{col.label}</th>
+                  ))}
+                  <th className="px-1.5 py-1 text-center text-[10px] font-semibold text-white bg-content-primary border-b-2 border-stroke-input whitespace-nowrap">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFacilities.map((facility, index) => (
+                  <tr key={facility.id} className={`border-b border-stroke-input ${index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}`}>
+                    {FACILITY_COLUMNS.map(col => (
+                      <td key={col.key} className="px-1.5 py-1 text-[11px] text-content-primary whitespace-nowrap">
+                        {String((facility as unknown as Record<string, unknown>)[col.key] || '')}
+                      </td>
+                    ))}
+                    <td className="px-1.5 py-1 text-center whitespace-nowrap">
+                      <div className="flex gap-1 justify-center">
+                        <button onClick={() => handleEdit(facility)} className="px-2 py-0.5 bg-content-primary text-white border-0 rounded text-[10px] font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors">編集</button>
+                        <button onClick={() => handleDelete(facility.id)} className="px-2 py-0.5 bg-content-alert text-white border-0 rounded text-[10px] font-semibold cursor-pointer hover:opacity-90 transition-colors">削除</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {filteredFacilities.length === 0 && (
-          <div style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: isMobile ? '40px 20px' : '60px 40px',
-            textAlign: 'center',
-            color: '#8A8A8A',
-            fontSize: isMobile ? '14px' : '16px'
-          }}>
+        {filteredFacilities.length === 0 && !isLoading && (
+          <div className={`bg-surface-card rounded-lg ${isMobile ? 'px-5 py-10' : 'px-10 py-14'} text-center text-content-sub ${isMobile ? 'text-sm' : 'text-base'}`}>
             検索条件に一致する施設マスタがありません
           </div>
         )}
       </main>
 
-      {/* 新規作成モーダル */}
       <FacilityFormModal
         isOpen={showNewModal}
         mode="create"
-        onClose={() => {
-          setShowNewModal(false);
-          setSelectedFacility(null);
-        }}
+        onClose={() => { setShowNewModal(false); setSelectedFacility(null); }}
         onSubmit={handleNewSubmit}
         isMobile={isMobile}
       />
-
-      {/* 編集モーダル */}
       <FacilityFormModal
         isOpen={showEditModal}
         mode="edit"
         facility={selectedFacility || undefined}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedFacility(null);
-        }}
+        onClose={() => { setShowEditModal(false); setSelectedFacility(null); }}
         onSubmit={handleEditSubmit}
         isMobile={isMobile}
       />
 
-      <footer style={{ padding: '12px 0', textAlign: 'center', fontSize: '12px', color: '#8A8A8A' }}>
+      <footer className="py-3 text-center text-xs text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE HOLDINGS, INC.
       </footer>
     </div>
