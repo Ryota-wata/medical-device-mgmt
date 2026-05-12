@@ -52,6 +52,7 @@
   --color-surface-screen: #FAFAFA;        /* 画面背景 */
   --color-surface-card: #FFFFFF;          /* カード・フォーム背景 */
   --color-surface-disabled: #F1F1F1;      /* 無効ボタン背景 */
+  --color-surface-negative: #D6D6D6;      /* ネガティブ/取消ボタン背景（Figma `negative`） */
   --color-cta-primary: #008C1D;           /* 主要CTA（緑塗りつぶし） */
   --color-cta-primary-dark: #146E2E;      /* CTAアウトラインボタンのテキスト色 */
   --color-stroke-input: #E1E1E1;          /* 入力欄ボーダー */
