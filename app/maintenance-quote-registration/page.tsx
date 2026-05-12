@@ -7,46 +7,12 @@ import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
-/** Figma 準拠カラートークン（Tailwind 補完用） */
-const COLORS = {
-  primary: '#008C1D',
-  primaryDark: '#146E2E',
-  accent: '#008C1D',
-  textPrimary: '#4A4A4A',
-  textSecondary: '#4A4A4A',
-  textMuted: '#8A8A8A',
-  textOnColor: '#ffffff',
-  border: '#E1E1E1',
-  borderLight: '#E1E1E1',
-  surface: '#FAFAFA',
-  surfaceAlt: '#F1F1F1',
-  sectionHeader: '#4A4A4A',
-  white: '#ffffff',
-  error: '#DA0000',
-  success: '#008C1D',
-  successLight: '#EBF5EE',
-  warning: '#008C1D',
-  warningBg: '#EBF5EE',
-  warningBorder: '#008C1D',
-  warningText: '#146E2E',
-  disabled: '#8A8A8A',
-  disabledBg: '#F1F1F1',
-  stepActive: '#008C1D',
-  stepCompleted: '#146E2E',
-  stepPending: '#E1E1E1',
-  // ステップ別テーマカラー（Figma 単色グリーンに統一）
-  step1: '#008C1D',
-  step2: '#008C1D',
-  step3: '#008C1D',
-  step4: '#008C1D',
-} as const;
-
 /** 保守契約登録のステップ定義 */
 const MAINTENANCE_STEPS = [
-  { step: 1, label: '見積依頼', color: COLORS.step1 },
-  { step: 2, label: '見積登録', color: COLORS.step2 },
-  { step: 3, label: '契約登録', color: COLORS.step3 },
-  { step: 4, label: '完了登録', color: COLORS.step4 },
+  { step: 1, label: '見積依頼' },
+  { step: 2, label: '見積登録' },
+  { step: 3, label: '契約登録' },
+  { step: 4, label: '完了登録' },
 ];
 
 // 依頼先業者
@@ -59,7 +25,7 @@ interface RfqVendor {
   isSent: boolean;
 }
 
-// 登録済み見積の型
+// 登録済み見積
 interface RegisteredQuotation {
   id: number;
   phase: '発注登録用見積' | '参考見積';
@@ -72,7 +38,7 @@ interface RegisteredQuotation {
   annualAmount: number;
 }
 
-// 登録済みドキュメントの型
+// 登録済みドキュメント
 interface RegisteredDocument {
   id: number;
   documentType: '契約書' | 'その他（免責部品一覧など）';
@@ -82,14 +48,12 @@ interface RegisteredDocument {
   registeredAt: string;
 }
 
-// 保守契約データ型
+// 保守契約データ
 interface MaintenanceContract {
   id: string;
-  // 受付部署
   applicationDepartment: string;
   applicationPerson: string;
   applicationContact: string;
-  // 保守契約情報
   maintenanceNo: string;
   contractGroupName: string;
   settlementNo: string;
@@ -98,61 +62,51 @@ interface MaintenanceContract {
   contractPeriodStart: string;
   contractPeriodEnd: string;
   contractReviewStartDate: string;
-  // ご依頼事項
   rfqNote: string;
-  // 完了登録用
   documentType: '契約書' | 'その他（免責部品一覧など）';
   accountType: string;
   accountOther: string;
-  // 基本表示用
   itemName: string;
   maker: string;
   model: string;
   assetCount: number;
 }
 
-// モックデータ取得
-const getMockContract = (id: string): MaintenanceContract => {
-  return {
-    id,
-    applicationDepartment: 'ME室',
-    applicationPerson: '佐藤 花子',
-    applicationContact: '内線2346',
-    maintenanceNo: `MC-2026-${id.padStart(4, '0')}`,
-    contractGroupName: '',
-    settlementNo: '',
-    contractType: '',
-    contractTypeMemo: 'フルメンテナンス',
-    contractPeriodStart: '',
-    contractPeriodEnd: '',
-    contractReviewStartDate: '',
-    rfqNote: '',
-    documentType: '契約書',
-    accountType: '',
-    accountOther: '',
-    itemName: '人工呼吸器',
-    maker: 'フィリップス',
-    model: 'V680',
-    assetCount: 2,
-  };
-};
+const getMockContract = (id: string): MaintenanceContract => ({
+  id,
+  applicationDepartment: 'ME室',
+  applicationPerson: '佐藤 花子',
+  applicationContact: '内線2346',
+  maintenanceNo: `MC-2026-${id.padStart(4, '0')}`,
+  contractGroupName: '',
+  settlementNo: '',
+  contractType: '',
+  contractTypeMemo: 'フルメンテナンス',
+  contractPeriodStart: '',
+  contractPeriodEnd: '',
+  contractReviewStartDate: '',
+  rfqNote: '',
+  documentType: '契約書',
+  accountType: '',
+  accountOther: '',
+  itemName: '人工呼吸器',
+  maker: 'フィリップス',
+  model: 'V680',
+  assetCount: 2,
+});
 
-// 共通スタイル（Figma 準拠）
-const inputStyle: React.CSSProperties = {
-  padding: '8px 12px',
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: '8px',
-  fontSize: '14px',
-  color: COLORS.textPrimary,
-  backgroundColor: COLORS.white,
-};
+// ============================================================
+// Tailwind class constants
+// ============================================================
+const inputCls =
+  'h-[42px] px-3 rounded-lg bg-surface-card border border-stroke-input text-sm text-content-primary focus:outline-none focus:border-cta-primary transition-colors disabled:bg-stroke-card disabled:cursor-not-allowed';
 
-/**
- * セクションコンポーネント（Step カード）
- * Figma 準拠：白カード / rounded-2xl / グリーン枠
- * accentColor は受け取るが無視し、Figma パレットに統一
- */
-const Section = ({
+// ============================================================
+// Sub-components
+// ============================================================
+
+/** Step カード */
+function Section({
   step,
   title,
   children,
@@ -162,16 +116,13 @@ const Section = ({
   step: number;
   title: string;
   children: React.ReactNode;
-  accentColor?: string;
   enabled: boolean;
   completed: boolean;
-}) => {
+}) {
   const borderClass = enabled
     ? 'border-2 border-cta-primary'
     : 'border border-stroke-card';
-  const headerBg = enabled || completed
-    ? 'bg-cta-primary'
-    : 'bg-content-primary';
+  const headerBg = enabled || completed ? 'bg-cta-primary' : 'bg-content-primary';
   return (
     <div className={`bg-surface-card ${borderClass} rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
       <div className={`flex items-center gap-3 px-4 py-3 ${headerBg} text-white rounded-t-2xl`}>
@@ -179,9 +130,7 @@ const Section = ({
           {completed ? '✓' : step}
         </span>
         <span className="text-sm font-bold flex-1">{title}</span>
-        {completed && (
-          <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">完了</span>
-        )}
+        {completed && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">完了</span>}
         {enabled && !completed && (
           <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full">作業中</span>
         )}
@@ -189,36 +138,116 @@ const Section = ({
       <div className={`p-4 ${enabled ? '' : 'pointer-events-none'}`}>{children}</div>
     </div>
   );
-};
+}
 
-// テーブルラベルセルスタイル生成（Figma パレット：灰背景 + 暗色テキスト）
-const thCellStyle = (_bg?: string): React.CSSProperties => ({
-  width: '180px',
-  padding: '10px 12px',
-  background: COLORS.surfaceAlt,
-  color: COLORS.textPrimary,
-  fontWeight: 600,
-  border: `1px solid ${COLORS.border}`,
-  verticalAlign: 'middle',
-  fontSize: '14px',
-});
+/** プログレスバー */
+function ProgressBar({ activeStep }: { activeStep: number }) {
+  return (
+    <div className="flex items-center justify-center px-4 py-3 bg-stroke-card border-b border-stroke-input">
+      {MAINTENANCE_STEPS.map((item, index) => {
+        const isCompleted = item.step < activeStep;
+        const isActive = item.step === activeStep;
+        const circleClass = isCompleted
+          ? 'bg-cta-primary-dark text-white'
+          : isActive
+          ? 'bg-cta-primary text-white border-2 border-cta-primary'
+          : 'bg-stroke-input text-content-sub';
+        const labelClass = isActive
+          ? 'text-cta-primary font-bold'
+          : isCompleted
+          ? 'text-cta-primary-dark'
+          : 'text-content-sub';
+        return (
+          <React.Fragment key={item.step}>
+            <div className="flex flex-col items-center min-w-[80px]">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${circleClass}`}>
+                {isCompleted ? '✓' : item.step}
+              </div>
+              <span className={`text-xs mt-1 text-center whitespace-nowrap ${labelClass}`}>
+                {item.label}
+              </span>
+            </div>
+            {index < MAINTENANCE_STEPS.length - 1 && (
+              <div
+                className={`flex-1 h-[3px] mx-2 mb-4 min-w-[24px] max-w-[60px] ${isCompleted ? 'bg-cta-primary-dark' : 'bg-stroke-input'}`}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
 
-const tdCellStyle: React.CSSProperties = {
-  padding: '10px 12px',
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.white,
-  fontSize: '14px',
-  color: COLORS.textPrimary,
-};
+/** タグラベル（受付部署/ご依頼事項 用） */
+function TagLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="bg-surface-select border border-cta-primary text-cta-primary-dark px-2 py-0.5 rounded-full text-xs font-bold">
+      {children}
+    </span>
+  );
+}
 
-const readonlyTdStyle: React.CSSProperties = {
-  padding: '10px 12px',
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.surface,
-  color: COLORS.textPrimary,
-  fontSize: '14px',
-};
+/** 灰背景ラベルセル */
+function ThLabelCell({ children, width = 'w-[180px]' }: { children: React.ReactNode; width?: string }) {
+  return (
+    <td className={`${width} px-3 py-2.5 bg-stroke-card text-content-primary font-semibold border border-stroke-input align-middle text-sm`}>
+      {children}
+    </td>
+  );
+}
 
+/** 白背景データセル */
+function TdCell({ children }: { children: React.ReactNode }) {
+  return (
+    <td className="px-3 py-2.5 border border-stroke-input bg-surface-card text-sm text-content-primary">
+      {children}
+    </td>
+  );
+}
+
+/** 読み取り専用セル */
+function ReadOnlyTdCell({ children }: { children: React.ReactNode }) {
+  return (
+    <td className="px-3 py-2.5 border border-stroke-input bg-surface-screen text-sm text-content-primary">
+      {children}
+    </td>
+  );
+}
+
+/** 業者テーブルヘッダー（緑） */
+function VendorTh({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <th className={`px-2.5 py-2 bg-cta-primary text-white font-semibold text-xs border border-cta-primary whitespace-nowrap text-left ${className}`}>
+      {children}
+    </th>
+  );
+}
+
+/** 業者テーブルデータセル */
+function VendorTd({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <td className={`px-2 py-1.5 border border-stroke-input text-xs align-middle ${className}`}>
+      {children}
+    </td>
+  );
+}
+
+// ============================================================
+// Main content
+// ============================================================
 function MaintenanceQuoteRegistrationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -229,41 +258,33 @@ function MaintenanceQuoteRegistrationContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
 
-  // STEP① 依頼先業者
   const [rfqVendors, setRfqVendors] = useState<RfqVendor[]>([
     { id: 1, vendorName: 'フィリップス・ジャパン', personInCharge: '田中 太郎', email: 'tanaka@philips.example.com', tel: '03-1234-5678', isSent: false },
     { id: 2, vendorName: '', personInCharge: '', email: '', tel: '', isSent: false },
     { id: 3, vendorName: '', personInCharge: '', email: '', tel: '', isSent: false },
   ]);
 
-  // STEP② 見積登録
   const [registeredQuotations, setRegisteredQuotations] = useState<RegisteredQuotation[]>([]);
   const [selectedQuotationFile, setSelectedQuotationFile] = useState<string>('');
   const [quotationPhase, setQuotationPhase] = useState<'発注登録用見積' | '参考見積'>('発注登録用見積');
   const [saveFormat, setSaveFormat] = useState<'電子取引' | 'スキャナ保存' | '未指定'>('未指定');
   const [selectedQuotationVendorId, setSelectedQuotationVendorId] = useState<number | ''>('');
   const [quotationAmount, setQuotationAmount] = useState<string>('');
-  // REQ-082: 見積登録時の会計区分
   const [quotationAccountDivision, setQuotationAccountDivision] = useState<string>('');
-  // REQ-069: 発注登録用見積を登録した場合の追加項目
   const [isOrderRegisterModalOpen, setIsOrderRegisterModalOpen] = useState(false);
   const [registeredOrderNo, setRegisteredOrderNo] = useState<string>('');
   const [annualAmount, setAnnualAmount] = useState<string>('');
 
-  // STEP④ ドキュメント
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
 
-  // プレビュータブ
   const [previewTab, setPreviewTab] = useState<number>(1);
   const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
   const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
 
-  // パネル幅の状態
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(55);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef<boolean>(false);
 
-  // ドラッグハンドラ
   const handleDragMove = useCallback((e: MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
     const containerRect = containerRef.current.getBoundingClientRect();
@@ -285,7 +306,6 @@ function MaintenanceQuoteRegistrationContent() {
   }, [handleDragMove, handleDragEnd]);
 
   useEffect(() => {
-    // REQ-090: 受付部署はログインIDより自動登録（受付部署=applicationDepartmentのみ対象、担当者/連絡先は対象外）
     const departmentDefault = user?.department || 'ME室';
     const storedData = sessionStorage.getItem('maintenanceContract');
     if (storedData) {
@@ -313,10 +333,10 @@ function MaintenanceQuoteRegistrationContent() {
 
   if (!formData) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <Header title="保守契約管理" hideMenu={true} showBackButton={false} />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-content-sub">読み込み中...</p>
         </div>
       </div>
     );
@@ -326,12 +346,9 @@ function MaintenanceQuoteRegistrationContent() {
     setFormData(prev => prev ? { ...prev, ...updates } : prev);
   };
 
-  // 入力済み業者一覧（STEP②のドロップダウン用）
   const filledVendors = rfqVendors.filter(v => v.vendorName.trim() !== '');
 
-  // === ステップ進行ハンドラ ===
-
-  // STEP① → STEP②
+  // === Handlers ===
   const handleStep1Complete = () => {
     const sentVendors = rfqVendors.filter(v => v.isSent);
     if (sentVendors.length === 0) {
@@ -346,7 +363,6 @@ function MaintenanceQuoteRegistrationContent() {
     }, 300);
   };
 
-  // STEP① 申請を見送る
   const handleRejectApplication = () => {
     if (confirm('申請を見送りますか？この操作は元に戻せません。')) {
       alert('申請を見送りました。');
@@ -354,7 +370,6 @@ function MaintenanceQuoteRegistrationContent() {
     }
   };
 
-  // STEP② → STEP③
   const handleStep2Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -364,7 +379,6 @@ function MaintenanceQuoteRegistrationContent() {
     }, 300);
   };
 
-  // STEP③ → STEP④
   const handleStep3Complete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -374,7 +388,6 @@ function MaintenanceQuoteRegistrationContent() {
     }, 300);
   };
 
-  // STEP④ 保守登録（完了）
   const handleFinalComplete = () => {
     setIsSubmitting(true);
     setTimeout(() => {
@@ -384,7 +397,6 @@ function MaintenanceQuoteRegistrationContent() {
     }, 500);
   };
 
-  // 依頼先テーブル操作
   const updateVendor = (id: number, updates: Partial<RfqVendor>) => {
     setRfqVendors(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
   };
@@ -400,7 +412,6 @@ function MaintenanceQuoteRegistrationContent() {
     }
   };
 
-  // 見積登録
   const handleRegisterQuotation = () => {
     if (!selectedQuotationFile) return;
     const vendor = filledVendors.find(v => v.id === selectedQuotationVendorId);
@@ -424,7 +435,6 @@ function MaintenanceQuoteRegistrationContent() {
     setPreviewTab(2);
   };
 
-  // 見積削除
   const handleQuotationDelete = (id: number) => {
     if (confirm('この見積を削除しますか？')) {
       setRegisteredQuotations(prev => prev.filter(q => q.id !== id));
@@ -432,7 +442,6 @@ function MaintenanceQuoteRegistrationContent() {
     }
   };
 
-  // ドキュメント削除
   const handleDocumentDelete = (id: number) => {
     if (confirm('このドキュメントを削除しますか？')) {
       setRegisteredDocuments(prev => prev.filter(d => d.id !== id));
@@ -440,121 +449,8 @@ function MaintenanceQuoteRegistrationContent() {
     }
   };
 
-  // プログレスバー
-  const ProgressBar = () => (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '12px 16px',
-      background: COLORS.surfaceAlt,
-      borderBottom: `1px solid ${COLORS.borderLight}`,
-    }}>
-      {MAINTENANCE_STEPS.map((item, index) => (
-        <React.Fragment key={item.step}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            minWidth: '80px',
-          }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              background: item.step < activeStep ? COLORS.stepCompleted : item.step === activeStep ? item.color : COLORS.stepPending,
-              color: item.step <= activeStep ? 'white' : COLORS.textMuted,
-              border: item.step === activeStep ? `2px solid ${item.color}` : 'none',
-            }}>
-              {item.step < activeStep ? '✓' : item.step}
-            </div>
-            <span style={{
-              fontSize: '11px',
-              marginTop: '4px',
-              color: item.step === activeStep ? item.color : item.step < activeStep ? COLORS.stepCompleted : COLORS.textMuted,
-              fontWeight: item.step === activeStep ? 'bold' : 'normal',
-              textAlign: 'center',
-              whiteSpace: 'nowrap',
-            }}>
-              {item.label}
-            </span>
-          </div>
-          {index < MAINTENANCE_STEPS.length - 1 && (
-            <div style={{
-              flex: 1,
-              height: '3px',
-              background: item.step < activeStep ? COLORS.stepCompleted : COLORS.stepPending,
-              margin: '0 8px',
-              marginBottom: '18px',
-              minWidth: '24px',
-              maxWidth: '60px',
-            }} />
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-
-  // 依頼先テーブルのヘッダー・セルスタイル
-  const vendorThStyle: React.CSSProperties = {
-    padding: '8px 10px',
-    background: COLORS.step1,
-    color: 'white',
-    fontWeight: 600,
-    fontSize: '12px',
-    border: `1px solid ${COLORS.step1}`,
-    whiteSpace: 'nowrap',
-    textAlign: 'left',
-  };
-  const vendorTdStyle: React.CSSProperties = {
-    padding: '6px 8px',
-    border: '1px solid #E1E1E1',
-    fontSize: '12px',
-    verticalAlign: 'middle',
-  };
-  const vendorInputStyle: React.CSSProperties = {
-    ...inputStyle,
-    fontSize: '12px',
-    padding: '4px 8px',
-    width: '100%',
-    boxSizing: 'border-box' as const,
-  };
-
-  // 見積追加テーブルのスタイル
-  const quoteThStyle = (bg: string): React.CSSProperties => ({
-    background: bg,
-    color: 'white',
-    padding: '10px 12px',
-    fontSize: '13px',
-    fontWeight: 'bold',
-    textAlign: 'left',
-    width: '120px',
-    border: `1px solid ${bg}`,
-    whiteSpace: 'nowrap',
-    verticalAlign: 'top',
-  });
-
-  // プレビューエリア内のカラー取得
-  const getPreviewColor = () => {
-    if (previewTab <= 2) return '#5a9bd5';
-    if (previewTab === 3) return COLORS.step3;
-    return COLORS.step4;
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
-      <style>{`
-        .maintenance-btn { transition: filter 150ms ease-out; }
-        .maintenance-btn:hover:not(:disabled) { filter: brightness(0.9); }
-        .maintenance-btn:focus-visible { outline: 2px solid ${COLORS.primary}; outline-offset: 2px; }
-        .maintenance-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-      `}</style>
-
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Header
         title="保守契約管理"
         hideMenu={true}
@@ -565,19 +461,10 @@ function MaintenanceQuoteRegistrationContent() {
         hideHomeButton={true}
       />
 
-      <ProgressBar />
+      <ProgressBar activeStep={activeStep} />
 
       {/* 基本情報バー */}
-      <div style={{
-        padding: '8px 16px',
-        background: COLORS.warningBg,
-        borderBottom: `1px solid ${COLORS.warningBorder}`,
-        display: 'flex',
-        gap: '24px',
-        fontSize: '12px',
-        color: COLORS.warningText,
-        flexWrap: 'wrap',
-      }}>
+      <div className="flex gap-6 flex-wrap px-4 py-2 bg-surface-select border-b border-cta-primary text-xs text-cta-primary-dark">
         <span><strong>保守No:</strong> {formData.maintenanceNo}</span>
         <span><strong>品目:</strong> {formData.itemName}</span>
         <span><strong>メーカー:</strong> {formData.maker}</span>
@@ -585,209 +472,126 @@ function MaintenanceQuoteRegistrationContent() {
         <span><strong>対象台数:</strong> {formData.assetCount}台</span>
       </div>
 
-      {/* メインコンテンツ（左右分割） */}
-      <div ref={containerRef} style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative' }}>
+      {/* メインコンテンツ */}
+      <div ref={containerRef} className="flex flex-1 min-h-0 relative">
         {/* 左側: タスク入力エリア */}
-        <div style={{
-          width: `${leftPanelWidth}%`,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'auto',
-          padding: '16px',
-        }}>
-
-          {/* ===== STEP① 見積依頼 ===== */}
-          <Section
-            step={1}
-            title="STEP①. 見積依頼"
-            accentColor={COLORS.step1}
-            enabled={isStepEnabled(1)}
-            completed={1 < activeStep}
-          >
-            {/* ガイドテキスト */}
-            <div style={{
-              padding: '10px 14px',
-              background: '#EBF5EE',
-              borderRadius: '4px',
-              marginBottom: '16px',
-              fontSize: '13px',
-              color: '#5b21b6',
-              lineHeight: 1.6,
-            }}>
+        <div
+          className="flex flex-col overflow-auto p-4"
+          style={{ width: `${leftPanelWidth}%` }}
+        >
+          {/* ===== STEP① ===== */}
+          <Section step={1} title="STEP①. 見積依頼" enabled={isStepEnabled(1)} completed={1 < activeStep}>
+            <div className="px-3.5 py-2.5 bg-surface-select rounded-md mb-4 text-sm text-cta-primary-dark leading-relaxed">
               業者を登録し見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。
             </div>
 
             {/* 受付部署 */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 'bold',
-                color: COLORS.step1,
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{
-                  background: COLORS.warningBg,
-                  border: `1px solid ${COLORS.warningBorder}`,
-                  color: COLORS.warningText,
-                  padding: '1px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                }}>受付部署</span>
+            <div className="mb-4">
+              <div className="mb-2 flex items-center gap-2">
+                <TagLabel>受付部署</TagLabel>
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table className="w-full border-collapse">
                 <tbody>
                   <tr>
-                    <td style={thCellStyle(COLORS.sectionHeader)}>部署名</td>
-                    <td style={readonlyTdStyle}>{formData.applicationDepartment || '（未設定）'}</td>
+                    <ThLabelCell>部署名</ThLabelCell>
+                    <ReadOnlyTdCell>{formData.applicationDepartment || '（未設定）'}</ReadOnlyTdCell>
                   </tr>
                   <tr>
-                    <td style={thCellStyle(COLORS.sectionHeader)}>担当者名</td>
-                    <td style={readonlyTdStyle}>{formData.applicationPerson || '（未設定）'}</td>
+                    <ThLabelCell>担当者名</ThLabelCell>
+                    <ReadOnlyTdCell>{formData.applicationPerson || '（未設定）'}</ReadOnlyTdCell>
                   </tr>
                   <tr>
-                    <td style={thCellStyle(COLORS.sectionHeader)}>連絡先</td>
-                    <td style={readonlyTdStyle}>{formData.applicationContact || '（未設定）'}</td>
+                    <ThLabelCell>連絡先</ThLabelCell>
+                    <ReadOnlyTdCell>{formData.applicationContact || '（未設定）'}</ReadOnlyTdCell>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             {/* 依頼先テーブル */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 'bold',
-                color: COLORS.step1,
-                marginBottom: '8px',
-              }}>
-                依頼先
-              </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="mb-4">
+              <p className="text-sm font-bold text-cta-primary-dark mb-2">依頼先</p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
-                      <th style={{ ...vendorThStyle, width: '30px', textAlign: 'center' }}>#</th>
-                      <th style={vendorThStyle}>業者名</th>
-                      <th style={vendorThStyle}>担当者</th>
-                      <th style={vendorThStyle}>メール</th>
-                      <th style={vendorThStyle}>連絡先</th>
-                      <th style={{ ...vendorThStyle, textAlign: 'center', width: '160px' }}>操作</th>
+                      <VendorTh className="w-[30px] text-center">#</VendorTh>
+                      <VendorTh>業者名</VendorTh>
+                      <VendorTh>担当者</VendorTh>
+                      <VendorTh>メール</VendorTh>
+                      <VendorTh>連絡先</VendorTh>
+                      <VendorTh className="text-center w-[160px]">操作</VendorTh>
                     </tr>
                   </thead>
                   <tbody>
                     {rfqVendors.map((vendor, idx) => (
-                      <tr key={vendor.id} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ ...vendorTdStyle, textAlign: 'center', fontWeight: 'bold', color: COLORS.textMuted }}>
-                          {idx + 1}
-                        </td>
-                        <td style={vendorTdStyle}>
+                      <tr key={vendor.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                        <VendorTd className="text-center font-bold text-content-sub">{idx + 1}</VendorTd>
+                        <VendorTd>
                           <input
                             type="text"
                             value={vendor.vendorName}
                             onChange={(e) => updateVendor(vendor.id, { vendorName: e.target.value })}
                             placeholder="業者名"
                             disabled={vendor.isSent || !isStepEnabled(1)}
-                            style={{
-                              ...vendorInputStyle,
-                              background: vendor.isSent ? COLORS.disabledBg : 'white',
-                            }}
+                            className={`${inputCls} h-8 text-xs w-full disabled:bg-stroke-card`}
                           />
-                        </td>
-                        <td style={vendorTdStyle}>
+                        </VendorTd>
+                        <VendorTd>
                           <input
                             type="text"
                             value={vendor.personInCharge}
                             onChange={(e) => updateVendor(vendor.id, { personInCharge: e.target.value })}
                             placeholder="担当者"
                             disabled={vendor.isSent || !isStepEnabled(1)}
-                            style={{
-                              ...vendorInputStyle,
-                              background: vendor.isSent ? COLORS.disabledBg : 'white',
-                            }}
+                            className={`${inputCls} h-8 text-xs w-full disabled:bg-stroke-card`}
                           />
-                        </td>
-                        <td style={vendorTdStyle}>
+                        </VendorTd>
+                        <VendorTd>
                           <input
                             type="email"
                             value={vendor.email}
                             onChange={(e) => updateVendor(vendor.id, { email: e.target.value })}
                             placeholder="email@example.com"
                             disabled={vendor.isSent || !isStepEnabled(1)}
-                            style={{
-                              ...vendorInputStyle,
-                              background: vendor.isSent ? COLORS.disabledBg : 'white',
-                            }}
+                            className={`${inputCls} h-8 text-xs w-full disabled:bg-stroke-card`}
                           />
-                        </td>
-                        <td style={vendorTdStyle}>
+                        </VendorTd>
+                        <VendorTd>
                           <input
                             type="text"
                             value={vendor.tel}
                             onChange={(e) => updateVendor(vendor.id, { tel: e.target.value })}
                             placeholder="03-xxxx-xxxx"
                             disabled={vendor.isSent || !isStepEnabled(1)}
-                            style={{
-                              ...vendorInputStyle,
-                              background: vendor.isSent ? COLORS.disabledBg : 'white',
-                              width: '120px',
-                            }}
+                            className={`${inputCls} h-8 text-xs w-[120px] disabled:bg-stroke-card`}
                           />
-                        </td>
-                        <td style={{ ...vendorTdStyle, textAlign: 'center' }}>
+                        </VendorTd>
+                        <VendorTd className="text-center">
                           {vendor.isSent ? (
-                            <span style={{
-                              padding: '3px 10px',
-                              borderRadius: '10px',
-                              fontSize: '11px',
-                              fontWeight: 'bold',
-                              background: COLORS.successLight,
-                              color: COLORS.success,
-                            }}>
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-select text-cta-primary">
                               送信済
                             </span>
                           ) : vendor.vendorName.trim() ? (
-                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                            <div className="flex gap-1 justify-center">
                               <button
-                                className="maintenance-btn"
                                 onClick={() => setPreviewTab(1)}
-                                style={{
-                                  padding: '4px 10px',
-                                  background: COLORS.surfaceAlt,
-                                  color: COLORS.textPrimary,
-                                  border: `1px solid ${COLORS.border}`,
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '11px',
-                                }}
+                                className="px-2.5 py-1 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors"
                               >
                                 プレビュー
                               </button>
                               <button
-                                className="maintenance-btn"
                                 onClick={() => handleSendRfq(vendor.id)}
                                 disabled={!isStepEnabled(1)}
-                                style={{
-                                  padding: '4px 10px',
-                                  background: COLORS.step1,
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '11px',
-                                  fontWeight: 'bold',
-                                }}
+                                className="px-2.5 py-1 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs font-bold hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 依頼送信
                               </button>
                             </div>
                           ) : (
-                            <span style={{ color: COLORS.textMuted, fontSize: '11px' }}>-</span>
+                            <span className="text-content-sub text-xs">---</span>
                           )}
-                        </td>
+                        </VendorTd>
                       </tr>
                     ))}
                   </tbody>
@@ -796,128 +600,53 @@ function MaintenanceQuoteRegistrationContent() {
             </div>
 
             {/* ご依頼事項 */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 'bold',
-                color: COLORS.step1,
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{
-                  background: COLORS.warningBg,
-                  border: `1px solid ${COLORS.warningBorder}`,
-                  color: COLORS.warningText,
-                  padding: '1px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                }}>ご依頼事項</span>
+            <div className="mb-4">
+              <div className="mb-2 flex items-center gap-2">
+                <TagLabel>ご依頼事項</TagLabel>
               </div>
               <textarea
                 placeholder="例：廃棄品の引取りをお願いします / 見積書を作成してください"
                 value={formData.rfqNote}
                 onChange={(e) => updateFormData({ rfqNote: e.target.value })}
                 disabled={!isStepEnabled(1)}
-                style={{
-                  ...inputStyle,
-                  width: '100%',
-                  minHeight: '80px',
-                  resize: 'vertical',
-                  boxSizing: 'border-box',
-                }}
+                className="w-full px-3 py-2 rounded-lg bg-surface-card border border-stroke-input text-sm text-content-primary min-h-[80px] resize-y focus:outline-none focus:border-cta-primary transition-colors disabled:bg-stroke-card"
               />
             </div>
 
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+            <div className="flex justify-between mt-4">
               <button
-                className="maintenance-btn"
                 onClick={handleRejectApplication}
                 disabled={!isStepEnabled(1) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: 'white',
-                  color: COLORS.error,
-                  border: `2px solid ${COLORS.error}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
+                className="h-10 px-6 rounded-lg bg-surface-card text-content-alert border-2 border-content-alert text-sm font-bold cursor-pointer hover:bg-surface-screen transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 申請を見送る
               </button>
               <button
-                className="maintenance-btn"
                 onClick={handleStep1Complete}
                 disabled={!isStepEnabled(1) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: COLORS.step1,
-                  color: COLORS.textOnColor,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
+                className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 見積依頼完了→STEP②へ
               </button>
             </div>
           </Section>
 
-          {/* ===== STEP② 見積登録 ===== */}
-          <Section
-            step={2}
-            title="STEP②. 見積登録"
-            accentColor={COLORS.step2}
-            enabled={isStepEnabled(2)}
-            completed={2 < activeStep}
-          >
-            {/* ガイドテキスト */}
-            <div style={{
-              padding: '10px 14px',
-              background: '#fffbeb',
-              borderRadius: '4px',
-              marginBottom: '16px',
-              fontSize: '13px',
-              color: '#92400e',
-              lineHeight: 1.6,
-            }}>
+          {/* ===== STEP② ===== */}
+          <Section step={2} title="STEP②. 見積登録" enabled={isStepEnabled(2)} completed={2 < activeStep}>
+            <div className="px-3.5 py-2.5 bg-surface-select rounded-md mb-4 text-sm text-cta-primary-dark leading-relaxed">
               見積書をファイル選択して登録し、業者名と見積金額を入力してください。
             </div>
 
             {/* 見積を追加テーブル */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 'bold',
-                color: COLORS.step3,
-                marginBottom: '8px',
-              }}>
-                見積を追加
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.step3}` }}>
+            <div className="mb-5">
+              <p className="text-sm font-bold text-cta-primary-dark mb-2">見積を追加</p>
+              <table className="w-full border-collapse border border-stroke-input">
                 <tbody>
-                  {/* 添付ファイル */}
                   <tr>
-                    <th style={quoteThStyle(COLORS.step3)}>添付ファイル</th>
-                    <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.step3}` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <label style={{
-                          padding: '6px 16px',
-                          background: '#f5f5f5',
-                          border: '1px solid #ccc',
-                          borderRadius: '4px',
-                          cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          whiteSpace: 'nowrap',
-                          opacity: isStepEnabled(2) ? 1 : 0.6,
-                        }}>
+                    <ThLabelCell>添付ファイル</ThLabelCell>
+                    <TdCell>
+                      <div className="flex items-center gap-2.5">
+                        <label className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm whitespace-nowrap hover:bg-stroke-input transition-colors ${isStepEnabled(2) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                           ファイルの選択
                           <input
                             type="file"
@@ -927,96 +656,89 @@ function MaintenanceQuoteRegistrationContent() {
                               const file = e.target.files?.[0];
                               if (file) setSelectedQuotationFile(file.name);
                             }}
-                            style={{ display: 'none' }}
+                            className="hidden"
                           />
                         </label>
-                        <span style={{ color: selectedQuotationFile ? COLORS.success : '#666', fontSize: '13px' }}>
+                        <span className={`text-sm ${selectedQuotationFile ? 'text-cta-primary' : 'text-content-sub'}`}>
                           {selectedQuotationFile || 'ファイルが選択されていません'}
                         </span>
                       </div>
-                    </td>
+                    </TdCell>
                   </tr>
-                  {/* 業者名（STEP①から自動） */}
                   <tr>
-                    <th style={quoteThStyle(COLORS.step3)}>業者名</th>
-                    <td style={{ background: '#f9fafb', padding: '10px 12px', border: `1px solid ${COLORS.step3}`, color: COLORS.textMuted, fontSize: '13px' }}>
-                      {filledVendors.length > 0
-                        ? filledVendors.map(v => v.vendorName).join('、')
-                        : '（STEP①で業者を登録してください）'
-                      }
-                    </td>
+                    <ThLabelCell>業者名</ThLabelCell>
+                    <ReadOnlyTdCell>
+                      <span className="text-content-sub">
+                        {filledVendors.length > 0
+                          ? filledVendors.map(v => v.vendorName).join('、')
+                          : '（STEP①で業者を登録してください）'}
+                      </span>
+                    </ReadOnlyTdCell>
                   </tr>
-                  {/* 見積フェーズ */}
                   <tr>
-                    <th style={quoteThStyle(COLORS.step3)}>見積フェーズ</th>
-                    <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.step3}` }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                    <ThLabelCell>見積フェーズ</ThLabelCell>
+                    <TdCell>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                           <input
                             type="radio"
                             name="quotationPhase"
                             checked={quotationPhase === '発注登録用見積'}
                             onChange={() => setQuotationPhase('発注登録用見積')}
                             disabled={!isStepEnabled(2)}
+                            className="accent-cta-primary"
                           />
                           発注登録用見積
                         </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                           <input
                             type="radio"
                             name="quotationPhase"
                             checked={quotationPhase === '参考見積'}
                             onChange={() => setQuotationPhase('参考見積')}
                             disabled={!isStepEnabled(2)}
+                            className="accent-cta-primary"
                           />
                           参考見積
                         </label>
                       </div>
-                    </td>
+                    </TdCell>
                   </tr>
-                  {/* 保存形式 */}
                   <tr>
-                    <th style={quoteThStyle(COLORS.step3)}>保存形式</th>
-                    <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.step3}` }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <ThLabelCell>保存形式</ThLabelCell>
+                    <TdCell>
+                      <div className="flex flex-col gap-1.5">
                         {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
-                          <label key={fmt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                          <label key={fmt} className="flex items-center gap-1.5 cursor-pointer text-sm">
                             <input
                               type="radio"
                               name="saveFormat"
                               checked={saveFormat === fmt}
                               onChange={() => setSaveFormat(fmt)}
                               disabled={!isStepEnabled(2)}
+                              className="accent-cta-primary"
                             />
                             {fmt}
                           </label>
                         ))}
                       </div>
-                    </td>
+                    </TdCell>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
-            <div style={{
-              marginBottom: '20px',
-              border: `2px solid #008C1D`,
-              borderRadius: '8px',
-              padding: '16px',
-            }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#008C1D', marginBottom: '12px' }}>
-                見積登録業者
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {/* 業者名 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>業者名</label>
+            {/* 見積登録業者セクション */}
+            <div className="mb-5 border-2 border-cta-primary rounded-lg p-4">
+              <p className="text-sm font-bold text-cta-primary mb-3">見積登録業者</p>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-bold min-w-[120px]">業者名</label>
                   <select
                     value={selectedQuotationVendorId}
                     onChange={(e) => setSelectedQuotationVendorId(e.target.value ? parseInt(e.target.value, 10) : '')}
                     disabled={!isStepEnabled(2)}
-                    style={{ ...inputStyle, width: '250px' }}
+                    className={`${inputCls} w-[250px]`}
                   >
                     <option value="">選択してください</option>
                     {filledVendors.map(v => (
@@ -1024,59 +746,48 @@ function MaintenanceQuoteRegistrationContent() {
                     ))}
                   </select>
                 </div>
-                {/* 担当者 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>担当者</label>
-                  <span style={{ fontSize: '13px', color: COLORS.textMuted }}>
-                    {filledVendors.find(v => v.id === selectedQuotationVendorId)?.personInCharge || '-'}
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-bold min-w-[120px]">担当者</label>
+                  <span className="text-sm text-content-sub">
+                    {filledVendors.find(v => v.id === selectedQuotationVendorId)?.personInCharge || '---'}
                   </span>
                 </div>
-                {/* 見積金額（税別） */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>見積金額（税別）</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-bold min-w-[120px]">見積金額（税別）</label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold">¥</span>
                     <input
                       type="text"
                       placeholder="0"
                       value={quotationAmount}
                       onChange={(e) => setQuotationAmount(e.target.value)}
                       disabled={!isStepEnabled(2)}
-                      style={{ ...inputStyle, width: '160px' }}
-                      className="tabular-nums"
+                      className={`${inputCls} w-[160px] tabular-nums`}
                     />
-                    <span style={{ fontSize: '12px', color: COLORS.textMuted }}>（税別）</span>
+                    <span className="text-xs text-content-sub">（税別）</span>
                   </div>
                 </div>
-                {/* 単年度金額（保守契約固有・残置） */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>単年度金額</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>¥</span>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-bold min-w-[120px]">単年度金額</label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold">¥</span>
                     <input
                       type="text"
                       placeholder="0"
                       value={annualAmount}
                       onChange={(e) => setAnnualAmount(e.target.value)}
                       disabled={!isStepEnabled(2)}
-                      style={{
-                        ...inputStyle,
-                        width: '160px',
-                        background: '#fffbeb',
-                        borderColor: '#e0d6a8',
-                      }}
-                      className="tabular-nums"
+                      className={`${inputCls} w-[160px] bg-[#fffbe3] tabular-nums`}
                     />
                   </div>
                 </div>
-                {/* 会計区分 */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>会計区分</label>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-bold min-w-[120px]">会計区分</label>
                   <select
                     value={quotationAccountDivision}
                     onChange={(e) => setQuotationAccountDivision(e.target.value)}
                     disabled={!isStepEnabled(2)}
-                    style={{ ...inputStyle, width: '250px' }}
+                    className={`${inputCls} w-[250px]`}
                   >
                     <option value="">選択してください</option>
                     {ACCOUNT_DIVISIONS.map((d) => (
@@ -1084,74 +795,44 @@ function MaintenanceQuoteRegistrationContent() {
                     ))}
                   </select>
                 </div>
-                {/* 見積書の登録 ボタン */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div className="flex justify-end">
                   <button
-                    className="maintenance-btn"
                     onClick={handleRegisterQuotation}
                     disabled={!isStepEnabled(2) || !selectedQuotationFile}
-                    style={{
-                      padding: '8px 20px',
-                      background: selectedQuotationFile ? '#008C1D' : COLORS.disabled,
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: selectedQuotationFile ? 'pointer' : 'not-allowed',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                    }}
+                    className={`h-9 px-5 rounded-md text-white text-sm font-bold transition-colors ${selectedQuotationFile ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
                   >
                     見積書の登録
                   </button>
                 </div>
 
-                {/* REQ-069: 発注登録用見積を登録した場合のみ表示 */}
                 {quotationPhase === '発注登録用見積' && registeredQuotations.some((q) => q.phase === '発注登録用見積') && (
-                  <div style={{ marginTop: '8px', paddingTop: '12px', borderTop: `1px dashed ${COLORS.border}` }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1E5A9E', marginBottom: '8px' }}>
+                  <div className="mt-2 pt-3 border-t border-dashed border-stroke-input">
+                    <p className="text-xs font-bold text-cta-primary-dark mb-2">
                       発注登録用見積として登録済み — 発注登録に進めます
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 'bold', minWidth: '120px' }}>決済No,</label>
+                    </p>
+                    <div className="flex items-center gap-3 mb-3">
+                      <label className="text-sm font-bold min-w-[120px]">決済No,</label>
                       <input
                         type="text"
                         value={formData.settlementNo}
                         onChange={(e) => updateFormData({ settlementNo: e.target.value })}
                         placeholder="院内の任意の決済番号"
                         disabled={!isStepEnabled(2)}
-                        style={{ ...inputStyle, width: '250px' }}
+                        className={`${inputCls} w-[250px]`}
                       />
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                    <div className="flex justify-end gap-2">
                       <button
                         onClick={() => alert('発注書プレビュー（mock）')}
                         disabled={!isStepEnabled(2)}
-                        style={{
-                          padding: '8px 16px',
-                          background: '#34495e',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                        }}
+                        className="h-9 px-4 bg-content-primary text-white border-0 rounded-md text-sm font-bold cursor-pointer hover:bg-content-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         発注書プレビュー
                       </button>
                       <button
                         onClick={() => setIsOrderRegisterModalOpen(true)}
                         disabled={!isStepEnabled(2) || !!registeredOrderNo}
-                        style={{
-                          padding: '8px 16px',
-                          background: registeredOrderNo ? COLORS.disabled : '#A35414',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: !registeredOrderNo && isStepEnabled(2) ? 'pointer' : 'not-allowed',
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                        }}
+                        className={`h-9 px-4 text-white border-0 rounded-md text-sm font-bold transition-colors ${registeredOrderNo ? 'bg-content-sub cursor-not-allowed' : 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer'} disabled:cursor-not-allowed`}
                       >
                         {registeredOrderNo ? `発注登録済 (${registeredOrderNo})` : '発注登録'}
                       </button>
@@ -1163,54 +844,39 @@ function MaintenanceQuoteRegistrationContent() {
 
             {/* 登録済み見積一覧 */}
             {registeredQuotations.length > 0 && (
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>
+              <div className="mb-4">
+                <p className="text-sm font-bold text-content-primary mb-2">
                   登録済み見積（{registeredQuotations.length}件）
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr style={{ background: COLORS.surfaceAlt }}>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>フェーズ</th>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>業者名</th>
-                        <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.border}` }}>見積金額</th>
-                        <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
+                      <tr className="bg-stroke-card">
+                        <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">フェーズ</th>
+                        <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">業者名</th>
+                        <th className="px-2 py-2 text-right border-b border-stroke-input font-semibold">見積金額</th>
+                        <th className="px-2 py-2 text-left border-b border-stroke-input font-semibold">ファイル名</th>
+                        <th className="px-2 py-2 text-center border-b border-stroke-input w-[60px]"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {registeredQuotations.map((q) => (
-                        <tr key={q.id} style={{ borderBottom: `1px solid ${COLORS.borderLight}` }}>
-                          <td style={{ padding: '8px' }}>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '11px',
-                              fontWeight: 'bold',
-                              background: q.phase === '発注登録用見積' ? '#EBF5EE' : '#F1F1F1',
-                              color: q.phase === '発注登録用見積' ? '#1E5A9E' : '#7b1fa2',
-                            }}>
+                        <tr key={q.id} className="border-b border-stroke-input">
+                          <td className="px-2 py-2">
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${q.phase === '発注登録用見積' ? 'bg-surface-select text-cta-primary-dark' : 'bg-stroke-card text-content-sub'}`}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
                             </span>
                           </td>
-                          <td style={{ padding: '8px' }}>{q.vendorName || '-'}</td>
-                          <td style={{ padding: '8px', textAlign: 'right' }} className="tabular-nums">
-                            {q.quotationAmount > 0 ? `¥${q.quotationAmount.toLocaleString()}` : '-'}
+                          <td className="px-2 py-2">{q.vendorName || '---'}</td>
+                          <td className="px-2 py-2 text-right tabular-nums">
+                            {q.quotationAmount > 0 ? `¥${q.quotationAmount.toLocaleString()}` : '---'}
                           </td>
-                          <td style={{ padding: '8px' }}>{q.fileName}</td>
-                          <td style={{ padding: '8px', textAlign: 'center' }}>
+                          <td className="px-2 py-2">{q.fileName}</td>
+                          <td className="px-2 py-2 text-center">
                             <button
                               onClick={() => handleQuotationDelete(q.id)}
                               disabled={!isStepEnabled(2)}
-                              style={{
-                                padding: '2px 8px',
-                                background: 'transparent',
-                                color: COLORS.error,
-                                border: `1px solid ${COLORS.error}`,
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
+                              className="px-2 py-0.5 bg-transparent text-content-alert border border-content-alert rounded-md cursor-pointer text-xs hover:bg-surface-card transition-colors disabled:opacity-50"
                             >
                               削除
                             </button>
@@ -1223,90 +889,68 @@ function MaintenanceQuoteRegistrationContent() {
               </div>
             )}
 
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+            <div className="flex justify-end mt-4">
               <button
-                className="maintenance-btn"
                 onClick={handleStep2Complete}
                 disabled={!isStepEnabled(2) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: COLORS.step2,
-                  color: COLORS.textOnColor,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
+                className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 見積登録完了→STEP③へ
               </button>
             </div>
           </Section>
 
-          {/* ===== STEP③ 契約登録 ===== */}
-          <Section
-            step={3}
-            title="STEP③. 契約登録"
-            accentColor={COLORS.step3}
-            enabled={isStepEnabled(3)}
-            completed={3 < activeStep}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          {/* ===== STEP③ ===== */}
+          <Section step={3} title="STEP③. 契約登録" enabled={isStepEnabled(3)} completed={3 < activeStep}>
+            <table className="w-full border-collapse text-sm">
               <tbody>
-                {/* 決済No,（院内の任意の決済番号） */}
                 <tr>
-                  <td style={thCellStyle(COLORS.step3)}>決済No,</td>
-                  <td style={tdCellStyle}>
+                  <ThLabelCell>決済No,</ThLabelCell>
+                  <TdCell>
                     <input
                       type="text"
                       value={formData.settlementNo}
                       onChange={(e) => updateFormData({ settlementNo: e.target.value })}
                       placeholder="院内の任意の決済番号"
                       disabled={!isStepEnabled(3)}
-                      style={{ ...inputStyle, width: '240px' }}
+                      className={`${inputCls} w-[240px]`}
                     />
-                  </td>
+                  </TdCell>
                 </tr>
-                {/* 契約グループ（読み取り専用） */}
                 <tr>
-                  <td style={thCellStyle(COLORS.sectionHeader)}>契約グループ</td>
-                  <td style={readonlyTdStyle}>{formData.contractGroupName || '（未設定）'}</td>
+                  <ThLabelCell>契約グループ</ThLabelCell>
+                  <ReadOnlyTdCell>{formData.contractGroupName || '（未設定）'}</ReadOnlyTdCell>
                 </tr>
-                {/* 契約種別（読み取り専用） */}
                 <tr>
-                  <td style={thCellStyle(COLORS.sectionHeader)}>契約種別</td>
-                  <td style={readonlyTdStyle}>{formData.contractType || '（未設定）'}</td>
+                  <ThLabelCell>契約種別</ThLabelCell>
+                  <ReadOnlyTdCell>{formData.contractType || '（未設定）'}</ReadOnlyTdCell>
                 </tr>
-                {/* 種別備考 */}
                 <tr>
-                  <td style={thCellStyle(COLORS.step3)}>種別備考</td>
-                  <td style={tdCellStyle}>
+                  <ThLabelCell>種別備考</ThLabelCell>
+                  <TdCell>
                     <select
                       value={formData.contractTypeMemo}
                       onChange={(e) => updateFormData({ contractTypeMemo: e.target.value })}
                       disabled={!isStepEnabled(3)}
-                      style={{ ...inputStyle, width: '200px' }}
+                      className={`${inputCls} w-[200px]`}
                     >
                       <option value="フルメンテナンス">フルメンテナンス</option>
                       <option value="定期点検">定期点検</option>
                       <option value="スポット対応">スポット対応</option>
                       <option value="POG契約">POG契約</option>
                     </select>
-                  </td>
+                  </TdCell>
                 </tr>
-                {/* 契約期間 */}
                 <tr>
-                  <td style={thCellStyle(COLORS.step3)}>契約期間</td>
-                  <td style={tdCellStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ThLabelCell>契約期間</ThLabelCell>
+                  <TdCell>
+                    <div className="flex items-center gap-2">
                       <input
                         type="date"
                         value={formData.contractPeriodStart}
                         onChange={(e) => updateFormData({ contractPeriodStart: e.target.value })}
                         disabled={!isStepEnabled(3)}
-                        style={{ ...inputStyle, width: '160px' }}
+                        className={`${inputCls} w-[160px] tabular-nums`}
                       />
                       <span>〜</span>
                       <input
@@ -1314,64 +958,38 @@ function MaintenanceQuoteRegistrationContent() {
                         value={formData.contractPeriodEnd}
                         onChange={(e) => updateFormData({ contractPeriodEnd: e.target.value })}
                         disabled={!isStepEnabled(3)}
-                        style={{ ...inputStyle, width: '160px' }}
+                        className={`${inputCls} w-[160px] tabular-nums`}
                       />
                     </div>
-                  </td>
+                  </TdCell>
                 </tr>
               </tbody>
             </table>
 
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+            <div className="flex justify-end mt-4">
               <button
-                className="maintenance-btn"
                 onClick={handleStep3Complete}
                 disabled={!isStepEnabled(3) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: COLORS.step3,
-                  color: COLORS.textOnColor,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
+                className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 契約登録完了→STEP④へ
               </button>
             </div>
           </Section>
 
-          {/* ===== STEP④ 完了登録（添付ドキュメントの登録） ===== */}
-          <Section
-            step={4}
-            title="STEP④. 完了登録（添付ドキュメントの登録）"
-            accentColor={COLORS.step4}
-            enabled={isStepEnabled(4)}
-            completed={4 < activeStep}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          {/* ===== STEP④ ===== */}
+          <Section step={4} title="STEP④. 完了登録（添付ドキュメントの登録）" enabled={isStepEnabled(4)} completed={4 < activeStep}>
+            <table className="w-full border-collapse text-sm">
               <tbody>
-                {/* 添付ファイル */}
                 <tr>
-                  <td style={thCellStyle(COLORS.step4)}>添付ファイル</td>
-                  <td style={tdCellStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <label style={{
-                        padding: '6px 16px',
-                        background: COLORS.surfaceAlt,
-                        border: `1px solid ${COLORS.border}`,
-                        borderRadius: '4px',
-                        cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed',
-                        fontSize: '13px',
-                        opacity: isStepEnabled(4) ? 1 : 0.6,
-                      }}>
+                  <ThLabelCell>添付ファイル</ThLabelCell>
+                  <TdCell>
+                    <div className="flex items-center gap-3">
+                      <label className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm hover:bg-stroke-input transition-colors ${isStepEnabled(4) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                         ファイルの選択
                         <input
                           type="file"
-                          style={{ display: 'none' }}
+                          className="hidden"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
@@ -1391,75 +1009,53 @@ function MaintenanceQuoteRegistrationContent() {
                           disabled={!isStepEnabled(4)}
                         />
                       </label>
-                      <span style={{ fontSize: '13px', color: COLORS.textMuted }}>
-                        ファイルが選択されていません
-                      </span>
+                      <span className="text-sm text-content-sub">ファイルが選択されていません</span>
                     </div>
-                  </td>
+                  </TdCell>
                 </tr>
-                {/* ドキュメント種別 */}
                 <tr>
-                  <td style={thCellStyle(COLORS.step4)}>ドキュメント種別</td>
-                  <td style={tdCellStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '13px' }}>
+                  <ThLabelCell>ドキュメント種別</ThLabelCell>
+                  <TdCell>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-1 cursor-pointer text-sm">
                         <input
                           type="radio"
                           name="documentType"
                           checked={formData.documentType === '契約書'}
                           onChange={() => updateFormData({ documentType: '契約書' })}
                           disabled={!isStepEnabled(4)}
+                          className="accent-cta-primary"
                         />
                         契約書
                       </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '13px' }}>
+                      <label className="flex items-center gap-1 cursor-pointer text-sm">
                         <input
                           type="radio"
                           name="documentType"
                           checked={formData.documentType === 'その他（免責部品一覧など）'}
                           onChange={() => updateFormData({ documentType: 'その他（免責部品一覧など）' })}
                           disabled={!isStepEnabled(4)}
+                          className="accent-cta-primary"
                         />
                         その他（免責部品一覧など）
                       </label>
                     </div>
-                  </td>
+                  </TdCell>
                 </tr>
               </tbody>
             </table>
 
-            {/* フッターボタン */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
+            <div className="flex justify-between mt-4">
               <button
-                className="maintenance-btn"
                 disabled={!isStepEnabled(4) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: 'white',
-                  color: COLORS.step2,
-                  border: `2px solid ${COLORS.step2}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
+                className="h-10 px-6 rounded-lg bg-surface-card text-cta-primary border-2 border-cta-primary text-sm font-bold cursor-pointer hover:bg-surface-select transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 明細の登録
               </button>
               <button
-                className="maintenance-btn"
                 onClick={handleFinalComplete}
                 disabled={!isStepEnabled(4) || isSubmitting}
-                style={{
-                  padding: '10px 24px',
-                  background: COLORS.step2,
-                  color: COLORS.textOnColor,
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                }}
+                className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-base font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 保守登録
               </button>
@@ -1470,43 +1066,15 @@ function MaintenanceQuoteRegistrationContent() {
         {/* ドラッグハンドル */}
         <div
           onMouseDown={handleDragStart}
-          style={{
-            width: '8px',
-            cursor: 'col-resize',
-            background: COLORS.borderLight,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
+          className="w-2 cursor-col-resize bg-stroke-card flex items-center justify-center shrink-0"
         >
-          <div style={{
-            width: '4px',
-            height: '40px',
-            background: COLORS.border,
-            borderRadius: '2px',
-          }} />
+          <div className="w-1 h-10 bg-stroke-input rounded" />
         </div>
 
         {/* 右側: プレビューエリア */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          background: COLORS.surfaceAlt,
-        }}>
-          {/* プレビューヘッダー */}
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: `1px solid ${COLORS.borderLight}`,
-            background: getPreviewColor(),
-            color: COLORS.textOnColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>
+        <div className="flex-1 flex flex-col overflow-hidden bg-stroke-card">
+          <div className="px-4 py-3 border-b border-stroke-input bg-cta-primary text-white flex items-center justify-between">
+            <h3 className="m-0 text-sm font-bold">
               {previewTab === 1 && '見積依頼書プレビュー'}
               {previewTab === 2 && (previewQuotationIndex !== null
                 ? `見積プレビュー - ${registeredQuotations[previewQuotationIndex]?.fileName || ''}`
@@ -1518,111 +1086,72 @@ function MaintenanceQuoteRegistrationContent() {
             </h3>
           </div>
 
-          {/* プレビューコンテンツ */}
-          <div style={{ flex: 1, padding: '16px', overflow: 'auto' }}>
+          <div className="flex-1 p-4 overflow-auto">
             {/* STEP①: 見積依頼書プレビュー */}
             {previewTab === 1 && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '24px',
-              }}>
-                <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '16px', color: COLORS.step1, textAlign: 'center' }}>
-                  見積依頼書
-                </h4>
-                <div style={{ padding: '16px', background: '#f9fafb', borderRadius: '4px', marginBottom: '16px', fontSize: '13px' }}>
-                  <div style={{ marginBottom: '8px' }}><strong>保守No:</strong> {formData.maintenanceNo}</div>
-                  <div style={{ marginBottom: '8px' }}><strong>品目:</strong> {formData.itemName}</div>
-                  <div style={{ marginBottom: '8px' }}><strong>メーカー:</strong> {formData.maker}</div>
-                  <div><strong>対象台数:</strong> {formData.assetCount}台</div>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-6">
+                <h4 className="text-base font-bold mb-4 text-content-primary text-center">見積依頼書</h4>
+                <div className="p-4 bg-surface-screen rounded-md mb-4 text-sm">
+                  <p className="mb-2"><strong>保守No:</strong> {formData.maintenanceNo}</p>
+                  <p className="mb-2"><strong>品目:</strong> {formData.itemName}</p>
+                  <p className="mb-2"><strong>メーカー:</strong> {formData.maker}</p>
+                  <p><strong>対象台数:</strong> {formData.assetCount}台</p>
                 </div>
-                <div style={{ padding: '16px', background: '#EBF5EE', borderRadius: '4px', marginBottom: '16px', fontSize: '13px' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px', color: COLORS.step1 }}>受付部署</div>
-                  <div>{formData.applicationDepartment} / {formData.applicationPerson} / {formData.applicationContact}</div>
+                <div className="p-4 bg-surface-select rounded-md mb-4 text-sm">
+                  <p className="font-bold mb-2 text-cta-primary-dark">受付部署</p>
+                  <p>{formData.applicationDepartment} / {formData.applicationPerson} / {formData.applicationContact}</p>
                 </div>
-                {formData.rfqNote && (
-                  <div style={{ padding: '16px', background: '#fffbeb', borderRadius: '4px', fontSize: '13px' }}>
-                    <div style={{ fontWeight: 'bold', marginBottom: '8px', color: COLORS.warningText }}>ご依頼事項</div>
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{formData.rfqNote}</div>
+                {formData.rfqNote ? (
+                  <div className="p-4 bg-surface-select rounded-md text-sm">
+                    <p className="font-bold mb-2 text-cta-primary-dark">ご依頼事項</p>
+                    <p className="whitespace-pre-wrap">{formData.rfqNote}</p>
                   </div>
-                )}
-                {!formData.rfqNote && (
-                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '16px', fontSize: '13px' }}>
+                ) : (
+                  <p className="text-center text-content-sub p-4 text-sm">
                     ご依頼事項が入力されるとここに表示されます
-                  </div>
+                  </p>
                 )}
               </div>
             )}
 
             {/* STEP②: 見積一覧 */}
             {previewTab === 2 && previewQuotationIndex === null && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: '#5a9bd5' }}>
-                  登録済み見積一覧
-                </h4>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
+                <h4 className="text-sm font-bold mb-3 text-content-primary">登録済み見積一覧</h4>
                 {registeredQuotations.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr style={{ background: '#5a9bd5', color: 'white' }}>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>フェーズ</th>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc', width: '150px' }}>業者名</th>
-                        <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #ccc', width: '120px' }}>見積金額</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
+                      <tr className="bg-cta-primary text-white">
+                        <th className="px-2 py-2 text-left border border-stroke-input">ファイル名</th>
+                        <th className="px-2 py-2 text-center border border-stroke-input w-20">フェーズ</th>
+                        <th className="px-2 py-2 text-left border border-stroke-input w-[150px]">業者名</th>
+                        <th className="px-2 py-2 text-right border border-stroke-input w-[120px]">見積金額</th>
+                        <th className="px-2 py-2 text-center border border-stroke-input w-20">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {registeredQuotations.map((q, idx) => (
-                        <tr key={q.id} style={{ background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{q.fileName}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '10px',
-                              background: q.phase === '発注登録用見積' ? '#EBF5EE' : '#FAFAFA',
-                              color: q.phase === '発注登録用見積' ? '#1E5A9E' : '#f57c00',
-                            }}>
+                        <tr key={q.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                          <td className="px-2 py-2 border border-stroke-input">{q.fileName}</td>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${q.phase === '発注登録用見積' ? 'bg-surface-select text-cta-primary-dark' : 'bg-stroke-card text-content-sub'}`}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
                             </span>
                           </td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{q.vendorName || '-'}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'right' }} className="tabular-nums">
-                            {q.quotationAmount > 0 ? `¥${q.quotationAmount.toLocaleString()}` : '-'}
+                          <td className="px-2 py-2 border border-stroke-input">{q.vendorName || '---'}</td>
+                          <td className="px-2 py-2 border border-stroke-input text-right tabular-nums">
+                            {q.quotationAmount > 0 ? `¥${q.quotationAmount.toLocaleString()}` : '---'}
                           </td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
                             <button
                               onClick={() => setPreviewQuotationIndex(idx)}
-                              style={{
-                                padding: '4px 8px',
-                                background: '#5a9bd5',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                                marginRight: '4px',
-                              }}
+                              className="px-2 py-1 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs mr-1 hover:bg-cta-primary-dark transition-colors"
                             >
                               表示
                             </button>
                             <button
                               onClick={() => handleQuotationDelete(q.id)}
-                              style={{
-                                padding: '4px 8px',
-                                background: COLORS.error,
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
+                              className="px-2 py-1 bg-content-alert text-white border-0 rounded-md cursor-pointer text-xs hover:opacity-90 transition-colors"
                             >
                               削除
                             </button>
@@ -1632,78 +1161,54 @@ function MaintenanceQuoteRegistrationContent() {
                     </tbody>
                   </table>
                 ) : (
-                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
-                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
-                    <div>登録済みの見積はありません</div>
-                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP②で見積を登録してください</div>
+                  <div className="text-center text-content-sub p-8">
+                    <p className="text-4xl mb-3">📁</p>
+                    <p>登録済みの見積はありません</p>
+                    <p className="text-xs mt-2">STEP②で見積を登録してください</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* STEP②: 見積プレビュー（選択時） */}
+            {/* STEP②: 見積プレビュー */}
             {previewTab === 2 && previewQuotationIndex !== null && registeredQuotations[previewQuotationIndex] && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}>
-                <div style={{ marginBottom: '16px' }}>
-                  <button
-                    onClick={() => setPreviewQuotationIndex(null)}
-                    style={{
-                      padding: '6px 12px',
-                      background: '#f0f0f0',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                    }}
-                  >
-                    ← 一覧に戻る
-                  </button>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
+                <button
+                  onClick={() => setPreviewQuotationIndex(null)}
+                  className="px-3 py-1.5 bg-stroke-card border border-stroke-input rounded-md cursor-pointer text-xs mb-4 hover:bg-stroke-input transition-colors"
+                >
+                  ← 一覧に戻る
+                </button>
+                <div className="text-center p-8 bg-surface-screen rounded-md mb-4">
+                  <p className="text-6xl mb-4">📄</p>
+                  <p className="text-sm font-bold mb-2">{registeredQuotations[previewQuotationIndex].fileName}</p>
+                  <p className="text-xs text-content-sub">PDFプレビュー（モック）</p>
                 </div>
-                <div style={{
-                  textAlign: 'center',
-                  padding: '32px',
-                  background: '#f5f5f5',
-                  borderRadius: '4px',
-                  marginBottom: '16px',
-                }}>
-                  <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
-                    {registeredQuotations[previewQuotationIndex].fileName}
-                  </div>
-                  <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
-                    PDFプレビュー（モック）
-                  </div>
-                </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <table className="w-full border-collapse text-xs">
                   <tbody>
                     <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold', width: '120px' }}>見積フェーズ</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].phase}</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px]">見積フェーズ</td>
+                      <td className="px-2 py-2 border border-stroke-input">{registeredQuotations[previewQuotationIndex].phase}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>業者名</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].vendorName || '-'}</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">業者名</td>
+                      <td className="px-2 py-2 border border-stroke-input">{registeredQuotations[previewQuotationIndex].vendorName || '---'}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>見積金額</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }} className="tabular-nums">
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">見積金額</td>
+                      <td className="px-2 py-2 border border-stroke-input tabular-nums">
                         {registeredQuotations[previewQuotationIndex].quotationAmount > 0
                           ? `¥${registeredQuotations[previewQuotationIndex].quotationAmount.toLocaleString()}`
-                          : '-'}
+                          : '---'}
                       </td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>保存形式</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredQuotations[previewQuotationIndex].saveFormat}</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">保存形式</td>
+                      <td className="px-2 py-2 border border-stroke-input">{registeredQuotations[previewQuotationIndex].saveFormat}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '8px', background: '#5a9bd5', color: 'white', fontWeight: 'bold' }}>登録日時</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">登録日時</td>
+                      <td className="px-2 py-2 border border-stroke-input">
                         {new Date(registeredQuotations[previewQuotationIndex].registeredAt).toLocaleString('ja-JP')}
                       </td>
                     </tr>
@@ -1714,40 +1219,33 @@ function MaintenanceQuoteRegistrationContent() {
 
             {/* STEP③: 契約情報プレビュー */}
             {previewTab === 3 && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '24px',
-              }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '16px', color: COLORS.step3 }}>
-                  契約情報サマリー
-                </h4>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-6">
+                <h4 className="text-sm font-bold mb-4 text-cta-primary-dark">契約情報サマリー</h4>
+                <table className="w-full border-collapse text-sm">
                   <tbody>
                     <tr>
-                      <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold', width: '140px' }}>保守No</td>
-                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>{formData.maintenanceNo}</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold w-[140px]">保守No</td>
+                      <td className="px-3 py-2.5 border border-stroke-input">{formData.maintenanceNo}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold' }}>契約グループ</td>
-                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>{formData.contractGroupName || '（未設定）'}</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">契約グループ</td>
+                      <td className="px-3 py-2.5 border border-stroke-input">{formData.contractGroupName || '（未設定）'}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold' }}>種別備考</td>
-                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>{formData.contractTypeMemo}</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">種別備考</td>
+                      <td className="px-3 py-2.5 border border-stroke-input">{formData.contractTypeMemo}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold' }}>契約期間</td>
-                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">契約期間</td>
+                      <td className="px-3 py-2.5 border border-stroke-input">
                         {formData.contractPeriodStart && formData.contractPeriodEnd
                           ? `${formData.contractPeriodStart} 〜 ${formData.contractPeriodEnd}`
                           : '（未設定）'}
                       </td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '10px', background: COLORS.step3, color: 'white', fontWeight: 'bold' }}>登録見積数</td>
-                      <td style={{ padding: '10px', border: '1px solid #ccc' }}>{registeredQuotations.length}件</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">登録見積数</td>
+                      <td className="px-3 py-2.5 border border-stroke-input">{registeredQuotations.length}件</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1756,66 +1254,36 @@ function MaintenanceQuoteRegistrationContent() {
 
             {/* STEP④: ドキュメント一覧 */}
             {previewTab === 4 && previewDocumentIndex === null && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', color: COLORS.step4 }}>
-                  登録済みドキュメント一覧
-                </h4>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
+                <h4 className="text-sm font-bold mb-3 text-cta-primary-dark">登録済みドキュメント一覧</h4>
                 {registeredDocuments.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <table className="w-full border-collapse text-xs">
                     <thead>
-                      <tr style={{ background: COLORS.step4, color: 'white' }}>
-                        <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #ccc' }}>ファイル名</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '100px' }}>種別</th>
-                        <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #ccc', width: '80px' }}>操作</th>
+                      <tr className="bg-cta-primary text-white">
+                        <th className="px-2 py-2 text-left border border-stroke-input">ファイル名</th>
+                        <th className="px-2 py-2 text-center border border-stroke-input w-24">種別</th>
+                        <th className="px-2 py-2 text-center border border-stroke-input w-20">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {registeredDocuments.map((d, idx) => (
-                        <tr key={d.id} style={{ background: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
-                          <td style={{ padding: '8px', border: '1px solid #ccc' }}>{d.fileName}</td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '10px',
-                              background: d.documentType === '契約書' ? '#EBF5EE' : '#FAFAFA',
-                              color: d.documentType === '契約書' ? '#146E2E' : '#f57c00',
-                            }}>
+                        <tr key={d.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                          <td className="px-2 py-2 border border-stroke-input">{d.fileName}</td>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${d.documentType === '契約書' ? 'bg-surface-select text-cta-primary-dark' : 'bg-stroke-card text-content-sub'}`}>
                               {d.documentType === '契約書' ? '契約書' : 'その他'}
                             </span>
                           </td>
-                          <td style={{ padding: '8px', border: '1px solid #ccc', textAlign: 'center' }}>
+                          <td className="px-2 py-2 border border-stroke-input text-center">
                             <button
                               onClick={() => setPreviewDocumentIndex(idx)}
-                              style={{
-                                padding: '4px 8px',
-                                background: COLORS.step4,
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                                marginRight: '4px',
-                              }}
+                              className="px-2 py-1 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs mr-1 hover:bg-cta-primary-dark transition-colors"
                             >
                               表示
                             </button>
                             <button
                               onClick={() => handleDocumentDelete(d.id)}
-                              style={{
-                                padding: '4px 8px',
-                                background: COLORS.error,
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '11px',
-                              }}
+                              className="px-2 py-1 bg-content-alert text-white border-0 rounded-md cursor-pointer text-xs hover:opacity-90 transition-colors"
                             >
                               削除
                             </button>
@@ -1825,62 +1293,38 @@ function MaintenanceQuoteRegistrationContent() {
                     </tbody>
                   </table>
                 ) : (
-                  <div style={{ textAlign: 'center', color: COLORS.textMuted, padding: '32px' }}>
-                    <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
-                    <div>登録済みのドキュメントはありません</div>
-                    <div style={{ fontSize: '11px', marginTop: '8px' }}>STEP④でドキュメントを登録してください</div>
+                  <div className="text-center text-content-sub p-8">
+                    <p className="text-4xl mb-3">📁</p>
+                    <p>登録済みのドキュメントはありません</p>
+                    <p className="text-xs mt-2">STEP④でドキュメントを登録してください</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* STEP④: ドキュメントプレビュー（選択時） */}
+            {/* STEP④: ドキュメントプレビュー */}
             {previewTab === 4 && previewDocumentIndex !== null && registeredDocuments[previewDocumentIndex] && (
-              <div style={{
-                background: COLORS.white,
-                border: `1px solid ${COLORS.borderLight}`,
-                borderRadius: '8px',
-                padding: '16px',
-              }}>
-                <div style={{ marginBottom: '16px' }}>
-                  <button
-                    onClick={() => setPreviewDocumentIndex(null)}
-                    style={{
-                      padding: '6px 12px',
-                      background: '#f0f0f0',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                    }}
-                  >
-                    ← 一覧に戻る
-                  </button>
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
+                <button
+                  onClick={() => setPreviewDocumentIndex(null)}
+                  className="px-3 py-1.5 bg-stroke-card border border-stroke-input rounded-md cursor-pointer text-xs mb-4 hover:bg-stroke-input transition-colors"
+                >
+                  ← 一覧に戻る
+                </button>
+                <div className="text-center p-8 bg-surface-screen rounded-md mb-4">
+                  <p className="text-6xl mb-4">📄</p>
+                  <p className="text-sm font-bold mb-2">{registeredDocuments[previewDocumentIndex].fileName}</p>
+                  <p className="text-xs text-content-sub">PDFプレビュー（モック）</p>
                 </div>
-                <div style={{
-                  textAlign: 'center',
-                  padding: '32px',
-                  background: '#f5f5f5',
-                  borderRadius: '4px',
-                  marginBottom: '16px',
-                }}>
-                  <div style={{ fontSize: '64px', marginBottom: '16px' }}>📄</div>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }}>
-                    {registeredDocuments[previewDocumentIndex].fileName}
-                  </div>
-                  <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
-                    PDFプレビュー（モック）
-                  </div>
-                </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <table className="w-full border-collapse text-xs">
                   <tbody>
                     <tr>
-                      <td style={{ padding: '8px', background: COLORS.step4, color: 'white', fontWeight: 'bold', width: '120px' }}>種別</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>{registeredDocuments[previewDocumentIndex].documentType}</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px]">種別</td>
+                      <td className="px-2 py-2 border border-stroke-input">{registeredDocuments[previewDocumentIndex].documentType}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '8px', background: COLORS.step4, color: 'white', fontWeight: 'bold' }}>登録日時</td>
-                      <td style={{ padding: '8px', border: '1px solid #ccc' }}>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">登録日時</td>
+                      <td className="px-2 py-2 border border-stroke-input">
                         {new Date(registeredDocuments[previewDocumentIndex].registeredAt).toLocaleString('ja-JP')}
                       </td>
                     </tr>
@@ -1891,49 +1335,29 @@ function MaintenanceQuoteRegistrationContent() {
           </div>
         </div>
 
-        {/* 縦型タブバー（右端） */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          background: '#f0f0f0',
-          borderLeft: '1px solid #E1E1E1',
-          width: '40px',
-          flexShrink: 0,
-        }}>
-          {MAINTENANCE_STEPS.map((item) => (
-            <button
-              key={item.step}
-              onClick={() => {
-                setPreviewTab(item.step);
-                if (item.step !== 2) setPreviewQuotationIndex(null);
-                if (item.step !== 4) setPreviewDocumentIndex(null);
-              }}
-              style={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: 'none',
-                borderBottom: '1px solid #E1E1E1',
-                background: previewTab === item.step ? item.color : 'transparent',
-                color: previewTab === item.step ? 'white' : '#666',
-                cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: previewTab === item.step ? 'bold' : 'normal',
-                transition: 'all 0.2s',
-                writingMode: 'vertical-rl',
-                textOrientation: 'mixed',
-                padding: '12px 0',
-              }}
-              title={item.label}
-            >
-              {item.label}
-            </button>
-          ))}
+        {/* 縦型タブバー */}
+        <div className="flex flex-col bg-stroke-card border-l border-stroke-input w-10 shrink-0">
+          {MAINTENANCE_STEPS.map((item) => {
+            const isActive = previewTab === item.step;
+            return (
+              <button
+                key={item.step}
+                onClick={() => {
+                  setPreviewTab(item.step);
+                  if (item.step !== 2) setPreviewQuotationIndex(null);
+                  if (item.step !== 4) setPreviewDocumentIndex(null);
+                }}
+                className={`flex-1 flex items-center justify-center border-0 border-b border-stroke-input cursor-pointer text-xs transition-all py-3 ${isActive ? 'bg-cta-primary text-white font-bold' : 'bg-transparent text-content-sub hover:bg-stroke-input'}`}
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                title={item.label}
+              >
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* REQ-069: 発注登録モーダル（保守契約） */}
       <OrderRegistrationModal
         isOpen={isOrderRegisterModalOpen}
         onClose={() => setIsOrderRegisterModalOpen(false)}
@@ -1951,10 +1375,10 @@ function MaintenanceQuoteRegistrationContent() {
 export default function MaintenanceQuoteRegistrationPage() {
   return (
     <Suspense fallback={
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: COLORS.surface }}>
+      <div className="flex flex-col min-h-dvh bg-surface-screen">
         <Header title="保守契約管理" hideMenu={true} showBackButton={false} />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: COLORS.textMuted }}>読み込み中...</p>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-content-sub">読み込み中...</p>
         </div>
       </div>
     }>
