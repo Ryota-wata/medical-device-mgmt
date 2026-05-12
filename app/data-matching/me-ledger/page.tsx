@@ -346,7 +346,7 @@ export default function MELedgerWindowPage() {
 
       {/* 一致検索パネル */}
       <div style={{
-        backgroundColor: '#e8f4fd',
+        backgroundColor: '#EAF3FB',
         borderBottom: '1px solid #b8daff',
         padding: '12px 24px'
       }}>

@@ -196,7 +196,7 @@ function InspectionResultContent() {
       case '合格':
         return { backgroundColor: '#EBF5EE', color: '#008C1D', borderColor: '#008C1D' };
       case '再点検':
-        return { backgroundColor: '#FDF1E5', color: '#f39c12', borderColor: '#f39c12' };
+        return { backgroundColor: '#FDF1E5', color: '#A35414', borderColor: '#A35414' };
       case '修理申請':
         return { backgroundColor: '#ffebee', color: '#DA0000', borderColor: '#DA0000' };
       default:

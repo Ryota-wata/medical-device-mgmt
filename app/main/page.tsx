@@ -659,7 +659,7 @@ export default function MainPage() {
                 onClick={() => setEditListMode('select')}
                 className={`flex-1 py-3 text-sm font-semibold transition-all cursor-pointer border-0 ${
                   editListMode === 'select'
-                    ? 'bg-surface-card text-[#27ae60] border-b-2 border-b-[#27ae60]'
+                    ? 'bg-surface-card text-[#008C1D] border-b-2 border-b-[#008C1D]'
                     : 'bg-surface-screen text-content-sub hover:text-content-primary'
                 }`}
               >
@@ -669,7 +669,7 @@ export default function MainPage() {
                 onClick={() => setEditListMode('create')}
                 className={`flex-1 py-3 text-sm font-semibold transition-all cursor-pointer border-0 ${
                   editListMode === 'create'
-                    ? 'bg-surface-card text-[#27ae60] border-b-2 border-b-[#27ae60]'
+                    ? 'bg-surface-card text-[#008C1D] border-b-2 border-b-[#008C1D]'
                     : 'bg-surface-screen text-content-sub hover:text-content-primary'
                 }`}
               >
@@ -729,7 +729,7 @@ export default function MainPage() {
                       value={newEditListName}
                       onChange={(e) => setNewEditListName(e.target.value)}
                       placeholder="例: 2025年度リモデル計画"
-                      className="w-full p-3 border border-stroke-input rounded-lg text-sm focus:outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#27ae60]"
+                      className="w-full p-3 border border-stroke-input rounded-lg text-sm focus:outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#008C1D]"
                     />
                   </div>
 

@@ -21,7 +21,7 @@ const LENDING_STATUS_COLORS: Record<LendingStatus, string> = {
   '待機中': '#8A8A8A',
   '貸出可': '#008C1D',
   '貸出中': '#0092E6',
-  '使用中': '#e67e22',
+  '使用中': '#A35414',
   '使用済': '#8A8A8A',
   '返却済': '#16a085',
   '使用不可': '#DA0000',
@@ -31,7 +31,7 @@ const LENDING_STATUS_COLORS: Record<LendingStatus, string> = {
 const getInspectionStatusColor = (status: string): string => {
   if (status === '点検月超過') return '#DA0000';
   if (status === '点検週') return '#A30000';
-  if (status === '点検月') return '#f39c12';
+  if (status === '点検月') return '#A35414';
   if (status.includes('ヶ月前')) return '#0092E6';
   return '#8A8A8A';
 };

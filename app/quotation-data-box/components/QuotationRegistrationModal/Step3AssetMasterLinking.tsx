@@ -105,7 +105,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
                         fontSize: '10px',
                         fontWeight: 'bold',
                         background: app.applicationType === '新規申請' ? '#008C1D' :
-                                   app.applicationType === '更新申請' ? '#e67e22' :
+                                   app.applicationType === '更新申請' ? '#A35414' :
                                    app.applicationType === '増設申請' ? '#0092E6' : '#8A8A8A',
                         color: 'white',
                       }}>

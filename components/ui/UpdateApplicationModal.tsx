@@ -343,7 +343,7 @@ export function UpdateApplicationModal({
       flexDirection: 'column',
     },
     header: {
-      background: '#e67e22',
+      background: '#A35414',
       color: 'white',
       padding: '16px 24px',
       fontSize: '18px',
@@ -373,10 +373,10 @@ export function UpdateApplicationModal({
     sectionTitle: {
       fontSize: '14px',
       fontWeight: 'bold',
-      color: '#e67e22',
+      color: '#A35414',
       marginBottom: '16px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #e67e22',
+      borderBottom: '2px solid #A35414',
     },
     note: {
       fontSize: '12px',
@@ -402,7 +402,7 @@ export function UpdateApplicationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #e67e22',
+      border: '1px solid #A35414',
       borderRadius: '4px',
       fontSize: '14px',
       boxSizing: 'border-box' as const,
@@ -417,7 +417,7 @@ export function UpdateApplicationModal({
     },
     select: {
       padding: '8px 12px',
-      border: '1px solid #e67e22',
+      border: '1px solid #A35414',
       borderRadius: '4px',
       fontSize: '14px',
       cursor: 'pointer',
@@ -438,7 +438,7 @@ export function UpdateApplicationModal({
       width: '100%',
       minHeight: '100px',
       padding: '12px',
-      border: '1px solid #e67e22',
+      border: '1px solid #A35414',
       borderRadius: '4px',
       fontSize: '14px',
       resize: 'vertical' as const,
@@ -453,7 +453,7 @@ export function UpdateApplicationModal({
     },
     confirmButton: {
       padding: '12px 48px',
-      background: '#e67e22',
+      background: '#A35414',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -562,7 +562,7 @@ export function UpdateApplicationModal({
                 <tbody>
                   {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>{getHopeLabel(index)}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#A35414' }}>{getHopeLabel(index)}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.item}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.maker || '-'}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.model || '-'}</td>
@@ -771,7 +771,7 @@ export function UpdateApplicationModal({
                 disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#e67e22',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#A35414',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -808,7 +808,7 @@ export function UpdateApplicationModal({
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#e67e22' }}>
+                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#A35414' }}>
                           {getHopeLabel(index)}
                         </td>
                         <td style={{ padding: '4px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
@@ -938,7 +938,7 @@ export function UpdateApplicationModal({
                             onClick={() => handleOpenAssetMaster(index)}
                             style={{
                               padding: '4px 8px',
-                              background: '#e67e22',
+                              background: '#A35414',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -1030,7 +1030,7 @@ export function UpdateApplicationModal({
             }}>
               <button style={{
                 padding: '8px 16px',
-                background: '#e67e22',
+                background: '#A35414',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1300,8 +1300,8 @@ export function UpdateApplicationModal({
                 style={{
                   padding: '12px 32px',
                   background: 'white',
-                  color: '#e67e22',
-                  border: '1px solid #e67e22',
+                  color: '#A35414',
+                  border: '1px solid #A35414',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -1315,7 +1315,7 @@ export function UpdateApplicationModal({
                 onClick={handleSubmit}
                 style={{
                   padding: '12px 32px',
-                  background: '#e67e22',
+                  background: '#A35414',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

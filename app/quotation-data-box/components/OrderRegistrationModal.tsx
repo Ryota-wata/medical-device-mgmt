@@ -131,7 +131,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
           </h2>
           <button
             onClick={() => alert('発注書テンプレートを出力します（実装予定）')}
-            style={{ padding: '8px 20px', background: '#e67e22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+            style={{ padding: '8px 20px', background: '#A35414', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
           >
             発注書出力
           </button>
@@ -174,8 +174,8 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
         </div>
 
         {/* 発注基本登録 セクション */}
-        <div style={{ border: '2px solid #e67e22', borderRadius: '6px', marginBottom: '16px' }}>
-          <div style={{ background: '#e67e22', color: 'white', padding: '8px 14px', fontSize: '14px', fontWeight: 'bold' }}>
+        <div style={{ border: '2px solid #A35414', borderRadius: '6px', marginBottom: '16px' }}>
+          <div style={{ background: '#A35414', color: 'white', padding: '8px 14px', fontSize: '14px', fontWeight: 'bold' }}>
             発注基本登録
           </div>
           <div style={{ padding: '16px' }}>

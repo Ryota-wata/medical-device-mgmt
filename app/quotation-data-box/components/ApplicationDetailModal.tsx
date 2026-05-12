@@ -313,8 +313,8 @@ export function ApplicationDetailModal({
               style={{
                 padding: '10px 20px',
                 background: 'white',
-                color: '#f39c12',
-                border: '2px solid #f39c12',
+                color: '#A35414',
+                border: '2px solid #A35414',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',

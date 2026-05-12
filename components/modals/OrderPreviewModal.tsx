@@ -56,7 +56,7 @@ const COLORS = {
   border: '#d1d5db',
   borderLight: '#E1E1E1',
   white: '#ffffff',
-  accent: '#e67e22',
+  accent: '#A35414',
   accentText: '#4A4A4A',
 } as const;
 

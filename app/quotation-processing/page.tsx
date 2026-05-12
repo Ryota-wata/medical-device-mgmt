@@ -458,7 +458,7 @@ function QuotationProcessingContent() {
               </div>
               <div style={{ flex: 1, background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '8px' }}>未確定</div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#f39c12' }}>{unconfirmedCount}</div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#A35414' }}>{unconfirmedCount}</div>
               </div>
             </div>
 
@@ -539,7 +539,7 @@ function QuotationProcessingContent() {
                               </div>
                               <span
                                 style={{
-                                  background: '#f39c12',
+                                  background: '#A35414',
                                   color: 'white',
                                   padding: '4px 10px',
                                   borderRadius: '12px',
@@ -624,7 +624,7 @@ function QuotationProcessingContent() {
                             borderRadius: '20px',
                             fontSize: '13px',
                             fontWeight: 'bold',
-                            background: item.isConfirmed ? '#008C1D' : '#f39c12',
+                            background: item.isConfirmed ? '#008C1D' : '#A35414',
                             color: 'white',
                           }}
                         >

@@ -9,9 +9,9 @@ import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
 /** カラートークン */
 const COLORS = {
-  primary: '#27ae60',
+  primary: '#008C1D',
   primaryDark: '#3d5a80',
-  accent: '#e67e22',
+  accent: '#A35414',
   textPrimary: '#1f2937',
   textSecondary: '#374151',
   textMuted: '#6b7280',
@@ -23,7 +23,7 @@ const COLORS = {
   sectionHeader: '#4b5563',
   white: '#ffffff',
   error: '#dc2626',
-  success: '#27ae60',
+  success: '#008C1D',
   successLight: '#e8f5e9',
   warning: '#f59e0b',
   warningBg: '#fffbeb',
@@ -31,14 +31,14 @@ const COLORS = {
   warningText: '#92400e',
   disabled: '#9ca3af',
   disabledBg: '#f3f4f6',
-  stepActive: '#3498db',
-  stepCompleted: '#27ae60',
-  stepPending: '#dee2e6',
+  stepActive: '#0092E6',
+  stepCompleted: '#008C1D',
+  stepPending: '#E1E1E1',
   // ステップ別テーマカラー
   step1: '#7c3aed',  // 紫: 見積依頼
   step2: '#d97706',  // 琥珀: 見積登録
-  step3: '#3498db',  // 青: 契約登録
-  step4: '#27ae60',  // 緑: 完了登録
+  step3: '#0092E6',  // 青: 契約登録
+  step4: '#008C1D',  // 緑: 完了登録
 } as const;
 
 /** 保守契約登録のステップ定義 */
@@ -1032,11 +1032,11 @@ function MaintenanceQuoteRegistrationContent() {
             {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
             <div style={{
               marginBottom: '20px',
-              border: `2px solid #27ae60`,
+              border: `2px solid #008C1D`,
               borderRadius: '8px',
               padding: '16px',
             }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#27ae60', marginBottom: '12px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#008C1D', marginBottom: '12px' }}>
                 見積登録業者
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1123,7 +1123,7 @@ function MaintenanceQuoteRegistrationContent() {
                     disabled={!isStepEnabled(2) || !selectedQuotationFile}
                     style={{
                       padding: '8px 20px',
-                      background: selectedQuotationFile ? '#27ae60' : COLORS.disabled,
+                      background: selectedQuotationFile ? '#008C1D' : COLORS.disabled,
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -1175,7 +1175,7 @@ function MaintenanceQuoteRegistrationContent() {
                         disabled={!isStepEnabled(2) || !!registeredOrderNo}
                         style={{
                           padding: '8px 16px',
-                          background: registeredOrderNo ? COLORS.disabled : '#e67e22',
+                          background: registeredOrderNo ? COLORS.disabled : '#A35414',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',

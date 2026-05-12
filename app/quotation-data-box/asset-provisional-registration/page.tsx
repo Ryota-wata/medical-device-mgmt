@@ -44,7 +44,7 @@ const C = {
 const COLORS = {
   primary: '#008C1D',
   primaryDark: '#3d5a80',
-  accent: '#e67e22',
+  accent: '#A35414',
   textOnAccent: '#4A4A4A',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',

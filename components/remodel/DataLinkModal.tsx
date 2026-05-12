@@ -761,7 +761,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
           <div style={{ padding: '40px 24px', textAlign: 'center' }}>
             <div style={{
               width: 64, height: 64, borderRadius: '50%', margin: '0 auto 20px',
-              background: result.matched > 0 || result.added > 0 ? '#008C1D' : '#f39c12',
+              background: result.matched > 0 || result.added > 0 ? '#008C1D' : '#A35414',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <span style={{ fontSize: 32, color: 'white' }}>{result.matched > 0 || result.added > 0 ? '\u2713' : '!'}</span>
@@ -777,7 +777,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               {result.unmatched > 0 && (
                 <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 14, color: '#555' }}>未マッチ</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#e67e22', fontVariantNumeric: 'tabular-nums' }}>{result.unmatched}件</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#A35414', fontVariantNumeric: 'tabular-nums' }}>{result.unmatched}件</span>
                 </div>
               )}
               {result.added > 0 && (
@@ -1284,7 +1284,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 {qStep === 2 && (
                   <button onClick={handleQuotationExecute} disabled={!canQuotationExecute} style={{
                     padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                    background: canQuotationExecute ? '#f39c12' : '#ccc',
+                    background: canQuotationExecute ? '#A35414' : '#ccc',
                     color: canQuotationExecute ? '#333' : '#999',
                     border: 'none', borderRadius: 6, cursor: canQuotationExecute ? 'pointer' : 'default', minWidth: 160,
                   }}>

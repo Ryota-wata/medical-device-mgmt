@@ -21,9 +21,9 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
   hospital_dept_head: { bg: '#1abc9c', text: 'white' },
   hospital_me: { bg: '#4A4A4A', text: 'white' },
   hospital_doctor_nurse: { bg: '#0073B8', text: 'white' },
-  rimo_hospital: { bg: '#e67e22', text: 'white' },
+  rimo_hospital: { bg: '#A35414', text: 'white' },
   estimate_staff: { bg: '#d35400', text: 'white' },
-  consignment_staff: { bg: '#f39c12', text: 'white' },
+  consignment_staff: { bg: '#A35414', text: 'white' },
   lending_warehouse: { bg: '#DA0000', text: 'white' },
   inspection_mobile: { bg: '#A30000', text: 'white' },
   transport_mobile: { bg: '#8A8A8A', text: 'white' },
@@ -606,7 +606,7 @@ export default function UserManagementPage() {
                             alignItems: 'center',
                             gap: '6px',
                             padding: '6px 10px',
-                            background: '#e8f4fd',
+                            background: '#EAF3FB',
                             border: '1px solid #E1E1E1',
                             borderRadius: '16px',
                             fontSize: '13px',
@@ -682,14 +682,14 @@ export default function UserManagementPage() {
                                 gap: '6px',
                                 padding: '6px 10px',
                                 background: '#FDF1E5',
-                                border: '1px solid #e67e22',
+                                border: '1px solid #A35414',
                                 borderRadius: '16px',
                                 fontSize: '13px',
                                 color: '#4A4A4A',
                               }}
                             >
                               <span>{facility}</span>
-                              <span style={{ fontSize: '10px', color: '#e67e22' }}>閲覧のみ</span>
+                              <span style={{ fontSize: '10px', color: '#A35414' }}>閲覧のみ</span>
                               <button
                                 type="button"
                                 onClick={() => removeFacility(facility)}

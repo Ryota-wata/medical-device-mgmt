@@ -166,7 +166,7 @@ export function ExcelImportPreviewModal({
             disabled={disabled}
             style={{
               padding: '10px 20px',
-              background: disabled ? '#bdc3c7' : '#e67e22',
+              background: disabled ? '#bdc3c7' : '#A35414',
               color: 'white',
               border: 'none',
               borderRadius: '6px',

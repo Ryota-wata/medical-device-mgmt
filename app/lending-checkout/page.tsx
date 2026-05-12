@@ -426,7 +426,7 @@ export default function LendingCheckoutPage() {
                   setProcessedAction(null);
                 }}
                 placeholder="例: 1（貸出可）/ 2（貸出中）/ 3（使用中）/ 4（使用済）"
-                className="flex-1 px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
+                className="flex-1 px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#008C1D]/20 transition-colors"
               />
               {(isTablet || isMobile) && (
                 <button
@@ -444,7 +444,7 @@ export default function LendingCheckoutPage() {
             <>
               {/* 機器情報 */}
               <div className="py-6 border-b border-stroke-card">
-                <h2 className="text-sm font-bold text-content-primary mb-3">機器ポンプ</h2>
+                <h2 className="text-sm font-bold text-content-primary mb-3">機器情報</h2>
                 <div className="bg-surface-select border border-cta-primary rounded-lg p-4">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div>
@@ -478,7 +478,7 @@ export default function LendingCheckoutPage() {
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     placeholder="例: 1 / 2 / 3 / 4"
-                    className="flex-1 px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#27ae60]/20 transition-colors"
+                    className="flex-1 px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#008C1D]/20 transition-colors"
                   />
                   {(isTablet || isMobile) && (
                     <button
@@ -668,7 +668,7 @@ export default function LendingCheckoutPage() {
                         height: `${ITEM_HEIGHT}px`,
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempYear === year ? '#27ae60' : '#1f2937',
+                        color: tempYear === year ? '#008C1D' : '#1f2937',
                         fontWeight: tempYear === year ? 'bold' : 'normal',
                       }}
                     >
@@ -699,7 +699,7 @@ export default function LendingCheckoutPage() {
                         height: `${ITEM_HEIGHT}px`,
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempMonth === month ? '#27ae60' : '#1f2937',
+                        color: tempMonth === month ? '#008C1D' : '#1f2937',
                         fontWeight: tempMonth === month ? 'bold' : 'normal',
                       }}
                     >
@@ -730,7 +730,7 @@ export default function LendingCheckoutPage() {
                         height: `${ITEM_HEIGHT}px`,
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempDay === day ? '#27ae60' : '#1f2937',
+                        color: tempDay === day ? '#008C1D' : '#1f2937',
                         fontWeight: tempDay === day ? 'bold' : 'normal',
                       }}
                     >

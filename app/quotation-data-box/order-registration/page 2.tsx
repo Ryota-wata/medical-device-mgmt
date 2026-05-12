@@ -250,7 +250,7 @@ export default function OrderRegistrationPage() {
         <div
           style={{
             padding: '10px 20px',
-            background: '#e67e22',
+            background: '#A35414',
             color: 'white',
             fontSize: '13px',
             fontWeight: 'bold',
@@ -266,7 +266,7 @@ export default function OrderRegistrationPage() {
       <StepProgressBar
         currentStep={6}
         steps={ORDER_PROGRESS_STEPS}
-        activeColor="#e67e22"
+        activeColor="#A35414"
       />
 
       {/* ページ全体スクロール */}
@@ -334,7 +334,7 @@ export default function OrderRegistrationPage() {
                       </tr>
                       {/* 納品日 */}
                       <tr>
-                        <th style={{ ...thStyle, background: '#e67e22', border: '1px solid #e67e22' }}>納品日</th>
+                        <th style={{ ...thStyle, background: '#A35414', border: '1px solid #A35414' }}>納品日</th>
                         <td style={tdStyle}>
                           <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} style={inputStyle} />
                         </td>
@@ -397,7 +397,7 @@ export default function OrderRegistrationPage() {
                   <button onClick={() => alert('Excel取込処理（実装予定）')} style={{ padding: '10px 20px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                     Excel取込
                   </button>
-                  <button onClick={handleGoToStep2} style={{ padding: '10px 20px', background: '#e67e22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
+                  <button onClick={handleGoToStep2} style={{ padding: '10px 20px', background: '#A35414', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
                     登録へ
                   </button>
                 </div>
@@ -413,7 +413,7 @@ export default function OrderRegistrationPage() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
                   <button
                     onClick={() => alert('発注書テンプレートを出力します（実装予定）')}
-                    style={{ padding: '10px 24px', background: '#e67e22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                    style={{ padding: '10px 24px', background: '#A35414', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
                   >
                     発注書出力
                   </button>
@@ -476,8 +476,8 @@ export default function OrderRegistrationPage() {
                 </div>
 
                 {/* 発注基本登録 セクション */}
-                <div style={{ border: '2px solid #e67e22', borderRadius: '6px', marginBottom: '16px' }}>
-                  <div style={{ background: '#e67e22', color: 'white', padding: '8px 14px', fontSize: '14px', fontWeight: 'bold' }}>
+                <div style={{ border: '2px solid #A35414', borderRadius: '6px', marginBottom: '16px' }}>
+                  <div style={{ background: '#A35414', color: 'white', padding: '8px 14px', fontSize: '14px', fontWeight: 'bold' }}>
                     発注基本登録
                   </div>
                   <div style={{ padding: '16px' }}>

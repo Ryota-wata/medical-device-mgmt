@@ -10,7 +10,7 @@ import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 const COLORS = {
   primary: '#008C1D',
   primaryDark: '#3d5a80',
-  accent: '#e67e22',
+  accent: '#A35414',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',
   textMuted: '#8A8A8A',
@@ -819,7 +819,7 @@ function DisposalTaskContent() {
                   {/* 1行目: バッジ + 業者名 + 担当者名 + アクション */}
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px' }}>
                     <span style={{
-                      background: vendor.isSent ? '#008C1D' : '#f39c12',
+                      background: vendor.isSent ? '#008C1D' : '#A35414',
                       color: 'white',
                       padding: '4px 6px',
                       borderRadius: '4px',
@@ -879,7 +879,7 @@ function DisposalTaskContent() {
                           disabled={isSubmitting}
                           style={{
                             padding: '6px 8px',
-                            background: '#e67e22',
+                            background: '#A35414',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
@@ -1362,7 +1362,7 @@ function DisposalTaskContent() {
                         disabled={!isStepEnabled(2) || !!registeredOrderNo}
                         style={{
                           padding: '8px 16px',
-                          background: registeredOrderNo ? COLORS.disabled : '#e67e22',
+                          background: registeredOrderNo ? COLORS.disabled : '#A35414',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -1497,7 +1497,7 @@ function DisposalTaskContent() {
                     disabled={!isStepEnabled(2) || 2 < activeStep || isSubmitting}
                     style={{
                       padding: '8px 16px',
-                      background: '#e67e22',
+                      background: '#A35414',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',

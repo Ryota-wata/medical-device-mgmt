@@ -259,7 +259,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
             onClick={() => {/* SHIPへ依頼処理 */}}
             style={{
               padding: '10px 20px',
-              background: '#f39c12',
+              background: '#A35414',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

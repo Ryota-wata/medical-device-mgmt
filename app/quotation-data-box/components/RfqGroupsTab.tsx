@@ -47,20 +47,20 @@ const STATUS_BADGE_COLORS: Record<RfqGroupStatus, string> = {
   '見積依頼': '#8A8A8A',
   '見積依頼済': '#0092E6',
   '見積DB登録済': '#0073B8',
-  '見積登録依頼中': '#f39c12',
+  '見積登録依頼中': '#A35414',
   '発注用見積依頼済': '#4527A0',
   '発注見積登録済': '#5E3A93',
-  '発注済': '#e67e22',
+  '発注済': '#A35414',
   '納期確定': '#008C1D',
   '検収済': '#16a085',
   '完了': '#8A8A8A',
   '申請を見送る': '#DA0000',
   // 廃棄ワークフロー
-  '廃棄承認待ち': '#f39c12',
+  '廃棄承認待ち': '#A35414',
   '廃棄承認済み': '#008C1D',
   '廃棄完了': '#7b1fa2',
   // 移設ワークフロー
-  '移動承認待ち': '#f39c12',
+  '移動承認待ち': '#A35414',
   '移動承認済み': '#008C1D',
   '移動完了': '#3f51b5',
 };
@@ -88,7 +88,7 @@ const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
 };
 
 // グルーピング色（同一rfqNoが複数ある場合の左ボーダー）
-const GROUP_BORDER_COLORS = ['#0092E6', '#e67e22', '#008C1D', '#4527A0', '#DA0000', '#16a085'];
+const GROUP_BORDER_COLORS = ['#0092E6', '#A35414', '#008C1D', '#4527A0', '#DA0000', '#16a085'];
 
 export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   rfqGroups,
@@ -221,7 +221,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ③発注登録
       case '発注見積登録済':
         buttons.push(
-          <button key="order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#e67e22' }}>
+          <button key="order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#A35414' }}>
             発注登録
           </button>
         );

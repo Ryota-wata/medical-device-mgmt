@@ -1030,7 +1030,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   noMenuHint: {
     fontSize: '13px',
-    color: '#e67e22',
+    color: '#A35414',
     margin: 0,
   },
   radioGroup: {

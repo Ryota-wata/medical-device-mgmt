@@ -907,7 +907,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
     const colors: Record<ContractType, string> = {
       '保守契約': '#0073B8',
       '定期点検': '#008C1D',
-      'スポット契約': '#e67e22',
+      'スポット契約': '#A35414',
       '借用契約': '#4527A0',
       'その他': '#8A8A8A',
     };

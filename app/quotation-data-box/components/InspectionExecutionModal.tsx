@@ -625,7 +625,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   reinspectButton: {
     padding: '12px 16px',
-    backgroundColor: '#f39c12',
+    backgroundColor: '#A35414',
     color: 'white',
     border: 'none',
     borderRadius: '4px',

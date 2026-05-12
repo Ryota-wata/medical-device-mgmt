@@ -313,7 +313,7 @@ export default function AssetSearchResultPage() {
       </div>
 
       {/* フィルターエリア（1行レイアウト: 各フィルター + キーワード検索を横並び。テーブルエリア最大化） */}
-      <div style={{ background: '#fff', padding: '6px 16px', borderBottom: '1px solid #dee2e6' }}>
+      <div style={{ background: '#fff', padding: '6px 16px', borderBottom: '1px solid #E1E1E1' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'nowrap' }}>
           {/* 施設 */}
           <div style={{ flex: '1 1 110px', minWidth: '110px', position: 'relative', zIndex: 17 }}>

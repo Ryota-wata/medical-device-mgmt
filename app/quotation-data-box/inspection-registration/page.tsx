@@ -12,7 +12,7 @@ import { InspectionCertPreviewModal } from '@/components/modals/InspectionCertPr
 const COLORS = {
   primary: '#4a6fa5',
   primaryDark: '#3d5a80',
-  accent: '#e67e22',
+  accent: '#A35414',
   textOnAccent: '#4A4A4A',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',

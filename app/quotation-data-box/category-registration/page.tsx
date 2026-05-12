@@ -247,7 +247,7 @@ export default function CategoryRegistrationPage() {
                           borderRadius: '10px',
                           fontSize: '10px',
                           fontWeight: 'bold',
-                          background: item.isRegistered ? '#008C1D' : '#f39c12',
+                          background: item.isRegistered ? '#008C1D' : '#A35414',
                           color: 'white',
                         }}>
                           {item.isRegistered ? '登録済' : '未登録'}

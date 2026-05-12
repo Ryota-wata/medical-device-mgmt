@@ -480,7 +480,7 @@ function RfqProcessContent() {
                 }}>
                   {/* インデックスバッジ */}
                   <span style={{
-                    background: vendor.isSent ? '#008C1D' : '#f39c12',
+                    background: vendor.isSent ? '#008C1D' : '#A35414',
                     color: 'white',
                     padding: '4px 6px',
                     borderRadius: '4px',
@@ -585,7 +585,7 @@ function RfqProcessContent() {
                     alignItems: 'center',
                     gap: '8px',
                   }}>
-                    <span style={{ color: vendor.isSent ? '#008C1D' : '#f39c12', fontWeight: 600 }}>
+                    <span style={{ color: vendor.isSent ? '#008C1D' : '#A35414', fontWeight: 600 }}>
                       依頼先{index + 1}
                     </span>
                     <span style={{ fontWeight: 600 }}>ご依頼事項</span>

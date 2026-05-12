@@ -76,7 +76,7 @@ const STATUS_BADGE_COLORS: Record<DisposalRfqStatus, string> = {
   '見積依頼': '#8A8A8A',
   '見積依頼済': '#0092E6',
   '見積登録済': '#008C1D',
-  '発注済': '#e67e22',
+  '発注済': '#A35414',
   '作業日確定': '#f1c40f',
   '完了': '#4527A0',
   '申請を見送る': '#DA0000',
@@ -373,14 +373,14 @@ export function TransferDisposalManagementTab() {
         );
       case '見積登録済':
         return (
-          <button style={{ ...btnBase, background: '#e67e22' }}
+          <button style={{ ...btnBase, background: '#A35414' }}
             onClick={navigateToTask}>
             廃棄依頼
           </button>
         );
       case '発注済':
         return (
-          <button style={{ ...btnBase, background: '#f39c12' }}
+          <button style={{ ...btnBase, background: '#A35414' }}
             onClick={navigateToTask}>
             作業日確定
           </button>

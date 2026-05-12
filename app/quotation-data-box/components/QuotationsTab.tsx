@@ -50,7 +50,7 @@ const GROUP_HEADERS = [
   { label: 'STEP② 価格情報', span: 4, color: '#0d6efd' },
   { label: 'STEP③', span: 2, color: '#198754' },
   { label: 'STEP④ 個体管理品目', span: 5, color: '#6f42c1' },
-  { label: 'STEP⑤ 個体登録', span: 3, color: '#e67e22' },
+  { label: 'STEP⑤ 個体登録', span: 3, color: '#A35414' },
 ];
 
 export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {

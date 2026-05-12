@@ -523,14 +523,14 @@ export default function InventoryPage() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f5f6fa' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
         <div style={{ textAlign: 'center', color: '#666' }}>読み込み中...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f5f6fa' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
       <Header
         title="棚卸し"
         resultCount={filteredItems.length}
@@ -541,13 +541,13 @@ export default function InventoryPage() {
       />
 
       {/* 進捗バー */}
-      <div style={{ background: 'white', padding: '20px', borderBottom: '1px solid #dee2e6' }}>
+      <div style={{ background: 'white', padding: '20px', borderBottom: '1px solid #E1E1E1' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A' }}>
             棚卸し進捗: {progress.checked} / {progress.total} 件 ({progress.percentage}%)
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '14px', color: '#e67e22' }}>
+            <span style={{ fontSize: '14px', color: '#A35414' }}>
               要対応: {progress.actionRequired}件
             </span>
             <button
@@ -570,7 +570,7 @@ export default function InventoryPage() {
               onClick={() => setResetModal(true)}
               style={{
                 padding: '8px 12px',
-                background: '#e74c3c',
+                background: '#DA0000',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -600,7 +600,7 @@ export default function InventoryPage() {
       </div>
 
       {/* フィルターバー */}
-      <div style={{ background: 'white', padding: '15px 20px', borderBottom: '1px solid #dee2e6' }}>
+      <div style={{ background: 'white', padding: '15px 20px', borderBottom: '1px solid #E1E1E1' }}>
         {/* ステータスフィルター */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
           {[
@@ -689,9 +689,9 @@ export default function InventoryPage() {
       {/* 一括操作バー（未確認フィルター時のみ表示） */}
       {filterStatus === 'all' && filteredItems.length > 0 && (
         <div style={{
-          background: '#e8f4fd',
+          background: '#EAF3FB',
           padding: '12px 20px',
-          borderBottom: '1px solid #bee5eb',
+          borderBottom: '1px solid #A8D4F0',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
@@ -733,7 +733,7 @@ export default function InventoryPage() {
             }}
             style={{
               padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#e74c3c',
+              background: selectedItems.size === 0 ? '#ccc' : '#DA0000',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -753,7 +753,7 @@ export default function InventoryPage() {
             }}
             style={{
               padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#f39c12',
+              background: selectedItems.size === 0 ? '#ccc' : '#A35414',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -773,7 +773,7 @@ export default function InventoryPage() {
             }}
             style={{
               padding: '8px 16px',
-              background: selectedItems.size === 0 ? '#ccc' : '#7f8c8d',
+              background: selectedItems.size === 0 ? '#ccc' : '#8A8A8A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -805,10 +805,10 @@ export default function InventoryPage() {
                   borderRadius: '8px',
                   overflow: 'hidden',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  border: item.status === 'unchecked' ? '1px solid #dee2e6' :
+                  border: item.status === 'unchecked' ? '1px solid #E1E1E1' :
                          item.status === 'stock_ok' ? '2px solid #008C1D' :
-                         item.status === 'location_changed' ? '2px solid #f39c12' :
-                         '2px solid #e74c3c'
+                         item.status === 'location_changed' ? '2px solid #A35414' :
+                         '2px solid #DA0000'
                 }}
               >
                 {/* 画像エリア */}
@@ -849,10 +849,14 @@ export default function InventoryPage() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '32px',
-                    color: '#999'
-                  }}>
-                    📦
+                    color: '#8A8A8A'
+                  }} aria-label="機器画像プレースホルダー">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M16.5 9.4 7.55 4.24"/>
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                      <path d="m3.3 7 8.7 5 8.7-5"/>
+                      <path d="M12 22V12"/>
+                    </svg>
                   </div>
                   {/* ステータスバッジ */}
                   <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
@@ -883,8 +887,8 @@ export default function InventoryPage() {
                 <div style={{ padding: '16px' }}>
                   {/* ヘッダー情報：QRコード + 日付 */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', color: '#7f8c8d' }}>{item.asset.qrCode}</span>
-                    <span style={{ fontSize: '11px', color: '#7f8c8d' }}>
+                    <span style={{ fontSize: '11px', color: '#8A8A8A' }}>{item.asset.qrCode}</span>
+                    <span style={{ fontSize: '11px', color: '#8A8A8A' }}>
                       {item.confirmedAt ? new Date(item.confirmedAt).toLocaleDateString('ja-JP') : new Date().toLocaleDateString('ja-JP')}
                     </span>
                   </div>
@@ -903,7 +907,7 @@ export default function InventoryPage() {
                   {/* 資産情報 */}
                   <div style={{
                     fontSize: '12px',
-                    color: '#5a6c7d',
+                    color: '#8A8A8A',
                     lineHeight: '1.8',
                     marginBottom: '12px'
                   }}>
@@ -965,7 +969,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#f39c12',
+              background: '#A35414',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -1033,7 +1037,7 @@ export default function InventoryPage() {
             </div>
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1056,7 +1060,7 @@ export default function InventoryPage() {
                 onClick={handleLocationChangeConfirm}
                 style={{
                   padding: '10px 20px',
-                  background: '#f39c12',
+                  background: '#A35414',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1218,7 +1222,7 @@ export default function InventoryPage() {
             </div>
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1285,7 +1289,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#e74c3c',
+              background: '#DA0000',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -1303,7 +1307,7 @@ export default function InventoryPage() {
             </div>
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1326,7 +1330,7 @@ export default function InventoryPage() {
                 onClick={handleReset}
                 style={{
                   padding: '10px 20px',
-                  background: '#e74c3c',
+                  background: '#DA0000',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1398,7 +1402,7 @@ export default function InventoryPage() {
             </div>
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1497,7 +1501,7 @@ export default function InventoryPage() {
             </div>
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1566,7 +1570,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#7f8c8d',
+              background: '#8A8A8A',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -1603,7 +1607,7 @@ export default function InventoryPage() {
             </div>
             <div style={{
               padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '12px'
@@ -1629,7 +1633,7 @@ export default function InventoryPage() {
                 onClick={handleBulkActionRequired}
                 style={{
                   padding: '10px 20px',
-                  background: '#7f8c8d',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

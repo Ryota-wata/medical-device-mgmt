@@ -100,7 +100,7 @@ export function ApplicationCloseConfirmModal({
             onClick={onConfirm}
             style={{
               padding: '10px 24px',
-              background: '#e67e22',
+              background: '#A35414',
               color: 'white',
               border: 'none',
               borderRadius: '8px',

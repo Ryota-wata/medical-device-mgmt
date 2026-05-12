@@ -313,10 +313,10 @@ function PeriodicInspectionContent() {
             }}>
               <div style={{ fontWeight: 600, marginBottom: '8px', color: '#008C1D' }}>点検対象機器</div>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <span><span style={{ color: '#7f8c8d' }}>QRコード:</span> {task.assetId}</span>
-                <span><span style={{ color: '#7f8c8d' }}>品目:</span> {task.assetName}</span>
-                <span><span style={{ color: '#7f8c8d' }}>メーカー:</span> {task.maker}</span>
-                <span><span style={{ color: '#7f8c8d' }}>型式:</span> {task.model}</span>
+                <span><span style={{ color: '#8A8A8A' }}>QRコード:</span> {task.assetId}</span>
+                <span><span style={{ color: '#8A8A8A' }}>品目:</span> {task.assetName}</span>
+                <span><span style={{ color: '#8A8A8A' }}>メーカー:</span> {task.maker}</span>
+                <span><span style={{ color: '#8A8A8A' }}>型式:</span> {task.model}</span>
               </div>
             </div>
 
@@ -353,7 +353,7 @@ function PeriodicInspectionContent() {
                 fontSize: '15px',
                 fontWeight: 600,
                 color: '#ffffff',
-                backgroundColor: isCameraActive ? '#e74c3c' : '#008C1D',
+                backgroundColor: isCameraActive ? '#DA0000' : '#008C1D',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -539,7 +539,7 @@ function PeriodicInspectionContent() {
 
               {/* 備考 */}
               <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '13px', color: '#7f8c8d', marginBottom: '4px' }}>備考（交換部品等）</div>
+                <div style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '4px' }}>備考（交換部品等）</div>
                 <input
                   type="text"
                   value={remarks}
@@ -562,7 +562,7 @@ function PeriodicInspectionContent() {
                 flexDirection: 'column',
                 gap: '8px'
               }}>
-                <div style={{ fontSize: '13px', color: '#7f8c8d', marginBottom: '4px' }}>総合評価</div>
+                <div style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '4px' }}>総合評価</div>
                 <button
                   onClick={() => handleShowConfirm('合格')}
                   style={styles.passButton}
@@ -620,7 +620,7 @@ function PeriodicInspectionContent() {
                 border: '2px solid',
                 ...(overallResult === '合格'
                   ? { backgroundColor: '#e8f5e9', color: '#008C1D', borderColor: '#008C1D' }
-                  : { backgroundColor: '#ffebee', color: '#e74c3c', borderColor: '#e74c3c' }
+                  : { backgroundColor: '#ffebee', color: '#DA0000', borderColor: '#DA0000' }
                 )
               }}>
                 <span style={{ fontSize: '32px', fontWeight: 700 }}>
@@ -702,7 +702,7 @@ function PeriodicInspectionContent() {
                           borderBottom: '1px solid #eee',
                           textAlign: 'center',
                           fontWeight: 600,
-                          color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#e74c3c' : '#333'
+                          color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#333'
                         }}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
@@ -819,7 +819,7 @@ function PeriodicInspectionContent() {
                 aria-label="修理申請へ"
                 style={{
                   flex: 1,
-                  backgroundColor: '#e74c3c',
+                  backgroundColor: '#DA0000',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -842,7 +842,7 @@ function PeriodicInspectionContent() {
           left: 0,
           width: '100%',
           backgroundColor: '#ffffff',
-          borderTop: '1px solid #dee2e6',
+          borderTop: '1px solid #E1E1E1',
           padding: isMobile ? '12px 16px' : '16px 24px',
           paddingBottom: isMobile ? 'max(12px, env(safe-area-inset-bottom))' : 'max(16px, env(safe-area-inset-bottom))',
           display: 'flex',
@@ -928,7 +928,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid #e0e0e0',
   },
   infoLabel: {
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     fontSize: '12px',
   },
   infoValue: {
@@ -999,12 +999,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   resultButtonNg: {
     padding: '6px 12px',
-    border: '1px solid #e74c3c',
+    border: '1px solid #DA0000',
     borderRadius: '4px',
     backgroundColor: '#fdecea',
     cursor: 'pointer',
     fontSize: '12px',
-    color: '#e74c3c',
+    color: '#DA0000',
     minWidth: '44px',
     minHeight: '32px',
   },
@@ -1018,7 +1018,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   unit: {
     fontSize: '12px',
-    color: '#7f8c8d',
+    color: '#8A8A8A',
     marginLeft: '4px',
   },
   passButton: {
@@ -1036,7 +1036,7 @@ const styles: Record<string, React.CSSProperties> = {
   repairButton: {
     width: '100%',
     padding: '14px 24px',
-    backgroundColor: '#e74c3c',
+    backgroundColor: '#DA0000',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
