@@ -350,14 +350,14 @@ export default function LedgerWindowPage() {
   };
 
   const getStatusColor = (status?: MatchingStatus) => {
-    if (!status) return '#757575'; // 未突合
+    if (!status) return '#8A8A8A'; // 未突合
     switch (status) {
-      case '完全一致': return '#4caf50';
-      case '部分一致': return '#8bc34a';
-      case '数量不一致': return '#A66F1B';
-      case '再確認': return '#2196f3';
-      case '未確認': return '#f44336';
-      case '未登録': return '#5E3A93';
+      case '完全一致': return '#008C1D';
+      case '部分一致': return '#008C1D';
+      case '数量不一致': return '#4A4A4A';
+      case '再確認': return '#4A4A4A';
+      case '未確認': return '#DA0000';
+      case '未登録': return '#4A4A4A';
       default: return '#999';
     }
   };
@@ -417,8 +417,8 @@ export default function LedgerWindowPage() {
           <span style={{ fontSize: '14px', color: '#8A8A8A', fontWeight: '600' }}>資産台帳:</span>
           <span style={{ fontSize: '14px', color: '#4A4A4A' }}>
             全{stats.total}件 |
-            <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
-            <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
+            <span style={{ color: '#8A8A8A', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
+            <span style={{ color: '#008C1D', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
             {stats.再確認 > 0 && (
               <span style={{ color: getStatusColor('再確認'), fontWeight: '600', marginLeft: '4px' }}>| 再確認 {stats.再確認}</span>
             )}
@@ -440,8 +440,8 @@ export default function LedgerWindowPage() {
 
       {/* 一致検索パネル */}
       <div style={{
-        backgroundColor: '#EAF3FB',
-        borderBottom: '1px solid #b8daff',
+        backgroundColor: '#EBF5EE',
+        borderBottom: '1px solid #EBF5EE',
         padding: '12px 24px'
       }}>
         <div style={{
@@ -707,7 +707,7 @@ export default function LedgerWindowPage() {
                   onClick={handleSelectAll}
                   style={{
                     padding: '6px 12px',
-                    backgroundColor: '#f0f0f0',
+                    backgroundColor: '#FAFAFA',
                     border: '1px solid #ccc',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -721,7 +721,7 @@ export default function LedgerWindowPage() {
                   disabled={selectedIds.size === 0}
                   style={{
                     padding: '6px 16px',
-                    backgroundColor: selectedIds.size > 0 ? '#f44336' : '#cccccc',
+                    backgroundColor: selectedIds.size > 0 ? '#DA0000' : '#E1E1E1',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -777,7 +777,7 @@ export default function LedgerWindowPage() {
                 </thead>
                 <tbody>
                   {matchFilteredData.map((row) => (
-                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#EAF3FB' : 'transparent' }}>
+                    <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#EBF5EE' : 'transparent' }}>
                       <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>
                         <input
                           type="checkbox"
@@ -829,7 +829,7 @@ export default function LedgerWindowPage() {
 
           {/* 使用方法の説明 */}
           <div style={{
-            backgroundColor: '#EAF3FB',
+            backgroundColor: '#EBF5EE',
             borderRadius: '8px',
             padding: '16px',
             fontSize: '14px',
