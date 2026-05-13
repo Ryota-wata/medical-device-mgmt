@@ -539,7 +539,7 @@ export default function RegistrationEditPage() {
     const isFreeInput = !isInMaster(field, value, masterId);
     return {
       ...baseStyle,
-      backgroundColor: isFreeInput ? '#fff9c4' : (baseStyle.backgroundColor || 'white')
+      backgroundColor: isFreeInput ? '#FDF1E5' : (baseStyle.backgroundColor || 'white')
     };
   };
 
@@ -970,12 +970,12 @@ export default function RegistrationEditPage() {
 
       {/* Linking Bar */}
       {linkingParent && (
-        <div className="bg-[#EBF5EE] border-b-2 border-[#66bb6a]">
+        <div className="bg-[#EBF5EE] border-b-2 border-[#008C1D]">
           {/* ヘッダー行 */}
           <div className="px-6 py-2.5 flex justify-between items-center bg-[#EBF5EE]">
             <div className="flex items-center gap-3">
               <span className="bg-[#146E2E] text-white px-2.5 py-0.5 rounded text-xs font-semibold">紐付け登録モード</span>
-              <span className="font-semibold text-[#1b5e20] text-sm">
+              <span className="font-semibold text-[#146E2E] text-sm">
                 本体: {linkingParent.item}
                 <span className="text-[#8A8A8A] font-normal ml-2">({linkingParent.sealNo})</span>
               </span>
@@ -995,18 +995,18 @@ export default function RegistrationEditPage() {
               </span>
             ) : (
               <>
-                <span className="text-[#1b5e20] text-[13px] font-semibold">
+                <span className="text-[#146E2E] text-[13px] font-semibold">
                   {selectedRows.size}件選択中 — 種別を選んで紐付け:
                 </span>
                 <button
                   onClick={handleLinkAsDetail}
-                  className="px-5 py-2 bg-[#A35414] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
+                  className="px-5 py-2 bg-[#4A4A4A] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
                 >
                   明細として紐付ける
                 </button>
                 <button
                   onClick={handleLinkAsAccessory}
-                  className="px-5 py-2 bg-[#7b1fa2] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
+                  className="px-5 py-2 bg-[#4A4A4A] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
                 >
                   付属品として紐付ける
                 </button>
@@ -1080,7 +1080,7 @@ export default function RegistrationEditPage() {
                 <tr key={row.id} style={{ backgroundColor: rowBgColor }}>
                   {/* ① QRコード */}
                   <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
-                    {isChild && <span className="text-[#9e9e9e] mr-1">└</span>}
+                    {isChild && <span className="text-[#8A8A8A] mr-1">└</span>}
                     {row.sealNo}
                   </td>
                   {/* ② 階 */}
@@ -1133,10 +1133,10 @@ export default function RegistrationEditPage() {
                         <div className="flex items-center gap-1">
                           <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
                             row.detailType === '本体'
-                              ? 'bg-[#EAF3FB] text-[#1E5A9E]'
+                              ? 'bg-[#EBF5EE] text-[#4A4A4A]'
                               : row.detailType === '明細'
-                                ? 'bg-[#FDF1E5] text-[#A35414]'
-                                : 'bg-[#F1ECF7] text-[#7b1fa2]'
+                                ? 'bg-[#FDF1E5] text-[#4A4A4A]'
+                                : 'bg-[#FAFAFA] text-[#4A4A4A]'
                           }`}>
                             {row.detailType}
                           </span>
@@ -1298,7 +1298,7 @@ export default function RegistrationEditPage() {
                   <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap">
                     <button
                       onClick={() => handlePhotoClick(row)}
-                      className="px-2 py-1 text-xs bg-[#EAF3FB] text-[#1E5A9E] border-none rounded cursor-pointer"
+                      className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
                     >
                       {row.photoCount}枚
                     </button>
@@ -1324,7 +1324,7 @@ export default function RegistrationEditPage() {
                           </button>
                           <button
                             onClick={handleCancel}
-                            className="px-2 py-1 text-xs bg-[#ffcdd2] text-[#4A4A4A] border-none rounded cursor-pointer"
+                            className="px-2 py-1 text-xs bg-[#FDF1E5] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
                             キャンセル
                           </button>
@@ -1333,7 +1333,7 @@ export default function RegistrationEditPage() {
                         <>
                           <button
                             onClick={() => handleEdit(row.id)}
-                            className="px-2 py-1 text-xs bg-[#EAF3FB] text-[#1E5A9E] border-none rounded cursor-pointer"
+                            className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
                           >
                             編集
                           </button>
@@ -1354,8 +1354,8 @@ export default function RegistrationEditPage() {
                               onClick={() => handleSetParent(row.id)}
                               className={`px-2 py-1 text-xs rounded cursor-pointer font-semibold whitespace-nowrap ${
                                 row.detailType === '本体'
-                                  ? 'bg-[#1E5A9E] text-white border-none'
-                                  : 'bg-transparent text-[#1E5A9E] border border-[#0092E6]'
+                                  ? 'bg-[#4A4A4A] text-white border-none'
+                                  : 'bg-transparent text-[#4A4A4A] border border-[#0092E6]'
                               }`}
                             >
                               {row.detailType === '本体' ? '明細を追加' : '本体に設定'}
@@ -1363,7 +1363,7 @@ export default function RegistrationEditPage() {
                           )}
                           {/* 子行: 親レコードへの参照 */}
                           {isChild && parentRow && (
-                            <span className="text-[11px] text-[#1E5A9E] whitespace-nowrap bg-[#EAF3FB] px-1.5 py-0.5 rounded">
+                            <span className="text-[11px] text-[#4A4A4A] whitespace-nowrap bg-[#EBF5EE] px-1.5 py-0.5 rounded">
                               親: {parentRow.sealNo}
                             </span>
                           )}
@@ -1395,7 +1395,7 @@ export default function RegistrationEditPage() {
       <footer className="bg-white border-t border-[#E1E1E1] px-6 py-4 flex justify-center gap-4">
         <button
           onClick={handleBulkConfirm}
-          className="px-8 py-3 bg-[#008C1D] text-white border-none rounded-lg cursor-pointer text-base font-semibold hover:bg-[#219a52]"
+          className="px-8 py-3 bg-[#008C1D] text-white border-none rounded-lg cursor-pointer text-base font-semibold hover:bg-[#008C1D]"
         >
           一括確定
         </button>
@@ -1429,7 +1429,7 @@ export default function RegistrationEditPage() {
                   key={photo.id}
                   className={`rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
                     selectedPhoto === photo.id
-                      ? 'border-[3px] border-[#1E5A9E]'
+                      ? 'border-[3px] border-[#4A4A4A]'
                       : 'border border-[#E1E1E1]'
                   }`}
                   onClick={() => setSelectedPhoto(selectedPhoto === photo.id ? null : photo.id)}
