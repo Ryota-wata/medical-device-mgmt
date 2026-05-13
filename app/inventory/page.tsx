@@ -494,11 +494,11 @@ export default function InventoryPage() {
   // ステータスバッジの取得
   const getStatusBadge = (status: InventoryStatus) => {
     const styles: Record<InventoryStatus, { bg: string; color: string; text: string }> = {
-      unchecked: { bg: '#e0e0e0', color: '#666', text: '未確認' },
-      stock_ok: { bg: '#d4edda', color: '#155724', text: '確認済' },
-      location_changed: { bg: '#FDF1E5', color: '#A35414', text: '移動' },
-      disposed: { bg: '#f8d7da', color: '#721c24', text: '廃棄' },
-      action_required: { bg: '#FBE9EC', color: '#9A2333', text: '要対応' }
+      unchecked: { bg: '#E1E1E1', color: '#666', text: '未確認' },
+      stock_ok: { bg: '#EBF5EE', color: '#146E2E', text: '確認済' },
+      location_changed: { bg: '#FDF1E5', color: '#4A4A4A', text: '移動' },
+      disposed: { bg: '#FDF1E5', color: '#DA0000', text: '廃棄' },
+      action_required: { bg: '#FDF1E5', color: '#DA0000', text: '要対応' }
     };
     const style = styles[status];
     return (
@@ -547,7 +547,7 @@ export default function InventoryPage() {
             棚卸し進捗: {progress.checked} / {progress.total} 件 ({progress.percentage}%)
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-[#A35414] tabular-nums">
+            <span className="text-sm text-[#4A4A4A] tabular-nums">
               要対応: {progress.actionRequired}件
             </span>
             <button
@@ -662,7 +662,7 @@ export default function InventoryPage() {
 
       {/* 一括操作バー（未確認フィルター時のみ表示） */}
       {filterStatus === 'all' && filteredItems.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 bg-[#EAF3FB] px-5 py-3 border-b border-[#A8D4F0]">
+        <div className="flex flex-wrap items-center gap-3 bg-[#EBF5EE] px-5 py-3 border-b border-[#EBF5EE]">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -697,7 +697,7 @@ export default function InventoryPage() {
               if (selectedItems.size === 0) return;
               setBulkTransferModal(true);
             }}
-            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#A35414] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
+            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#4A4A4A] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
           >
             移動申請へ
           </button>
@@ -729,7 +729,7 @@ export default function InventoryPage() {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   border: item.status === 'unchecked' ? '1px solid #E1E1E1' :
                          item.status === 'stock_ok' ? '2px solid #008C1D' :
-                         item.status === 'location_changed' ? '2px solid #A35414' :
+                         item.status === 'location_changed' ? '2px solid #4A4A4A' :
                          '2px solid #DA0000'
                 }}
               >
@@ -737,7 +737,7 @@ export default function InventoryPage() {
                 <div
                   style={{
                     height: '160px',
-                    background: '#f0f0f0',
+                    background: '#FAFAFA',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -845,11 +845,11 @@ export default function InventoryPage() {
                     <div style={{
                       marginTop: '8px',
                       padding: '8px 12px',
-                      background: '#FBE9EC',
+                      background: '#FDF1E5',
                       borderRadius: '4px',
                       fontSize: '12px',
-                      color: '#9A2333',
-                      borderLeft: '3px solid #9A2333',
+                      color: '#DA0000',
+                      borderLeft: '3px solid #DA0000',
                     }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>保留理由:</div>
                       {item.actionRequiredComment}
@@ -891,7 +891,7 @@ export default function InventoryPage() {
             }}
           >
             <div style={{
-              background: '#A35414',
+              background: '#4A4A4A',
               color: 'white',
               padding: '16px 24px',
               fontSize: '16px',
@@ -948,7 +948,7 @@ export default function InventoryPage() {
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      border: '1px solid #d0d0d0',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '6px',
                       fontSize: '14px',
                       boxSizing: 'border-box'
@@ -968,7 +968,7 @@ export default function InventoryPage() {
                 onClick={() => setLocationChangeModal({ isOpen: false, itemIndex: null })}
                 style={{
                   padding: '10px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -982,7 +982,7 @@ export default function InventoryPage() {
                 onClick={handleLocationChangeConfirm}
                 style={{
                   padding: '10px 20px',
-                  background: '#A35414',
+                  background: '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1110,7 +1110,7 @@ export default function InventoryPage() {
               <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
                 棚卸しを完了してよろしいですか？
               </p>
-              <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+              <div style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
                 <div style={{ marginBottom: '8px', fontSize: '14px' }}>
                   <strong>確認済み:</strong> {progress.checked}件 / {progress.total}件
                 </div>
@@ -1131,7 +1131,7 @@ export default function InventoryPage() {
                   padding: '10px 20px',
                   background: 'white',
                   color: '#4A4A4A',
-                  border: '1px solid #374151',
+                  border: '1px solid #4A4A4A',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -1153,7 +1153,7 @@ export default function InventoryPage() {
                 onClick={() => setCompleteModal(false)}
                 style={{
                   padding: '10px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1238,7 +1238,7 @@ export default function InventoryPage() {
                 onClick={() => setResetModal(false)}
                 style={{
                   padding: '10px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1310,7 +1310,7 @@ export default function InventoryPage() {
               <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
                 以下の資産を「在庫あり（現状維持）」で確定しますか？
               </p>
-              <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '16px' }}>
+              <div style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px' }}>
                 <div style={{ marginBottom: '8px', fontSize: '14px' }}>
                   <strong>資産名:</strong> {inventoryItems[stockOkModal.itemIndex]?.asset.name}
                 </div>
@@ -1333,7 +1333,7 @@ export default function InventoryPage() {
                 onClick={() => setStockOkModal({ isOpen: false, itemIndex: null })}
                 style={{
                   padding: '10px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1405,7 +1405,7 @@ export default function InventoryPage() {
               <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
                 選択した資産を一括で「在庫あり（現状維持）」で確定しますか？
               </p>
-              <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '16px' }}>
+              <div style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px' }}>
                 <div style={{ fontSize: '14px', marginBottom: '8px' }}>
                   <strong>選択件数:</strong> {selectedItems.size}件
                 </div>
@@ -1432,7 +1432,7 @@ export default function InventoryPage() {
                 onClick={() => setBulkConfirmModal(false)}
                 style={{
                   padding: '10px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -1518,7 +1518,7 @@ export default function InventoryPage() {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: '14px',
                     boxSizing: 'border-box',
@@ -1541,7 +1541,7 @@ export default function InventoryPage() {
                 }}
                 style={{
                   padding: '10px 20px',
-                  background: '#95a5a6',
+                  background: '#8A8A8A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
