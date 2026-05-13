@@ -862,17 +862,17 @@ function MaintenanceQuoteRegistrationContent() {
                     <tbody>
                       {registeredQuotations.map((q) => (
                         <tr key={q.id} className="border-b border-stroke-input">
-                          <td className="px-2 py-2">
+                          <td className="px-2 py-2 border border-stroke-input">
                             <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${q.phase === '発注登録用見積' ? 'bg-surface-select text-cta-primary-dark' : 'bg-stroke-card text-content-sub'}`}>
                               {q.phase === '発注登録用見積' ? '発注登録用' : '参考'}
                             </span>
                           </td>
-                          <td className="px-2 py-2">{q.vendorName || '---'}</td>
-                          <td className="px-2 py-2 text-right tabular-nums">
+                          <td className="px-2 py-2 border border-stroke-input">{q.vendorName || '---'}</td>
+                          <td className="px-2 py-2 text-right tabular-nums border border-stroke-input">
                             {q.quotationAmount > 0 ? `¥${q.quotationAmount.toLocaleString()}` : '---'}
                           </td>
-                          <td className="px-2 py-2">{q.fileName}</td>
-                          <td className="px-2 py-2 text-center">
+                          <td className="px-2 py-2 border border-stroke-input">{q.fileName}</td>
+                          <td className="px-2 py-2 text-center border border-stroke-input">
                             <button
                               onClick={() => handleQuotationDelete(q.id)}
                               disabled={!isStepEnabled(2)}
@@ -1187,15 +1187,15 @@ function MaintenanceQuoteRegistrationContent() {
                 <table className="w-full border-collapse text-xs">
                   <tbody>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px]">見積フェーズ</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px] border border-stroke-input">見積フェーズ</td>
                       <td className="px-2 py-2 border border-stroke-input">{registeredQuotations[previewQuotationIndex].phase}</td>
                     </tr>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">業者名</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold border border-stroke-input">業者名</td>
                       <td className="px-2 py-2 border border-stroke-input">{registeredQuotations[previewQuotationIndex].vendorName || '---'}</td>
                     </tr>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">見積金額</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold border border-stroke-input">見積金額</td>
                       <td className="px-2 py-2 border border-stroke-input tabular-nums">
                         {registeredQuotations[previewQuotationIndex].quotationAmount > 0
                           ? `¥${registeredQuotations[previewQuotationIndex].quotationAmount.toLocaleString()}`
@@ -1203,11 +1203,11 @@ function MaintenanceQuoteRegistrationContent() {
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">保存形式</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold border border-stroke-input">保存形式</td>
                       <td className="px-2 py-2 border border-stroke-input">{registeredQuotations[previewQuotationIndex].saveFormat}</td>
                     </tr>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">登録日時</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold border border-stroke-input">登録日時</td>
                       <td className="px-2 py-2 border border-stroke-input">
                         {new Date(registeredQuotations[previewQuotationIndex].registeredAt).toLocaleString('ja-JP')}
                       </td>
@@ -1224,19 +1224,19 @@ function MaintenanceQuoteRegistrationContent() {
                 <table className="w-full border-collapse text-sm">
                   <tbody>
                     <tr>
-                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold w-[140px]">保守No</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold w-[140px] border border-stroke-input">保守No</td>
                       <td className="px-3 py-2.5 border border-stroke-input">{formData.maintenanceNo}</td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">契約グループ</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold border border-stroke-input">契約グループ</td>
                       <td className="px-3 py-2.5 border border-stroke-input">{formData.contractGroupName || '（未設定）'}</td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">種別備考</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold border border-stroke-input">種別備考</td>
                       <td className="px-3 py-2.5 border border-stroke-input">{formData.contractTypeMemo}</td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">契約期間</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold border border-stroke-input">契約期間</td>
                       <td className="px-3 py-2.5 border border-stroke-input">
                         {formData.contractPeriodStart && formData.contractPeriodEnd
                           ? `${formData.contractPeriodStart} 〜 ${formData.contractPeriodEnd}`
@@ -1244,7 +1244,7 @@ function MaintenanceQuoteRegistrationContent() {
                       </td>
                     </tr>
                     <tr>
-                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold">登録見積数</td>
+                      <td className="px-3 py-2.5 bg-cta-primary text-white font-bold border border-stroke-input">登録見積数</td>
                       <td className="px-3 py-2.5 border border-stroke-input">{registeredQuotations.length}件</td>
                     </tr>
                   </tbody>
@@ -1319,11 +1319,11 @@ function MaintenanceQuoteRegistrationContent() {
                 <table className="w-full border-collapse text-xs">
                   <tbody>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px]">種別</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold w-[120px] border border-stroke-input">種別</td>
                       <td className="px-2 py-2 border border-stroke-input">{registeredDocuments[previewDocumentIndex].documentType}</td>
                     </tr>
                     <tr>
-                      <td className="px-2 py-2 bg-cta-primary text-white font-bold">登録日時</td>
+                      <td className="px-2 py-2 bg-cta-primary text-white font-bold border border-stroke-input">登録日時</td>
                       <td className="px-2 py-2 border border-stroke-input">
                         {new Date(registeredDocuments[previewDocumentIndex].registeredAt).toLocaleString('ja-JP')}
                       </td>
