@@ -279,7 +279,7 @@ export function ContractReviewModal({
     },
     td: {
       padding: '10px 8px',
-      borderBottom: '1px solid #f0f0f0',
+      borderBottom: '1px solid #FAFAFA',
     },
     checkbox: {
       width: '18px',
@@ -309,7 +309,7 @@ export function ContractReviewModal({
     input: {
       width: '200px',
       padding: '10px 12px',
-      border: '1px solid #d0d0d0',
+      border: '1px solid #E1E1E1',
       borderRadius: '6px',
       fontSize: '14px',
     },
@@ -317,14 +317,14 @@ export function ContractReviewModal({
       width: '100%',
       minHeight: '80px',
       padding: '10px 12px',
-      border: '1px solid #d0d0d0',
+      border: '1px solid #E1E1E1',
       borderRadius: '6px',
       fontSize: '14px',
       resize: 'vertical',
       boxSizing: 'border-box',
     },
     dropZone: {
-      border: '2px dashed #d0d0d0',
+      border: '2px dashed #E1E1E1',
       borderRadius: '8px',
       padding: '32px',
       textAlign: 'center',
@@ -333,7 +333,7 @@ export function ContractReviewModal({
     },
     dropZoneActive: {
       borderColor: '#0092E6',
-      backgroundColor: '#EAF3FB',
+      backgroundColor: '#EBF5EE',
     },
     dropZoneIcon: {
       fontSize: '32px',
@@ -356,13 +356,13 @@ export function ContractReviewModal({
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '8px 12px',
-      backgroundColor: '#EAF3FB',
+      backgroundColor: '#EBF5EE',
       borderRadius: '4px',
       marginBottom: '8px',
     },
     fileName: {
       fontSize: '13px',
-      color: '#1976d2',
+      color: '#4A4A4A',
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
