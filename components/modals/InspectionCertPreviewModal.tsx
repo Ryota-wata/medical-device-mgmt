@@ -14,7 +14,7 @@ interface InspectionCertPreviewModalProps {
 
 /** カラートークン */
 const COLORS = {
-  primary: '#4a6fa5',
+  primary: '#4A4A4A',
   primaryDark: '#146E2E',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',
@@ -24,9 +24,9 @@ const COLORS = {
   borderLight: '#E1E1E1',
   white: '#ffffff',
   surfaceHeader: '#FAFAFA',
-  accentBlueLight: '#e0f2fe',
-  successBg: '#f0fdf4',
-  successText: '#166534',
+  accentBlueLight: '#EBF5EE',
+  successBg: '#EBF5EE',
+  successText: '#008C1D',
 } as const;
 
 /** 明細テーブルのヘッダーセルスタイル */
@@ -261,7 +261,7 @@ export const InspectionCertPreviewModal: React.FC<InspectionCertPreviewModalProp
             marginTop: '12px',
             padding: '8px 16px',
             background: COLORS.successBg,
-            border: `1px solid #bbf7d0`,
+            border: `1px solid #EBF5EE`,
             borderRadius: '4px',
             fontSize: '13px',
             color: COLORS.successText,
