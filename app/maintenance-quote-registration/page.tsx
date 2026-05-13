@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Printer } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
@@ -329,8 +330,8 @@ function MaintenanceQuoteRegistrationContent() {
   }, [contractId, user?.department]);
 
   const activeStep = currentStep;
-  // Figma 構造: previewTab = activeStep に固定 (タブ UI 撤去後)
-  const previewTab = activeStep;
+  // Figma 構造: 右プレビューエリア top に 4 横タブあり (manual 切替)
+  const [previewTab, setPreviewTab] = useState<number>(1);
   const isStepEnabled = (step: number) => step <= activeStep;
 
   if (!formData) {
@@ -360,6 +361,7 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       setCurrentStep(2);
+      setPreviewTab(2);
       setIsSubmitting(false);
     }, 300);
   };
@@ -375,6 +377,7 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       setCurrentStep(3);
+      setPreviewTab(3);
       setIsSubmitting(false);
     }, 300);
   };
@@ -383,6 +386,7 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       setCurrentStep(4);
+      setPreviewTab(4);
       setIsSubmitting(false);
     }, 300);
   };
@@ -573,7 +577,7 @@ function MaintenanceQuoteRegistrationContent() {
                           ) : vendor.vendorName.trim() ? (
                             <div className="flex gap-1 justify-center">
                               <button
-                                onClick={() => {/* プレビューは activeStep に連動して自動表示 */}}
+                                onClick={() => setPreviewTab(1)}
                                 className="px-2.5 py-1 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors"
                               >
                                 プレビュー
@@ -1068,9 +1072,40 @@ function MaintenanceQuoteRegistrationContent() {
           <div className="w-1 h-10 bg-stroke-input rounded" />
         </div>
 
-        {/* 右側: プレビューエリア (Figma 構造: 色帯なし、プレーンヘッダー) */}
+        {/* 右側: プレビューエリア (Figma 構造: top に 4 横タブ + Printer アイコン) */}
         <div className="flex-1 flex flex-col overflow-hidden bg-stroke-card">
-          <div className="px-4 py-3 border-b border-stroke-input bg-surface-card flex items-center justify-between">
+          {/* 4 横タブ */}
+          <div className="flex items-stretch bg-surface-card border-b border-stroke-input">
+            {MAINTENANCE_STEPS.map((item) => {
+              const isActive = previewTab === item.step;
+              return (
+                <button
+                  key={item.step}
+                  onClick={() => {
+                    setPreviewTab(item.step);
+                    if (item.step !== 2) setPreviewQuotationIndex(null);
+                    if (item.step !== 4) setPreviewDocumentIndex(null);
+                  }}
+                  className={`flex-1 px-3 py-3 text-xs font-bold cursor-pointer border-0 border-b-[3px] transition-colors ${
+                    isActive
+                      ? 'border-b-cta-primary text-cta-primary-dark bg-surface-card'
+                      : 'border-b-transparent text-content-sub bg-surface-card hover:bg-stroke-card'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+            <button
+              className="inline-flex items-center justify-center w-10 h-10 bg-surface-card border-0 border-b-[3px] border-b-transparent text-content-sub cursor-pointer hover:text-content-primary transition-colors shrink-0"
+              aria-label="印刷"
+              title="印刷"
+            >
+              <Printer size={18} />
+            </button>
+          </div>
+          {/* タブヘッダー: タイトル */}
+          <div className="px-4 py-3 border-b border-stroke-input bg-surface-card">
             <h3 className="m-0 text-sm font-bold text-content-primary">
               {previewTab === 1 && '見積依頼書プレビュー'}
               {previewTab === 2 && (previewQuotationIndex !== null
