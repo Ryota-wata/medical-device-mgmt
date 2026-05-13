@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { Settings } from 'lucide-react';
 import { useLendingStore } from '@/lib/stores';
 
 // ステータス型
@@ -236,7 +237,7 @@ const getPeriodicInspectionStyle = (status: PeriodicInspectionStatus): React.CSS
 // テーブルスタイル
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #4A4A4A',
+  border: '1px solid #E1E1E1',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -245,7 +246,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #8A8A8A',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -346,8 +347,8 @@ export const LendingManagementTab: React.FC = () => {
   // ソート矢印の表示
   const getSortArrow = (field: SortableField) => {
     const isActive = sortState.field === field;
-    const upColor = isActive && sortState.direction === 'asc' ? '#DA0000' : '#aaa';
-    const downColor = isActive && sortState.direction === 'desc' ? '#DA0000' : '#aaa';
+    const upColor = isActive && sortState.direction === 'asc' ? '#DA0000' : '#8A8A8A';
+    const downColor = isActive && sortState.direction === 'desc' ? '#DA0000' : '#8A8A8A';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '2px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -554,62 +555,62 @@ export const LendingManagementTab: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
-            <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>商品情報</th>
-              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}>貸出機器状況</th>
-              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A' }}>操作</th>
+            <tr>
+              <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A' }}>商品情報</th>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A' }}>貸出機器状況</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
-            <tr style={{ background: '#4A4A4A', color: 'white' }}>
+            <tr>
               {/* 商品情報 */}
-              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>QRコード</th>
-              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>品目</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>QRコード</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>品目</th>
               <th
-                style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('maker')}
               >
                 メーカー{getSortArrow('maker')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('model')}
               >
                 型式{getSortArrow('model')}
               </th>
               {/* 貸出機器状況 */}
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>ステータス</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>設置部署</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>ステータス</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>設置部署</th>
               <th
-                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('lendingDate')}
               >
                 貸出日{getSortArrow('lendingDate')}
               </th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>超過日数</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>日常点検メニュー</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>超過日数</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>日常点検メニュー</th>
               <th
-                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('dailyInspectionDate')}
               >
                 日常点検日{getSortArrow('dailyInspectionDate')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('periodicInspectionStatus')}
               >
                 定期点検予定{getSortArrow('periodicInspectionStatus')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('lendingCount')}
               >
                 貸出回数累計{getSortArrow('lendingCount')}
               </th>
               {/* 操作 */}
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A' }}>フリーコメント</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A' }}>貸出設定変更</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A', textAlign: 'center', width: '40px' }}>
-                <span style={{ fontSize: '14px' }}>&#9881;</span>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>フリーコメント</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A' }}>貸出設定変更</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', textAlign: 'center', width: '40px' }} aria-label="設定">
+                <Settings size={16} aria-hidden style={{ display: 'inline-block', verticalAlign: 'middle' }} />
               </th>
             </tr>
           </thead>
@@ -664,13 +665,13 @@ export const LendingManagementTab: React.FC = () => {
                     </div>
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
-                    <span
+                    <button
                       onClick={() => openSettingModal(device)}
-                      style={{ color: '#666', cursor: 'pointer', fontSize: '14px' }}
-                      title="設定編集"
+                      aria-label="貸出設定編集"
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#4A4A4A', padding: '4px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      &#9881;
-                    </span>
+                      <Settings size={16} aria-hidden />
+                    </button>
                   </td>
                 </tr>
               );
