@@ -171,7 +171,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
   const primaryAsset = assets[0];
 
   // テーマカラー
-  const themeColor = '#4a6741';
+  const themeColor = '#008C1D';
 
   // 確認画面用テーブルスタイル
   const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' };
@@ -274,7 +274,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 </tbody>
               </table>
               {assets.length > 1 && (
-                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#A35414' }}>
+                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#4A4A4A' }}>
                   ※ {assets.length}件の資産が選択されています
                 </div>
               )}
@@ -379,7 +379,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.department || '-'}
               </div>
@@ -390,7 +390,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {applicantName}
               </div>
@@ -401,7 +401,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {applicationDate}
               </div>
@@ -413,7 +413,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.department || '-'}
               </div>
@@ -424,7 +424,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.section || '-'}
               </div>
@@ -435,7 +435,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.roomName || '-'}
               </div>
@@ -449,7 +449,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 background: '#FDF1E5',
                 borderRadius: '4px',
                 fontSize: '13px',
-                color: '#A35414'
+                color: '#4A4A4A'
               }}>
                 ※ {assets.length}件の資産が選択されています
               </div>
@@ -478,37 +478,37 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 alignItems: 'center'
               }}>
                 <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.qrCode || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>品目名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.name || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>メーカー名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.maker || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>型式</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.model || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>数量</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.quantity ?? '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>シリアルNo.</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.serialNumber || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>納入年月日</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.deliveryDate || '-'}
                 </div>
               </div>
@@ -517,7 +517,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
-                    <tr style={{ background: '#f0f0f0' }}>
+                    <tr style={{ background: '#FAFAFA' }}>
                       {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
                         <th key={label} style={{ padding: '8px 10px', textAlign: 'left', border: '1px solid #E1E1E1', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap' }}>
                           {label}
@@ -558,11 +558,11 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
 
             <div style={{
               padding: '10px 14px',
-              background: '#fff8e1',
-              border: '1px solid #ffe082',
+              background: '#FAFAFA',
+              border: '1px solid #FDF1E5',
               borderRadius: '4px',
               fontSize: '12px',
-              color: '#6d4c00',
+              color: '#4A4A4A',
               marginBottom: '16px',
             }}>
               接続本体が変更となる資産は移動先の本体QRコードを登録してください
