@@ -76,9 +76,9 @@ const STATUS_BADGE_COLORS: Record<DisposalRfqStatus, string> = {
   '見積依頼': '#8A8A8A',
   '見積依頼済': '#0092E6',
   '見積登録済': '#008C1D',
-  '発注済': '#A35414',
-  '作業日確定': '#f1c40f',
-  '完了': '#4527A0',
+  '発注済': '#4A4A4A',
+  '作業日確定': '#4A4A4A',
+  '完了': '#4A4A4A',
   '申請を見送る': '#DA0000',
 };
 
@@ -110,8 +110,8 @@ const STEP_TABS: { key: StepKey; label: string; statuses: DisposalRfqStatus[] }[
 
 // 申請種別バッジスタイル
 const getApplicationTypeStyle = (type: '移動申請' | '廃棄申請'): React.CSSProperties => ({
-  background: type === '移動申請' ? '#FDF1E5' : '#FBE9EC',
-  color: type === '移動申請' ? '#A35414' : '#9A2333',
+  background: type === '移動申請' ? '#FDF1E5' : '#FDF1E5',
+  color: type === '移動申請' ? '#4A4A4A' : '#DA0000',
 });
 
 // --- モックデータ ---
@@ -373,21 +373,21 @@ export function TransferDisposalManagementTab() {
         );
       case '見積登録済':
         return (
-          <button style={{ ...btnBase, background: '#A35414' }}
+          <button style={{ ...btnBase, background: '#4A4A4A' }}
             onClick={navigateToTask}>
             廃棄依頼
           </button>
         );
       case '発注済':
         return (
-          <button style={{ ...btnBase, background: '#A35414' }}
+          <button style={{ ...btnBase, background: '#4A4A4A' }}
             onClick={navigateToTask}>
             作業日確定
           </button>
         );
       case '作業日確定':
         return (
-          <button style={{ ...btnBase, background: '#4527A0' }}
+          <button style={{ ...btnBase, background: '#4A4A4A' }}
             onClick={navigateToTask}>
             完了登録
           </button>
@@ -486,7 +486,7 @@ export function TransferDisposalManagementTab() {
                         key={app.id}
                         style={{
                           borderBottom: '1px solid #E1E1E1',
-                          background: selectedApplicationIds.has(app.id) ? '#EAF3FB' : 'transparent',
+                          background: selectedApplicationIds.has(app.id) ? '#EBF5EE' : 'transparent',
                           cursor: 'pointer',
                         }}
                         onClick={() => handleViewDetail(app)}
@@ -571,7 +571,7 @@ export function TransferDisposalManagementTab() {
                 disabled={selectedApplicationIds.size === 0}
                 style={{
                   padding: '8px 16px',
-                  background: selectedApplicationIds.size === 0 ? '#bdc3c7' : '#008C1D',
+                  background: selectedApplicationIds.size === 0 ? '#E1E1E1' : '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -730,7 +730,7 @@ export function TransferDisposalManagementTab() {
         const isTransfer = app.applicationType === '移動申請';
         const typeLabel = isTransfer ? '移動申請' : '廃棄申請';
         const modalTh: React.CSSProperties = {
-          background: '#e8e8e8', padding: '8px 12px', fontSize: '13px',
+          background: '#E1E1E1', padding: '8px 12px', fontSize: '13px',
           fontWeight: 600, textAlign: 'left', border: '1px solid #ccc',
           whiteSpace: 'nowrap', width: '120px',
         };
@@ -755,7 +755,7 @@ export function TransferDisposalManagementTab() {
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
-                background: '#f5f5f0', borderRadius: '8px',
+                background: '#FAFAFA', borderRadius: '8px',
                 width: '90%', maxWidth: '700px', maxHeight: '90vh',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
                 display: 'flex', flexDirection: 'column',
@@ -763,12 +763,12 @@ export function TransferDisposalManagementTab() {
             >
               {/* ヘッダー */}
               <div style={{
-                background: '#3d4f3d', padding: '12px 16px',
+                background: '#4A4A4A', padding: '12px 16px',
                 borderRadius: '8px 8px 0 0', color: 'white',
                 display: 'flex', alignItems: 'center', gap: '12px',
               }}>
                 <span style={{
-                  background: '#fffde7', color: '#4A4A4A', padding: '4px 12px',
+                  background: '#FAFAFA', color: '#4A4A4A', padding: '4px 12px',
                   borderRadius: '4px', fontSize: '14px', fontWeight: 'bold',
                 }}>
                   {typeLabel} 内容確認
@@ -901,7 +901,7 @@ export function TransferDisposalManagementTab() {
                 <button
                   onClick={() => alert('印刷プレビューを表示します（モック）')}
                   style={{
-                    padding: '10px 24px', background: '#fffde7', color: '#333',
+                    padding: '10px 24px', background: '#FAFAFA', color: '#333',
                     border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
                     fontSize: '14px', fontWeight: 'bold',
                   }}
@@ -912,7 +912,7 @@ export function TransferDisposalManagementTab() {
                   <button
                     onClick={handleConfirmApproval}
                     style={{
-                      padding: '10px 24px', background: '#fffde7', color: '#333',
+                      padding: '10px 24px', background: '#FAFAFA', color: '#333',
                       border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
                       fontSize: '14px', fontWeight: 'bold',
                     }}
@@ -923,7 +923,7 @@ export function TransferDisposalManagementTab() {
                   <button
                     onClick={() => alert('添付ファイルを表示します（モック）')}
                     style={{
-                      padding: '10px 24px', background: '#fffde7', color: '#333',
+                      padding: '10px 24px', background: '#FAFAFA', color: '#333',
                       border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
                       fontSize: '14px', fontWeight: 'bold',
                     }}
@@ -934,7 +934,7 @@ export function TransferDisposalManagementTab() {
                 <button
                   onClick={() => setIsApprovalModalOpen(false)}
                   style={{
-                    padding: '10px 32px', background: '#fffde7', color: '#333',
+                    padding: '10px 32px', background: '#FAFAFA', color: '#333',
                     border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
                     fontSize: '14px', fontWeight: 'bold',
                   }}
