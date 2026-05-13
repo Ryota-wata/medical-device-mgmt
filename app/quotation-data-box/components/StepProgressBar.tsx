@@ -20,7 +20,7 @@ const DEFAULT_STEPS = [
 export const StepProgressBar: React.FC<StepProgressBarProps> = ({ currentStep, steps, activeColor }) => {
   const displaySteps = steps || DEFAULT_STEPS;
   const currentColor = activeColor || '#0092E6';
-  const currentBorderColor = activeColor || '#0073B8';
+  const currentBorderColor = activeColor || '#4A4A4A';
 
   return (
     <div style={{
