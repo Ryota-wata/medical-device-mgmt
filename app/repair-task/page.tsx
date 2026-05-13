@@ -266,10 +266,15 @@ const Section = ({
   enabled: boolean;
   completed: boolean;
 }) => {
+  // Figma 構造: 色帯ヘッダー撤去、プレーンテキスト + チェックマーク + 状態バッジ (outline)
+  // (step / accentColor prop は呼び出し側API互換のため引数残す)
+  void step;
+  void accentColor;
+  const titleColor = enabled || completed ? COLORS.textPrimary : COLORS.textMuted;
   return (
     <div style={{
       background: COLORS.white,
-      border: enabled ? `2px solid ${accentColor}` : `1px solid ${COLORS.borderLight}`,
+      border: `1px solid ${COLORS.borderLight}`,
       borderRadius: '8px',
       marginBottom: '16px',
       opacity: enabled ? 1 : 0.7,
@@ -279,38 +284,27 @@ const Section = ({
         alignItems: 'center',
         gap: '12px',
         padding: '10px 16px',
-        background: enabled ? accentColor : completed ? COLORS.success : COLORS.sectionHeader,
-        color: COLORS.textOnColor,
-        borderRadius: '6px 6px 0 0',
+        borderBottom: `1px solid ${COLORS.borderLight}`,
       }}>
-        <span style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '24px',
-          height: '24px',
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.2)',
-          fontSize: '12px',
-          fontWeight: 'bold',
-        }}>
-          {completed ? '✓' : step}
+        <span style={{ fontSize: '14px', fontWeight: 'bold', flex: 1, color: titleColor }}>
+          {title}
         </span>
-        <span style={{ fontSize: '14px', fontWeight: 'bold', flex: 1 }}>{title}</span>
         {completed && (
           <span style={{
             fontSize: '11px',
-            background: 'rgba(255,255,255,0.2)',
+            color: COLORS.success,
+            border: `1px solid ${COLORS.success}`,
             padding: '2px 8px',
             borderRadius: '10px',
           }}>
             完了
           </span>
         )}
-        {enabled && !headerAction && (
+        {enabled && !completed && !headerAction && (
           <span style={{
             fontSize: '11px',
-            background: 'rgba(255,255,255,0.3)',
+            color: COLORS.success,
+            border: `1px solid ${COLORS.success}`,
             padding: '2px 8px',
             borderRadius: '10px',
           }}>
@@ -1693,13 +1687,12 @@ function RepairTaskContent() {
         }}>
           {/* メインプレビューエリア */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* プレビューヘッダー */}
+            {/* プレビューヘッダー (Figma 構造: 色帯なし、プレーンヘッダー) */}
             <div style={{
               padding: '12px 16px',
-              background: previewTab === '見積書' ? COLORS.success :
-                         previewTab === '修理発注書' ? '#4A4A4A' :
-                         previewTab === '完了報告書他' ? COLORS.error : COLORS.primary,
-              color: 'white',
+              background: COLORS.white,
+              borderBottom: `1px solid ${COLORS.borderLight}`,
+              color: COLORS.textPrimary,
               fontSize: '14px',
               fontWeight: 'bold',
               display: 'flex',
@@ -1723,9 +1716,9 @@ function RepairTaskContent() {
                 className="repair-btn"
                 style={{
                   padding: '4px 12px',
-                  background: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  background: COLORS.surface,
+                  color: COLORS.textPrimary,
+                  border: `1px solid ${COLORS.borderLight}`,
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '11px',
@@ -2713,56 +2706,8 @@ function RepairTaskContent() {
           </div>
 
           {/* 縦型タブバー（右端・文書名ベース） */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            background: '#FAFAFA',
-            borderLeft: '1px solid #E1E1E1',
-            width: '32px',
-            flexShrink: 0,
-          }}>
-            {([
-              { key: '申請申請書' as PreviewDocTab, label: '申請申請書' },
-              { key: '修理依頼書' as PreviewDocTab, label: '修理依頼書' },
-              { key: '見積書' as PreviewDocTab, label: '見積書' },
-              { key: '修理発注書' as PreviewDocTab, label: '修理発注書' },
-              { key: '完了報告書他' as PreviewDocTab, label: '完了報告書他' },
-            ]).map((tab) => {
-              const isActive = previewTab === tab.key;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => {
-                    setPreviewTab(tab.key);
-                    if (tab.key === '修理依頼書') setPreviewVendorIndex(null);
-                    if (tab.key === '見積書') setPreviewQuotationIndex(null);
-                    if (tab.key === '完了報告書他') setPreviewDocumentIndex(null);
-                  }}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: 'none',
-                    borderBottom: '1px solid #E1E1E1',
-                    background: isActive ? '#4A4A4A' : 'transparent',
-                    color: isActive ? '#333' : '#666',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    fontWeight: isActive ? 'bold' : 'normal',
-                    transition: 'all 0.2s',
-                    writingMode: 'vertical-rl',
-                    textOrientation: 'mixed',
-                    padding: '6px 0',
-                    letterSpacing: '1px',
-                  }}
-                  title={tab.label}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Figma 構造: 単一プレビューエリア、縦タブバーは撤去
+              previewTab はインラインプレビュー/登録ボタンから setPreviewTab で連動 */}
         </div>
       </div>
 
