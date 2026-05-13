@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ReceivedQuotationItem, ReceivedQuotationGroup } from '@/lib/types/quotation';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface QuotationsTabProps {
   items: ReceivedQuotationItem[];
@@ -119,10 +120,10 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
       </table>
 
       {enrichedItems.length === 0 && (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
-          <p className="text-pretty">該当する見積明細がありません</p>
-          <p style={{ fontSize: '12px', marginTop: '8px' }} className="text-pretty">絞り込み条件を変更してください</p>
-        </div>
+        <EmptyState
+          title="該当する見積明細がありません"
+          description="絞り込み条件を変更してください"
+        />
       )}
     </div>
   );

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Settings } from 'lucide-react';
 import { useLendingStore } from '@/lib/stores';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ステータス型
 type LendingStatus = '待機中' | '貸出可' | '貸出中' | '使用中' | '使用済' | '返却済' | '使用不可';
@@ -677,9 +678,10 @@ export const LendingManagementTab: React.FC = () => {
         </table>
 
         {sortedDevices.length === 0 && (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
-            該当する貸出機器がありません
-          </div>
+          <EmptyState
+            title="該当する貸出機器がありません"
+            description="検索条件を変更するか、フィルターを見直してください"
+          />
         )}
       </div>
 

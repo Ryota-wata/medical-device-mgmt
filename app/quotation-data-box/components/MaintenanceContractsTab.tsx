@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMaintenanceContractStore } from '@/lib/stores';
 import { ContractReviewModal } from './ContractReviewModal';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // 契約種別
 type ContractType = '保守契約' | '定期点検' | 'スポット契約' | '借用契約' | 'その他';
@@ -1050,9 +1051,10 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         </table>
 
         {sortedContracts.length === 0 && (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
-            該当する保守契約がありません
-          </div>
+          <EmptyState
+            title="該当する保守契約がありません"
+            description="検索条件を変更するか、フィルターを見直してください"
+          />
         )}
       </div>
 

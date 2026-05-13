@@ -1,4 +1,5 @@
 import React from 'react';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // 修理タスクのステータス
 export type RepairStatus = '見積依頼' | '見積依頼済' | '見積登録済' | '発注登録済' | '作業日確定' | '完了' | '却下';
@@ -282,9 +283,10 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
       </table>
 
       {repairRequests.length === 0 && (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#8A8A8A' }}>
-          該当する修理依頼がありません
-        </div>
+        <EmptyState
+          title="該当する修理依頼がありません"
+          description="検索条件を変更するか、フィルターを見直してください"
+        />
       )}
     </div>
   );
