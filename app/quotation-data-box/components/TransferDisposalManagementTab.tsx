@@ -414,18 +414,20 @@ export function TransferDisposalManagementTab() {
         border: '1px solid #E1E1E1',
         overflow: 'hidden',
       }}>
-        {/* ヘッダー */}
+        {/* ヘッダー (Figma 準拠: 白背景 + 黒文字) */}
         <div style={{
           padding: '12px 16px',
-          background: '#008C1D',
-          color: 'white',
+          background: 'white',
+          color: '#4A4A4A',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <span style={{ fontWeight: 'bold', fontSize: '14px' }}>申請受付</span>
+          <span style={{ fontWeight: 600, fontSize: '14px' }}>申請受付</span>
           <span style={{
-            background: 'rgba(255,255,255,0.2)',
+            background: '#F1F1F1',
+            color: '#4A4A4A',
             padding: '2px 10px',
             borderRadius: '12px',
             fontSize: '12px',
@@ -446,7 +448,7 @@ export function TransferDisposalManagementTab() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                   {/* グループヘッダー行 */}
-                  <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                  <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
                     <th rowSpan={2} style={{ ...thGroupStyle, width: '36px', verticalAlign: 'middle' }}>
                       <input
                         type="checkbox"
@@ -462,7 +464,7 @@ export function TransferDisposalManagementTab() {
                     <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center', verticalAlign: 'middle' }}></th>
                   </tr>
                   {/* サブカラムヘッダー行 */}
-                  <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                  <tr style={{ background: '#FAFAFA', color: '#4A4A4A' }}>
                     <th style={thSubStyle}>申請日</th>
                     <th style={thSubStyle}>申請No, 種別</th>
                     <th style={thSubStyle}>部門名</th>
@@ -597,11 +599,12 @@ export function TransferDisposalManagementTab() {
         display: 'flex',
         flexDirection: 'column',
       }}>
-        {/* ヘッダー */}
+        {/* ヘッダー (Figma 準拠: 白背景 + 黒文字) */}
         <div style={{
           padding: '10px 16px',
-          background: '#008C1D',
-          color: 'white',
+          background: 'white',
+          color: '#4A4A4A',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -641,7 +644,8 @@ export function TransferDisposalManagementTab() {
                 {tab.label}
                 <span style={{
                   marginLeft: '6px',
-                  background: isActive ? 'rgba(255,255,255,0.3)' : '#E1E1E1',
+                  background: '#F1F1F1',
+                  color: '#4A4A4A',
                   padding: '1px 6px',
                   borderRadius: '8px',
                   fontSize: '11px',
@@ -668,7 +672,7 @@ export function TransferDisposalManagementTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                 {/* グループヘッダー行 */}
-                <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>廃棄依頼No,</th>
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>廃棄依頼グループ名称</th>
                   <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>廃棄業者情報</th>
@@ -677,7 +681,7 @@ export function TransferDisposalManagementTab() {
                   <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
                 </tr>
                 {/* サブカラムヘッダー行 */}
-                <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                <tr style={{ background: '#FAFAFA', color: '#4A4A4A' }}>
                   <th style={thSubStyle}>業者名</th>
                   <th style={thSubStyle}>氏名</th>
                   <th style={thSubStyle}>連絡先</th>
