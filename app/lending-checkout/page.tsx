@@ -92,10 +92,10 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
 
 // ステータスに応じたバッジスタイル
 const STATUS_STYLES: Record<DeviceStatus, string> = {
-  available: 'bg-[#e8f5e9] text-[#146E2E] border-cta-primary',
-  lending: 'bg-[#e3f2fd] text-[#1E5A9E] border-[#0092E6]',
-  in_use: 'bg-[#fff3e0] text-[#A35414] border-[#A66F1B]',
-  used: 'bg-[#FBE9EC] text-[#9A2333] border-[#DA0000]',
+  available: 'bg-[#EBF5EE] text-[#146E2E] border-cta-primary',
+  lending: 'bg-[#EBF5EE] text-[#4A4A4A] border-[#0092E6]',
+  in_use: 'bg-[#FAFAFA] text-[#4A4A4A] border-[#4A4A4A]',
+  used: 'bg-[#FDF1E5] text-[#DA0000] border-[#DA0000]',
 };
 
 export default function LendingCheckoutPage() {
@@ -458,7 +458,7 @@ export default function LendingCheckoutPage() {
                     </span>
                   </div>
                   <div className="text-xs text-content-sub">
-                    ME管理No: <span className="font-semibold text-[#374151] tabular-nums">{deviceInfo.meNo}</span>
+                    ME管理No: <span className="font-semibold text-[#4A4A4A] tabular-nums">{deviceInfo.meNo}</span>
                   </div>
                   {showLendingInfoReadonly && deviceInfo.lendingInfo && (
                     <div className="mt-2 pt-2 border-t border-cta-primary text-xs text-content-sub">
@@ -549,14 +549,14 @@ export default function LendingCheckoutPage() {
                   {deviceInfo.manufacturer} / {deviceInfo.model}
                 </div>
                 <div className="text-xs text-content-sub mt-1">
-                  ME管理No: <span className="font-semibold text-[#374151] tabular-nums">{deviceInfo.meNo}</span>
+                  ME管理No: <span className="font-semibold text-[#4A4A4A] tabular-nums">{deviceInfo.meNo}</span>
                 </div>
               </div>
 
               <div className="text-center">
                 <span
                   onClick={handleNextDevice}
-                  className="text-sm text-cta-primary-dark font-semibold underline cursor-pointer hover:text-[#219a52] transition-colors"
+                  className="text-sm text-cta-primary-dark font-semibold underline cursor-pointer hover:text-[#008C1D] transition-colors"
                 >
                   次の機器を処理
                 </span>
@@ -587,7 +587,7 @@ export default function LendingCheckoutPage() {
         <div className="mt-4">
           <button
             onClick={() => router.push('/main')}
-            className="px-8 py-2.5 bg-surface-disabled text-sm font-medium text-[#4b5563] rounded-md border-0 cursor-pointer hover:bg-[#d1d5db] transition-colors"
+            className="px-8 py-2.5 bg-surface-disabled text-sm font-medium text-[#4A4A4A] rounded-md border-0 cursor-pointer hover:bg-[#E1E1E1] transition-colors"
           >
             戻る
           </button>
@@ -629,7 +629,7 @@ export default function LendingCheckoutPage() {
             </div>
 
             {/* 年月日ヘッダー */}
-            <div className="flex px-2.5 py-2 border-b border-stroke-card bg-[#fafafa]">
+            <div className="flex px-2.5 py-2 border-b border-stroke-card bg-[#FAFAFA]">
               <div className="flex-1 text-center text-[13px] font-bold text-content-sub">年</div>
               <div className="flex-1 text-center text-[13px] font-bold text-content-sub">月</div>
               <div className="flex-1 text-center text-[13px] font-bold text-content-sub">日</div>
@@ -668,7 +668,7 @@ export default function LendingCheckoutPage() {
                         height: `${ITEM_HEIGHT}px`,
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempYear === year ? '#008C1D' : '#1f2937',
+                        color: tempYear === year ? '#008C1D' : '#4A4A4A',
                         fontWeight: tempYear === year ? 'bold' : 'normal',
                       }}
                     >
@@ -699,7 +699,7 @@ export default function LendingCheckoutPage() {
                         height: `${ITEM_HEIGHT}px`,
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempMonth === month ? '#008C1D' : '#1f2937',
+                        color: tempMonth === month ? '#008C1D' : '#4A4A4A',
                         fontWeight: tempMonth === month ? 'bold' : 'normal',
                       }}
                     >
@@ -730,7 +730,7 @@ export default function LendingCheckoutPage() {
                         height: `${ITEM_HEIGHT}px`,
                         scrollSnapAlign: 'center',
                         fontSize: '18px',
-                        color: tempDay === day ? '#008C1D' : '#1f2937',
+                        color: tempDay === day ? '#008C1D' : '#4A4A4A',
                         fontWeight: tempDay === day ? 'bold' : 'normal',
                       }}
                     >
