@@ -83,14 +83,14 @@ const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      return { label: '保証期限切れ', color: '#b71c1c', fontWeight: 'bold', sortValue: diffDays };
+      return { label: '保証期限切れ', color: '#DA0000', fontWeight: 'bold', sortValue: diffDays };
     }
 
     const diffMonths = Math.ceil(diffDays / 30);
     if (diffMonths <= 6) {
       return {
         label: `保証期間終了 ${diffMonths}ヶ月前`,
-        color: diffMonths <= 2 ? '#9A2333' : '#A35414',
+        color: diffMonths <= 2 ? '#DA0000' : '#4A4A4A',
         fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
         sortValue: diffDays,
       };
@@ -107,7 +107,7 @@ const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
     if (diffMonths <= 6) {
       return {
         label: `契約更新 ${diffMonths}ヶ月前`,
-        color: diffMonths <= 2 ? '#9A2333' : '#1E5A9E',
+        color: diffMonths <= 2 ? '#DA0000' : '#4A4A4A',
         fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
         sortValue: diffDays,
       };
@@ -140,9 +140,9 @@ const calcDeadlineDisplay = (contract: MaintenanceContract): { label: string; co
   }
 
   if (nearestDays < 0) {
-    return { label: `${Math.abs(nearestDays)}日超過`, color: '#b71c1c' };
+    return { label: `${Math.abs(nearestDays)}日超過`, color: '#DA0000' };
   }
-  return { label: `${nearestDays}日前`, color: nearestDays <= 30 ? '#9A2333' : '#A35414' };
+  return { label: `${nearestDays}日前`, color: nearestDays <= 30 ? '#DA0000' : '#4A4A4A' };
 };
 
 // モック契約データ
@@ -576,29 +576,29 @@ const ContractGroupDetailModal = ({
               <tr>
                 <th colSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>部署情報</th>
                 <th colSpan={4} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>商品情報</th>
-                <th colSpan={10} style={{ ...mThGroup, background: '#fff176', color: '#333' }}>点検情報</th>
+                <th colSpan={10} style={{ ...mThGroup, background: '#FAFAFA', color: '#333' }}>点検情報</th>
                 <th rowSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>操作</th>
               </tr>
               {/* サブカラムヘッダー行 */}
               <tr>
                 {/* 部署情報 */}
-                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>管理部署</th>
-                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>設置部署</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>管理部署</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>設置部署</th>
                 {/* 商品情報 */}
-                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>QRラベル</th>
-                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>品目</th>
-                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>メーカー</th>
-                <th style={{ ...mThSub, background: '#eeeeee', color: '#333' }}>型式</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>QRラベル</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>品目</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>メーカー</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>型式</th>
                 {/* 点検情報 */}
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>点検グループ名</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>点検種別</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>点検周期</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>保証期間</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>部品免責</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>免責金額</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>オンコール</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>リモート</th>
-                <th style={{ ...mThSub, background: '#fff9c4', color: '#333' }}>コメント</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>点検グループ名</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>点検種別</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>点検周期</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>保証期間</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>部品免責</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>免責金額</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>オンコール</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>リモート</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>コメント</th>
               </tr>
             </thead>
             <tbody>
@@ -606,7 +606,7 @@ const ContractGroupDetailModal = ({
                 const isEditing = editingId === asset.id;
                 const isNewAsset = !asset.qrLabel && !asset.itemName;
                 return (
-                <tr key={asset.id} style={{ background: isEditing ? '#fffde7' : idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                <tr key={asset.id} style={{ background: isEditing ? '#FAFAFA' : idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
                   {/* 部署情報（新規追加時は編集可能） */}
                   {isEditing && isNewAsset ? (
                     <>
@@ -615,8 +615,8 @@ const ContractGroupDetailModal = ({
                     </>
                   ) : (
                     <>
-                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.managementDept || '-'}</td>
-                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.installDept || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.managementDept || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.installDept || '-'}</td>
                     </>
                   )}
                   {/* 商品情報（新規追加時は編集可能） */}
@@ -629,10 +629,10 @@ const ContractGroupDetailModal = ({
                     </>
                   ) : (
                     <>
-                      <td style={{ ...mTd, background: '#f9f9f9', fontFamily: 'monospace', fontWeight: 600, color: '#0092E6' }}>{asset.qrLabel || '-'}</td>
-                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.itemName || '-'}</td>
-                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.maker || '-'}</td>
-                      <td style={{ ...mTd, background: '#f9f9f9' }}>{asset.model || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA', fontFamily: 'monospace', fontWeight: 600, color: '#0092E6' }}>{asset.qrLabel || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.itemName || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.maker || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.model || '-'}</td>
                     </>
                   )}
                   {/* 点検情報（表示 or 編集） */}
@@ -707,7 +707,7 @@ const ContractGroupDetailModal = ({
             onClick={() => setShowReviewModal(true)}
             style={{
               padding: '10px 20px',
-              background: '#A30000',
+              background: '#DA0000',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -859,8 +859,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   };
 
   const getSortArrow = () => {
-    const upColor = sortDirection === 'asc' ? '#A30000' : '#aaa';
-    const downColor = sortDirection === 'desc' ? '#A30000' : '#aaa';
+    const upColor = sortDirection === 'asc' ? '#DA0000' : '#aaa';
+    const downColor = sortDirection === 'desc' ? '#DA0000' : '#aaa';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '4px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -905,10 +905,10 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   // 契約種別バッジ色
   const getContractTypeBadge = (type: ContractType) => {
     const colors: Record<ContractType, string> = {
-      '保守契約': '#0073B8',
+      '保守契約': '#4A4A4A',
       '定期点検': '#008C1D',
-      'スポット契約': '#A35414',
-      '借用契約': '#4527A0',
+      'スポット契約': '#4A4A4A',
+      '借用契約': '#4A4A4A',
       'その他': '#8A8A8A',
     };
     return (
@@ -948,31 +948,31 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>契約情報</th>
-              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>業者情報</th>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}>契約情報</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}>業者情報</th>
               <th
                 rowSpan={2}
-                style={{ ...thGroupStyle, textAlign: 'center', background: '#ffcc80', color: '#333', borderColor: '#ef6c00' }}
+                style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}
               >
                 契約検討開始
               </th>
-              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#DA0000', color: 'white', borderColor: '#9A2333' }}>操作</th>
+              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#DA0000', color: 'white', borderColor: '#DA0000' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>申請No.</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約グループ名</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約種別</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>種別備考</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約日</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約期間</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約金額</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>単年度金額</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>契約業者</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>担当者</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>連絡先</th>
-              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#9A2333' }}>登録</th>
-              <th style={{ ...thSubStyle, background: '#ef9a9a', color: '#333', borderColor: '#9A2333' }}>フリーコメント</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>申請No.</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約グループ名</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約種別</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>種別備考</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約日</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約期間</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約金額</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>単年度金額</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約業者</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>担当者</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>連絡先</th>
+              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>登録</th>
+              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>フリーコメント</th>
             </tr>
           </thead>
           <tbody>
@@ -1012,8 +1012,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     {(() => {
                       const stepConfig: Record<number, { label: string; color: string }> = {
-                        1: { label: '見積依頼', color: '#7c3aed' },
-                        2: { label: '見積登録', color: '#d97706' },
+                        1: { label: '見積依頼', color: '#4A4A4A' },
+                        2: { label: '見積登録', color: '#4A4A4A' },
                         3: { label: '契約登録', color: '#0092E6' },
                         4: { label: '完了登録', color: '#008C1D' },
                       };
