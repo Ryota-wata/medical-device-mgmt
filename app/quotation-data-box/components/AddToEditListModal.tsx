@@ -148,7 +148,7 @@ export function AddToEditListModal({
             <div
               style={{
                 background: '#FDF1E5',
-                border: '1px solid #A66F1B',
+                border: '1px solid #4A4A4A',
                 borderRadius: '8px',
                 padding: '12px 16px',
                 marginBottom: '20px',
@@ -158,7 +158,7 @@ export function AddToEditListModal({
               }}
             >
               <span style={{ fontSize: '18px' }}>⚠️</span>
-              <span style={{ fontSize: '14px', color: '#A35414' }}>
+              <span style={{ fontSize: '14px', color: '#4A4A4A' }}>
                 編集リストがありません。新規作成してください。
               </span>
             </div>
@@ -235,8 +235,8 @@ export function AddToEditListModal({
                       gap: '12px',
                       padding: '12px 16px',
                       cursor: 'pointer',
-                      borderBottom: '1px solid #f0f0f0',
-                      background: selectedEditListId === list.id ? '#EAF3FB' : 'transparent',
+                      borderBottom: '1px solid #FAFAFA',
+                      background: selectedEditListId === list.id ? '#EBF5EE' : 'transparent',
                     }}
                   >
                     <input
@@ -290,7 +290,7 @@ export function AddToEditListModal({
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: '14px',
                     boxSizing: 'border-box',
@@ -321,7 +321,7 @@ export function AddToEditListModal({
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: '13px',
                     marginBottom: '8px',
@@ -351,7 +351,7 @@ export function AddToEditListModal({
                 {/* 施設リスト */}
                 <div
                   style={{
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     maxHeight: '160px',
                     overflow: 'auto',
@@ -372,7 +372,7 @@ export function AddToEditListModal({
                           gap: '10px',
                           padding: '10px 12px',
                           cursor: 'pointer',
-                          borderBottom: '1px solid #f0f0f0',
+                          borderBottom: '1px solid #FAFAFA',
                           background: selectedFacilities.includes(facility) ? '#EBF5EE' : 'transparent',
                         }}
                       >
@@ -392,7 +392,7 @@ export function AddToEditListModal({
           )}
 
           {/* 対象申請 */}
-          <div style={{ marginTop: '20px', padding: '12px', background: '#f0f0f0', borderRadius: '6px' }}>
+          <div style={{ marginTop: '20px', padding: '12px', background: '#FAFAFA', borderRadius: '6px' }}>
             <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
               対象申請: {selectedApplicationIds.length}件
             </span>
