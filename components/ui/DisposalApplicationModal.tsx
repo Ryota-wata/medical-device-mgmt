@@ -347,80 +347,26 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               申請基本情報
             </h3>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr auto 1fr auto 1fr',
-              gap: '12px 16px',
-              alignItems: 'center'
-            }}>
-              {/* 1行目 */}
-              <div style={{ fontSize: '13px', color: '#666' }}>所属部署</div>
-              <div style={{
-                padding: '8px 12px',
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                fontSize: '13px',
-                background: '#FAFAFA'
-              }}>
-                {primaryAsset.department || '-'}
-              </div>
-
-              <div style={{ fontSize: '13px', color: '#666' }}>申請者</div>
-              <div style={{
-                padding: '8px 12px',
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                fontSize: '13px',
-                background: '#FAFAFA'
-              }}>
-                {applicantName}
-              </div>
-
-              <div style={{ fontSize: '13px', color: '#666' }}>申請日</div>
-              <div style={{
-                padding: '8px 12px',
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                fontSize: '13px',
-                background: '#FAFAFA'
-              }}>
-                {applicationDate}
-              </div>
-
-              {/* 2行目 */}
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部門</div>
-              <div style={{
-                padding: '8px 12px',
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                fontSize: '13px',
-                background: '#FAFAFA'
-              }}>
-                {primaryAsset.department || '-'}
-              </div>
-
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部署</div>
-              <div style={{
-                padding: '8px 12px',
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                fontSize: '13px',
-                background: '#FAFAFA'
-              }}>
-                {primaryAsset.section || '-'}
-              </div>
-
-              <div style={{ fontSize: '13px', color: '#666' }}>設置室名</div>
-              <div style={{
-                padding: '8px 12px',
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                fontSize: '13px',
-                background: '#FAFAFA'
-              }}>
-                {primaryAsset.roomName || '-'}
-              </div>
-            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                <tr>
+                  <th style={thStyle}>所属部署</th>
+                  <td style={tdStyle}>{primaryAsset.department || '-'}</td>
+                  <th style={thStyle}>申請者</th>
+                  <td style={tdStyle}>{applicantName}</td>
+                  <th style={thStyle}>申請日</th>
+                  <td style={tdStyle}>{applicationDate}</td>
+                </tr>
+                <tr>
+                  <th style={thStyle}>設置部門</th>
+                  <td style={tdStyle}>{primaryAsset.department || '-'}</td>
+                  <th style={thStyle}>設置部署</th>
+                  <td style={tdStyle}>{primaryAsset.section || '-'}</td>
+                  <th style={thStyle}>設置室名</th>
+                  <td style={tdStyle}>{primaryAsset.roomName || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
 
             {/* 複数選択時の表示 */}
             {assets.length > 1 && (
@@ -451,48 +397,31 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             </h3>
 
             {assets.length === 1 ? (
-              /* 単数選択：グリッド表示 */
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr auto 1fr auto 1fr',
-                gap: '12px 16px',
-                alignItems: 'center'
-              }}>
-                <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.qrCode || '-'}
-                </div>
-
-                <div style={{ fontSize: '13px', color: '#666' }}>品目名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.name || '-'}
-                </div>
-
-                <div style={{ fontSize: '13px', color: '#666' }}>メーカー名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.maker || '-'}
-                </div>
-
-                <div style={{ fontSize: '13px', color: '#666' }}>型式</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.model || '-'}
-                </div>
-
-                <div style={{ fontSize: '13px', color: '#666' }}>数量</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.quantity ?? '-'}
-                </div>
-
-                <div style={{ fontSize: '13px', color: '#666' }}>シリアルNo.</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.serialNumber || '-'}
-                </div>
-
-                <div style={{ fontSize: '13px', color: '#666' }}>納入年月日</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
-                  {primaryAsset.deliveryDate || '-'}
-                </div>
-              </div>
+              /* 単数選択：テーブル表示 (Figma 395:68355 準拠) */
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={thStyle}>QRコード</th>
+                    <td style={tdStyle}>{primaryAsset.qrCode || '-'}</td>
+                    <th style={thStyle}>品目名</th>
+                    <td style={tdStyle}>{primaryAsset.name || '-'}</td>
+                    <th style={thStyle}>メーカー名</th>
+                    <td style={tdStyle}>{primaryAsset.maker || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>型式</th>
+                    <td style={tdStyle}>{primaryAsset.model || '-'}</td>
+                    <th style={thStyle}>数量</th>
+                    <td style={tdStyle}>{primaryAsset.quantity ?? '-'}</td>
+                    <th style={thStyle}>シリアルNo.</th>
+                    <td style={tdStyle}>{primaryAsset.serialNumber || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>納入年月日</th>
+                    <td style={tdStyle} colSpan={5}>{primaryAsset.deliveryDate || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
             ) : (
               /* 複数選択：テーブル表示 */
               <div style={{ overflowX: 'auto' }}>
