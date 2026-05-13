@@ -492,11 +492,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   warning: {
     backgroundColor: '#FDF1E5',
-    border: '1px solid #A66F1B',
+    border: '1px solid #4A4A4A',
     borderRadius: '4px',
     padding: '8px 12px',
     fontSize: '13px',
-    color: '#A35414',
+    color: '#4A4A4A',
     marginTop: '8px',
   },
   body: {
@@ -507,7 +507,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px',
     borderRadius: '4px',
     fontSize: '13px',
-    color: '#A35414',
+    color: '#4A4A4A',
     marginBottom: '16px',
   },
   table: {
@@ -558,7 +558,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '6px 12px',
     border: '1px solid #DA0000',
     borderRadius: '4px',
-    backgroundColor: '#fdecea',
+    backgroundColor: '#FDF1E5',
     cursor: 'pointer',
     fontSize: '12px',
     color: '#DA0000',
@@ -625,7 +625,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   reinspectButton: {
     padding: '12px 16px',
-    backgroundColor: '#A35414',
+    backgroundColor: '#4A4A4A',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
