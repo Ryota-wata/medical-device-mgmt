@@ -21,26 +21,26 @@ const LENDING_STATUS_COLORS: Record<LendingStatus, string> = {
   '待機中': '#8A8A8A',
   '貸出可': '#008C1D',
   '貸出中': '#0092E6',
-  '使用中': '#A35414',
+  '使用中': '#4A4A4A',
   '使用済': '#8A8A8A',
-  '返却済': '#16a085',
+  '返却済': '#4A4A4A',
   '使用不可': '#DA0000',
 };
 
 // 定期ステータスの色
 const getInspectionStatusColor = (status: string): string => {
   if (status === '点検月超過') return '#DA0000';
-  if (status === '点検週') return '#A30000';
-  if (status === '点検月') return '#A35414';
+  if (status === '点検週') return '#DA0000';
+  if (status === '点検月') return '#4A4A4A';
   if (status.includes('ヶ月前')) return '#0092E6';
   return '#8A8A8A';
 };
 
 // 定期ステータスの行背景色
 const getRowHighlight = (status: string): string | undefined => {
-  if (status === '点検月超過') return '#fff0f0';
-  if (status === '点検週') return '#fff8e1';
-  if (status === '点検月') return '#fffde7';
+  if (status === '点検月超過') return '#FDF1E5';
+  if (status === '点検週') return '#FAFAFA';
+  if (status === '点検月') return '#FAFAFA';
   return undefined;
 };
 
@@ -173,8 +173,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
 
   const getSortArrow = (field: SortField) => {
     const isActive = sortField === field;
-    const upColor = isActive && sortDirection === 'asc' ? '#A30000' : '#aaa';
-    const downColor = isActive && sortDirection === 'desc' ? '#A30000' : '#aaa';
+    const upColor = isActive && sortDirection === 'asc' ? '#DA0000' : '#aaa';
+    const downColor = isActive && sortDirection === 'desc' ? '#DA0000' : '#aaa';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '2px', lineHeight: 1, fontSize: '8px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -323,29 +323,29 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
             {/* グループヘッダー */}
             <tr>
               <th colSpan={2} style={{ ...thGroup, background: '#EBF5EE', color: '#333' }}>設置情報</th>
-              <th colSpan={4} style={{ ...thGroup, background: '#fff9c4', color: '#333' }}>商品情報</th>
-              <th style={{ ...thGroup, background: '#EAF3FB', color: '#333' }}>貸出状況</th>
-              <th colSpan={6} style={{ ...thGroup, background: '#ffccbc', color: '#333' }}>定期点検情報</th>
-              <th colSpan={3} style={{ ...thGroup, background: '#F1ECF7', color: '#333' }}>操作</th>
+              <th colSpan={4} style={{ ...thGroup, background: '#FDF1E5', color: '#333' }}>商品情報</th>
+              <th style={{ ...thGroup, background: '#EBF5EE', color: '#333' }}>貸出状況</th>
+              <th colSpan={6} style={{ ...thGroup, background: '#FDF1E5', color: '#333' }}>定期点検情報</th>
+              <th colSpan={3} style={{ ...thGroup, background: '#FAFAFA', color: '#333' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr>
               <th style={{ ...thSub, background: '#EBF5EE' }}>部門</th>
               <th style={{ ...thSub, background: '#EBF5EE' }}>部署</th>
-              <th style={{ ...thSub, background: '#fffde7' }}>QRコード</th>
-              <th style={{ ...thSub, background: '#fffde7' }}>品目</th>
-              <th style={{ ...thSortable, background: '#fffde7' }} onClick={() => handleSortToggle('maker')}>メーカー{getSortArrow('maker')}</th>
-              <th style={{ ...thSortable, background: '#fffde7' }} onClick={() => handleSortToggle('model')}>型式{getSortArrow('model')}</th>
-              <th style={{ ...thSortable, background: '#EAF3FB' }} onClick={() => handleSortToggle('lendingStatus')}>ステータス{getSortArrow('lendingStatus')}</th>
-              <th style={{ ...thSub, background: '#fbe9e7' }}>種別</th>
-              <th style={{ ...thSub, background: '#fbe9e7' }}>点検メニュー</th>
-              <th style={{ ...thSub, background: '#fbe9e7' }}>点検周期</th>
-              <th style={{ ...thSub, background: '#fbe9e7' }}>前回点検日</th>
-              <th style={{ ...thSortable, background: '#fbe9e7' }} onClick={() => handleSortToggle('nextInspectionDate')}>次回点検予定{getSortArrow('nextInspectionDate')}</th>
-              <th style={{ ...thSortable, background: '#fbe9e7' }} onClick={() => handleSortToggle('status')}>ステータス{getSortArrow('status')}</th>
-              <th style={{ ...thSub, background: '#F1ECF7', textAlign: 'center' }}>Action</th>
-              <th style={{ ...thSub, background: '#F1ECF7', textAlign: 'center' }}>設定変更</th>
-              <th style={{ ...thSub, background: '#F1ECF7', textAlign: 'center' }}>カルテ</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>QRコード</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>品目</th>
+              <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('maker')}>メーカー{getSortArrow('maker')}</th>
+              <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('model')}>型式{getSortArrow('model')}</th>
+              <th style={{ ...thSortable, background: '#EBF5EE' }} onClick={() => handleSortToggle('lendingStatus')}>ステータス{getSortArrow('lendingStatus')}</th>
+              <th style={{ ...thSub, background: '#FDF1E5' }}>種別</th>
+              <th style={{ ...thSub, background: '#FDF1E5' }}>点検メニュー</th>
+              <th style={{ ...thSub, background: '#FDF1E5' }}>点検周期</th>
+              <th style={{ ...thSub, background: '#FDF1E5' }}>前回点検日</th>
+              <th style={{ ...thSortable, background: '#FDF1E5' }} onClick={() => handleSortToggle('nextInspectionDate')}>次回点検予定{getSortArrow('nextInspectionDate')}</th>
+              <th style={{ ...thSortable, background: '#FDF1E5' }} onClick={() => handleSortToggle('status')}>ステータス{getSortArrow('status')}</th>
+              <th style={{ ...thSub, background: '#FAFAFA', textAlign: 'center' }}>Action</th>
+              <th style={{ ...thSub, background: '#FAFAFA', textAlign: 'center' }}>設定変更</th>
+              <th style={{ ...thSub, background: '#FAFAFA', textAlign: 'center' }}>カルテ</th>
             </tr>
           </thead>
           <tbody>
@@ -451,7 +451,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                             {task.inspectionType === 'メーカー保守' && (
                               <button
                                 onClick={() => handleResultRegistration(task)}
-                                style={dropdownItemStyle('#4527A0')}
+                                style={dropdownItemStyle('#4A4A4A')}
                               >
                                 結果登録
                               </button>
@@ -581,7 +581,7 @@ function dropdownItemStyle(color: string): React.CSSProperties {
     padding: '8px 14px',
     background: 'transparent',
     border: 'none',
-    borderBottom: '1px solid #f0f0f0',
+    borderBottom: '1px solid #FAFAFA',
     textAlign: 'left',
     fontSize: '12px',
     color: color,
