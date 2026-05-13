@@ -47,7 +47,7 @@ interface OrderPreviewModalProps {
 
 /** カラートークン（page.tsx と統一） */
 const COLORS = {
-  primary: '#4a6fa5',
+  primary: '#4A4A4A',
   primaryDark: '#146E2E',
   textPrimary: '#4A4A4A',
   textSecondary: '#4A4A4A',
@@ -56,7 +56,7 @@ const COLORS = {
   border: '#E1E1E1',
   borderLight: '#E1E1E1',
   white: '#ffffff',
-  accent: '#A35414',
+  accent: '#4A4A4A',
   accentText: '#4A4A4A',
 } as const;
 
