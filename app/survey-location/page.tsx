@@ -18,7 +18,9 @@ function SurveyLocationContent() {
   const facilityMasterData = useMemo(() => {
     // selectedFacility 未設定時は全施設データから抽出 (デモ用フォールバック)
     if (!facilityName) return hospitalFacilities;
-    return hospitalFacilities.filter(f => f.hospitalName === facilityName);
+    const filtered = hospitalFacilities.filter(f => f.hospitalName === facilityName);
+    // 選択施設に該当データがない場合も全件にフォールバック (selectedFacility がマスタ未登録の場合の救済)
+    return filtered.length > 0 ? filtered : hospitalFacilities;
   }, [hospitalFacilities, facilityName]);
 
   const surveyDate = useMemo(() => {
