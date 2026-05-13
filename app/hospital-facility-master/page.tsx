@@ -249,6 +249,7 @@ function HospitalFacilityMasterContent() {
     color: '#4A4A4A',
     whiteSpace: 'nowrap' as const,
     background: '#FAFAFA',
+    border: '1px solid #E1E1E1',
   });
 
   const thStyleNew = (isTab: boolean) => ({
@@ -259,6 +260,7 @@ function HospitalFacilityMasterContent() {
     color: '#4A4A4A',
     whiteSpace: 'nowrap' as const,
     background: '#FAFAFA',
+    border: '1px solid #E1E1E1',
   });
 
   const thStyleHosp = (isTab: boolean) => ({
@@ -269,13 +271,16 @@ function HospitalFacilityMasterContent() {
     color: '#146E2E',
     whiteSpace: 'nowrap' as const,
     background: '#EBF5EE',
+    border: '1px solid #E1E1E1',
   });
 
   const tdBase = (isTab: boolean) => ({
     padding: isTab ? '6px 4px' : '8px 6px',
     fontSize: isTab ? '12px' : '13px',
     whiteSpace: 'nowrap' as const,
-    verticalAlign: 'top' as const,
+    verticalAlign: 'middle' as const,
+    border: '1px solid #E1E1E1',
+    color: '#4A4A4A',
   });
 
   const cellInputStyle = {
@@ -675,7 +680,7 @@ function HospitalFacilityMasterContent() {
                     <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       新（リモデルのみ）
                     </th>
-                    <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#FAFAFA', border: '2px solid #E1E1E1' }}>操作</th>
+                    <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#F1F1F1', border: '1px solid #E1E1E1' }}>操作</th>
                   </tr>
                   {/* Row 2: カラム名 */}
                   <tr style={{ borderBottom: '2px solid #E1E1E1' }}>
