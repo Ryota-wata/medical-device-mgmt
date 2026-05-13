@@ -60,8 +60,8 @@ export function ExcelImportPreviewModal({
             style={{
               padding: '6px 12px',
               background: 'transparent',
-              color: '#0073B8',
-              border: '1px solid #0073B8',
+              color: '#4A4A4A',
+              border: '1px solid #4A4A4A',
               borderRadius: '4px',
               fontSize: '12px',
               fontWeight: 600,
@@ -83,7 +83,7 @@ export function ExcelImportPreviewModal({
             <div style={{
               flex: 1,
               padding: '16px',
-              background: '#eaf7ee',
+              background: '#EBF5EE',
               borderRadius: '8px',
               textAlign: 'center',
             }}>
@@ -95,7 +95,7 @@ export function ExcelImportPreviewModal({
             <div style={{
               flex: 1,
               padding: '16px',
-              background: errors.length > 0 ? '#fdecea' : '#FAFAFA',
+              background: errors.length > 0 ? '#FDF1E5' : '#FAFAFA',
               borderRadius: '8px',
               textAlign: 'center',
             }}>
@@ -114,8 +114,8 @@ export function ExcelImportPreviewModal({
           {/* エラー一覧 */}
           {errors.length > 0 && (
             <div style={{
-              background: '#fdecea',
-              border: '1px solid #f5c6cb',
+              background: '#FDF1E5',
+              border: '1px solid #FDF1E5',
               borderRadius: '8px',
               padding: '16px',
               marginBottom: '16px',
@@ -123,7 +123,7 @@ export function ExcelImportPreviewModal({
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#DA0000', marginBottom: '8px' }}>
                 エラー詳細
               </div>
-              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#721c24' }}>
+              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#DA0000' }}>
                 {errors.map((err, i) => (
                   <li key={i} style={{ marginBottom: '4px' }}>{err}</li>
                 ))}
@@ -152,7 +152,7 @@ export function ExcelImportPreviewModal({
               padding: '10px 20px',
               background: '#FAFAFA',
               color: '#4A4A4A',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: '14px',
               fontWeight: 600,
@@ -166,7 +166,7 @@ export function ExcelImportPreviewModal({
             disabled={disabled}
             style={{
               padding: '10px 20px',
-              background: disabled ? '#bdc3c7' : '#A35414',
+              background: disabled ? '#E1E1E1' : '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
@@ -182,7 +182,7 @@ export function ExcelImportPreviewModal({
             disabled={disabled}
             style={{
               padding: '10px 20px',
-              background: disabled ? '#bdc3c7' : '#008C1D',
+              background: disabled ? '#E1E1E1' : '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
