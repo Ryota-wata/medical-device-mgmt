@@ -390,18 +390,18 @@ export default function AssetProvisionalRegistrationPage() {
                 onCellChange={handlePcCellChange}
               />
 
-              <div className="flex justify-between items-center pt-2 gap-3">
+              <div className="flex justify-end items-center pt-2 gap-3">
                 <button
                   onClick={() => router.push('/quotation-data-box')}
-                  className="h-12 min-w-[180px] px-6 rounded-lg bg-[#d6d6d6] text-content-primary text-base font-normal cursor-pointer transition-colors hover:bg-stroke-input focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-sub"
+                  className="h-12 min-w-[120px] px-6 rounded-lg bg-surface-card border border-stroke-input text-content-primary text-base font-medium cursor-pointer transition-colors hover:bg-surface-screen focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-content-sub"
                 >
                   戻る
                 </button>
                 <button
                   onClick={handlePcRegisterAll}
-                  className="h-12 min-w-[200px] px-6 rounded-lg bg-surface-card border border-cta-primary text-cta-primary-dark text-base font-medium cursor-pointer transition-colors hover:bg-surface-select focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
+                  className="h-12 min-w-[180px] px-6 rounded-lg bg-cta-primary text-white text-base font-semibold cursor-pointer transition-colors hover:bg-cta-primary-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-primary"
                 >
-                  検収登録する
+                  確定する
                 </button>
               </div>
             </div>
