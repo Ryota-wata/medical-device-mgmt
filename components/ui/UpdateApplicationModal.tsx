@@ -705,51 +705,41 @@ export function UpdateApplicationModal({
             </table>
           </div>
 
-          {/* 申請品目 */}
+          {/* 申請品目 (Figma 280:28894: テーブル UI) */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>申請品目</div>
-            <div style={{ background: '#FDF1E5', border: '1px solid #FDF1E5', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>品目名</div>
-                  <div style={{ fontWeight: 600 }}>{assets[0]?.item || assets[0]?.name || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
-                </div>
-              </div>
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#4A4A4A' }}>
-                ※ 更新対象資産から自動設定されています
-              </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                <tr>
+                  <th style={tableTh}>品目名</th>
+                  <td style={tableTd}>{assets[0]?.item || assets[0]?.name || '-'}</td>
+                  <th style={tableTh}>メーカー</th>
+                  <td style={tableTd}>{assets[0]?.maker || '-'}</td>
+                  <th style={tableTh}>型式</th>
+                  <td style={tableTd}>{assets[0]?.model || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#8A8A8A' }}>
+              ※ 更新対象資産から自動設定されています
             </div>
           </div>
 
-          {/* 更新対象機器 */}
+          {/* 更新対象機器 (Figma 280:28894: テーブル UI) */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#DA0000', borderBottomColor: '#DA0000' }}>
-              更新対象機器
-            </div>
-            <div style={{ background: '#FDF1E5', border: '1px solid #FDF1E5', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>QRコード</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.qrCode || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
-                </div>
-              </div>
-            </div>
+            <div style={styles.sectionTitle}>更新対象機器</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                <tr>
+                  <th style={tableTh}>QRコード</th>
+                  <td style={tableTd}>{assets[0]?.qrCode || '-'}</td>
+                  <th style={tableTh}>メーカー</th>
+                  <td style={tableTd}>{assets[0]?.maker || '-'}</td>
+                  <th style={tableTh}>型式</th>
+                  <td style={tableTd}>{assets[0]?.model || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* 要望機器（新規購入希望） */}

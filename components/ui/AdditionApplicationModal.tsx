@@ -583,66 +583,53 @@ export function AdditionApplicationModal({
             </table>
           </div>
 
-          {/* 申請品目 */}
+          {/* 申請品目 (Figma 284:30759: テーブル UI) */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>申請品目</div>
-            <div style={{ background: themeLightBg, border: `1px solid ${themeBorder}`, borderRadius: '8px', padding: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>品目名</div>
-                  <div style={{ fontWeight: 600 }}>{assets[0]?.item || assets[0]?.name || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
-                </div>
-              </div>
-              <div style={{ marginTop: '8px', fontSize: '12px', color: themeColor }}>
-                ※ 増設対象資産から自動設定されています
-              </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                <tr>
+                  <th style={tableTh}>品目名</th>
+                  <td style={tableTd}>{assets[0]?.item || assets[0]?.name || '-'}</td>
+                  <th style={tableTh}>メーカー</th>
+                  <td style={tableTd}>{assets[0]?.maker || '-'}</td>
+                  <th style={tableTh}>型式</th>
+                  <td style={tableTd}>{assets[0]?.model || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#8A8A8A' }}>
+              ※ 増設対象資産から自動設定されています
             </div>
           </div>
 
-          {/* 増設対象機器 */}
+          {/* 増設対象機器 (Figma 284:30759: テーブル UI) */}
           <div style={styles.section}>
-            <div style={styles.sectionTitle}>
-              増設対象機器
-            </div>
-            <div style={{ background: themeLightBg, border: `1px solid ${themeBorder}`, borderRadius: '8px', padding: '16px' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: themeColor, marginBottom: '12px' }}>
-                {assets[0]?.name}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>メーカー</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.maker || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>型式</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>管理番号</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.managementNo || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>設置場所</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.roomName || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>部門</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.department || '-'}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>部署</div>
-                  <div style={{ fontWeight: 500 }}>{assets[0]?.section || '-'}</div>
-                </div>
-              </div>
-            </div>
+            <div style={styles.sectionTitle}>増設対象機器</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                <tr>
+                  <th style={tableTh}>品目名</th>
+                  <td style={tableTd} colSpan={5}>{assets[0]?.name || '-'}</td>
+                </tr>
+                <tr>
+                  <th style={tableTh}>メーカー</th>
+                  <td style={tableTd}>{assets[0]?.maker || '-'}</td>
+                  <th style={tableTh}>型式</th>
+                  <td style={tableTd}>{assets[0]?.model || '-'}</td>
+                  <th style={tableTh}>管理番号</th>
+                  <td style={tableTd}>{assets[0]?.managementNo || '-'}</td>
+                </tr>
+                <tr>
+                  <th style={tableTh}>設置場所</th>
+                  <td style={tableTd}>{assets[0]?.roomName || '-'}</td>
+                  <th style={tableTh}>部門</th>
+                  <td style={tableTd}>{assets[0]?.department || '-'}</td>
+                  <th style={tableTh}>部署</th>
+                  <td style={tableTd}>{assets[0]?.section || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* 使用用途及び件数 */}
