@@ -145,7 +145,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
 
   const headerCellStyle: React.CSSProperties = {
     ...cellStyle,
-    background: '#4a6fa5',
+    background: '#4A4A4A',
     color: 'white',
     fontWeight: 'bold',
     whiteSpace: 'nowrap',
@@ -198,7 +198,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
         </div>
         <div style={{
           background: '#FDF1E5',
-          color: '#A35414',
+          color: '#4A4A4A',
           padding: '4px 12px',
           borderRadius: '4px',
           fontSize: '11px',
@@ -225,7 +225,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               onClick={() => setActiveTab('basic')}
               style={{
                 padding: '10px 24px',
-                background: activeTab === 'basic' ? '#4a6fa5' : '#FAFAFA',
+                background: activeTab === 'basic' ? '#4A4A4A' : '#FAFAFA',
                 color: activeTab === 'basic' ? 'white' : '#333',
                 border: 'none',
                 borderRight: '1px solid #E1E1E1',
@@ -240,7 +240,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               onClick={() => setActiveTab('category')}
               style={{
                 padding: '10px 24px',
-                background: activeTab === 'category' ? '#4a6fa5' : '#FAFAFA',
+                background: activeTab === 'category' ? '#4A4A4A' : '#FAFAFA',
                 color: activeTab === 'category' ? 'white' : '#333',
                 border: 'none',
                 cursor: 'pointer',
@@ -400,7 +400,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                     onClick={handleAssetInfoCheck}
                     style={{
                       padding: '8px 20px',
-                      background: '#5E3A93',
+                      background: '#4A4A4A',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
