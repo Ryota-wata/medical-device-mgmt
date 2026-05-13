@@ -119,20 +119,20 @@ function Section({
   enabled: boolean;
   completed: boolean;
 }) {
-  const borderClass = enabled
-    ? 'border-2 border-cta-primary'
-    : 'border border-stroke-card';
-  const headerBg = enabled || completed ? 'bg-cta-primary' : 'bg-content-primary';
+  // Figma 構造: プレーンテキストヘッダー (色帯なし)、active/inactive は文字色で表現
+  // 元モック文言 (STEP①./STEP②./STEP③./STEP④.) を保持
+  // (step prop は未使用だが、呼び出し側API互換のため引数は残す)
+  void step;
+  const titleColor = enabled || completed ? 'text-content-primary' : 'text-content-sub';
   return (
-    <div className={`bg-surface-card ${borderClass} rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
-      <div className={`flex items-center gap-3 px-4 py-3 ${headerBg} text-white rounded-t-2xl`}>
-        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/20 text-xs font-bold">
-          {completed ? '✓' : step}
+    <div className={`bg-surface-card border border-stroke-card rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-stroke-card">
+        <span className={`text-sm font-bold flex-1 ${titleColor}`}>
+          {title}
         </span>
-        <span className="text-sm font-bold flex-1">{title}</span>
-        {completed && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">完了</span>}
+        {completed && <span className="text-xs text-cta-primary-dark border border-cta-primary px-2 py-0.5 rounded-full">完了</span>}
         {enabled && !completed && (
-          <span className="text-xs bg-white/30 px-2 py-0.5 rounded-full">作業中</span>
+          <span className="text-xs text-cta-primary-dark border border-cta-primary px-2 py-0.5 rounded-full">作業中</span>
         )}
       </div>
       <div className={`p-4 ${enabled ? '' : 'pointer-events-none'}`}>{children}</div>
@@ -277,7 +277,7 @@ function MaintenanceQuoteRegistrationContent() {
 
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
 
-  const [previewTab, setPreviewTab] = useState<number>(1);
+  // Figma 構造: 右サイドバーは単一プレビュー (activeStep 連動、宣言は下の方なので関数経由)
   const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
   const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
 
@@ -329,6 +329,8 @@ function MaintenanceQuoteRegistrationContent() {
   }, [contractId, user?.department]);
 
   const activeStep = currentStep;
+  // Figma 構造: previewTab = activeStep に固定 (タブ UI 撤去後)
+  const previewTab = activeStep;
   const isStepEnabled = (step: number) => step <= activeStep;
 
   if (!formData) {
@@ -358,7 +360,6 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       setCurrentStep(2);
-      setPreviewTab(2);
       setIsSubmitting(false);
     }, 300);
   };
@@ -374,7 +375,6 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       setCurrentStep(3);
-      setPreviewTab(3);
       setIsSubmitting(false);
     }, 300);
   };
@@ -383,7 +383,6 @@ function MaintenanceQuoteRegistrationContent() {
     setIsSubmitting(true);
     setTimeout(() => {
       setCurrentStep(4);
-      setPreviewTab(4);
       setIsSubmitting(false);
     }, 300);
   };
@@ -432,7 +431,6 @@ function MaintenanceQuoteRegistrationContent() {
     setQuotationAccountDivision('');
     setAnnualAmount('');
     setSelectedQuotationVendorId('');
-    setPreviewTab(2);
   };
 
   const handleQuotationDelete = (id: number) => {
@@ -575,7 +573,7 @@ function MaintenanceQuoteRegistrationContent() {
                           ) : vendor.vendorName.trim() ? (
                             <div className="flex gap-1 justify-center">
                               <button
-                                onClick={() => setPreviewTab(1)}
+                                onClick={() => {/* プレビューは activeStep に連動して自動表示 */}}
                                 className="px-2.5 py-1 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors"
                               >
                                 プレビュー
@@ -1002,7 +1000,6 @@ function MaintenanceQuoteRegistrationContent() {
                                 registeredAt: new Date().toISOString(),
                               };
                               setRegisteredDocuments(prev => [...prev, newDocument]);
-                              setPreviewTab(4);
                               alert(`ドキュメント「${file.name}」を登録しました。`);
                             }
                           }}
@@ -1071,10 +1068,10 @@ function MaintenanceQuoteRegistrationContent() {
           <div className="w-1 h-10 bg-stroke-input rounded" />
         </div>
 
-        {/* 右側: プレビューエリア */}
+        {/* 右側: プレビューエリア (Figma 構造: 色帯なし、プレーンヘッダー) */}
         <div className="flex-1 flex flex-col overflow-hidden bg-stroke-card">
-          <div className="px-4 py-3 border-b border-stroke-input bg-cta-primary text-white flex items-center justify-between">
-            <h3 className="m-0 text-sm font-bold">
+          <div className="px-4 py-3 border-b border-stroke-input bg-surface-card flex items-center justify-between">
+            <h3 className="m-0 text-sm font-bold text-content-primary">
               {previewTab === 1 && '見積依頼書プレビュー'}
               {previewTab === 2 && (previewQuotationIndex !== null
                 ? `見積プレビュー - ${registeredQuotations[previewQuotationIndex]?.fileName || ''}`
@@ -1335,27 +1332,7 @@ function MaintenanceQuoteRegistrationContent() {
           </div>
         </div>
 
-        {/* 縦型タブバー */}
-        <div className="flex flex-col bg-stroke-card border-l border-stroke-input w-10 shrink-0">
-          {MAINTENANCE_STEPS.map((item) => {
-            const isActive = previewTab === item.step;
-            return (
-              <button
-                key={item.step}
-                onClick={() => {
-                  setPreviewTab(item.step);
-                  if (item.step !== 2) setPreviewQuotationIndex(null);
-                  if (item.step !== 4) setPreviewDocumentIndex(null);
-                }}
-                className={`flex-1 flex items-center justify-center border-0 border-b border-stroke-input cursor-pointer text-xs transition-all py-3 ${isActive ? 'bg-cta-primary text-white font-bold' : 'bg-transparent text-content-sub hover:bg-stroke-input'}`}
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-                title={item.label}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+        {/* Figma 構造: 単一プレビュー (activeStep 連動)、縦タブバーは撤去 */}
       </div>
 
       <OrderRegistrationModal
