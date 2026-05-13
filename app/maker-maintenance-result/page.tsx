@@ -243,7 +243,7 @@ export default function MakerMaintenanceResultPage() {
             {/* ヘッダー */}
             <div style={{
               padding: '12px 16px',
-              background: '#5E3A93',
+              background: '#4A4A4A',
               color: 'white',
               fontSize: '14px',
               fontWeight: 'bold',
@@ -563,7 +563,7 @@ export default function MakerMaintenanceResultPage() {
             <div style={{
               width: '4px',
               height: '40px',
-              background: '#bdbdbd',
+              background: '#E1E1E1',
               borderRadius: '2px',
             }} />
           </div>
@@ -581,7 +581,7 @@ export default function MakerMaintenanceResultPage() {
             {/* プレビューヘッダー */}
             <div style={{
               padding: '12px 16px',
-              background: '#34495e',
+              background: '#4A4A4A',
               color: 'white',
               fontSize: '14px',
               fontWeight: 'bold',
