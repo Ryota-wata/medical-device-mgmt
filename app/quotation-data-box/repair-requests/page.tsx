@@ -187,7 +187,7 @@ const STEP_TABS: { key: StepKey; label: string; statuses: RepairStatus[] }[] = [
 // ========== テーブルヘッダースタイル ==========
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #4A4A4A',
+  border: '1px solid #E1E1E1',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -196,7 +196,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #8A8A8A',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -325,15 +325,17 @@ function RepairRequestsContent() {
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#008C1D',
-              color: 'white',
+              background: 'white',
+              color: '#4A4A4A',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>申請受付</span>
+              <span style={{ fontWeight: 600, fontSize: '14px' }}>申請受付</span>
               <span style={{
-                background: 'rgba(255,255,255,0.2)',
+                background: '#F1F1F1',
+                color: '#4A4A4A',
                 padding: '2px 10px',
                 borderRadius: '12px',
                 fontSize: '12px',
@@ -351,7 +353,7 @@ function RepairRequestsContent() {
                 <div style={{ maxHeight: '300px', overflow: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                      <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
                         <th rowSpan={2} style={{ ...thGroupStyle, width: '36px', verticalAlign: 'middle' }}>
                           <input
                             type="checkbox"
@@ -365,7 +367,7 @@ function RepairRequestsContent() {
                         <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>院内担当情報</th>
                         <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center', verticalAlign: 'middle' }}></th>
                       </tr>
-                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
+                      <tr style={{ background: '#FAFAFA', color: '#4A4A4A' }}>
                         <th style={thSubStyle}>申請日</th>
                         <th style={thSubStyle}>申請依頼No.</th>
                         <th style={thSubStyle}>部門名</th>
@@ -463,8 +465,9 @@ function RepairRequestsContent() {
           }}>
             <div style={{
               padding: '10px 16px',
-              background: '#008C1D',
-              color: 'white',
+              background: 'white',
+              color: '#4A4A4A',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -472,11 +475,11 @@ function RepairRequestsContent() {
               <span style={{ fontWeight: 600, fontSize: 14 }}>修理 タスク管理リスト</span>
             </div>
 
-            {/* ステップタブ */}
+            {/* ステップタブ (Figma 下線スタイル) */}
             <div style={{
-              borderBottom: '2px solid #E1E1E1',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
-              background: '#FAFAFA',
+              background: 'white',
               overflowX: 'auto',
             }}>
               {STEP_TABS.map((tab) => {
@@ -490,21 +493,22 @@ function RepairRequestsContent() {
                     onClick={() => setActiveStep(tab.key)}
                     style={{
                       padding: '10px 16px',
-                      background: isActive ? '#4A4A4A' : 'transparent',
+                      background: 'transparent',
                       border: 'none',
-                      borderBottom: isActive ? '2px solid #4A4A4A' : '2px solid transparent',
+                      borderBottom: isActive ? '2px solid #008C1D' : '2px solid transparent',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      fontWeight: isActive ? 'bold' : 'normal',
-                      color: isActive ? 'white' : '#555',
+                      fontWeight: isActive ? 600 : 500,
+                      color: isActive ? '#146E2E' : '#8A8A8A',
                       whiteSpace: 'nowrap',
-                      marginBottom: '-2px',
+                      marginBottom: '-1px',
                     }}
                   >
                     {tab.label}
                     <span style={{
                       marginLeft: '6px',
-                      background: isActive ? 'rgba(255,255,255,0.3)' : '#E1E1E1',
+                      background: '#F1F1F1',
+                      color: '#4A4A4A',
                       padding: '1px 6px',
                       borderRadius: '8px',
                       fontSize: '11px',

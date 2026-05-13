@@ -68,7 +68,7 @@ const STATUS_DEADLINE_MAP: Partial<Record<RepairStatus, DeadlineMapping>> = {
 
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #4A4A4A',
+  border: '1px solid #E1E1E1',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -77,7 +77,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #8A8A8A',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -189,7 +189,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
     <div style={{ flex: 1, overflow: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-          <tr style={{ background: '#4A4A4A', color: 'white' }}>
+          <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>申請項目</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>品目情報</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>担当情報</th>
@@ -198,7 +198,7 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>期限</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
           </tr>
-          <tr style={{ background: '#4A4A4A', color: 'white' }}>
+          <tr style={{ background: '#FAFAFA', color: '#4A4A4A' }}>
             <th style={thSubStyle}>修理区分</th>
             <th style={thSubStyle}>申請日</th>
             <th style={thSubStyle}>申請依頼No.</th>
