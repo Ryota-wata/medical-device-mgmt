@@ -12,20 +12,20 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect';
 // ロールバッジカラー
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
   system_admin: { bg: '#DA0000', text: 'white' },
-  org_default_1: { bg: '#5E3A93', text: 'white' },
-  org_default_2: { bg: '#4527A0', text: 'white' },
-  org_default_3: { bg: '#7d3c98', text: 'white' },
-  org_default_4: { bg: '#6c3483', text: 'white' },
+  org_default_1: { bg: '#4A4A4A', text: 'white' },
+  org_default_2: { bg: '#4A4A4A', text: 'white' },
+  org_default_3: { bg: '#4A4A4A', text: 'white' },
+  org_default_4: { bg: '#4A4A4A', text: 'white' },
   hospital_sys_admin: { bg: '#008C1D', text: 'white' },
-  hospital_office: { bg: '#2ecc71', text: 'white' },
-  hospital_dept_head: { bg: '#1abc9c', text: 'white' },
+  hospital_office: { bg: '#008C1D', text: 'white' },
+  hospital_dept_head: { bg: '#4A4A4A', text: 'white' },
   hospital_me: { bg: '#4A4A4A', text: 'white' },
-  hospital_doctor_nurse: { bg: '#0073B8', text: 'white' },
-  rimo_hospital: { bg: '#A35414', text: 'white' },
-  estimate_staff: { bg: '#d35400', text: 'white' },
-  consignment_staff: { bg: '#A35414', text: 'white' },
+  hospital_doctor_nurse: { bg: '#4A4A4A', text: 'white' },
+  rimo_hospital: { bg: '#4A4A4A', text: 'white' },
+  estimate_staff: { bg: '#4A4A4A', text: 'white' },
+  consignment_staff: { bg: '#4A4A4A', text: 'white' },
   lending_warehouse: { bg: '#DA0000', text: 'white' },
-  inspection_mobile: { bg: '#A30000', text: 'white' },
+  inspection_mobile: { bg: '#DA0000', text: 'white' },
   transport_mobile: { bg: '#8A8A8A', text: 'white' },
   vendor_receiving_mobile: { bg: '#8A8A8A', text: 'white' },
 };
@@ -606,7 +606,7 @@ export default function UserManagementPage() {
                             alignItems: 'center',
                             gap: '6px',
                             padding: '6px 10px',
-                            background: '#EAF3FB',
+                            background: '#EBF5EE',
                             border: '1px solid #E1E1E1',
                             borderRadius: '16px',
                             fontSize: '13px',
@@ -682,14 +682,14 @@ export default function UserManagementPage() {
                                 gap: '6px',
                                 padding: '6px 10px',
                                 background: '#FDF1E5',
-                                border: '1px solid #A35414',
+                                border: '1px solid #4A4A4A',
                                 borderRadius: '16px',
                                 fontSize: '13px',
                                 color: '#4A4A4A',
                               }}
                             >
                               <span>{facility}</span>
-                              <span style={{ fontSize: '10px', color: '#A35414' }}>閲覧のみ</span>
+                              <span style={{ fontSize: '10px', color: '#4A4A4A' }}>閲覧のみ</span>
                               <button
                                 type="button"
                                 onClick={() => removeFacility(facility)}
@@ -730,7 +730,7 @@ export default function UserManagementPage() {
                     background: '#FDF1E5',
                     borderRadius: '4px',
                     fontSize: '12px',
-                    color: '#A35414',
+                    color: '#4A4A4A',
                   }}>
                     <strong>所属施設（{formData.hospital || '未設定'}）</strong>の資産のみアクセス可能です
                   </div>
@@ -807,7 +807,7 @@ export default function UserManagementPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              background: 'linear-gradient(135deg, #008C1D, #0A6B17)',
+              background: 'linear-gradient(135deg, #008C1D, #146E2E)',
               color: 'white',
               padding: isMobile ? '6px 10px' : '8px 12px',
               borderRadius: '6px',
@@ -901,7 +901,7 @@ export default function UserManagementPage() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
               boxSizing: 'border-box',
@@ -930,7 +930,7 @@ export default function UserManagementPage() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d0d0d0',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px',
             }}
@@ -961,7 +961,7 @@ export default function UserManagementPage() {
                   padding: '16px',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}>
-                  <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #f0f0f0' }}>
+                  <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #FAFAFA' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <div style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>
                         {user.contactPerson || user.username}
@@ -1046,7 +1046,7 @@ export default function UserManagementPage() {
                   {filteredUsers.map((user, index) => {
                     const roleColor = ROLE_COLORS[user.role];
                     return (
-                      <tr key={user.id} style={{ borderBottom: '1px solid #f0f0f0', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                      <tr key={user.id} style={{ borderBottom: '1px solid #FAFAFA', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A', fontWeight: 500 }}>{user.department || '-'}</td>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A' }}>{user.position || '-'}</td>
                         <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A' }}>{user.contactPerson || user.username}</td>
