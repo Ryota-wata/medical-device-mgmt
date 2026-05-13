@@ -256,14 +256,14 @@ export default function MELedgerWindowPage() {
   };
 
   const getStatusColor = (status?: MatchingStatus) => {
-    if (!status) return '#757575';
+    if (!status) return '#8A8A8A';
     switch (status) {
-      case '完全一致': return '#4caf50';
-      case '部分一致': return '#8bc34a';
-      case '数量不一致': return '#A66F1B';
-      case '再確認': return '#2196f3';
-      case '未確認': return '#f44336';
-      case '未登録': return '#5E3A93';
+      case '完全一致': return '#008C1D';
+      case '部分一致': return '#008C1D';
+      case '数量不一致': return '#4A4A4A';
+      case '再確認': return '#4A4A4A';
+      case '未確認': return '#DA0000';
+      case '未登録': return '#4A4A4A';
       default: return '#999';
     }
   };
@@ -287,7 +287,7 @@ export default function MELedgerWindowPage() {
       {/* Header */}
       <header style={{
         backgroundColor: '#EBF5EE',
-        borderBottom: '1px solid #a5d6a7',
+        borderBottom: '1px solid #008C1D',
         padding: '16px 24px'
       }}>
         <div style={{
@@ -323,8 +323,8 @@ export default function MELedgerWindowPage() {
           <span style={{ fontSize: '14px', color: '#8A8A8A', fontWeight: '600' }}>ME管理台帳:</span>
           <span style={{ fontSize: '14px', color: '#4A4A4A' }}>
             全{stats.total}件 |
-            <span style={{ color: '#757575', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
-            <span style={{ color: '#4caf50', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
+            <span style={{ color: '#8A8A8A', fontWeight: '600', marginLeft: '4px' }}>対応中 {stats.対応中}</span> |
+            <span style={{ color: '#008C1D', fontWeight: '600', marginLeft: '4px' }}>突合済 {stats.突合済}</span>
             {stats.再確認 > 0 && (
               <span style={{ color: getStatusColor('再確認'), fontWeight: '600', marginLeft: '4px' }}>| 再確認 {stats.再確認}</span>
             )}
@@ -346,8 +346,8 @@ export default function MELedgerWindowPage() {
 
       {/* 一致検索パネル */}
       <div style={{
-        backgroundColor: '#EAF3FB',
-        borderBottom: '1px solid #b8daff',
+        backgroundColor: '#EBF5EE',
+        borderBottom: '1px solid #EBF5EE',
         padding: '12px 24px'
       }}>
         <div style={{
@@ -508,7 +508,7 @@ export default function MELedgerWindowPage() {
                   onClick={handleSelectAll}
                   style={{
                     padding: '6px 12px',
-                    backgroundColor: '#f0f0f0',
+                    backgroundColor: '#FAFAFA',
                     border: '1px solid #ccc',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -522,7 +522,7 @@ export default function MELedgerWindowPage() {
                   disabled={selectedIds.size === 0}
                   style={{
                     padding: '6px 16px',
-                    backgroundColor: selectedIds.size > 0 ? '#f44336' : '#cccccc',
+                    backgroundColor: selectedIds.size > 0 ? '#DA0000' : '#E1E1E1',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -545,7 +545,7 @@ export default function MELedgerWindowPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#EBF5EE' }}>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', width: '50px' }}>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', width: '50px' }}>
                       <input
                         type="checkbox"
                         checked={selectedIds.size === filteredData.length && filteredData.length > 0}
@@ -553,17 +553,17 @@ export default function MELedgerWindowPage() {
                         style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     </th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>ME番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>資産番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>部門</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>部署</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>型式</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>シリアル番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>数量</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #a5d6a7', whiteSpace: 'nowrap' }}>点検日</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>突合状況</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>ME番号</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>資産番号</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>部門</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>部署</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>品目</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>メーカー</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>型式</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>シリアル番号</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>数量</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>点検日</th>
                   </tr>
                 </thead>
                 <tbody>
