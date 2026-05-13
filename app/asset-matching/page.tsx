@@ -282,12 +282,12 @@ export default function AssetMatchingPage() {
         <div className="mb-4 text-center text-lg font-bold">
           資産台帳とマスタの突き合わせ
         </div>
-        <div className="text-[#d32f2f] mb-4 text-sm text-center">
+        <div className="text-[#DA0000] mb-4 text-sm text-center">
           この画面はデスクトップ表示に最適化されています
         </div>
         <button
           onClick={handleBack}
-          className="w-full py-3 bg-[#1976d2] text-white border-none rounded-lg cursor-pointer text-base"
+          className="w-full py-3 bg-[#4A4A4A] text-white border-none rounded-lg cursor-pointer text-base"
         >
           戻る
         </button>
@@ -333,15 +333,15 @@ export default function AssetMatchingPage() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-[#8A8A8A] font-semibold">残：</span>
-              <span className="text-[#A35414] font-semibold">{remainingCount}件</span>
-              <span className="text-[#d1d5db]">|</span>
+              <span className="text-[#4A4A4A] font-semibold">{remainingCount}件</span>
+              <span className="text-[#E1E1E1]">|</span>
               <span className="text-[#8A8A8A] font-semibold">完：</span>
               <span className="text-[#008C1D] font-semibold">{totalCount - remainingCount}件</span>
               <span className="text-[#8A8A8A]">/ {totalCount}件</span>
             </div>
             <button
               onClick={completeMatching}
-              className="px-5 py-2.5 bg-white text-[#008C1D] border border-[#008C1D] rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#f0fdf4]"
+              className="px-5 py-2.5 bg-white text-[#008C1D] border border-[#008C1D] rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#EBF5EE]"
             >
               突き合わせ完了
             </button>
@@ -428,7 +428,7 @@ export default function AssetMatchingPage() {
             </button>
             <button
               onClick={() => exportAssetMatchingToExcel(filteredData)}
-              className="px-4 py-2 bg-[#008C1D] text-white border-none rounded cursor-pointer text-[13px] font-semibold whitespace-nowrap h-[38px] hover:bg-[#219a52]"
+              className="px-4 py-2 bg-[#008C1D] text-white border-none rounded cursor-pointer text-[13px] font-semibold whitespace-nowrap h-[38px] hover:bg-[#008C1D]"
             >
               Excel出力
             </button>
@@ -442,7 +442,7 @@ export default function AssetMatchingPage() {
           <div className="flex gap-3 mb-4">
             <button
               onClick={bulkConfirmSelected}
-              className="px-5 py-2.5 bg-[#008C1D] text-white border-none rounded cursor-pointer text-sm font-semibold flex items-center gap-2 hover:bg-[#219a52]"
+              className="px-5 py-2.5 bg-[#008C1D] text-white border-none rounded cursor-pointer text-sm font-semibold flex items-center gap-2 hover:bg-[#008C1D]"
             >
               <span>&#10003;</span> 選択項目を一括確定
             </button>
@@ -451,8 +451,8 @@ export default function AssetMatchingPage() {
               disabled={editingRow === null}
               className={`px-5 py-2.5 text-white border-none rounded text-sm font-semibold flex items-center gap-2 ${
                 editingRow !== null
-                  ? 'bg-[#1976d2] cursor-pointer opacity-100 hover:bg-[#1E5A9E]'
-                  : 'bg-[#b0bec5] cursor-not-allowed opacity-70'
+                  ? 'bg-[#4A4A4A] cursor-pointer opacity-100 hover:bg-[#4A4A4A]'
+                  : 'bg-[#E1E1E1] cursor-not-allowed opacity-70'
               }`}
             >
               資産マスタを別ウィンドウで開く
@@ -483,29 +483,29 @@ export default function AssetMatchingPage() {
                     No.
                   </th>
                   <th
-                    className="p-2 border-b border-[#E1E1E1] bg-[#EAF3FB] font-semibold sticky z-[4]"
+                    className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] font-semibold sticky z-[4]"
                     style={{ left: stickyLeft.department }}
                   >
                     台帳データ
                   </th>
                   <th
-                    className="p-2 border-b border-[#E1E1E1] bg-[#EAF3FB] sticky z-[4]"
+                    className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] sticky z-[4]"
                     style={{ left: stickyLeft.section }}
                   ></th>
                   <th
-                    className="p-2 border-b border-[#E1E1E1] bg-[#EAF3FB] sticky z-[4]"
+                    className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] sticky z-[4]"
                     style={{ left: stickyLeft.itemName }}
                   ></th>
                   <th
-                    className="p-2 border-b border-[#E1E1E1] bg-[#EAF3FB] sticky z-[4]"
+                    className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] sticky z-[4]"
                     style={{ left: stickyLeft.maker }}
                   ></th>
                   <th
-                    className="p-2 border-b border-[#E1E1E1] bg-[#EAF3FB] sticky z-[4]"
+                    className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] sticky z-[4]"
                     style={{ left: stickyLeft.model }}
                   ></th>
                   <th
-                    className="p-2 border-b border-[#E1E1E1] bg-[#EAF3FB] sticky z-[4] border-r-2 border-r-[#bdbdbd]"
+                    className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] sticky z-[4] border-r-2 border-r-[#E1E1E1]"
                     style={{ left: stickyLeft.qty }}
                   ></th>
                   <th colSpan={7} className="p-2 border-b border-[#E1E1E1] bg-[#FDF1E5] font-semibold">
@@ -522,37 +522,37 @@ export default function AssetMatchingPage() {
                 <tr className="bg-[#FAFAFA]">
                   {/* 台帳データ（sticky） */}
                   <th
-                    className={`${thBase} sticky z-[3] bg-[#EAF3FB] min-w-[90px]`}
+                    className={`${thBase} sticky z-[3] bg-[#EBF5EE] min-w-[90px]`}
                     style={{ left: stickyLeft.department }}
                   >
                     共通部門
                   </th>
                   <th
-                    className={`${thBase} sticky z-[3] bg-[#EAF3FB] min-w-[110px]`}
+                    className={`${thBase} sticky z-[3] bg-[#EBF5EE] min-w-[110px]`}
                     style={{ left: stickyLeft.section }}
                   >
                     共通部署
                   </th>
                   <th
-                    className={`${thBase} sticky z-[3] bg-[#EAF3FB] min-w-[150px]`}
+                    className={`${thBase} sticky z-[3] bg-[#EBF5EE] min-w-[150px]`}
                     style={{ left: stickyLeft.itemName }}
                   >
                     品目名(原)
                   </th>
                   <th
-                    className={`${thBase} sticky z-[3] bg-[#EAF3FB] min-w-[130px]`}
+                    className={`${thBase} sticky z-[3] bg-[#EBF5EE] min-w-[130px]`}
                     style={{ left: stickyLeft.maker }}
                   >
                     メーカー名(原)
                   </th>
                   <th
-                    className={`${thBase} sticky z-[3] bg-[#EAF3FB] min-w-[120px]`}
+                    className={`${thBase} sticky z-[3] bg-[#EBF5EE] min-w-[120px]`}
                     style={{ left: stickyLeft.model }}
                   >
                     型式(原)
                   </th>
                   <th
-                    className={`${thBase} sticky z-[3] bg-[#EAF3FB] min-w-[50px] border-r-2 border-r-[#bdbdbd]`}
+                    className={`${thBase} sticky z-[3] bg-[#EBF5EE] min-w-[50px] border-r-2 border-r-[#E1E1E1]`}
                     style={{ left: stickyLeft.qty }}
                   >
                     数量
@@ -609,62 +609,62 @@ export default function AssetMatchingPage() {
 
                         {/* 台帳データ（読み取り専用・sticky） */}
                         <td
-                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          className={`${tdBase} sticky z-[2] bg-[#EBF5EE]`}
                           style={{ left: stickyLeft.department }}
                         >
                           {row.department}
                         </td>
                         <td
-                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          className={`${tdBase} sticky z-[2] bg-[#EBF5EE]`}
                           style={{ left: stickyLeft.section }}
                         >
                           {row.section}
                         </td>
                         <td
-                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff] min-w-[150px]`}
+                          className={`${tdBase} sticky z-[2] bg-[#EBF5EE] min-w-[150px]`}
                           style={{ left: stickyLeft.itemName }}
                         >
                           {row.originalItemName}
                         </td>
                         <td
-                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          className={`${tdBase} sticky z-[2] bg-[#EBF5EE]`}
                           style={{ left: stickyLeft.maker }}
                         >
                           {row.manufacturer}
                         </td>
                         <td
-                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff]`}
+                          className={`${tdBase} sticky z-[2] bg-[#EBF5EE]`}
                           style={{ left: stickyLeft.model }}
                         >
                           {row.model}
                         </td>
                         <td
-                          className={`${tdBase} sticky z-[2] bg-[#f0f7ff] border-r-2 border-r-[#bdbdbd]`}
+                          className={`${tdBase} sticky z-[2] bg-[#EBF5EE] border-r-2 border-r-[#E1E1E1]`}
                           style={{ left: stickyLeft.qty }}
                         >
                           {row.quantityUnit}
                         </td>
 
                         {/* AI判定（推薦）（読み取り専用 + 採用ボタン） */}
-                        <td className={`${tdBase} bg-[#fff8e1] text-center`}>
+                        <td className={`${tdBase} bg-[#FAFAFA] text-center`}>
                           <button
                             onClick={() => handleApplyAIRecommendation(row.id)}
                             className={`px-2 py-1 text-[11px] text-white border-none rounded cursor-pointer whitespace-nowrap ${
-                              row.aiApplied ? 'bg-[#f44336] hover:bg-[#d32f2f]' : 'bg-[#A66F1B] hover:bg-[#f57c00]'
+                              row.aiApplied ? 'bg-[#DA0000] hover:bg-[#DA0000]' : 'bg-[#4A4A4A] hover:bg-[#4A4A4A]'
                             }`}
                           >
                             {row.aiApplied ? '解除' : '採用'}
                           </button>
                         </td>
-                        <td className={`${tdBase} bg-[#fff8e1]`}>{row.aiRecommendation.category}</td>
-                        <td className={`${tdBase} bg-[#fff8e1] min-w-[120px]`}>{row.aiRecommendation.major}</td>
-                        <td className={`${tdBase} bg-[#fff8e1] min-w-[120px]`}>{row.aiRecommendation.middle}</td>
-                        <td className={`${tdBase} bg-[#fff8e1] min-w-[150px]`}>{row.aiRecommendation.item}</td>
-                        <td className={`${tdBase} bg-[#fff8e1]`}>{row.aiRecommendation.manufacturer}</td>
-                        <td className={`${tdBase} bg-[#fff8e1]`}>{row.aiRecommendation.model}</td>
+                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.category}</td>
+                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[120px]`}>{row.aiRecommendation.major}</td>
+                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[120px]`}>{row.aiRecommendation.middle}</td>
+                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[150px]`}>{row.aiRecommendation.item}</td>
+                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.manufacturer}</td>
+                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.model}</td>
 
                         {/* SHIP資産マスタ紐づけ（編集対象） */}
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#fffde7]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -679,7 +679,7 @@ export default function AssetMatchingPage() {
                             displayLinked.category
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#fffde7]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -694,7 +694,7 @@ export default function AssetMatchingPage() {
                             displayLinked.majorCategory
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#fffde7]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -709,7 +709,7 @@ export default function AssetMatchingPage() {
                             displayLinked.middleCategory
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[150px] ${isEditing ? 'bg-[#fffde7]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[150px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -724,7 +724,7 @@ export default function AssetMatchingPage() {
                             displayLinked.item
                           )}
                         </td>
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#fffde7]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -739,7 +739,7 @@ export default function AssetMatchingPage() {
                             displayLinked.manufacturer
                           )}
                         </td>
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#fffde7]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
                           {isEditing && editingLinked ? (
                             <SearchableSelect
                               label=""
@@ -767,7 +767,7 @@ export default function AssetMatchingPage() {
                           ) : (
                             <button
                               onClick={() => toggleEditMode(row.id)}
-                              className="px-2 py-1 text-xs bg-[#EAF3FB] border-none rounded cursor-pointer whitespace-nowrap hover:bg-[#bbdefb]"
+                              className="px-2 py-1 text-xs bg-[#EBF5EE] border-none rounded cursor-pointer whitespace-nowrap hover:bg-[#EBF5EE]"
                             >
                               編集
                             </button>
@@ -777,14 +777,14 @@ export default function AssetMatchingPage() {
                           {isEditing ? (
                             <button
                               onClick={saveEdit}
-                              className="px-2 py-1 text-xs bg-[#1976d2] text-white border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#1E5A9E]"
+                              className="px-2 py-1 text-xs bg-[#4A4A4A] text-white border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#4A4A4A]"
                             >
                               保存
                             </button>
                           ) : (
                             <button
                               onClick={() => confirmRow(row.id)}
-                              className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#146E2E] border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#a5d6a7]"
+                              className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#146E2E] border-none rounded cursor-pointer whitespace-nowrap font-semibold hover:bg-[#008C1D]"
                             >
                               確定
                             </button>
@@ -820,13 +820,13 @@ export default function AssetMatchingPage() {
               </button>
               <button
                 onClick={handleLeaveWithoutSave}
-                className="px-6 py-2.5 bg-white border border-[#e57373] rounded-lg cursor-pointer text-sm text-[#d32f2f] hover:bg-[#fef2f2]"
+                className="px-6 py-2.5 bg-white border border-[#DA0000] rounded-lg cursor-pointer text-sm text-[#DA0000] hover:bg-[#FDF1E5]"
               >
                 保存せず戻る
               </button>
               <button
                 onClick={handleLeaveWithSave}
-                className="px-6 py-2.5 bg-[#1976d2] text-white border-none rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#1E5A9E]"
+                className="px-6 py-2.5 bg-[#4A4A4A] text-white border-none rounded-lg cursor-pointer text-sm font-semibold hover:bg-[#4A4A4A]"
               >
                 一時保存して戻る
               </button>
