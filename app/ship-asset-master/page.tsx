@@ -265,7 +265,7 @@ function ShipAssetMasterContent() {
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
-          background: 'linear-gradient(135deg, #A66F1B 0%, #f57c00 100%)',
+          background: 'linear-gradient(135deg, #4A4A4A 0%, #4A4A4A 100%)',
           color: 'white',
           padding: '12px 20px',
           textAlign: 'center',
@@ -418,7 +418,7 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -436,7 +436,7 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -454,7 +454,7 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -472,7 +472,7 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -490,7 +490,7 @@ function ShipAssetMasterContent() {
             style={{
               width: '100%',
               padding: isMobile ? '8px' : '10px',
-              border: '1px solid #d1d5db',
+              border: '1px solid #E1E1E1',
               borderRadius: '6px',
               fontSize: isMobile ? '13px' : '14px'
             }}
@@ -577,10 +577,10 @@ function ShipAssetMasterContent() {
                     {([
                       { label: 'JMDN分類・一般名称', span: 8, color: '#4A4A4A' },
                       { label: '薬事', span: 1, color: '#8A8A8A' },
-                      { label: 'SHIP_Master', span: 8, color: '#198754' },
-                      { label: '設備情報', span: 22, color: '#0d6efd' },
-                      { label: '資産情報', span: 8, color: '#6f42c1' },
-                      { label: 'PMDA提供', span: 21, color: '#dc3545' },
+                      { label: 'SHIP_Master', span: 8, color: '#008C1D' },
+                      { label: '設備情報', span: 22, color: '#4A4A4A' },
+                      { label: '資産情報', span: 8, color: '#4A4A4A' },
+                      { label: 'PMDA提供', span: 21, color: '#DA0000' },
                       { label: '登録', span: 1, color: '#8A8A8A' },
                       { label: '', span: 1, color: '#4A4A4A' },
                     ] as const).map((g, i) => (
@@ -607,7 +607,7 @@ function ShipAssetMasterContent() {
                       ))}
                       <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {isSelectMode ? (
-                          <button onClick={(e) => { e.stopPropagation(); handleSelect(asset); }} style={{ padding: '3px 10px', background: '#A66F1B', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>選択</button>
+                          <button onClick={(e) => { e.stopPropagation(); handleSelect(asset); }} style={{ padding: '3px 10px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>選択</button>
                         ) : (
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                             <button onClick={() => handleEdit(asset)} style={{ padding: '3px 8px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>
