@@ -513,6 +513,59 @@ const testApplications: Application[] = [
     freeInput: '廃棄業者: 株式会社メディカル廃棄\n見積日: 2025-01-20\n発注日: \n検収日: ',
     quotationInfo: []
   },
+  // 手術部門 — 申請ステータスモーダル用サンプル (移動)
+  {
+    id: 17,
+    applicationNo: 'TRAN-2026-001',
+    applicationDate: '2026-02-03',
+    applicationType: '移動申請',
+    facility: {
+      building: '本館',
+      floor: '2F',
+      department: '手術部門',
+      section: '手術室'
+    },
+    roomName: '手術室3',
+    asset: { name: '麻酔器', model: 'Aisys CS2' },
+    vendor: 'GEヘルスケア',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '手術室レイアウト変更に伴う移動',
+    executionYear: '2026',
+    status: '承認済み',
+    approvalProgress: { current: 1, total: 1 },
+    freeInput: '4月の手術室再編に合わせて移動',
+    transferDestination: {
+      department: '手術部門',
+      section: '手術室',
+      roomName: '手術室5',
+    },
+    quotationInfo: []
+  },
+  // 手術部門 — 申請ステータスモーダル用サンプル (廃棄)
+  {
+    id: 18,
+    applicationNo: 'DISP-2026-001',
+    applicationDate: '2026-01-28',
+    applicationType: '廃棄申請',
+    facility: {
+      building: '本館',
+      floor: '2F',
+      department: '手術部門',
+      section: '手術室'
+    },
+    roomName: '手術準備室',
+    asset: { name: '除細動器', model: 'TEC-5631' },
+    vendor: '日本光電',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '更新に伴う廃棄',
+    executionYear: '2026',
+    status: '見積依頼中',
+    approvalProgress: { current: 1, total: 1 },
+    freeInput: '廃棄業者: 株式会社メディカル廃棄\n見積依頼日: 2026-02-02',
+    quotationInfo: []
+  },
 ];
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({

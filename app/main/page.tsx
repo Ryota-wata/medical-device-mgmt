@@ -2,9 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore, useMasterStore, useEditListStore, useApplicationStore } from '@/lib/stores';
-import { usePurchaseApplicationStore } from '@/lib/stores/purchaseApplicationStore';
-import { useRepairRequestStore } from '@/lib/stores/repairRequestStore';
+import { useAuthStore, useMasterStore, useEditListStore } from '@/lib/stores';
 import { generateMockAssets } from '@/lib/data/generateMockAssets';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { usePermissions } from '@/lib/hooks/usePermissions';
@@ -12,6 +10,7 @@ import { useToast } from '@/components/ui/Toast';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 import { AppHeader, type AppHeaderNavItem } from '@/components/layouts/AppHeader';
+import { ApplicationStatusModal } from '@/components/modals/ApplicationStatusModal';
 
 export default function MainPage() {
   const router = useRouter();
@@ -51,116 +50,7 @@ export default function MainPage() {
     canAccess,
   } = usePermissions();
 
-  // ユーザーの所属部署
-  const userDepartment = user?.department || '未設定';
 
-  // 各ストアからデータ取得
-  const { applications: purchaseApps } = usePurchaseApplicationStore();
-  const { applications: generalApps } = useApplicationStore();
-  const { requests: repairRequests } = useRepairRequestStore();
-
-  // 統合された申請リスト型
-  interface UnifiedApplication {
-    id: string;
-    applicationNo: string;
-    applicationType: string;
-    itemName: string;
-    status: string;
-    applicationDate: string;
-    deadline?: string;
-  }
-
-  // 統合申請リスト（ユーザーの所属部署でフィルタ）
-  const unifiedApplications = useMemo((): UnifiedApplication[] => {
-    const result: UnifiedApplication[] = [];
-
-    // PurchaseApplication（新規/更新/増設）
-    purchaseApps
-      .filter(app => app.applicantDepartment === userDepartment)
-      .forEach(app => {
-        result.push({
-          id: app.id,
-          applicationNo: app.applicationNo,
-          applicationType: app.applicationType,
-          itemName: app.assets[0]?.name || '-',
-          status: app.status,
-          applicationDate: app.applicationDate,
-          deadline: app.desiredDeliveryDate,
-        });
-      });
-
-    // Application（移動/廃棄）※部門フィルタはfacility.departmentを使用
-    generalApps
-      .filter(app =>
-        (app.applicationType === '移動申請' || app.applicationType === '廃棄申請') &&
-        app.facility.department === userDepartment
-      )
-      .forEach(app => {
-        result.push({
-          id: String(app.id),
-          applicationNo: app.applicationNo,
-          applicationType: app.applicationType,
-          itemName: app.asset.name,
-          status: app.status,
-          applicationDate: app.applicationDate,
-          deadline: undefined,
-        });
-      });
-
-    // RepairRequest（修理）
-    repairRequests
-      .filter(req => req.applicantDepartment === userDepartment)
-      .forEach(req => {
-        result.push({
-          id: req.id,
-          applicationNo: req.requestNo,
-          applicationType: '修理申請',
-          itemName: req.itemName,
-          status: req.status,
-          applicationDate: req.requestDate,
-          deadline: req.deliveryDate,
-        });
-      });
-
-    // 申請日降順でソート
-    return result.sort((a, b) =>
-      new Date(b.applicationDate).getTime() - new Date(a.applicationDate).getTime()
-    );
-  }, [purchaseApps, generalApps, repairRequests, userDepartment]);
-
-  // ステータスのバッジスタイル取得
-  const getStatusBadgeStyle = (status: string): { bg: string; text: string } => {
-    const styles: Record<string, { bg: string; text: string }> = {
-      '申請中': { bg: 'bg-amber-100', text: 'text-amber-800' },
-      '編集中': { bg: 'bg-sky-100', text: 'text-sky-800' },
-      '見積中': { bg: 'bg-purple-100', text: 'text-purple-800' },
-      '発注済': { bg: 'bg-indigo-100', text: 'text-indigo-800' },
-      '検収済': { bg: 'bg-teal-100', text: 'text-teal-800' },
-      '完了': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
-      '却下': { bg: 'bg-red-100', text: 'text-red-800' },
-      '承認待ち': { bg: 'bg-amber-100', text: 'text-amber-800' },
-      '承認済み': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
-      '見積依頼中': { bg: 'bg-purple-100', text: 'text-purple-800' },
-      '受付': { bg: 'bg-orange-100', text: 'text-orange-800' },
-      '依頼済': { bg: 'bg-sky-100', text: 'text-sky-800' },
-      '引取済': { bg: 'bg-purple-100', text: 'text-purple-800' },
-      '修理中': { bg: 'bg-orange-100', text: 'text-orange-800' },
-    };
-    return styles[status] || { bg: 'bg-slate-100', text: 'text-slate-800' };
-  };
-
-  // 申請種別のバッジスタイル取得
-  const getTypeBadgeStyle = (type: string): { bg: string; text: string } => {
-    const styles: Record<string, { bg: string; text: string }> = {
-      '新規申請': { bg: 'bg-emerald-100', text: 'text-emerald-800' },
-      '更新申請': { bg: 'bg-sky-100', text: 'text-sky-800' },
-      '増設申請': { bg: 'bg-indigo-100', text: 'text-indigo-800' },
-      '移動申請': { bg: 'bg-amber-100', text: 'text-amber-800' },
-      '廃棄申請': { bg: 'bg-red-100', text: 'text-red-800' },
-      '修理申請': { bg: 'bg-orange-100', text: 'text-orange-800' },
-    };
-    return styles[type] || { bg: 'bg-slate-100', text: 'text-slate-800' };
-  };
 
   const handleLogout = () => {
     setIsLogoutConfirmOpen(true);
@@ -879,132 +769,11 @@ export default function MainPage() {
         </div>
       )}
 
-      {/* 申請ステータスモーダル */}
-      {isApplicationStatusModalOpen && (
-        <div
-          onClick={() => setIsApplicationStatusModalOpen(false)}
-          className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${isMobile ? 'p-2' : 'p-3 sm:p-5'}`}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`bg-surface-card rounded-lg w-full max-h-[95vh] shadow-xl flex flex-col ${
-              isMobile ? 'max-w-full mx-2' : isTablet ? 'max-w-[700px]' : 'max-w-[900px]'
-            }`}
-          >
-            <div className={`bg-surface-card border-b border-stroke-card ${isMobile ? 'px-3 py-3 text-base' : 'px-5 py-4 text-lg'} font-bold flex justify-between items-center rounded-t-lg shrink-0`}>
-              <span className="text-content-primary text-balance">申請ステータス</span>
-              <button
-                onClick={() => setIsApplicationStatusModalOpen(false)}
-                className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
-                aria-label="閉じる"
-              >
-                <svg className="size-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-
-            <div className={`${isMobile ? 'px-3 py-2' : 'px-5 py-3'} border-b border-stroke-card bg-surface-screen shrink-0`}>
-              <div className="flex items-center gap-2">
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-content-sub whitespace-nowrap`}>申請部署</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-content-primary`}>{userDepartment}</span>
-                <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-content-sub ml-2 tabular-nums`}>({unifiedApplications.length}件)</span>
-              </div>
-            </div>
-
-            <div className={`${isMobile ? 'p-2' : 'p-4'} overflow-y-auto overscroll-contain flex-1`}>
-              {unifiedApplications.length === 0 ? (
-                <div className="text-center py-10 text-content-sub">
-                  <p className="text-pretty">申請履歴がありません</p>
-                  <p className="text-sm mt-2 text-content-sub text-pretty">資産リスト画面から各種申請を行ってください</p>
-                </div>
-              ) : isMobile ? (
-                <div className="flex flex-col gap-3">
-                  {unifiedApplications.map((app) => {
-                    const statusStyle = getStatusBadgeStyle(app.status);
-                    const typeStyle = getTypeBadgeStyle(app.applicationType);
-                    return (
-                      <div key={app.id} className="border border-stroke-card rounded-lg p-3 bg-surface-card">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs text-content-sub">{app.applicationNo}</span>
-                            <span className="text-xs text-[#E1E1E1]">|</span>
-                            <span className="text-xs text-content-sub tabular-nums">{app.applicationDate}</span>
-                          </div>
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                            {app.status}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
-                            {app.applicationType}
-                          </span>
-                          <span className="text-sm font-medium text-content-primary truncate">{app.itemName}</span>
-                        </div>
-                        {app.deadline && (
-                          <div className="text-xs text-orange-600">期限: {app.deadline}</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                      <tr className="bg-surface-screen">
-                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">申請No.</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">申請日</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">申請種別</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">品目</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">ステータス</th>
-                        <th className="py-2.5 px-3 text-left font-semibold text-content-primary whitespace-nowrap border-b border-stroke-card">期限</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {unifiedApplications.map((app) => {
-                        const statusStyle = getStatusBadgeStyle(app.status);
-                        const typeStyle = getTypeBadgeStyle(app.applicationType);
-                        return (
-                          <tr key={app.id} className="border-b border-[#FAFAFA] hover:bg-surface-screen">
-                            <td className="py-2.5 px-3 font-mono text-xs text-content-sub border border-stroke-input">{app.applicationNo}</td>
-                            <td className="py-2.5 px-3 text-content-sub tabular-nums border border-stroke-input">{app.applicationDate}</td>
-                            <td className="py-2.5 px-3 border border-stroke-input">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
-                                {app.applicationType}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-content-primary max-w-[200px] truncate border border-stroke-input">{app.itemName}</td>
-                            <td className="py-2.5 px-3 border border-stroke-input">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                                {app.status}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-orange-600 font-medium tabular-nums border border-stroke-input">{app.deadline || '-'}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            <div className={`${isMobile ? 'px-3 py-3' : 'px-5 py-4'} border-t border-stroke-card bg-surface-screen rounded-b-lg shrink-0`}>
-              <div className="flex justify-end">
-                <button
-                  onClick={() => setIsApplicationStatusModalOpen(false)}
-                  className={`px-4 py-2 bg-[#4A4A4A] text-white rounded-md font-medium transition-colors hover:bg-[#4A4A4A] border-0 cursor-pointer ${
-                    isMobile ? 'text-sm' : 'text-base'
-                  }`}
-                >
-                  閉じる
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 申請ステータスモーダル (スライド72準拠: カード + 5ステップ進捗バー) */}
+      <ApplicationStatusModal
+        isOpen={isApplicationStatusModalOpen}
+        onClose={() => setIsApplicationStatusModalOpen(false)}
+      />
 
       {/* 削除確認ダイアログ */}
       <ConfirmDialog
