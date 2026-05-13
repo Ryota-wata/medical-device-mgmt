@@ -99,7 +99,7 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
         </thead>
         <tbody>
           {enrichedItems.map((item, index) => (
-            <tr key={item.id} style={{ borderBottom: '1px solid #E1E1E1', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
+            <tr key={item.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', height: '36px' }}>
               {QUOTATION_COLUMNS.map(col => {
                 const val = (item as unknown as Record<string, unknown>)[col.key];
                 let display = '';
@@ -109,8 +109,9 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
 
                 return (
                   <td key={col.key} style={{
-                    padding: '8px 6px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+                    padding: '6px 8px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
                     textAlign: col.align || 'left',
+                    border: '1px solid #E1E1E1', color: '#4A4A4A', verticalAlign: 'middle',
                   }}>{display}</td>
                 );
               })}

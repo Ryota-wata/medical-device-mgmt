@@ -1,8 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Plus } from 'lucide-react';
+import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -33,7 +33,6 @@ const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
 };
 
 export default function UserManagementPage() {
-  const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
   const { users, setUsers, addUser, updateUser, deleteUser } = useUserStore();
   const { user: currentUser } = useAuthStore();
@@ -186,10 +185,6 @@ export default function UserManagementPage() {
       return matchUsername && matchDepartment && matchRole;
     });
   }, [users, isShipUser, currentUserHospital, filterUsername, filterDepartment, filterRole]);
-
-  const handleBack = () => {
-    router.push('/main');
-  };
 
   const handleEdit = (user: User) => {
     setSelectedUser(user);
@@ -793,94 +788,32 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       {/* Header */}
-      <header style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #E1E1E1',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: isMobile ? '12px' : '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #008C1D, #146E2E)',
-              color: 'white',
-              padding: isMobile ? '6px 10px' : '8px 12px',
-              borderRadius: '6px',
-              fontSize: isMobile ? '12px' : '14px',
-              fontWeight: 700,
-              letterSpacing: '1px'
-            }}>
-              SHIP
-            </div>
-            <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 600, margin: 0, color: '#4A4A4A' }}>
-              ユーザー管理
-            </h1>
-          </div>
-          <div style={{
-            background: '#F1F1F1',
-            color: '#8A8A8A',
-            padding: isMobile ? '4px 12px' : '6px 16px',
-            borderRadius: '20px',
-            fontSize: isMobile ? '12px' : '14px',
-            fontWeight: 600
-          }}>
-            {filteredUsers.length}件
-          </div>
-          {!isShipUser && currentUserHospital && (
-            <div style={{
-              background: '#008C1D',
-              color: 'white',
-              padding: isMobile ? '4px 12px' : '6px 16px',
-              borderRadius: '20px',
-              fontSize: isMobile ? '11px' : '12px',
-              fontWeight: 600
-            }}>
-              {currentUserHospital}
-            </div>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            onClick={handleOpenNewModal}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#008C1D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            新規作成
-          </button>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#8A8A8A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            メイン画面に戻る
-          </button>
-        </div>
-      </header>
+      <Header
+        title="ユーザー管理"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+        resultCount={filteredUsers.length}
+        showOriginalLabel={false}
+      >
+        {!isShipUser && currentUserHospital && (
+          <span className="bg-surface-select text-cta-primary-dark border border-cta-primary rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap">
+            {currentUserHospital}
+          </span>
+        )}
+        <button
+          onClick={handleOpenNewModal}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
+        >
+          <Plus size={16} aria-hidden />
+          新規作成
+        </button>
+      </Header>
 
       {/* Filter Header */}
       <div style={{
@@ -1029,32 +962,37 @@ export default function UserManagementPage() {
           </div>
         ) : (
           // テーブル表示 (PC/タブレット)
-          <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
-                <thead style={{ background: '#FAFAFA', border: '2px solid #E1E1E1' }}>
+                <thead>
                   <tr>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>所属部署</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>役職</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>担当者</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>連絡先</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>メールアドレス</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>ロール</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>アクセス可能施設</th>
-                    <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>操作</th>
+                    {(['所属部署', '役職', '担当者', '連絡先', 'メールアドレス'] as const).map((label) => (
+                      <th key={label} style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{label}</th>
+                    ))}
+                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>ロール</th>
+                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>アクセス可能施設</th>
+                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', width: '92px' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user, index) => {
                     const roleColor = ROLE_COLORS[user.role];
+                    const cellBaseStyle: React.CSSProperties = {
+                      padding: isTablet ? '10px 12px' : '12px 14px',
+                      fontSize: isTablet ? '13px' : '14px',
+                      color: '#4A4A4A',
+                      border: '1px solid #E1E1E1',
+                      verticalAlign: 'middle',
+                    };
                     return (
-                      <tr key={user.id} style={{ borderBottom: '1px solid #FAFAFA', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A', fontWeight: 500 }}>{user.department || '-'}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A' }}>{user.position || '-'}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A' }}>{user.contactPerson || user.username}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A', fontVariantNumeric: 'tabular-nums' }}>{user.phone || '-'}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '13px' : '14px', color: '#4A4A4A' }}>{user.email}</td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center' }}>
+                      <tr key={user.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                        <td style={{ ...cellBaseStyle, fontWeight: 500 }}>{user.department || '-'}</td>
+                        <td style={cellBaseStyle}>{user.position || '-'}</td>
+                        <td style={cellBaseStyle}>{user.contactPerson || user.username}</td>
+                        <td style={{ ...cellBaseStyle, fontVariantNumeric: 'tabular-nums' }}>{user.phone || '-'}</td>
+                        <td style={cellBaseStyle}>{user.email}</td>
+                        <td style={{ ...cellBaseStyle, textAlign: 'center' }}>
                           <span style={{
                             display: 'inline-block',
                             padding: '4px 12px',
@@ -1067,7 +1005,7 @@ export default function UserManagementPage() {
                             {USER_ROLE_LABELS[user.role]}
                           </span>
                         </td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '12px' : '13px', color: '#8A8A8A', maxWidth: '200px' }}>
+                        <td style={{ ...cellBaseStyle, fontSize: isTablet ? '12px' : '13px', color: '#8A8A8A', maxWidth: '200px' }}>
                           <div style={{
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -1076,39 +1014,31 @@ export default function UserManagementPage() {
                             {getAccessibleFacilitiesText(user)}
                           </div>
                         </td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <td style={{ ...cellBaseStyle, textAlign: 'center', whiteSpace: 'nowrap' }}>
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                             <button
                               onClick={() => handleEdit(user)}
-                              aria-label="編集"
+                              aria-label={`${user.username || 'ユーザー'} を編集`}
                               style={{
-                                background: 'transparent',
-                                color: '#4A4A4A',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '28px', height: '28px',
+                                background: 'transparent', color: '#146E2E',
+                                border: '1px solid #008C1D', borderRadius: '4px', cursor: 'pointer',
                               }}
                             >
-                              <Edit2 size={16} aria-hidden />
+                              <Edit2 size={14} aria-hidden />
                             </button>
                             <button
                               onClick={() => handleDelete(user.id)}
-                              aria-label="削除"
+                              aria-label={`${user.username || 'ユーザー'} を削除`}
                               style={{
-                                background: 'transparent',
-                                color: '#8A8A8A',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '4px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: '28px', height: '28px',
+                                background: 'transparent', color: '#DA0000',
+                                border: '1px solid #DA0000', borderRadius: '4px', cursor: 'pointer',
                               }}
                             >
-                              <Trash2 size={16} aria-hidden />
+                              <Trash2 size={14} aria-hidden />
                             </button>
                           </div>
                         </td>
