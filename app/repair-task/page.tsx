@@ -1596,53 +1596,63 @@ function RepairTaskContent() {
             経理部にて固定資産番号、最終の勘定科目を登録してください。
           </div>
 
-          <FormRow>
-            <span style={{ ...labelStyle, fontWeight: 'bold' }}>固定資産番号</span>
-            <input type="text" value={fixedAssetNo} onChange={(e) => setFixedAssetNo(e.target.value)} placeholder="固定資産番号を入力" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '200px' }} />
-          </FormRow>
-
-          <FormRow>
-            <span style={{ ...labelStyle, fontWeight: 'bold' }}>最終勘定科目</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                <input type="radio" name="finalAccountType" checked={finalAccountType === '修繕費'} onChange={() => setFinalAccountType('修繕費')} disabled={!isStepEnabled(4)} />
-                修繕費
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                <input type="radio" name="finalAccountType" checked={finalAccountType === 'その他'} onChange={() => setFinalAccountType('その他')} disabled={!isStepEnabled(4)} />
-                その他
-                {finalAccountType === 'その他' && (
-                  <input type="text" value={finalAccountOther} onChange={(e) => setFinalAccountOther(e.target.value)} placeholder="科目名を入力" disabled={!isStepEnabled(4)} style={{ marginLeft: '8px', padding: '4px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', width: '150px' }} />
-                )}
-              </label>
-            </div>
-          </FormRow>
-
-          {/* REQ-086: 完了登録の添付ファイル + ドキュメント種別 (Figma: 灰枠、黒文字) */}
-          <div style={{ marginTop: '16px', padding: '12px', border: `1px solid ${COLORS.border}`, borderRadius: '4px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '12px' }}>添付ファイル / ドキュメント種別</div>
-            <FormRow>
-              <span style={{ ...labelStyle, fontWeight: 'bold', minWidth: '110px' }}>添付ファイル</span>
-              <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
-                ファイルの選択（複数可）
-                <input type="file" accept=".pdf,.jpg,.png" multiple disabled={!isStepEnabled(4)} onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length > 0) setStep4DocFiles((prev) => [...prev, ...files.map(f => f.name)]); e.target.value = ''; }} style={{ display: 'none' }} />
-              </label>
-              <span style={{ color: step4DocFiles.length > 0 ? COLORS.success : '#666', fontSize: '13px' }}>
-                {step4DocFiles.length > 0 ? `${step4DocFiles.length}件: ${step4DocFiles.join(', ')}` : 'ファイルが選択されていません'}
-              </span>
-            </FormRow>
-            <FormRow style={{ marginTop: '8px' }}>
-              <span style={{ ...labelStyle, fontWeight: 'bold', minWidth: '110px' }}>ドキュメント種別</span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {(['修理報告書', '納品書', '検収書', '請求書', 'その他'] as const).map((dt) => (
-                  <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                    <input type="radio" name="step4DocumentType" checked={step4DocumentType === dt} onChange={() => setStep4DocumentType(dt)} disabled={!isStepEnabled(4)} />
-                    {dt}
-                  </label>
-                ))}
-              </div>
-            </FormRow>
-          </div>
+          {/* Figma 580:33593 構造: テーブル UI (ラベル列 灰背景 + 値列 白背景) */}
+          <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>添付ファイル / ドキュメント種別</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, marginBottom: '16px' }}>
+            <tbody>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>固定資産番号</th>
+                <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
+                  <input type="text" value={fixedAssetNo} onChange={(e) => setFixedAssetNo(e.target.value)} placeholder="固定資産番号を入力" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '200px' }} />
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>最終勘定科目</th>
+                <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input type="radio" name="finalAccountType" checked={finalAccountType === '修繕費'} onChange={() => setFinalAccountType('修繕費')} disabled={!isStepEnabled(4)} />
+                      修繕費
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input type="radio" name="finalAccountType" checked={finalAccountType === 'その他'} onChange={() => setFinalAccountType('その他')} disabled={!isStepEnabled(4)} />
+                      その他
+                      {finalAccountType === 'その他' && (
+                        <input type="text" value={finalAccountOther} onChange={(e) => setFinalAccountOther(e.target.value)} placeholder="科目名を入力" disabled={!isStepEnabled(4)} style={{ marginLeft: '8px', padding: '4px 8px', border: `1px solid ${COLORS.border}`, borderRadius: '4px', fontSize: '13px', width: '150px' }} />
+                      )}
+                    </label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>添付ファイル</th>
+                <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
+                      ファイルの選択（複数可）
+                      <input type="file" accept=".pdf,.jpg,.png" multiple disabled={!isStepEnabled(4)} onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length > 0) setStep4DocFiles((prev) => [...prev, ...files.map(f => f.name)]); e.target.value = ''; }} style={{ display: 'none' }} />
+                    </label>
+                    <span style={{ color: step4DocFiles.length > 0 ? COLORS.success : COLORS.textMuted, fontSize: '13px' }}>
+                      {step4DocFiles.length > 0 ? `${step4DocFiles.length}件: ${step4DocFiles.join(', ')}` : 'ファイルが選択されていません'}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
+                <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                    {(['修理報告書', '納品書', '検収書', '請求書', 'その他'] as const).map((dt) => (
+                      <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                        <input type="radio" name="step4DocumentType" checked={step4DocumentType === dt} onChange={() => setStep4DocumentType(dt)} disabled={!isStepEnabled(4)} />
+                        {dt}
+                      </label>
+                    ))}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           <FormRow style={{ justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
             <button className="repair-btn" onClick={handleStep4Complete} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
