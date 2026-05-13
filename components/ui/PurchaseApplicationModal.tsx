@@ -363,7 +363,7 @@ export function PurchaseApplicationModal({
     label: {
       fontSize: '13px',
       fontWeight: 600,
-      color: '#333',
+      color: '#4A4A4A',
     },
     input: {
       padding: '8px 12px',
@@ -428,7 +428,7 @@ export function PurchaseApplicationModal({
     fileSelectButton: {
       padding: '8px 16px',
       background: 'white',
-      color: '#333',
+      color: '#4A4A4A',
       border: '1px solid #E1E1E1',
       borderRadius: '4px',
       cursor: 'pointer',
@@ -721,7 +721,7 @@ export function PurchaseApplicationModal({
                 disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#008C1D',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#E1E1E1' : '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -766,7 +766,7 @@ export function PurchaseApplicationModal({
                               disabled={index === 0}
                               style={{
                                 padding: '2px 6px',
-                                background: index === 0 ? '#ccc' : '#8A8A8A',
+                                background: index === 0 ? '#E1E1E1' : '#8A8A8A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '2px',
@@ -782,7 +782,7 @@ export function PurchaseApplicationModal({
                               disabled={index === desiredEquipments.length - 1}
                               style={{
                                 padding: '2px 6px',
-                                background: index === desiredEquipments.length - 1 ? '#ccc' : '#8A8A8A',
+                                background: index === desiredEquipments.length - 1 ? '#E1E1E1' : '#8A8A8A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '2px',

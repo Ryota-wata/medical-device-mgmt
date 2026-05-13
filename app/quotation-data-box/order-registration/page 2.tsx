@@ -81,7 +81,7 @@ const tdStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   padding: '6px 10px',
-  border: '1px solid #ccc',
+  border: '1px solid #E1E1E1',
   borderRadius: '4px',
   fontSize: '13px',
 };
@@ -283,12 +283,12 @@ export default function OrderRegistrationPage() {
             {internalStep === 1 && (
               <>
                 {/* ヘッダー情報 */}
-                <div style={{ display: 'flex', marginBottom: '16px', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ flex: 1, padding: '10px 14px', borderRight: '1px solid #ccc' }}>
+                <div style={{ display: 'flex', marginBottom: '16px', border: '1px solid #E1E1E1', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ flex: 1, padding: '10px 14px', borderRight: '1px solid #E1E1E1' }}>
                     <div style={{ fontSize: '10px', color: '#888', marginBottom: '2px' }}>見積依頼No.</div>
                     <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A' }}>{rfqGroup.rfqNo}</div>
                   </div>
-                  <div style={{ flex: 2, padding: '10px 14px', borderRight: '1px solid #ccc' }}>
+                  <div style={{ flex: 2, padding: '10px 14px', borderRight: '1px solid #E1E1E1' }}>
                     <div style={{ fontSize: '10px', color: '#888', marginBottom: '2px' }}>見積グループ名称</div>
                     <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A' }}>{rfqGroup.groupName}</div>
                   </div>
@@ -307,10 +307,10 @@ export default function OrderRegistrationPage() {
                         <th style={thStyle}>申請者</th>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ padding: '6px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', color: '#333' }}>
+                            <span style={{ padding: '6px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', color: '#4A4A4A' }}>
                               {rfqGroup.email || user?.email || 'user@company.com'}
                             </span>
-                            <span style={{ fontSize: '13px', color: '#333' }}>
+                            <span style={{ fontSize: '13px', color: '#4A4A4A' }}>
                               {rfqGroup.personInCharge || user?.username || 'user'}
                             </span>
                           </div>
@@ -344,7 +344,7 @@ export default function OrderRegistrationPage() {
                         <th style={thStyle}>添付ファイル</th>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <label style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                            <label style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
                               ファイルの選択
                               <input type="file" onChange={handleFileChange} style={{ display: 'none' }} />
                             </label>
@@ -504,16 +504,16 @@ export default function OrderRegistrationPage() {
 
                       {/* リース会社 */}
                       <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース会社</label>
-                      <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                      <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#4A4A4A' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
 
                       {/* リース開始日 / 年数 */}
                       <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース開始日</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                        <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#4A4A4A' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
                         <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>年数</label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
-                          <span style={{ fontSize: '13px', color: isLeaseType ? '#333' : '#bbb' }}>年</span>
+                          <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#4A4A4A' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                          <span style={{ fontSize: '13px', color: isLeaseType ? '#4A4A4A' : '#bbb' }}>年</span>
                         </div>
                       </div>
                     </div>

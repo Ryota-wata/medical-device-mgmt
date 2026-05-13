@@ -665,7 +665,7 @@ function RfqProcessContent() {
                         <label style={{
                           padding: '6px 16px',
                           background: 'white',
-                          border: '1px solid #ccc',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '4px',
                           cursor: 'pointer',
                           fontSize: '13px',
@@ -851,7 +851,7 @@ function RfqProcessContent() {
             <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
               <div style={{
                 background: 'white',
-                border: '1px solid #ccc',
+                border: '1px solid #E1E1E1',
                 padding: '40px 48px',
                 margin: '0 auto',
                 fontFamily: '"Yu Mincho", "Hiragino Mincho ProN", serif',
@@ -1111,7 +1111,7 @@ function RfqProcessContent() {
 const inputStyle: React.CSSProperties = {
   flex: 1,
   padding: '6px 10px',
-  border: '1px solid #ccc',
+  border: '1px solid #E1E1E1',
   borderRadius: '4px',
   fontSize: '13px',
   minWidth: 0,
@@ -1124,7 +1124,7 @@ const disabledInputStyle: React.CSSProperties = {
 
 const inputStyleCompact: React.CSSProperties = {
   padding: '6px 10px',
-  border: '1px solid #ccc',
+  border: '1px solid #E1E1E1',
   borderRadius: '4px',
   fontSize: '13px',
 };

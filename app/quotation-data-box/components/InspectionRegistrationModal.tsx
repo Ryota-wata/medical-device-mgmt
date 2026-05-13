@@ -878,7 +878,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '8px 20px',
     backgroundColor: '#fff',
     color: '#666',
-    border: '1px solid #ccc',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '13px',
@@ -894,7 +894,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 'bold',
   },
   proceedButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#E1E1E1',
     cursor: 'not-allowed',
   },
   backButton: {

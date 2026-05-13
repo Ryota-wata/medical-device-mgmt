@@ -418,7 +418,7 @@ function QuotationProcessingContent() {
                 onClick={handleGoToStep2}
                 disabled={!isOcrComplete}
                 style={{
-                  background: isOcrComplete ? '#008C1D' : '#ccc',
+                  background: isOcrComplete ? '#008C1D' : '#E1E1E1',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -666,7 +666,7 @@ function QuotationProcessingContent() {
                           <button
                             disabled
                             style={{
-                              background: '#ccc',
+                              background: '#E1E1E1',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',

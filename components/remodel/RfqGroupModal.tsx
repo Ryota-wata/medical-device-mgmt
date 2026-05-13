@@ -103,7 +103,7 @@ export function RfqGroupModal({
         <div style={{ padding: '24px' }}>
           {/* 見積依頼No */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#333' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#4A4A4A' }}>
               見積依頼No.（自動採番）
             </label>
             <input
@@ -125,7 +125,7 @@ export function RfqGroupModal({
 
           {/* 見積依頼グループ名 */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#333' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#4A4A4A' }}>
               見積依頼グループ名
             </label>
             <input
@@ -178,7 +178,7 @@ export function RfqGroupModal({
               disabled={!rfqGroupName.trim()}
               style={{
                 padding: '10px 20px',
-                background: rfqGroupName.trim() ? '#DA0000' : '#ccc',
+                background: rfqGroupName.trim() ? '#DA0000' : '#E1E1E1',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',

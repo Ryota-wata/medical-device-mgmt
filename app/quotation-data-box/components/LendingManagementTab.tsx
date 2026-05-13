@@ -412,7 +412,7 @@ export const LendingManagementTab: React.FC = () => {
         justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span style={{ fontSize: '13px', color: '#333' }}>登録済み機器: <strong>{devices.length}件</strong></span>
+          <span style={{ fontSize: '13px', color: '#4A4A4A' }}>登録済み機器: <strong>{devices.length}件</strong></span>
           <span style={{
             background: '#4A4A4A',
             color: 'white',
@@ -522,7 +522,7 @@ export const LendingManagementTab: React.FC = () => {
           </select>
         </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#333', cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#4A4A4A', cursor: 'pointer' }}>
           <input
             type="checkbox"
             checked={filter.overdueOnly}
@@ -536,7 +536,7 @@ export const LendingManagementTab: React.FC = () => {
           style={{
             padding: '5px 12px',
             background: '#FAFAFA',
-            border: '1px solid #ccc',
+            border: '1px solid #E1E1E1',
             borderRadius: '3px',
             cursor: 'pointer',
             fontSize: '11px',
@@ -652,7 +652,7 @@ export const LendingManagementTab: React.FC = () => {
                     {device.lendingCount}
                   </td>
                   {/* 操作 */}
-                  <td style={{ ...tdStyle, fontSize: '11px', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', color: device.freeComment ? '#333' : '#bbb' }}>
+                  <td style={{ ...tdStyle, fontSize: '11px', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', color: device.freeComment ? '#4A4A4A' : '#bbb' }}>
                     {device.freeComment || '-'}
                   </td>
                   <td style={{ ...tdStyle, fontSize: '11px' }}>
@@ -688,7 +688,7 @@ export const LendingManagementTab: React.FC = () => {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee' }}>
-              <h3 style={{ margin: 0, fontSize: '15px', color: '#333' }}>貸出設定変更</h3>
+              <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>貸出設定変更</h3>
               <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
                 {selectedDeviceForSetting.qrCode} - {selectedDeviceForSetting.itemName}（{selectedDeviceForSetting.maker} {selectedDeviceForSetting.model}）
               </p>

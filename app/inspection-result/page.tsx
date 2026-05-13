@@ -236,7 +236,7 @@ function InspectionResultContent() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
         }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
-          <h2 style={{ fontSize: '18px', color: '#333', marginBottom: '8px' }}>点検結果がありません</h2>
+          <h2 style={{ fontSize: '18px', color: '#4A4A4A', marginBottom: '8px' }}>点検結果がありません</h2>
           <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
             点検を実施してからこの画面にアクセスしてください。
           </p>
@@ -334,7 +334,7 @@ function InspectionResultContent() {
             <h2 style={{
               fontSize: '15px',
               fontWeight: 600,
-              color: '#333',
+              color: '#4A4A4A',
               marginBottom: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -367,7 +367,7 @@ function InspectionResultContent() {
             <h2 style={{
               fontSize: '15px',
               fontWeight: 600,
-              color: '#333',
+              color: '#4A4A4A',
               marginBottom: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -401,7 +401,7 @@ function InspectionResultContent() {
             <h2 style={{
               fontSize: '15px',
               fontWeight: 600,
-              color: '#333',
+              color: '#4A4A4A',
               marginBottom: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -433,7 +433,7 @@ function InspectionResultContent() {
                         border: '1px solid #eee',
                         textAlign: 'center',
                         fontWeight: 600,
-                        color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#333'
+                        color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#4A4A4A'
                       }}>
                         {item.unit ? `${item.result} ${item.unit}` : item.result}
                       </td>
@@ -456,7 +456,7 @@ function InspectionResultContent() {
               <h2 style={{
                 fontSize: '15px',
                 fontWeight: 600,
-                color: '#333',
+                color: '#4A4A4A',
                 marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
@@ -583,7 +583,7 @@ function InfoItem({ label, value, tabular }: { label: string; value: string; tab
       <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>{label}</div>
       <div style={{
         fontSize: '13px',
-        color: '#333',
+        color: '#4A4A4A',
         fontWeight: 500,
         fontVariantNumeric: tabular ? 'tabular-nums' : 'normal',
         overflow: 'hidden',

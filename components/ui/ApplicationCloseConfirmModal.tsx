@@ -49,7 +49,7 @@ export function ApplicationCloseConfirmModal({
           style={{
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#333',
+            color: '#4A4A4A',
             margin: '0 0 12px',
             textAlign: 'center',
           }}
@@ -83,7 +83,7 @@ export function ApplicationCloseConfirmModal({
             style={{
               padding: '10px 24px',
               background: '#E1E1E1',
-              color: '#333',
+              color: '#4A4A4A',
               border: 'none',
               borderRadius: '8px',
               cursor: 'pointer',

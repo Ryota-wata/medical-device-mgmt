@@ -68,7 +68,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
                 <label style={{
                   padding: '6px 16px',
                   background: '#FAFAFA',
-                  border: '1px solid #ccc',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '13px',
@@ -116,11 +116,11 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
                   border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '13px',
-                  color: '#333',
+                  color: '#4A4A4A',
                 }}>
                   {user?.username || 'user001'}
                 </span>
-                <span style={{ fontSize: '13px', color: '#333' }}>
+                <span style={{ fontSize: '13px', color: '#4A4A4A' }}>
                   {user?.email ? user.email.split('@')[0] : '担当者名'}
                 </span>
               </div>
@@ -278,7 +278,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
               onChange={(e) => setRegistrationDeadline(e.target.value)}
               style={{
                 padding: '6px 10px',
-                border: '1px solid #ccc',
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
               }}

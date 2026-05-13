@@ -326,7 +326,7 @@ export function TransferDisposalManagementTab() {
   // ステータスバッジ
   const getStatusBadge = (status: DisposalRfqStatus) => {
     const bg = STATUS_BADGE_COLORS[status] || '#8A8A8A';
-    const textColor = status === '作業日確定' ? '#333' : 'white';
+    const textColor = status === '作業日確定' ? '#4A4A4A' : 'white';
     return (
       <span style={{
         padding: '4px 12px',

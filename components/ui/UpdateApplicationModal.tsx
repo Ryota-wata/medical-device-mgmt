@@ -410,7 +410,7 @@ export function UpdateApplicationModal({
     label: {
       fontSize: '13px',
       fontWeight: 600,
-      color: '#333',
+      color: '#4A4A4A',
     },
     input: {
       padding: '8px 12px',
@@ -751,7 +751,7 @@ export function UpdateApplicationModal({
                 disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#4A4A4A',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#E1E1E1' : '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -798,7 +798,7 @@ export function UpdateApplicationModal({
                               disabled={index === 0}
                               style={{
                                 padding: '2px 6px',
-                                background: index === 0 ? '#ccc' : '#8A8A8A',
+                                background: index === 0 ? '#E1E1E1' : '#8A8A8A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '2px',
@@ -814,7 +814,7 @@ export function UpdateApplicationModal({
                               disabled={index === desiredEquipments.length - 1}
                               style={{
                                 padding: '2px 6px',
-                                background: index === desiredEquipments.length - 1 ? '#ccc' : '#8A8A8A',
+                                background: index === desiredEquipments.length - 1 ? '#E1E1E1' : '#8A8A8A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '2px',
@@ -1022,7 +1022,7 @@ export function UpdateApplicationModal({
                 style={{
                   padding: '8px 16px',
                   background: 'white',
-                  color: '#333',
+                  color: '#4A4A4A',
                   border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -1214,11 +1214,11 @@ export function UpdateApplicationModal({
                     style={{
                       flex: 1,
                       padding: '6px 12px',
-                      border: '1px solid #ccc',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '4px',
                       fontSize: '13px',
                       background: assetHandling === 'transfer' ? '#fff' : '#FAFAFA',
-                      color: assetHandling === 'transfer' ? '#333' : '#999',
+                      color: assetHandling === 'transfer' ? '#4A4A4A' : '#999',
                     }}
                   />
                   <span style={{ fontSize: '13px', color: '#666' }}>】</span>
@@ -1251,11 +1251,11 @@ export function UpdateApplicationModal({
                     style={{
                       flex: 1,
                       padding: '6px 12px',
-                      border: '1px solid #ccc',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '4px',
                       fontSize: '13px',
                       background: assetHandling === 'continue' ? '#fff' : '#FAFAFA',
-                      color: assetHandling === 'continue' ? '#333' : '#999',
+                      color: assetHandling === 'continue' ? '#4A4A4A' : '#999',
                     }}
                   />
                   <span style={{ fontSize: '13px', color: '#666' }}>】</span>

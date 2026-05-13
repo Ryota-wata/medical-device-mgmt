@@ -760,7 +760,7 @@ export default function AssetMatchingPage() {
                           {isEditing ? (
                             <button
                               onClick={() => toggleEditMode(row.id)}
-                              className="px-2 py-1 text-xs bg-[#FAFAFA] border border-[#ccc] rounded cursor-pointer whitespace-nowrap hover:bg-[#E1E1E1]"
+                              className="px-2 py-1 text-xs bg-[#FAFAFA] border border-[#E1E1E1] rounded cursor-pointer whitespace-nowrap hover:bg-[#E1E1E1]"
                             >
                               キャンセル
                             </button>

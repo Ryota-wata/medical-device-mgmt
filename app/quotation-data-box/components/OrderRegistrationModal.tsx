@@ -29,7 +29,7 @@ const PAYMENT_TERMS: PaymentTerms[] = [
 
 const inputStyle: React.CSSProperties = {
   padding: '6px 10px',
-  border: '1px solid #ccc',
+  border: '1px solid #E1E1E1',
   borderRadius: '4px',
   fontSize: '13px',
 };
@@ -202,16 +202,16 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
 
               {/* リース会社 */}
               <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース会社</label>
-              <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+              <input type="text" value={leaseCompany} onChange={(e) => setLeaseCompany(e.target.value)} disabled={!isLeaseType} placeholder={isLeaseType ? 'リース会社名' : '-'} style={{ ...inputStyle, color: isLeaseType ? '#4A4A4A' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
 
               {/* リース開始日 / 年数 */}
               <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>リース開始日</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                <input type="month" value={leaseStartDate} onChange={(e) => setLeaseStartDate(e.target.value)} disabled={!isLeaseType} style={{ ...inputStyle, width: '150px', color: isLeaseType ? '#4A4A4A' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
                 <label style={{ fontSize: '13px', fontWeight: 'bold', color: isLeaseType ? '#4A4A4A' : '#bbb', whiteSpace: 'nowrap' }}>年数</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#333' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
-                  <span style={{ fontSize: '13px', color: isLeaseType ? '#333' : '#bbb' }}>年</span>
+                  <input type="number" value={leaseYears} onChange={(e) => setLeaseYears(e.target.value)} disabled={!isLeaseType} min="1" max="20" style={{ ...inputStyle, width: '60px', textAlign: 'right', color: isLeaseType ? '#4A4A4A' : '#bbb', background: isLeaseType ? 'white' : '#FAFAFA' }} />
+                  <span style={{ fontSize: '13px', color: isLeaseType ? '#4A4A4A' : '#bbb' }}>年</span>
                 </div>
               </div>
             </div>

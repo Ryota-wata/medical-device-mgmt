@@ -297,7 +297,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   label: {
     fontSize: '14px',
     fontWeight: 600,
-    color: '#333',
+    color: '#4A4A4A',
     marginBottom: '6px',
     display: 'flex',
     alignItems: 'center'
@@ -307,7 +307,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '2px solid #E1E1E1',
     borderRadius: '6px',
     fontSize: '14px',
-    color: '#333',
+    color: '#4A4A4A',
     transition: 'all 0.2s',
     background: 'white'
   },
@@ -316,7 +316,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '2px solid #E1E1E1',
     borderRadius: '6px',
     fontSize: '14px',
-    color: '#333',
+    color: '#4A4A4A',
     transition: 'all 0.2s',
     background: 'white',
     cursor: 'pointer'

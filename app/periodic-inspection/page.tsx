@@ -673,7 +673,7 @@ function PeriodicInspectionContent() {
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               marginBottom: '16px'
             }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#4A4A4A', marginBottom: '12px' }}>
                 点検項目結果
               </h2>
               <div style={{ overflowX: 'auto' }}>
@@ -695,7 +695,7 @@ function PeriodicInspectionContent() {
                           borderBottom: '1px solid #E1E1E1',
                           textAlign: 'center',
                           fontWeight: 600,
-                          color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#333'
+                          color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#4A4A4A'
                         }}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
@@ -715,7 +715,7 @@ function PeriodicInspectionContent() {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                 marginBottom: '16px'
               }}>
-                <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#4A4A4A', marginBottom: '8px' }}>
                   備考
                 </h2>
                 <p style={{ fontSize: '14px', color: '#555', margin: 0, lineHeight: '1.6' }}>
@@ -897,7 +897,7 @@ function ConfirmInfoItem({ label, value }: { label: string; value: string }) {
       <div style={{ fontSize: '11px', color: '#888', marginBottom: '2px' }}>{label}</div>
       <div style={{
         fontSize: '13px',
-        color: '#333',
+        color: '#4A4A4A',
         fontWeight: 500,
         overflow: 'hidden',
         textOverflow: 'ellipsis',

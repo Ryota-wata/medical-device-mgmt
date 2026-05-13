@@ -278,7 +278,7 @@ export function AdditionApplicationModal({
     label: {
       fontSize: '13px',
       fontWeight: 600,
-      color: '#333',
+      color: '#4A4A4A',
     },
     input: {
       padding: '8px 12px',
@@ -699,7 +699,7 @@ export function AdditionApplicationModal({
                 style={{
                   padding: '8px 16px',
                   background: 'white',
-                  color: '#333',
+                  color: '#4A4A4A',
                   border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',

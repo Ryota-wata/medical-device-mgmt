@@ -226,7 +226,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               style={{
                 padding: '10px 24px',
                 background: activeTab === 'basic' ? '#4A4A4A' : '#FAFAFA',
-                color: activeTab === 'basic' ? 'white' : '#333',
+                color: activeTab === 'basic' ? 'white' : '#4A4A4A',
                 border: 'none',
                 borderRight: '1px solid #E1E1E1',
                 cursor: 'pointer',
@@ -241,7 +241,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               style={{
                 padding: '10px 24px',
                 background: activeTab === 'category' ? '#4A4A4A' : '#FAFAFA',
-                color: activeTab === 'category' ? 'white' : '#333',
+                color: activeTab === 'category' ? 'white' : '#4A4A4A',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: '13px',
@@ -256,7 +256,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
               style={{
                 padding: '10px 24px',
                 background: '#FAFAFA',
-                color: '#333',
+                color: '#4A4A4A',
                 border: 'none',
                 borderLeft: '1px solid #E1E1E1',
                 cursor: 'pointer',

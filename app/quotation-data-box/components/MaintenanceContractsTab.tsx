@@ -418,7 +418,7 @@ const ContractGroupDetailModal = ({
   };
   const cellInput: React.CSSProperties = {
     padding: '3px 6px',
-    border: '1px solid #ccc',
+    border: '1px solid #E1E1E1',
     borderRadius: '3px',
     fontSize: '11px',
     boxSizing: 'border-box' as const,
@@ -533,7 +533,7 @@ const ContractGroupDetailModal = ({
           justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '15px', color: '#333' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>
               契約グループ詳細: {contract.contractGroupName || '未設定'}
             </h3>
             <button
@@ -574,31 +574,31 @@ const ContractGroupDetailModal = ({
             <thead>
               {/* グループヘッダー行 */}
               <tr>
-                <th colSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>部署情報</th>
-                <th colSpan={4} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>商品情報</th>
-                <th colSpan={10} style={{ ...mThGroup, background: '#FAFAFA', color: '#333' }}>点検情報</th>
-                <th rowSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#333' }}>操作</th>
+                <th colSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>部署情報</th>
+                <th colSpan={4} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>商品情報</th>
+                <th colSpan={10} style={{ ...mThGroup, background: '#FAFAFA', color: '#4A4A4A' }}>点検情報</th>
+                <th rowSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>操作</th>
               </tr>
               {/* サブカラムヘッダー行 */}
               <tr>
                 {/* 部署情報 */}
-                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>管理部署</th>
-                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>設置部署</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#4A4A4A' }}>管理部署</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#4A4A4A' }}>設置部署</th>
                 {/* 商品情報 */}
-                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>QRラベル</th>
-                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>品目</th>
-                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>メーカー</th>
-                <th style={{ ...mThSub, background: '#E1E1E1', color: '#333' }}>型式</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#4A4A4A' }}>QRラベル</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#4A4A4A' }}>品目</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#4A4A4A' }}>メーカー</th>
+                <th style={{ ...mThSub, background: '#E1E1E1', color: '#4A4A4A' }}>型式</th>
                 {/* 点検情報 */}
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>点検グループ名</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>点検種別</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>点検周期</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>保証期間</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>部品免責</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>免責金額</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>オンコール</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>リモート</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#333' }}>コメント</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>点検グループ名</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>点検種別</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>点検周期</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>保証期間</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>部品免責</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>免責金額</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>オンコール</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>リモート</th>
+                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>コメント</th>
               </tr>
             </thead>
             <tbody>
@@ -937,7 +937,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span style={{ fontSize: '13px', color: '#333' }}>
+        <span style={{ fontSize: '13px', color: '#4A4A4A' }}>
           <strong>{sortedContracts.length}件</strong>表示
         </span>
       </div>
@@ -960,17 +960,17 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>申請No.</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約グループ名</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約種別</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>種別備考</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約日</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約期間</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約金額</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>単年度金額</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約業者</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>担当者</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>連絡先</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>申請No.</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約グループ名</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約種別</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>種別備考</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約日</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約期間</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約金額</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>単年度金額</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約業者</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>担当者</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>連絡先</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>登録</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>フリーコメント</th>
             </tr>
@@ -1040,7 +1040,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                       );
                     })()}
                   </td>
-                  <td style={{ ...tdStyle, fontSize: '11px', color: contract.comment ? '#333' : '#bbb' }}>
+                  <td style={{ ...tdStyle, fontSize: '11px', color: contract.comment ? '#4A4A4A' : '#bbb' }}>
                     {contract.comment || '-'}
                   </td>
                 </tr>
@@ -1061,7 +1061,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee' }}>
-              <h3 style={{ margin: 0, fontSize: '15px', color: '#333' }}>フリーコメント編集</h3>
+              <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>フリーコメント編集</h3>
               <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
                 {selectedContract.applicationNo} - {selectedContract.contractGroupName}
               </p>

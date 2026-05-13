@@ -288,7 +288,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                           ))}
                         </select>
                       ) : (
-                        <span style={{ color: '#ccc' }}>-</span>
+                        <span style={{ color: '#E1E1E1' }}>-</span>
                       )}
                     </td>
                   </tr>

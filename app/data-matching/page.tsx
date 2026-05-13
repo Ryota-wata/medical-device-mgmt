@@ -695,7 +695,7 @@ export default function DataMatchingPage() {
                 style={{
                   padding: '8px 16px',
                   backgroundColor: '#ffffff',
-                  border: '1px solid #ccc',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -755,7 +755,7 @@ export default function DataMatchingPage() {
                   </div>
                 ))}
                 <div style={{
-                  borderTop: '1px dashed #ccc',
+                  borderTop: '1px dashed #E1E1E1',
                   marginTop: '12px',
                   paddingTop: '12px',
                   display: 'flex',
@@ -967,7 +967,7 @@ export default function DataMatchingPage() {
               style={{
                 padding: '8px 16px',
                 backgroundColor: '#ffffff',
-                border: '1px solid #ccc',
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
@@ -1047,7 +1047,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.department}
             onChange={(e) => setFilters({ department: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">共通部門</option>
             {departmentOptions.map(dept => (
@@ -1061,7 +1061,7 @@ export default function DataMatchingPage() {
             disabled={!filters.department}
             style={{
               padding: '6px 8px',
-              border: '1px solid #ccc',
+              border: '1px solid #E1E1E1',
               borderRadius: '4px',
               fontSize: '13px',
               backgroundColor: filters.department ? 'white' : '#FAFAFA'
@@ -1076,7 +1076,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.category}
             onChange={(e) => setFilters({ category: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">カテゴリ</option>
             {categoryOptions.map(cat => (
@@ -1087,7 +1087,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.majorCategory}
             onChange={(e) => setFilters({ majorCategory: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">大分類</option>
             {majorCategoryOptions.map(major => (
@@ -1098,7 +1098,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.middleCategory}
             onChange={(e) => setFilters({ middleCategory: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">中分類</option>
             {middleCategoryOptions.map(middle => (
@@ -1109,7 +1109,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.item}
             onChange={(e) => setFilters({ item: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">個体管理品目</option>
             {itemOptions.map(it => (
@@ -1120,7 +1120,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.manufacturer}
             onChange={(e) => setFilters({ manufacturer: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">メーカー</option>
             {manufacturerOptions.map(mfr => (
@@ -1131,7 +1131,7 @@ export default function DataMatchingPage() {
           <select
             value={filters.model}
             onChange={(e) => setFilters({ model: e.target.value })}
-            style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+            style={{ padding: '6px 8px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px' }}
           >
             <option value="">型式</option>
             {modelOptions.map(mdl => (
@@ -1147,7 +1147,7 @@ export default function DataMatchingPage() {
             style={{
               padding: '6px 12px',
               backgroundColor: '#FAFAFA',
-              border: '1px solid #ccc',
+              border: '1px solid #E1E1E1',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '13px'
@@ -1245,7 +1245,7 @@ export default function DataMatchingPage() {
                       padding: '4px 8px',
                       backgroundColor: '#FAFAFA',
                       color: '#666',
-                      border: '1px solid #ccc',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '11px'
@@ -1266,7 +1266,7 @@ export default function DataMatchingPage() {
                   style={{
                     padding: '4px 10px',
                     backgroundColor: '#FAFAFA',
-                    border: '1px solid #ccc',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '12px'
@@ -1276,7 +1276,7 @@ export default function DataMatchingPage() {
                 </button>
 
                 {/* 突合状況アクションボタン */}
-                <div style={{ display: 'flex', gap: '2px', alignItems: 'center', borderLeft: '1px solid #ccc', paddingLeft: '8px' }}>
+                <div style={{ display: 'flex', gap: '2px', alignItems: 'center', borderLeft: '1px solid #E1E1E1', paddingLeft: '8px' }}>
                   <span style={{ fontSize: '11px', color: '#8A8A8A', marginRight: '4px' }}>突合状況:</span>
                   {([
                     { status: '完全一致' as MatchingStatus, label: '完全一致', color: '#008C1D', needsBoth: true },
@@ -1458,8 +1458,8 @@ export default function DataMatchingPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderTop: '1px solid #ccc',
-            borderBottom: '1px solid #ccc'
+            borderTop: '1px solid #E1E1E1',
+            borderBottom: '1px solid #E1E1E1'
           }}
         >
           <div style={{
@@ -1511,7 +1511,7 @@ export default function DataMatchingPage() {
                 style={{
                   padding: '4px 10px',
                   backgroundColor: '#FAFAFA',
-                  border: '1px solid #ccc',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '12px'
@@ -1732,7 +1732,7 @@ export default function DataMatchingPage() {
                 style={{
                   padding: '10px 24px',
                   backgroundColor: '#ffffff',
-                  border: '1px solid #ccc',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px'
