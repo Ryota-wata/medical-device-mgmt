@@ -159,7 +159,7 @@ function AssetMasterContent() {
   };
 
   return (
-    <div className="min-h-dvh bg-surface-screen flex flex-col">
+    <div className="h-dvh bg-surface-screen flex flex-col">
       {/* ヘッダー (Figma 216:37645) */}
       <div className="bg-surface-card border-b border-stroke-input px-5 py-3 flex items-center gap-3 shadow-sm">
         <span className="text-content-sub text-lg cursor-pointer select-none">&lt;</span>
