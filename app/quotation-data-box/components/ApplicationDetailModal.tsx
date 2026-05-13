@@ -51,10 +51,10 @@ const tableStyle: React.CSSProperties = {
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: '14px',
   fontWeight: 'bold',
-  color: '#4a6741',
+  color: '#008C1D',
   marginBottom: '16px',
   paddingBottom: '8px',
-  borderBottom: '2px solid #4a6741',
+  borderBottom: '2px solid #008C1D',
 };
 
 const sectionStyle: React.CSSProperties = {
@@ -104,7 +104,7 @@ export function ApplicationDetailModal({
         {/* ヘッダー */}
         <div
           style={{
-            background: '#4a6741',
+            background: '#008C1D',
             color: 'white',
             padding: '16px 24px',
             fontSize: '18px',
@@ -119,7 +119,7 @@ export function ApplicationDetailModal({
             <span
               style={{
                 background: 'white',
-                color: '#4a6741',
+                color: '#008C1D',
                 padding: '4px 12px',
                 borderRadius: '4px',
                 fontSize: '13px',
@@ -203,7 +203,7 @@ export function ApplicationDetailModal({
               <tbody>
                 {application.assets.map((asset, index) => (
                   <tr key={index}>
-                    <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                    <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#008C1D' }}>
                       {getHopeLabel(index)}
                     </td>
                     <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{asset.name || '-'}</td>
@@ -313,8 +313,8 @@ export function ApplicationDetailModal({
               style={{
                 padding: '10px 20px',
                 background: 'white',
-                color: '#A35414',
-                border: '2px solid #A35414',
+                color: '#4A4A4A',
+                border: '2px solid #4A4A4A',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '14px',
