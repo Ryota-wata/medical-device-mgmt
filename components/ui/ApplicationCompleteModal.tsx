@@ -42,48 +42,21 @@ export function ApplicationCompleteModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '12px',
+          borderRadius: '8px',
           width: '90%',
           maxWidth: '480px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
           overflow: 'hidden',
           textAlign: 'center',
-          padding: '40px 32px 32px',
+          padding: '32px',
         }}
       >
-        {/* チェックマークアイコン */}
-        <div
-          style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: '#EBF5EE',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 20px',
-          }}
-        >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#008C1D"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </div>
-
         {/* 送信完了メッセージ */}
         <h2
           style={{
             fontSize: '18px',
-            fontWeight: 'bold',
-            color: '#333',
+            fontWeight: 600,
+            color: '#4A4A4A',
             margin: '0 0 12px',
           }}
         >
@@ -94,7 +67,7 @@ export function ApplicationCompleteModal({
         <p
           style={{
             fontSize: '14px',
-            color: '#555',
+            color: '#8A8A8A',
             margin: guidanceText ? '0 0 16px' : '0 0 32px',
             fontVariantNumeric: 'tabular-nums',
           }}
@@ -107,7 +80,7 @@ export function ApplicationCompleteModal({
           <p
             style={{
               fontSize: '13px',
-              color: '#888',
+              color: '#8A8A8A',
               margin: '0 0 32px',
               lineHeight: '1.6',
               whiteSpace: 'pre-line',
@@ -117,7 +90,7 @@ export function ApplicationCompleteModal({
           </p>
         )}
 
-        {/* ボタン */}
+        {/* ボタン (Figma 395:68355: 続けて申請するを上、戻るを下) */}
         <div
           style={{
             display: 'flex',
@@ -126,36 +99,36 @@ export function ApplicationCompleteModal({
           }}
         >
           <button
-            onClick={onGoToMain}
+            onClick={onContinue}
             style={{
               padding: '12px 24px',
               background: '#008C1D',
               color: 'white',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 'bold',
-              minHeight: '44px',
-            }}
-          >
-            {returnDestination}に戻る
-          </button>
-          <button
-            onClick={onContinue}
-            style={{
-              padding: '12px 24px',
-              background: 'white',
-              color: '#008C1D',
-              border: '2px solid #008C1D',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 600,
               minHeight: '44px',
             }}
           >
             続けて申請する
+          </button>
+          <button
+            onClick={onGoToMain}
+            style={{
+              padding: '12px 24px',
+              background: 'white',
+              color: '#146E2E',
+              border: '1px solid #146E2E',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              minHeight: '44px',
+            }}
+          >
+            {returnDestination}に戻る
           </button>
         </div>
       </div>
