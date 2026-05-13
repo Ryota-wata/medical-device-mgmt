@@ -208,10 +208,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxHeight: '90vh'
   },
   modalHeader: {
-    background: 'linear-gradient(135deg, #008C1D 0%, #008C1D 100%)',
-    color: 'white',
+    background: 'white',
+    color: '#4A4A4A',
     padding: '20px 28px',
     borderRadius: '12px 12px 0 0',
+    borderBottom: '1px solid #E1E1E1',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -220,11 +221,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   modalTitle: {
     fontSize: '20px',
     fontWeight: 700,
-    margin: 0
+    margin: 0,
+    color: '#4A4A4A'
   },
   closeButton: {
-    background: 'rgba(255, 255, 255, 0.2)',
-    color: 'white',
+    background: 'transparent',
+    color: '#8A8A8A',
     border: 'none',
     borderRadius: '50%',
     width: '36px',
@@ -292,7 +294,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   hint: {
     fontSize: '12px',
-    color: '#666',
+    color: '#8A8A8A',
     marginTop: '4px',
     display: 'block'
   },
@@ -319,8 +321,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     minWidth: '120px'
   },
   cancelButton: {
-    background: '#8A8A8A',
-    color: 'white'
+    background: 'white',
+    color: '#4A4A4A',
+    border: '1px solid #E1E1E1'
   },
   submitButton: {
     background: '#008C1D',
