@@ -117,20 +117,20 @@ function HistoryContent() {
   ];
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#FAFAFA]">
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
       {/* ヘッダー */}
-      <header className="bg-white border-b border-[#E1E1E1] px-4 py-3">
+      <header className="bg-surface-card border-b border-stroke-input px-4 py-3">
         <div className="flex items-center justify-between max-w-[800px] mx-auto">
           <button
             onClick={handleBack}
-            className="size-10 flex items-center justify-center text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A] transition-colors"
+            className="size-10 flex items-center justify-center text-content-sub bg-transparent border-0 cursor-pointer hover:text-content-primary transition-colors"
             aria-label="戻る"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>
-          <h1 className="text-sm font-bold text-[#4A4A4A]">登録履歴</h1>
+          <h1 className="text-sm font-bold text-content-primary">登録履歴</h1>
           <div className="size-10" />
         </div>
       </header>
@@ -148,15 +148,15 @@ function HistoryContent() {
                 onChange={handleSelectAll}
                 className="size-4 accent-[#008C1D] cursor-pointer"
               />
-              <span className="text-sm text-[#4A4A4A]">全選択</span>
+              <span className="text-sm text-content-primary">全選択</span>
             </label>
             {/* ページ情報 + 件数選択 */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#8A8A8A] tabular-nums">{startIndex}-{endIndex} / {allHistoryData.length}P</span>
+              <span className="text-xs text-content-sub tabular-nums">{startIndex}-{endIndex} / {allHistoryData.length}P</span>
               <div className="relative">
                 <button
                   onClick={() => setShowPerPageMenu(!showPerPageMenu)}
-                  className="flex items-center gap-1 text-xs text-[#8A8A8A] bg-transparent border-0 cursor-pointer hover:text-[#4A4A4A]"
+                  className="flex items-center gap-1 text-xs text-content-sub bg-transparent border-0 cursor-pointer hover:text-content-primary"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m6 9 6 6 6-6" />
@@ -165,13 +165,13 @@ function HistoryContent() {
                 {showPerPageMenu && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowPerPageMenu(false)} />
-                    <div className="absolute right-0 top-full mt-1 bg-white border border-[#E1E1E1] rounded-md shadow-lg z-20 min-w-[80px]">
+                    <div className="absolute right-0 top-full mt-1 bg-surface-card border border-stroke-input rounded-md shadow-lg z-20 min-w-[80px]">
                       {[10, 30].map(n => (
                         <button
                           key={n}
                           onClick={() => handlePerPageChange(n)}
                           className={`w-full px-3 py-2 text-xs text-left border-0 cursor-pointer transition-colors ${
-                            perPage === n ? 'text-[#008C1D] font-bold bg-[#f0fdf4]' : 'text-[#4A4A4A] bg-white hover:bg-[#FAFAFA]'
+                            perPage === n ? 'text-cta-primary font-bold bg-surface-select' : 'text-content-primary bg-surface-card hover:bg-surface-screen'
                           }`}
                         >
                           {n}件
@@ -186,8 +186,8 @@ function HistoryContent() {
 
           {/* 選択状態テキスト */}
           {selectedOnPage > 0 && (
-            <p className="text-xs text-[#8A8A8A] mb-2">
-              ページ内のスレッド<span className="font-bold text-[#4A4A4A]">{selectedOnPage}件</span>が選択されています。
+            <p className="text-xs text-content-sub mb-2">
+              ページ内のスレッド<span className="font-bold text-content-primary">{selectedOnPage}件</span>が選択されています。
             </p>
           )}
 
@@ -198,8 +198,8 @@ function HistoryContent() {
               disabled={selectedCards.size === 0}
               className={`px-4 py-1.5 text-xs font-bold rounded border transition-colors ${
                 selectedCards.size > 0
-                  ? 'text-[#008C1D] border-[#008C1D] bg-white cursor-pointer hover:bg-[#f0fdf4]'
-                  : 'text-[#8A8A8A] border-[#E1E1E1] bg-[#FAFAFA] cursor-not-allowed'
+                  ? 'text-cta-primary border-cta-primary bg-surface-card cursor-pointer hover:bg-surface-select'
+                  : 'text-content-sub border-stroke-input bg-surface-screen cursor-not-allowed'
               }`}
             >
               修正
@@ -209,8 +209,8 @@ function HistoryContent() {
               disabled={selectedCards.size === 0}
               className={`px-4 py-1.5 text-xs font-bold rounded border transition-colors ${
                 selectedCards.size > 0
-                  ? 'text-[#008C1D] border-[#008C1D] bg-white cursor-pointer hover:bg-[#f0fdf4]'
-                  : 'text-[#8A8A8A] border-[#E1E1E1] bg-[#FAFAFA] cursor-not-allowed'
+                  ? 'text-cta-primary border-cta-primary bg-surface-card cursor-pointer hover:bg-surface-select'
+                  : 'text-content-sub border-stroke-input bg-surface-screen cursor-not-allowed'
               }`}
             >
               再利用
@@ -227,7 +227,7 @@ function HistoryContent() {
                 key={card.id}
                 type="button"
                 onClick={() => handleSelectCard(card.id)}
-                className={`text-left bg-white rounded-lg border-0 cursor-pointer transition-all ${
+                className={`text-left bg-surface-card rounded-lg border-0 cursor-pointer transition-all ${
                   isSelected ? 'ring-2 ring-[#008C1D]' : 'ring-1 ring-[#E1E1E1]'
                 }`}
               >
@@ -235,17 +235,17 @@ function HistoryContent() {
                   <div
                     key={field.key}
                     className={`flex items-center px-4 py-2.5 ${
-                      i < fields.length - 1 ? 'border-b border-[#F1F1F1]' : ''
+                      i < fields.length - 1 ? 'border-b border-stroke-card' : ''
                     }`}
                   >
-                    <span className="text-xs text-[#8A8A8A] w-[100px] shrink-0">{field.label}</span>
-                    <span className={`text-sm text-[#4A4A4A] flex-1 ${field.key === 'labelNumber' || field.key === 'size' ? 'tabular-nums' : ''}`}>
+                    <span className="text-xs text-content-sub w-[100px] shrink-0">{field.label}</span>
+                    <span className={`text-sm text-content-primary flex-1 ${field.key === 'labelNumber' || field.key === 'size' ? 'tabular-nums' : ''}`}>
                       {card[field.key]}
                     </span>
                     {/* チェックボックス（ラベル番号行のみ） */}
                     {field.key === 'labelNumber' && (
                       <div className={`size-5 rounded flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? 'bg-[#008C1D]' : 'border-2 border-[#d1d5db] bg-white'
+                        isSelected ? 'bg-cta-primary' : 'border-2 border-stroke-input bg-surface-card'
                       }`}>
                         {isSelected && (
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -267,28 +267,28 @@ function HistoryContent() {
             <button
               onClick={() => setCurrentPage(1)}
               disabled={currentPage === 1}
-              className="size-8 flex items-center justify-center text-xs text-[#8A8A8A] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="size-8 flex items-center justify-center text-xs text-content-sub bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             >
               &laquo;
             </button>
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="size-8 flex items-center justify-center text-xs text-[#8A8A8A] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="size-8 flex items-center justify-center text-xs text-content-sub bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             >
               &lsaquo;
             </button>
             {pageNumbers.map((p, i) =>
               p === '...' ? (
-                <span key={`dots-${i}`} className="size-8 flex items-center justify-center text-xs text-[#8A8A8A]">...</span>
+                <span key={`dots-${i}`} className="size-8 flex items-center justify-center text-xs text-content-sub">...</span>
               ) : (
                 <button
                   key={p}
                   onClick={() => setCurrentPage(p as number)}
                   className={`size-8 flex items-center justify-center text-xs rounded border-0 cursor-pointer transition-colors tabular-nums ${
                     currentPage === p
-                      ? 'text-[#008C1D] font-bold bg-transparent'
-                      : 'text-[#8A8A8A] bg-transparent hover:text-[#4A4A4A]'
+                      ? 'text-cta-primary font-bold bg-transparent'
+                      : 'text-content-sub bg-transparent hover:text-content-primary'
                   }`}
                 >
                   {p}
@@ -298,14 +298,14 @@ function HistoryContent() {
             <button
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="size-8 flex items-center justify-center text-xs text-[#8A8A8A] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="size-8 flex items-center justify-center text-xs text-content-sub bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             >
               &rsaquo;
             </button>
             <button
               onClick={() => setCurrentPage(totalPages)}
               disabled={currentPage === totalPages}
-              className="size-8 flex items-center justify-center text-xs text-[#8A8A8A] bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="size-8 flex items-center justify-center text-xs text-content-sub bg-transparent border-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             >
               &raquo;
             </button>
@@ -314,7 +314,7 @@ function HistoryContent() {
       </div>
 
       {/* フッター */}
-      <footer className="py-3 text-center text-xs text-[#8A8A8A]">
+      <footer className="py-3 text-center text-xs text-content-sub">
         &copy;Copyright 2024 SHIP HEALTHCARE Research&amp;Consulting, INC. All rights reserved
       </footer>
 
@@ -324,7 +324,7 @@ function HistoryContent() {
 
 export default function HistoryPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-[#8A8A8A]">読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <HistoryContent />
     </Suspense>
   );
