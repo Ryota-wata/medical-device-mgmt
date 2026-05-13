@@ -328,6 +328,10 @@ export function UpdateApplicationModal({
     padding: '8px 12px', border: '1px solid #E1E1E1', fontSize: '13px',
     background: 'white',
   };
+  const tableTdHighlight: React.CSSProperties = {
+    padding: '8px 12px', border: '1px solid #E1E1E1', fontSize: '13px',
+    background: '#FDF1E5',
+  };
 
   const styles: Record<string, React.CSSProperties> = {
     overlay: {
@@ -725,18 +729,18 @@ export function UpdateApplicationModal({
             </div>
           </div>
 
-          {/* 更新対象機器 (Figma 280:28894: テーブル UI) */}
+          {/* 更新対象機器 (Figma 280:28894: テーブル UI + 薄橙背景強調) */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>更新対象機器</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <tbody>
                 <tr>
                   <th style={tableTh}>QRコード</th>
-                  <td style={tableTd}>{assets[0]?.qrCode || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.qrCode || '-'}</td>
                   <th style={tableTh}>メーカー</th>
-                  <td style={tableTd}>{assets[0]?.maker || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.maker || '-'}</td>
                   <th style={tableTh}>型式</th>
-                  <td style={tableTd}>{assets[0]?.model || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.model || '-'}</td>
                 </tr>
               </tbody>
             </table>

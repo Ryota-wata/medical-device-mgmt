@@ -196,6 +196,10 @@ export function AdditionApplicationModal({
     padding: '8px 12px', border: '1px solid #E1E1E1', fontSize: '13px',
     background: 'white',
   };
+  const tableTdHighlight: React.CSSProperties = {
+    padding: '8px 12px', border: '1px solid #E1E1E1', fontSize: '13px',
+    background: '#FDF1E5',
+  };
 
   const styles: Record<string, React.CSSProperties> = {
     overlay: {
@@ -603,30 +607,30 @@ export function AdditionApplicationModal({
             </div>
           </div>
 
-          {/* 増設対象機器 (Figma 284:30759: テーブル UI) */}
+          {/* 増設対象機器 (Figma 284:30759: テーブル UI + 薄橙背景強調) */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>増設対象機器</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <tbody>
                 <tr>
                   <th style={tableTh}>品目名</th>
-                  <td style={tableTd} colSpan={5}>{assets[0]?.name || '-'}</td>
+                  <td style={tableTdHighlight} colSpan={5}>{assets[0]?.name || '-'}</td>
                 </tr>
                 <tr>
                   <th style={tableTh}>メーカー</th>
-                  <td style={tableTd}>{assets[0]?.maker || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.maker || '-'}</td>
                   <th style={tableTh}>型式</th>
-                  <td style={tableTd}>{assets[0]?.model || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.model || '-'}</td>
                   <th style={tableTh}>管理番号</th>
-                  <td style={tableTd}>{assets[0]?.managementNo || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.managementNo || '-'}</td>
                 </tr>
                 <tr>
                   <th style={tableTh}>設置場所</th>
-                  <td style={tableTd}>{assets[0]?.roomName || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.roomName || '-'}</td>
                   <th style={tableTh}>部門</th>
-                  <td style={tableTd}>{assets[0]?.department || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.department || '-'}</td>
                   <th style={tableTh}>部署</th>
-                  <td style={tableTd}>{assets[0]?.section || '-'}</td>
+                  <td style={tableTdHighlight}>{assets[0]?.section || '-'}</td>
                 </tr>
               </tbody>
             </table>
