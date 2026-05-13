@@ -53,8 +53,8 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '20px', padding: '14px', background: '#EAF3FB', borderRadius: '6px', border: '1px solid #0092E6' }}>
-        <p style={{ margin: '0', fontSize: '12px', color: '#1E5A9E', lineHeight: '1.5' }}>
+      <div style={{ marginBottom: '20px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #0092E6' }}>
+        <p style={{ margin: '0', fontSize: '12px', color: '#4A4A4A', lineHeight: '1.5' }}>
           以下の全ての明細が見積明細情報画面に登録されます。
         </p>
       </div>
@@ -105,7 +105,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
                         fontSize: '10px',
                         fontWeight: 'bold',
                         background: app.applicationType === '新規申請' ? '#008C1D' :
-                                   app.applicationType === '更新申請' ? '#A35414' :
+                                   app.applicationType === '更新申請' ? '#4A4A4A' :
                                    app.applicationType === '増設申請' ? '#0092E6' : '#8A8A8A',
                         color: 'white',
                       }}>
@@ -132,7 +132,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
           fontSize: '14px',
           fontWeight: 'bold',
           color: '#4A4A4A',
-          borderLeft: '4px solid #5E3A93',
+          borderLeft: '4px solid #4A4A4A',
           paddingLeft: '10px'
         }}>
           登録される見積明細（{ocrResult.items.length}件）
@@ -165,7 +165,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
                         onClick={() => handleOpenApplicationModal(item)}
                         style={{
                           padding: '4px 10px',
-                          background: '#5E3A93',
+                          background: '#4A4A4A',
                           color: 'white',
                           border: 'none',
                           borderRadius: '3px',
