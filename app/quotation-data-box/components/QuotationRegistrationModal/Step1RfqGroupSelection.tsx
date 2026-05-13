@@ -42,19 +42,19 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
   return (
     <div>
       {/* フォームテーブル */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #4a6fa5' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #4A4A4A' }}>
         <tbody>
           {/* 添付ファイル */}
           <tr>
             <th style={{
-              background: '#4a6fa5',
+              background: '#4A4A4A',
               color: 'white',
               padding: '10px 12px',
               fontSize: '13px',
               fontWeight: 'bold',
               textAlign: 'left',
               width: '120px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
               whiteSpace: 'nowrap',
             }}>
               添付ファイル
@@ -62,7 +62,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
             <td style={{
               background: 'white',
               padding: '10px 12px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <label style={{
@@ -92,14 +92,14 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           {/* 申請者 */}
           <tr>
             <th style={{
-              background: '#4a6fa5',
+              background: '#4A4A4A',
               color: 'white',
               padding: '10px 12px',
               fontSize: '13px',
               fontWeight: 'bold',
               textAlign: 'left',
               width: '120px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
               whiteSpace: 'nowrap',
             }}>
               申請者
@@ -107,7 +107,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
             <td style={{
               background: 'white',
               padding: '10px 12px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{
@@ -130,14 +130,14 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           {/* 見積フェーズ */}
           <tr>
             <th style={{
-              background: '#4a6fa5',
+              background: '#4A4A4A',
               color: 'white',
               padding: '10px 12px',
               fontSize: '13px',
               fontWeight: 'bold',
               textAlign: 'left',
               width: '120px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
               whiteSpace: 'nowrap',
               verticalAlign: 'top',
             }}>
@@ -146,7 +146,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
             <td style={{
               background: 'white',
               padding: '10px 12px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
             }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -183,14 +183,14 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           {/* 保存形式 */}
           <tr>
             <th style={{
-              background: '#4a6fa5',
+              background: '#4A4A4A',
               color: 'white',
               padding: '10px 12px',
               fontSize: '13px',
               fontWeight: 'bold',
               textAlign: 'left',
               width: '120px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
               whiteSpace: 'nowrap',
               verticalAlign: 'top',
             }}>
@@ -199,7 +199,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
             <td style={{
               background: 'white',
               padding: '10px 12px',
-              border: '1px solid #4a6fa5',
+              border: '1px solid #4A4A4A',
             }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -259,7 +259,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
             onClick={() => {/* SHIPへ依頼処理 */}}
             style={{
               padding: '10px 20px',
-              background: '#A35414',
+              background: '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -306,7 +306,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           disabled={ocrProcessing}
           style={{
             padding: '10px 20px',
-            background: ocrProcessing ? '#bdc3c7' : '#0092E6',
+            background: ocrProcessing ? '#E1E1E1' : '#0092E6',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
