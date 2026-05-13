@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, Suspense } from 'react';
+import { ChevronLeft, QrCode, Camera, Check } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { Header } from '@/components/layouts/Header';
@@ -477,22 +478,22 @@ export default function AssetProvisionalRegistrationPage() {
       {/* Fixed Footer */}
       {!registrationComplete && rfqGroup && orderGroup && (
         <footer className="fixed bottom-0 left-0 right-0 bg-surface-card border-t border-stroke-input px-2 py-2 md:px-3 md:py-2.5 flex justify-around flex-wrap shadow-[0_-2px_4px_rgba(0,0,0,0.1)] z-[100]">
-          <FooterButton onClick={handleBack} icon="◀" label="戻る" variant="default" isMobile={isMobile} />
-          <FooterButton onClick={handleQRScan} icon="📷" label="QR読取" variant="alert" isMobile={isMobile} />
-          <FooterButton onClick={handlePhotoCapture} icon="📷" label="写真撮影" variant="alert" isMobile={isMobile} />
+          <FooterButton onClick={handleBack} icon={<ChevronLeft size={22} aria-hidden />} label="戻る" variant="default" isMobile={isMobile} />
+          <FooterButton onClick={handleQRScan} icon={<QrCode size={22} aria-hidden />} label="QR読取" variant="default" isMobile={isMobile} />
+          <FooterButton onClick={handlePhotoCapture} icon={<Camera size={22} aria-hidden />} label="写真撮影" variant="default" isMobile={isMobile} />
           {viewState === 'form' ? (
             <FooterButton
               onClick={handleRegisterItem}
               disabled={isSubmitting}
-              icon="✓"
+              icon={<Check size={22} aria-hidden />}
               label={isSubmitting ? '登録中...' : '商品登録'}
               variant="primary"
               isMobile={isMobile}
             />
           ) : allRegistered ? (
-            <FooterButton onClick={handleCompleteAll} icon="✓" label="登録完了" variant="primary" isMobile={isMobile} />
+            <FooterButton onClick={handleCompleteAll} icon={<Check size={22} aria-hidden />} label="登録完了" variant="primary" isMobile={isMobile} />
           ) : (
-            <FooterButton onClick={() => {}} disabled icon="✓" label="商品登録" variant="disabled" isMobile={isMobile} />
+            <FooterButton onClick={() => {}} disabled icon={<Check size={22} aria-hidden />} label="商品登録" variant="disabled" isMobile={isMobile} />
           )}
         </footer>
       )}
@@ -1194,25 +1195,25 @@ function FooterButton({
   isMobile: boolean;
   disabled?: boolean;
 }) {
-  const iconBgClass: Record<FooterVariant, string> = {
-    default: 'bg-stroke-card text-content-primary',
-    primary: 'bg-surface-select text-cta-primary',
-    alert: 'bg-surface-select text-content-alert',
-    disabled: 'bg-stroke-card text-content-sub',
-  };
-  const textClass: Record<FooterVariant, string> = {
-    default: 'text-content-primary',
+  const iconColorClass: Record<FooterVariant, string> = {
+    default: 'text-content-sub',
     primary: 'text-cta-primary',
     alert: 'text-content-alert',
-    disabled: 'text-content-sub',
+    disabled: 'text-content-disabled',
+  };
+  const textClass: Record<FooterVariant, string> = {
+    default: 'text-content-sub',
+    primary: 'text-cta-primary',
+    alert: 'text-content-alert',
+    disabled: 'text-content-disabled',
   };
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`flex flex-col items-center gap-1 bg-transparent border-0 rounded-lg transition-colors ${isMobile ? 'p-1 min-w-[60px]' : 'p-2 min-w-[70px]'} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-stroke-card'}`}
+      className={`flex flex-col items-center gap-1 bg-transparent border-0 rounded-lg transition-colors ${isMobile ? 'p-1 min-w-[60px]' : 'p-2 min-w-[70px]'} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-stroke-card'}`}
     >
-      <span className={`flex items-center justify-center rounded-full text-xl ${isMobile ? 'w-9 h-9' : 'w-10 h-10'} ${iconBgClass[variant]}`}>
+      <span className={`flex items-center justify-center ${iconColorClass[variant]}`}>
         {icon}
       </span>
       <span className={`text-xs ${textClass[variant]}`}>{label}</span>
