@@ -505,7 +505,7 @@ export function InspectionRegistrationModal({
                         key={asset.qrCode}
                         style={{
                           ...styles.tableRow,
-                          backgroundColor: selectedAssetIds.has(asset.qrCode) ? '#EAF3FB' : (index % 2 === 0 ? 'white' : '#FAFAFA'),
+                          backgroundColor: selectedAssetIds.has(asset.qrCode) ? '#EBF5EE' : (index % 2 === 0 ? 'white' : '#FAFAFA'),
                         }}
                         onClick={() => toggleAssetSelection(asset.qrCode)}
                       >
@@ -989,7 +989,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: 'hidden',
   },
   menuHeader: {
-    backgroundColor: '#ecf0f1',
+    backgroundColor: '#FAFAFA',
     padding: '10px 16px',
     fontSize: '14px',
     fontWeight: 600,
@@ -1030,7 +1030,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   noMenuHint: {
     fontSize: '13px',
-    color: '#A35414',
+    color: '#4A4A4A',
     margin: 0,
   },
   radioGroup: {
