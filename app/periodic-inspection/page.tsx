@@ -423,56 +423,55 @@ function PeriodicInspectionContent() {
             margin: '0 auto',
             overflow: 'hidden'
           }}>
-            {/* ヘッダー情報 */}
+            {/* ヘッダー情報 (Figma 597:42208: 2 列テーブル) */}
             <div style={{
               padding: '16px',
               borderBottom: '1px solid #E1E1E1',
               backgroundColor: '#FAFAFA'
             }}>
-              {/* 基本情報 */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>QRコード</span>
-                  <span style={{ ...styles.infoValue, fontVariantNumeric: 'tabular-nums' }}>{task.assetId}</span>
-                </div>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>実施者名</span>
-                  <input
-                    type="text"
-                    value={inspectorName}
-                    onChange={(e) => setInspectorName(e.target.value)}
-                    placeholder="氏名を入力"
-                    style={styles.input}
-                  />
-                </div>
-                <div style={styles.dateDisplay}>{today}</div>
-              </div>
-
-              {/* 機器情報 */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>対象機器</span>
-                  <span style={styles.infoValue}>{task.assetName}　{task.maker}　{task.model}</span>
-                </div>
-              </div>
-
-              {/* 点検種別 */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoLabel}>点検種別</span>
-                  <span style={{ ...styles.infoValue, color: '#008C1D' }}>定期点検</span>
-                </div>
-              </div>
-
-              {/* 点検メニュー */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={styles.infoLabel}>点検メニュー</span>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoValue}>
-                    {selectedMenu?.name || '（メニュー未設定）'}
-                  </span>
-                </div>
-              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #E1E1E1' }}>
+                <tbody>
+                  <tr>
+                    <th style={infoTableTh}>QRコード</th>
+                    <td style={{ ...infoTableTd, fontVariantNumeric: 'tabular-nums' }}>{task.assetId}</td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>実施者名</th>
+                    <td style={infoTableTd}>
+                      <input
+                        type="text"
+                        value={inspectorName}
+                        onChange={(e) => setInspectorName(e.target.value)}
+                        placeholder="氏名を入力"
+                        style={{
+                          width: '100%',
+                          border: '1px solid #E1E1E1',
+                          borderRadius: '4px',
+                          padding: '4px 8px',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>実施日</th>
+                    <td style={{ ...infoTableTd, fontVariantNumeric: 'tabular-nums' }}>{today}</td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>対象機器</th>
+                    <td style={infoTableTd}>{task.assetName}　{task.maker}　{task.model}</td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>点検種別</th>
+                    <td style={{ ...infoTableTd, color: '#008C1D' }}>定期点検</td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>点検メニュー</th>
+                    <td style={infoTableTd}>{selectedMenu?.name || '（メニュー未設定）'}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             {/* 点検項目 */}
@@ -586,7 +585,7 @@ function PeriodicInspectionContent() {
           }}>
             {/* 案内バナー */}
             <div style={{
-              background: 'linear-gradient(135deg, #008C1D 0%, #146E2E 100%)',
+              backgroundColor: '#008C1D',
               borderRadius: '8px',
               padding: '16px',
               marginBottom: '16px',
@@ -695,11 +694,11 @@ function PeriodicInspectionContent() {
                   <tbody>
                     {itemResults.map((item, index) => (
                       <tr key={index}>
-                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.itemName}</td>
-                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.content}</td>
+                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #E1E1E1' }}>{item.itemName}</td>
+                        <td style={{ padding: '10px 12px', borderBottom: '1px solid #E1E1E1' }}>{item.content}</td>
                         <td style={{
                           padding: '10px 12px',
-                          borderBottom: '1px solid #eee',
+                          borderBottom: '1px solid #E1E1E1',
                           textAlign: 'center',
                           fontWeight: 600,
                           color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#333'
@@ -916,6 +915,26 @@ function ConfirmInfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+const infoTableTh: React.CSSProperties = {
+  background: '#F1F1F1',
+  color: '#4A4A4A',
+  fontWeight: 600,
+  fontSize: '13px',
+  textAlign: 'left',
+  padding: '8px 12px',
+  border: '1px solid #E1E1E1',
+  width: '120px',
+  whiteSpace: 'nowrap',
+};
+
+const infoTableTd: React.CSSProperties = {
+  background: '#FFFFFF',
+  color: '#4A4A4A',
+  fontSize: '13px',
+  padding: '8px 12px',
+  border: '1px solid #E1E1E1',
+};
+
 const styles: Record<string, React.CSSProperties> = {
   infoItem: {
     display: 'flex',
@@ -973,7 +992,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   td: {
     padding: '10px 8px',
-    borderBottom: '1px solid #eee',
+    borderBottom: '1px solid #E1E1E1',
     verticalAlign: 'middle' as const,
   },
   resultButton: {
