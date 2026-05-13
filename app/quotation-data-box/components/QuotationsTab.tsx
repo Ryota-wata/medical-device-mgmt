@@ -45,12 +45,12 @@ const QUOTATION_COLUMNS: { key: string; label: string; align?: 'right' | 'center
 ];
 
 const GROUP_HEADERS = [
-  { label: '見積ヘッダー', span: 6, color: '#4A4A4A' },
-  { label: 'STEP② 商品情報', span: 5, color: '#4A4A4A' },
-  { label: 'STEP② 価格情報', span: 4, color: '#4A4A4A' },
-  { label: 'STEP③', span: 2, color: '#008C1D' },
-  { label: 'STEP④ 個体管理品目', span: 5, color: '#4A4A4A' },
-  { label: 'STEP⑤ 個体登録', span: 3, color: '#4A4A4A' },
+  { label: '見積ヘッダー', span: 6, color: '#F1F1F1' },
+  { label: 'STEP② 商品情報', span: 5, color: '#F1F1F1' },
+  { label: 'STEP② 価格情報', span: 4, color: '#F1F1F1' },
+  { label: 'STEP③', span: 2, color: '#F1F1F1' },
+  { label: 'STEP④ 個体管理品目', span: 5, color: '#F1F1F1' },
+  { label: 'STEP⑤ 個体登録', span: 3, color: '#F1F1F1' },
 ];
 
 export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
@@ -75,13 +75,13 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
     <div style={{ flex: 1, overflow: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
         <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-          {/* グループヘッダー */}
+          {/* グループヘッダー (Figma 339:54381: 薄灰 + 黒文字) */}
           <tr>
             {GROUP_HEADERS.map((g, i) => (
               <th key={i} colSpan={g.span} style={{
-                padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700,
-                color: 'white', background: g.color,
-                borderRight: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap',
+                padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600,
+                color: '#4A4A4A', background: g.color,
+                border: '1px solid #E1E1E1', whiteSpace: 'nowrap',
               }}>{g.label}</th>
             ))}
           </tr>
@@ -90,15 +90,15 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
             {QUOTATION_COLUMNS.map(col => (
               <th key={col.key} style={{
                 padding: '4px 6px', textAlign: col.align || 'left', fontSize: '10px', fontWeight: 600,
-                color: 'white', background: '#4A4A4A',
-                border: '2px solid #E1E1E1', whiteSpace: 'nowrap',
+                color: '#4A4A4A', background: '#FAFAFA',
+                border: '1px solid #E1E1E1', whiteSpace: 'nowrap',
               }}>{col.label}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {enrichedItems.map((item, index) => (
-            <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
+            <tr key={item.id} style={{ borderBottom: '1px solid #E1E1E1', background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
               {QUOTATION_COLUMNS.map(col => {
                 const val = (item as unknown as Record<string, unknown>)[col.key];
                 let display = '';
