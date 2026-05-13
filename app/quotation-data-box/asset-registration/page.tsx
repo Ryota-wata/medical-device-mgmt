@@ -369,7 +369,7 @@ function DetailTableCard({
               <th className="px-4 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input" colSpan={11}>
                 商品分類
               </th>
-              <th className="px-4 py-2 text-sm font-semibold text-content-primary bg-[#fffbe3]">
+              <th className="px-4 py-2 text-sm font-semibold text-content-primary bg-[#FAFAFA]">
                 入力項目
               </th>
             </tr>
@@ -386,7 +386,7 @@ function DetailTableCard({
               <th className={`${COL.model} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>型式</th>
               <th className={`${COL.amount} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-right`}>案分金額（税別）</th>
               <th className={`${COL.account} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>仮勘定科目</th>
-              <th className={`${COL.fixedAsset} px-4 py-2 text-sm font-normal text-content-primary bg-[#fffdf5]`}>固定資産番号</th>
+              <th className={`${COL.fixedAsset} px-4 py-2 text-sm font-normal text-content-primary bg-[#FAFAFA]`}>固定資産番号</th>
             </tr>
           </thead>
           <tbody>
