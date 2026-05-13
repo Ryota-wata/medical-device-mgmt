@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Monitor, Smartphone, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Monitor, Smartphone, X } from 'lucide-react';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { RfqGroupStatus } from '@/lib/types';
@@ -205,62 +205,62 @@ function RemodelManagementContent() {
         </div>
       </div>
 
-      {/* 資産仮登録モード選択ダイアログ */}
+      {/* 資産仮登録モード選択ダイアログ (Figma 342:56859 準拠) */}
       {showModeSelection && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
-          <div className="bg-surface-card rounded-2xl p-8 max-w-[520px] w-[90%] shadow-2xl">
-            <div className="flex items-start justify-between mb-2">
-              <h2 className="text-lg font-bold text-content-primary text-balance">資産仮登録の入力方法を選択</h2>
-              <button
-                onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
-                aria-label="閉じる"
-                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-content-sub hover:bg-stroke-card bg-transparent border-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-xs text-content-sub mb-6">登録作業の状況に応じて入力方法を選んでください。</p>
+          <div className="bg-surface-card rounded-xl p-6 max-w-[520px] w-[90%] shadow-2xl relative">
+            <button
+              onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
+              aria-label="閉じる"
+              className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-md text-content-primary hover:bg-stroke-card bg-transparent border-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-base font-semibold text-content-primary mb-2 text-balance">資産仮登録の入力方法を選択</h2>
+            <p className="text-xs text-content-sub mb-5">登録作業の状況に応じて入力方法を選んでください。</p>
 
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => handleModeSelected('mobile')}
-                className="flex items-start gap-4 p-4 border-2 border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary"
+                className="flex items-center gap-4 p-4 border border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary-dark"
               >
-                <div className="w-12 h-12 rounded-lg bg-surface-select flex items-center justify-center shrink-0 text-cta-primary-dark">
-                  <Smartphone className="w-6 h-6" aria-hidden />
+                <div className="w-10 h-10 rounded-lg bg-surface-select flex items-center justify-center shrink-0 text-cta-primary-dark">
+                  <Smartphone className="w-5 h-5" aria-hidden />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-[15px] font-semibold text-content-primary mb-1">モバイル（現場作業）</p>
                   <p className="text-xs text-content-sub leading-relaxed">
                     現場でQRラベル貼付・写真撮影・シリアルNo.入力を行います。<br />
                     1品目ずつ登録する操作フローです。
                   </p>
                 </div>
+                <ChevronRight className="w-5 h-5 text-content-sub" aria-hidden />
               </button>
 
               <button
                 onClick={() => handleModeSelected('pc')}
-                className="flex items-start gap-4 p-4 border-2 border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary"
+                className="flex items-center gap-4 p-4 border border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary-dark"
               >
-                <div className="w-12 h-12 rounded-lg bg-surface-select flex items-center justify-center shrink-0 text-cta-primary-dark">
-                  <Monitor className="w-6 h-6" aria-hidden />
+                <div className="w-10 h-10 rounded-lg bg-stroke-card flex items-center justify-center shrink-0 text-content-primary">
+                  <Monitor className="w-5 h-5" aria-hidden />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-[15px] font-semibold text-content-primary mb-1">PC（手書き検収書から手入力）</p>
                   <p className="text-xs text-content-sub leading-relaxed">
                     手書き検収書の内容をテーブル形式で一括入力します。<br />
                     全品目を一覧しながら効率的に登録できます。
                   </p>
                 </div>
+                <ChevronRight className="w-5 h-5 text-content-sub" aria-hidden />
               </button>
             </div>
 
-            <div className="mt-5 flex justify-end">
+            <div className="mt-4 flex justify-center">
               <button
                 onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
-                className="h-10 px-5 bg-transparent border border-stroke-input rounded-md cursor-pointer text-sm text-content-sub hover:bg-stroke-card transition-colors"
+                className="bg-transparent border-0 text-sm text-cta-primary-dark underline cursor-pointer px-3 py-1"
               >
-                キャンセル
+                閉じる
               </button>
             </div>
           </div>
