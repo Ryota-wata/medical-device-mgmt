@@ -59,6 +59,7 @@
   --color-stroke-card: #F1F1F1;           /* カード薄ボーダー */
   --color-surface-header: #EDEDED;        /* ヘッダー背景 */
   --color-surface-select: #EBF5EE;        /* ドロップダウン選択中ハイライト（薄緑） */
+  --color-step-completed: #8FCE9C;        /* ステップバー: 完了済 step の塗り/ラベル色（Figma 339:53999 系） */
 }
 
 body {

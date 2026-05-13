@@ -91,7 +91,7 @@ const detailClassificationToItemType = (c: DetailClassification): QuotationItemT
 };
 
 const classLabelStyleMap: Record<DetailClassification, string> = {
-  '親明細': 'bg-content-alert text-white',
+  '親明細': 'bg-cta-primary text-white',
   '子明細': 'bg-content-link text-white',
   '孫明細': 'bg-content-primary text-white',
   '明細代表': 'bg-content-sub text-white',
@@ -150,172 +150,190 @@ export default function RegistrationConfirmPage() {
 
   const fmtNum = (n: number) => n ? n.toLocaleString() : '';
 
+  // 基本情報フォーム行: ラベル列 200px / 入力列 flex-1 / 各セル 65px h
+  const labelCellCls = 'bg-stroke-card flex items-center justify-center px-4 h-[65px] w-[200px] shrink-0 text-base text-content-primary';
+  const inputCellCls = 'flex items-center px-4 h-[65px] text-base text-content-primary';
+
   return (
     <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Header title="見積登録（購入）登録確認へ" stepBadge="STEP 6" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={6} />
 
       <div className="flex-1 overflow-auto p-4">
-        {/* 確認メッセージ */}
-        <div className="px-4 py-3 bg-surface-select border border-cta-primary rounded-lg mb-4 text-sm text-cta-primary-dark font-bold">
-          下記の内容で見積Databaseへ登録を実施します。
-        </div>
+        {/* 単一カード: 確認テキスト + 基本情報 + フィルター/合計 + テーブル */}
+        <section className="bg-surface-card border border-stroke-card rounded-2xl mb-4">
+          <div className="p-4 flex flex-col gap-6">
+            {/* 確認テキスト */}
+            <p className="text-base font-semibold text-content-primary">
+              下記の内容で見積データベースへ登録します。
+            </p>
 
-        {/* 基本情報 */}
-        <section className="bg-surface-card border border-stroke-input rounded-lg mb-4 overflow-hidden">
-          <div className="px-4 py-2 bg-content-sub text-white text-xs font-bold">基本情報</div>
-          <div className="p-4">
-            <table className="w-full text-xs border-collapse">
-              <tbody>
-                <tr>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left w-[100px]">見積日付</th>
-                  <td className="px-2 py-1 border border-stroke-input w-[120px] tabular-nums">{basicInfo.quotationDate}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left w-[100px]">見積フェーズ</th>
-                  <td className="px-2 py-1 border border-stroke-input w-[80px]">{basicInfo.quotationPhase}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left w-[120px]">見積依頼G名称</th>
-                  <td className="px-2 py-1 border border-stroke-input" colSpan={3}>{basicInfo.rfqGroupName}</td>
-                </tr>
-                <tr>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">見積依頼No.</th>
-                  <td className="px-2 py-1 border border-stroke-input">{basicInfo.rfqNo}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">宛先（施設名）</th>
-                  <td className="px-2 py-1 border border-stroke-input" colSpan={5}>{basicInfo.facilityName}</td>
-                </tr>
-                <tr>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">業者・メーカー</th>
-                  <td className="px-2 py-1 border border-stroke-input">{basicInfo.vendorName}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">連絡先</th>
-                  <td className="px-2 py-1 border border-stroke-input tabular-nums">{basicInfo.contact}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">mail</th>
-                  <td className="px-2 py-1 border border-stroke-input" colSpan={3}>{basicInfo.mail}</td>
-                </tr>
-                <tr>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">納期</th>
-                  <td className="px-2 py-1 border border-stroke-input tabular-nums">{basicInfo.deliveryPeriod}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">見積有効期限</th>
-                  <td className="px-2 py-1 border border-stroke-input tabular-nums">{basicInfo.validityPeriod}</td>
-                  <th className="px-2 py-1 bg-surface-screen text-content-primary font-bold border border-stroke-input text-left">インボイス</th>
-                  <td className="px-2 py-1 border border-stroke-input" colSpan={3}>{basicInfo.invoiceNo}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* 登録明細確認 */}
-        <section className="bg-surface-card border border-stroke-input rounded-lg mb-4">
-          {/* 上部バー */}
-          <div className="px-4 py-3 flex justify-between items-center flex-wrap gap-3 border-b border-stroke-input">
-            <button
-              onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
-              className={`px-3.5 py-1.5 border rounded-md text-xs font-bold cursor-pointer transition-colors ${
-                showOnlyIndividual
-                  ? 'bg-cta-primary text-white border-cta-primary hover:bg-cta-primary-dark'
-                  : 'bg-surface-select text-cta-primary-dark border-cta-primary hover:bg-stroke-card'
-              }`}
-            >
-              個体管理品目のみ表示
-            </button>
-            <div className="text-center">
-              <div className="text-[10px] text-content-sub">合計金額（税抜）</div>
-              <div className="text-base font-bold text-cta-primary bg-surface-select px-3 py-1 rounded-md tabular-nums">
-                ¥{totalAmount.toLocaleString()}
+            {/* 基本情報フォーム */}
+            <div className="border border-stroke-input">
+              {/* 行1 */}
+              <div className="flex border-b border-stroke-input">
+                <div className="flex shrink-0">
+                  <div className={labelCellCls}>見積日付</div>
+                  <div className={`${inputCellCls} w-[374px] tabular-nums`}>{basicInfo.quotationDate}</div>
+                </div>
+                <div className="flex w-[512px] shrink-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>見積フェーズ</div>
+                  <div className={`${inputCellCls} flex-1`}>{basicInfo.quotationPhase}</div>
+                </div>
+                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>見積依頼G名称</div>
+                  <div className={`${inputCellCls} flex-1`}>{basicInfo.rfqGroupName}</div>
+                </div>
+              </div>
+              {/* 行2 */}
+              <div className="flex border-b border-stroke-input">
+                <div className="flex shrink-0">
+                  <div className={labelCellCls}>見積依頼No.</div>
+                  <div className={`${inputCellCls} w-[374px]`}>{basicInfo.rfqNo}</div>
+                </div>
+                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>宛先（施設名）</div>
+                  <div className={`${inputCellCls} flex-1`}>{basicInfo.facilityName}</div>
+                </div>
+              </div>
+              {/* 行3 */}
+              <div className="flex border-b border-stroke-input">
+                <div className="flex shrink-0">
+                  <div className={labelCellCls}>業者・メーカー</div>
+                  <div className={`${inputCellCls} w-[374px]`}>{basicInfo.vendorName}</div>
+                </div>
+                <div className="flex w-[512px] shrink-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>連絡先</div>
+                  <div className={`${inputCellCls} flex-1 tabular-nums`}>{basicInfo.contact}</div>
+                </div>
+                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>メール</div>
+                  <div className={`${inputCellCls} flex-1`}>{basicInfo.mail}</div>
+                </div>
+              </div>
+              {/* 行4 */}
+              <div className="flex">
+                <div className="flex shrink-0">
+                  <div className={labelCellCls}>納期</div>
+                  <div className={`${inputCellCls} w-[374px] tabular-nums`}>{basicInfo.deliveryPeriod}</div>
+                </div>
+                <div className="flex w-[512px] shrink-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>見積有効期限</div>
+                  <div className={`${inputCellCls} flex-1 tabular-nums`}>{basicInfo.validityPeriod}</div>
+                </div>
+                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
+                  <div className={labelCellCls}>インボイス</div>
+                  <div className={`${inputCellCls} flex-1`}>{basicInfo.invoiceNo}</div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* テーブル */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[10px] min-w-[1400px]">
-              <thead className="sticky top-0 z-[2]">
-                <tr>
-                  <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❸</th>
-                  <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❹ 個体管理品目</th>
-                  <th colSpan={5} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❺ 個体登録／金額案分</th>
-                  <th colSpan={4} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-surface-select text-xs font-bold text-cta-primary-dark">STEP❻ 設置情報</th>
-                </tr>
-                <tr className="bg-surface-screen">
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[30px] text-center font-normal text-content-primary">No</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[90px] text-left font-normal text-content-primary">カテゴリ</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[55px] text-center font-normal text-content-primary border-r border-stroke-input">明細区分</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap text-left font-normal text-content-primary">個体管理品目</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-left font-normal text-content-primary">メーカー</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[100px] text-left font-normal text-content-primary border-r border-stroke-input">型式（見積名称）</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[35px] text-center font-normal text-content-primary">数量</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[30px] text-center font-normal text-content-primary">単位</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[35px] text-center font-normal text-content-primary">親子<br />関</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary">定価金額</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[80px] text-right font-normal text-content-primary border-r border-stroke-input">購入金額<br />(税別)</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[100px] text-left font-normal text-content-primary bg-surface-select">部門</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[100px] text-left font-normal text-content-primary bg-surface-select">部署</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[100px] text-left font-normal text-content-primary bg-surface-select">室名</th>
-                  <th className="px-1.5 py-1 border-b border-stroke-input text-[10px] whitespace-nowrap w-[100px] text-left font-normal text-content-primary bg-surface-select">管理部署</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayRows.map((row) => {
-                  const showOriginal = row.isFirstOfGroup;
-                  const span = row.groupRowCount;
-                  const clsLabel = row.detailClassification.replace('明細', '');
+            {/* フィルター + 合計行 (Figma 339:54069 構造: ラベル列 200px + 入力行 flex-1) */}
+            <div className="flex items-center h-[65px]">
+              <button
+                onClick={() => setShowOnlyIndividual(!showOnlyIndividual)}
+                className={`flex items-center justify-center h-[65px] w-[200px] shrink-0 text-base text-content-primary cursor-pointer border-0 transition-colors ${
+                  showOnlyIndividual ? 'bg-surface-select' : 'bg-stroke-card hover:bg-surface-select'
+                }`}
+                aria-pressed={showOnlyIndividual}
+              >
+                個体管理品目のみ表示
+              </button>
+              <div className="flex-1 flex items-center justify-end pr-4 gap-3">
+                <span className="text-sm text-content-primary">合計金額（税抜）</span>
+                <span className="text-xl font-bold text-content-alert tabular-nums">
+                  ¥{totalAmount.toLocaleString()}
+                </span>
+              </div>
+            </div>
 
-                  return (
-                    <tr key={row.id} className="border-b border-stroke-card">
-                      {showOriginal && (
-                        <>
-                          <td rowSpan={span} className="px-1.5 py-1 text-center tabular-nums align-top border-b border-stroke-input text-content-primary">{row.rowNo}</td>
-                          <td rowSpan={span} className="px-1.5 py-1 align-top border-b border-stroke-input text-content-primary">{row.category}</td>
-                          <td rowSpan={span} className="px-1.5 py-1 text-center align-top border-b border-stroke-input border-r border-stroke-input">
-                            {row.detailClassification && (
-                              <span className={`inline-block px-1.5 py-px rounded text-[9px] font-bold ${classLabelStyleMap[row.detailClassification]}`}>{clsLabel}</span>
-                            )}
-                          </td>
-                        </>
-                      )}
-                      <td className="px-1.5 py-1 whitespace-nowrap align-top text-content-primary">{row.itemName}</td>
-                      <td className="px-1.5 py-1 align-top text-content-primary">{row.manufacturer}</td>
-                      <td className="px-1.5 py-1 align-top border-r border-stroke-input text-content-primary">{row.model}</td>
-                      <td className="px-1.5 py-1 text-center tabular-nums align-top text-content-primary">{row.quantity || '-'}</td>
-                      <td className="px-1.5 py-1 text-center align-top text-content-primary">{row.unit}</td>
-                      <td className="px-1.5 py-1 text-center tabular-nums align-top text-content-primary">{row.seqId}</td>
-                      {showOriginal && (
-                        <>
-                          <td rowSpan={span} className="px-1.5 py-1 text-right tabular-nums align-top border-b border-stroke-input text-content-primary">{fmtNum(row.listPriceTotal)}</td>
-                          <td rowSpan={span} className="px-1.5 py-1 text-right tabular-nums align-top border-b border-stroke-input border-r border-stroke-input font-bold text-content-primary">{fmtNum(row.purchasePriceTotal)}</td>
-                        </>
-                      )}
-                      <td className="px-1.5 py-1 align-top bg-surface-select">
-                        <input type="text" value={row.department} onChange={e => handleLocationChange(row.id, 'department', e.target.value)} className="w-full text-[10px] px-1 py-0.5 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                      </td>
-                      <td className="px-1.5 py-1 align-top bg-surface-select">
-                        <input type="text" value={row.section} onChange={e => handleLocationChange(row.id, 'section', e.target.value)} className="w-full text-[10px] px-1 py-0.5 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                      </td>
-                      <td className="px-1.5 py-1 align-top bg-surface-select">
-                        <input type="text" value={row.roomName} onChange={e => handleLocationChange(row.id, 'roomName', e.target.value)} className="w-full text-[10px] px-1 py-0.5 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                      </td>
-                      <td className="px-1.5 py-1 align-top bg-surface-select">
-                        <input type="text" value={row.managingSection} onChange={e => handleLocationChange(row.id, 'managingSection', e.target.value)} className="w-full text-[10px] px-1 py-0.5 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {/* テーブル */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-xs min-w-[1500px]">
+                <thead className="sticky top-0 z-[2]">
+                  <tr className="bg-stroke-card">
+                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[60px]">No</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[100px]">カテゴリ</th>
+                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[80px]">明細区分</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary">個体管理品目</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[100px]">メーカー</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">型式（見積名称）</th>
+                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">数量</th>
+                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">単位</th>
+                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">親子<br />関係</th>
+                    <th className="px-2 py-2 text-right border border-stroke-input text-xs font-bold text-content-primary w-[100px]">定価金額</th>
+                    <th className="px-2 py-2 text-right border border-stroke-input text-xs font-bold text-content-primary w-[110px]">購入金額<br />(税別)</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">部門</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">部署</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">室名</th>
+                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">管理部署</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayRows.map((row) => {
+                    const showOriginal = row.isFirstOfGroup;
+                    const span = row.groupRowCount;
+                    const clsLabel = row.detailClassification.replace('明細', '');
+
+                    return (
+                      <tr key={row.id}>
+                        {showOriginal && (
+                          <>
+                            <td rowSpan={span} className="px-2 py-2 text-center tabular-nums align-middle border border-stroke-input text-content-primary">{row.rowNo}</td>
+                            <td rowSpan={span} className="px-2 py-2 align-middle border border-stroke-input text-content-primary">{row.category}</td>
+                            <td rowSpan={span} className="px-2 py-2 text-center align-middle border border-stroke-input">
+                              {row.detailClassification && (
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${classLabelStyleMap[row.detailClassification]}`}>{clsLabel}</span>
+                              )}
+                            </td>
+                          </>
+                        )}
+                        <td className="px-2 py-2 whitespace-nowrap align-middle border border-stroke-input text-content-primary">{row.itemName}</td>
+                        <td className="px-2 py-2 align-middle border border-stroke-input text-content-primary">{row.manufacturer}</td>
+                        <td className="px-2 py-2 align-middle border border-stroke-input text-content-primary">{row.model}</td>
+                        <td className="px-2 py-2 text-center tabular-nums align-middle border border-stroke-input text-content-primary">{row.quantity || '-'}</td>
+                        <td className="px-2 py-2 text-center align-middle border border-stroke-input text-content-primary">{row.unit}</td>
+                        <td className="px-2 py-2 text-center tabular-nums align-middle border border-stroke-input text-content-primary">{row.seqId}</td>
+                        {showOriginal && (
+                          <>
+                            <td rowSpan={span} className="px-2 py-2 text-right tabular-nums align-middle border border-stroke-input text-content-primary">{fmtNum(row.listPriceTotal)}</td>
+                            <td rowSpan={span} className="px-2 py-2 text-right tabular-nums align-middle border border-stroke-input font-bold text-content-primary">{fmtNum(row.purchasePriceTotal)}</td>
+                          </>
+                        )}
+                        <td className="px-1 py-1 align-middle border border-stroke-input">
+                          <input type="text" value={row.department} onChange={e => handleLocationChange(row.id, 'department', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
+                        </td>
+                        <td className="px-1 py-1 align-middle border border-stroke-input">
+                          <input type="text" value={row.section} onChange={e => handleLocationChange(row.id, 'section', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
+                        </td>
+                        <td className="px-1 py-1 align-middle border border-stroke-input">
+                          <input type="text" value={row.roomName} onChange={e => handleLocationChange(row.id, 'roomName', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
+                        </td>
+                        <td className="px-1 py-1 align-middle border border-stroke-input">
+                          <input type="text" value={row.managingSection} onChange={e => handleLocationChange(row.id, 'managingSection', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
-        {/* フッターボタン */}
-        <div className="flex gap-3 justify-between mt-4">
+        {/* フッターボタン (Figma 339:54307 構造: 左寄せ x=0 width=239 + x=287 width=254) */}
+        <div className="flex gap-12 mt-4 px-4">
           <button
             onClick={() => router.push('/quotation-data-box/price-allocation')}
-            className="h-12 px-7 bg-surface-negative text-content-primary border-0 rounded-lg cursor-pointer text-sm font-bold hover:bg-stroke-input transition-colors"
+            className="h-12 w-[239px] bg-surface-negative text-content-primary border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-stroke-input transition-colors"
           >
-            一つ前のSTEPに戻る
+            戻る
           </button>
           <button
             onClick={handleRegister}
-            className="h-12 px-7 bg-cta-primary text-white border-0 rounded-lg cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
+            className="h-12 w-[254px] bg-cta-primary text-white border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-cta-primary-dark transition-colors"
           >
-            見積情報Databaseに登録
+            見積情報データベースに登録
           </button>
         </div>
       </div>
