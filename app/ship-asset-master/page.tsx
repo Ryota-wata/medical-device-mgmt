@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -8,6 +8,9 @@ import { AssetMaster } from '@/lib/types/master';
 import { AssetFormModal } from '@/components/modals/AssetFormModal';
 import { exportAssetsToExcel, parseAssetsFromExcel, assignAssetIds, downloadAssetTemplate } from '@/lib/utils/excel-asset-master';
 import { ExcelImportPreviewModal } from '@/components/ui/ExcelImportPreviewModal';
+import { Header } from '@/components/layouts/Header';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Pencil, Trash2, Plus, Download, Upload, MousePointerClick } from 'lucide-react';
 
 const NOW = '2025-01-01T00:00:00Z';
 
@@ -92,7 +95,6 @@ const ASSET_MASTER_COLUMNS: { key: string; label: string }[] = [
 ];
 
 function ShipAssetMasterContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isSelectMode = searchParams.get('mode') === 'select';
   const { isMobile, isTablet } = useResponsive();
@@ -149,10 +151,6 @@ function ShipAssetMasterContent() {
     return matchCategory && matchLargeClass && matchMediumClass && matchItem && matchMaker;
   });
   const filteredAssets = allFilteredAssets.slice(0, displayLimit);
-
-  const handleBack = () => {
-    router.push('/main');
-  };
 
   const handleEdit = (asset: AssetMaster) => {
     setSelectedAsset(asset);
@@ -265,9 +263,9 @@ function ShipAssetMasterContent() {
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
-          background: '#F1F1F1',
-          color: '#4A4A4A',
-          padding: '12px 20px',
+          background: '#EBF5EE',
+          color: '#146E2E',
+          padding: '10px 20px',
           textAlign: 'center',
           fontWeight: 600,
           fontSize: '14px',
@@ -277,19 +275,19 @@ function ShipAssetMasterContent() {
           justifyContent: 'center',
           gap: '12px'
         }}>
-          <span style={{ fontSize: '18px' }}>👆</span>
+          <MousePointerClick size={16} aria-hidden />
           資産マスタを選択してください - 行をクリックすると選択されます
           <button
             onClick={() => window.close()}
             style={{
               padding: '6px 12px',
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              border: '1px solid rgba(255,255,255,0.5)',
+              background: 'white',
+              color: '#4A4A4A',
+              border: '1px solid #E1E1E1',
               borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '12px',
-              fontWeight: 'bold',
+              fontWeight: 600,
             }}
           >
             キャンセル
@@ -298,105 +296,46 @@ function ShipAssetMasterContent() {
       )}
 
       {/* Header */}
-      <header style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #E1E1E1',
-        padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: isMobile ? '12px' : '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#4A4A4A', margin: 0 }}>
-            SHIP資産マスタ
-          </h1>
-          <div style={{
-            background: '#F1F1F1',
-            color: '#8A8A8A',
-            padding: isMobile ? '4px 12px' : '6px 16px',
-            borderRadius: '20px',
-            fontSize: isMobile ? '12px' : '14px',
-            fontWeight: 600
-          }}>
-            {allFilteredAssets.length > displayLimit ? `${displayLimit}件表示 / ${allFilteredAssets.length}件中` : `${allFilteredAssets.length}件`}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleExport}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#4A4A4A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            エクスポート
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#4A4A4A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            インポート
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            style={{ display: 'none' }}
-            onChange={handleFileSelect}
-          />
-          <button
-            onClick={() => setShowNewModal(true)}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#008C1D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            新規作成
-          </button>
-          <button
-            onClick={handleBack}
-            style={{
-              padding: isMobile ? '8px 16px' : '10px 20px',
-              background: '#E1E1E1',
-              color: '#4A4A4A',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            メイン画面に戻る
-          </button>
-        </div>
-      </header>
+      <Header
+        title="SHIP資産マスタ"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+        resultCount={allFilteredAssets.length}
+        showOriginalLabel={false}
+      >
+        <button
+          onClick={handleExport}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
+        >
+          <Download size={16} aria-hidden />
+          エクスポート
+        </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
+        >
+          <Upload size={16} aria-hidden />
+          インポート
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={handleFileSelect}
+        />
+        <button
+          onClick={() => setShowNewModal(true)}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
+        >
+          <Plus size={16} aria-hidden />
+          新規作成
+        </button>
+      </Header>
 
       {/* Filter Header */}
       <div style={{
@@ -537,9 +476,9 @@ function ShipAssetMasterContent() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#4A4A4A',
-                      color: 'white',
-                      border: 'none',
+                      background: 'white',
+                      color: '#146E2E',
+                      border: '1px solid #008C1D',
                       borderRadius: '4px',
                       fontSize: '13px',
                       fontWeight: 600,
@@ -553,9 +492,9 @@ function ShipAssetMasterContent() {
                     style={{
                       flex: 1,
                       padding: '8px',
-                      background: '#DA0000',
-                      color: 'white',
-                      border: 'none',
+                      background: 'white',
+                      color: '#DA0000',
+                      border: '1px solid #DA0000',
                       borderRadius: '4px',
                       fontSize: '13px',
                       fontWeight: 600,
@@ -570,30 +509,30 @@ function ShipAssetMasterContent() {
           </div>
         ) : (
           // テーブル表示 (PC/タブレット)
-          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', overflow: 'auto', flex: 1, minHeight: 0 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', overflow: 'auto', flex: 1, minHeight: 0 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                  {/* グループヘッダー */}
+                  {/* グループヘッダー (Figma パレット内 #F1F1F1 で統一) */}
                   <tr>
                     {([
-                      { label: 'JMDN分類・一般名称', span: 8, color: '#4A4A4A' },
-                      { label: '薬事', span: 1, color: '#8A8A8A' },
-                      { label: 'SHIP_Master', span: 8, color: '#008C1D' },
-                      { label: '設備情報', span: 22, color: '#4A4A4A' },
-                      { label: '資産情報', span: 8, color: '#4A4A4A' },
-                      { label: 'PMDA提供', span: 21, color: '#DA0000' },
-                      { label: '登録', span: 1, color: '#8A8A8A' },
-                      { label: '', span: 1, color: '#4A4A4A' },
+                      { label: 'JMDN分類・一般名称', span: 8 },
+                      { label: '薬事', span: 1 },
+                      { label: 'SHIP_Master', span: 8 },
+                      { label: '設備情報', span: 22 },
+                      { label: '資産情報', span: 8 },
+                      { label: 'PMDA提供', span: 21 },
+                      { label: '登録', span: 1 },
+                      { label: '', span: 1 },
                     ] as const).map((g, i) => (
-                      <th key={i} colSpan={g.span} style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'white', background: g.color, borderRight: '1px solid rgba(255,255,255,0.2)', whiteSpace: 'nowrap' }}>{g.label}</th>
+                      <th key={i} colSpan={g.span} style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{g.label}</th>
                     ))}
                   </tr>
                   {/* カラムヘッダー */}
                   <tr>
                     {ASSET_MASTER_COLUMNS.map(col => (
-                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
+                      <th key={col.key} style={{ padding: '6px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
                     ))}
-                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: '6px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', width: '88px' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -601,18 +540,35 @@ function ShipAssetMasterContent() {
                     <tr
                       key={asset.id}
                       onClick={isSelectMode ? () => handleSelect(asset) : undefined}
-                      style={{ borderBottom: '1px solid #E1E1E1', background: index % 2 === 0 ? 'white' : '#FAFAFA', cursor: isSelectMode ? 'pointer' : 'default' }}
+                      style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', cursor: isSelectMode ? 'pointer' : 'default', height: '34px' }}
                     >
                       {ASSET_MASTER_COLUMNS.map(col => (
-                        <td key={col.key} style={{ padding: '4px 6px', fontSize: '11px', color: '#4A4A4A', whiteSpace: 'nowrap' }}>{String((asset as unknown as Record<string, unknown>)[col.key] || '')}</td>
+                        <td key={col.key} style={{ padding: '6px 8px', fontSize: '11px', color: '#4A4A4A', whiteSpace: 'nowrap', border: '1px solid #E1E1E1', verticalAlign: 'middle' }}>{String((asset as unknown as Record<string, unknown>)[col.key] || '')}</td>
                       ))}
-                      <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap', border: '1px solid #E1E1E1', verticalAlign: 'middle' }}>
                         {isSelectMode ? (
-                          <button onClick={(e) => { e.stopPropagation(); handleSelect(asset); }} style={{ padding: '3px 10px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>選択</button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleSelect(asset); }}
+                            style={{ padding: '4px 10px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                          >
+                            選択
+                          </button>
                         ) : (
                           <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                            <button onClick={() => handleEdit(asset)} style={{ padding: '3px 8px', background: '#4A4A4A', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>編集</button>
-                            <button onClick={() => handleDelete(asset.id)} style={{ padding: '3px 8px', background: '#DA0000', color: 'white', border: 'none', borderRadius: '3px', fontSize: '10px', fontWeight: 600, cursor: 'pointer' }}>削除</button>
+                            <button
+                              onClick={() => handleEdit(asset)}
+                              aria-label={`${asset.item || '資産'} を編集`}
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'transparent', color: '#146E2E', border: '1px solid #008C1D', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(asset.id)}
+                              aria-label={`${asset.item || '資産'} を削除`}
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'transparent', color: '#DA0000', border: '1px solid #DA0000', borderRadius: '4px', cursor: 'pointer' }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
                           </div>
                         )}
                       </td>
@@ -635,16 +591,33 @@ function ShipAssetMasterContent() {
         )}
 
         {filteredAssets.length === 0 && (
-          <div style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: isMobile ? '40px 20px' : '60px 40px',
-            textAlign: 'center',
-            color: '#8A8A8A',
-            fontSize: isMobile ? '14px' : '16px'
-          }}>
-            {isLoading ? '資産マスタを読み込み中...' : '検索条件に一致する資産マスタがありません'}
-          </div>
+          isLoading ? (
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: isMobile ? '40px 20px' : '60px 40px',
+              textAlign: 'center',
+              color: '#8A8A8A',
+              fontSize: isMobile ? '14px' : '16px'
+            }}>
+              資産マスタを読み込み中...
+            </div>
+          ) : (
+            <div className="bg-surface-card rounded-lg">
+              <EmptyState
+                title="検索条件に一致する資産マスタがありません"
+                description="検索条件を変更するか、フィルターをリセットしてください"
+                actionLabel="フィルターをリセット"
+                onAction={() => {
+                  setFilterCategory('');
+                  setFilterLargeClass('');
+                  setFilterMediumClass('');
+                  setFilterItem('');
+                  setFilterMaker('');
+                }}
+              />
+            </div>
+          )
         )}
       </main>
 
