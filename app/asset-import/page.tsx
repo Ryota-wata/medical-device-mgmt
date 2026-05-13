@@ -181,7 +181,7 @@ export default function AssetImportPage() {
   return (
     <div className="min-h-dvh bg-surface-screen flex flex-col">
       <Header
-        title="台帳取込"
+        title="固定資産管理台帳取込"
         showBackButton={true}
         backHref="/main"
         backLabel="メイン画面に戻る"
@@ -366,13 +366,13 @@ export default function AssetImportPage() {
             </div>
           )}
 
-          {/* Notice */}
-          <div className="bg-surface-select border border-cta-primary rounded-lg p-4 md:p-5 mb-6 md:mb-8">
-            <h3 className="inline-flex items-center gap-2 text-sm md:text-[15px] font-bold text-cta-primary-dark mb-3">
+          {/* Notice (Figma 仕様: 赤 alert スタイル) */}
+          <div className="bg-surface-card border border-content-alert rounded-lg p-4 md:p-5 mb-6 md:mb-8">
+            <h3 className="inline-flex items-center gap-2 text-sm md:text-[15px] font-bold text-content-alert mb-3">
               <Pin className="w-4 h-4" aria-hidden />
               アップロード時の注意事項
             </h3>
-            <ul className="text-[13px] md:text-sm text-content-sub leading-[1.8] pl-5 m-0">
+            <ul className="text-[13px] md:text-sm text-content-alert leading-[1.8] pl-5 m-0">
               <li>Excelファイルの1行目はヘッダー行として認識されます</li>
               <li>データは2行目から読み込まれます</li>
               <li>空白行は自動的にスキップされます</li>
