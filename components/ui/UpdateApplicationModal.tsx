@@ -343,11 +343,12 @@ export function UpdateApplicationModal({
       flexDirection: 'column',
     },
     header: {
-      background: '#4A4A4A',
-      color: 'white',
+      background: 'white',
+      color: '#4A4A4A',
       padding: '16px 24px',
       fontSize: '18px',
-      fontWeight: 'bold',
+      fontWeight: 600,
+      borderBottom: '1px solid #E1E1E1',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -355,12 +356,13 @@ export function UpdateApplicationModal({
     closeButton: {
       background: 'none',
       border: 'none',
-      color: 'white',
-      fontSize: '24px',
+      color: '#4A4A4A',
+      fontSize: '20px',
       cursor: 'pointer',
       padding: '0',
       width: '30px',
       height: '30px',
+      lineHeight: 1,
     },
     body: {
       flex: 1,
@@ -372,11 +374,11 @@ export function UpdateApplicationModal({
     },
     sectionTitle: {
       fontSize: '14px',
-      fontWeight: 'bold',
+      fontWeight: 600,
       color: '#4A4A4A',
       marginBottom: '16px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #4A4A4A',
+      borderBottom: '1px solid #E1E1E1',
     },
     note: {
       fontSize: '12px',
@@ -402,7 +404,7 @@ export function UpdateApplicationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #4A4A4A',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       fontSize: '14px',
       boxSizing: 'border-box' as const,
@@ -417,7 +419,7 @@ export function UpdateApplicationModal({
     },
     select: {
       padding: '8px 12px',
-      border: '1px solid #4A4A4A',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       fontSize: '14px',
       cursor: 'pointer',
@@ -438,7 +440,7 @@ export function UpdateApplicationModal({
       width: '100%',
       minHeight: '100px',
       padding: '12px',
-      border: '1px solid #4A4A4A',
+      border: '1px solid #E1E1E1',
       borderRadius: '4px',
       fontSize: '14px',
       resize: 'vertical' as const,
@@ -453,13 +455,13 @@ export function UpdateApplicationModal({
     },
     confirmButton: {
       padding: '12px 48px',
-      background: '#4A4A4A',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
+      background: 'white',
+      color: '#146E2E',
+      border: '1px solid #146E2E',
+      borderRadius: '6px',
       cursor: 'pointer',
       fontSize: '15px',
-      fontWeight: 'bold',
+      fontWeight: 600,
     },
   };
 
@@ -477,8 +479,8 @@ export function UpdateApplicationModal({
         {isConfirmView ? (
           /* 確認画面 */
           <div>
-            <div style={{ background: '#FDF1E5', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
-              <span style={{ color: '#4A4A4A', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            <div style={{ color: '#DA0000', fontSize: '13px', fontWeight: 500, marginBottom: '16px' }}>
+              ※以下の項目に間違いがないかご確認ください
             </div>
 
             {/* 申請基本情報 */}
@@ -1301,27 +1303,27 @@ export function UpdateApplicationModal({
                   padding: '12px 32px',
                   background: 'white',
                   color: '#4A4A4A',
-                  border: '1px solid #4A4A4A',
-                  borderRadius: '4px',
+                  border: '1px solid #E1E1E1',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  fontWeight: 'bold',
+                  fontWeight: 500,
                   marginRight: '16px',
                 }}
               >
-                ← 修正する
+                戻る
               </button>
               <button
                 onClick={handleSubmit}
                 style={{
                   padding: '12px 32px',
-                  background: '#4A4A4A',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  fontWeight: 'bold',
+                  fontWeight: 600,
                 }}
               >
                 申請する
