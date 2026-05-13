@@ -434,7 +434,7 @@ function OrderItemsTable({
               <th className="w-[260px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">メーカー</th>
               <th className="w-[180px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input">型式</th>
               <th className="w-[80px] px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-right">数量</th>
-              <th className="w-[200px] px-4 py-2 text-sm font-normal text-content-primary bg-[#FAFAFA]">納品日</th>
+              <th className="w-[200px] px-4 py-2 text-sm font-normal text-content-primary bg-surface-screen border-r border-stroke-input">納品日</th>
             </tr>
           </thead>
           <tbody>
