@@ -154,7 +154,7 @@ export const Header: React.FC<HeaderProps> = ({
         background: '#EDEDED',
         color: '#4A4A4A',
         padding: isMobile ? '6px 12px' : '8px 16px',
-        borderBottom: '1px solid #DDDDDD',
+        borderBottom: '1px solid #E1E1E1',
         flexWrap: 'wrap',
         gap: isMobile ? '8px' : '12px',
         minHeight: isMobile ? 48 : 52,
@@ -196,7 +196,7 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         )}
         {subInfo && (
-          <span style={{ background: '#FFF8E1', color: '#92400E', padding: '3px 10px', borderRadius: 4, fontSize: 11, border: '1px solid #FCD34D' }}>
+          <span style={{ background: '#FAFAFA', color: '#4A4A4A', padding: '3px 10px', borderRadius: 4, fontSize: 11, border: '1px solid #4A4A4A' }}>
             {subInfo}
           </span>
         )}
@@ -253,7 +253,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => { router.push('/main'); setIsMenuOpen(false); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#4A4A4A', fontSize: 13, textAlign: 'left' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#F8F8F8')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FAFAFA')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Icon.FileText size={16} /><span>申請一覧</span>
@@ -261,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={() => { router.push('/quotation-data-box'); setIsMenuOpen(false); }}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#4A4A4A', fontSize: 13, textAlign: 'left', borderTop: '1px solid #F1F1F1' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#F8F8F8')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FAFAFA')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Icon.Box size={16} /><span>見積書管理</span>
@@ -269,7 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   onClick={handleLogout}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#DA0000', fontSize: 13, textAlign: 'left', borderTop: '1px solid #F1F1F1' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#FDF1E5')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <Icon.LogOut size={16} /><span>ログアウト</span>
@@ -343,7 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
                 whiteSpace: 'nowrap',
                 transition: 'background 0.15s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#0A6B17')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#146E2E')}
               onMouseLeave={(e) => (e.currentTarget.style.background = '#008C1D')}
             >
               <Icon.ChevronLeft size={14} /><span>{backLabel || '戻る'}</span>
