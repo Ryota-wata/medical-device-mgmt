@@ -597,34 +597,21 @@ function PeriodicInspectionContent() {
               </span>
             </div>
 
-            {/* 総合評価バッジ */}
+            {/* 総合評価 (Figma 597:42958: ラベル + 値の縦並び) */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '12px',
-              padding: isMobile ? '20px 16px' : '28px 32px',
+              padding: isMobile ? '16px' : '20px 24px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               marginBottom: '16px',
-              textAlign: 'center'
             }}>
-              <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>総合評価</div>
+              <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '4px' }}>総合評価</div>
               <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '16px 32px',
-                borderRadius: '12px',
-                border: '2px solid',
-                ...(overallResult === '合格'
-                  ? { backgroundColor: '#EBF5EE', color: '#008C1D', borderColor: '#008C1D' }
-                  : { backgroundColor: '#FDF1E5', color: '#DA0000', borderColor: '#DA0000' }
-                )
+                fontSize: '20px',
+                fontWeight: 700,
+                color: overallResult === '合格' ? '#008C1D' : '#DA0000',
               }}>
-                <span style={{ fontSize: '32px', fontWeight: 700 }}>
-                  {overallResult === '合格' ? '✓' : '⚠'}
-                </span>
-                <span style={{ fontSize: '24px', fontWeight: 700 }}>
-                  {overallResult}
-                </span>
+                {overallResult}
               </div>
             </div>
 
