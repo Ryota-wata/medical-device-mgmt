@@ -348,15 +348,17 @@ function PurchaseManagementContent() {
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#008C1D',
-              color: 'white',
+              background: 'white',
+              color: '#4A4A4A',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>申請受付</span>
+              <span style={{ fontWeight: 600, fontSize: '14px' }}>申請受付</span>
               <span style={{
-                background: 'rgba(255,255,255,0.2)',
+                background: '#F1F1F1',
+                color: '#4A4A4A',
                 padding: '2px 10px',
                 borderRadius: '12px',
                 fontSize: '12px',
@@ -528,13 +530,14 @@ function PurchaseManagementContent() {
           }}>
             <div style={{
               padding: '12px 16px',
-              background: '#008C1D',
-              color: 'white',
+              background: 'white',
+              color: '#4A4A4A',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>見積（発注）グループ</span>
+              <span style={{ fontWeight: 600, fontSize: '14px' }}>見積（発注）グループ</span>
             </div>
 
             {/* ステップタブ */}
