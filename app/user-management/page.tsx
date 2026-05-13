@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useAuthStore } from '@/lib/stores/authStore';
@@ -1075,36 +1076,38 @@ export default function UserManagementPage() {
                           </div>
                         </td>
                         <td style={{ padding: isTablet ? '12px' : '14px', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                             <button
                               onClick={() => handleEdit(user)}
+                              aria-label="編集"
                               style={{
-                                padding: '6px 12px',
-                                background: '#4A4A4A',
-                                color: 'white',
+                                background: 'transparent',
+                                color: '#4A4A4A',
                                 border: 'none',
-                                borderRadius: '4px',
-                                fontSize: isTablet ? '12px' : '13px',
-                                fontWeight: 600,
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                padding: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                               }}
                             >
-                              編集
+                              <Edit2 size={16} aria-hidden />
                             </button>
                             <button
                               onClick={() => handleDelete(user.id)}
+                              aria-label="削除"
                               style={{
-                                padding: '6px 12px',
-                                background: '#DA0000',
-                                color: 'white',
+                                background: 'transparent',
+                                color: '#8A8A8A',
                                 border: 'none',
-                                borderRadius: '4px',
-                                fontSize: isTablet ? '12px' : '13px',
-                                fontWeight: 600,
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                padding: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                               }}
                             >
-                              削除
+                              <Trash2 size={16} aria-hidden />
                             </button>
                           </div>
                         </td>
