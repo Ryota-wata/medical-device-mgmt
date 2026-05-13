@@ -122,15 +122,16 @@ export function VendorFormModal({
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
         }}
       >
-        {/* Header */}
+        {/* Header (白背景 + 黒文字 + 下罫線) */}
         <div style={{
-          background: 'linear-gradient(135deg, #4A4A4A 0%, #4A4A4A 100%)',
-          color: 'white',
+          background: 'white',
+          color: '#4A4A4A',
           padding: isMobile ? '16px' : '20px',
           borderTopLeftRadius: '12px',
-          borderTopRightRadius: '12px'
+          borderTopRightRadius: '12px',
+          borderBottom: '1px solid #E1E1E1',
         }}>
-          <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px', fontWeight: 600 }}>
+          <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px', fontWeight: 600, color: '#4A4A4A' }}>
             {mode === 'create' ? '業者マスタ 新規作成' : '業者マスタ 編集'}
           </h2>
         </div>

@@ -243,10 +243,10 @@ function InspectionResultContent() {
           <button
             onClick={() => router.push('/main')}
             style={{
-              backgroundColor: '#4A4A4A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
+              backgroundColor: 'white',
+              color: '#4A4A4A',
+              border: '1px solid #E1E1E1',
+              borderRadius: '6px',
               padding: '12px 24px',
               fontSize: '14px',
               fontWeight: 500,
@@ -262,12 +262,11 @@ function InspectionResultContent() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
-      {/* Header */}
+      {/* Header (Figma 通り: 緑塗りフラット) */}
       <header style={{
-        background: 'linear-gradient(135deg, #008C1D 0%, #146E2E 100%)',
+        background: '#008C1D',
         color: 'white',
         padding: isMobile ? '16px' : '20px 24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
         textAlign: 'center'
       }}>
         <h1 style={{

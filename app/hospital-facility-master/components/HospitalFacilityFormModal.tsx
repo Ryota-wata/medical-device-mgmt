@@ -241,16 +241,17 @@ export function HospitalFacilityFormModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Header (白背景 + 黒文字 + 下罫線) */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #4A4A4A, #4A4A4A)',
-            color: 'white',
+            background: 'white',
+            color: '#4A4A4A',
             padding: isMobile ? '16px' : '20px',
             borderRadius: '12px 12px 0 0',
+            borderBottom: '1px solid #E1E1E1',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px', fontWeight: 600 }}>
+          <h2 style={{ margin: 0, fontSize: isMobile ? '18px' : '20px', fontWeight: 600, color: '#4A4A4A' }}>
             {mode === 'create' ? '施設マスタ新規作成' : '施設マスタ編集'}
           </h2>
         </div>
@@ -574,7 +575,7 @@ export function HospitalFacilityFormModal({
               type="submit"
               style={{
                 padding: isMobile ? '10px 20px' : '12px 24px',
-                background: 'linear-gradient(135deg, #4A4A4A, #4A4A4A)',
+                background: '#008C1D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
