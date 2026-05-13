@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { useInspectionStore } from '@/lib/stores';
@@ -240,13 +241,13 @@ export default function MakerMaintenanceResultPage() {
             border: '1px solid #E1E1E1',
             borderRadius: '4px',
           }}>
-            {/* ヘッダー */}
+            {/* ヘッダー (Figma 597:43893: 白背景 + 黒文字) */}
             <div style={{
               padding: '12px 16px',
-              background: '#4A4A4A',
-              color: 'white',
+              background: 'white',
+              color: '#4A4A4A',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 600,
               borderBottom: '1px solid #E1E1E1',
             }}>
               点検結果登録（添付ドキュメントの登録）
@@ -254,88 +255,96 @@ export default function MakerMaintenanceResultPage() {
 
             {/* フォーム */}
             <div style={{ padding: '20px', flex: 1 }}>
-              {/* 添付ファイル */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={styles.label}>添付ファイル</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                    id="file-input"
-                  />
-                  <label
-                    htmlFor="file-input"
-                    style={{
-                      padding: '8px 16px',
-                      background: '#0092E6',
-                      color: 'white',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                    }}
-                  >
-                    ファイルを選択
-                  </label>
-                  <span style={{ fontSize: '13px', color: '#666' }}>
-                    {formData.attachedFile ? formData.attachedFile.name : '選択されていません'}
-                  </span>
-                </div>
-              </div>
-
-              {/* ドキュメント種類 */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={styles.label}>ドキュメント</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="documentType"
-                      value="点検報告書"
-                      checked={formData.documentType === '点検報告書'}
-                      onChange={(e) => handleInputChange('documentType', e.target.value)}
-                    />
-                    <span>点検報告書</span>
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      name="documentType"
-                      value="その他"
-                      checked={formData.documentType === 'その他'}
-                      onChange={(e) => handleInputChange('documentType', e.target.value)}
-                    />
-                    <span>その他</span>
-                  </label>
-                  {formData.documentType === 'その他' && (
-                    <input
-                      type="text"
-                      value={formData.customFileName}
-                      onChange={(e) => handleInputChange('customFileName', e.target.value)}
-                      placeholder="ファイル名を入力"
-                      style={{
-                        padding: '6px 12px',
-                        border: '1px solid #E1E1E1',
-                        borderRadius: '4px',
-                        fontSize: '13px',
-                        width: '200px',
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* 点検実施日 */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={styles.label}>点検実施日</label>
-                <input
-                  type="date"
-                  value={formData.inspectionDate}
-                  onChange={(e) => handleInputChange('inspectionDate', e.target.value)}
-                  style={styles.input}
-                />
-              </div>
+              {/* 添付ファイル / ドキュメント / 点検実施日 (Figma 597:43893: テーブル UI) */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>添付ファイル</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={handleFileChange}
+                          style={{ display: 'none' }}
+                          id="file-input"
+                        />
+                        <label
+                          htmlFor="file-input"
+                          style={{
+                            padding: '6px 14px',
+                            background: 'white',
+                            color: '#146E2E',
+                            border: '1px solid #146E2E',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ファイルを選択
+                        </label>
+                        <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
+                          {formData.attachedFile ? formData.attachedFile.name : '選択されていません'}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>ドキュメント</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                        <label style={styles.radioLabel}>
+                          <input
+                            type="radio"
+                            name="documentType"
+                            value="点検報告書"
+                            checked={formData.documentType === '点検報告書'}
+                            onChange={(e) => handleInputChange('documentType', e.target.value)}
+                          />
+                          <span>点検報告書</span>
+                        </label>
+                        <label style={styles.radioLabel}>
+                          <input
+                            type="radio"
+                            name="documentType"
+                            value="その他"
+                            checked={formData.documentType === 'その他'}
+                            onChange={(e) => handleInputChange('documentType', e.target.value)}
+                          />
+                          <span>その他</span>
+                        </label>
+                        {formData.documentType === 'その他' && (
+                          <input
+                            type="text"
+                            value={formData.customFileName}
+                            onChange={(e) => handleInputChange('customFileName', e.target.value)}
+                            placeholder="ファイル名を入力"
+                            style={{
+                              padding: '6px 12px',
+                              border: '1px solid #E1E1E1',
+                              borderRadius: '4px',
+                              fontSize: '13px',
+                              width: '200px',
+                            }}
+                          />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>点検実施日</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
+                      <input
+                        type="date"
+                        value={formData.inspectionDate}
+                        onChange={(e) => handleInputChange('inspectionDate', e.target.value)}
+                        style={{ ...styles.input, width: '200px' }}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               {/* 点検業者セクション */}
               <div style={{
@@ -418,11 +427,12 @@ export default function MakerMaintenanceResultPage() {
                     onClick={handleAddCostItem}
                     style={{
                       padding: '4px 12px',
-                      background: '#0092E6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
+                      background: 'white',
+                      color: '#146E2E',
+                      border: '1px solid #146E2E',
+                      borderRadius: '6px',
                       fontSize: '12px',
+                      fontWeight: 500,
                       cursor: 'pointer',
                     }}
                   >
@@ -501,17 +511,18 @@ export default function MakerMaintenanceResultPage() {
                             type="button"
                             onClick={() => handleRemoveCostItem(item.id)}
                             style={{
-                              padding: '4px 8px',
-                              background: '#DA0000',
-                              color: 'white',
+                              background: 'transparent',
+                              color: '#8A8A8A',
                               border: 'none',
-                              borderRadius: '4px',
-                              fontSize: '11px',
                               cursor: 'pointer',
+                              padding: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                             }}
                             aria-label="行を削除"
                           >
-                            削除
+                            <Trash2 size={16} aria-hidden />
                           </button>
                         </td>
                       </tr>
@@ -578,13 +589,14 @@ export default function MakerMaintenanceResultPage() {
             overflow: 'hidden',
             background: 'white',
           }}>
-            {/* プレビューヘッダー */}
+            {/* プレビューヘッダー (Figma 597:43893: 白背景 + 黒文字) */}
             <div style={{
               padding: '12px 16px',
-              background: '#4A4A4A',
-              color: 'white',
+              background: 'white',
+              color: '#4A4A4A',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 600,
+              borderBottom: '1px solid #E1E1E1',
             }}>
               ドキュメントプレビュー
             </div>
@@ -636,13 +648,13 @@ export default function MakerMaintenanceResultPage() {
             onClick={handleBack}
             style={{
               padding: '12px 28px',
-              background: '#8A8A8A',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
+              background: 'white',
+              color: '#4A4A4A',
+              border: '1px solid #E1E1E1',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 500,
             }}
           >
             キャンセル
@@ -654,10 +666,10 @@ export default function MakerMaintenanceResultPage() {
               background: '#008C1D',
               color: 'white',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '14px',
-              fontWeight: 'bold',
+              fontWeight: 600,
             }}
           >
             点検記録を登録
