@@ -63,7 +63,7 @@ export function SubTabNavigation({ activeTab }: SubTabNavigationProps) {
               marginBottom: -1,
             }}
             onMouseEnter={(e) => {
-              if (!isActive) e.currentTarget.style.background = '#F8F8F8';
+              if (!isActive) e.currentTarget.style.background = '#FAFAFA';
             }}
             onMouseLeave={(e) => {
               if (!isActive) e.currentTarget.style.background = 'transparent';
