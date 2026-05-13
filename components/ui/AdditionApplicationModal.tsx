@@ -183,8 +183,8 @@ export function AdditionApplicationModal({
   };
 
   // テーマカラー（増設申請用：青系）
-  const themeColor = '#0073B8';
-  const themeLightBg = '#EAF3FB';
+  const themeColor = '#4A4A4A';
+  const themeLightBg = '#EBF5EE';
   const themeBorder = '#0092E6';
 
   const styles: Record<string, React.CSSProperties> = {
