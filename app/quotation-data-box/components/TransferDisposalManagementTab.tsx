@@ -730,17 +730,17 @@ export function TransferDisposalManagementTab() {
         const isTransfer = app.applicationType === '移動申請';
         const typeLabel = isTransfer ? '移動申請' : '廃棄申請';
         const modalTh: React.CSSProperties = {
-          background: '#E1E1E1', padding: '8px 12px', fontSize: '13px',
-          fontWeight: 600, textAlign: 'left', border: '1px solid #ccc',
-          whiteSpace: 'nowrap', width: '120px',
+          background: '#F1F1F1', padding: '8px 12px', fontSize: '13px',
+          fontWeight: 600, textAlign: 'left', border: '1px solid #E1E1E1',
+          whiteSpace: 'nowrap', width: '120px', color: '#4A4A4A',
         };
         const modalTd: React.CSSProperties = {
           background: 'white', padding: '8px 12px', fontSize: '13px',
-          border: '1px solid #ccc',
+          border: '1px solid #E1E1E1', color: '#4A4A4A',
         };
         const sectionLabel: React.CSSProperties = {
-          fontSize: '13px', fontWeight: 'bold', color: '#333',
-          borderBottom: '1px solid #999', paddingBottom: '4px', marginTop: '16px', marginBottom: '8px',
+          fontSize: '13px', fontWeight: 600, color: '#4A4A4A',
+          borderBottom: '1px solid #E1E1E1', paddingBottom: '4px', marginTop: '16px', marginBottom: '8px',
         };
         return (
           <div
@@ -763,24 +763,24 @@ export function TransferDisposalManagementTab() {
             >
               {/* ヘッダー */}
               <div style={{
-                background: '#4A4A4A', padding: '12px 16px',
-                borderRadius: '8px 8px 0 0', color: 'white',
-                display: 'flex', alignItems: 'center', gap: '12px',
+                background: 'white', padding: '16px 20px',
+                borderRadius: '8px 8px 0 0', color: '#4A4A4A',
+                borderBottom: '1px solid #E1E1E1',
+                display: 'flex', alignItems: 'center', gap: '16px',
               }}>
-                <span style={{
-                  background: '#FAFAFA', color: '#4A4A4A', padding: '4px 12px',
-                  borderRadius: '4px', fontSize: '14px', fontWeight: 'bold',
-                }}>
-                  {typeLabel} 内容確認
-                </span>
-                <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
-                  {typeLabel}No, {app.applicationNo}
-                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>
+                    {typeLabel}：内容確認
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
+                    {typeLabel}No, {app.applicationNo}
+                  </span>
+                </div>
                 <button
                   onClick={() => setIsApprovalModalOpen(false)}
                   style={{
                     marginLeft: 'auto', background: 'transparent', border: 'none',
-                    color: 'white', fontSize: '18px', cursor: 'pointer', padding: '4px 8px',
+                    color: '#4A4A4A', fontSize: '20px', cursor: 'pointer', padding: '4px 8px', lineHeight: 1,
                   }}
                   aria-label="閉じる"
                 >
@@ -861,7 +861,7 @@ export function TransferDisposalManagementTab() {
                 <div style={sectionLabel}>コメント（必要理由 他）</div>
                 <div style={{
                   background: '#FAFAFA', padding: '10px 12px', borderRadius: '4px',
-                  fontSize: '13px', color: '#333', border: '1px solid #ccc',
+                  fontSize: '13px', color: '#4A4A4A', border: '1px solid #E1E1E1',
                   marginBottom: '4px', minHeight: '40px',
                 }}>
                   {app.comment || '-'}
@@ -871,7 +871,7 @@ export function TransferDisposalManagementTab() {
                 <div style={sectionLabel}>添付ファイル</div>
                 <div style={{
                   background: 'white', padding: '10px 12px', borderRadius: '4px',
-                  fontSize: '13px', color: '#333', border: '1px solid #ccc',
+                  fontSize: '13px', color: '#4A4A4A', border: '1px solid #E1E1E1',
                   marginBottom: '4px',
                 }}>
                   {app.attachments.length > 0 ? app.attachments.map((f, i) => (
@@ -893,17 +893,27 @@ export function TransferDisposalManagementTab() {
                 </table>
               </div>
 
-              {/* フッターボタン */}
+              {/* フッターボタン (Figma 階層: 戻る=Secondary グレー / 中央=Outline / Primary=緑塗り) */}
               <div style={{
-                padding: '12px 20px', borderTop: '1px solid #ccc',
-                display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center',
+                padding: '16px 20px', borderTop: '1px solid #E1E1E1',
+                display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center',
               }}>
+                <button
+                  onClick={() => setIsApprovalModalOpen(false)}
+                  style={{
+                    padding: '10px 32px', background: 'white', color: '#4A4A4A',
+                    border: '1px solid #E1E1E1', borderRadius: '6px', cursor: 'pointer',
+                    fontSize: '14px', fontWeight: 500, minWidth: '120px',
+                  }}
+                >
+                  戻る
+                </button>
                 <button
                   onClick={() => alert('印刷プレビューを表示します（モック）')}
                   style={{
-                    padding: '10px 24px', background: '#FAFAFA', color: '#333',
-                    border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
-                    fontSize: '14px', fontWeight: 'bold',
+                    padding: '10px 24px', background: 'white', color: '#146E2E',
+                    border: '1px solid #146E2E', borderRadius: '6px', cursor: 'pointer',
+                    fontSize: '14px', fontWeight: 500, minWidth: '120px',
                   }}
                 >
                   印刷
@@ -912,9 +922,9 @@ export function TransferDisposalManagementTab() {
                   <button
                     onClick={handleConfirmApproval}
                     style={{
-                      padding: '10px 24px', background: '#FAFAFA', color: '#333',
-                      border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
-                      fontSize: '14px', fontWeight: 'bold',
+                      padding: '10px 24px', background: '#008C1D', color: 'white',
+                      border: 'none', borderRadius: '6px', cursor: 'pointer',
+                      fontSize: '14px', fontWeight: 600, minWidth: '180px',
                     }}
                   >
                     承認して原本に反映
@@ -923,24 +933,14 @@ export function TransferDisposalManagementTab() {
                   <button
                     onClick={() => alert('添付ファイルを表示します（モック）')}
                     style={{
-                      padding: '10px 24px', background: '#FAFAFA', color: '#333',
-                      border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
-                      fontSize: '14px', fontWeight: 'bold',
+                      padding: '10px 24px', background: 'white', color: '#146E2E',
+                      border: '1px solid #146E2E', borderRadius: '6px', cursor: 'pointer',
+                      fontSize: '14px', fontWeight: 500, minWidth: '140px',
                     }}
                   >
                     添付ファイル
                   </button>
                 )}
-                <button
-                  onClick={() => setIsApprovalModalOpen(false)}
-                  style={{
-                    padding: '10px 32px', background: '#FAFAFA', color: '#333',
-                    border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer',
-                    fontSize: '14px', fontWeight: 'bold',
-                  }}
-                >
-                  キャンセル
-                </button>
               </div>
             </div>
           </div>
