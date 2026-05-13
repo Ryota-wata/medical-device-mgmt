@@ -3,12 +3,12 @@ import { OCRResult, QuotationItemType, AIJudgmentResult, ConfirmedStateMap, Conf
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
-  'A_表紙明細': { bg: '#EAF3FB', text: '#1E5A9E' },
-  'B_明細代表': { bg: '#F1ECF7', text: '#7b1fa2' },
+  'A_表紙明細': { bg: '#EBF5EE', text: '#4A4A4A' },
+  'B_明細代表': { bg: '#FAFAFA', text: '#4A4A4A' },
   'C_個体管理品目': { bg: '#EBF5EE', text: '#146E2E' },
-  'D_付属品': { bg: '#FDF1E5', text: '#ef6c00' },
-  'E_その他役務': { bg: '#FBE9EC', text: '#c2185b' },
-  'F_値引き': { bg: '#ffebee', text: '#9A2333' },
+  'D_付属品': { bg: '#FDF1E5', text: '#4A4A4A' },
+  'E_その他役務': { bg: '#FDF1E5', text: '#4A4A4A' },
+  'F_値引き': { bg: '#FDF1E5', text: '#DA0000' },
 };
 
 interface Step4IndividualItemLinkingProps {
@@ -109,8 +109,8 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '16px', padding: '14px', background: '#F1ECF7', borderRadius: '6px', border: '1px solid #ce93d8' }}>
-        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '8px' }}>
+      <div style={{ marginBottom: '16px', padding: '14px', background: '#FAFAFA', borderRadius: '6px', border: '1px solid #8A8A8A' }}>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
           ② 個体管理品目のAI判定を実施し確認・修正を実施してください
         </div>
         <div style={{ fontSize: '12px', color: '#555', lineHeight: 1.6 }}>
@@ -124,7 +124,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
         <div style={{
           padding: '8px 16px',
           background: '#EBF5EE',
-          border: '1px solid #a5d6a7',
+          border: '1px solid #008C1D',
           borderRadius: '4px',
           fontSize: '13px',
           fontWeight: 'bold',
@@ -135,11 +135,11 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
         <div style={{
           padding: '8px 16px',
           background: confirmedCount === individualItems.length ? '#EBF5EE' : '#FDF1E5',
-          border: `1px solid ${confirmedCount === individualItems.length ? '#a5d6a7' : '#ffcc80'}`,
+          border: `1px solid ${confirmedCount === individualItems.length ? '#008C1D' : '#FDF1E5'}`,
           borderRadius: '4px',
           fontSize: '13px',
           fontWeight: 'bold',
-          color: confirmedCount === individualItems.length ? '#146E2E' : '#ef6c00',
+          color: confirmedCount === individualItems.length ? '#146E2E' : '#4A4A4A',
         }}>
           紐付け済み: {confirmedCount}/{individualItems.length}件
         </div>
@@ -150,7 +150,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
           }}
           style={{
             padding: '8px 16px',
-            background: '#1976d2',
+            background: '#4A4A4A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -176,7 +176,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                   borderBottom: '2px solid #0092E6',
                   fontWeight: 'bold',
                   color: '#0092E6',
-                  background: '#EAF3FB',
+                  background: '#EBF5EE',
                   fontSize: '11px'
                 }}>
                   元明細（原本情報）
@@ -185,10 +185,10 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                 <th colSpan={6} style={{
                   padding: '6px',
                   textAlign: 'center',
-                  borderBottom: '2px solid #5E3A93',
+                  borderBottom: '2px solid #4A4A4A',
                   fontWeight: 'bold',
-                  color: '#5E3A93',
-                  background: '#F1ECF7',
+                  color: '#4A4A4A',
+                  background: '#FAFAFA',
                   fontSize: '11px'
                 }}>
                   個体品目のAI判定
@@ -202,12 +202,12 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                 <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', fontSize: '9px' }}>型式</th>
                 <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '40px', fontSize: '9px' }}>数量</th>
                 <th style={{ padding: '5px', background: '#FAFAFA' }}></th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#faf5fc' }}>category</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '90px', fontSize: '9px', background: '#faf5fc' }}>大分類</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', fontSize: '9px', background: '#faf5fc' }}>中分類</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', fontSize: '9px', background: '#faf5fc' }}>個体管理品目</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#faf5fc' }}>メーカー</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#faf5fc' }}>型式</th>
+                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>category</th>
+                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '90px', fontSize: '9px', background: '#FAFAFA' }}>大分類</th>
+                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', fontSize: '9px', background: '#FAFAFA' }}>中分類</th>
+                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', fontSize: '9px', background: '#FAFAFA' }}>個体管理品目</th>
+                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>メーカー</th>
+                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>型式</th>
                 <th style={{ padding: '5px', borderBottom: '1px solid #E1E1E1' }}></th>
               </tr>
             </thead>
@@ -230,22 +230,22 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                     <td style={{ padding: '5px', color: '#555' }}>{item.model || '-'}</td>
                     <td style={{ padding: '5px', textAlign: 'center' }}>{item.quantity}</td>
                     <td style={{ padding: '5px', textAlign: 'center', background: '#FAFAFA' }}>⇒</td>
-                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#fdfaff', fontSize: '9px' }}>
+                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#FAFAFA', fontSize: '9px' }}>
                       {displayData && 'category' in displayData ? displayData.category : '-'}
                     </td>
-                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#fdfaff', fontSize: '9px' }}>
+                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#FAFAFA', fontSize: '9px' }}>
                       {displayData && 'majorCategory' in displayData ? displayData.majorCategory : '-'}
                     </td>
-                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#fdfaff', fontSize: '9px' }}>
+                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#FAFAFA', fontSize: '9px' }}>
                       {displayData && 'middleCategory' in displayData ? displayData.middleCategory : '-'}
                     </td>
-                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#fdfaff', fontWeight: 'bold' }}>
+                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#FAFAFA', fontWeight: 'bold' }}>
                       {displayData?.assetName || '-'}
                     </td>
-                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#fdfaff', color: '#555', fontSize: '9px' }}>
+                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#FAFAFA', color: '#555', fontSize: '9px' }}>
                       {displayData?.manufacturer || '-'}
                     </td>
-                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#fdfaff', color: '#555', fontSize: '9px' }}>
+                    <td style={{ padding: '5px', background: rowIsConfirmed ? '#EBF5EE' : '#FAFAFA', color: '#555', fontSize: '9px' }}>
                       {displayData?.model || '-'}
                     </td>
                     <td style={{ padding: '5px', textAlign: 'center' }}>
@@ -254,7 +254,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                           <span style={{
                             display: 'inline-block',
                             padding: '3px 6px',
-                            background: confirmedInfo?.status === 'asset_master_selected' ? '#1976d2' : '#008C1D',
+                            background: confirmedInfo?.status === 'asset_master_selected' ? '#4A4A4A' : '#008C1D',
                             color: 'white',
                             borderRadius: '3px',
                             fontSize: '8px',
@@ -282,7 +282,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                         <span style={{
                           display: 'inline-block',
                           padding: '3px 8px',
-                          background: '#A66F1B',
+                          background: '#4A4A4A',
                           color: 'white',
                           borderRadius: '3px',
                           fontSize: '8px',
@@ -297,7 +297,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                               onClick={() => handleConfirm(index, aiJudgment)}
                               style={{
                                 padding: '3px 5px',
-                                background: '#A66F1B',
+                                background: '#4A4A4A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '3px',
@@ -313,7 +313,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                             onClick={() => handleOpenAssetMasterForSelection(index)}
                             style={{
                               padding: '3px 5px',
-                              background: '#1976d2',
+                              background: '#4A4A4A',
                               color: 'white',
                               border: 'none',
                               borderRadius: '3px',
