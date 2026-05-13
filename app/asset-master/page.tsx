@@ -161,29 +161,30 @@ function AssetMasterContent() {
   return (
     <div className="min-h-dvh bg-surface-screen flex flex-col">
       {/* ヘッダー (Figma 216:37645) */}
-      <div className="bg-surface-card border-b border-stroke-input px-5 py-3 flex items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <span className="text-content-sub text-lg cursor-pointer select-none">&lt;</span>
-          <h1 className="text-lg md:text-xl font-semibold text-content-primary m-0 text-balance">
-            資産マスタ選択画面
-          </h1>
-        </div>
-        {/* 全体検索 (Figma: 右上の小型検索ボックス) */}
-        <div className="relative" style={{ width: '280px' }}>
-          <input
-            type="text"
-            value={filters.globalSearch || ''}
-            onChange={(e) => setFilters({...filters, globalSearch: e.target.value})}
-            placeholder="キーワード検索"
-            aria-label="全体検索"
-            className="w-full px-3 py-1.5 pr-8 border border-stroke-input rounded text-sm text-content-primary placeholder:text-content-sub focus:outline-none focus:ring-2 focus:ring-cta-primary/30 focus:border-cta-primary box-border"
-          />
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-content-sub text-sm" aria-hidden>⌕</span>
-        </div>
+      <div className="bg-surface-card border-b border-stroke-input px-5 py-3 flex items-center gap-3 shadow-sm">
+        <span className="text-content-sub text-lg cursor-pointer select-none">&lt;</span>
+        <h1 className="text-lg md:text-xl font-semibold text-content-primary m-0 text-balance">
+          資産マスタ選択画面
+        </h1>
       </div>
 
       {/* フィルターヘッダー */}
       <div className="bg-surface-card mx-4 mt-4 rounded-lg border border-stroke-input p-4">
+        {/* キーワード検索 (フィルターエリア上部) */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-content-sub mb-1">キーワード検索</label>
+          <div className="relative" style={{ maxWidth: '400px' }}>
+            <input
+              type="text"
+              value={filters.globalSearch || ''}
+              onChange={(e) => setFilters({...filters, globalSearch: e.target.value})}
+              placeholder="全カラムから曖昧検索"
+              aria-label="キーワード検索"
+              className="w-full px-3 py-2 pr-8 border border-stroke-input rounded text-sm text-content-primary placeholder:text-content-sub focus:outline-none focus:ring-2 focus:ring-cta-primary/30 focus:border-cta-primary box-border"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-content-sub text-sm" aria-hidden>⌕</span>
+          </div>
+        </div>
         {/* 個別フィルター */}
         <div className="flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[120px]">
