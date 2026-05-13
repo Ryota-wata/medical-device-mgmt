@@ -493,7 +493,7 @@ export default function MainPage() {
                     <button
                       key={label}
                       onClick={() => handleMenuSelect(menuMap[label])}
-                      className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg text-sm font-medium text-content-primary cursor-pointer transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
+                      className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg text-sm font-medium text-content-primary cursor-pointer transition-all hover:border-cta-primary hover:bg-[#EBF5EE]"
                     >
                       {label}
                     </button>
@@ -691,7 +691,7 @@ export default function MainPage() {
                         <div key={list.id} className="flex items-stretch gap-2">
                           <button
                             onClick={() => handleSelectEditList(list.id)}
-                            className="flex-1 p-4 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-left transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
+                            className="flex-1 p-4 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-left transition-all hover:border-cta-primary hover:bg-[#EBF5EE]"
                           >
                             <div className="font-semibold text-sm text-content-primary mb-1">
                               {list.name}
@@ -708,7 +708,7 @@ export default function MainPage() {
                               e.stopPropagation();
                               handleDeleteEditList({ id: list.id, name: list.name });
                             }}
-                            className="px-3 py-2 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-[#dc2626] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#dc2626]"
+                            className="px-3 py-2 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-[#DA0000] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#DA0000]"
                             title="削除"
                           >
                             削除
@@ -749,8 +749,8 @@ export default function MainPage() {
                     disabled={!newEditListName.trim()}
                     className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${
                       newEditListName.trim()
-                        ? 'bg-cta-primary text-white cursor-pointer hover:bg-[#219a52]'
-                        : 'bg-[#e5e7eb] text-content-sub cursor-not-allowed'
+                        ? 'bg-cta-primary text-white cursor-pointer hover:bg-[#008C1D]'
+                        : 'bg-[#E1E1E1] text-content-sub cursor-not-allowed'
                     }`}
                   >
                     作成
@@ -758,7 +758,7 @@ export default function MainPage() {
 
                   <button
                     onClick={closeEditListModal}
-                    className="w-full mt-2 py-2.5 text-sm font-medium text-[#dc2626] hover:bg-red-50 rounded-md transition-colors cursor-pointer border-0 bg-transparent"
+                    className="w-full mt-2 py-2.5 text-sm font-medium text-[#DA0000] hover:bg-red-50 rounded-md transition-colors cursor-pointer border-0 bg-transparent"
                   >
                     閉じる
                   </button>
@@ -863,13 +863,13 @@ export default function MainPage() {
               <div className="flex flex-col gap-2">
                 <button
                   onClick={handleAvailableDevices}
-                  className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-sm font-medium text-content-primary transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
+                  className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-sm font-medium text-content-primary transition-all hover:border-cta-primary hover:bg-[#EBF5EE]"
                 >
                   貸出可能機器閲覧
                 </button>
                 <button
                   onClick={handleLendingCheckout}
-                  className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-sm font-medium text-content-primary transition-all hover:border-cta-primary hover:bg-[#f0fdf4]"
+                  className="px-4 py-3 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-sm font-medium text-content-primary transition-all hover:border-cta-primary hover:bg-[#EBF5EE]"
                 >
                   貸出・返却
                 </button>
@@ -928,7 +928,7 @@ export default function MainPage() {
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-xs text-content-sub">{app.applicationNo}</span>
-                            <span className="text-xs text-[#d1d5db]">|</span>
+                            <span className="text-xs text-[#E1E1E1]">|</span>
                             <span className="text-xs text-content-sub tabular-nums">{app.applicationDate}</span>
                           </div>
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
@@ -966,7 +966,7 @@ export default function MainPage() {
                         const statusStyle = getStatusBadgeStyle(app.status);
                         const typeStyle = getTypeBadgeStyle(app.applicationType);
                         return (
-                          <tr key={app.id} className="border-b border-[#f3f4f6] hover:bg-surface-screen">
+                          <tr key={app.id} className="border-b border-[#FAFAFA] hover:bg-surface-screen">
                             <td className="py-2.5 px-3 font-mono text-xs text-content-sub">{app.applicationNo}</td>
                             <td className="py-2.5 px-3 text-content-sub tabular-nums">{app.applicationDate}</td>
                             <td className="py-2.5 px-3">
@@ -994,7 +994,7 @@ export default function MainPage() {
               <div className="flex justify-end">
                 <button
                   onClick={() => setIsApplicationStatusModalOpen(false)}
-                  className={`px-4 py-2 bg-[#4b5563] text-white rounded-md font-medium transition-colors hover:bg-[#374151] border-0 cursor-pointer ${
+                  className={`px-4 py-2 bg-[#4A4A4A] text-white rounded-md font-medium transition-colors hover:bg-[#4A4A4A] border-0 cursor-pointer ${
                     isMobile ? 'text-sm' : 'text-base'
                   }`}
                 >
