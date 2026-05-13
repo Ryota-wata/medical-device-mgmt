@@ -6,6 +6,7 @@ import { useQuotationStore } from '@/lib/stores/quotationStore';
 import { useEditListStore } from '@/lib/stores/editListStore';
 import { usePermissions } from '@/lib/hooks';
 import { Header } from '@/components/layouts/Header';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { QuotationsTab } from '../quotation-data-box/components/QuotationsTab';
 
 type QuotationTabType = 'remodel' | 'purchase';
@@ -120,43 +121,42 @@ function QuotationManagementContent() {
           ))}
         </div>
 
-        {/* 絞り込みエリア */}
-        <div className="bg-surface-card border-b border-stroke-input px-5 py-4 flex items-center gap-6 flex-wrap">
-          <div className="flex items-center gap-2">
-            <label className="text-[13px] font-semibold text-content-primary whitespace-nowrap">
+        {/* 絞り込みエリア (点検管理と同じ FilterItem 形式) */}
+        <div className="bg-surface-card border-b border-stroke-input px-5 py-3 flex items-end gap-3 flex-wrap">
+          <div className="flex flex-col gap-1 min-w-[180px] max-w-[220px]">
+            <label className="text-[12px] font-medium text-content-sub">
               編集リスト
             </label>
-            <select
-              value={selectedEditListId}
-              onChange={(e) => handleEditListChange(e.target.value)}
-              className="px-3 py-1.5 border border-stroke-input rounded text-[13px] min-w-[200px] bg-surface-card focus:outline-none focus:border-cta-primary"
-            >
-              <option value="">すべて</option>
-              {editLists.map((list) => (
-                <option key={list.id} value={list.id}>{list.name}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={editLists.find((l) => l.id === selectedEditListId)?.name || ''}
+              onChange={(label) => {
+                const found = editLists.find((l) => l.name === label);
+                handleEditListChange(found?.id || '');
+              }}
+              options={editLists.map((list) => list.name)}
+              placeholder="すべて"
+            />
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-[13px] font-semibold text-content-primary whitespace-nowrap">
+          <div className="flex flex-col gap-1 min-w-[260px] max-w-[340px]">
+            <label className="text-[12px] font-medium text-content-sub">
               見積依頼グループ
             </label>
-            <select
-              value={selectedRfqGroupId}
-              onChange={(e) => setSelectedRfqGroupId(e.target.value)}
-              className="px-3 py-1.5 border border-stroke-input rounded text-[13px] min-w-[320px] bg-surface-card focus:outline-none focus:border-cta-primary"
-            >
-              <option value="">すべて</option>
-              {availableRfqGroups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.rfqNo} - {g.groupName}
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={(() => {
+                const g = availableRfqGroups.find((g) => String(g.id) === selectedRfqGroupId);
+                return g ? `${g.rfqNo} - ${g.groupName}` : '';
+              })()}
+              onChange={(label) => {
+                const found = availableRfqGroups.find((g) => `${g.rfqNo} - ${g.groupName}` === label);
+                setSelectedRfqGroupId(found ? String(found.id) : '');
+              }}
+              options={availableRfqGroups.map((g) => `${g.rfqNo} - ${g.groupName}`)}
+              placeholder="すべて"
+            />
           </div>
 
-          <div className="ml-auto flex gap-4 items-center text-[13px]">
+          <div className="ml-auto flex gap-4 items-center text-[13px] pb-1">
             <span className="text-content-primary">
               表示: <strong className="text-cta-primary-dark tabular-nums">{filteredItems.length}</strong>件
             </span>

@@ -108,7 +108,7 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
 
                 return (
                   <td key={col.key} style={{
-                    padding: '4px 6px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
+                    padding: '8px 6px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums',
                     textAlign: col.align || 'left',
                   }}>{display}</td>
                 );
