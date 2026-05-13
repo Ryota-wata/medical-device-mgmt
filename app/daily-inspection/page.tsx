@@ -337,7 +337,7 @@ function DailyInspectionContent() {
           <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
             {/* QRコード表示エリア */}
             <div className="bg-surface-disabled rounded-md flex flex-col items-center justify-center py-10 mb-6">
-              <QRCodePlaceholder size={48} color="#9ca3af" />
+              <QRCodePlaceholder size={48} color="#8A8A8A" />
               <p className="text-sm text-content-sub mt-2">QRコードを読んでください</p>
             </div>
 
@@ -424,7 +424,7 @@ function DailyInspectionContent() {
           <div className={`mt-4 ${isMobile ? 'flex flex-col gap-3' : 'flex gap-3'}`}>
             <button
               onClick={handleBack}
-              className={`${isMobile ? 'w-full order-2' : 'flex-1'} py-3 text-sm font-medium text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors`}
+              className={`${isMobile ? 'w-full order-2' : 'flex-1'} py-3 text-sm font-medium text-[#4A4A4A] bg-[#E1E1E1] border-0 rounded-md cursor-pointer hover:bg-[#E1E1E1] transition-colors`}
             >
               戻る
             </button>
@@ -433,7 +433,7 @@ function DailyInspectionContent() {
               disabled={!isQrEntered}
               className={`${isMobile ? 'w-full order-1' : 'flex-1'} py-3 text-sm font-bold rounded-md transition-colors ${
                 isQrEntered
-                  ? 'text-cta-primary-dark bg-white border border-cta-primary cursor-pointer hover:bg-[#f0fdf4]'
+                  ? 'text-cta-primary-dark bg-white border border-cta-primary cursor-pointer hover:bg-[#EBF5EE]'
                   : 'text-content-sub bg-surface-disabled border border-stroke-input cursor-default'
               }`}
             >
@@ -485,9 +485,9 @@ function DailyInspectionContent() {
 
             {/* 機器タグバッジ */}
             <div className="flex flex-wrap gap-2 mb-6">
-              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4b5563] bg-white">{selectedAsset?.largeClass}</span>
-              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4b5563] bg-white">{selectedAsset?.mediumClass}</span>
-              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4b5563] bg-white">{selectedAsset?.item}/{selectedAsset?.maker}/ {selectedAsset?.model}</span>
+              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4A4A4A] bg-white">{selectedAsset?.largeClass}</span>
+              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4A4A4A] bg-white">{selectedAsset?.mediumClass}</span>
+              <span className="px-2.5 py-1 text-xs border border-stroke-input rounded-full text-[#4A4A4A] bg-white">{selectedAsset?.item}/{selectedAsset?.maker}/ {selectedAsset?.model}</span>
             </div>
 
             {/* タイミング点検 */}
@@ -515,7 +515,7 @@ function DailyInspectionContent() {
               onChange={(e) => setSelectedMenuId(e.target.value)}
               className={`w-full px-3 py-2.5 text-sm rounded-md outline-none transition-colors bg-white cursor-pointer ${
                 filteredMenus.length === 0
-                  ? 'border-2 border-[#dc2626] text-[#dc2626]'
+                  ? 'border-2 border-[#DA0000] text-[#DA0000]'
                   : 'border border-stroke-input text-content-primary focus:border-cta-primary'
               }`}
             >
@@ -525,7 +525,7 @@ function DailyInspectionContent() {
               ))}
             </select>
             {filteredMenus.length === 0 && (
-              <p className="text-xs text-[#dc2626] mt-1.5 text-pretty">
+              <p className="text-xs text-[#DA0000] mt-1.5 text-pretty">
                 この商品の「{usageTiming}」点検メニューが登録されていません
               </p>
             )}
@@ -581,8 +581,8 @@ function DailyInspectionContent() {
                                 const base = 'px-3 py-1.5 text-xs rounded border cursor-pointer transition-colors min-w-[44px] min-h-[32px]';
                                 const active = item.result === val;
                                 const color = val === '○'
-                                  ? 'border-cta-primary bg-[#f0fdf4] text-cta-primary-dark'
-                                  : 'border-[#dc2626] bg-[#fef2f2] text-[#dc2626]';
+                                  ? 'border-cta-primary bg-[#EBF5EE] text-cta-primary-dark'
+                                  : 'border-[#DA0000] bg-[#FDF1E5] text-[#DA0000]';
                                 return (
                                   <button
                                     key={val}
@@ -626,7 +626,7 @@ function DailyInspectionContent() {
               </button>
               <button
                 onClick={() => handleShowConfirm('異常あり')}
-                className="flex-1 py-3 text-sm font-bold text-white bg-[#dc2626] border-0 rounded-md cursor-pointer hover:bg-[#b91c1c] transition-colors"
+                className="flex-1 py-3 text-sm font-bold text-white bg-[#DA0000] border-0 rounded-md cursor-pointer hover:bg-[#DA0000] transition-colors"
               >
                 異常あり（使用停止へ）
               </button>
@@ -637,7 +637,7 @@ function DailyInspectionContent() {
           <div className="mt-4">
             <button
               onClick={handleBack}
-              className="w-full py-3 text-sm font-medium text-[#4b5563] bg-[#e5e7eb] border-0 rounded-md cursor-pointer hover:bg-[#d1d5db] transition-colors"
+              className="w-full py-3 text-sm font-medium text-[#4A4A4A] bg-[#E1E1E1] border-0 rounded-md cursor-pointer hover:bg-[#E1E1E1] transition-colors"
             >
               戻る
             </button>
@@ -664,7 +664,7 @@ function DailyInspectionContent() {
           {/* 総合評価カード */}
           <div className="bg-white rounded-lg shadow-sm border border-stroke-card p-4 sm:p-6">
             <h2 className="text-sm font-bold text-content-primary mb-2">総合評価</h2>
-            <div className={`text-2xl font-bold ${overallResult === '合格' ? 'text-cta-primary-dark' : 'text-[#dc2626]'}`}>
+            <div className={`text-2xl font-bold ${overallResult === '合格' ? 'text-cta-primary-dark' : 'text-[#DA0000]'}`}>
               {overallResult}
             </div>
           </div>
@@ -755,7 +755,7 @@ function DailyInspectionContent() {
                         <td className="px-3 py-2.5 text-sm text-content-primary">{item.itemName}</td>
                         <td className="px-3 py-2.5 text-sm text-content-primary border-l border-stroke-card">{item.content}</td>
                         <td className={`px-3 py-2.5 text-sm text-center font-semibold border-l border-stroke-card ${
-                          item.result === '○' ? 'text-cta-primary-dark' : item.result === '×' ? 'text-[#dc2626]' : 'text-content-primary'
+                          item.result === '○' ? 'text-cta-primary-dark' : item.result === '×' ? 'text-[#DA0000]' : 'text-content-primary'
                         }`}>
                           {item.unit ? `${item.result} ${item.unit}` : item.result || '-'}
                         </td>
@@ -792,7 +792,7 @@ function DailyInspectionContent() {
             className={`w-full py-3 text-sm font-bold rounded-md transition-colors ${
               isExporting
                 ? 'text-content-sub bg-surface-disabled border border-stroke-input cursor-not-allowed'
-                : 'text-cta-primary-dark bg-white border border-cta-primary cursor-pointer hover:bg-[#f0fdf4]'
+                : 'text-cta-primary-dark bg-white border border-cta-primary cursor-pointer hover:bg-[#EBF5EE]'
             }`}
           >
             {isExporting ? '出力中...' : '修理申請へ'}
