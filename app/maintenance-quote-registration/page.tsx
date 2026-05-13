@@ -777,7 +777,7 @@ function MaintenanceQuoteRegistrationContent() {
                       value={annualAmount}
                       onChange={(e) => setAnnualAmount(e.target.value)}
                       disabled={!isStepEnabled(2)}
-                      className={`${inputCls} w-[160px] bg-[#fffbe3] tabular-nums`}
+                      className={`${inputCls} w-[160px] bg-[#FAFAFA] tabular-nums`}
                     />
                   </div>
                 </div>
