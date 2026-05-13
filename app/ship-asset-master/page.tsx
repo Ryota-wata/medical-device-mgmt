@@ -499,10 +499,10 @@ function ShipAssetMasterContent() {
       </div>
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {isMobile ? (
           // カード表示 (モバイル)
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
             {filteredAssets.map((asset) => (
               <div key={asset.id} style={{
                 background: 'white',
@@ -569,7 +569,7 @@ function ShipAssetMasterContent() {
           </div>
         ) : (
           // テーブル表示 (PC/タブレット)
-          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', overflow: 'auto', maxHeight: 'calc(100vh - 220px)' }}>
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', overflow: 'auto', flex: 1, minHeight: 0 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   {/* グループヘッダー */}
