@@ -202,12 +202,12 @@ export default function ItemAiMatchingPage() {
         {/* 単一カード (Figma 338:49204) */}
         <section className="bg-surface-card border border-stroke-card rounded-2xl mb-4">
           <div className="p-4 flex flex-col gap-6">
-            {/* 説明エリア (Figma 338:49207 構造: ラベル列 200px + 入力 1333px) */}
-            <div className="flex">
-              <div className="flex items-center justify-center px-4 w-[200px] h-[79px] shrink-0 bg-stroke-card text-base text-content-primary text-center">
+            {/* 説明エリア (Figma 338:49207 構造: ラベル列 200px + 入力 flex-1, 両子を items-stretch で高さ揃え) */}
+            <div className="flex items-stretch border border-stroke-input rounded">
+              <div className="flex items-center justify-center px-4 w-[200px] shrink-0 bg-stroke-card text-base text-content-primary text-center">
                 個体品目AI判定
               </div>
-              <div className="flex-1 flex flex-col justify-center px-4 py-3 bg-surface-select gap-1 border-y border-stroke-input">
+              <div className="flex-1 flex flex-col justify-center px-4 py-3 bg-surface-select gap-1">
                 <p className="text-sm font-semibold text-cta-primary-dark">
                   個体管理品目のAI判定を実施し確認・修正を実施してください
                 </p>
