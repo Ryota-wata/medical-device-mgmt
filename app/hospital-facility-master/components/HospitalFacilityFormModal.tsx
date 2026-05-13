@@ -190,7 +190,7 @@ export function HospitalFacilityFormModal({
   const inputStyle = {
     width: '100%',
     padding: isMobile ? '10px' : '12px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '6px',
     fontSize: isMobile ? '14px' : '15px',
     boxSizing: 'border-box' as const,
@@ -244,7 +244,7 @@ export function HospitalFacilityFormModal({
         {/* Header */}
         <div
           style={{
-            background: 'linear-gradient(135deg, #4527A0, #5E3A93)',
+            background: 'linear-gradient(135deg, #4A4A4A, #4A4A4A)',
             color: 'white',
             padding: isMobile ? '16px' : '20px',
             borderRadius: '12px 12px 0 0',
@@ -263,7 +263,7 @@ export function HospitalFacilityFormModal({
               style={{
                 fontSize: isMobile ? '14px' : '16px',
                 fontWeight: 600,
-                color: '#546e7a',
+                color: '#4A4A4A',
                 marginBottom: '16px',
                 paddingBottom: '8px',
                 borderBottom: '2px solid #E1E1E1',
@@ -431,10 +431,10 @@ export function HospitalFacilityFormModal({
               style={{
                 fontSize: isMobile ? '14px' : '16px',
                 fontWeight: 600,
-                color: '#4527A0',
+                color: '#4A4A4A',
                 marginBottom: '16px',
                 paddingBottom: '8px',
-                borderBottom: '2px solid #e8daef',
+                borderBottom: '2px solid #FAFAFA',
               }}
             >
               新（リモデルのみ）
@@ -442,43 +442,43 @@ export function HospitalFacilityFormModal({
 
             <div style={sectionGrid}>
               <div>
-                <label style={{ ...labelStyle, color: '#4527A0' }}>棟</label>
+                <label style={{ ...labelStyle, color: '#4A4A4A' }}>棟</label>
                 <input
                   type="text"
                   value={formData.newBuilding}
                   onChange={(e) => setFormData(prev => ({ ...prev, newBuilding: e.target.value }))}
                   placeholder="棟"
-                  style={{ ...inputStyle, borderColor: '#d7bde2' }}
+                  style={{ ...inputStyle, borderColor: '#FAFAFA' }}
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#4527A0' }}>部門</label>
+                <label style={{ ...labelStyle, color: '#4A4A4A' }}>部門</label>
                 <input
                   type="text"
                   value={formData.newDepartment}
                   onChange={(e) => setFormData(prev => ({ ...prev, newDepartment: e.target.value }))}
                   placeholder="部門"
-                  style={{ ...inputStyle, borderColor: '#d7bde2' }}
+                  style={{ ...inputStyle, borderColor: '#FAFAFA' }}
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#4527A0' }}>部署</label>
+                <label style={{ ...labelStyle, color: '#4A4A4A' }}>部署</label>
                 <input
                   type="text"
                   value={formData.newSection}
                   onChange={(e) => setFormData(prev => ({ ...prev, newSection: e.target.value }))}
                   placeholder="部署"
-                  style={{ ...inputStyle, borderColor: '#d7bde2' }}
+                  style={{ ...inputStyle, borderColor: '#FAFAFA' }}
                 />
               </div>
               <div>
-                <label style={{ ...labelStyle, color: '#4527A0' }}>諸室</label>
+                <label style={{ ...labelStyle, color: '#4A4A4A' }}>諸室</label>
                 <input
                   type="text"
                   value={formData.newRoomName}
                   onChange={(e) => setFormData(prev => ({ ...prev, newRoomName: e.target.value }))}
                   placeholder="室名"
-                  style={{ ...inputStyle, borderColor: '#d7bde2' }}
+                  style={{ ...inputStyle, borderColor: '#FAFAFA' }}
                 />
               </div>
             </div>
@@ -559,7 +559,7 @@ export function HospitalFacilityFormModal({
               onClick={onClose}
               style={{
                 padding: isMobile ? '10px 20px' : '12px 24px',
-                background: '#ecf0f1',
+                background: '#FAFAFA',
                 color: '#4A4A4A',
                 border: 'none',
                 borderRadius: '6px',
@@ -574,7 +574,7 @@ export function HospitalFacilityFormModal({
               type="submit"
               style={{
                 padding: isMobile ? '10px 20px' : '12px 24px',
-                background: 'linear-gradient(135deg, #4527A0, #5E3A93)',
+                background: 'linear-gradient(135deg, #4A4A4A, #4A4A4A)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
