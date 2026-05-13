@@ -160,29 +160,30 @@ function AssetMasterContent() {
 
   return (
     <div className="min-h-dvh bg-surface-screen flex flex-col">
-      {/* ヘッダー */}
-      <div className="bg-surface-screen border-b border-stroke-input px-5 py-3 flex items-center gap-3 shadow-sm">
-        <span className="text-content-sub text-lg cursor-pointer select-none">&lt;</span>
-        <h1 className="text-lg md:text-xl font-bold text-content-primary m-0 text-balance">
-          資産マスタ選択
-        </h1>
-      </div>
-
-      {/* フィルターヘッダー */}
-      <div className="bg-surface-card mx-4 mt-4 rounded-lg border border-stroke-input p-4">
-        {/* 全体検索 */}
-        <div className="mb-3">
-          <label className="block text-xs font-bold text-content-primary mb-1">
-            全体検索
-          </label>
+      {/* ヘッダー (Figma 216:37645) */}
+      <div className="bg-surface-card border-b border-stroke-input px-5 py-3 flex items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="text-content-sub text-lg cursor-pointer select-none">&lt;</span>
+          <h1 className="text-lg md:text-xl font-semibold text-content-primary m-0 text-balance">
+            資産マスタ選択画面
+          </h1>
+        </div>
+        {/* 全体検索 (Figma: 右上の小型検索ボックス) */}
+        <div className="relative" style={{ width: '280px' }}>
           <input
             type="text"
             value={filters.globalSearch || ''}
             onChange={(e) => setFilters({...filters, globalSearch: e.target.value})}
-            placeholder="キーワードを入力（全カラムから曖昧検索）"
-            className="w-full px-3 py-2.5 border border-stroke-input rounded-lg text-sm text-content-primary placeholder:text-content-sub focus:outline-none focus:ring-2 focus:ring-cta-primary/30 focus:border-cta-primary box-border"
+            placeholder="キーワード検索"
+            aria-label="全体検索"
+            className="w-full px-3 py-1.5 pr-8 border border-stroke-input rounded text-sm text-content-primary placeholder:text-content-sub focus:outline-none focus:ring-2 focus:ring-cta-primary/30 focus:border-cta-primary box-border"
           />
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-content-sub text-sm" aria-hidden>⌕</span>
         </div>
+      </div>
+
+      {/* フィルターヘッダー */}
+      <div className="bg-surface-card mx-4 mt-4 rounded-lg border border-stroke-input p-4">
         {/* 個別フィルター */}
         <div className="flex gap-3 flex-wrap items-end">
           <div className="flex-1 min-w-[120px]">
@@ -291,13 +292,7 @@ function AssetMasterContent() {
               </button>
               <button
                 onClick={() => window.close()}
-                className="px-3 py-2 md:px-5 md:py-2.5 bg-content-sub text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#8A8A8A';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#8A8A8A';
-                }}
+                className="px-3 py-2 md:px-5 md:py-2.5 bg-white text-content-primary border border-stroke-input rounded-lg text-xs md:text-sm font-medium cursor-pointer transition-colors hover:bg-surface-screen"
               >
                 キャンセル
               </button>
@@ -328,13 +323,7 @@ function AssetMasterContent() {
               </button>
               <button
                 onClick={() => window.close()}
-                className="px-3 py-2 md:px-5 md:py-2.5 bg-content-sub text-white border-none rounded-lg text-xs md:text-sm font-bold cursor-pointer transition-colors"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#8A8A8A';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#8A8A8A';
-                }}
+                className="px-3 py-2 md:px-5 md:py-2.5 bg-white text-content-primary border border-stroke-input rounded-lg text-xs md:text-sm font-medium cursor-pointer transition-colors hover:bg-surface-screen"
               >
                 キャンセル
               </button>
