@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { Pencil, Trash2, Plus, Download } from 'lucide-react';
 import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -156,14 +157,16 @@ export default function ShipFacilityMasterPage() {
       >
         <button
           onClick={() => exportFacilitiesToExcel(filteredFacilities)}
-          className={`inline-flex items-center justify-center h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-content-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-content-primary/90 transition-colors`}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
         >
+          <Download size={16} aria-hidden />
           エクスポート
         </button>
         <button
           onClick={() => setShowNewModal(true)}
-          className={`inline-flex items-center justify-center h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
         >
+          <Plus size={16} aria-hidden />
           新規作成
         </button>
       </Header>
@@ -216,6 +219,10 @@ export default function ShipFacilityMasterPage() {
           </div>
         ) : (
           <div className="bg-surface-card rounded-lg shadow-sm overflow-auto max-h-[calc(100vh-220px)]">
+            {/* 一覧キャプション (Figma 配置) */}
+            <div className="px-4 py-3 border-b border-stroke-input">
+              <h2 className="text-base font-bold text-content-primary">施設一覧</h2>
+            </div>
             <table className="w-full border-collapse">
               <thead className="sticky top-0 z-[2]">
                 <tr>
@@ -226,16 +233,16 @@ export default function ShipFacilityMasterPage() {
                     { label: '病床情報', span: 19 },
                     { label: '', span: 1 },
                   ] as const).map((g, i) => (
-                    <th key={i} colSpan={g.span} className="px-1.5 py-1 text-center text-[10px] font-bold text-white bg-content-primary border-r border-white/20 whitespace-nowrap">
+                    <th key={i} colSpan={g.span} className="px-1.5 py-1 text-center text-[10px] font-bold text-content-primary bg-stroke-card border-r border-stroke-input whitespace-nowrap">
                       {g.label}
                     </th>
                   ))}
                 </tr>
                 <tr>
                   {FACILITY_COLUMNS.map(col => (
-                    <th key={col.key} className="px-1.5 py-1 text-left text-[10px] font-semibold text-white bg-content-primary border-b-2 border-stroke-input whitespace-nowrap">{col.label}</th>
+                    <th key={col.key} className="px-1.5 py-1 text-left text-[10px] font-semibold text-content-primary bg-surface-screen border-b border-stroke-input whitespace-nowrap">{col.label}</th>
                   ))}
-                  <th className="px-1.5 py-1 text-center text-[10px] font-semibold text-white bg-content-primary border-b-2 border-stroke-input whitespace-nowrap">操作</th>
+                  <th className="px-1.5 py-1 text-center text-[10px] font-semibold text-content-primary bg-surface-screen border-b border-stroke-input whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,8 +255,20 @@ export default function ShipFacilityMasterPage() {
                     ))}
                     <td className="px-1.5 py-1 text-center whitespace-nowrap">
                       <div className="flex gap-1 justify-center">
-                        <button onClick={() => handleEdit(facility)} className="px-2 py-0.5 bg-content-primary text-white border-0 rounded text-[10px] font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors">編集</button>
-                        <button onClick={() => handleDelete(facility.id)} className="px-2 py-0.5 bg-content-alert text-white border-0 rounded text-[10px] font-semibold cursor-pointer hover:opacity-90 transition-colors">削除</button>
+                        <button
+                          onClick={() => handleEdit(facility)}
+                          className="inline-flex items-center justify-center w-7 h-7 bg-transparent text-content-primary border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
+                          aria-label={`${facility.facilityName} を編集`}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(facility.id)}
+                          className="inline-flex items-center justify-center w-7 h-7 bg-transparent text-content-alert border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
+                          aria-label={`${facility.facilityName} を削除`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
