@@ -44,8 +44,8 @@ interface RepairRequestsTabProps {
 const STATUS_BADGE_COLORS: Record<RepairStatus, string> = {
   '見積依頼': '#8A8A8A',
   '見積依頼済': '#0092E6',
-  '見積登録済': '#0073B8',
-  '発注登録済': '#A35414',
+  '見積登録済': '#4A4A4A',
+  '発注登録済': '#4A4A4A',
   '作業日確定': '#008C1D',
   '完了': '#8A8A8A',
   '却下': '#DA0000',
@@ -248,9 +248,9 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
                         borderRadius: '8px',
                         fontSize: '10px',
                         fontWeight: 'bold',
-                        background: '#ffebee',
-                        color: '#9A2333',
-                        border: '1px solid #ef9a9a',
+                        background: '#FDF1E5',
+                        color: '#DA0000',
+                        border: '1px solid #FDF1E5',
                         whiteSpace: 'nowrap',
                       }}>
                         代替機未返却
