@@ -380,32 +380,32 @@ function PurchaseManagementContent() {
                 <div style={{ maxHeight: '300px', overflow: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                     <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                      {/* グループヘッダー行 */}
-                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
-                        <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #4A4A4A', width: '36px', verticalAlign: 'middle' }}>
+                      {/* グループヘッダー行 (Figma 304:37602: 薄灰 + 黒文字) */}
+                      <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
+                        <th rowSpan={2} style={{ padding: '8px 6px', border: '1px solid #E1E1E1', width: '36px', verticalAlign: 'middle' }}>
                           <input
                             type="checkbox"
                             checked={pendingApplications.length > 0 && selectedApplicationIds.size === pendingApplications.length}
                             onChange={(e) => handleSelectAllApplications(e.target.checked)}
                           />
                         </th>
-                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請情報</th>
-                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>品目情報</th>
-                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
-                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #4A4A4A', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}></th>
+                        <th colSpan={2} style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>申請情報</th>
+                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>設置情報</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>品目情報</th>
+                        <th colSpan={3} style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, fontSize: '12px' }}>院内担当情報</th>
+                        <th rowSpan={2} style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, fontSize: '12px', verticalAlign: 'middle' }}></th>
                       </tr>
                       {/* サブカラムヘッダー行 */}
-                      <tr style={{ background: '#4A4A4A', color: 'white' }}>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請日</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No, 種別</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>室名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>品目名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>所属部署</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>氏名</th>
-                        <th style={{ padding: '6px 8px', border: '1px solid #8A8A8A', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>連絡先</th>
+                      <tr style={{ background: '#FAFAFA', color: '#4A4A4A' }}>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請日</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>申請No, 種別</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部門名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>部署名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>室名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>品目名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>所属部署</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>氏名</th>
+                        <th style={{ padding: '6px 8px', border: '1px solid #E1E1E1', textAlign: 'left', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap' }}>連絡先</th>
                       </tr>
                     </thead>
                     <tbody>
