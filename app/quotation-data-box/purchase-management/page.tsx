@@ -540,11 +540,11 @@ function PurchaseManagementContent() {
               <span style={{ fontWeight: 600, fontSize: '14px' }}>見積（発注）グループ</span>
             </div>
 
-            {/* ステップタブ */}
+            {/* ステップタブ (Figma 304:37602: 下線スタイル) */}
             <div style={{
-              borderBottom: '2px solid #E1E1E1',
+              borderBottom: '1px solid #E1E1E1',
               display: 'flex',
-              background: '#FAFAFA',
+              background: 'white',
               overflowX: 'auto',
             }}>
               {STEP_TABS.map((tab) => {
@@ -558,21 +558,22 @@ function PurchaseManagementContent() {
                     onClick={() => setActiveStep(tab.key)}
                     style={{
                       padding: '10px 16px',
-                      background: isActive ? '#008C1D' : 'transparent',
+                      background: 'transparent',
                       border: 'none',
                       borderBottom: isActive ? '2px solid #008C1D' : '2px solid transparent',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      fontWeight: isActive ? 'bold' : 'normal',
-                      color: isActive ? 'white' : '#555',
+                      fontWeight: isActive ? 600 : 500,
+                      color: isActive ? '#146E2E' : '#8A8A8A',
                       whiteSpace: 'nowrap',
-                      marginBottom: '-2px',
+                      marginBottom: '-1px',
                     }}
                   >
                     {tab.label}
                     <span style={{
                       marginLeft: '6px',
-                      background: isActive ? 'rgba(255,255,255,0.3)' : '#E1E1E1',
+                      background: '#F1F1F1',
+                      color: '#4A4A4A',
                       padding: '1px 6px',
                       borderRadius: '8px',
                       fontSize: '11px',
