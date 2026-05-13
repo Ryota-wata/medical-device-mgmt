@@ -331,10 +331,7 @@ export function InspectionMenuModal({
         {/* ヘッダー */}
         <div style={styles.header}>
           <div style={styles.titleRow}>
-            <h2 style={styles.title}>点検メニュー</h2>
-            <span style={selectedMenuId === null ? styles.modeBadgeNew : styles.modeBadgeEdit}>
-              {selectedMenuId === null ? '新規作成' : '編集'}
-            </span>
+            <h2 style={styles.title}>点検メニュー登録</h2>
           </div>
           <button style={styles.closeButton} onClick={onClose} aria-label="閉じる">
             ×
@@ -378,7 +375,7 @@ export function InspectionMenuModal({
             {/* 既存プラン編集モードの場合 */}
             {selectedMenuId !== null && (
               <div style={styles.existingPlanSelect}>
-                <label style={styles.label}>編集するプランを選択</label>
+                <label style={styles.label}>検索するプランを選択</label>
                 <select
                   style={styles.selectFull}
                   value={formData.name}
@@ -528,7 +525,7 @@ export function InspectionMenuModal({
           {/* 新たな点検項目 */}
           <div style={{
             ...styles.section,
-            ...(editingItemIndex >= 0 ? { border: '2px solid #0092E6', backgroundColor: '#FAFAFA' } : {})
+            ...(editingItemIndex >= 0 ? { border: '2px solid #008C1D', backgroundColor: '#FAFAFA' } : {})
           }}>
             <h3 style={styles.sectionTitle}>
               {editingItemIndex >= 0 ? `点検項目の編集（${editingItemIndex + 1}行目）` : '新たな点検項目'}
@@ -707,7 +704,7 @@ export function InspectionMenuModal({
             キャンセル
           </button>
           <button style={styles.submitButton} onClick={handleSubmit}>
-            {selectedMenuId === null ? '点検メニューを登録' : '点検メニューを更新'}
+            {selectedMenuId === null ? '点検メニュー登録' : '点検メニュー更新'}
           </button>
         </div>
       </div>
@@ -729,7 +726,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 1000,
   },
   modal: {
-    backgroundColor: '#E1E1E1',
+    backgroundColor: '#FAFAFA',
     borderRadius: '8px',
     width: '95%',
     maxWidth: '900px',
@@ -737,13 +734,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+    border: '1px solid #E1E1E1',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '12px 20px',
-    borderBottom: '1px solid #ccc',
+    borderBottom: '1px solid #E1E1E1',
   },
   titleRow: {
     display: 'flex',
@@ -765,7 +763,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 500,
   },
   modeBadgeEdit: {
-    backgroundColor: '#0092E6',
+    backgroundColor: '#4E9440',
     color: 'white',
     padding: '4px 10px',
     borderRadius: '12px',
@@ -832,7 +830,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
   },
   newButton: {
-    backgroundColor: '#0092E6',
+    backgroundColor: '#008C1D',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -883,7 +881,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '16px',
     height: '16px',
     cursor: 'pointer',
-    accentColor: '#0092E6',
+    accentColor: '#008C1D',
   },
   cycleInputInline: {
     display: 'flex',
@@ -1052,7 +1050,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   editButton: {
-    backgroundColor: '#0092E6',
+    backgroundColor: '#4A4A4A',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1061,7 +1059,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   deleteButton: {
-    backgroundColor: '#DA0000',
+    backgroundColor: '#8A8A8A',
     color: 'white',
     border: 'none',
     borderRadius: '4px',
@@ -1074,7 +1072,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'flex-end',
     gap: '12px',
     padding: '12px 20px',
-    borderTop: '1px solid #ccc',
+    borderTop: '1px solid #E1E1E1',
     backgroundColor: '#FAFAFA',
     borderRadius: '0 0 8px 8px',
   },

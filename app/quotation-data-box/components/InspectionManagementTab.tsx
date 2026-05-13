@@ -16,15 +16,15 @@ interface InspectionManagementTabProps {
 type SortDirection = 'asc' | 'desc' | null;
 type SortField = 'maker' | 'model' | 'lendingStatus' | 'nextInspectionDate' | 'status';
 
-// 貸出ステータスの色
+// 貸出ステータスの色（Figma label トークン準拠）
 const LENDING_STATUS_COLORS: Record<LendingStatus, string> = {
-  '待機中': '#8A8A8A',
-  '貸出可': '#008C1D',
-  '貸出中': '#0092E6',
-  '使用中': '#4A4A4A',
-  '使用済': '#8A8A8A',
-  '返却済': '#4A4A4A',
-  '使用不可': '#DA0000',
+  '待機中': '#F7A367',   // label/使用中 (橙) — Figma 「待機中」も橙
+  '貸出可': '#008C1D',   // cta-primary (緑)
+  '貸出中': '#087CB6',   // label/依頼済 (青)
+  '使用中': '#F7A367',   // label/使用中 (橙)
+  '使用済': '#8A8A8A',   // content-sub
+  '返却済': '#4E9440',   // label/仮登録 (緑)
+  '使用不可': '#DA0000', // content-alert (赤)
 };
 
 // 定期ステータスの色
@@ -260,7 +260,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   // テーブルヘッダースタイル
   const thGroup: React.CSSProperties = {
     padding: '8px 6px',
-    border: '1px solid #4A4A4A',
+    border: '1px solid #E1E1E1',
     fontWeight: 600,
     fontSize: '12px',
     whiteSpace: 'nowrap',
@@ -269,7 +269,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   };
   const thSub: React.CSSProperties = {
     padding: '6px 8px',
-    border: '1px solid #8A8A8A',
+    border: '1px solid #E1E1E1',
     textAlign: 'left',
     fontWeight: 600,
     fontSize: '12px',
@@ -285,13 +285,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* ボタンバー */}
-      <div style={{ padding: '10px 16px', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-        <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#008C1D')}>点検メニュー登録</button>
-        <button onClick={handleExportSchedule} style={btnStyle('#FFFFFF')}>点検予定表の出力</button>
-      </div>
-
-      {/* フィルターエリア（REQ-108: 4項目のみ） */}
+      {/* フィルターエリア + 操作ボタン（REQ-108: 4項目のみ） */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #E1E1E1', background: '#FAFAFA' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'nowrap' }}>
           <FilterItem label="点検日">
@@ -306,6 +300,10 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
           <FilterItem label="貸出状況">
             <SearchableSelect value={filters.lendingState} onChange={(v) => handleFilterChange('lendingState', v)} options={['貸出中', '貸出中以外']} placeholder="全て" />
           </FilterItem>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <button onClick={() => setIsMenuModalOpen(true)} style={btnStyle('#008C1D')}>点検メニュー登録</button>
+            <button onClick={handleExportSchedule} style={btnStyle('#FFFFFF')}>点検予定表の出力</button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
@@ -322,27 +320,27 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
             <tr>
-              <th colSpan={2} style={{ ...thGroup, background: '#EBF5EE', color: '#333' }}>設置情報</th>
-              <th colSpan={4} style={{ ...thGroup, background: '#FDF1E5', color: '#333' }}>商品情報</th>
-              <th style={{ ...thGroup, background: '#EBF5EE', color: '#333' }}>貸出状況</th>
-              <th colSpan={6} style={{ ...thGroup, background: '#FDF1E5', color: '#333' }}>定期点検情報</th>
-              <th colSpan={3} style={{ ...thGroup, background: '#FAFAFA', color: '#333' }}>操作</th>
+              <th colSpan={2} style={{ ...thGroup, background: '#F1F1F1', color: '#4A4A4A' }}>設置情報</th>
+              <th colSpan={4} style={{ ...thGroup, background: '#F1F1F1', color: '#4A4A4A' }}>商品情報</th>
+              <th style={{ ...thGroup, background: '#F1F1F1', color: '#4A4A4A' }}>貸出状況</th>
+              <th colSpan={6} style={{ ...thGroup, background: '#F1F1F1', color: '#4A4A4A' }}>定期点検情報</th>
+              <th colSpan={3} style={{ ...thGroup, background: '#F1F1F1', color: '#4A4A4A' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr>
-              <th style={{ ...thSub, background: '#EBF5EE' }}>部門</th>
-              <th style={{ ...thSub, background: '#EBF5EE' }}>部署</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>部門</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>部署</th>
               <th style={{ ...thSub, background: '#FAFAFA' }}>QRコード</th>
               <th style={{ ...thSub, background: '#FAFAFA' }}>品目</th>
               <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('maker')}>メーカー{getSortArrow('maker')}</th>
               <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('model')}>型式{getSortArrow('model')}</th>
-              <th style={{ ...thSortable, background: '#EBF5EE' }} onClick={() => handleSortToggle('lendingStatus')}>ステータス{getSortArrow('lendingStatus')}</th>
-              <th style={{ ...thSub, background: '#FDF1E5' }}>種別</th>
-              <th style={{ ...thSub, background: '#FDF1E5' }}>点検メニュー</th>
-              <th style={{ ...thSub, background: '#FDF1E5' }}>点検周期</th>
-              <th style={{ ...thSub, background: '#FDF1E5' }}>前回点検日</th>
-              <th style={{ ...thSortable, background: '#FDF1E5' }} onClick={() => handleSortToggle('nextInspectionDate')}>次回点検予定{getSortArrow('nextInspectionDate')}</th>
-              <th style={{ ...thSortable, background: '#FDF1E5' }} onClick={() => handleSortToggle('status')}>ステータス{getSortArrow('status')}</th>
+              <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('lendingStatus')}>ステータス{getSortArrow('lendingStatus')}</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>種別</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>点検メニュー</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>点検周期</th>
+              <th style={{ ...thSub, background: '#FAFAFA' }}>前回点検日</th>
+              <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('nextInspectionDate')}>次回点検予定{getSortArrow('nextInspectionDate')}</th>
+              <th style={{ ...thSortable, background: '#FAFAFA' }} onClick={() => handleSortToggle('status')}>ステータス{getSortArrow('status')}</th>
               <th style={{ ...thSub, background: '#FAFAFA', textAlign: 'center' }}>Action</th>
               <th style={{ ...thSub, background: '#FAFAFA', textAlign: 'center' }}>設定変更</th>
               <th style={{ ...thSub, background: '#FAFAFA', textAlign: 'center' }}>カルテ</th>
