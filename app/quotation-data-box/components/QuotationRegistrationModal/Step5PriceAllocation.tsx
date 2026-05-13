@@ -13,12 +13,12 @@ const ITEM_TYPE_LABELS: Record<QuotationItemType, string> = {
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string }> = {
-  'A_表紙明細': { bg: '#EAF3FB', text: '#1E5A9E' },
-  'B_明細代表': { bg: '#F1ECF7', text: '#7b1fa2' },
+  'A_表紙明細': { bg: '#EBF5EE', text: '#4A4A4A' },
+  'B_明細代表': { bg: '#FAFAFA', text: '#4A4A4A' },
   'C_個体管理品目': { bg: '#EBF5EE', text: '#146E2E' },
-  'D_付属品': { bg: '#FDF1E5', text: '#ef6c00' },
-  'E_その他役務': { bg: '#FBE9EC', text: '#c2185b' },
-  'F_値引き': { bg: '#ffebee', text: '#9A2333' },
+  'D_付属品': { bg: '#FDF1E5', text: '#4A4A4A' },
+  'E_その他役務': { bg: '#FDF1E5', text: '#4A4A4A' },
+  'F_値引き': { bg: '#FDF1E5', text: '#DA0000' },
 };
 
 // 会計区分の選択肢
@@ -115,7 +115,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #a5d6a7' }}>
+      <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #008C1D' }}>
         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#146E2E', marginBottom: '8px' }}>
           個体登録及び金額案分
         </div>
@@ -130,7 +130,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
       <div style={{ marginBottom: '16px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{
           padding: '8px 16px',
-          background: '#EAF3FB',
+          background: '#EBF5EE',
           border: '1px solid #0092E6',
           borderRadius: '4px',
           fontSize: '13px',
@@ -140,7 +140,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
         <div style={{
           padding: '8px 16px',
           background: '#FDF1E5',
-          border: '1px solid #ffcc80',
+          border: '1px solid #FDF1E5',
           borderRadius: '4px',
           fontSize: '13px',
         }}>
@@ -148,12 +148,12 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
         </div>
         <div style={{
           padding: '8px 16px',
-          background: difference === 0 ? '#EBF5EE' : '#ffebee',
-          border: `1px solid ${difference === 0 ? '#a5d6a7' : '#ef9a9a'}`,
+          background: difference === 0 ? '#EBF5EE' : '#FDF1E5',
+          border: `1px solid ${difference === 0 ? '#008C1D' : '#FDF1E5'}`,
           borderRadius: '4px',
           fontSize: '13px',
           fontWeight: 'bold',
-          color: difference === 0 ? '#146E2E' : '#9A2333',
+          color: difference === 0 ? '#146E2E' : '#DA0000',
         }}>
           差額: ¥{difference.toLocaleString()}
           {difference === 0 && ' ✓'}
@@ -162,7 +162,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           onClick={handleAutoAllocate}
           style={{
             padding: '8px 16px',
-            background: '#5E3A93',
+            background: '#4A4A4A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -187,7 +187,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                 <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '100px' }}>原価格</th>
                 <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '60px', background: '#FDF1E5' }}>案分数量</th>
                 <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#FDF1E5' }}>案分金額</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#EAF3FB' }}>会計区分</th>
+                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#EBF5EE' }}>会計区分</th>
                 <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px' }}>親品目</th>
               </tr>
             </thead>
@@ -199,7 +199,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                 return (
                   <tr key={item.index} style={{
                     borderBottom: '1px solid #eee',
-                    background: isIndividual ? '#f8fff8' : 'transparent',
+                    background: isIndividual ? '#FAFAFA' : 'transparent',
                   }}>
                     <td style={{ padding: '6px', textAlign: 'center' }}>
                       <span style={{
@@ -217,7 +217,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                     <td style={{ padding: '6px', fontWeight: isIndividual ? 'bold' : 'normal' }}>{item.itemName}</td>
                     <td style={{ padding: '6px', textAlign: 'center', color: '#666' }}>{item.originalQuantity}</td>
                     <td style={{ padding: '6px', textAlign: 'right', color: '#666' }}>¥{item.originalPrice.toLocaleString()}</td>
-                    <td style={{ padding: '6px', textAlign: 'center', background: '#fffaf0' }}>
+                    <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA' }}>
                       <input
                         type="number"
                         value={item.allocatedQuantity}
@@ -234,7 +234,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                         }}
                       />
                     </td>
-                    <td style={{ padding: '6px', textAlign: 'right', background: '#fffaf0' }}>
+                    <td style={{ padding: '6px', textAlign: 'right', background: '#FAFAFA' }}>
                       <input
                         type="number"
                         value={item.allocatedPrice}
@@ -249,7 +249,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                         }}
                       />
                     </td>
-                    <td style={{ padding: '6px', textAlign: 'center', background: '#f5f9ff' }}>
+                    <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA' }}>
                       <select
                         value={item.accountingCategory}
                         onChange={(e) => handleChange(item.index, 'accountingCategory', e.target.value as AccountingCategory)}
@@ -305,7 +305,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           登録後に実行可能なアクション
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ padding: '4px 8px', background: '#EAF3FB', borderRadius: '3px', fontSize: '11px' }}>
+          <span style={{ padding: '4px 8px', background: '#EBF5EE', borderRadius: '3px', fontSize: '11px' }}>
             テンプレート発行（発注書・検収書）
           </span>
           <span style={{ padding: '4px 8px', background: '#EBF5EE', borderRadius: '3px', fontSize: '11px' }}>
@@ -338,7 +338,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           disabled={difference !== 0}
           style={{
             padding: '10px 24px',
-            background: difference !== 0 ? '#bdc3c7' : '#008C1D',
+            background: difference !== 0 ? '#E1E1E1' : '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
