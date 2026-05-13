@@ -80,7 +80,7 @@ function VendorMasterContent() {
   const tdCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-content-primary whitespace-nowrap border border-stroke-input`;
 
   return (
-    <div className="flex flex-col min-h-dvh bg-surface-screen">
+    <div className="flex flex-col h-dvh bg-surface-screen">
       <Header
         title="業者マスタ"
         showBackButton={true}
@@ -134,9 +134,9 @@ function VendorMasterContent() {
         </div>
       </div>
 
-      <main className={`flex-1 overflow-y-auto ${isMobile ? 'p-4' : isTablet ? 'p-5' : 'p-6'}`}>
+      <main className={`flex-1 overflow-hidden flex flex-col ${isMobile ? 'p-4' : isTablet ? 'p-5' : 'p-6'}`} style={{ minHeight: 0 }}>
         {isMobile ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
             {filteredVendors.map((vendor) => (
               <div key={vendor.id} className="bg-surface-card rounded-lg p-4 shadow-sm">
                 <div className="mb-3 pb-3 border-b border-stroke-input">
@@ -161,10 +161,10 @@ function VendorMasterContent() {
             ))}
           </div>
         ) : (
-          <div className="bg-surface-card rounded-lg overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+          <div className="bg-surface-card rounded-lg overflow-hidden shadow-sm flex-1 flex flex-col" style={{ minHeight: 0 }}>
+            <div className="overflow-auto flex-1">
               <table className="w-full border-collapse">
-                <thead className="bg-surface-screen border-b border-stroke-input">
+                <thead className="bg-surface-screen border-b border-stroke-input sticky top-0 z-10">
                   <tr>
                     <th className={thCls}>担当施設名</th>
                     <th className={thCls}>インボイス登録番号</th>

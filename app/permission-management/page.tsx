@@ -158,8 +158,8 @@ export default function PermissionManagementPage() {
   const totalCount = PERMISSION_UNITS.length;
 
   return (
-    <div className="min-h-dvh bg-surface-screen">
-      <header className="bg-surface-card border-b border-stroke-input px-5 py-4 flex justify-between items-center flex-wrap gap-3 sticky top-0 z-20">
+    <div className="h-dvh flex flex-col bg-surface-screen">
+      <header className="bg-surface-card border-b border-stroke-input px-5 py-4 flex justify-between items-center flex-wrap gap-3 z-20">
         <div className="flex items-center gap-3">
           <span className="px-2.5 py-1 bg-cta-primary text-white rounded text-xs font-bold tracking-wider">SHIP</span>
           <h1 className="text-base font-bold text-content-primary m-0">権限管理</h1>
@@ -182,7 +182,7 @@ export default function PermissionManagementPage() {
         </div>
       </header>
 
-      <div className="max-w-[1100px] mx-auto w-full px-5 py-6 pb-24">
+      <div className="max-w-[1100px] mx-auto w-full px-5 py-6 pb-24 flex-1 overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
         <div className="bg-surface-card border border-stroke-input rounded-md p-4 mb-4">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1.5 min-w-[260px]">
@@ -200,10 +200,10 @@ export default function PermissionManagementPage() {
           </div>
         </div>
 
-        <div className="bg-surface-card border border-stroke-input rounded-md overflow-hidden">
+        <div className="bg-surface-card border border-stroke-input rounded-md overflow-auto flex-1" style={{ minHeight: 0 }}>
           <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-surface-screen border-b border-stroke-input">
+            <thead className="sticky top-0 z-10 bg-surface-screen">
+              <tr className="border-b border-stroke-input">
                 <th className="text-left font-semibold text-content-sub py-3 px-4 whitespace-nowrap">機能</th>
                 <th className="text-left font-semibold text-content-sub py-3 px-4">切替内容</th>
                 <th className="text-center font-semibold text-content-sub py-3 px-4 w-[100px]">ON/OFF</th>
