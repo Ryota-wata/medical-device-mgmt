@@ -428,7 +428,7 @@ function AssetSurveyContent() {
                   placeholder="資産番号を入力"
                   style={{
                     padding: isMobile ? '10px' : '10px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: isMobile ? '14px' : '14px'
                   }}
@@ -451,7 +451,7 @@ function AssetSurveyContent() {
                   placeholder="備品番号を入力"
                   style={{
                     padding: isMobile ? '10px' : '10px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: isMobile ? '14px' : '14px'
                   }}
@@ -474,7 +474,7 @@ function AssetSurveyContent() {
                   placeholder="シリアルNo.を入力"
                   style={{
                     padding: isMobile ? '10px' : '10px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: isMobile ? '14px' : '14px'
                   }}
@@ -502,7 +502,7 @@ function AssetSurveyContent() {
                   onClick={openDatePicker}
                   style={{
                     padding: isMobile ? '10px' : '10px 12px',
-                    border: '1px solid #d0d0d0',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '6px',
                     fontSize: isMobile ? '14px' : '14px',
                     background: 'white',
@@ -540,7 +540,7 @@ function AssetSurveyContent() {
                         height: isMobile ? '22px' : '24px',
                         borderRadius: isMobile ? '11px' : '12px',
                         border: 'none',
-                        background: isLease ? '#008C1D' : '#bdc3c7',
+                        background: isLease ? '#008C1D' : '#E1E1E1',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background 0.3s',
@@ -573,7 +573,7 @@ function AssetSurveyContent() {
                         height: isMobile ? '22px' : '24px',
                         borderRadius: isMobile ? '11px' : '12px',
                         border: 'none',
-                        background: isLoan ? '#008C1D' : '#bdc3c7',
+                        background: isLoan ? '#008C1D' : '#E1E1E1',
                         cursor: 'pointer',
                         position: 'relative',
                         transition: 'background 0.3s',
@@ -740,7 +740,7 @@ function AssetSurveyContent() {
                     step="1"
                     style={{
                       padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '6px',
                       fontSize: isMobile ? '14px' : '14px'
                     }}
@@ -765,7 +765,7 @@ function AssetSurveyContent() {
                     step="1"
                     style={{
                       padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '6px',
                       fontSize: isMobile ? '14px' : '14px'
                     }}
@@ -790,7 +790,7 @@ function AssetSurveyContent() {
                     step="1"
                     style={{
                       padding: isMobile ? '10px' : '10px 12px',
-                      border: '1px solid #d0d0d0',
+                      border: '1px solid #E1E1E1',
                       borderRadius: '6px',
                       fontSize: isMobile ? '14px' : '14px'
                     }}
@@ -817,7 +817,7 @@ function AssetSurveyContent() {
                 rows={isMobile ? 3 : 4}
                 style={{
                   padding: isMobile ? '10px' : '10px 12px',
-                  border: '1px solid #d0d0d0',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '6px',
                   fontSize: isMobile ? '14px' : '14px',
                   resize: 'vertical',
@@ -855,7 +855,7 @@ function AssetSurveyContent() {
                       readOnly
                       style={{
                         padding: isMobile ? '10px' : '10px 12px',
-                        border: '1px solid #d0d0d0',
+                        border: '1px solid #E1E1E1',
                         borderRadius: '6px',
                         fontSize: isMobile ? '14px' : '14px',
                         background: '#FAFAFA'
@@ -929,14 +929,14 @@ function AssetSurveyContent() {
             minWidth: isMobile ? '60px' : '70px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
+            e.currentTarget.style.background = '#FAFAFA';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'none';
           }}
         >
           <div style={{
-            background: '#ecf0f1',
+            background: '#FAFAFA',
             borderRadius: '50%',
             width: isMobile ? '35px' : '40px',
             height: isMobile ? '35px' : '40px',
@@ -972,14 +972,14 @@ function AssetSurveyContent() {
             minWidth: isMobile ? '60px' : '70px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
+            e.currentTarget.style.background = '#FAFAFA';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'none';
           }}
         >
           <div style={{
-            background: '#ecf0f1',
+            background: '#FAFAFA',
             borderRadius: '50%',
             width: isMobile ? '35px' : '40px',
             height: isMobile ? '35px' : '40px',
@@ -1010,14 +1010,14 @@ function AssetSurveyContent() {
             minWidth: isMobile ? '60px' : '70px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
+            e.currentTarget.style.background = '#FAFAFA';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'none';
           }}
         >
           <div style={{
-            background: '#ecf0f1',
+            background: '#FAFAFA',
             borderRadius: '50%',
             width: isMobile ? '35px' : '40px',
             height: isMobile ? '35px' : '40px',
@@ -1048,14 +1048,14 @@ function AssetSurveyContent() {
             minWidth: isMobile ? '60px' : '70px'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#ecf0f1';
+            e.currentTarget.style.background = '#FAFAFA';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'none';
           }}
         >
           <div style={{
-            background: '#ecf0f1',
+            background: '#FAFAFA',
             borderRadius: '50%',
             width: isMobile ? '35px' : '40px',
             height: isMobile ? '35px' : '40px',
@@ -1087,14 +1087,14 @@ function AssetSurveyContent() {
             color: '#008C1D'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#d5f4e6';
+            e.currentTarget.style.background = '#EBF5EE';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'none';
           }}
         >
           <div style={{
-            background: '#d5f4e6',
+            background: '#EBF5EE',
             borderRadius: '50%',
             width: isMobile ? '35px' : '40px',
             height: isMobile ? '35px' : '40px',
@@ -1205,7 +1205,7 @@ function AssetSurveyContent() {
                 right: '10px',
                 height: `${ITEM_HEIGHT}px`,
                 transform: 'translateY(-50%)',
-                background: '#f0f7ff',
+                background: '#EBF5EE',
                 borderRadius: '8px',
                 pointerEvents: 'none',
                 zIndex: 1
