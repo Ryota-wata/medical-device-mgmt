@@ -200,7 +200,7 @@ function InspectionResultContent() {
       case '修理申請':
         return { backgroundColor: '#FDF1E5', color: '#DA0000', borderColor: '#DA0000' };
       default:
-        return { backgroundColor: '#FAFAFA', color: '#666', borderColor: '#E1E1E1' };
+        return { backgroundColor: '#FAFAFA', color: '#8A8A8A', borderColor: '#E1E1E1' };
     }
   };
 
@@ -237,7 +237,7 @@ function InspectionResultContent() {
         }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
           <h2 style={{ fontSize: '18px', color: '#4A4A4A', marginBottom: '8px' }}>点検結果がありません</h2>
-          <p style={{ fontSize: '14px', color: '#666', marginBottom: '24px' }}>
+          <p style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '24px' }}>
             点検を実施してからこの画面にアクセスしてください。
           </p>
           <button
@@ -303,7 +303,7 @@ function InspectionResultContent() {
             marginBottom: '16px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>総合評価</div>
+            <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '12px' }}>総合評価</div>
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',

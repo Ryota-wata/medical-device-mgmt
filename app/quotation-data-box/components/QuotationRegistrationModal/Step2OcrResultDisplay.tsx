@@ -430,7 +430,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                           <tr key={index} style={{ borderBottom: '1px solid #E1E1E1' }}>
                             <td style={{ padding: '6px 8px' }}>
                               <div style={{ fontWeight: 'bold' }}>{item.itemName}</div>
-                              <div style={{ fontSize: '10px', color: '#666' }}>{item.manufacturer} {item.model}</div>
+                              <div style={{ fontSize: '10px', color: '#8A8A8A' }}>{item.manufacturer} {item.model}</div>
                             </td>
                             <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                               ¥{item.totalPrice.toLocaleString()}
@@ -487,7 +487,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
 
             {activeTab === 'category' && (
               <div>
-                <div style={{ fontSize: '12px', color: '#666', padding: '20px', textAlign: 'center' }}>
+                <div style={{ fontSize: '12px', color: '#8A8A8A', padding: '20px', textAlign: 'center' }}>
                   category設定画面
                 </div>
               </div>
@@ -495,7 +495,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
           </div>
 
           {/* 注記 */}
-          <div style={{ padding: '12px', borderTop: '1px solid #E1E1E1', background: '#FAFAFA', fontSize: '11px', color: '#666', lineHeight: 1.8 }}>
+          <div style={{ padding: '12px', borderTop: '1px solid #E1E1E1', background: '#FAFAFA', fontSize: '11px', color: '#8A8A8A', lineHeight: 1.8 }}>
             <div>✓ 読み込んだ見積PDFファイルと相違ないか確認・修正を行って下さい</div>
             <div>✓ 合計値が税抜か税込か確認して下さい</div>
             <div style={{ color: '#DA0000', fontWeight: 'bold' }}>

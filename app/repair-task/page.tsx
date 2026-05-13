@@ -1469,7 +1469,7 @@ function RepairTaskContent() {
                             ファイルの選択
                             <input type="file" accept=".pdf,.jpg,.png" disabled={!isStepEnabled(3)} onChange={(e) => { const file = e.target.files?.[0]; if (file) setSelectedDocFileName(file.name); }} style={{ display: 'none' }} />
                           </label>
-                          <span style={{ color: selectedDocFileName ? COLORS.success : '#666', fontSize: '13px' }}>{selectedDocFileName || 'ファイルが選択されていません'}</span>
+                          <span style={{ color: selectedDocFileName ? COLORS.success : '#8A8A8A', fontSize: '13px' }}>{selectedDocFileName || 'ファイルが選択されていません'}</span>
                         </div>
                       </td>
                     </tr>
@@ -1777,7 +1777,7 @@ function RepairTaskContent() {
                 <div style={{
                   textAlign: 'center',
                   fontSize: '12px',
-                  color: '#666',
+                  color: '#8A8A8A',
                   marginBottom: '24px',
                   paddingBottom: '12px',
                   borderBottom: '2px solid #4A4A4A',
@@ -1924,7 +1924,7 @@ function RepairTaskContent() {
                   border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '12px',
-                  color: '#666',
+                  color: '#8A8A8A',
                 }}>
                   <div style={{ marginBottom: '4px' }}>
                     <span style={{ fontWeight: 'bold' }}>導入業者：</span>
@@ -2442,12 +2442,12 @@ function RepairTaskContent() {
                         }}
                       >
                         <div style={{ fontWeight: 'bold', color: '#4A4A4A' }}>{vendor.name || `依頼先${idx + 1}`}</div>
-                        {vendor.person && <div style={{ fontSize: '12px', color: '#666' }}>{vendor.person}</div>}
+                        {vendor.person && <div style={{ fontSize: '12px', color: '#8A8A8A' }}>{vendor.person}</div>}
                       </button>
                     ))}
                   </div>
                 ) : (
-                  <p style={{ color: '#666', fontSize: '14px' }}>
+                  <p style={{ color: '#8A8A8A', fontSize: '14px' }}>
                     STEP2で依頼先を追加してください
                   </p>
                 )}
@@ -2565,7 +2565,7 @@ function RepairTaskContent() {
                   <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
                     {registeredQuotations[previewQuotationIndex].fileName}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
+                  <div style={{ fontSize: '12px', color: '#8A8A8A' }}>
                     フェーズ: {registeredQuotations[previewQuotationIndex].phase}<br />
                     保存形式: {registeredQuotations[previewQuotationIndex].saveFormat}<br />
                     登録日時: {new Date(registeredQuotations[previewQuotationIndex].registeredAt).toLocaleString('ja-JP')}
@@ -2685,7 +2685,7 @@ function RepairTaskContent() {
                   <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
                     {registeredDocuments[previewDocumentIndex].fileName}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
+                  <div style={{ fontSize: '12px', color: '#8A8A8A' }}>
                     種別: {registeredDocuments[previewDocumentIndex].documentType}<br />
                     勘定科目: {registeredDocuments[previewDocumentIndex].accountType}
                     {registeredDocuments[previewDocumentIndex].accountOther ? ` (${registeredDocuments[previewDocumentIndex].accountOther})` : ''}<br />

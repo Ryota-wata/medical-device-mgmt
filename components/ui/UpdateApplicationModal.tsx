@@ -392,7 +392,7 @@ export function UpdateApplicationModal({
     },
     note: {
       fontSize: '12px',
-      color: '#666',
+      color: '#8A8A8A',
       textAlign: 'right' as const,
       marginBottom: '12px',
     },
@@ -425,7 +425,7 @@ export function UpdateApplicationModal({
       borderRadius: '4px',
       fontSize: '14px',
       background: '#FAFAFA',
-      color: '#666',
+      color: '#8A8A8A',
     },
     select: {
       padding: '8px 12px',
@@ -550,9 +550,9 @@ export function UpdateApplicationModal({
               <div style={{ ...styles.sectionTitle, color: '#DA0000', borderBottomColor: '#DA0000' }}>更新対象機器</div>
               <div style={{ background: '#FDF1E5', border: '1px solid #FDF1E5', borderRadius: '8px', padding: '16px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#666' }}>QRコード:</span> {assets[0]?.qrCode || '-'}</div>
-                  <div><span style={{ color: '#666' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
-                  <div><span style={{ color: '#666' }}>型式:</span> {assets[0]?.model || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>QRコード:</span> {assets[0]?.qrCode || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>型式:</span> {assets[0]?.model || '-'}</div>
                 </div>
               </div>
             </div>
@@ -1032,7 +1032,7 @@ export function UpdateApplicationModal({
               >
                 ファイルの選択
               </button>
-              <span style={{ fontSize: '13px', color: '#666' }}>
+              <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
                 {attachedFiles.length === 0 ? 'ファイルが選択されていません' : `${attachedFiles.length}件選択中`}
               </span>
               <input
@@ -1204,7 +1204,7 @@ export function UpdateApplicationModal({
                     style={{ width: '18px', height: '18px', minWidth: '18px' }}
                   />
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}>他部署への移動</span>
-                  <span style={{ fontSize: '13px', color: '#666' }}>【</span>
+                  <span style={{ fontSize: '13px', color: '#8A8A8A' }}>【</span>
                   <input
                     type="text"
                     value={transferDestination}
@@ -1221,7 +1221,7 @@ export function UpdateApplicationModal({
                       color: assetHandling === 'transfer' ? '#4A4A4A' : '#999',
                     }}
                   />
-                  <span style={{ fontSize: '13px', color: '#666' }}>】</span>
+                  <span style={{ fontSize: '13px', color: '#8A8A8A' }}>】</span>
                 </label>
               </div>
 
@@ -1241,7 +1241,7 @@ export function UpdateApplicationModal({
                     style={{ width: '18px', height: '18px', minWidth: '18px' }}
                   />
                   <span style={{ fontWeight: 'bold', fontSize: '14px' }}>継続して使用</span>
-                  <span style={{ fontSize: '13px', color: '#666' }}>【</span>
+                  <span style={{ fontSize: '13px', color: '#8A8A8A' }}>【</span>
                   <input
                     type="text"
                     value={continuePurpose}
@@ -1258,11 +1258,11 @@ export function UpdateApplicationModal({
                       color: assetHandling === 'continue' ? '#4A4A4A' : '#999',
                     }}
                   />
-                  <span style={{ fontSize: '13px', color: '#666' }}>】</span>
+                  <span style={{ fontSize: '13px', color: '#8A8A8A' }}>】</span>
                 </label>
               </div>
             </div>
-            <div style={{ marginTop: '8px', padding: '12px', background: '#FAFAFA', borderRadius: '4px', fontSize: '12px', color: '#666', lineHeight: '1.6' }}>
+            <div style={{ marginTop: '8px', padding: '12px', background: '#FAFAFA', borderRadius: '4px', fontSize: '12px', color: '#8A8A8A', lineHeight: '1.6' }}>
               廃棄・移動にチェックした上記「更新対象機器」に記載された「{assets[0]?.name}」は、本更新申請の承認後に申請処理されます。
               事務処理が完了すると、当該資産は資産台帳から除外・移動されます。
             </div>

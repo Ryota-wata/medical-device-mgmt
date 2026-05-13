@@ -452,7 +452,7 @@ const ContractGroupDetailModal = ({
           <td style={mTd}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
               <input type="number" min="0" max="120" value={asset.inspectionCycle} onChange={(e) => updateAsset(asset.id, { inspectionCycle: e.target.value })} placeholder="-" style={{ ...cellInput, width: '45px', textAlign: 'right' }} />
-              <span style={{ fontSize: '10px', color: '#666' }}>ヶ月</span>
+              <span style={{ fontSize: '10px', color: '#8A8A8A' }}>ヶ月</span>
             </div>
           </td>
           <td style={mTd}>
@@ -559,7 +559,7 @@ const ContractGroupDetailModal = ({
               border: 'none',
               fontSize: '20px',
               cursor: 'pointer',
-              color: '#666',
+              color: '#8A8A8A',
               padding: '4px 8px',
             }}
             aria-label="閉じる"
@@ -1062,7 +1062,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
           <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #E1E1E1' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>フリーコメント編集</h3>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#8A8A8A' }}>
                 {selectedContract.applicationNo} - {selectedContract.contractGroupName}
               </p>
             </div>

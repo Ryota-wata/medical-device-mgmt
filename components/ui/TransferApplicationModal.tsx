@@ -516,7 +516,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               alignItems: 'center',
               marginBottom: '16px',
             }}>
-              <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
+              <div style={{ fontSize: '13px', color: '#8A8A8A' }}>QRコード</div>
               <input
                 type="text"
                 value={parentQrCode}
@@ -539,7 +539,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
               gap: '12px 16px',
               alignItems: 'center'
             }}>
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部門 <span style={{ color: '#DA0000' }}>*</span></div>
+              <div style={{ fontSize: '13px', color: '#8A8A8A' }}>設置部門 <span style={{ color: '#DA0000' }}>*</span></div>
               <div style={{ position: 'relative', zIndex: 12 }}>
                 <SearchableSelect
                   value={destDepartment}
@@ -550,7 +550,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 />
               </div>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>設置部署 <span style={{ color: '#DA0000' }}>*</span></div>
+              <div style={{ fontSize: '13px', color: '#8A8A8A' }}>設置部署 <span style={{ color: '#DA0000' }}>*</span></div>
               <div style={{ position: 'relative', zIndex: 11 }}>
                 <SearchableSelect
                   value={destSection}
@@ -561,7 +561,7 @@ export const TransferApplicationModal: React.FC<TransferApplicationModalProps> =
                 />
               </div>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>設置室名 <span style={{ color: '#DA0000' }}>*</span></div>
+              <div style={{ fontSize: '13px', color: '#8A8A8A' }}>設置室名 <span style={{ color: '#DA0000' }}>*</span></div>
               <input
                 type="text"
                 value={destRoomName}

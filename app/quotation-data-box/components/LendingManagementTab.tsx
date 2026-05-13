@@ -689,7 +689,7 @@ export const LendingManagementTab: React.FC = () => {
           <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #E1E1E1' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>貸出設定変更</h3>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#8A8A8A' }}>
                 {selectedDeviceForSetting.qrCode} - {selectedDeviceForSetting.itemName}（{selectedDeviceForSetting.maker} {selectedDeviceForSetting.model}）
               </p>
             </div>

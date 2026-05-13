@@ -791,7 +791,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
           <div style={{ padding: '16px 24px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <button onClick={() => { setResult(null); setQStep(1); }} style={{
               padding: '10px 24px', fontSize: 14, fontWeight: 600,
-              background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#666',
+              background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#8A8A8A',
             }}>続けて操作</button>
             <button onClick={onClose} style={{
               padding: '10px 28px', fontSize: 14, fontWeight: 600,
@@ -830,7 +830,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 700, flexShrink: 0,
                 background: isActive ? 'white' : isDone ? '#008C1D' : '#E1E1E1',
-                color: isActive ? '#4A4A4A' : isDone ? 'white' : '#666',
+                color: isActive ? '#4A4A4A' : isDone ? 'white' : '#8A8A8A',
               }}>
                 {isDone ? '\u2713' : step.id}
               </div>
@@ -935,7 +935,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         {dataSource && !isQuotationMode && (
           <div style={{ padding: '12px 24px', borderBottom: '1px solid #E1E1E1', background: '#FAFAFA', display: 'flex', gap: 12, alignItems: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>紐づけキー</label>
+              <label style={{ fontSize: 11, color: '#8A8A8A', fontWeight: 600 }}>紐づけキー</label>
               <select value={linkKey} onChange={(e) => setLinkKey(e.target.value as LinkKey | '')} style={{
                 padding: '6px 12px', fontSize: 13, border: '2px solid #4A4A4A', borderRadius: 4, minWidth: 160, fontWeight: 600,
               }}>
@@ -1212,7 +1212,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
 
                   {addTargets.size > 0 && (
                     <div style={{ padding: '12px 16px', background: '#FAFAFA', border: '1px solid #FDF1E5', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
-                      <span style={{ color: '#666', flexShrink: 0 }}>設置情報の引き継ぎ元:</span>
+                      <span style={{ color: '#8A8A8A', flexShrink: 0 }}>設置情報の引き継ぎ元:</span>
                       <select value={inheritSourceNo ?? ''} onChange={(e) => setInheritSourceNo(e.target.value ? Number(e.target.value) : null)}
                         style={{ padding: '4px 10px', fontSize: 13, border: '1px solid #E1E1E1', borderRadius: 4, flex: 1, maxWidth: 360 }}>
                         <option value="">引き継がない</option>
@@ -1263,12 +1263,12 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 {qStep > 1 && (
                   <button onClick={goBack} style={{
                     padding: '10px 20px', fontSize: 14, fontWeight: 600,
-                    background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#666',
+                    background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#8A8A8A',
                   }}>戻る</button>
                 )}
                 <button onClick={onClose} style={{
                   padding: '10px 20px', fontSize: 14, fontWeight: 600,
-                  background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#666',
+                  background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#8A8A8A',
                 }}>閉じる</button>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1298,7 +1298,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
             <>
               <button onClick={onClose} style={{
                 padding: '10px 24px', fontSize: 14, fontWeight: 600,
-                background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#666',
+                background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#8A8A8A',
               }}>閉じる</button>
               <button onClick={handleCopyExecute} disabled={!canCopyExecute} style={{
                 padding: '10px 28px', fontSize: 14, fontWeight: 700,

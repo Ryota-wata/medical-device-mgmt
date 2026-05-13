@@ -215,8 +215,8 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
                       </span>
                     </td>
                     <td style={{ padding: '6px', fontWeight: isIndividual ? 'bold' : 'normal' }}>{item.itemName}</td>
-                    <td style={{ padding: '6px', textAlign: 'center', color: '#666' }}>{item.originalQuantity}</td>
-                    <td style={{ padding: '6px', textAlign: 'right', color: '#666' }}>¥{item.originalPrice.toLocaleString()}</td>
+                    <td style={{ padding: '6px', textAlign: 'center', color: '#8A8A8A' }}>{item.originalQuantity}</td>
+                    <td style={{ padding: '6px', textAlign: 'right', color: '#8A8A8A' }}>¥{item.originalPrice.toLocaleString()}</td>
                     <td style={{ padding: '6px', textAlign: 'center', background: '#FAFAFA' }}>
                       <input
                         type="number"

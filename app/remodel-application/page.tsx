@@ -1484,9 +1484,9 @@ function RemodelApplicationContent() {
             fontSize: '12px',
             whiteSpace: 'nowrap',
           }}>
-            <span><span style={{ color: '#666' }}>件数</span> <strong style={{ color: '#4A4A4A', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
+            <span><span style={{ color: '#8A8A8A' }}>件数</span> <strong style={{ color: '#4A4A4A', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
             <span style={{ color: '#E1E1E1' }}>|</span>
-            <span><span style={{ color: '#666' }}>金額</span> <strong style={{ color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
+            <span><span style={{ color: '#8A8A8A' }}>金額</span> <strong style={{ color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
               const amount = asset.rfqAmount;
               if (typeof amount === 'number') return sum + amount;
               if (typeof amount === 'string' && amount) {

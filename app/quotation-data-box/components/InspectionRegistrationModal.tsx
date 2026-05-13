@@ -824,7 +824,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: 'none',
     fontSize: '24px',
     cursor: 'pointer',
-    color: '#666',
+    color: '#8A8A8A',
     lineHeight: 1,
   },
   resultsSection: {
@@ -868,7 +868,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   footerLeft: {
     fontSize: '13px',
-    color: '#666',
+    color: '#8A8A8A',
   },
   footerRight: {
     display: 'flex',
@@ -877,7 +877,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   cancelButton: {
     padding: '8px 20px',
     backgroundColor: '#fff',
-    color: '#666',
+    color: '#8A8A8A',
     border: '1px solid #E1E1E1',
     borderRadius: '4px',
     cursor: 'pointer',

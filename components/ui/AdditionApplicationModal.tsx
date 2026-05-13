@@ -260,7 +260,7 @@ export function AdditionApplicationModal({
     },
     note: {
       fontSize: '12px',
-      color: '#666',
+      color: '#8A8A8A',
       textAlign: 'right' as const,
       marginBottom: '12px',
     },
@@ -293,7 +293,7 @@ export function AdditionApplicationModal({
       borderRadius: '4px',
       fontSize: '14px',
       background: '#FAFAFA',
-      color: '#666',
+      color: '#8A8A8A',
     },
     select: {
       padding: '8px 12px',
@@ -427,10 +427,10 @@ export function AdditionApplicationModal({
                   {assets[0]?.name}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', fontSize: '13px' }}>
-                  <div><span style={{ color: '#666' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
-                  <div><span style={{ color: '#666' }}>型式:</span> {assets[0]?.model || '-'}</div>
-                  <div><span style={{ color: '#666' }}>設置場所:</span> {assets[0]?.roomName || '-'}</div>
-                  <div><span style={{ color: '#666' }}>管理番号:</span> {assets[0]?.managementNo || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>型式:</span> {assets[0]?.model || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>設置場所:</span> {assets[0]?.roomName || '-'}</div>
+                  <div><span style={{ color: '#8A8A8A' }}>管理番号:</span> {assets[0]?.managementNo || '-'}</div>
                 </div>
               </div>
             </div>
@@ -709,7 +709,7 @@ export function AdditionApplicationModal({
               >
                 ファイルの選択
               </button>
-              <span style={{ fontSize: '13px', color: '#666' }}>
+              <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
                 {attachedFiles.length === 0 ? 'ファイルが選択されていません' : `${attachedFiles.length}件選択中`}
               </span>
               <input
@@ -746,7 +746,7 @@ export function AdditionApplicationModal({
                 ))}
               </div>
             )}
-            <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+            <div style={{ fontSize: '12px', color: '#8A8A8A', marginTop: '8px' }}>
               見積書・参考資料などを添付してください
             </div>
           </div>

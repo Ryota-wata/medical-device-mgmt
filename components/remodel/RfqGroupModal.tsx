@@ -117,7 +117,7 @@ export function RfqGroupModal({
                 borderRadius: '6px',
                 fontSize: '14px',
                 background: '#FAFAFA',
-                color: '#666',
+                color: '#8A8A8A',
                 boxSizing: 'border-box',
               }}
             />
@@ -152,7 +152,7 @@ export function RfqGroupModal({
             borderRadius: '6px',
             border: '1px solid #E1E1E1',
           }}>
-            <span style={{ color: '#666' }}>選択されたレコード: </span>
+            <span style={{ color: '#8A8A8A' }}>選択されたレコード: </span>
             <span style={{ fontWeight: 'bold', color: '#DA0000' }}>{selectedCount}件</span>
           </div>
 

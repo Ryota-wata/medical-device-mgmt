@@ -581,7 +581,7 @@ export default function UserManagementPage() {
               {/* SHIP側ロール: 担当施設 */}
               {isShipRoleSelected && (
                 <div>
-                  <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                  <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '12px' }}>
                     担当施設を検索して追加してください（複数選択可）
                   </p>
                   <SearchableSelect
@@ -656,7 +656,7 @@ export default function UserManagementPage() {
                   </div>
                   {formData.hospital ? (
                     <>
-                      <p style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                      <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '12px' }}>
                         他施設の閲覧権限を検索して追加（任意）:
                       </p>
                       <SearchableSelect
@@ -1066,7 +1066,7 @@ export default function UserManagementPage() {
                             {USER_ROLE_LABELS[user.role]}
                           </span>
                         </td>
-                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '12px' : '13px', color: '#666', maxWidth: '200px' }}>
+                        <td style={{ padding: isTablet ? '12px' : '14px', fontSize: isTablet ? '12px' : '13px', color: '#8A8A8A', maxWidth: '200px' }}>
                           <div style={{
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',

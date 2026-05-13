@@ -164,7 +164,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
               }}>
                 {ITEM_TYPE_LABELS[type].split('_')[0]}
               </span>
-              <span style={{ color: '#666' }}>{ITEM_TYPE_DESCRIPTIONS[type]}</span>
+              <span style={{ color: '#8A8A8A' }}>{ITEM_TYPE_DESCRIPTIONS[type]}</span>
             </div>
           ))}
         </div>

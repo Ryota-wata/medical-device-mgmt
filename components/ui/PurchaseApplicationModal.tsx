@@ -345,7 +345,7 @@ export function PurchaseApplicationModal({
     },
     note: {
       fontSize: '12px',
-      color: '#666',
+      color: '#8A8A8A',
       textAlign: 'right' as const,
       marginBottom: '12px',
     },
@@ -378,7 +378,7 @@ export function PurchaseApplicationModal({
       borderRadius: '4px',
       fontSize: '14px',
       background: '#FAFAFA',
-      color: '#666',
+      color: '#8A8A8A',
     },
     select: {
       padding: '8px 12px',
@@ -939,7 +939,7 @@ export function PurchaseApplicationModal({
               >
                 ファイルの選択
               </button>
-              <span style={{ fontSize: '13px', color: '#666' }}>
+              <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
                 {attachedFiles.length === 0 ? 'ファイルが選択されていません' : `${attachedFiles.length}件選択中`}
               </span>
               <input

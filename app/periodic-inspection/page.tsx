@@ -376,7 +376,7 @@ function PeriodicInspectionContent() {
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '13px', color: '#666', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#8A8A8A', marginBottom: '6px' }}>
                 QRコードを手入力
               </label>
               <input

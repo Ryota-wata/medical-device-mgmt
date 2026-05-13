@@ -858,7 +858,7 @@ export default function DataMatchingPage() {
                               borderRadius: '4px',
                               fontSize: '12px',
                               backgroundColor: list.type === 'fixed-asset' ? '#EBF5EE' : list.type === 'me-ledger' ? '#EBF5EE' : '#FAFAFA',
-                              color: list.type === 'fixed-asset' ? '#008C1D' : list.type === 'me-ledger' ? '#146E2E' : '#666'
+                              color: list.type === 'fixed-asset' ? '#008C1D' : list.type === 'me-ledger' ? '#146E2E' : '#8A8A8A'
                             }}>
                               {list.type === 'fixed-asset' ? '固定資産台帳' : list.type === 'me-ledger' ? 'ME管理台帳' : 'その他'}
                             </span>
@@ -1244,7 +1244,7 @@ export default function DataMatchingPage() {
                     style={{
                       padding: '4px 8px',
                       backgroundColor: '#FAFAFA',
-                      color: '#666',
+                      color: '#8A8A8A',
                       border: '1px solid #E1E1E1',
                       borderRadius: '4px',
                       cursor: 'pointer',

@@ -775,7 +775,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: 'none',
     fontSize: '24px',
     cursor: 'pointer',
-    color: '#666',
+    color: '#8A8A8A',
     padding: '4px 8px',
   },
   content: {

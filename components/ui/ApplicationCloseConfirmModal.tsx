@@ -61,7 +61,7 @@ export function ApplicationCloseConfirmModal({
         <p
           style={{
             fontSize: '14px',
-            color: '#666',
+            color: '#8A8A8A',
             margin: '0 0 28px',
             textAlign: 'center',
             lineHeight: '1.6',

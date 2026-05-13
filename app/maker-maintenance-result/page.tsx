@@ -487,7 +487,7 @@ export default function MakerMaintenanceResultPage() {
                                 boxSizing: 'border-box',
                               }}
                             />
-                            <span style={{ fontSize: '12px', color: '#666' }}>円</span>
+                            <span style={{ fontSize: '12px', color: '#8A8A8A' }}>円</span>
                           </div>
                         </td>
                         <td style={{ ...styles.td, textAlign: 'center' }}>

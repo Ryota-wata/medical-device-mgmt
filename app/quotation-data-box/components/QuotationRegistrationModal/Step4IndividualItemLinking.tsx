@@ -336,7 +336,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
       </div>
 
       {individualItems.length === 0 && (
-        <div style={{ marginBottom: '16px', padding: '20px', textAlign: 'center', background: '#FAFAFA', borderRadius: '6px', color: '#666' }}>
+        <div style={{ marginBottom: '16px', padding: '20px', textAlign: 'center', background: '#FAFAFA', borderRadius: '6px', color: '#8A8A8A' }}>
           個体管理品目がありません。次のステップへ進んでください。
         </div>
       )}

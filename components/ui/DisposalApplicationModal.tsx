@@ -524,7 +524,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               >
                 ファイルの選択
               </label>
-              <span style={{ fontSize: '13px', color: '#666' }}>
+              <span style={{ fontSize: '13px', color: '#8A8A8A' }}>
                 {attachedFiles.length === 0 ? 'ファイルが選択されていません' : `${attachedFiles.length}件のファイルが選択されています`}
               </span>
             </div>
@@ -548,7 +548,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span>{file.name}</span>
-                      <span style={{ color: '#666' }}>({formatFileSize(file.size)})</span>
+                      <span style={{ color: '#8A8A8A' }}>({formatFileSize(file.size)})</span>
                     </div>
                     <button
                       onClick={() => handleFileRemove(index)}
@@ -569,7 +569,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               </div>
             )}
 
-            <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: '#8A8A8A', margin: 0 }}>
               見積書・修理不能証明など手持ちの書類を添付してください
             </p>
           </div>

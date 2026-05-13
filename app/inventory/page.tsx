@@ -494,7 +494,7 @@ export default function InventoryPage() {
   // ステータスバッジの取得
   const getStatusBadge = (status: InventoryStatus) => {
     const styles: Record<InventoryStatus, { bg: string; color: string; text: string }> = {
-      unchecked: { bg: '#E1E1E1', color: '#666', text: '未確認' },
+      unchecked: { bg: '#E1E1E1', color: '#8A8A8A', text: '未確認' },
       stock_ok: { bg: '#EBF5EE', color: '#146E2E', text: '確認済' },
       location_changed: { bg: '#FDF1E5', color: '#4A4A4A', text: '移動' },
       disposed: { bg: '#FDF1E5', color: '#DA0000', text: '廃棄' },
@@ -902,7 +902,7 @@ export default function InventoryPage() {
               場所変更
             </div>
             <div style={{ padding: '24px' }}>
-              <p style={{ marginBottom: '20px', color: '#666' }}>
+              <p style={{ marginBottom: '20px', color: '#8A8A8A' }}>
                 変更後の設置場所を入力してください。
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1121,7 +1121,7 @@ export default function InventoryPage() {
                   <strong>廃棄申請（自動作成）:</strong> {inventoryItems.filter(i => i.status === 'disposed').length}件
                 </div>
               </div>
-              <p style={{ color: '#666', fontSize: '13px' }}>
+              <p style={{ color: '#8A8A8A', fontSize: '13px' }}>
                 ※ 場所変更・廃棄とした資産については、自動的に申請が作成されます。
               </p>
               <button
@@ -1409,7 +1409,7 @@ export default function InventoryPage() {
                 <div style={{ fontSize: '14px', marginBottom: '8px' }}>
                   <strong>選択件数:</strong> {selectedItems.size}件
                 </div>
-                <div style={{ fontSize: '13px', color: '#666', maxHeight: '150px', overflow: 'auto' }}>
+                <div style={{ fontSize: '13px', color: '#8A8A8A', maxHeight: '150px', overflow: 'auto' }}>
                   {Array.from(selectedItems).map(qrCode => {
                     const item = inventoryItems.find(i => i.asset.qrCode === qrCode);
                     return item ? (

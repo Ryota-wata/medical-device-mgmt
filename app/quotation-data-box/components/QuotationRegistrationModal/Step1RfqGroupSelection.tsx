@@ -82,7 +82,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
                     style={{ display: 'none' }}
                   />
                 </label>
-                <span style={{ color: '#666', fontSize: '13px' }}>
+                <span style={{ color: '#8A8A8A', fontSize: '13px' }}>
                   {fileName || 'ファイルが選択されていません'}
                 </span>
               </div>

@@ -557,7 +557,7 @@ function RepairRequestsContent() {
 
               <button
                 onClick={() => { setCategoryFilter(''); setAlternativeUnreturnedOnly(false); setActiveStep('all'); }}
-                style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: '#666' }}
+                style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: '#8A8A8A' }}
               >
                 クリア
               </button>
