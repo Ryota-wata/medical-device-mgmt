@@ -441,12 +441,11 @@ export const LendingManagementTab: React.FC = () => {
             value={filter.lendingGroupName}
             onChange={(e) => setFilter(prev => ({ ...prev, lendingGroupName: e.target.value }))}
             style={{
-              padding: '6px 10px',
+              padding: '5px 8px',
               fontSize: '12px',
-              border: '1px solid #999',
+              border: '1px solid #E1E1E1',
               borderRadius: '3px',
               minWidth: '200px',
-              fontWeight: 600,
             }}
           >
             <option value="">貸出グループ名</option>
@@ -496,13 +495,11 @@ export const LendingManagementTab: React.FC = () => {
             value={filter.status}
             onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))}
             style={{
-              padding: '6px 10px',
+              padding: '5px 8px',
               fontSize: '12px',
-              border: '2px solid #4A4A4A',
+              border: '1px solid #E1E1E1',
               borderRadius: '3px',
               minWidth: '120px',
-              fontWeight: 600,
-              background: '#FAFAFA',
             }}
           >
             <option value="">ステータス</option>
