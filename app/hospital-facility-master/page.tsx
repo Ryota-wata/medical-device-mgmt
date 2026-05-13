@@ -343,7 +343,7 @@ function HospitalFacilityMasterContent() {
         disabled={editingId !== null}
         style={{
           padding: '5px 10px',
-          background: editingId !== null ? '#8A8A8A' : '#4A4A4A',
+          background: editingId !== null ? '#8A8A8A' : '#008C1D',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
@@ -413,7 +413,7 @@ function HospitalFacilityMasterContent() {
   const renderEditRow = (key: string) => {
     const editBg = '#FAFAFA';
     return (
-      <tr key={key} style={{ background: editBg, borderBottom: '2px solid #4A4A4A' }}>
+      <tr key={key} style={{ background: editBg, borderBottom: '2px solid #008C1D' }}>
         {/* 共通マスタ (4列) */}
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipDivision', divisionOptions, '部門')}</td>
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipDepartment', oldDeptOptions, '部署', !editForm.oldShipDivision)}</td>
@@ -487,7 +487,7 @@ function HospitalFacilityMasterContent() {
     const purpleLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#4A4A4A', marginBottom: '4px' };
     const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#146E2E', marginBottom: '4px' };
     return (
-      <div key={key} style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', border: '2px solid #4A4A4A' }}>
+      <div key={key} style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', border: '2px solid #008C1D' }}>
         {/* 共通マスタ */}
         <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #E1E1E1', fontSize: '14px' }}>共通マスタ</div>
         <div style={{ marginBottom: '8px' }}>
@@ -564,7 +564,7 @@ function HospitalFacilityMasterContent() {
         </div>
       </div>
       <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-        <button onClick={() => handleStartEdit(facility)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#8A8A8A' : '#4A4A4A', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>編集</button>
+        <button onClick={() => handleStartEdit(facility)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#F1F1F1' : 'white', color: editingId !== null ? '#8A8A8A' : '#146E2E', border: editingId !== null ? '1px solid #E1E1E1' : '1px solid #146E2E', borderRadius: '4px', fontSize: '13px', fontWeight: 500, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>編集</button>
         <button onClick={() => handleDelete(facility.id)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#8A8A8A' : '#DA0000', color: 'white', border: 'none', borderRadius: '4px', fontSize: '13px', fontWeight: 600, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>削除</button>
       </div>
     </div>
@@ -600,12 +600,12 @@ function HospitalFacilityMasterContent() {
                 onClick={handleExport}
                 style={{
                   padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: '#4A4A4A',
-                  color: 'white',
-                  border: 'none',
+                  background: 'white',
+                  color: '#146E2E',
+                  border: '1px solid #146E2E',
                   borderRadius: '6px',
                   fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
@@ -616,12 +616,12 @@ function HospitalFacilityMasterContent() {
                 onClick={() => fileInputRef.current?.click()}
                 style={{
                   padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: '#4A4A4A',
-                  color: 'white',
-                  border: 'none',
+                  background: 'white',
+                  color: '#146E2E',
+                  border: '1px solid #146E2E',
                   borderRadius: '6px',
                   fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 600,
+                  fontWeight: 500,
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
