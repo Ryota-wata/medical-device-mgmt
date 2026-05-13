@@ -115,10 +115,10 @@ export default function CategoryRegistrationPage() {
 
       <div className="flex-1 overflow-auto p-4">
         <section className="bg-surface-card border border-stroke-input rounded mb-4">
-          <div className="flex items-center justify-between px-4 py-3 bg-content-primary text-white">
+          <div className="flex items-center justify-between px-4 py-3 bg-surface-card border-b border-stroke-input">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold">登録区分登録</span>
-              <span className="text-xs opacity-90 tabular-nums">登録: {registeredCount} / {detailItems.length}件</span>
+              <span className="text-sm font-semibold text-content-primary">登録区分登録</span>
+              <span className="text-xs text-content-sub tabular-nums">登録: {registeredCount} / {detailItems.length}件</span>
             </div>
           </div>
 
