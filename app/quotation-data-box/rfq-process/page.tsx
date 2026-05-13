@@ -342,7 +342,7 @@ function RfqProcessContent() {
           fontSize: '11px',
           fontWeight: 'bold',
         }}>STEP 1</span>
-        <span style={{ fontSize: '12px', color: '#bdc3c7', marginLeft: '8px' }}>
+        <span style={{ fontSize: '12px', color: '#E1E1E1', marginLeft: '8px' }}>
           {rfqGroup.rfqNo} - {rfqGroup.groupName}
         </span>
         <div style={{ flex: 1 }} />
@@ -442,12 +442,12 @@ function RfqProcessContent() {
             {/* 黄色ガイダンス */}
             <div style={{
               background: '#FDF1E5',
-              border: '1px solid #A66F1B',
+              border: '1px solid #4A4A4A',
               margin: '12px',
               padding: '10px 16px',
               borderRadius: '4px',
               fontSize: '13px',
-              color: '#A35414',
+              color: '#4A4A4A',
               fontWeight: 500,
             }}>
               業者を登録し見積依頼書を作成してください。複数業者への相見積もりが可能です。
@@ -480,7 +480,7 @@ function RfqProcessContent() {
                 }}>
                   {/* インデックスバッジ */}
                   <span style={{
-                    background: vendor.isSent ? '#008C1D' : '#A35414',
+                    background: vendor.isSent ? '#008C1D' : '#4A4A4A',
                     color: 'white',
                     padding: '4px 6px',
                     borderRadius: '4px',
@@ -585,7 +585,7 @@ function RfqProcessContent() {
                     alignItems: 'center',
                     gap: '8px',
                   }}>
-                    <span style={{ color: vendor.isSent ? '#008C1D' : '#A35414', fontWeight: 600 }}>
+                    <span style={{ color: vendor.isSent ? '#008C1D' : '#4A4A4A', fontWeight: 600 }}>
                       依頼先{index + 1}
                     </span>
                     <span style={{ fontWeight: 600 }}>ご依頼事項</span>
@@ -855,7 +855,7 @@ function RfqProcessContent() {
                 padding: '40px 48px',
                 margin: '0 auto',
                 fontFamily: '"Yu Mincho", "Hiragino Mincho ProN", serif',
-                color: '#111827',
+                color: '#4A4A4A',
                 lineHeight: 1.8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               }}>
@@ -865,7 +865,7 @@ function RfqProcessContent() {
                   fontSize: '22px',
                   fontWeight: 'bold',
                   letterSpacing: '8px',
-                  borderBottom: '2px solid #111827',
+                  borderBottom: '2px solid #4A4A4A',
                   paddingBottom: '8px',
                   marginBottom: '28px',
                 }}>
@@ -930,7 +930,7 @@ function RfqProcessContent() {
                     marginBottom: '20px',
                     padding: '8px 12px',
                     background: '#FDF1E5',
-                    border: '1px solid #A66F1B',
+                    border: '1px solid #4A4A4A',
                     borderRadius: '2px',
                     fontSize: '12px',
                   }}>
@@ -1141,7 +1141,7 @@ const textareaStyle: React.CSSProperties = {
 
 const accentBtnSmall: React.CSSProperties = {
   padding: '6px 10px',
-  background: '#4527A0',
+  background: '#4A4A4A',
   color: 'white',
   border: 'none',
   borderRadius: '4px',
