@@ -346,63 +346,47 @@ export default function MakerMaintenanceResultPage() {
                 </tbody>
               </table>
 
-              {/* 点検業者セクション */}
-              <div style={{
-                border: '1px solid #E1E1E1',
-                borderRadius: '4px',
-                marginBottom: '20px',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  padding: '10px 16px',
-                  background: '#FAFAFA',
-                  borderBottom: '1px solid #E1E1E1',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#4A4A4A',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}>
-                  <span>点検業者</span>
-                  <span style={{ color: '#aaa' }}>|</span>
-                  <span>担当者</span>
-                  <span style={{ color: '#aaa' }}>|</span>
-                  <span>連絡先</span>
-                </div>
-                <div style={{ padding: '16px', display: 'flex', gap: '16px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.label}>点検業者</label>
-                    <input
-                      type="text"
-                      value={formData.vendorName}
-                      onChange={(e) => handleInputChange('vendorName', e.target.value)}
-                      placeholder="業者名を入力"
-                      style={styles.input}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.label}>担当者</label>
-                    <input
-                      type="text"
-                      value={formData.staffName}
-                      onChange={(e) => handleInputChange('staffName', e.target.value)}
-                      placeholder="担当者名を入力"
-                      style={styles.input}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={styles.label}>連絡先</label>
-                    <input
-                      type="text"
-                      value={formData.contactInfo}
-                      onChange={(e) => handleInputChange('contactInfo', e.target.value)}
-                      placeholder="電話番号・メール等"
-                      style={styles.input}
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* 点検業者 / 担当者 / 連絡先 (Figma 597:43893: テーブル UI) */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
+                <tbody>
+                  <tr>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>点検業者</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
+                      <input
+                        type="text"
+                        value={formData.vendorName}
+                        onChange={(e) => handleInputChange('vendorName', e.target.value)}
+                        placeholder="業者名を入力"
+                        style={{ ...styles.input, width: '100%', boxSizing: 'border-box' }}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>担当者</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
+                      <input
+                        type="text"
+                        value={formData.staffName}
+                        onChange={(e) => handleInputChange('staffName', e.target.value)}
+                        placeholder="担当者名を入力"
+                        style={{ ...styles.input, width: '100%', boxSizing: 'border-box' }}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th style={{ padding: '10px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '140px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap' }}>連絡先</th>
+                    <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>
+                      <input
+                        type="text"
+                        value={formData.contactInfo}
+                        onChange={(e) => handleInputChange('contactInfo', e.target.value)}
+                        placeholder="電話番号・メール等"
+                        style={{ ...styles.input, width: '100%', boxSizing: 'border-box' }}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               {/* 発生費用セクション */}
               <div style={{
