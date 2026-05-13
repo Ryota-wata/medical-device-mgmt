@@ -845,28 +845,30 @@ function RepairTaskContent() {
             />
           </FormRow>
 
-          <FormRow>
+          <FormRow style={{ alignItems: 'flex-start' }}>
             <span style={labelStyle}>代替機対応</span>
-            <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <input
-                type="radio"
-                name="alternative"
-                checked={formData.needsAlternative}
-                onChange={() => updateFormData({ needsAlternative: true })}
-                disabled={!isStepEnabled(1)}
-              />
-              必要
-            </label>
-            <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <input
-                type="radio"
-                name="alternative"
-                checked={!formData.needsAlternative}
-                onChange={() => updateFormData({ needsAlternative: false })}
-                disabled={!isStepEnabled(1)}
-              />
-              不要
-            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input
+                  type="radio"
+                  name="alternative"
+                  checked={formData.needsAlternative}
+                  onChange={() => updateFormData({ needsAlternative: true })}
+                  disabled={!isStepEnabled(1)}
+                />
+                必要
+              </label>
+              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input
+                  type="radio"
+                  name="alternative"
+                  checked={!formData.needsAlternative}
+                  onChange={() => updateFormData({ needsAlternative: false })}
+                  disabled={!isStepEnabled(1)}
+                />
+                不要
+              </label>
+            </div>
             {formData.needsAlternative && (
               <>
                 <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>納品日:</span>
@@ -906,28 +908,30 @@ function RepairTaskContent() {
             )}
           </FormRow>
 
-          <FormRow>
+          <FormRow style={{ alignItems: 'flex-start' }}>
             <span style={labelStyle}>商品引取対応</span>
-            <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <input
-                type="radio"
-                name="pickupRequired"
-                checked={formData.pickupRequired}
-                onChange={() => updateFormData({ pickupRequired: true })}
-                disabled={!isStepEnabled(1)}
-              />
-              必要
-            </label>
-            <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <input
-                type="radio"
-                name="pickupRequired"
-                checked={!formData.pickupRequired}
-                onChange={() => updateFormData({ pickupRequired: false })}
-                disabled={!isStepEnabled(1)}
-              />
-              不要
-            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input
+                  type="radio"
+                  name="pickupRequired"
+                  checked={formData.pickupRequired}
+                  onChange={() => updateFormData({ pickupRequired: true })}
+                  disabled={!isStepEnabled(1)}
+                />
+                必要
+              </label>
+              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input
+                  type="radio"
+                  name="pickupRequired"
+                  checked={!formData.pickupRequired}
+                  onChange={() => updateFormData({ pickupRequired: false })}
+                  disabled={!isStepEnabled(1)}
+                />
+                不要
+              </label>
+            </div>
             {formData.pickupRequired && (
               <>
                 <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>引取日:</span>
@@ -1353,7 +1357,7 @@ function RepairTaskContent() {
             対応区分を選択してください。外部発注の場合は発注書のプレビュー・出力ができます。
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
             {/* 発注書の発行カード */}
             <label style={{
               display: 'block',
@@ -1641,7 +1645,7 @@ function RepairTaskContent() {
               <tr>
                 <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {(['修理報告書', '納品書', '検収書', '請求書', 'その他'] as const).map((dt) => (
                       <label key={dt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
                         <input type="radio" name="step4DocumentType" checked={step4DocumentType === dt} onChange={() => setStep4DocumentType(dt)} disabled={!isStepEnabled(4)} />
