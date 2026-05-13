@@ -278,7 +278,7 @@ function AssetMasterContent() {
                 }`}
                 onMouseEnter={(e) => {
                   if (selectedAssetId) {
-                    e.currentTarget.style.background = '#0A6B17';
+                    e.currentTarget.style.background = '#146E2E';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -315,7 +315,7 @@ function AssetMasterContent() {
                 }`}
                 onMouseEnter={(e) => {
                   if (selectedAssetId) {
-                    e.currentTarget.style.background = '#0A6B17';
+                    e.currentTarget.style.background = '#146E2E';
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -387,7 +387,7 @@ function AssetMasterContent() {
                   onClick={() => setSelectedAssetId(asset.id)}
                   onMouseEnter={(e) => {
                     if (selectedAssetId !== asset.id) {
-                      e.currentTarget.style.background = '#e8f4f8';
+                      e.currentTarget.style.background = '#EBF5EE';
                     }
                   }}
                   onMouseLeave={(e) => {
