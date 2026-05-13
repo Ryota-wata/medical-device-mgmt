@@ -583,18 +583,15 @@ function PeriodicInspectionContent() {
             maxWidth: '600px',
             margin: '0 auto'
           }}>
-            {/* 案内バナー */}
+            {/* 案内文 (Figma 597:42958: 黒の強調文) */}
             <div style={{
-              backgroundColor: '#008C1D',
-              borderRadius: '8px',
-              padding: '16px',
+              padding: '8px 0',
               marginBottom: '16px',
-              textAlign: 'center',
             }}>
               <span style={{
-                fontSize: '16px',
-                fontWeight: 700,
-                color: '#ffffff',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: '#4A4A4A',
               }}>
                 下記内容で問題がなければ完了してください
               </span>
@@ -631,7 +628,7 @@ function PeriodicInspectionContent() {
               </div>
             </div>
 
-            {/* 点検対象機器 */}
+            {/* 点検対象機器 (Figma 597:42958: テーブル UI) */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '12px',
@@ -639,20 +636,32 @@ function PeriodicInspectionContent() {
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               marginBottom: '16px'
             }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#4A4A4A', marginBottom: '12px' }}>
                 点検対象機器
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                <ConfirmInfoItem label="QRコード" value={task.assetId} />
-                <ConfirmInfoItem label="大分類" value={task.largeClass} />
-                <ConfirmInfoItem label="中分類" value={task.mediumClass} />
-                <ConfirmInfoItem label="品目" value={task.assetName} />
-                <ConfirmInfoItem label="メーカー" value={task.maker} />
-                <ConfirmInfoItem label="型式" value={task.model} />
-              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={infoTableTh}>QRコード</th>
+                    <td style={infoTableTd}>{task.assetId}</td>
+                    <th style={infoTableTh}>大分類</th>
+                    <td style={infoTableTd}>{task.largeClass}</td>
+                    <th style={infoTableTh}>中分類</th>
+                    <td style={infoTableTd}>{task.mediumClass}</td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>品目</th>
+                    <td style={infoTableTd}>{task.assetName}</td>
+                    <th style={infoTableTh}>メーカー</th>
+                    <td style={infoTableTd}>{task.maker}</td>
+                    <th style={infoTableTh}>型式</th>
+                    <td style={infoTableTd}>{task.model}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            {/* 点検情報 */}
+            {/* 点検情報 (Figma 597:42958: テーブル UI) */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '12px',
@@ -660,15 +669,25 @@ function PeriodicInspectionContent() {
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               marginBottom: '16px'
             }}>
-              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#333', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#4A4A4A', marginBottom: '12px' }}>
                 点検情報
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr 1fr 1fr 1fr', gap: '8px' }}>
-                <ConfirmInfoItem label="点検種別" value="定期点検" />
-                <ConfirmInfoItem label="点検メニュー" value={selectedMenu?.name || '（メニュー未設定）'} />
-                <ConfirmInfoItem label="実施者" value={inspectorName} />
-                <ConfirmInfoItem label="実施日" value={today} />
-              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <tbody>
+                  <tr>
+                    <th style={infoTableTh}>点検種別</th>
+                    <td style={infoTableTd}>定期点検</td>
+                    <th style={infoTableTh}>点検メニュー</th>
+                    <td style={infoTableTd}>{selectedMenu?.name || '（メニュー未設定）'}</td>
+                  </tr>
+                  <tr>
+                    <th style={infoTableTh}>実施者</th>
+                    <td style={infoTableTd}>{inspectorName}</td>
+                    <th style={infoTableTh}>実施日</th>
+                    <td style={infoTableTd}>{today}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             {/* 点検項目結果テーブル */}
@@ -780,13 +799,13 @@ function PeriodicInspectionContent() {
               aria-label="戻る"
               style={{
                 flex: 1,
-                backgroundColor: '#FAFAFA',
+                backgroundColor: 'white',
                 color: '#4A4A4A',
-                border: 'none',
-                borderRadius: '8px',
+                border: '1px solid #E1E1E1',
+                borderRadius: '6px',
                 padding: '14px 16px',
                 fontSize: '15px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
                 minHeight: '48px',
               }}
@@ -799,10 +818,10 @@ function PeriodicInspectionContent() {
                 aria-label="完了"
                 style={{
                   flex: 1,
-                  backgroundColor: '#4A4A4A',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  color: '#146E2E',
+                  border: '1px solid #146E2E',
+                  borderRadius: '6px',
                   padding: '14px 16px',
                   fontSize: '15px',
                   fontWeight: 600,
@@ -821,7 +840,7 @@ function PeriodicInspectionContent() {
                   backgroundColor: '#DA0000',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   padding: '14px 16px',
                   fontSize: '15px',
                   fontWeight: 600,
