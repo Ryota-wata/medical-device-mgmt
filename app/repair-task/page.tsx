@@ -1110,8 +1110,8 @@ function RepairTaskContent() {
                   disabled={!isStepEnabled(1) || isSubmitting}
                   style={{
                     padding: '10px 24px',
-                    background: COLORS.accent,
-                    color: COLORS.textOnAccent,
+                    background: COLORS.primary,
+                    color: COLORS.textOnColor,
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1407,7 +1407,7 @@ function RepairTaskContent() {
               <button className="repair-btn" onClick={() => setPreviewTab('修理発注書')} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: '#4A4A4A', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}>
                 発注書プレビュー
               </button>
-              <button className="repair-btn" onClick={handleStep2Order} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.accent, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+              <button className="repair-btn" onClick={handleStep2Order} disabled={!isStepEnabled(2) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
                 発注書を発行
               </button>
             </FormRow>
@@ -1575,7 +1575,7 @@ function RepairTaskContent() {
 
               {/* アクションボタン */}
               <FormRow style={{ justifyContent: 'flex-end', gap: '12px' }}>
-                <button className="repair-btn" onClick={handleStep3InspectionComplete} disabled={!isStepEnabled(3) || isSubmitting} style={{ padding: '10px 24px', background: '#4A4A4A', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+                <button className="repair-btn" onClick={handleStep3InspectionComplete} disabled={!isStepEnabled(3) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
                   {isSubmitting ? '登録中...' : '検収登録'}
                 </button>
               </FormRow>
