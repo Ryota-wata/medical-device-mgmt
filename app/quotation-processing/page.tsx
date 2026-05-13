@@ -162,7 +162,7 @@ function QuotationProcessingContent() {
   const unconfirmedCount = matchingResults.length - confirmedCount;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f7fa' }}>
+    <div style={{ minHeight: '100vh', background: '#FAFAFA' }}>
       {/* ヘッダー */}
       <header
         style={{
@@ -178,7 +178,7 @@ function QuotationProcessingContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #4A4A4A 0%, #4A4A4A 100%)',
                 color: 'white',
                 width: '50px',
                 height: '50px',
@@ -198,7 +198,7 @@ function QuotationProcessingContent() {
             <span style={{ background: '#4A4A4A', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold' }}>
               {rfqNo}
             </span>
-            <span style={{ color: '#bdc3c7', fontSize: '14px' }}>業者: 〇〇〇〇商事</span>
+            <span style={{ color: '#E1E1E1', fontSize: '14px' }}>業者: 〇〇〇〇商事</span>
           </div>
         </div>
         <button
@@ -458,7 +458,7 @@ function QuotationProcessingContent() {
               </div>
               <div style={{ flex: 1, background: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
                 <div style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '8px' }}>未確定</div>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#A35414' }}>{unconfirmedCount}</div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#4A4A4A' }}>{unconfirmedCount}</div>
               </div>
             </div>
 
@@ -470,7 +470,7 @@ function QuotationProcessingContent() {
                   style={{
                     borderBottom: '1px solid #E1E1E1',
                     padding: '20px 0',
-                    background: item.isConfirmed ? '#f0f9f4' : 'transparent',
+                    background: item.isConfirmed ? '#EBF5EE' : 'transparent',
                   }}
                 >
                   <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr', gap: '20px' }}>
@@ -508,7 +508,7 @@ function QuotationProcessingContent() {
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 background:
-                                  item.selectedCandidate?.itemId === candidate.itemId ? '#f0f9f4' : 'white',
+                                  item.selectedCandidate?.itemId === candidate.itemId ? '#EBF5EE' : 'white',
                               }}
                             >
                               <input
@@ -539,7 +539,7 @@ function QuotationProcessingContent() {
                               </div>
                               <span
                                 style={{
-                                  background: '#A35414',
+                                  background: '#4A4A4A',
                                   color: 'white',
                                   padding: '4px 10px',
                                   borderRadius: '12px',
@@ -624,7 +624,7 @@ function QuotationProcessingContent() {
                             borderRadius: '20px',
                             fontSize: '13px',
                             fontWeight: 'bold',
-                            background: item.isConfirmed ? '#008C1D' : '#A35414',
+                            background: item.isConfirmed ? '#008C1D' : '#4A4A4A',
                             color: 'white',
                           }}
                         >
