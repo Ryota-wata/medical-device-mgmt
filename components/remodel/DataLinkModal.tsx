@@ -754,9 +754,9 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
         <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 540, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <div style={{ background: '#4A4A4A', color: 'white', padding: '16px 24px', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Data Link</h2>
-            <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
+          <div style={{ background: 'white', color: '#4A4A4A', padding: '16px 24px', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#4A4A4A' }}>Data Link</h2>
+            <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: '#4A4A4A', fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
           </div>
           <div style={{ padding: '40px 24px', textAlign: 'center' }}>
             <div style={{
@@ -794,8 +794,8 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', color: '#666',
             }}>続けて操作</button>
             <button onClick={onClose} style={{
-              padding: '10px 28px', fontSize: 14, fontWeight: 700,
-              background: '#4A4A4A', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer',
+              padding: '10px 28px', fontSize: 14, fontWeight: 600,
+              background: '#008C1D', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer',
             }}>閉じる</button>
           </div>
         </div>
@@ -859,32 +859,33 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
         maxHeight: '92vh', display: 'flex', flexDirection: 'column',
         boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
       }}>
-        {/* ヘッダー */}
+        {/* ヘッダー (白背景 + 黒文字 + 下罫線) */}
         <div style={{
-          background: '#4A4A4A', color: 'white', padding: '16px 24px',
+          background: 'white', color: '#4A4A4A', padding: '16px 24px',
           borderRadius: '12px 12px 0 0',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Data Link</h2>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#4A4A4A' }}>Data Link</h2>
             {mode === 'copy' && (
               <select value={dataSource} onChange={(e) => handleDataSourceChange(e.target.value as DataSource | '')} style={{
-                padding: '4px 10px', fontSize: 13, border: '1px solid rgba(255,255,255,0.4)', borderRadius: 4,
-                background: 'rgba(255,255,255,0.15)', color: 'white', fontWeight: 600,
+                padding: '4px 10px', fontSize: 13, border: '1px solid #E1E1E1', borderRadius: 4,
+                background: 'white', color: '#4A4A4A', fontWeight: 600,
               }}>
-                <option value="" style={{ color: '#333' }}>選択してください</option>
-                <option value="資産Master" style={{ color: '#333' }}>資産Master</option>
-                <option value="業者Master" style={{ color: '#333' }}>業者Master</option>
-                <option value="原本リスト" style={{ color: '#333' }}>原本リスト</option>
+                <option value="">選択してください</option>
+                <option value="資産Master">資産Master</option>
+                <option value="業者Master">業者Master</option>
+                <option value="原本リスト">原本リスト</option>
               </select>
             )}
             {mode === 'quotation' && (
-              <span style={{ fontSize: 13, opacity: 0.9 }}>見積DB &rarr; 編集リスト（{linkedAssets.length}件）</span>
+              <span style={{ fontSize: 13, color: '#8A8A8A' }}>見積DB &rarr; 編集リスト（{linkedAssets.length}件）</span>
             )}
           </div>
           <button onClick={onClose} aria-label="閉じる" style={{
-            background: 'transparent', border: 'none', color: 'white',
-            fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1,
+            background: 'transparent', border: 'none', color: '#4A4A4A',
+            fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1,
           }}>&times;</button>
         </div>
 
