@@ -120,7 +120,7 @@ export default function OcrConfirmPage() {
   };
 
   const handleBack = () => router.push('/quotation-data-box');
-  const handleNext = () => router.push('/quotation-data-box/category-registration');
+  const handleAiJudgment = () => router.push('/quotation-data-box/category-registration');
 
   // 基本情報フォーム: ラベル列 200px / 入力列 flex-1 / 65px h
   const labelCellCls = 'bg-stroke-card flex items-center justify-center px-4 h-[65px] w-[200px] shrink-0 text-base text-content-primary';
@@ -251,12 +251,18 @@ export default function OcrConfirmPage() {
                 <table className="w-full border-collapse text-xs min-w-[900px]">
                   <thead className="sticky top-0 z-[2] bg-stroke-card">
                     <tr>
-                      <th className="px-2 py-2 text-center border border-stroke-input w-[50px] font-normal text-content-primary">No.</th>
+                      <th rowSpan={2} className="px-2 py-2 text-center border border-stroke-input w-[40px] font-bold text-content-primary">No.</th>
+                      <th colSpan={4} className="px-2 py-2 text-center border border-stroke-input font-bold text-content-primary">商品情報（原本情報）</th>
+                      <th colSpan={4} className="px-2 py-2 text-center border border-stroke-input font-bold text-content-primary">価格情報（原本情報）</th>
+                    </tr>
+                    <tr>
                       <th className="px-2 py-2 text-left border border-stroke-input font-normal text-content-primary">品名（見積名称）</th>
                       <th className="px-2 py-2 text-left border border-stroke-input w-[120px] font-normal text-content-primary">メーカー</th>
                       <th className="px-2 py-2 text-left border border-stroke-input w-[140px] font-normal text-content-primary">型式（見積名称）</th>
-                      <th className="px-2 py-2 text-center border border-stroke-input w-[60px] font-normal text-content-primary">数量</th>
+                      <th className="px-2 py-2 text-center border border-stroke-input w-[50px] font-normal text-content-primary">数量</th>
+                      <th className="px-2 py-2 text-right border border-stroke-input w-[100px] font-normal text-content-primary">定価単価</th>
                       <th className="px-2 py-2 text-right border border-stroke-input w-[110px] font-normal text-content-primary">定価金額</th>
+                      <th className="px-2 py-2 text-right border border-stroke-input w-[100px] font-normal text-content-primary">購入単価</th>
                       <th className="px-2 py-2 text-right border border-stroke-input w-[110px] font-normal text-content-primary">購入金額</th>
                     </tr>
                   </thead>
@@ -302,10 +308,32 @@ export default function OcrConfirmPage() {
                         <td className="px-1.5 py-1 border border-stroke-input">
                           <input
                             type="text"
+                            value={item.listUnitPrice?.toLocaleString() ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                              handleDetailChange(index, 'listUnitPrice', value as number);
+                            }}
+                            className={`${cellInputCls} text-right tabular-nums`}
+                          />
+                        </td>
+                        <td className="px-1.5 py-1 border border-stroke-input">
+                          <input
+                            type="text"
                             value={item.listPrice?.toLocaleString() ?? ''}
                             onChange={(e) => {
                               const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
                               handleDetailChange(index, 'listPrice', value as number);
+                            }}
+                            className={`${cellInputCls} text-right tabular-nums`}
+                          />
+                        </td>
+                        <td className="px-1.5 py-1 border border-stroke-input">
+                          <input
+                            type="text"
+                            value={item.purchaseUnitPrice?.toLocaleString() ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? null : parseInt(e.target.value.replace(/,/g, ''), 10) || 0;
+                              handleDetailChange(index, 'purchaseUnitPrice', value as number);
                             }}
                             className={`${cellInputCls} text-right tabular-nums`}
                           />
@@ -335,9 +363,9 @@ export default function OcrConfirmPage() {
                 </div>
                 <button
                   onClick={handleExcelImport}
-                  className="h-11 px-6 bg-surface-card border border-cta-primary text-cta-primary-dark rounded cursor-pointer text-sm font-bold whitespace-nowrap shrink-0 hover:bg-surface-select transition-colors"
+                  className="h-11 px-8 bg-cta-primary text-white border-0 rounded cursor-pointer text-sm font-bold whitespace-nowrap flex-shrink-0 hover:bg-cta-primary-dark transition-colors"
                 >
-                  Excelインポート
+                  Excel取込
                 </button>
               </div>
             </div>
@@ -365,19 +393,19 @@ export default function OcrConfirmPage() {
           </div>
         </div>
 
-        {/* フッターボタン (Figma: 左寄せ 戻る + 次へ) */}
-        <div className="flex gap-12 mt-4 px-4">
+        {/* フッターボタン */}
+        <div className="flex gap-3 justify-between mt-4">
           <button
             onClick={handleBack}
-            className="h-12 w-[239px] bg-surface-negative text-content-primary border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-stroke-input transition-colors"
+            className="h-12 px-7 bg-surface-negative text-content-primary border-0 rounded cursor-pointer text-sm font-bold hover:bg-stroke-input transition-colors"
           >
-            戻る
+            一つ前のSTEPに戻る
           </button>
           <button
-            onClick={handleNext}
-            className="h-12 w-[239px] bg-cta-primary text-white border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-cta-primary-dark transition-colors"
+            onClick={handleAiJudgment}
+            className="h-12 px-7 bg-cta-primary text-white border-0 rounded cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
           >
-            次へ
+            登録区分のAI判定へ
           </button>
         </div>
       </div>

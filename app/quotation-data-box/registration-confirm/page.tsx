@@ -165,7 +165,7 @@ export default function RegistrationConfirmPage() {
           <div className="p-4 flex flex-col gap-6">
             {/* 確認テキスト */}
             <p className="text-base font-semibold text-content-primary">
-              下記の内容で見積データベースへ登録します。
+              下記の内容で見積Databaseへ登録を実施します。
             </p>
 
             {/* 基本情報フォーム */}
@@ -207,7 +207,7 @@ export default function RegistrationConfirmPage() {
                   <div className={`${inputCellCls} flex-1 tabular-nums`}>{basicInfo.contact}</div>
                 </div>
                 <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>メール</div>
+                  <div className={labelCellCls}>mail</div>
                   <div className={`${inputCellCls} flex-1`}>{basicInfo.mail}</div>
                 </div>
               </div>
@@ -251,6 +251,12 @@ export default function RegistrationConfirmPage() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-xs min-w-[1500px]">
                 <thead className="sticky top-0 z-[2]">
+                  <tr>
+                    <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❸</th>
+                    <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❹ 個体管理品目</th>
+                    <th colSpan={5} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❺ 個体登録／金額案分</th>
+                    <th colSpan={4} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-surface-select text-xs font-bold text-cta-primary-dark">STEP❻ 設置情報</th>
+                  </tr>
                   <tr className="bg-stroke-card">
                     <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[60px]">No</th>
                     <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[100px]">カテゴリ</th>
@@ -260,7 +266,7 @@ export default function RegistrationConfirmPage() {
                     <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">型式（見積名称）</th>
                     <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">数量</th>
                     <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">単位</th>
-                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">親子<br />関係</th>
+                    <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">親子<br />関</th>
                     <th className="px-2 py-2 text-right border border-stroke-input text-xs font-bold text-content-primary w-[100px]">定価金額</th>
                     <th className="px-2 py-2 text-right border border-stroke-input text-xs font-bold text-content-primary w-[110px]">購入金額<br />(税別)</th>
                     <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">部門</th>
@@ -327,13 +333,13 @@ export default function RegistrationConfirmPage() {
             onClick={() => router.push('/quotation-data-box/price-allocation')}
             className="h-12 w-[239px] bg-surface-negative text-content-primary border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-stroke-input transition-colors"
           >
-            戻る
+            一つ前のSTEPに戻る
           </button>
           <button
             onClick={handleRegister}
             className="h-12 w-[254px] bg-cta-primary text-white border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-cta-primary-dark transition-colors"
           >
-            見積情報データベースに登録
+            見積情報Databaseに登録
           </button>
         </div>
       </div>

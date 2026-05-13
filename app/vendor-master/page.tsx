@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, Suspense } from 'react';
-import { Pencil, Trash2, Plus } from 'lucide-react';
 import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -91,7 +90,14 @@ function VendorMasterContent() {
         hideHomeButton={true}
         resultCount={filteredVendors.length}
         showOriginalLabel={false}
-      />
+      >
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="inline-flex items-center justify-center h-9 px-4 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-sm font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors"
+        >
+          新規作成
+        </button>
+      </Header>
 
       {/* Filter */}
       <div className={`bg-surface-card border-b border-stroke-input ${isMobile ? 'px-4 py-3' : isTablet ? 'px-5 py-4' : 'px-6 py-5'} grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[repeat(3,minmax(180px,1fr))]'} gap-4`}>
@@ -155,17 +161,6 @@ function VendorMasterContent() {
           </div>
         ) : (
           <div className="bg-surface-card rounded-lg overflow-hidden shadow-sm">
-            {/* キャプション + 新規作成ボタン (Figma 配置) */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-stroke-input">
-              <h2 className="text-base font-bold text-content-primary">業者一覧</h2>
-              <button
-                onClick={() => setShowNewModal(true)}
-                className="inline-flex items-center gap-1.5 h-9 px-4 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-sm font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors"
-              >
-                <Plus size={16} aria-hidden />
-                新規作成
-              </button>
-            </div>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead className="bg-surface-screen border-b border-stroke-input">
@@ -197,21 +192,9 @@ function VendorMasterContent() {
                       <td className={tdCls}>{vendor.email}</td>
                       <td className={`${tdCls} text-center`}>{vendor.isPrimaryContact ? '○' : '---'}</td>
                       <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap`}>
-                        <div className="flex gap-1 justify-center">
-                          <button
-                            onClick={() => handleEdit(vendor)}
-                            className="inline-flex items-center justify-center w-8 h-8 bg-transparent text-content-primary border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
-                            aria-label={`${vendor.vendorName} を編集`}
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(vendor.id)}
-                            className="inline-flex items-center justify-center w-8 h-8 bg-transparent text-content-alert border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
-                            aria-label={`${vendor.vendorName} を削除`}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <div className="flex gap-2 justify-center">
+                          <button onClick={() => handleEdit(vendor)} className={`px-3 py-1.5 bg-content-primary text-white border-0 rounded ${isTablet ? 'text-xs' : 'text-[13px]'} font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors`}>編集</button>
+                          <button onClick={() => handleDelete(vendor.id)} className={`px-3 py-1.5 bg-content-alert text-white border-0 rounded ${isTablet ? 'text-xs' : 'text-[13px]'} font-semibold cursor-pointer hover:opacity-90 transition-colors`}>削除</button>
                         </div>
                       </td>
                     </tr>

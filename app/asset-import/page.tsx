@@ -181,7 +181,7 @@ export default function AssetImportPage() {
   return (
     <div className="min-h-dvh bg-surface-screen flex flex-col">
       <Header
-        title="固定資産管理台帳取込"
+        title="台帳取込"
         showBackButton={true}
         backHref="/main"
         backLabel="メイン画面に戻る"

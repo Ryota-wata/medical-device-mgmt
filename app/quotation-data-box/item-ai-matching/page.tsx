@@ -314,36 +314,36 @@ export default function ItemAiMatchingPage() {
                         <td className="px-2 py-2 text-center border border-stroke-input">
                           {isIndividual ? (
                             rowIsConfirmed ? (
-                              <div className="flex gap-2 justify-center items-center">
-                                <span className="px-2 py-0.5 bg-cta-primary text-white rounded text-[10px] font-bold">
+                              <div className="flex gap-1 justify-center items-center flex-wrap">
+                                <span className="px-1.5 py-0.5 bg-cta-primary text-white rounded text-[9px] font-bold">
+                                  AI適用
+                                </span>
+                                <span className="px-1.5 py-0.5 bg-cta-primary-dark text-white rounded text-[9px] font-bold">
+                                  資産マスタ
+                                </span>
+                                <span className="px-1.5 py-0.5 bg-content-link text-white rounded text-[9px] font-bold">
                                   紐付済
                                 </span>
                                 <button
                                   onClick={() => handleUnconfirm(item.id)}
-                                  className="text-content-link text-[10px] underline cursor-pointer hover:opacity-80"
+                                  className="px-1.5 py-0.5 bg-content-alert text-white border-0 rounded text-[9px] font-bold cursor-pointer hover:opacity-90 transition-colors"
                                 >
                                   解除
                                 </button>
                               </div>
                             ) : isSelectingThisRow ? (
-                              <span className="inline-block px-2 py-1 bg-cta-primary text-white rounded text-[10px] font-bold">
+                              <span className="inline-block px-2 py-1 bg-cta-primary text-white rounded text-[9px] font-bold">
                                 選択中...
                               </span>
                             ) : (
-                              <div className="flex flex-col gap-1 items-center">
+                              <div className="flex gap-1 justify-center flex-wrap">
                                 {aiJudgment && (
-                                  <button
-                                    onClick={() => handleApplyAI(item.id, aiJudgment)}
-                                    className="px-3 py-1 bg-cta-primary text-white border-0 rounded text-[10px] font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors w-full"
-                                  >
+                                  <button onClick={() => handleApplyAI(item.id, aiJudgment)} className="px-1.5 py-0.5 bg-cta-primary text-white border-0 rounded text-[9px] font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors">
                                     AI適用
                                   </button>
                                 )}
-                                <button
-                                  onClick={() => handleOpenAssetMaster(item.id)}
-                                  className="px-3 py-1 bg-surface-card text-cta-primary-dark border border-cta-primary rounded text-[10px] font-bold cursor-pointer hover:bg-surface-select transition-colors w-full"
-                                >
-                                  資産マスタ選択
+                                <button onClick={() => handleOpenAssetMaster(item.id)} className="px-1.5 py-0.5 bg-cta-primary-dark text-white border-0 rounded text-[9px] font-bold cursor-pointer whitespace-nowrap hover:opacity-90 transition-colors">
+                                  資産マスタ
                                 </button>
                               </div>
                             )
@@ -358,19 +358,18 @@ export default function ItemAiMatchingPage() {
           </div>
         </section>
 
-        {/* フッターボタン (Figma: 左寄せ 戻る + 次へ) */}
-        <div className="flex gap-12 mt-4 px-4">
+        <div className="flex gap-3 justify-between mt-4">
           <button
             onClick={handleBack}
-            className="h-12 w-[239px] bg-surface-negative text-content-primary border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-stroke-input transition-colors"
+            className="h-12 px-7 bg-surface-negative text-content-primary border-0 rounded cursor-pointer text-sm font-bold hover:bg-stroke-input transition-colors"
           >
-            戻る
+            一つ前のSTEPに戻る
           </button>
           <button
             onClick={handleNext}
-            className="h-12 w-[254px] bg-cta-primary text-white border-0 rounded-lg cursor-pointer text-base font-normal hover:bg-cta-primary-dark transition-colors"
+            className="h-12 px-7 bg-cta-primary text-white border-0 rounded cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
           >
-            次へ
+            個体登録/価格按分へ
           </button>
         </div>
       </div>
