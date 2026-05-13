@@ -319,6 +319,16 @@ export function UpdateApplicationModal({
     setIsConfirmView(false);
   };
 
+  const tableTh: React.CSSProperties = {
+    padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1',
+    textAlign: 'left', width: '100px', fontSize: '13px', fontWeight: 600, color: '#4A4A4A',
+    whiteSpace: 'nowrap',
+  };
+  const tableTd: React.CSSProperties = {
+    padding: '8px 12px', border: '1px solid #E1E1E1', fontSize: '13px',
+    background: 'white',
+  };
+
   const styles: Record<string, React.CSSProperties> = {
     overlay: {
       position: 'fixed',
@@ -637,84 +647,62 @@ export function UpdateApplicationModal({
         ) : (
           /* 入力画面 */
           <>
-          {/* 申請基本情報 */}
+          {/* 申請基本情報 (Figma 280:28894: テーブル UI) */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>申請基本情報</div>
-            <div style={styles.formGrid}>
-              <div style={styles.formItem}>
-                <label style={styles.label}>管理部署</label>
-                <input style={styles.inputDisabled} value={managementDepartment} disabled />
-              </div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>申請者</label>
-                <input style={styles.inputDisabled} value={applicantName} disabled />
-              </div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>申請日</label>
-                <input style={styles.inputDisabled} value={applicationDate} disabled />
-              </div>
-              <div></div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>設置部門 <span style={{ color: '#DA0000' }}>*</span></label>
-                <SearchableSelect
-                  value={installationDepartment}
-                  onChange={setInstallationDepartment}
-                  options={divisionOptions}
-                  placeholder="選択してください"
-                />
-              </div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>設置部署 <span style={{ color: '#DA0000' }}>*</span></label>
-                <SearchableSelect
-                  value={installationSection}
-                  onChange={setInstallationSection}
-                  options={departmentOptions}
-                  placeholder="選択してください"
-                />
-              </div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>設置室名</label>
-                <input
-                  style={styles.input}
-                  value={installationRoomName}
-                  onChange={(e) => setInstallationRoomName(e.target.value)}
-                  placeholder="手術室B"
-                />
-              </div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>優先順位</label>
-                <select style={styles.select} value={priority} onChange={(e) => setPriority(e.target.value)}>
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-              </div>
-              <div style={styles.formItem}>
-                <label style={styles.label}>希望納期</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <select
-                    style={{ ...styles.select, width: '90px' }}
-                    value={desiredDeliveryYear}
-                    onChange={(e) => setDesiredDeliveryYear(e.target.value)}
-                  >
-                    {[2025, 2026, 2027, 2028, 2029, 2030].map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                  <span>年</span>
-                  <select
-                    style={{ ...styles.select, width: '70px' }}
-                    value={desiredDeliveryMonth}
-                    onChange={(e) => setDesiredDeliveryMonth(e.target.value)}
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                  <span>月</span>
-                </div>
-              </div>
-            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <tbody>
+                <tr>
+                  <th style={tableTh}>管理部署</th>
+                  <td style={tableTd}>{managementDepartment}</td>
+                  <th style={tableTh}>申請者</th>
+                  <td style={tableTd}>{applicantName}</td>
+                  <th style={tableTh}>申請日</th>
+                  <td style={tableTd}>{applicationDate}</td>
+                </tr>
+                <tr>
+                  <th style={tableTh}>設置部門<span style={{ color: '#DA0000' }}> *</span></th>
+                  <td style={tableTd}>
+                    <SearchableSelect value={installationDepartment} onChange={setInstallationDepartment} options={divisionOptions} placeholder="選択してください" />
+                  </td>
+                  <th style={tableTh}>設置部署<span style={{ color: '#DA0000' }}> *</span></th>
+                  <td style={tableTd}>
+                    <SearchableSelect value={installationSection} onChange={setInstallationSection} options={departmentOptions} placeholder="選択してください" />
+                  </td>
+                  <th style={tableTh}>設置室名</th>
+                  <td style={tableTd}>
+                    <input style={{ ...styles.input, width: '100%', boxSizing: 'border-box' }} value={installationRoomName} onChange={(e) => setInstallationRoomName(e.target.value)} placeholder="手術室B" />
+                  </td>
+                </tr>
+                <tr>
+                  <th style={tableTh}>優先順位</th>
+                  <td style={tableTd}>
+                    <select style={{ ...styles.select, width: '80px' }} value={priority} onChange={(e) => setPriority(e.target.value)}>
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <th style={tableTh}>希望納期</th>
+                  <td style={tableTd} colSpan={3}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <select style={{ ...styles.select, width: '80px' }} value={desiredDeliveryYear} onChange={(e) => setDesiredDeliveryYear(e.target.value)}>
+                        {[2025, 2026, 2027, 2028, 2029, 2030].map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                      <span>年</span>
+                      <select style={{ ...styles.select, width: '64px' }} value={desiredDeliveryMonth} onChange={(e) => setDesiredDeliveryMonth(e.target.value)}>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      <span>月</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           {/* 申請品目 */}
