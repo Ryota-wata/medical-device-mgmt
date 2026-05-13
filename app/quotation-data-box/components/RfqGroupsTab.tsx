@@ -20,7 +20,7 @@ interface RfqGroupsTabProps {
 
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #4A4A4A',
+  border: '1px solid #E1E1E1',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -29,7 +29,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #8A8A8A',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -324,8 +324,8 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
     <div style={{ flex: 1, overflow: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-          {/* グループヘッダー行 */}
-          <tr style={{ background: '#4A4A4A', color: 'white' }}>
+          {/* グループヘッダー行 (Figma 304:37602: 薄灰 + 黒文字) */}
+          <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）依頼No,</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）グループ名称</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>業者情報</th>
@@ -334,7 +334,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
           </tr>
           {/* サブカラムヘッダー行 */}
-          <tr style={{ background: '#4A4A4A', color: 'white' }}>
+          <tr style={{ background: '#FAFAFA', color: '#4A4A4A' }}>
             <th style={thSubStyle}>業者名</th>
             <th style={thSubStyle}>氏名</th>
             <th style={thSubStyle}>連絡先</th>
