@@ -503,7 +503,7 @@ export function ColumnSettingsModal({
                     fontSize: 13,
                     fontWeight: 600,
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#0A6B17')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#146E2E')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '#008C1D')}
                 >
                   保存
@@ -587,7 +587,7 @@ export function ColumnSettingsModal({
                             fontWeight: 600,
                             whiteSpace: 'nowrap',
                           }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = '#0A6B17')}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#146E2E')}
                           onMouseLeave={(e) => (e.currentTarget.style.background = '#008C1D')}
                         >
                           適用
@@ -604,7 +604,7 @@ export function ColumnSettingsModal({
                             fontSize: 12,
                             whiteSpace: 'nowrap',
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#DA0000'; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = '#FDF1E5'; e.currentTarget.style.borderColor = '#DA0000'; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#E1E1E1'; }}
                         >
                           削除
@@ -626,7 +626,7 @@ export function ColumnSettingsModal({
               const status = getGroupStatus(group.id);
 
               const groupBg = status === 'all' ? '#EBF5EE' : status === 'partial' ? '#FDF1E5' : '#FAFAFA';
-              const groupBgHover = status === 'all' ? '#DBEDE0' : status === 'partial' ? '#F5E2CB' : '#F1F1F1';
+              const groupBgHover = status === 'all' ? '#EBF5EE' : status === 'partial' ? '#FDF1E5' : '#F1F1F1';
               return (
                 <div key={group.id} style={{ border: '1px solid #E1E1E1', borderRadius: 6, overflow: 'hidden' }}>
                   {/* グループヘッダー */}
