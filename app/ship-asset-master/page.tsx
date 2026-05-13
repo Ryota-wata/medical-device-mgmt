@@ -261,7 +261,7 @@ function ShipAssetMasterContent() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
