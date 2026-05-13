@@ -2,9 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { DepartmentMaster, RoomCategoryMaster } from '@/lib/types/master';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function ShipDepartmentMasterPage() {
   const router = useRouter();
@@ -47,8 +50,6 @@ export default function ShipDepartmentMasterPage() {
     const matchRC2 = !filterRoomCategory2 || rc.roomCategory2.includes(filterRoomCategory2);
     return matchRC1 && matchRC2;
   });
-
-  const handleBack = () => router.push('/main');
 
   // --- 左テーブル: 部署マスタ ハンドラ ---
   const handleEditDept = (dept: DepartmentMaster) => {
@@ -122,6 +123,9 @@ export default function ShipDepartmentMasterPage() {
     }
   };
 
+  const filterInputCls = `w-full ${isMobile ? 'p-2 text-[13px]' : 'p-2.5 text-sm'} border border-stroke-input rounded-md box-border bg-surface-card focus:outline-none focus:border-cta-primary transition-colors`;
+  const filterLabelCls = `block ${isMobile ? 'text-xs' : 'text-[13px]'} font-semibold mb-1.5 text-content-primary`;
+
   // --- モーダル共通レンダラー ---
   const renderModal = (
     title: string,
@@ -129,78 +133,95 @@ export default function ShipDepartmentMasterPage() {
     onSubmit: () => void,
     onCancel: () => void,
     submitLabel: string,
-    submitColor: string,
-  ) => {
-    const submitColorClass =
-      submitColor === '#008C1D' ? 'bg-cta-primary hover:bg-cta-primary-dark' :
-      submitColor === '#DA0000' ? 'bg-content-alert hover:opacity-90' :
-      submitColor === '#4A4A4A' ? 'bg-cta-primary hover:bg-cta-primary-dark' :
-      'bg-content-primary hover:bg-content-primary';
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]">
-        <div className={`bg-surface-card rounded-lg ${isMobile ? 'w-[90%]' : 'max-w-[700px] w-[90%]'} max-h-[90vh] overflow-auto`}>
-          <div className="px-6 py-4 border-b border-stroke-input">
-            <h2 className="text-lg font-semibold text-content-primary text-balance">{title}</h2>
-          </div>
-          <div className="p-6 flex flex-col gap-5">
-            {fields.map((f) => (
-              <div key={f.label}>
-                <label className="text-sm font-semibold text-content-primary block mb-2">{f.label}</label>
-                <input
-                  type="text"
-                  value={f.value}
-                  onChange={(e) => f.onChange(e.target.value)}
-                  placeholder={f.placeholder}
-                  className="w-full px-3 py-2.5 border border-stroke-input rounded text-sm"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="px-6 pb-6 flex gap-3 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-5 py-2.5 bg-content-sub text-white rounded-md text-sm font-semibold cursor-pointer hover:bg-content-sub"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={onSubmit}
-              className={`px-5 py-2.5 text-white rounded-md text-sm font-semibold cursor-pointer ${submitColorClass}`}
-            >
-              {submitLabel}
-            </button>
-          </div>
+  ) => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]">
+      <div className={`bg-surface-card rounded-lg shadow-lg ${isMobile ? 'w-[90%]' : 'max-w-[560px] w-[90%]'} max-h-[90vh] overflow-auto`}>
+        <div className="px-6 py-4 border-b border-stroke-input">
+          <h2 className="text-base font-bold text-content-primary text-balance">{title}</h2>
+        </div>
+        <div className="p-6 flex flex-col gap-5">
+          {fields.map((f) => (
+            <div key={f.label}>
+              <label className="block text-sm font-semibold text-content-primary mb-1.5">{f.label}</label>
+              <input
+                type="text"
+                value={f.value}
+                onChange={(e) => f.onChange(e.target.value)}
+                placeholder={f.placeholder}
+                className="w-full px-3 py-2.5 border border-stroke-input rounded-md text-sm bg-surface-card focus:outline-none focus:border-cta-primary transition-colors"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="px-6 pb-6 flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-5 py-2.5 bg-surface-card text-content-primary border border-stroke-input rounded-md text-sm font-semibold cursor-pointer hover:bg-surface-screen transition-colors"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={onSubmit}
+            className="px-5 py-2.5 bg-cta-primary text-white border-0 rounded-md text-sm font-semibold cursor-pointer hover:bg-cta-primary-dark transition-colors"
+          >
+            {submitLabel}
+          </button>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+
+  // --- 共通カード見出し (タイトル + 件数 + 新規作成ボタン) ---
+  const renderCardHeader = (title: string, count: number, onNew: () => void) => (
+    <div className={`flex items-center justify-between ${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-stroke-input bg-surface-card`}>
+      <div className="flex items-center gap-3">
+        <h2 className={`${isMobile ? 'text-[15px]' : 'text-base'} font-bold text-content-primary text-balance`}>{title}</h2>
+        <span className="bg-stroke-card text-content-primary px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums">{count}件</span>
+      </div>
+      <button
+        onClick={onNew}
+        className={`inline-flex items-center justify-center gap-1.5 ${isMobile ? 'px-3 py-1.5 text-[13px]' : 'px-4 py-2 text-sm'} bg-cta-primary text-white border-0 rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-cta-primary-dark transition-colors`}
+      >
+        <Plus size={16} aria-hidden />
+        新規作成
+      </button>
+    </div>
+  );
+
+  // --- 共通操作ボタン (編集 / 削除) ---
+  const renderActionButtons = (onEdit: () => void, onDelete: () => void, label: string) => (
+    <div className="flex gap-1 justify-center">
+      <button
+        onClick={onEdit}
+        className="inline-flex items-center justify-center w-7 h-7 bg-transparent text-cta-primary-dark border border-cta-primary rounded cursor-pointer hover:bg-surface-select transition-colors"
+        aria-label={`${label} を編集`}
+      >
+        <Pencil size={14} />
+      </button>
+      <button
+        onClick={onDelete}
+        className="inline-flex items-center justify-center w-7 h-7 bg-transparent text-content-alert border border-content-alert rounded cursor-pointer hover:bg-stroke-card transition-colors"
+        aria-label={`${label} を削除`}
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
 
   // --- 左テーブル: 部署マスタ レンダリング ---
   const renderDeptTable = () => (
     <div className="bg-surface-card rounded-lg overflow-hidden shadow-sm">
-      <div className={`flex items-center justify-between ${isMobile ? 'px-4 py-3' : 'px-5 py-4'} bg-content-primary rounded-t-lg`}>
-        <div className="flex items-center gap-3">
-          <h2 className={`${isMobile ? 'text-[15px]' : 'text-base'} font-semibold text-white text-balance`}>部署マスタ</h2>
-          <span className="bg-surface-card/20 text-white px-3 py-0.5 rounded-full text-[13px] font-semibold tabular-nums">{filteredDepartments.length}件</span>
-        </div>
-        <button
-          onClick={() => { setDeptFormData({ division: '', department: '' }); setShowNewDeptModal(true); }}
-          className={`${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-[13px]'} bg-cta-primary hover:bg-cta-primary-dark text-white rounded-md font-semibold cursor-pointer whitespace-nowrap`}
-        >
-          新規作成
-        </button>
-      </div>
+      {renderCardHeader('部署マスタ', filteredDepartments.length, () => { setDeptFormData({ division: '', department: '' }); setShowNewDeptModal(true); })}
 
       {/* フィルター */}
-      <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-stroke-input grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+      <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-stroke-input grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3 bg-surface-card`}>
         <div>
-          <label className="text-sm font-semibold text-content-primary block mb-2">部門</label>
-          <input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" className="px-3 py-2 border border-stroke-input rounded text-sm w-full" />
+          <label className={filterLabelCls}>部門</label>
+          <input type="text" value={filterDivision} onChange={(e) => setFilterDivision(e.target.value)} placeholder="診療部門" className={filterInputCls} />
         </div>
         <div>
-          <label className="text-sm font-semibold text-content-primary block mb-2">部署</label>
-          <input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" className="px-3 py-2 border border-stroke-input rounded text-sm w-full" />
+          <label className={filterLabelCls}>部署</label>
+          <input type="text" value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)} placeholder="外科" className={filterInputCls} />
         </div>
       </div>
 
@@ -211,10 +232,7 @@ export default function ShipDepartmentMasterPage() {
             <div key={dept.id} className="bg-surface-screen rounded-lg p-4 border border-stroke-input">
               <div className="text-base font-semibold text-content-primary mb-1">{dept.department}</div>
               <div className="text-[13px] text-content-sub mb-3">{dept.division}</div>
-              <div className="flex gap-2">
-                <button onClick={() => handleEditDept(dept)} className="flex-1 py-2 bg-content-primary text-white rounded text-xs font-semibold cursor-pointer hover:bg-content-primary">編集</button>
-                <button onClick={() => handleDeleteDept(dept.id)} className="flex-1 py-2 bg-content-alert text-white rounded text-xs font-semibold cursor-pointer hover:opacity-90">削除</button>
-              </div>
+              {renderActionButtons(() => handleEditDept(dept), () => handleDeleteDept(dept.id), dept.department)}
             </div>
           ))}
         </div>
@@ -222,22 +240,19 @@ export default function ShipDepartmentMasterPage() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-content-primary text-white">
-                <th className={`${isTablet ? 'p-3' : 'p-3.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold`}>部門</th>
-                <th className={`${isTablet ? 'p-3' : 'p-3.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold`}>部署</th>
-                <th className={`${isTablet ? 'p-3' : 'p-3.5'} text-center ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold whitespace-nowrap`}>操作</th>
+              <tr>
+                <th className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold text-content-primary bg-stroke-card border border-stroke-input`}>部門</th>
+                <th className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold text-content-primary bg-stroke-card border border-stroke-input`}>部署</th>
+                <th className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-center ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold text-content-primary bg-stroke-card border border-stroke-input whitespace-nowrap w-[110px]`}>操作</th>
               </tr>
             </thead>
             <tbody>
-              {filteredDepartments.map((dept) => (
-                <tr key={dept.id} className="border-b border-stroke-card bg-surface-card hover:bg-surface-screen">
-                  <td className={`${isTablet ? 'p-3' : 'p-3.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary`}>{dept.division}</td>
-                  <td className={`${isTablet ? 'p-3' : 'p-3.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary`}>{dept.department}</td>
-                  <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap`}>
-                    <div className="flex gap-2 justify-center">
-                      <button onClick={() => handleEditDept(dept)} className={`px-3 py-1.5 bg-content-primary text-white rounded text-[13px] font-semibold cursor-pointer hover:bg-content-primary`}>編集</button>
-                      <button onClick={() => handleDeleteDept(dept.id)} className={`px-3 py-1.5 bg-content-alert text-white rounded text-[13px] font-semibold cursor-pointer hover:opacity-90`}>削除</button>
-                    </div>
+              {filteredDepartments.map((dept, index) => (
+                <tr key={dept.id} className={index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                  <td className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary border border-stroke-input`}>{dept.division}</td>
+                  <td className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary border border-stroke-input`}>{dept.department}</td>
+                  <td className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-center whitespace-nowrap border border-stroke-input`}>
+                    {renderActionButtons(() => handleEditDept(dept), () => handleDeleteDept(dept.id), dept.department)}
                   </td>
                 </tr>
               ))}
@@ -247,9 +262,12 @@ export default function ShipDepartmentMasterPage() {
       )}
 
       {filteredDepartments.length === 0 && (
-        <div className="py-10 px-5 text-center text-content-sub text-sm">
-          検索条件に一致する部署マスタがありません
-        </div>
+        <EmptyState
+          title="検索条件に一致する部署マスタがありません"
+          description="検索条件を変更するか、フィルターを見直してください"
+          actionLabel="フィルターをリセット"
+          onAction={() => { setFilterDivision(''); setFilterDepartment(''); }}
+        />
       )}
     </div>
   );
@@ -257,28 +275,17 @@ export default function ShipDepartmentMasterPage() {
   // --- 右テーブル: 諸室区分マスタ レンダリング ---
   const renderRoomTable = () => (
     <div className="bg-surface-card rounded-lg overflow-hidden shadow-sm">
-      <div className={`flex items-center justify-between ${isMobile ? 'px-4 py-3' : 'px-5 py-4'} bg-content-primary rounded-t-lg`}>
-        <div className="flex items-center gap-3">
-          <h2 className={`${isMobile ? 'text-[15px]' : 'text-base'} font-semibold text-white text-balance`}>諸室区分マスタ</h2>
-          <span className="bg-surface-card/20 text-white px-3 py-0.5 rounded-full text-[13px] font-semibold tabular-nums">{filteredRoomCategories.length}件</span>
-        </div>
-        <button
-          onClick={() => { setRoomFormData({ roomCategory1: '', roomCategory2: '' }); setShowNewRoomModal(true); }}
-          className={`${isMobile ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-[13px]'} bg-cta-primary hover:bg-cta-primary-dark text-white rounded-md font-semibold cursor-pointer whitespace-nowrap`}
-        >
-          新規作成
-        </button>
-      </div>
+      {renderCardHeader('諸室区分マスタ', filteredRoomCategories.length, () => { setRoomFormData({ roomCategory1: '', roomCategory2: '' }); setShowNewRoomModal(true); })}
 
       {/* フィルター */}
-      <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-stroke-input grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+      <div className={`${isMobile ? 'px-4 py-3' : 'px-5 py-4'} border-b border-stroke-input grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-3 bg-surface-card`}>
         <div>
-          <label className="text-sm font-semibold text-content-primary block mb-2">諸室区分①</label>
-          <input type="text" value={filterRoomCategory1} onChange={(e) => setFilterRoomCategory1(e.target.value)} placeholder="手術室" className="px-3 py-2 border border-stroke-input rounded text-sm w-full" />
+          <label className={filterLabelCls}>諸室区分①</label>
+          <input type="text" value={filterRoomCategory1} onChange={(e) => setFilterRoomCategory1(e.target.value)} placeholder="手術室" className={filterInputCls} />
         </div>
         <div>
-          <label className="text-sm font-semibold text-content-primary block mb-2">諸室区分②</label>
-          <input type="text" value={filterRoomCategory2} onChange={(e) => setFilterRoomCategory2(e.target.value)} placeholder="オペ室1" className="px-3 py-2 border border-stroke-input rounded text-sm w-full" />
+          <label className={filterLabelCls}>諸室区分②</label>
+          <input type="text" value={filterRoomCategory2} onChange={(e) => setFilterRoomCategory2(e.target.value)} placeholder="オペ室1" className={filterInputCls} />
         </div>
       </div>
 
@@ -289,10 +296,7 @@ export default function ShipDepartmentMasterPage() {
             <div key={rc.id} className="bg-surface-screen rounded-lg p-4 border border-stroke-input">
               <div className="text-base font-semibold text-content-primary mb-1">{rc.roomCategory1}</div>
               <div className="text-[13px] text-content-sub mb-3">{rc.roomCategory2}</div>
-              <div className="flex gap-2">
-                <button onClick={() => handleEditRoom(rc)} className="flex-1 py-2 bg-content-primary text-white rounded text-xs font-semibold cursor-pointer hover:bg-content-primary">編集</button>
-                <button onClick={() => handleDeleteRoom(rc.id)} className="flex-1 py-2 bg-content-alert text-white rounded text-xs font-semibold cursor-pointer hover:opacity-90">削除</button>
-              </div>
+              {renderActionButtons(() => handleEditRoom(rc), () => handleDeleteRoom(rc.id), rc.roomCategory1)}
             </div>
           ))}
         </div>
@@ -300,22 +304,19 @@ export default function ShipDepartmentMasterPage() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-content-primary text-white">
-                <th className={`${isTablet ? 'p-3' : 'p-3.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold`}>諸室区分①</th>
-                <th className={`${isTablet ? 'p-3' : 'p-3.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold`}>諸室区分②</th>
-                <th className={`${isTablet ? 'p-3' : 'p-3.5'} text-center ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold whitespace-nowrap`}>操作</th>
+              <tr>
+                <th className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold text-content-primary bg-stroke-card border border-stroke-input`}>諸室区分①</th>
+                <th className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-left ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold text-content-primary bg-stroke-card border border-stroke-input`}>諸室区分②</th>
+                <th className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-center ${isTablet ? 'text-[13px]' : 'text-sm'} font-semibold text-content-primary bg-stroke-card border border-stroke-input whitespace-nowrap w-[110px]`}>操作</th>
               </tr>
             </thead>
             <tbody>
-              {filteredRoomCategories.map((rc) => (
-                <tr key={rc.id} className="border-b border-stroke-card bg-surface-card hover:bg-surface-screen">
-                  <td className={`${isTablet ? 'p-3' : 'p-3.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary`}>{rc.roomCategory1}</td>
-                  <td className={`${isTablet ? 'p-3' : 'p-3.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary`}>{rc.roomCategory2}</td>
-                  <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap`}>
-                    <div className="flex gap-2 justify-center">
-                      <button onClick={() => handleEditRoom(rc)} className={`px-3 py-1.5 bg-content-primary text-white rounded text-[13px] font-semibold cursor-pointer hover:bg-content-primary`}>編集</button>
-                      <button onClick={() => handleDeleteRoom(rc.id)} className={`px-3 py-1.5 bg-content-alert text-white rounded text-[13px] font-semibold cursor-pointer hover:opacity-90`}>削除</button>
-                    </div>
+              {filteredRoomCategories.map((rc, index) => (
+                <tr key={rc.id} className={index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                  <td className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary border border-stroke-input`}>{rc.roomCategory1}</td>
+                  <td className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} ${isTablet ? 'text-[13px]' : 'text-sm'} text-content-primary border border-stroke-input`}>{rc.roomCategory2}</td>
+                  <td className={`${isTablet ? 'px-3 py-2' : 'px-3.5 py-2.5'} text-center whitespace-nowrap border border-stroke-input`}>
+                    {renderActionButtons(() => handleEditRoom(rc), () => handleDeleteRoom(rc.id), rc.roomCategory1)}
                   </td>
                 </tr>
               ))}
@@ -325,32 +326,29 @@ export default function ShipDepartmentMasterPage() {
       )}
 
       {filteredRoomCategories.length === 0 && (
-        <div className="py-10 px-5 text-center text-content-sub text-sm">
-          検索条件に一致する諸室区分マスタがありません
-        </div>
+        <EmptyState
+          title="検索条件に一致する諸室区分マスタがありません"
+          description="検索条件を変更するか、フィルターを見直してください"
+          actionLabel="フィルターをリセット"
+          onAction={() => { setFilterRoomCategory1(''); setFilterRoomCategory2(''); }}
+        />
       )}
     </div>
   );
 
   return (
-    <div className="flex flex-col h-dvh bg-surface-screen">
-      {/* Header */}
-      <header className={`bg-surface-card border-b border-stroke-input ${isMobile ? 'px-4 py-3' : isTablet ? 'px-5 py-3.5' : 'px-6 py-4'} flex items-center justify-between flex-wrap ${isMobile ? 'gap-3' : 'gap-4'} sticky top-0 z-20`}>
-        <div className={`flex items-center ${isMobile ? 'gap-3' : 'gap-4'} flex-1`}>
-          <h1 className={`${isMobile ? 'text-base' : isTablet ? 'text-lg' : 'text-xl'} font-bold text-content-primary text-balance`}>
-            SHIP部署マスタ
-          </h1>
-        </div>
-        <button
-          onClick={handleBack}
-          className={`${isMobile ? 'px-4 py-2 text-[13px]' : 'px-5 py-2.5 text-sm'} bg-content-sub text-white rounded-md font-semibold cursor-pointer whitespace-nowrap hover:bg-content-sub`}
-        >
-          メイン画面に戻る
-        </button>
-      </header>
+    <div className="flex flex-col min-h-dvh bg-surface-screen">
+      <Header
+        title="SHIP部署マスタ"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+      />
 
-      {/* Main Content: 2カラム */}
-      <main className={`flex-1 ${isMobile ? 'p-4' : isTablet ? 'p-5' : 'p-6'} overflow-y-auto`}>
+      <main className={`flex-1 overflow-y-auto ${isMobile ? 'p-4' : isTablet ? 'p-5' : 'p-6'}`}>
         <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-6'} items-start`}>
           {renderDeptTable()}
           {renderRoomTable()}
@@ -371,7 +369,6 @@ export default function ShipDepartmentMasterPage() {
         handleNewDeptSubmit,
         () => setShowNewDeptModal(false),
         '作成',
-        '#008C1D',
       )}
 
       {/* 部署マスタ: 編集モーダル */}
@@ -384,7 +381,6 @@ export default function ShipDepartmentMasterPage() {
         handleEditDeptSubmit,
         () => { setShowEditDeptModal(false); setSelectedDepartment(null); },
         '更新',
-        '#4A4A4A',
       )}
 
       {/* 諸室区分マスタ: 新規作成モーダル */}
@@ -397,7 +393,6 @@ export default function ShipDepartmentMasterPage() {
         handleNewRoomSubmit,
         () => setShowNewRoomModal(false),
         '作成',
-        '#4A4A4A',
       )}
 
       {/* 諸室区分マスタ: 編集モーダル */}
@@ -410,7 +405,6 @@ export default function ShipDepartmentMasterPage() {
         handleEditRoomSubmit,
         () => { setShowEditRoomModal(false); setSelectedRoomCategory(null); },
         '更新',
-        '#4A4A4A',
       )}
     </div>
   );
