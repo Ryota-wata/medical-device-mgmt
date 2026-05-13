@@ -66,7 +66,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
         <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700, color: '#4A4A4A' }}>
           発注登録
         </h3>
-        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#4b5563' }}>
+        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#4A4A4A' }}>
           発注書の送付方法を選択してください。確定すると発注No,が自動配番されます。
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
