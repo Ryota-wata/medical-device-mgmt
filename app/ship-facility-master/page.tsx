@@ -9,6 +9,7 @@ import { useMasterStore } from '@/lib/stores/masterStore';
 import { FacilityMaster } from '@/lib/types/master';
 import { FacilityFormModal } from '@/components/modals/FacilityFormModal';
 import { exportFacilitiesToExcel } from '@/lib/utils/excel-facility-master';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const FACILITY_COLUMNS: { key: string; label: string }[] = [
   { key: 'facilityCode', label: '医療機関コード' },
@@ -275,8 +276,18 @@ export default function ShipFacilityMasterPage() {
         )}
 
         {filteredFacilities.length === 0 && !isLoading && (
-          <div className={`bg-surface-card rounded-lg ${isMobile ? 'px-5 py-10' : 'px-10 py-14'} text-center text-content-sub ${isMobile ? 'text-sm' : 'text-base'}`}>
-            検索条件に一致する施設マスタがありません
+          <div className="bg-surface-card rounded-lg">
+            <EmptyState
+              title="検索条件に一致する施設マスタがありません"
+              description="検索条件を変更するか、フィルターをリセットしてください"
+              actionLabel="フィルターをリセット"
+              onAction={() => {
+                setFilterFacilityCode('');
+                setFilterFacilityName('');
+                setFilterPrefecture('');
+                setFilterFoundingBody('');
+              }}
+            />
           </div>
         )}
       </main>

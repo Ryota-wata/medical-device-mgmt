@@ -6,6 +6,7 @@ import { AssetMaster } from '@/lib/types/master';
 import { useMasterStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 function AssetMasterContent() {
   const searchParams = useSearchParams();
@@ -427,9 +428,20 @@ function AssetMasterContent() {
         </div>
 
         {filteredAssets.length === 0 && (
-          <div className="py-10 text-center text-content-sub text-sm md:text-base">
-            該当する資産がありません
-          </div>
+          <EmptyState
+            title="該当する資産がありません"
+            description="検索条件を変更するか、フィルターをリセットしてください"
+            actionLabel="フィルターをリセット"
+            onAction={() => setFilters({
+              globalSearch: '',
+              category: '',
+              largeClass: '',
+              mediumClass: '',
+              item: '',
+              maker: '',
+              model: ''
+            })}
+          />
         )}
       </div>
     </div>

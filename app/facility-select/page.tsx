@@ -2,9 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Lock } from 'lucide-react';
 import { useAuthStore, useMasterStore } from '@/lib/stores';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function FacilitySelectPage() {
   const router = useRouter();
@@ -120,10 +121,11 @@ export default function FacilitySelectPage() {
             ))}
 
             {facilityList.length === 0 && (
-              <div className="text-center py-10 text-content-sub text-pretty">
-                <p>アクセス可能な施設がありません</p>
-                <p className="text-sm mt-2">管理者にお問い合わせください</p>
-              </div>
+              <EmptyState
+                icon={<Lock size={48} strokeWidth={1.5} />}
+                title="アクセス可能な施設がありません"
+                description="表示できる施設が割り当てられていません。管理者にお問い合わせください"
+              />
             )}
           </div>
         )}

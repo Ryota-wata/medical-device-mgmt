@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { User, UserRole, USER_ROLE_LABELS, isShipRole, isHospitalRole, ROLE_CATEGORIES, ROLE_CATEGORY_LABELS, RoleCategory } from '@/lib/types/user';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ロールバッジカラー
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
@@ -1121,15 +1122,17 @@ export default function UserManagementPage() {
         )}
 
         {filteredUsers.length === 0 && (
-          <div style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: isMobile ? '40px 20px' : '60px 40px',
-            textAlign: 'center',
-            color: '#8A8A8A',
-            fontSize: isMobile ? '14px' : '16px'
-          }}>
-            検索条件に一致するユーザーがいません
+          <div className="bg-surface-card rounded-lg">
+            <EmptyState
+              title="検索条件に一致するユーザーがいません"
+              description="検索条件を変更するか、フィルターをリセットしてください"
+              actionLabel="フィルターをリセット"
+              onAction={() => {
+                setFilterUsername('');
+                setFilterDepartment('');
+                setFilterRole('');
+              }}
+            />
           </div>
         )}
       </main>
