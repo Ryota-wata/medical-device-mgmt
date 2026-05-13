@@ -369,7 +369,7 @@ export function InspectionMenuModal({
                   style={styles.radioInput}
                   disabled={menus.length === 0}
                 />
-                <span style={menus.length === 0 ? { color: '#bdc3c7' } : {}}>
+                <span style={menus.length === 0 ? { color: '#E1E1E1' } : {}}>
                   既存プラン編集 {menus.length === 0 && '（プランなし）'}
                 </span>
               </label>
@@ -528,7 +528,7 @@ export function InspectionMenuModal({
           {/* 新たな点検項目 */}
           <div style={{
             ...styles.section,
-            ...(editingItemIndex >= 0 ? { border: '2px solid #0092E6', backgroundColor: '#f8fbff' } : {})
+            ...(editingItemIndex >= 0 ? { border: '2px solid #0092E6', backgroundColor: '#FAFAFA' } : {})
           }}>
             <h3 style={styles.sectionTitle}>
               {editingItemIndex >= 0 ? `点検項目の編集（${editingItemIndex + 1}行目）` : '新たな点検項目'}
@@ -659,7 +659,7 @@ export function InspectionMenuModal({
                           <button
                             style={{
                               ...styles.editButton,
-                              ...(editingItemIndex === index ? { backgroundColor: '#0073B8' } : {})
+                              ...(editingItemIndex === index ? { backgroundColor: '#4A4A4A' } : {})
                             }}
                             onClick={() => handleEditItem(index)}
                             aria-label="編集"
@@ -729,7 +729,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     zIndex: 1000,
   },
   modal: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: '#E1E1E1',
     borderRadius: '8px',
     width: '95%',
     maxWidth: '900px',
@@ -827,7 +827,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flex: 1,
     minWidth: '280px',
     padding: '8px 12px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
   },
@@ -857,7 +857,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   selectFull: {
     width: '100%',
     padding: '8px 12px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '14px',
     backgroundColor: 'white',
@@ -896,7 +896,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   cycleNumberSmall: {
     width: '50px',
     padding: '4px 8px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '13px',
     textAlign: 'center',
@@ -963,7 +963,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   evalSelect: {
     padding: '6px 10px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '13px',
     backgroundColor: 'white',
@@ -971,7 +971,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   evalInput: {
     padding: '6px 10px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '13px',
     width: '100px',
@@ -979,7 +979,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   inputSmall: {
     width: '100%',
     padding: '6px 10px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '13px',
     boxSizing: 'border-box',
@@ -987,7 +987,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   selectSmall: {
     width: '100%',
     padding: '6px 10px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '4px',
     fontSize: '13px',
     backgroundColor: 'white',
@@ -1045,7 +1045,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   orderButton: {
     padding: '2px 6px',
-    border: '1px solid #bdc3c7',
+    border: '1px solid #E1E1E1',
     borderRadius: '3px',
     backgroundColor: 'white',
     fontSize: '10px',
@@ -1075,7 +1075,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '12px',
     padding: '12px 20px',
     borderTop: '1px solid #ccc',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#FAFAFA',
     borderRadius: '0 0 8px 8px',
   },
   cancelButton: {
