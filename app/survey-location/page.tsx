@@ -16,7 +16,8 @@ function SurveyLocationContent() {
   const { facilities: hospitalFacilities } = useHospitalFacilityStore();
 
   const facilityMasterData = useMemo(() => {
-    if (!facilityName) return [];
+    // selectedFacility 未設定時は全施設データから抽出 (デモ用フォールバック)
+    if (!facilityName) return hospitalFacilities;
     return hospitalFacilities.filter(f => f.hospitalName === facilityName);
   }, [hospitalFacilities, facilityName]);
 
@@ -143,7 +144,7 @@ function SurveyLocationContent() {
               label="Category"
               value={category}
               onChange={setCategory}
-              options={['', ...categoryOptions]}
+              options={categoryOptions}
               placeholder="選択してください"
               isMobile={isMobile}
             />
@@ -155,7 +156,7 @@ function SurveyLocationContent() {
               label="部門"
               value={department}
               onChange={handleDepartmentChange}
-              options={['', ...departmentOptions]}
+              options={departmentOptions}
               placeholder="選択してください"
               isMobile={isMobile}
             />
@@ -167,7 +168,7 @@ function SurveyLocationContent() {
               label="部署"
               value={section}
               onChange={handleSectionChange}
-              options={['', ...sectionOptions]}
+              options={sectionOptions}
               placeholder="選択してください"
               isMobile={isMobile}
             />
