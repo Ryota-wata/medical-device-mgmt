@@ -123,20 +123,20 @@ export const ApplicationCreationModal: React.FC<ApplicationCreationModalProps> =
 
         {/* 確定資産情報（assetInfoがある場合） */}
         {assetInfo && (
-          <div style={{ marginBottom: '20px', padding: '15px', background: '#F1ECF7', borderRadius: '4px', border: '1px solid #ce93d8' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '10px' }}>確定資産情報（Step2で確定）</div>
+          <div style={{ marginBottom: '20px', padding: '15px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #8A8A8A' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '10px' }}>確定資産情報（Step2で確定）</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: '13px' }}>
-              <span style={{ color: '#5E3A93' }}>category:</span>
+              <span style={{ color: '#4A4A4A' }}>category:</span>
               <span>{assetInfo.category || '-'}</span>
-              <span style={{ color: '#5E3A93' }}>大分類:</span>
+              <span style={{ color: '#4A4A4A' }}>大分類:</span>
               <span>{assetInfo.majorCategory || '-'}</span>
-              <span style={{ color: '#5E3A93' }}>中分類:</span>
+              <span style={{ color: '#4A4A4A' }}>中分類:</span>
               <span>{assetInfo.middleCategory || '-'}</span>
-              <span style={{ color: '#5E3A93' }}>資産名:</span>
+              <span style={{ color: '#4A4A4A' }}>資産名:</span>
               <span style={{ fontWeight: 'bold' }}>{assetInfo.assetName}</span>
-              <span style={{ color: '#5E3A93' }}>メーカー:</span>
+              <span style={{ color: '#4A4A4A' }}>メーカー:</span>
               <span>{assetInfo.manufacturer || '-'}</span>
-              <span style={{ color: '#5E3A93' }}>型式:</span>
+              <span style={{ color: '#4A4A4A' }}>型式:</span>
               <span>{assetInfo.model || '-'}</span>
             </div>
           </div>
