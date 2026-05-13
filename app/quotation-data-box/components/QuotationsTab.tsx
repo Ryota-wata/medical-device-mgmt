@@ -46,11 +46,11 @@ const QUOTATION_COLUMNS: { key: string; label: string; align?: 'right' | 'center
 
 const GROUP_HEADERS = [
   { label: '見積ヘッダー', span: 6, color: '#4A4A4A' },
-  { label: 'STEP② 商品情報', span: 5, color: '#0d6efd' },
-  { label: 'STEP② 価格情報', span: 4, color: '#0d6efd' },
-  { label: 'STEP③', span: 2, color: '#198754' },
-  { label: 'STEP④ 個体管理品目', span: 5, color: '#6f42c1' },
-  { label: 'STEP⑤ 個体登録', span: 3, color: '#A35414' },
+  { label: 'STEP② 商品情報', span: 5, color: '#4A4A4A' },
+  { label: 'STEP② 価格情報', span: 4, color: '#4A4A4A' },
+  { label: 'STEP③', span: 2, color: '#008C1D' },
+  { label: 'STEP④ 個体管理品目', span: 5, color: '#4A4A4A' },
+  { label: 'STEP⑤ 個体登録', span: 3, color: '#4A4A4A' },
 ];
 
 export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
