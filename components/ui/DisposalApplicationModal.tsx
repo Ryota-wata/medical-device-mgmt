@@ -185,31 +185,33 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
           flexDirection: 'column',
         }}
       >
-        {/* モーダルヘッダー */}
+        {/* モーダルヘッダー (Figma 395:68355: 白背景 + 黒文字) */}
         <div
           style={{
-            background: themeColor,
+            background: 'white',
             padding: '16px 24px',
             fontSize: '18px',
-            fontWeight: 'bold',
-            color: 'white',
+            fontWeight: 600,
+            color: '#4A4A4A',
+            borderBottom: '1px solid #E1E1E1',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <span>{isConfirmView ? '廃棄申請 - 内容確認' : '廃棄申請'}</span>
+          <span>{isConfirmView ? '廃棄申請：内容確認' : '廃棄申請'}</span>
           <button
             onClick={() => setShowCloseConfirm(true)}
             style={{
               background: 'none',
               border: 'none',
-              color: 'white',
-              fontSize: '24px',
+              color: '#4A4A4A',
+              fontSize: '20px',
               cursor: 'pointer',
               padding: '0',
               width: '30px',
               height: '30px',
+              lineHeight: 1,
             }}
             aria-label="閉じる"
           >
@@ -228,7 +230,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
 
             {/* 申請基本情報 */}
             <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #E1E1E1' }}>
                 申請基本情報
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -262,7 +264,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
 
             {/* 対象資産情報 */}
             <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #E1E1E1' }}>
                 対象資産情報
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -294,7 +296,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             {/* コメント */}
             {comment && (
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #E1E1E1' }}>
                   コメント（廃棄理由他）
                 </div>
                 <div style={{ padding: '12px', background: '#FAFAFA', borderRadius: '4px', border: '1px solid #E1E1E1', whiteSpace: 'pre-wrap' }}>
@@ -306,7 +308,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
             {/* 添付ファイル */}
             {attachedFiles.length > 0 && (
               <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, marginBottom: '16px', paddingBottom: '8px', borderBottom: `2px solid ${themeColor}` }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid #E1E1E1' }}>
                   添付ファイル
                 </div>
                 <ul style={{ margin: 0, paddingLeft: '20px' }}>
@@ -322,14 +324,24 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
         ) : (
           /* ===== 入力画面 ===== */
           <>
+          {/* 注意文 (Figma 395:68355: 赤強調) */}
+          <div style={{
+            color: themeColor,
+            fontSize: '13px',
+            fontWeight: 500,
+            marginBottom: '16px',
+          }}>
+            ※以下の項目に間違いがないかご確認ください
+          </div>
+
           {/* 申請基本情報 */}
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
-              fontWeight: 'bold',
-              color: themeColor,
+              fontWeight: 600,
+              color: '#4A4A4A',
               marginBottom: '16px',
-              borderBottom: `2px solid ${themeColor}`,
+              borderBottom: '1px solid #E1E1E1',
               paddingBottom: '8px'
             }}>
               申請基本情報
@@ -345,7 +357,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>所属部署</div>
               <div style={{
                 padding: '8px 12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#FAFAFA'
@@ -356,7 +368,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>申請者</div>
               <div style={{
                 padding: '8px 12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#FAFAFA'
@@ -367,7 +379,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>申請日</div>
               <div style={{
                 padding: '8px 12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#FAFAFA'
@@ -379,7 +391,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置部門</div>
               <div style={{
                 padding: '8px 12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#FAFAFA'
@@ -390,7 +402,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置部署</div>
               <div style={{
                 padding: '8px 12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#FAFAFA'
@@ -401,7 +413,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ fontSize: '13px', color: '#666' }}>設置室名</div>
               <div style={{
                 padding: '8px 12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 background: '#FAFAFA'
@@ -429,10 +441,10 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
-              fontWeight: 'bold',
-              color: themeColor,
+              fontWeight: 600,
+              color: '#4A4A4A',
               marginBottom: '16px',
-              borderBottom: `2px solid ${themeColor}`,
+              borderBottom: '1px solid #E1E1E1',
               paddingBottom: '8px'
             }}>
               対象資産情報
@@ -447,37 +459,37 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 alignItems: 'center'
               }}>
                 <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.qrCode || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>品目名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.name || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>メーカー名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.maker || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>型式</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.model || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>数量</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.quantity ?? '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>シリアルNo.</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.serialNumber || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>納入年月日</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.deliveryDate || '-'}
                 </div>
               </div>
@@ -516,10 +528,10 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{
               fontSize: '14px',
-              fontWeight: 'bold',
-              color: themeColor,
+              fontWeight: 600,
+              color: '#4A4A4A',
               marginBottom: '12px',
-              borderBottom: `2px solid ${themeColor}`,
+              borderBottom: '1px solid #E1E1E1',
               paddingBottom: '8px'
             }}>
               コメント（廃棄理由他）
@@ -532,7 +544,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               style={{
                 width: '100%',
                 padding: '12px',
-                border: `1px solid ${themeColor}`,
+                border: '1px solid #E1E1E1',
                 borderRadius: '4px',
                 fontSize: '13px',
                 boxSizing: 'border-box',
@@ -548,17 +560,17 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               alignItems: 'center',
               gap: '12px',
               padding: '12px',
-              border: `1px solid ${themeColor}`,
+              border: '1px solid #E1E1E1',
               borderRadius: '4px',
               marginBottom: '8px',
             }}>
               <div style={{
                 padding: '8px 16px',
-                background: themeColor,
-                color: 'white',
+                background: '#F1F1F1',
+                color: '#4A4A4A',
                 borderRadius: '4px',
                 fontSize: '13px',
-                fontWeight: 'bold',
+                fontWeight: 600,
               }}>
                 添付ファイル
               </div>
@@ -652,7 +664,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                   padding: '12px 32px',
                   background: 'white',
                   color: themeColor,
-                  border: `1px solid ${themeColor}`,
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -683,13 +695,13 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               onClick={handleConfirm}
               style={{
                 padding: '12px 48px',
-                background: themeColor,
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
+                background: 'white',
+                color: '#146E2E',
+                border: '1px solid #146E2E',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 fontSize: '15px',
-                fontWeight: 'bold',
+                fontWeight: 600,
               }}
             >
               記載内容を確認する
