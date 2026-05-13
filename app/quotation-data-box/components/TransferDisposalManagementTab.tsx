@@ -208,7 +208,7 @@ const MOCK_RFQ_GROUPS: DisposalRfqGroup[] = [
 // --- ヘッダースタイル ---
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #4A4A4A',
+  border: '1px solid #E1E1E1',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -217,7 +217,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #8A8A8A',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
