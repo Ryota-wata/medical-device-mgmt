@@ -696,7 +696,7 @@ function PcDetailTableCard({
             <tr className="bg-stroke-card border-b border-stroke-input text-left">
               <th className="px-3 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input text-center" rowSpan={2}>No.</th>
               <th className="px-3 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input" colSpan={7}>商品分類</th>
-              <th className="px-3 py-2 text-sm font-semibold text-cta-primary-dark bg-[#fffbe3]" colSpan={7}>入力項目</th>
+              <th className="px-3 py-2 text-sm font-semibold text-cta-primary-dark bg-[#FAFAFA]" colSpan={7}>入力項目</th>
             </tr>
             <tr className="bg-stroke-card border-b border-stroke-input text-left">
               <th className="w-[120px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">資産MasterID</th>
@@ -706,13 +706,13 @@ function PcDetailTableCard({
               <th className="w-[180px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">品名</th>
               <th className="w-[140px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">メーカー名</th>
               <th className="w-[120px] px-3 py-2 text-xs font-normal text-content-primary border-r border-stroke-input">型式</th>
-              <th className="w-[80px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">階</th>
-              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">部門</th>
-              <th className="w-[130px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">部署</th>
-              <th className="w-[130px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">室名</th>
-              <th className="w-[160px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">QRコード</th>
-              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3] border-r border-stroke-input">シリアルNo.</th>
-              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#fffbe3]">写真撮影</th>
+              <th className="w-[80px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA] border-r border-stroke-input">階</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA] border-r border-stroke-input">部門</th>
+              <th className="w-[130px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA] border-r border-stroke-input">部署</th>
+              <th className="w-[130px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA] border-r border-stroke-input">室名</th>
+              <th className="w-[160px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA] border-r border-stroke-input">QRコード</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA] border-r border-stroke-input">シリアルNo.</th>
+              <th className="w-[140px] px-3 py-2 text-xs font-normal text-cta-primary-dark bg-[#FAFAFA]">写真撮影</th>
             </tr>
           </thead>
           <tbody>
@@ -783,11 +783,11 @@ function PcDetailTableCard({
                       className={pcCellInputCls}
                     />
                   </PcEditCell>
-                  <td className="px-3 py-2 align-middle bg-[#fffdf5]">
+                  <td className="px-3 py-2 align-middle bg-[#FAFAFA]">
                     {r.photoFileName ? (
                       <span className="text-xs text-cta-primary font-medium">{r.photoFileName}</span>
                     ) : (
-                      <label className="inline-flex items-center gap-1 px-2 py-1 bg-[#fffbe3] border border-stroke-input rounded-md cursor-pointer text-xs text-cta-primary-dark whitespace-nowrap hover:bg-surface-select transition-colors">
+                      <label className="inline-flex items-center gap-1 px-2 py-1 bg-[#FAFAFA] border border-stroke-input rounded-md cursor-pointer text-xs text-cta-primary-dark whitespace-nowrap hover:bg-surface-select transition-colors">
                         <span>📷 アップロード</span>
                         <input
                           type="file"
@@ -815,7 +815,7 @@ const pcCellInputCls =
   'w-full h-[34px] px-2 rounded-md bg-surface-card border border-stroke-input text-xs text-content-primary placeholder:text-content-placeholder focus:outline-none focus:border-cta-primary transition-colors';
 
 function PcEditCell({ children }: { children: React.ReactNode }) {
-  return <td className="px-2 py-2 align-middle bg-[#fffdf5] border-r border-stroke-input">{children}</td>;
+  return <td className="px-2 py-2 align-middle bg-[#FAFAFA] border-r border-stroke-input">{children}</td>;
 }
 
 // ============================================================
