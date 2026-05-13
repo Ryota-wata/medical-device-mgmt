@@ -196,9 +196,9 @@ function InspectionResultContent() {
       case '合格':
         return { backgroundColor: '#EBF5EE', color: '#008C1D', borderColor: '#008C1D' };
       case '再点検':
-        return { backgroundColor: '#FDF1E5', color: '#A35414', borderColor: '#A35414' };
+        return { backgroundColor: '#FDF1E5', color: '#4A4A4A', borderColor: '#4A4A4A' };
       case '修理申請':
-        return { backgroundColor: '#ffebee', color: '#DA0000', borderColor: '#DA0000' };
+        return { backgroundColor: '#FDF1E5', color: '#DA0000', borderColor: '#DA0000' };
       default:
         return { backgroundColor: '#FAFAFA', color: '#666', borderColor: '#E1E1E1' };
     }
@@ -264,7 +264,7 @@ function InspectionResultContent() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #008C1D 0%, #0A6B17 100%)',
+        background: 'linear-gradient(135deg, #008C1D 0%, #146E2E 100%)',
         color: 'white',
         padding: isMobile ? '16px' : '20px 24px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
