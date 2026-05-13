@@ -1201,14 +1201,14 @@ function RemodelApplicationContent() {
             </span>
             <button
               onClick={() => router.push(`/quotation-data-box/remodel-dashboard?editListId=${editList.id}`)}
-              className="px-3 py-1 bg-[#008C1D] hover:bg-[#0A6B17] text-white rounded font-medium text-xs transition-colors border-0 cursor-pointer whitespace-nowrap"
+              className="px-3 py-1 bg-[#008C1D] hover:bg-[#146E2E] text-white rounded font-medium text-xs transition-colors border-0 cursor-pointer whitespace-nowrap"
             >
               ダッシュボードへ
             </button>
           </div>
         ) : (
           <div className="px-4 py-1.5 bg-[#F1F1F1] border-b border-[#E1E1E1] flex items-center gap-2 flex-wrap">
-            <span className="px-2 py-0.5 bg-[#4b5563] text-white rounded-full text-xs font-semibold whitespace-nowrap">
+            <span className="px-2 py-0.5 bg-[#4A4A4A] text-white rounded-full text-xs font-semibold whitespace-nowrap">
               通常
             </span>
             <span className="text-xs text-[#4A4A4A] flex-1 truncate" title="見積依頼グループを作成して購入管理画面でタスクを進めてください">
@@ -1243,7 +1243,7 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#0A6B17'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#146E2E'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#008C1D'; }}
         >
           API連携
@@ -1268,7 +1268,7 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#A30000'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#DA0000'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#DA0000'; }}
         >
           Data Link
@@ -1289,7 +1289,7 @@ function RemodelApplicationContent() {
             fontWeight: 500,
             transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#A30000'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#DA0000'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = '#DA0000'; }}
         >
           見積DB Link
@@ -1307,7 +1307,7 @@ function RemodelApplicationContent() {
           disabled={selectedItems.size === 0}
           style={{
             padding: '8px 16px',
-            background: selectedItems.size === 0 ? '#bdc3c7' : '#008C1D',
+            background: selectedItems.size === 0 ? '#E1E1E1' : '#008C1D',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -1357,7 +1357,7 @@ function RemodelApplicationContent() {
               disabled={disabled}
               style={{
                 padding: '8px 16px',
-                background: disabled ? '#bdc3c7' : '#A35414',
+                background: disabled ? '#E1E1E1' : '#4A4A4A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1381,15 +1381,15 @@ function RemodelApplicationContent() {
               padding: '8px 16px',
               fontSize: '13px',
               fontWeight: 600,
-              backgroundColor: '#A35414',
+              backgroundColor: '#4A4A4A',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#A35414'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#A35414'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#4A4A4A'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#4A4A4A'; }}
           >
             + 新規要望{isInlineNewMode && inlineNewRows.length > 0 ? `（${inlineNewRows.length}件編集中）` : ''}
           </button>
@@ -1409,7 +1409,7 @@ function RemodelApplicationContent() {
                   cursor: 'pointer',
                   transition: 'background 0.2s',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#0A6B17'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#146E2E'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = '#008C1D'; }}
               >
                 全て登録（{inlineNewRows.length}件）
@@ -1423,7 +1423,7 @@ function RemodelApplicationContent() {
                   fontWeight: 600,
                   backgroundColor: '#fff',
                   color: '#DA0000',
-                  border: '1px solid #f5b7b1',
+                  border: '1px solid #FDF1E5',
                   borderRadius: '4px',
                   cursor: 'pointer',
                 }}
@@ -1441,7 +1441,7 @@ function RemodelApplicationContent() {
           {selectedItems.size > 0 && (
             <div style={{
               padding: '6px 12px',
-              background: '#1E5A9E',
+              background: '#4A4A4A',
               color: 'white',
               borderRadius: '4px',
               fontSize: '13px',
@@ -1512,7 +1512,7 @@ function RemodelApplicationContent() {
               minWidth: '220px',
               maxWidth: '380px',
               padding: '4px 10px',
-              border: '1px solid #ced4da',
+              border: '1px solid #E1E1E1',
               borderRadius: '4px',
               fontSize: '12px',
               outline: 'none',
@@ -1590,7 +1590,7 @@ function RemodelApplicationContent() {
         {selectedItems.size > 1 && editingCell !== null && selectedItems.has(editingCell.rowNo) && (
           <div style={{
             padding: '8px 16px',
-            background: '#EAF3FB',
+            background: '#EBF5EE',
             border: '1px solid #0092E6',
             borderRadius: '4px',
             marginBottom: '8px',
@@ -1598,7 +1598,7 @@ function RemodelApplicationContent() {
             alignItems: 'center',
             gap: '8px',
             fontSize: '13px',
-            color: '#1E5A9E',
+            color: '#4A4A4A',
             fontWeight: 600,
           }}>
             <span style={{
@@ -1607,7 +1607,7 @@ function RemodelApplicationContent() {
               justifyContent: 'center',
               width: '20px',
               height: '20px',
-              background: '#1E5A9E',
+              background: '#4A4A4A',
               color: 'white',
               borderRadius: '50%',
               fontSize: '11px',
@@ -1679,7 +1679,7 @@ function RemodelApplicationContent() {
                       fontSize: '11px',
                       fontWeight: 700,
                       color: 'white',
-                      background: '#A35414',
+                      background: '#4A4A4A',
                       borderRight: '1px solid rgba(255,255,255,0.3)',
                       borderBottom: '1px solid rgba(255,255,255,0.2)',
                       whiteSpace: 'nowrap',
@@ -1734,7 +1734,7 @@ function RemodelApplicationContent() {
                         position: 'relative',
                         whiteSpace: 'nowrap',
                         overflow: 'visible',
-                        background: draggedColumn === col.key ? '#EAF3FB' : '#FAFAFA',
+                        background: draggedColumn === col.key ? '#EBF5EE' : '#FAFAFA',
                         zIndex: openFilterColumn === col.key ? 100 : 1,
                         borderRight: '1px solid #E1E1E1',
                         borderBottom: '2px solid #E1E1E1',
@@ -1827,7 +1827,7 @@ function RemodelApplicationContent() {
                                   padding: '6px 8px',
                                   cursor: 'pointer',
                                   fontSize: '12px',
-                                  borderBottom: '1px solid #f0f0f0',
+                                  borderBottom: '1px solid #FAFAFA',
                                 }}
                               >
                                 <input
@@ -1878,10 +1878,10 @@ function RemodelApplicationContent() {
                       fontWeight: 'bold',
                       color: '#4A4A4A',
                       whiteSpace: 'nowrap',
-                      background: '#fff8e1',
+                      background: '#FAFAFA',
                       borderRight: '1px solid #E1E1E1',
                       borderBottom: '2px solid #E1E1E1',
-                      borderTop: '2px solid #A35414',
+                      borderTop: '2px solid #4A4A4A',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1913,7 +1913,7 @@ function RemodelApplicationContent() {
                 const getRowBorderColor = () => {
                   if (errorRows.has(asset.no)) return '#DA0000';
                   if (appliedRows.has(asset.no)) return '#008C1D';
-                  if (asset.purchaseCategory) return '#A35414';
+                  if (asset.purchaseCategory) return '#4A4A4A';
                   return 'transparent';
                 };
                 return (
@@ -1928,7 +1928,7 @@ function RemodelApplicationContent() {
                     position: 'sticky',
                     left: 0,
                     zIndex: 100,
-                    background: selectedItems.has(asset.no) ? '#EAF3FB' : 'white',
+                    background: selectedItems.has(asset.no) ? '#EBF5EE' : 'white',
                     boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
                     borderRight: '1px solid #E1E1E1',
                     borderBottom: '1px solid #E1E1E1',
@@ -1957,15 +1957,15 @@ function RemodelApplicationContent() {
                     const getCellBackground = () => {
                       if (isEditing) return '#FDF1E5';
                       // 一括適用対象行のハイライト
-                      if (isBulkEditTarget && editingCell?.colKey === col.key) return '#fff8e1';
+                      if (isBulkEditTarget && editingCell?.colKey === col.key) return '#FAFAFA';
                       if (isHovered && isEditable) {
                         // 選択状態では濃い青、非選択では薄い青
-                        return isRowSelected ? '#bbdefb' : '#EAF3FB';
+                        return isRowSelected ? '#EBF5EE' : '#EBF5EE';
                       }
                       // 一括適用対象行の通常ハイライト
-                      if (isBulkEditTarget) return '#fffde7';
+                      if (isBulkEditTarget) return '#FAFAFA';
                       // デフォルトは行の背景色に合わせる
-                      return isRowSelected ? '#EAF3FB' : 'white';
+                      return isRowSelected ? '#EBF5EE' : 'white';
                     };
 
                     return (
@@ -1994,9 +1994,9 @@ function RemodelApplicationContent() {
                             const currentVal = asset.purchaseCategory || '';
                             const categoryColors: Record<string, string> = {
                               '新規': '#008C1D',
-                              '更新': '#A35414',
+                              '更新': '#4A4A4A',
                               '移設': '#008C1D',
-                              '増設': '#4527A0',
+                              '増設': '#4A4A4A',
                               '廃棄予定': '#DA0000',
                             };
                             // 新規追加レコード（sourceType === 'added' かつ purchaseCategory === '新規'）はバッジ固定
@@ -2032,7 +2032,7 @@ function RemodelApplicationContent() {
                                   fontSize: '12px',
                                   fontWeight: 'bold',
                                   cursor: 'pointer',
-                                  background: currentVal ? categoryColors[currentVal] || '#f0f0f0' : 'transparent',
+                                  background: currentVal ? categoryColors[currentVal] || '#FAFAFA' : 'transparent',
                                   color: currentVal ? 'white' : '#8A8A8A',
                                   appearance: 'auto',
                                 }}
@@ -2079,7 +2079,7 @@ function RemodelApplicationContent() {
                         key={`fc-${fc.key}-${asset.no}`}
                         style={{
                           padding: '4px 6px',
-                          background: selectedItems.has(asset.no) ? '#EAF3FB' : '#fffdf2',
+                          background: selectedItems.has(asset.no) ? '#EBF5EE' : '#FAFAFA',
                           borderRight: '1px solid #E1E1E1',
                           borderBottom: '1px solid #E1E1E1',
                         }}
@@ -2114,7 +2114,7 @@ function RemodelApplicationContent() {
                       padding: '4px',
                       textAlign: 'center',
                       whiteSpace: 'nowrap',
-                      background: selectedItems.has(asset.no) ? '#EAF3FB' : 'white',
+                      background: selectedItems.has(asset.no) ? '#EBF5EE' : 'white',
                       borderRight: '1px solid #E1E1E1',
                       borderBottom: '1px solid #E1E1E1',
                     }}
@@ -2197,7 +2197,7 @@ function RemodelApplicationContent() {
                           padding: '8px 10px',
                           background: '#fff',
                           color: '#DA0000',
-                          border: '1px solid #f5b7b1',
+                          border: '1px solid #FDF1E5',
                           borderRadius: '3px',
                           cursor: 'pointer',
                           fontSize: '12px',
@@ -2236,12 +2236,12 @@ function RemodelApplicationContent() {
                       background: '#EBF5EE',
                       boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
                       borderRight: '1px solid #E1E1E1',
-                      borderBottom: '2px solid #4caf50',
+                      borderBottom: '2px solid #008C1D',
                       textAlign: 'center',
                       verticalAlign: 'middle',
                     }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#4caf50', fontSize: '12px', fontWeight: 'bold' }}>新規{rowIdx + 1}</span>
+                        <span style={{ color: '#008C1D', fontSize: '12px', fontWeight: 'bold' }}>新規{rowIdx + 1}</span>
                         <button
                           onClick={() => handleInlineRowRemove(row.id)}
                           title="この新規要望行を削除"
@@ -2275,11 +2275,11 @@ function RemodelApplicationContent() {
                           key={col.key}
                           style={{
                             padding: isInlineEditing ? '4px' : '8px 8px',
-                            background: isInlineEditing ? '#FDF1E5' : isEditable ? '#f1f8e9' : '#EBF5EE',
+                            background: isInlineEditing ? '#FDF1E5' : isEditable ? '#EBF5EE' : '#EBF5EE',
                             borderTop: 'none',
                             borderLeft: 'none',
                             borderRight: '1px solid #E1E1E1',
-                            borderBottom: '2px solid #4caf50',
+                            borderBottom: '2px solid #008C1D',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -2319,7 +2319,7 @@ function RemodelApplicationContent() {
                               style={{
                                 width: '100%',
                                 padding: '6px 4px',
-                                border: '2px solid #4caf50',
+                                border: '2px solid #008C1D',
                                 borderRadius: '4px',
                                 fontSize: '13px',
                                 boxSizing: 'border-box',
@@ -2347,7 +2347,7 @@ function RemodelApplicationContent() {
                               style={{
                                 width: '100%',
                                 padding: '6px 8px',
-                                border: '2px solid #4caf50',
+                                border: '2px solid #008C1D',
                                 borderRadius: '4px',
                                 fontSize: '13px',
                                 boxSizing: 'border-box',
@@ -2361,7 +2361,7 @@ function RemodelApplicationContent() {
                                 flex: 1,
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                color: cellValue ? '#4A4A4A' : '#a5d6a7',
+                                color: cellValue ? '#4A4A4A' : '#008C1D',
                                 fontStyle: cellValue ? 'normal' : 'italic',
                                 fontSize: '13px',
                               }}>
@@ -2390,7 +2390,7 @@ function RemodelApplicationContent() {
                           /* 通常表示 */
                           ) : (
                             <span style={{
-                              color: cellValue ? '#4A4A4A' : (isEditable ? '#a5d6a7' : '#bbb'),
+                              color: cellValue ? '#4A4A4A' : (isEditable ? '#008C1D' : '#bbb'),
                               fontStyle: isEditable && !cellValue ? 'italic' : 'normal',
                               fontSize: '13px',
                             }}>
@@ -2480,9 +2480,9 @@ function RemodelApplicationContent() {
         {applicationFeedback && (
           <div style={{
             padding: '10px 16px',
-            background: '#d4edda',
-            border: '1px solid #c3e6cb',
-            color: '#155724',
+            background: '#EBF5EE',
+            border: '1px solid #EBF5EE',
+            color: '#146E2E',
             fontSize: '13px',
             fontWeight: 600,
             display: 'flex',
@@ -2535,7 +2535,7 @@ function RemodelApplicationContent() {
             }}
           >
             <div style={{
-              background: '#A35414',
+              background: '#4A4A4A',
               color: 'white',
               padding: '16px 20px',
               fontSize: '16px',
@@ -2576,12 +2576,12 @@ function RemodelApplicationContent() {
                 ))}
               </div>
               {Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0 && (
-                <div style={{ padding: '12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#A35414', marginBottom: '12px' }}>
+                <div style={{ padding: '12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#4A4A4A', marginBottom: '12px' }}>
                   有効な廃棄・移設対象がありません。リモデル区分を確認してください。
                 </div>
               )}
               {applicationErrors.length > 0 && (
-                <div style={{ padding: '12px', background: '#f8d7da', borderRadius: '4px', fontSize: '13px', color: '#721c24', marginBottom: '12px' }}>
+                <div style={{ padding: '12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#DA0000', marginBottom: '12px' }}>
                   バリデーションエラー: {applicationErrors.length}件（スキップされます）
                 </div>
               )}
@@ -2613,7 +2613,7 @@ function RemodelApplicationContent() {
                 disabled={Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0}
                 style={{
                   padding: '8px 20px',
-                  background: Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0 ? '#bdc3c7' : '#A35414',
+                  background: Object.values(applicationBreakdown).reduce((a, b) => a + b, 0) === 0 ? '#E1E1E1' : '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -2692,15 +2692,15 @@ function RemodelApplicationContent() {
             <div style={{ padding: '24px' }}>
               <div style={{
                 background: '#FDF1E5',
-                border: '1px solid #A66F1B',
+                border: '1px solid #4A4A4A',
                 borderRadius: '8px',
                 padding: '16px',
                 marginBottom: '20px',
               }}>
-                <p style={{ margin: 0, color: '#A35414', fontWeight: 'bold', marginBottom: '8px' }}>
+                <p style={{ margin: 0, color: '#4A4A4A', fontWeight: 'bold', marginBottom: '8px' }}>
                   以下の処理が実行されます:
                 </p>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: '#A35414', fontSize: '14px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#4A4A4A', fontSize: '14px' }}>
                   <li>個別部署マスタの「新居」情報が「現状」に反映されます</li>
                   <li>資産の設置場所が新しい場所に更新されます</li>
                   <li>この操作は取り消すことができません</li>
@@ -2709,7 +2709,7 @@ function RemodelApplicationContent() {
 
               <div style={{
                 background: '#EBF5EE',
-                border: '1px solid #a5d6a7',
+                border: '1px solid #008C1D',
                 borderRadius: '8px',
                 padding: '16px',
               }}>
@@ -2850,13 +2850,13 @@ function RemodelApplicationContent() {
               value={freeColumnLabelDraft}
               onChange={(e) => setFreeColumnLabelDraft(e.target.value)}
               placeholder="列名（例: 設置担当者メモ）"
-              style={{ width: '100%', padding: '8px 10px', border: '1px solid #ced4da', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }}
               autoFocus
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '20px' }}>
               <button
                 onClick={() => setIsAddFreeColumnOpen(false)}
-                style={{ padding: '8px 16px', background: '#fff', color: '#4b5563', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                style={{ padding: '8px 16px', background: '#fff', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
               >
                 キャンセル
               </button>
@@ -2874,7 +2874,7 @@ function RemodelApplicationContent() {
                 disabled={!freeColumnLabelDraft.trim()}
                 style={{
                   padding: '8px 16px',
-                  background: freeColumnLabelDraft.trim() ? '#008C1D' : '#bdc3c7',
+                  background: freeColumnLabelDraft.trim() ? '#008C1D' : '#E1E1E1',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -2993,7 +2993,7 @@ function RemodelApplicationContent() {
             }}
           >
             <div style={{
-              background: '#A35414',
+              background: '#4A4A4A',
               color: 'white',
               padding: '16px 20px',
               fontSize: '16px',
@@ -3036,7 +3036,7 @@ function RemodelApplicationContent() {
                 onClick={handleUpdateConfirm}
                 style={{
                   padding: '8px 20px',
-                  background: '#A35414',
+                  background: '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -3078,7 +3078,7 @@ function RemodelApplicationContent() {
             }}
           >
             <div style={{
-              background: '#4527A0',
+              background: '#4A4A4A',
               color: 'white',
               padding: '16px 20px',
               fontSize: '16px',
@@ -3100,7 +3100,7 @@ function RemodelApplicationContent() {
                 style={{
                   width: '80px',
                   padding: '8px 12px',
-                  border: '1px solid #d0d0d0',
+                  border: '1px solid #E1E1E1',
                   borderRadius: '4px',
                   fontSize: '16px',
                   textAlign: 'center',
@@ -3134,7 +3134,7 @@ function RemodelApplicationContent() {
                 onClick={handleAdditionConfirm}
                 style={{
                   padding: '8px 20px',
-                  background: '#4527A0',
+                  background: '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
