@@ -198,19 +198,19 @@ const getStatusStyle = (status: LendingStatus): React.CSSProperties => {
   };
   switch (status) {
     case '待機中':
-      return { ...baseStyle, background: '#FDF1E5', color: '#A35414' };
+      return { ...baseStyle, background: '#FDF1E5', color: '#4A4A4A' };
     case '貸出可':
       return { ...baseStyle, background: '#EBF5EE', color: '#146E2E' };
     case '貸出中':
-      return { ...baseStyle, background: '#EAF3FB', color: '#1E5A9E' };
+      return { ...baseStyle, background: '#EBF5EE', color: '#4A4A4A' };
     case '使用中':
-      return { ...baseStyle, background: '#e8eaf6', color: '#283593' };
+      return { ...baseStyle, background: '#FAFAFA', color: '#4A4A4A' };
     case '使用済':
-      return { ...baseStyle, background: '#F1ECF7', color: '#6a1b9a' };
+      return { ...baseStyle, background: '#FAFAFA', color: '#4A4A4A' };
     case '返却済':
-      return { ...baseStyle, background: '#e0f2f1', color: '#00695c' };
+      return { ...baseStyle, background: '#EBF5EE', color: '#4A4A4A' };
     case '使用不可':
-      return { ...baseStyle, background: '#FBE9EC', color: '#b71c1c' };
+      return { ...baseStyle, background: '#FDF1E5', color: '#DA0000' };
     default:
       return baseStyle;
   }
@@ -223,11 +223,11 @@ const getPeriodicInspectionStyle = (status: PeriodicInspectionStatus): React.CSS
     case '01点検週':
       return { color: '#146E2E' };
     case '02点検月':
-      return { color: '#1E5A9E' };
+      return { color: '#4A4A4A' };
     case '03点検●ヶ月前':
-      return { color: '#A35414' };
+      return { color: '#4A4A4A' };
     case '04点検月超過':
-      return { color: '#b71c1c', fontWeight: 'bold' };
+      return { color: '#DA0000', fontWeight: 'bold' };
     default:
       return {};
   }
@@ -346,8 +346,8 @@ export const LendingManagementTab: React.FC = () => {
   // ソート矢印の表示
   const getSortArrow = (field: SortableField) => {
     const isActive = sortState.field === field;
-    const upColor = isActive && sortState.direction === 'asc' ? '#A30000' : '#aaa';
-    const downColor = isActive && sortState.direction === 'desc' ? '#A30000' : '#aaa';
+    const upColor = isActive && sortState.direction === 'asc' ? '#DA0000' : '#aaa';
+    const downColor = isActive && sortState.direction === 'desc' ? '#DA0000' : '#aaa';
     return (
       <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '2px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
         <span style={{ color: upColor }}>&#9650;</span>
@@ -497,11 +497,11 @@ export const LendingManagementTab: React.FC = () => {
             style={{
               padding: '6px 10px',
               fontSize: '12px',
-              border: '2px solid #f1c40f',
+              border: '2px solid #4A4A4A',
               borderRadius: '3px',
               minWidth: '120px',
               fontWeight: 600,
-              background: '#fffde7',
+              background: '#FAFAFA',
             }}
           >
             <option value="">ステータス</option>
@@ -555,60 +555,60 @@ export const LendingManagementTab: React.FC = () => {
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#FBE9EC', color: '#333', borderColor: '#e57373' }}>商品情報</th>
-              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#fff9c4', color: '#333', borderColor: '#A66F1B' }}>貸出機器状況</th>
-              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1ECF7', color: '#333', borderColor: '#ba68c8' }}>操作</th>
+              <th colSpan={4} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>商品情報</th>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}>貸出機器状況</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
               {/* 商品情報 */}
-              <th style={{ ...thSubStyle, background: '#ffcdd2', color: '#333', borderColor: '#e57373' }}>QRコード</th>
-              <th style={{ ...thSubStyle, background: '#ffcdd2', color: '#333', borderColor: '#e57373' }}>品目</th>
+              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>QRコード</th>
+              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>品目</th>
               <th
-                style={{ ...thSubStyle, background: '#ffcdd2', color: '#333', borderColor: '#e57373', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000', cursor: 'pointer' }}
                 onClick={() => handleSort('maker')}
               >
                 メーカー{getSortArrow('maker')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#ffcdd2', color: '#333', borderColor: '#e57373', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000', cursor: 'pointer' }}
                 onClick={() => handleSort('model')}
               >
                 型式{getSortArrow('model')}
               </th>
               {/* 貸出機器状況 */}
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>ステータス</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>設置部署</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>ステータス</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>設置部署</th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('lendingDate')}
               >
                 貸出日{getSortArrow('lendingDate')}
               </th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>超過日数</th>
-              <th style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B' }}>日常点検メニュー</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>超過日数</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>日常点検メニュー</th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('dailyInspectionDate')}
               >
                 日常点検日{getSortArrow('dailyInspectionDate')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('periodicInspectionStatus')}
               >
                 定期点検予定{getSortArrow('periodicInspectionStatus')}
               </th>
               <th
-                style={{ ...thSubStyle, background: '#fff59d', color: '#333', borderColor: '#A66F1B', cursor: 'pointer' }}
+                style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A', cursor: 'pointer' }}
                 onClick={() => handleSort('lendingCount')}
               >
                 貸出回数累計{getSortArrow('lendingCount')}
               </th>
               {/* 操作 */}
-              <th style={{ ...thSubStyle, background: '#e1bee7', color: '#333', borderColor: '#ba68c8' }}>フリーコメント</th>
-              <th style={{ ...thSubStyle, background: '#e1bee7', color: '#333', borderColor: '#ba68c8' }}>貸出設定変更</th>
-              <th style={{ ...thSubStyle, background: '#e1bee7', color: '#333', borderColor: '#ba68c8', textAlign: 'center', width: '40px' }}>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A' }}>フリーコメント</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A' }}>貸出設定変更</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#8A8A8A', textAlign: 'center', width: '40px' }}>
                 <span style={{ fontSize: '14px' }}>&#9881;</span>
               </th>
             </tr>
@@ -618,7 +618,7 @@ export const LendingManagementTab: React.FC = () => {
               const isOverdue = device.overdueDays > 0;
               return (
                 <tr key={device.id} style={{
-                  background: isOverdue ? '#fff5f5' : (index % 2 === 0 ? 'white' : '#FAFAFA'),
+                  background: isOverdue ? '#FDF1E5' : (index % 2 === 0 ? 'white' : '#FAFAFA'),
                   verticalAlign: 'top',
                 }}>
                   {/* 商品情報 */}
@@ -634,7 +634,7 @@ export const LendingManagementTab: React.FC = () => {
                   <td style={tdStyle} className="tabular-nums">{device.lendingDate || '-'}</td>
                   <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">
                     {isOverdue ? (
-                      <span style={{ color: '#A30000', fontWeight: 'bold' }}>{device.overdueDays}日</span>
+                      <span style={{ color: '#DA0000', fontWeight: 'bold' }}>{device.overdueDays}日</span>
                     ) : (
                       <span style={{ color: '#8A8A8A' }}>-</span>
                     )}
