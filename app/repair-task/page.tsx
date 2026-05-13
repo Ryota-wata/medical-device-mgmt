@@ -762,22 +762,26 @@ function RepairTaskContent() {
 
       <ProgressBar />
 
-      {/* 基本情報バー */}
-      <div style={{
-        padding: '8px 16px',
-        background: COLORS.warningBg,
-        borderBottom: `1px solid ${COLORS.warningBorder}`,
-        display: 'flex',
-        gap: '24px',
-        fontSize: '12px',
-        color: COLORS.warningText,
-        flexWrap: 'wrap',
-      }}>
-        <span><strong>申請No:</strong> {request.requestNo}</span>
-        <span><strong>品名:</strong> {request.itemName}</span>
-        <span><strong>メーカー:</strong> {request.maker}</span>
-        <span><strong>型式:</strong> {request.model}</span>
-        <span><strong>症状:</strong> {request.symptoms}</span>
+      {/* 基本情報テーブル (Figma 構造: ラベル列 灰背景 + 値列 白背景) */}
+      <div style={{ padding: '12px 16px', background: COLORS.white, borderBottom: `1px solid ${COLORS.border}` }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, fontSize: '13px' }}>
+          <tbody>
+            <tr>
+              <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '100px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>申請No:</th>
+              <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}`, fontVariantNumeric: 'tabular-nums' }}>{request.requestNo}</td>
+              <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '80px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>品名:</th>
+              <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.itemName}</td>
+              <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '90px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>メーカー:</th>
+              <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.maker}</td>
+            </tr>
+            <tr>
+              <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>型式:</th>
+              <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.model}</td>
+              <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>症状:</th>
+              <td colSpan={3} style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.symptoms}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* メインコンテンツ（左右分割） */}
@@ -817,160 +821,95 @@ function RepairTaskContent() {
             </button>
           }
         >
-          <FormRow>
-            <span style={labelStyle}>受付部署</span>
-            <input
-              type="text"
-              placeholder="部署名"
-              value={formData.receptionDepartment}
-              onChange={(e) => updateFormData({ receptionDepartment: e.target.value })}
-              {...getInputProps(1)}
-              style={{ ...getInputProps(1).style, width: '150px' }}
-            />
-            <input
-              type="text"
-              placeholder="担当者名"
-              value={formData.receptionPerson}
-              onChange={(e) => updateFormData({ receptionPerson: e.target.value })}
-              {...getInputProps(1)}
-              style={{ ...getInputProps(1).style, width: '120px' }}
-            />
-            <input
-              type="text"
-              placeholder="連絡先"
-              value={formData.receptionContact}
-              onChange={(e) => updateFormData({ receptionContact: e.target.value })}
-              {...getInputProps(1)}
-              style={{ ...getInputProps(1).style, width: '150px' }}
-            />
-          </FormRow>
-
-          <FormRow style={{ alignItems: 'flex-start' }}>
-            <span style={labelStyle}>代替機対応</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input
-                  type="radio"
-                  name="alternative"
-                  checked={formData.needsAlternative}
-                  onChange={() => updateFormData({ needsAlternative: true })}
-                  disabled={!isStepEnabled(1)}
-                />
-                必要
-              </label>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input
-                  type="radio"
-                  name="alternative"
-                  checked={!formData.needsAlternative}
-                  onChange={() => updateFormData({ needsAlternative: false })}
-                  disabled={!isStepEnabled(1)}
-                />
-                不要
-              </label>
-            </div>
-            {formData.needsAlternative && (
-              <>
-                <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>納品日:</span>
-                <input
-                  type="date"
-                  value={formData.alternativeDeliveryDate}
-                  onChange={(e) => updateFormData({ alternativeDeliveryDate: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-                <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>返却日:</span>
-                <input
-                  type="date"
-                  value={formData.alternativeReturnDate}
-                  onChange={(e) => updateFormData({ alternativeReturnDate: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-                <button
-                  className="repair-btn"
-                  onClick={() => updateFormData({ alternativeReturned: true })}
-                  disabled={!isStepEnabled(1) || formData.alternativeReturned}
-                  style={{
-                    padding: '4px 12px',
-                    background: formData.alternativeReturned ? COLORS.success : COLORS.primary,
-                    color: COLORS.textOnColor,
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: formData.alternativeReturned ? 'default' : 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {formData.alternativeReturned ? '返却済' : '返却済にする'}
-                </button>
-              </>
-            )}
-          </FormRow>
-
-          <FormRow style={{ alignItems: 'flex-start' }}>
-            <span style={labelStyle}>商品引取対応</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input
-                  type="radio"
-                  name="pickupRequired"
-                  checked={formData.pickupRequired}
-                  onChange={() => updateFormData({ pickupRequired: true })}
-                  disabled={!isStepEnabled(1)}
-                />
-                必要
-              </label>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <input
-                  type="radio"
-                  name="pickupRequired"
-                  checked={!formData.pickupRequired}
-                  onChange={() => updateFormData({ pickupRequired: false })}
-                  disabled={!isStepEnabled(1)}
-                />
-                不要
-              </label>
-            </div>
-            {formData.pickupRequired && (
-              <>
-                <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>引取日:</span>
-                <input
-                  type="date"
-                  value={formData.pickupRequiredDate}
-                  onChange={(e) => updateFormData({ pickupRequiredDate: e.target.value })}
-                  {...getInputProps(1)}
-                  style={{ ...getInputProps(1).style, width: '150px' }}
-                />
-              </>
-            )}
-          </FormRow>
-
-          <FormRow>
-            <span style={labelStyle}>導入業者</span>
-            <span style={{ fontSize: '13px', color: COLORS.textSecondary }}>
-              {request.installerName} / {request.installerPerson} / {request.installerContact}
-            </span>
-          </FormRow>
-
-          <FormRow>
-            <span style={labelStyle}>保守契約</span>
-            <span style={{ fontSize: '13px', color: request.hasMaintenanceContract ? COLORS.success : COLORS.error }}>
-              {request.hasMaintenanceContract ? '保守契約対象' : '保守契約なし'}
-              {request.warrantyEndDate && ` (期限: ${request.warrantyEndDate})`}
-            </span>
-          </FormRow>
-
-          <div style={{
-            padding: '12px',
-            background: COLORS.surfaceAlt,
-            borderRadius: '4px',
-            marginBottom: '16px',
-            fontSize: '12px',
-            color: COLORS.textSecondary,
-          }}>
-            修理申請書を確認し院内修理の場合は院内修理対応とし、納期が確定次第、納期登録を実施してください。
-          </div>
+          {/* 受付情報 〜 保守契約 (Figma 構造: テーブル UI ラベル列 灰背景 + 値列 白背景) */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, marginBottom: '16px', fontSize: '13px' }}>
+            <tbody>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>受付部署</th>
+                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <input type="text" placeholder="部署名" value={formData.receptionDepartment} onChange={(e) => updateFormData({ receptionDepartment: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                    <input type="text" placeholder="担当者名" value={formData.receptionPerson} onChange={(e) => updateFormData({ receptionPerson: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '120px' }} />
+                    <input type="text" placeholder="連絡先" value={formData.receptionContact} onChange={(e) => updateFormData({ receptionContact: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>代替機対応</th>
+                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input type="radio" name="alternative" checked={formData.needsAlternative} onChange={() => updateFormData({ needsAlternative: true })} disabled={!isStepEnabled(1)} />
+                      必要
+                    </label>
+                    <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input type="radio" name="alternative" checked={!formData.needsAlternative} onChange={() => updateFormData({ needsAlternative: false })} disabled={!isStepEnabled(1)} />
+                      不要
+                    </label>
+                    {formData.needsAlternative && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>納品日:</span>
+                        <input type="date" value={formData.alternativeDeliveryDate} onChange={(e) => updateFormData({ alternativeDeliveryDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                        <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>返却日:</span>
+                        <input type="date" value={formData.alternativeReturnDate} onChange={(e) => updateFormData({ alternativeReturnDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                        <button
+                          className="repair-btn"
+                          onClick={() => updateFormData({ alternativeReturned: true })}
+                          disabled={!isStepEnabled(1) || formData.alternativeReturned}
+                          style={{
+                            padding: '4px 12px',
+                            background: formData.alternativeReturned ? COLORS.success : COLORS.primary,
+                            color: COLORS.textOnColor,
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: formData.alternativeReturned ? 'default' : 'pointer',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {formData.alternativeReturned ? '返却済' : '返却済にする'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>商品引取対応</th>
+                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input type="radio" name="pickupRequired" checked={formData.pickupRequired} onChange={() => updateFormData({ pickupRequired: true })} disabled={!isStepEnabled(1)} />
+                      必要
+                    </label>
+                    <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input type="radio" name="pickupRequired" checked={!formData.pickupRequired} onChange={() => updateFormData({ pickupRequired: false })} disabled={!isStepEnabled(1)} />
+                      不要
+                    </label>
+                    {formData.pickupRequired && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                        <span style={{ color: COLORS.textMuted, fontSize: '12px' }}>引取日:</span>
+                        <input type="date" value={formData.pickupRequiredDate} onChange={(e) => updateFormData({ pickupRequiredDate: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>導入業者</th>
+                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: COLORS.textPrimary }}>
+                  {request.installerName} / {request.installerPerson} / {request.installerContact}
+                </td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>保守契約</th>
+                <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: request.hasMaintenanceContract ? COLORS.success : COLORS.error }}>
+                  {request.hasMaintenanceContract ? '保守契約対象' : '保守契約なし'}
+                  {request.warrantyEndDate && ` (期限: ${request.warrantyEndDate})`}
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
           {/* 見積依頼セクション */}
           <>
