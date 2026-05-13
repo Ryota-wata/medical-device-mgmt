@@ -628,7 +628,7 @@ function PeriodicInspectionContent() {
               </div>
             </div>
 
-            {/* 点検対象機器 (Figma 597:42958: テーブル UI) */}
+            {/* 点検対象機器 (Figma 597:42958: 1セル内にラベル+値) */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '12px',
@@ -642,26 +642,20 @@ function PeriodicInspectionContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={infoTableTh}>QRコード</th>
-                    <td style={infoTableTd}>{task.assetId}</td>
-                    <th style={infoTableTh}>大分類</th>
-                    <td style={infoTableTd}>{task.largeClass}</td>
-                    <th style={infoTableTh}>中分類</th>
-                    <td style={infoTableTd}>{task.mediumClass}</td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>QRコード</div><div style={infoCellValue}>{task.assetId || '-'}</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>大分類</div><div style={infoCellValue}>{task.largeClass || '-'}</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>中分類</div><div style={infoCellValue}>{task.mediumClass || '-'}</div></td>
                   </tr>
                   <tr>
-                    <th style={infoTableTh}>品目</th>
-                    <td style={infoTableTd}>{task.assetName}</td>
-                    <th style={infoTableTh}>メーカー</th>
-                    <td style={infoTableTd}>{task.maker}</td>
-                    <th style={infoTableTh}>型式</th>
-                    <td style={infoTableTd}>{task.model}</td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>品目</div><div style={infoCellValue}>{task.assetName || '-'}</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>メーカー</div><div style={infoCellValue}>{task.maker || '-'}</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>型式</div><div style={infoCellValue}>{task.model || '-'}</div></td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            {/* 点検情報 (Figma 597:42958: テーブル UI) */}
+            {/* 点検情報 (Figma 597:42958: 1セル内にラベル+値) */}
             <div style={{
               backgroundColor: '#ffffff',
               borderRadius: '12px',
@@ -675,16 +669,10 @@ function PeriodicInspectionContent() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
                   <tr>
-                    <th style={infoTableTh}>点検種別</th>
-                    <td style={infoTableTd}>定期点検</td>
-                    <th style={infoTableTh}>点検メニュー</th>
-                    <td style={infoTableTd}>{selectedMenu?.name || '（メニュー未設定）'}</td>
-                  </tr>
-                  <tr>
-                    <th style={infoTableTh}>実施者</th>
-                    <td style={infoTableTd}>{inspectorName}</td>
-                    <th style={infoTableTh}>実施日</th>
-                    <td style={infoTableTd}>{today}</td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>点検種別</div><div style={infoCellValue}>定期点検</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>点検メニュー</div><div style={infoCellValue}>{selectedMenu?.name || '（メニュー未設定）'}</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>実施者</div><div style={infoCellValue}>{inspectorName || '-'}</div></td>
+                    <td style={infoCellTd}><div style={infoCellLabel}>実施日</div><div style={infoCellValue}>{today}</div></td>
                   </tr>
                 </tbody>
               </table>
@@ -952,6 +940,25 @@ const infoTableTd: React.CSSProperties = {
   fontSize: '13px',
   padding: '8px 12px',
   border: '1px solid #E1E1E1',
+};
+
+const infoCellTd: React.CSSProperties = {
+  background: '#FFFFFF',
+  padding: '8px 12px',
+  border: '1px solid #E1E1E1',
+  verticalAlign: 'top',
+};
+
+const infoCellLabel: React.CSSProperties = {
+  fontSize: '11px',
+  color: '#8A8A8A',
+  marginBottom: '2px',
+};
+
+const infoCellValue: React.CSSProperties = {
+  fontSize: '13px',
+  color: '#4A4A4A',
+  fontWeight: 500,
 };
 
 const styles: Record<string, React.CSSProperties> = {
