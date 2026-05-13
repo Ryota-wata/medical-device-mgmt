@@ -799,22 +799,28 @@ function RepairTaskContent() {
             </button>
           }
         >
-          {/* 申請情報テーブル (Figma 568:27485 構造: STEP1 内に配置) */}
+          {/* 申請情報テーブル (Figma 568:27485 構造: 2 列 × 5 行) */}
           <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, marginBottom: '12px', fontSize: '13px' }}>
             <tbody>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '100px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>申請No:</th>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>申請No:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}`, fontVariantNumeric: 'tabular-nums' }}>{request.requestNo}</td>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '80px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>品名:</th>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>品名:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.itemName}</td>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '90px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>メーカー:</th>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>メーカー:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.maker}</td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>型式:</th>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>型式:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.model}</td>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>症状:</th>
-                <td colSpan={3} style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.symptoms}</td>
+              </tr>
+              <tr>
+                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>症状:</th>
+                <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.symptoms}</td>
               </tr>
             </tbody>
           </table>
