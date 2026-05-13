@@ -518,14 +518,21 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
         onClose={() => setIsRegistrationModalOpen(false)}
       />
 
-      {/* 日程調整モーダル */}
+      {/* 日程調整モーダル (Figma 345:62213) */}
       {isDateModalOpen && selectedTaskForDate && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }} onClick={() => setIsDateModalOpen(false)}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '90%', maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>点検日程調整</h3>
-            <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#8A8A8A' }}>{selectedTaskForDate.assetName}</p>
+          <div style={{ background: 'white', borderRadius: '8px', padding: '24px', width: '90%', maxWidth: '400px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setIsDateModalOpen(false)}
+              aria-label="閉じる"
+              style={{ position: 'absolute', top: '12px', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#4A4A4A', lineHeight: 1, padding: '4px 8px' }}
+            >
+              ×
+            </button>
+            <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>点検日程調整</h3>
+            <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#8A8A8A' }}>{selectedTaskForDate.assetName}</p>
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '13px', color: '#333' }}>点検予定日</label>
+              <label style={{ fontSize: '13px', color: '#4A4A4A' }}>点検予定日</label>
               <input
                 type="date"
                 value={newDate}
@@ -533,10 +540,18 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '14px', marginTop: '8px', boxSizing: 'border-box' }}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button onClick={() => setIsDateModalOpen(false)} style={{ padding: '10px 20px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>キャンセル</button>
-              <button onClick={handleSetDate} style={{ padding: '10px 20px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>設定</button>
-            </div>
+            <button
+              onClick={handleSetDate}
+              style={{ width: '100%', padding: '12px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              保存
+            </button>
+            <button
+              onClick={() => setIsDateModalOpen(false)}
+              style={{ width: '100%', marginTop: '12px', padding: '4px', background: 'transparent', color: '#146E2E', border: 'none', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              閉じる
+            </button>
           </div>
         </div>
       )}
