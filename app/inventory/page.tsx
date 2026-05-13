@@ -523,8 +523,8 @@ export default function InventoryPage() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#FAFAFA' }}>
-        <div style={{ textAlign: 'center', color: '#666' }}>読み込み中...</div>
+      <div className="flex items-center justify-center h-dvh bg-surface-screen">
+        <div className="text-sm text-content-sub text-center">読み込み中...</div>
       </div>
     );
   }

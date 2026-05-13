@@ -438,7 +438,7 @@ function AssetMasterContent() {
 
 export default function AssetMasterPage() {
   return (
-    <Suspense fallback={<div>読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <AssetMasterContent />
     </Suspense>
   );

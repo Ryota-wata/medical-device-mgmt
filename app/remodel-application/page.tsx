@@ -3156,7 +3156,7 @@ function RemodelApplicationContent() {
 
 export default function RemodelApplicationPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <RemodelApplicationContent />
     </Suspense>
   );

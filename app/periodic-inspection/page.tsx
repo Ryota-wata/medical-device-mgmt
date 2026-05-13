@@ -1081,7 +1081,7 @@ const styles: Record<string, React.CSSProperties> = {
 
 export default function PeriodicInspectionPage() {
   return (
-    <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh' }}>Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <PeriodicInspectionContent />
     </Suspense>
   );

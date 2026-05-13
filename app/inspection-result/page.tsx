@@ -597,17 +597,7 @@ function InfoItem({ label, value, tabular }: { label: string; value: string; tab
 
 export default function InspectionResultPage() {
   return (
-    <Suspense fallback={
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100dvh',
-        background: '#FAFAFA'
-      }}>
-        <div>読み込み中...</div>
-      </div>
-    }>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <InspectionResultContent />
     </Suspense>
   );

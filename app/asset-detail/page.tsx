@@ -76,7 +76,7 @@ function AssetDetailContent() {
     });
   };
 
-  if (!asset) return <div>読み込み中...</div>;
+  if (!asset) return <div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>;
 
   // 資産に写真が登録されていない場合、デモ用のサンプル4枚を表示（プレースホルダー）
   const makePlaceholderSvg = (label: string, bg: string) => {
@@ -566,7 +566,7 @@ function KartRow({ label, value, numeric, highlight }: { label: string; value: a
 
 export default function AssetDetailPage() {
   return (
-    <Suspense fallback={<div>読み込み中...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-dvh text-sm text-content-sub">読み込み中...</div>}>
       <AssetDetailContent />
     </Suspense>
   );
