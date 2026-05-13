@@ -151,7 +151,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
   const primaryAsset = assets[0];
 
   // テーマカラー（廃棄申請：赤系）
-  const themeColor = '#A30000';
+  const themeColor = '#DA0000';
 
   // 確認画面用テーブルスタイル
   const thStyle: React.CSSProperties = { padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' };
@@ -222,7 +222,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
         {isConfirmView ? (
           /* ===== 確認画面 ===== */
           <div>
-            <div style={{ background: '#ffebee', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
+            <div style={{ background: '#FDF1E5', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
               <span style={{ color: themeColor, fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
@@ -254,7 +254,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 </tbody>
               </table>
               {assets.length > 1 && (
-                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#A35414' }}>
+                <div style={{ marginTop: '8px', padding: '8px 12px', background: '#FDF1E5', borderRadius: '4px', fontSize: '13px', color: '#4A4A4A' }}>
                   ※ {assets.length}件の資産が選択されています
                 </div>
               )}
@@ -348,7 +348,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.department || '-'}
               </div>
@@ -359,7 +359,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {applicantName}
               </div>
@@ -370,7 +370,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {applicationDate}
               </div>
@@ -382,7 +382,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.department || '-'}
               </div>
@@ -393,7 +393,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.section || '-'}
               </div>
@@ -404,7 +404,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 border: `1px solid ${themeColor}`,
                 borderRadius: '4px',
                 fontSize: '13px',
-                background: '#f9f9f9'
+                background: '#FAFAFA'
               }}>
                 {primaryAsset.roomName || '-'}
               </div>
@@ -418,7 +418,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 background: '#FDF1E5',
                 borderRadius: '4px',
                 fontSize: '13px',
-                color: '#A35414'
+                color: '#4A4A4A'
               }}>
                 ※ {assets.length}件の資産が選択されています
               </div>
@@ -447,37 +447,37 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 alignItems: 'center'
               }}>
                 <div style={{ fontSize: '13px', color: '#666' }}>QRコード</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.qrCode || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>品目名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.name || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>メーカー名</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.maker || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>型式</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.model || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>数量</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.quantity ?? '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>シリアルNo.</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.serialNumber || '-'}
                 </div>
 
                 <div style={{ fontSize: '13px', color: '#666' }}>納入年月日</div>
-                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#f9f9f9' }}>
+                <div style={{ padding: '8px 12px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px', background: '#FAFAFA' }}>
                   {primaryAsset.deliveryDate || '-'}
                 </div>
               </div>
@@ -486,7 +486,7 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
-                    <tr style={{ background: '#f0f0f0' }}>
+                    <tr style={{ background: '#FAFAFA' }}>
                       {['QRコード', '品目名', 'メーカー名', '型式', '数量', 'シリアルNo.', '納入年月日'].map(label => (
                         <th key={label} style={{ padding: '8px 10px', textAlign: 'left', border: '1px solid #E1E1E1', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap' }}>
                           {label}
