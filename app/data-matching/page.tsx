@@ -587,7 +587,7 @@ export default function DataMatchingPage() {
       case '再確認': return '#4A4A4A';
       case '未確認': return '#DA0000';
       case '未登録': return '#4A4A4A';
-      default: return '#999';
+      default: return '#8A8A8A';
     }
   };
 
@@ -1384,7 +1384,7 @@ export default function DataMatchingPage() {
                           {row.matchingStatus}
                         </span>
                       ) : (
-                        <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
+                        <span style={{ color: '#8A8A8A', fontSize: '11px' }}>ー</span>
                       )}
                     </td>
                     <td style={tdStyle}>{row.qrCode || '-'}</td>
@@ -1430,14 +1430,14 @@ export default function DataMatchingPage() {
                 )}
                 {matchFilteredData.length === 0 && activeTab === 'pending' && pendingItems.length > 0 && (
                   <tr>
-                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A', fontSize: '13px' }}>
                       フィルター条件に該当するデータがありません
                     </td>
                   </tr>
                 )}
                 {matchFilteredData.length === 0 && activeTab === 'completed' && (
                   <tr>
-                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                    <td colSpan={16} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A', fontSize: '13px' }}>
                       まだ対応済みの項目はありません
                     </td>
                   </tr>
@@ -1576,7 +1576,7 @@ export default function DataMatchingPage() {
                           {row.matchingStatus}
                         </span>
                       ) : (
-                        <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
+                        <span style={{ color: '#8A8A8A', fontSize: '11px' }}>ー</span>
                       )}
                     </td>
                     <td style={tdStyle}>{row.qrCode || '-'}</td>
@@ -1597,7 +1597,7 @@ export default function DataMatchingPage() {
                 ))}
                 {ledgerMatchFilteredData.length === 0 && (
                   <tr>
-                    <td colSpan={currentList?.type === 'me-ledger' ? 16 : 15} style={{ padding: '24px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                    <td colSpan={currentList?.type === 'me-ledger' ? 16 : 15} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A', fontSize: '13px' }}>
                       {ledgerUnmatchedCount === 0 ? '全ての台帳レコードの突合が完了しました' : 'フィルター条件に該当するデータがありません'}
                     </td>
                   </tr>
@@ -1654,7 +1654,7 @@ export default function DataMatchingPage() {
                   border: 'none',
                   backgroundColor: 'transparent',
                   cursor: 'pointer',
-                  color: '#999'
+                  color: '#8A8A8A'
                 }}
                 aria-label="閉じる"
               >
@@ -1698,7 +1698,7 @@ export default function DataMatchingPage() {
                               {row.matchingStatus}
                             </span>
                           ) : (
-                            <span style={{ color: '#999', fontSize: '11px' }}>ー</span>
+                            <span style={{ color: '#8A8A8A', fontSize: '11px' }}>ー</span>
                           )}
                         </td>
                         <td style={tdStyle}>{row.qrCode || '-'}</td>

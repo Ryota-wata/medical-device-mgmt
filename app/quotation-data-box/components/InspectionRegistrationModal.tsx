@@ -835,7 +835,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   emptyMessage: {
     padding: '40px',
     textAlign: 'center',
-    color: '#999',
+    color: '#8A8A8A',
   },
   table: {
     width: '100%',

@@ -781,7 +781,7 @@ export function UpdateApplicationModal({
                 <tbody>
                   {desiredEquipments.length === 0 ? (
                     <tr>
-                      <td colSpan={9} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #E1E1E1' }}>
+                      <td colSpan={9} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A', border: '1px solid #E1E1E1' }}>
                         「+ 資産を追加」ボタンで要望機器を追加してください
                       </td>
                     </tr>
@@ -1218,7 +1218,7 @@ export function UpdateApplicationModal({
                       borderRadius: '4px',
                       fontSize: '13px',
                       background: assetHandling === 'transfer' ? '#fff' : '#FAFAFA',
-                      color: assetHandling === 'transfer' ? '#4A4A4A' : '#999',
+                      color: assetHandling === 'transfer' ? '#4A4A4A' : '#8A8A8A',
                     }}
                   />
                   <span style={{ fontSize: '13px', color: '#8A8A8A' }}>】</span>
@@ -1255,7 +1255,7 @@ export function UpdateApplicationModal({
                       borderRadius: '4px',
                       fontSize: '13px',
                       background: assetHandling === 'continue' ? '#fff' : '#FAFAFA',
-                      color: assetHandling === 'continue' ? '#4A4A4A' : '#999',
+                      color: assetHandling === 'continue' ? '#4A4A4A' : '#8A8A8A',
                     }}
                   />
                   <span style={{ fontSize: '13px', color: '#8A8A8A' }}>】</span>

@@ -1886,7 +1886,7 @@ function RepairTaskContent() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: '#FAFAFA',
-                    color: '#999',
+                    color: '#8A8A8A',
                     fontSize: '13px',
                   }}>
                     （撮影された写真のスペース）
@@ -2086,7 +2086,7 @@ function RepairTaskContent() {
                         background: '#FAFAFA',
                         flexShrink: 0,
                       }}>
-                        <div style={{ textAlign: 'center', color: '#999', fontSize: '12px' }}>
+                        <div style={{ textAlign: 'center', color: '#8A8A8A', fontSize: '12px' }}>
                           <div style={{ fontSize: '28px', marginBottom: '4px' }}>📷</div>
                           <div>撮影された</div>
                           <div>写真のスペース</div>
@@ -2521,7 +2521,7 @@ function RepairTaskContent() {
                     </tbody>
                   </table>
                 ) : (
-                  <div style={{ textAlign: 'center', color: '#999', padding: '32px' }}>
+                  <div style={{ textAlign: 'center', color: '#8A8A8A', padding: '32px' }}>
                     <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
                     <div>登録済みの見積はありません</div>
                     <div style={{ fontSize: '12px', marginTop: '8px' }}>STEP3で見積を登録してください</div>
@@ -2641,7 +2641,7 @@ function RepairTaskContent() {
                     </tbody>
                   </table>
                 ) : (
-                  <div style={{ textAlign: 'center', color: '#999', padding: '32px' }}>
+                  <div style={{ textAlign: 'center', color: '#8A8A8A', padding: '32px' }}>
                     <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
                     <div>登録済みのドキュメントはありません</div>
                     <div style={{ fontSize: '12px', marginTop: '8px' }}>STEP5でドキュメントを登録してください</div>

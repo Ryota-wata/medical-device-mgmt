@@ -426,7 +426,7 @@ export function MaintenanceContractRegistrationModal({
                     <tbody>
                       {searchResults.length === 0 ? (
                         <tr>
-                          <td colSpan={10} style={{ ...styles.td, textAlign: 'center', color: '#999' }}>
+                          <td colSpan={10} style={{ ...styles.td, textAlign: 'center', color: '#8A8A8A' }}>
                             該当する資産がありません
                           </td>
                         </tr>

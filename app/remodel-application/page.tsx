@@ -1894,7 +1894,7 @@ function RemodelApplicationContent() {
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: '#999',
+                          color: '#8A8A8A',
                           cursor: 'pointer',
                           fontSize: '14px',
                           padding: '0 2px',
@@ -2412,7 +2412,7 @@ function RemodelApplicationContent() {
                           border: '1px solid #E1E1E1',
                         }}
                       >
-                        <span style={{ color: '#999', fontSize: '12px' }}>-</span>
+                        <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>
                       </td>
                     ))}
                     {/* 操作セル（新規行は空） */}
@@ -2425,7 +2425,7 @@ function RemodelApplicationContent() {
                         border: '1px solid #E1E1E1',
                       }}
                     >
-                      <span style={{ color: '#999', fontSize: '12px' }}>-</span>
+                      <span style={{ color: '#8A8A8A', fontSize: '12px' }}>-</span>
                     </td>
                   </tr>
                 ));

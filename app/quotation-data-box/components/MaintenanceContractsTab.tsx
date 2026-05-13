@@ -115,13 +115,13 @@ const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
     }
   }
 
-  return { label: '-', color: '#999', sortValue: 9999 };
+  return { label: '-', color: '#8A8A8A', sortValue: 9999 };
 };
 
 // 期限表示
 const calcDeadlineDisplay = (contract: MaintenanceContract): { label: string; color: string } => {
   const status = calcStatus(contract);
-  if (status.label === '-') return { label: '-', color: '#999' };
+  if (status.label === '-') return { label: '-', color: '#8A8A8A' };
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -427,7 +427,7 @@ const ContractGroupDetailModal = ({
 
   // ○/× 表示
   const boolDisplay = (val: boolean) => (
-    <span style={{ color: val ? '#008C1D' : '#999', fontWeight: val ? 'bold' : 'normal' }}>
+    <span style={{ color: val ? '#008C1D' : '#8A8A8A', fontWeight: val ? 'bold' : 'normal' }}>
       {val ? '○' : '×'}
     </span>
   );
@@ -739,7 +739,7 @@ const ContractGroupDetailModal = ({
               onClick={onClose}
               style={{
                 padding: '10px 20px',
-                background: '#999',
+                background: '#8A8A8A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',

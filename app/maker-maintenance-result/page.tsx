@@ -513,7 +513,7 @@ export default function MakerMaintenanceResultPage() {
                     ))}
                     {formData.costItems.length === 0 && (
                       <tr>
-                        <td colSpan={4} style={{ ...styles.td, textAlign: 'center', color: '#999' }}>
+                        <td colSpan={4} style={{ ...styles.td, textAlign: 'center', color: '#8A8A8A' }}>
                           費用項目がありません
                         </td>
                       </tr>
@@ -611,7 +611,7 @@ export default function MakerMaintenanceResultPage() {
               ) : (
                 <div style={{
                   textAlign: 'center',
-                  color: '#999',
+                  color: '#8A8A8A',
                 }}>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
                   <p style={{ fontSize: '14px' }}>ファイルを選択するとプレビューが表示されます</p>

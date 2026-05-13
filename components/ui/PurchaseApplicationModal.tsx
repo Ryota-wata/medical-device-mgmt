@@ -749,7 +749,7 @@ export function PurchaseApplicationModal({
                 <tbody>
                   {desiredEquipments.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#999', border: '1px solid #E1E1E1' }}>
+                      <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#8A8A8A', border: '1px solid #E1E1E1' }}>
                         「+ 資産を追加」ボタンで要望機器を追加してください
                       </td>
                     </tr>

@@ -535,7 +535,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 background: '#FAFAFA',
-                color: '#999',
+                color: '#8A8A8A',
                 fontSize: '13px',
               }}>
                 PDFファイルがありません

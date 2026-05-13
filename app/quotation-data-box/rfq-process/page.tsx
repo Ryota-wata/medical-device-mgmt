@@ -395,13 +395,13 @@ function RfqProcessContent() {
                   background: step.num < 1 ? '#008C1D'
                     : step.num === 1 ? '#087CB6'
                     : '#E1E1E1',
-                  color: step.num <= 1 ? 'white' : '#999',
+                  color: step.num <= 1 ? 'white' : '#8A8A8A',
                 }}>
                   {step.num < 1 ? '\u2713' : step.num}
                 </div>
                 <span style={{
                   fontSize: '11px',
-                  color: step.num === 1 ? '#4A4A4A' : step.num < 1 ? '#008C1D' : '#999',
+                  color: step.num === 1 ? '#4A4A4A' : step.num < 1 ? '#008C1D' : '#8A8A8A',
                   whiteSpace: 'nowrap',
                   fontWeight: step.num === 1 ? 600 : 400,
                 }}>
@@ -599,7 +599,7 @@ function RfqProcessContent() {
                     disabled={vendor.isSent}
                     style={{
                       ...textareaStyle,
-                      ...(vendor.isSent ? { background: '#FAFAFA', color: '#999' } : {}),
+                      ...(vendor.isSent ? { background: '#FAFAFA', color: '#8A8A8A' } : {}),
                     }}
                   />
                 </div>
@@ -679,7 +679,7 @@ function RfqProcessContent() {
                             style={{ display: 'none' }}
                           />
                         </label>
-                        <span style={{ color: '#999', fontSize: '12px' }}>
+                        <span style={{ color: '#8A8A8A', fontSize: '12px' }}>
                           {pdfFile ? pdfFile.name : 'ファイルが選択されていません'}
                         </span>
                       </div>
@@ -961,7 +961,7 @@ function RfqProcessContent() {
                     <tbody>
                       {editListItems.length === 0 ? (
                         <tr>
-                          <td colSpan={6} style={{ padding: '16px', textAlign: 'center', color: '#999', border: '1px solid #E1E1E1' }}>
+                          <td colSpan={6} style={{ padding: '16px', textAlign: 'center', color: '#8A8A8A', border: '1px solid #E1E1E1' }}>
                             品目が登録されていません
                           </td>
                         </tr>
@@ -1012,7 +1012,7 @@ function RfqProcessContent() {
                   <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>ご回答送付先</div>
                   {activeVendor.email && <div>E-mail: {activeVendor.email}</div>}
                   {activeVendor.tel && <div>TEL: {activeVendor.tel}</div>}
-                  {!activeVendor.email && !activeVendor.tel && <div style={{ color: '#999' }}>（連絡先未入力）</div>}
+                  {!activeVendor.email && !activeVendor.tel && <div style={{ color: '#8A8A8A' }}>（連絡先未入力）</div>}
                 </div>
 
                 <div style={{ textAlign: 'right', marginTop: '24px', fontSize: '12px' }}>以上</div>
@@ -1120,7 +1120,7 @@ const inputStyle: React.CSSProperties = {
 
 const disabledInputStyle: React.CSSProperties = {
   background: '#FAFAFA',
-  color: '#999',
+  color: '#8A8A8A',
 };
 
 const inputStyleCompact: React.CSSProperties = {
