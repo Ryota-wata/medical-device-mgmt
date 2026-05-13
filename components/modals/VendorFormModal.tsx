@@ -87,7 +87,7 @@ export function VendorFormModal({
   const inputStyle = {
     width: '100%',
     padding: '10px 12px',
-    border: '1px solid #d0d0d0',
+    border: '1px solid #E1E1E1',
     borderRadius: '6px',
     fontSize: '14px',
     boxSizing: 'border-box' as const,
@@ -124,7 +124,7 @@ export function VendorFormModal({
       >
         {/* Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #4A4A4A 0%, #34495e 100%)',
+          background: 'linear-gradient(135deg, #4A4A4A 0%, #4A4A4A 100%)',
           color: 'white',
           padding: isMobile ? '16px' : '20px',
           borderTopLeftRadius: '12px',
