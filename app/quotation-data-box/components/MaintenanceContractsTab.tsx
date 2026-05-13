@@ -902,14 +902,14 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
     return amount.toLocaleString();
   };
 
-  // 契約種別バッジ色
+  // 契約種別バッジ色 (Figma 580:32040 label/* tokens)
   const getContractTypeBadge = (type: ContractType) => {
     const colors: Record<ContractType, string> = {
-      '保守契約': '#4A4A4A',
-      '定期点検': '#008C1D',
-      'スポット契約': '#4A4A4A',
-      '借用契約': '#4A4A4A',
-      'その他': '#8A8A8A',
+      '保守契約': '#008C1D',      // primary light (緑)
+      '定期点検': '#4E9440',      // label/仮登録 (緑)
+      'スポット契約': '#F7A367',  // label/使用中 (橙)
+      '借用契約': '#087CB6',      // label/依頼済 (青)
+      'その他': '#8A8A8A',         // Sub (灰)
     };
     return (
       <span style={{
