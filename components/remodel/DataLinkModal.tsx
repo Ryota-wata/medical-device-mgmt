@@ -754,9 +754,9 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
         <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 540, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <div style={{ background: '#4A4A4A', color: 'white', padding: '16px 24px', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Data Link</h2>
-            <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
+          <div style={{ background: 'white', color: '#4A4A4A', padding: '16px 24px', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Data Link</h2>
+            <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: '#4A4A4A', fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
           </div>
           <div style={{ padding: '40px 24px', textAlign: 'center' }}>
             <div style={{
@@ -861,8 +861,9 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
       }}>
         {/* ヘッダー */}
         <div style={{
-          background: '#4A4A4A', color: 'white', padding: '16px 24px',
+          background: 'white', color: '#4A4A4A', padding: '16px 24px',
           borderRadius: '12px 12px 0 0',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

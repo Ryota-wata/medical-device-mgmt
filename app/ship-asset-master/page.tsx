@@ -265,12 +265,13 @@ function ShipAssetMasterContent() {
       {/* 選択モードバナー */}
       {isSelectMode && (
         <div style={{
-          background: 'linear-gradient(135deg, #4A4A4A 0%, #4A4A4A 100%)',
-          color: 'white',
+          background: '#F1F1F1',
+          color: '#4A4A4A',
           padding: '12px 20px',
           textAlign: 'center',
-          fontWeight: 'bold',
+          fontWeight: 600,
           fontSize: '14px',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -590,9 +591,9 @@ function ShipAssetMasterContent() {
                   {/* カラムヘッダー */}
                   <tr>
                     {ASSET_MASTER_COLUMNS.map(col => (
-                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
+                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
                     ))}
-                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>

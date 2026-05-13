@@ -166,9 +166,10 @@ function QuotationProcessingContent() {
       {/* ヘッダー */}
       <header
         style={{
-          background: '#4A4A4A',
-          color: 'white',
+          background: 'white',
+          color: '#4A4A4A',
           padding: '15px 20px',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -178,7 +179,7 @@ function QuotationProcessingContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div
               style={{
-                background: 'linear-gradient(135deg, #4A4A4A 0%, #4A4A4A 100%)',
+                background: '#008C1D',
                 color: 'white',
                 width: '50px',
                 height: '50px',
@@ -192,22 +193,22 @@ function QuotationProcessingContent() {
             >
               SHIP
             </div>
-            <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>見積処理</h1>
+            <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0, color: '#4A4A4A' }}>見積処理</h1>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ background: '#4A4A4A', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 'bold' }}>
+            <span style={{ background: '#F1F1F1', color: '#4A4A4A', padding: '6px 16px', borderRadius: '20px', fontSize: '14px', fontWeight: 600 }}>
               {rfqNo}
             </span>
-            <span style={{ color: '#E1E1E1', fontSize: '14px' }}>業者: 〇〇〇〇商事</span>
+            <span style={{ color: '#8A8A8A', fontSize: '14px' }}>業者: 〇〇〇〇商事</span>
           </div>
         </div>
         <button
           onClick={() => router.push('/quotation-data-box')}
           style={{
-            background: '#4A4A4A',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
+            background: 'white',
+            color: '#4A4A4A',
+            border: '1px solid #E1E1E1',
+            borderRadius: '6px',
             padding: '8px 16px',
             cursor: 'pointer',
             fontSize: '14px',
