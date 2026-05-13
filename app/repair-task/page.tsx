@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Printer } from 'lucide-react';
 import { useAuthStore, useAssetStore, useLendingStore } from '@/lib/stores';
 import { Asset } from '@/lib/types';
 import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
@@ -1685,9 +1686,70 @@ function RepairTaskContent() {
           background: 'white',
           margin: '16px 16px 16px 0',
         }}>
-          {/* メインプレビューエリア */}
+          {/* メインプレビューエリア (Figma 構造: top に 5 横タブ + Printer アイコン) */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* プレビューヘッダー (Figma 構造: 色帯なし、プレーンヘッダー) */}
+            {/* 5 横タブ + Printer */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'stretch',
+              background: COLORS.white,
+              borderBottom: `1px solid ${COLORS.borderLight}`,
+            }}>
+              {([
+                { key: '申請申請書' as PreviewDocTab, label: '申請申請書' },
+                { key: '修理依頼書' as PreviewDocTab, label: '修理依頼書' },
+                { key: '見積書' as PreviewDocTab, label: '見積書' },
+                { key: '修理発注書' as PreviewDocTab, label: '修理発注書' },
+                { key: '完了報告書他' as PreviewDocTab, label: '完了報告書他' },
+              ]).map((tab) => {
+                const isActive = previewTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => {
+                      setPreviewTab(tab.key);
+                      if (tab.key === '修理依頼書') setPreviewVendorIndex(null);
+                      if (tab.key === '見積書') setPreviewQuotationIndex(null);
+                      if (tab.key === '完了報告書他') setPreviewDocumentIndex(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '12px 8px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      border: 'none',
+                      borderBottom: isActive ? `3px solid ${COLORS.primary}` : '3px solid transparent',
+                      background: COLORS.white,
+                      color: isActive ? COLORS.primaryDark : COLORS.textMuted,
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+              <button
+                className="repair-btn"
+                aria-label="印刷"
+                title="印刷"
+                style={{
+                  width: '40px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: COLORS.white,
+                  border: 'none',
+                  borderBottom: '3px solid transparent',
+                  color: COLORS.textMuted,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                <Printer size={18} />
+              </button>
+            </div>
+            {/* タブヘッダー: 現在タブのタイトル */}
             <div style={{
               padding: '12px 16px',
               background: COLORS.white,
