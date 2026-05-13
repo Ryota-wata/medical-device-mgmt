@@ -7,7 +7,7 @@ import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function LendingManagementContent() {
   return (
-    <div className="min-h-dvh flex flex-col bg-surface-screen">
+    <div className="h-dvh flex flex-col bg-surface-screen">
       <Header
         title="タスク管理"
         showBackButton={true}
@@ -16,11 +16,11 @@ function LendingManagementContent() {
         hideMenu={true}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 flex flex-col p-4 overflow-y-auto">
+      <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+        <div className="flex-1 flex flex-col p-4 overflow-hidden" style={{ minHeight: 0 }}>
           <SubTabNavigation activeTab="lendingManagement" />
 
-          <div className="flex-1 bg-surface-card overflow-auto">
+          <div className="flex-1 bg-surface-card overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
             <LendingManagementTab />
           </div>
         </div>

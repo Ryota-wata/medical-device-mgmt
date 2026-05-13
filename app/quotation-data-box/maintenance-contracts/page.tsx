@@ -7,7 +7,7 @@ import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function MaintenanceContractsContent() {
   return (
-    <div className="min-h-dvh flex flex-col bg-surface-screen">
+    <div className="h-dvh flex flex-col bg-surface-screen">
       <Header
         title="タスク管理"
         showBackButton={true}

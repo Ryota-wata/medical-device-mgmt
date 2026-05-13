@@ -571,7 +571,7 @@ function HospitalFacilityMasterContent() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       {/* Header */}
       <header
         style={{
@@ -683,14 +683,14 @@ function HospitalFacilityMasterContent() {
       )}
 
       {/* Main Content */}
-      <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: isMobile ? '16px' : isTablet ? '20px' : '24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {!selectedFacilityName ? (
           <div style={{ background: 'white', borderRadius: '8px', padding: isMobile ? '40px 20px' : '60px 40px', textAlign: 'center', color: '#8A8A8A', fontSize: isMobile ? '14px' : '16px' }}>
             施設を選択してください
           </div>
         ) : isMobile ? (
           /* ── モバイル: カード表示 ── */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
             {editingId === 'new' && renderMobileEditCard('new-card')}
             {filteredFacilities.map((facility) =>
               editingId === facility.id
@@ -700,10 +700,10 @@ function HospitalFacilityMasterContent() {
           </div>
         ) : (
           /* ── PC/タブレット: テーブル表示 ── */
-          <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ overflowX: 'auto' }}>
+          <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
+                <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                   {/* Row 1: グループヘッダー */}
                   <tr>
                     <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
