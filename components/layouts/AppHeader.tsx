@@ -91,7 +91,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ navItems = [] }) => {
       <div className="flex justify-between items-center gap-3 flex-wrap">
         {/* 左: ロゴ + システム名 */}
         <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="size-10 bg-[#26a4e4] rounded-lg flex items-center justify-center text-white font-bold text-[10px]">
+          <div className="size-10 bg-[#4A4A4A] rounded-lg flex items-center justify-center text-white font-bold text-[10px]">
             logo
           </div>
           {!isMobile && (
