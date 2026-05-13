@@ -579,14 +579,14 @@ export default function DataMatchingPage() {
   };
 
   const getStatusColor = (status?: MatchingStatus) => {
-    if (!status) return '#757575';
+    if (!status) return '#8A8A8A';
     switch (status) {
-      case '完全一致': return '#4caf50';
-      case '部分一致': return '#8bc34a';
-      case '数量不一致': return '#A66F1B';
-      case '再確認': return '#2196f3';
-      case '未確認': return '#f44336';
-      case '未登録': return '#5E3A93';
+      case '完全一致': return '#008C1D';
+      case '部分一致': return '#008C1D';
+      case '数量不一致': return '#4A4A4A';
+      case '再確認': return '#4A4A4A';
+      case '未確認': return '#DA0000';
+      case '未登録': return '#4A4A4A';
       default: return '#999';
     }
   };
@@ -645,7 +645,7 @@ export default function DataMatchingPage() {
         <div style={{ marginBottom: '16px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }}>
           データ統合
         </div>
-        <div style={{ color: '#d32f2f', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
+        <div style={{ color: '#DA0000', marginBottom: '16px', fontSize: '14px', textAlign: 'center' }}>
           この画面はデスクトップ表示に最適化されています
         </div>
         <button
@@ -737,11 +737,11 @@ export default function DataMatchingPage() {
                 {mergedListNames.map((name, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: idx < mergedListNames.length - 1 ? '8px' : 0 }}>
                     {idx > 0 && (
-                      <span style={{ color: '#4caf50', fontWeight: '600', marginRight: '8px' }}>+</span>
+                      <span style={{ color: '#008C1D', fontWeight: '600', marginRight: '8px' }}>+</span>
                     )}
                     <span style={{
                       padding: '4px 12px',
-                      backgroundColor: idx === 0 ? '#EAF3FB' : '#EBF5EE',
+                      backgroundColor: idx === 0 ? '#EBF5EE' : '#EBF5EE',
                       color: idx === 0 ? '#008C1D' : '#146E2E',
                       borderRadius: '4px',
                       fontSize: '14px',
@@ -750,7 +750,7 @@ export default function DataMatchingPage() {
                       {name}
                     </span>
                     {idx > 0 && (
-                      <span style={{ color: '#4caf50', fontSize: '14px' }}>✓ 突合済み</span>
+                      <span style={{ color: '#008C1D', fontSize: '14px' }}>✓ 突合済み</span>
                     )}
                   </div>
                 ))}
@@ -797,7 +797,7 @@ export default function DataMatchingPage() {
                   textAlign: 'center',
                   backgroundColor: '#EBF5EE',
                   borderRadius: '8px',
-                  border: '1px solid #4caf50'
+                  border: '1px solid #008C1D'
                 }}>
                   <div style={{ fontSize: '24px', marginBottom: '12px' }}>✓</div>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#146E2E', marginBottom: '8px' }}>
@@ -812,7 +812,7 @@ export default function DataMatchingPage() {
                     }}
                     style={{
                       padding: '12px 32px',
-                      backgroundColor: '#4caf50',
+                      backgroundColor: '#008C1D',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -837,7 +837,7 @@ export default function DataMatchingPage() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '16px',
-                          backgroundColor: selectedListId === list.id ? '#EAF3FB' : 'white',
+                          backgroundColor: selectedListId === list.id ? '#EBF5EE' : 'white',
                           cursor: 'pointer'
                         }}
                       >
@@ -857,7 +857,7 @@ export default function DataMatchingPage() {
                               padding: '2px 8px',
                               borderRadius: '4px',
                               fontSize: '12px',
-                              backgroundColor: list.type === 'fixed-asset' ? '#EAF3FB' : list.type === 'me-ledger' ? '#EBF5EE' : '#FAFAFA',
+                              backgroundColor: list.type === 'fixed-asset' ? '#EBF5EE' : list.type === 'me-ledger' ? '#EBF5EE' : '#FAFAFA',
                               color: list.type === 'fixed-asset' ? '#008C1D' : list.type === 'me-ledger' ? '#146E2E' : '#666'
                             }}>
                               {list.type === 'fixed-asset' ? '固定資産台帳' : list.type === 'me-ledger' ? 'ME管理台帳' : 'その他'}
@@ -881,8 +881,8 @@ export default function DataMatchingPage() {
                       style={{
                         padding: '12px 24px',
                         backgroundColor: '#ffffff',
-                        color: '#4caf50',
-                        border: '2px solid #4caf50',
+                        color: '#008C1D',
+                        border: '2px solid #008C1D',
                         borderRadius: '4px',
                         cursor: 'pointer',
                         fontSize: '14px',
@@ -896,7 +896,7 @@ export default function DataMatchingPage() {
                       disabled={!selectedListId}
                       style={{
                         padding: '12px 24px',
-                        backgroundColor: selectedListId ? '#008C1D' : '#cccccc',
+                        backgroundColor: selectedListId ? '#008C1D' : '#E1E1E1',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -983,7 +983,7 @@ export default function DataMatchingPage() {
             </h1>
             <span style={{
               padding: '4px 12px',
-              backgroundColor: currentList?.type === 'me-ledger' ? '#EBF5EE' : '#EAF3FB',
+              backgroundColor: currentList?.type === 'me-ledger' ? '#EBF5EE' : '#EBF5EE',
               color: currentList?.type === 'me-ledger' ? '#146E2E' : '#008C1D',
               borderRadius: '4px',
               fontSize: '14px',
@@ -1007,7 +1007,7 @@ export default function DataMatchingPage() {
               <div style={{
                 width: `${progressPercent}%`,
                 height: '100%',
-                backgroundColor: progressPercent === 100 ? '#4caf50' : '#008C1D',
+                backgroundColor: progressPercent === 100 ? '#008C1D' : '#008C1D',
                 borderRadius: '4px',
                 transition: 'width 0.3s ease'
               }} />
@@ -1016,7 +1016,7 @@ export default function DataMatchingPage() {
               onClick={completeCurrentMatching}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#A66F1B',
+                backgroundColor: '#4A4A4A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1165,7 +1165,7 @@ export default function DataMatchingPage() {
           {/* 上パネル ヘッダー */}
           <div style={{
             padding: '8px 16px',
-            backgroundColor: '#EAF3FB',
+            backgroundColor: '#EBF5EE',
             borderBottom: '1px solid #0092E6',
             display: 'flex',
             justifyContent: 'space-between',
@@ -1198,9 +1198,9 @@ export default function DataMatchingPage() {
                   onClick={() => handleTabChange('completed')}
                   style={{
                     padding: '4px 12px',
-                    backgroundColor: activeTab === 'completed' ? '#4caf50' : 'transparent',
-                    color: activeTab === 'completed' ? 'white' : '#4caf50',
-                    border: activeTab === 'completed' ? 'none' : '1px solid #4caf50',
+                    backgroundColor: activeTab === 'completed' ? '#008C1D' : 'transparent',
+                    color: activeTab === 'completed' ? 'white' : '#008C1D',
+                    border: activeTab === 'completed' ? 'none' : '1px solid #008C1D',
                     borderRadius: '4px',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -1265,7 +1265,7 @@ export default function DataMatchingPage() {
                   onClick={handleSelectAllMerged}
                   style={{
                     padding: '4px 10px',
-                    backgroundColor: '#f0f0f0',
+                    backgroundColor: '#FAFAFA',
                     border: '1px solid #ccc',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1279,12 +1279,12 @@ export default function DataMatchingPage() {
                 <div style={{ display: 'flex', gap: '2px', alignItems: 'center', borderLeft: '1px solid #ccc', paddingLeft: '8px' }}>
                   <span style={{ fontSize: '11px', color: '#8A8A8A', marginRight: '4px' }}>突合状況:</span>
                   {([
-                    { status: '完全一致' as MatchingStatus, label: '完全一致', color: '#4caf50', needsBoth: true },
-                    { status: '数量不一致' as MatchingStatus, label: '数量不一致', color: '#A66F1B', needsBoth: true },
-                    { status: '部分一致' as MatchingStatus, label: '部分一致', color: '#8bc34a', needsBoth: true },
-                    { status: '未確認' as MatchingStatus, label: '未確認(現場無)', color: '#f44336', needsBoth: false },
-                    { status: '未登録' as MatchingStatus, label: '未登録(台帳無)', color: '#5E3A93', needsBoth: false },
-                    { status: '再確認' as MatchingStatus, label: '再確認', color: '#2196f3', needsBoth: true },
+                    { status: '完全一致' as MatchingStatus, label: '完全一致', color: '#008C1D', needsBoth: true },
+                    { status: '数量不一致' as MatchingStatus, label: '数量不一致', color: '#4A4A4A', needsBoth: true },
+                    { status: '部分一致' as MatchingStatus, label: '部分一致', color: '#008C1D', needsBoth: true },
+                    { status: '未確認' as MatchingStatus, label: '未確認(現場無)', color: '#DA0000', needsBoth: false },
+                    { status: '未登録' as MatchingStatus, label: '未登録(台帳無)', color: '#4A4A4A', needsBoth: false },
+                    { status: '再確認' as MatchingStatus, label: '再確認', color: '#4A4A4A', needsBoth: true },
                   ]).map(({ status, label, color, needsBoth }) => {
                     const isEnabled = needsBoth
                       ? selectedMergedIds.size > 0 && selectedLedgerIds.size > 0
@@ -1360,7 +1360,7 @@ export default function DataMatchingPage() {
               </thead>
               <tbody>
                 {matchFilteredData.map((row) => (
-                  <tr key={row.id} style={{ backgroundColor: selectedMergedIds.has(row.id) && activeTab === 'pending' ? '#EAF3FB' : 'transparent' }}>
+                  <tr key={row.id} style={{ backgroundColor: selectedMergedIds.has(row.id) && activeTab === 'pending' ? '#EBF5EE' : 'transparent' }}>
                     {activeTab === 'pending' && (
                       <td style={{ ...tdStyle, textAlign: 'center' }}>
                         <input
@@ -1414,7 +1414,7 @@ export default function DataMatchingPage() {
                         style={{
                           marginTop: '8px',
                           padding: '8px 24px',
-                          backgroundColor: '#4caf50',
+                          backgroundColor: '#008C1D',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -1465,7 +1465,7 @@ export default function DataMatchingPage() {
           <div style={{
             width: '40px',
             height: '4px',
-            backgroundColor: '#bdbdbd',
+            backgroundColor: '#E1E1E1',
             borderRadius: '2px'
           }} />
         </div>
@@ -1483,7 +1483,7 @@ export default function DataMatchingPage() {
             flexShrink: 0
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#A35414' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#4A4A4A' }}>
                 {currentList?.name}
               </span>
               <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
@@ -1510,7 +1510,7 @@ export default function DataMatchingPage() {
                 onClick={handleSelectAllLedger}
                 style={{
                   padding: '4px 10px',
-                  backgroundColor: '#f0f0f0',
+                  backgroundColor: '#FAFAFA',
                   border: '1px solid #ccc',
                   borderRadius: '4px',
                   cursor: 'pointer',
@@ -1526,7 +1526,7 @@ export default function DataMatchingPage() {
           <div style={{ flex: 1, overflow: 'auto' }}>
             <table style={{ width: '1590px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <thead>
-                <tr style={{ backgroundColor: '#fff8e1', position: 'sticky', top: 0, zIndex: 1 }}>
+                <tr style={{ backgroundColor: '#FAFAFA', position: 'sticky', top: 0, zIndex: 1 }}>
                   <th style={{ ...thStyle, width: '40px', textAlign: 'center' }}>
                     <input
                       type="checkbox"
