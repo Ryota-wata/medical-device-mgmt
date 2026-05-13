@@ -306,7 +306,7 @@ export function PurchaseApplicationModal({
       flexDirection: 'column',
     },
     header: {
-      background: '#4a6741',
+      background: '#008C1D',
       color: 'white',
       padding: '16px 24px',
       fontSize: '18px',
@@ -336,10 +336,10 @@ export function PurchaseApplicationModal({
     sectionTitle: {
       fontSize: '14px',
       fontWeight: 'bold',
-      color: '#4a6741',
+      color: '#008C1D',
       marginBottom: '16px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #4a6741',
+      borderBottom: '2px solid #008C1D',
     },
     note: {
       fontSize: '12px',
@@ -365,7 +365,7 @@ export function PurchaseApplicationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #4a6741',
+      border: '1px solid #008C1D',
       borderRadius: '4px',
       fontSize: '14px',
       boxSizing: 'border-box' as const,
@@ -380,7 +380,7 @@ export function PurchaseApplicationModal({
     },
     select: {
       padding: '8px 12px',
-      border: '1px solid #4a6741',
+      border: '1px solid #008C1D',
       borderRadius: '4px',
       fontSize: '14px',
       cursor: 'pointer',
@@ -401,7 +401,7 @@ export function PurchaseApplicationModal({
       width: '100%',
       minHeight: '100px',
       padding: '12px',
-      border: '1px solid #4a6741',
+      border: '1px solid #008C1D',
       borderRadius: '4px',
       fontSize: '14px',
       resize: 'vertical' as const,
@@ -415,7 +415,7 @@ export function PurchaseApplicationModal({
     },
     attachButton: {
       padding: '8px 16px',
-      background: '#4a6741',
+      background: '#008C1D',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -446,7 +446,7 @@ export function PurchaseApplicationModal({
     },
     confirmButton: {
       padding: '12px 48px',
-      background: '#4a6741',
+      background: '#008C1D',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -537,7 +537,7 @@ export function PurchaseApplicationModal({
                 <tbody>
                   {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>{getHopeLabel(index)}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#008C1D' }}>{getHopeLabel(index)}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.item}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.maker || '-'}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.model || '-'}</td>
@@ -719,7 +719,7 @@ export function PurchaseApplicationModal({
                 disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#4a6741',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -754,7 +754,7 @@ export function PurchaseApplicationModal({
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4a6741' }}>
+                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#008C1D' }}>
                           {getHopeLabel(index)}
                         </td>
                         <td style={{ padding: '4px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
@@ -846,7 +846,7 @@ export function PurchaseApplicationModal({
                             onClick={() => handleOpenAssetMaster(index)}
                             style={{
                               padding: '4px 8px',
-                              background: '#4a6741',
+                              background: '#008C1D',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -958,7 +958,7 @@ export function PurchaseApplicationModal({
                       alignItems: 'center',
                       gap: '6px',
                       padding: '4px 10px',
-                      background: '#EAF3FB',
+                      background: '#EBF5EE',
                       borderRadius: '4px',
                       fontSize: '12px',
                     }}
@@ -1037,8 +1037,8 @@ export function PurchaseApplicationModal({
                 style={{
                   padding: '12px 32px',
                   background: 'white',
-                  color: '#4a6741',
-                  border: '1px solid #4a6741',
+                  color: '#008C1D',
+                  border: '1px solid #008C1D',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -1052,7 +1052,7 @@ export function PurchaseApplicationModal({
                 onClick={handleSubmit}
                 style={{
                   padding: '12px 32px',
-                  background: '#4a6741',
+                  background: '#008C1D',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
