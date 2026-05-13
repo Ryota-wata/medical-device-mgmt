@@ -69,7 +69,7 @@ export function ApplicationCompleteModal({
             height="32"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#4a6741"
+            stroke="#008C1D"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -129,7 +129,7 @@ export function ApplicationCompleteModal({
             onClick={onGoToMain}
             style={{
               padding: '12px 24px',
-              background: '#4a6741',
+              background: '#008C1D',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -146,8 +146,8 @@ export function ApplicationCompleteModal({
             style={{
               padding: '12px 24px',
               background: 'white',
-              color: '#4a6741',
-              border: '2px solid #4a6741',
+              color: '#008C1D',
+              border: '2px solid #008C1D',
               borderRadius: '8px',
               cursor: 'pointer',
               fontSize: '14px',
