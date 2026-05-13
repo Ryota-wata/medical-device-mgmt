@@ -428,12 +428,11 @@ export default function AssetProvisionalRegistrationPage() {
         <ParamsReader onRead={handleParamsRead} />
       </Suspense>
 
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-[100] bg-content-primary text-white px-4 py-3 md:px-6 md:py-4 shadow-md flex justify-center items-center">
+      {/* Sticky Header (Figma 342:58973: 白背景 + 黒文字) */}
+      <div className="sticky top-0 z-[100] bg-surface-card border-b border-stroke-input text-content-primary px-4 py-3 md:px-6 md:py-4 flex justify-center items-center">
         <h1 className="text-base md:text-lg font-semibold m-0 text-balance">
           {registrationComplete ? '検収登録完了' : '検収登録'}
         </h1>
-        <span className="text-xs px-2 py-0.5 bg-white/20 rounded ml-2">モバイル</span>
       </div>
 
       <main className="flex-1 overflow-y-auto px-3 py-4 pb-32 md:px-5 md:py-6">
@@ -1166,7 +1165,7 @@ function MobileCard({
 }
 
 function GreenDivider() {
-  return <div className="h-1 bg-cta-primary rounded my-6" />;
+  return null;
 }
 
 function MobileInfoRow({ label, value }: { label: string; value: string }) {
