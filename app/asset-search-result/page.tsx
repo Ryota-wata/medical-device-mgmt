@@ -416,17 +416,17 @@ export default function AssetSearchResultPage() {
           <table style={{ borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#FAFAFA' }}>
               {/* グループヘッダー行 */}
-              <tr style={{ borderBottom: '1px solid #E1E1E1' }}>
+              <tr>
                 <th
                   rowSpan={2}
                   style={{
                     padding: '8px',
                     textAlign: 'center',
                     width: `${columnWidths.checkbox}px`,
-                    background: '#FAFAFA',
+                    background: '#F1F1F1',
                     position: 'relative',
                     verticalAlign: 'middle',
-                    borderRight: '1px solid #E1E1E1',
+                    border: '1px solid #E1E1E1',
                   }}
                 >
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} style={{ accentColor: '#008C1D', cursor: 'pointer' }} />
@@ -462,7 +462,7 @@ export default function AssetSearchResultPage() {
                     }
                   });
                   return groupSpans.map((span, idx) => {
-                    const style = GROUP_STYLES[span.group] || { label: span.group, bg: '#FAFAFA', color: '#4A4A4A' };
+                    const style = GROUP_STYLES[span.group] || { label: span.group, bg: '#F1F1F1', color: '#4A4A4A' };
                     return (
                       <th
                         key={`${span.group}-${idx}`}
@@ -473,10 +473,9 @@ export default function AssetSearchResultPage() {
                           fontSize: 11,
                           fontWeight: 600,
                           letterSpacing: '0.02em',
-                          color: style.color,
-                          background: style.bg,
-                          borderLeft: idx > 0 ? '1px solid #E1E1E1' : undefined,
-                          borderBottom: '1px solid #E1E1E1',
+                          color: '#4A4A4A',
+                          background: '#F1F1F1',
+                          border: '1px solid #E1E1E1',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -487,9 +486,8 @@ export default function AssetSearchResultPage() {
                 })()}
               </tr>
               {/* カラム名行 */}
-              <tr style={{ borderBottom: '1px solid #E1E1E1' }}>
+              <tr>
                 {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => {
-                  const groupStyle = GROUP_STYLES[col.group || 'other'] || { bg: '#FAFAFA' };
                   return (
                   <th
                     key={col.key}
@@ -504,7 +502,7 @@ export default function AssetSearchResultPage() {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       background: '#FAFAFA',
-                      borderRight: '1px solid #E1E1E1',
+                      border: '1px solid #E1E1E1',
                       fontSize: 12,
                     }}
                   >
@@ -538,10 +536,10 @@ export default function AssetSearchResultPage() {
                 <tr
                   key={asset.no}
                   style={{
-                    borderBottom: '1px solid #E1E1E1',
                     cursor: 'pointer',
                     background: selectedItems.has(asset.no) ? '#EBF5EE' : '#FFFFFF',
                     transition: 'background 0.1s ease',
+                    height: '38px',
                   }}
                   onDoubleClick={() => router.push(`/asset-detail?no=${asset.no}&from=asset-search`)}
                   onMouseEnter={(e) => {
@@ -555,7 +553,10 @@ export default function AssetSearchResultPage() {
                     }
                   }}
                 >
-                  <td style={{ padding: '10px 10px', whiteSpace: 'nowrap', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+                  <td
+                    style={{ padding: '8px 10px', whiteSpace: 'nowrap', overflow: 'hidden', border: '1px solid #E1E1E1', textAlign: 'center', verticalAlign: 'middle' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedItems.has(asset.no)}
@@ -564,7 +565,19 @@ export default function AssetSearchResultPage() {
                     />
                   </td>
                   {ALL_COLUMNS.filter((col) => visibleColumns[col.key]).map((col) => (
-                    <td key={col.key} style={{ padding: '10px 10px', color: '#4A4A4A', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <td
+                      key={col.key}
+                      style={{
+                        padding: '8px 10px',
+                        color: '#4A4A4A',
+                        fontSize: 13,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        border: '1px solid #E1E1E1',
+                        verticalAlign: 'middle',
+                      }}
+                    >
                       {getCellValue(asset, col.key)}
                     </td>
                   ))}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { Download, Upload, Plus } from 'lucide-react';
+import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useHospitalFacilityStore } from '@/lib/stores/hospitalFacilityStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -45,7 +46,6 @@ const emptyForm: InlineFormData = {
 };
 
 function HospitalFacilityMasterContent() {
-  const router = useRouter();
   const { isMobile, isTablet } = useResponsive();
   const { facilities: masterFacilities, departments, roomCategories } = useMasterStore();
   const {
@@ -123,8 +123,6 @@ function HospitalFacilityMasterContent() {
   }, [roomCategories, editForm.oldShipRoomCategory]);
 
   // ── 操作ハンドラ ──
-  const handleBack = () => router.push('/main');
-
   const handleStartNew = () => {
     setEditingId('new');
     setEditForm({ ...emptyForm });
@@ -573,92 +571,54 @@ function HospitalFacilityMasterContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#FAFAFA' }}>
       {/* Header */}
-      <header
-        style={{
-          background: '#ffffff',
-          borderBottom: '1px solid #E1E1E1',
-          padding: isMobile ? '12px 16px' : isTablet ? '14px 20px' : '16px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: isMobile ? '12px' : '16px',
-        }}
+      <Header
+        title="個別部署マスタ"
+        showBackButton={true}
+        backHref="/main"
+        backLabel="メイン画面に戻る"
+        backButtonVariant="secondary"
+        hideMenu={true}
+        hideHomeButton={true}
+        resultCount={selectedFacilityName ? filteredFacilities.length : undefined}
+        showOriginalLabel={false}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '12px' : '16px', flex: 1 }}>
-          <h1 style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px', fontWeight: 700, color: '#4A4A4A', margin: 0 }}>個別部署マスタ</h1>
-          {selectedFacilityName && (
-            <div style={{ background: '#F1F1F1', color: '#8A8A8A', padding: isMobile ? '4px 12px' : '6px 16px', borderRadius: '20px', fontSize: isMobile ? '12px' : '14px', fontWeight: 600 }}>
-              {selectedFacilityName} - {filteredFacilities.length}件
-            </div>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {selectedFacilityName && (
-            <>
-              <button
-                onClick={handleExport}
-                style={{
-                  padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: 'white',
-                  color: '#146E2E',
-                  border: '1px solid #146E2E',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                エクスポート
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: 'white',
-                  color: '#146E2E',
-                  border: '1px solid #146E2E',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                インポート
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-              />
-              <button
-                onClick={handleStartNew}
-                disabled={editingId !== null}
-                style={{
-                  padding: isMobile ? '8px 16px' : '10px 20px',
-                  background: editingId !== null ? '#8A8A8A' : '#008C1D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: isMobile ? '13px' : '14px',
-                  fontWeight: 600,
-                  cursor: editingId !== null ? 'not-allowed' : 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                新規作成
-              </button>
-            </>
-          )}
-          <button onClick={handleBack} style={{ padding: isMobile ? '8px 16px' : '10px 20px', background: '#E1E1E1', color: '#4A4A4A', border: 'none', borderRadius: '6px', fontSize: isMobile ? '13px' : '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            メイン画面に戻る
-          </button>
-        </div>
-      </header>
+        {selectedFacilityName && (
+          <>
+            <span className={`bg-stroke-card text-content-primary rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${isMobile ? 'hidden' : 'inline-flex'}`}>
+              {selectedFacilityName}
+            </span>
+            <button
+              onClick={handleExport}
+              className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
+            >
+              <Download size={16} aria-hidden />
+              エクスポート
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} bg-surface-card text-cta-primary-dark border border-cta-primary rounded-md cursor-pointer font-semibold whitespace-nowrap hover:bg-surface-select transition-colors`}
+            >
+              <Upload size={16} aria-hidden />
+              インポート
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              style={{ display: 'none' }}
+              onChange={handleFileSelect}
+            />
+            <button
+              onClick={handleStartNew}
+              disabled={editingId !== null}
+              className={`inline-flex items-center justify-center gap-1.5 h-9 ${isMobile ? 'px-3 text-[13px]' : 'px-4 text-sm'} ${editingId !== null ? 'bg-content-sub cursor-not-allowed' : 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer'} text-white border-0 rounded-md font-semibold whitespace-nowrap transition-colors`}
+            >
+              <Plus size={16} aria-hidden />
+              新規作成
+            </button>
+          </>
+        )}
+      </Header>
 
       {/* Facility Selection */}
       {!selectedFacilityFromAuth && (
