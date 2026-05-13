@@ -386,7 +386,7 @@ function RepairRequestsContent() {
                           key={app.id}
                           style={{
                             borderBottom: '1px solid #E1E1E1',
-                            background: selectedApplicationIds.has(app.id) ? '#EAF3FB' : 'transparent',
+                            background: selectedApplicationIds.has(app.id) ? '#EBF5EE' : 'transparent',
                             cursor: 'pointer',
                           }}
                           onClick={() => handleViewDetail(app)}
@@ -490,9 +490,9 @@ function RepairRequestsContent() {
                     onClick={() => setActiveStep(tab.key)}
                     style={{
                       padding: '10px 16px',
-                      background: isActive ? '#A66F1B' : 'transparent',
+                      background: isActive ? '#4A4A4A' : 'transparent',
                       border: 'none',
-                      borderBottom: isActive ? '2px solid #A66F1B' : '2px solid transparent',
+                      borderBottom: isActive ? '2px solid #4A4A4A' : '2px solid transparent',
                       cursor: 'pointer',
                       fontSize: '12px',
                       fontWeight: isActive ? 'bold' : 'normal',
@@ -553,7 +553,7 @@ function RepairRequestsContent() {
 
               <button
                 onClick={() => { setCategoryFilter(''); setAlternativeUnreturnedOnly(false); setActiveStep('all'); }}
-                style={{ padding: '6px 16px', background: '#f0f0f0', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: '#666' }}
+                style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', color: '#666' }}
               >
                 クリア
               </button>
@@ -589,13 +589,13 @@ function RepairRequestsContent() {
         };
         const sectionTitleStyle: React.CSSProperties = {
           fontSize: 14, fontWeight: 700, color: '#4A4A4A', marginBottom: 12,
-          borderBottom: '2px solid #d1d5db', paddingBottom: 6,
+          borderBottom: '2px solid #E1E1E1', paddingBottom: 6,
         };
         return (
           <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
             <div style={{ background: 'white', borderRadius: 8, maxWidth: 700, width: '95%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {/* ヘッダー */}
-              <div style={{ padding: '14px 24px', background: '#4a5a3c', color: 'white', display: 'flex', alignItems: 'center', gap: 24 }}>
+              <div style={{ padding: '14px 24px', background: '#008C1D', color: 'white', display: 'flex', alignItems: 'center', gap: 24 }}>
                 <span style={{ fontWeight: 700, fontSize: 15, border: '1px solid rgba(255,255,255,0.4)', padding: '4px 16px', borderRadius: 4 }}>修理申請 内容確認</span>
                 <span style={{ fontSize: 14, background: 'rgba(255,255,255,0.15)', padding: '4px 16px', borderRadius: 4 }}>
                   移動申請No. {selectedApplication.applicationNo}
@@ -636,7 +636,7 @@ function RepairRequestsContent() {
                 <div style={sectionStyle}>
                   <div style={{ ...sectionTitleStyle, display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     機器情報
-                    <span style={{ fontSize: 12, fontWeight: 400, color: '#16a34a' }}>(登録済み資産)</span>
+                    <span style={{ fontSize: 12, fontWeight: 400, color: '#008C1D' }}>(登録済み資産)</span>
                   </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <tbody>
@@ -693,26 +693,26 @@ function RepairRequestsContent() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <button
                     onClick={() => window.print()}
-                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
+                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #E1E1E1', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
                   >
                     印刷
                   </button>
                   <button
                     onClick={() => { setShowDetailModal(false); setSelectedApplication(null); }}
-                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #d1d5db', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
+                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #E1E1E1', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
                   >
                     キャンセル
                   </button>
                   <div style={{ flex: 1 }} />
                   <button
                     onClick={() => handleProcessApplication(selectedApplication, '院内対応')}
-                    style={{ padding: '10px 32px', background: '#4a5a3c', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+                    style={{ padding: '10px 32px', background: '#008C1D', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
                   >
                     院内対応
                   </button>
                   <button
                     onClick={() => handleProcessApplication(selectedApplication, '外部依頼')}
-                    style={{ padding: '10px 32px', background: '#4a5a3c', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+                    style={{ padding: '10px 32px', background: '#008C1D', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
                   >
                     外部依頼
                   </button>
