@@ -106,7 +106,7 @@ function RemodelManagementContent() {
                   router.push('/remodel-application');
                 }
               }}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-transparent text-white border border-white/60 rounded-md cursor-pointer text-xs font-semibold whitespace-nowrap transition-colors hover:bg-white/15 hover:border-white"
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-surface-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs font-semibold whitespace-nowrap transition-colors hover:bg-surface-screen"
             >
               編集リスト
               <ArrowRight className="w-3.5 h-3.5" aria-hidden />
