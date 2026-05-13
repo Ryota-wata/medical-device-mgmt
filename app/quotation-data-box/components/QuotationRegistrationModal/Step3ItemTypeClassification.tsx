@@ -23,12 +23,12 @@ const ITEM_TYPE_DESCRIPTIONS: Record<QuotationItemType, string> = {
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string; border: string }> = {
-  'A_表紙明細': { bg: '#EAF3FB', text: '#1E5A9E', border: '#0092E6' },
-  'B_明細代表': { bg: '#F1ECF7', text: '#7b1fa2', border: '#ce93d8' },
-  'C_個体管理品目': { bg: '#EBF5EE', text: '#146E2E', border: '#a5d6a7' },
-  'D_付属品': { bg: '#FDF1E5', text: '#ef6c00', border: '#ffcc80' },
-  'E_その他役務': { bg: '#FBE9EC', text: '#c2185b', border: '#f48fb1' },
-  'F_値引き': { bg: '#ffebee', text: '#9A2333', border: '#ef9a9a' },
+  'A_表紙明細': { bg: '#EBF5EE', text: '#4A4A4A', border: '#0092E6' },
+  'B_明細代表': { bg: '#FAFAFA', text: '#4A4A4A', border: '#8A8A8A' },
+  'C_個体管理品目': { bg: '#EBF5EE', text: '#146E2E', border: '#008C1D' },
+  'D_付属品': { bg: '#FDF1E5', text: '#4A4A4A', border: '#FDF1E5' },
+  'E_その他役務': { bg: '#FDF1E5', text: '#4A4A4A', border: '#FDF1E5' },
+  'F_値引き': { bg: '#FDF1E5', text: '#DA0000', border: '#FDF1E5' },
 };
 
 interface Step3ItemTypeClassificationProps {
@@ -112,8 +112,8 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '16px', padding: '14px', background: '#EAF3FB', borderRadius: '6px', border: '1px solid #0092E6' }}>
-        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#1E5A9E', marginBottom: '8px' }}>
+      <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #0092E6' }}>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
           ① 登録区分をチェック・修正してください
         </div>
         <div style={{ fontSize: '12px', color: '#555', lineHeight: 1.6 }}>
@@ -194,7 +194,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
                 return (
                   <tr key={index} style={{
                     borderBottom: '1px solid #eee',
-                    background: classification.isModified ? '#fff8e1' : 'transparent',
+                    background: classification.isModified ? '#FAFAFA' : 'transparent',
                   }}>
                     <td style={{ padding: '6px', textAlign: 'center' }}>{item.rowNo || index + 1}</td>
                     <td style={{ padding: '6px', fontWeight: 'bold' }}>{item.itemName}</td>
@@ -247,8 +247,8 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
       </div>
 
       {/* 次ステップへの案内 */}
-      <div style={{ marginBottom: '16px', padding: '12px', background: '#F1ECF7', borderRadius: '6px', border: '1px solid #ce93d8' }}>
-        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#7b1fa2', marginBottom: '4px' }}>
+      <div style={{ marginBottom: '16px', padding: '12px', background: '#FAFAFA', borderRadius: '6px', border: '1px solid #8A8A8A' }}>
+        <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '4px' }}>
           次のステップ：個体管理品目のAI判定（{individualItemCount}件）
         </div>
         <div style={{ fontSize: '11px', color: '#555' }}>
@@ -276,7 +276,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
           onClick={handleNext}
           style={{
             padding: '10px 24px',
-            background: '#5E3A93',
+            background: '#4A4A4A',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
