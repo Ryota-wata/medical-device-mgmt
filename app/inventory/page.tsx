@@ -1413,7 +1413,7 @@ export default function InventoryPage() {
                   {Array.from(selectedItems).map(qrCode => {
                     const item = inventoryItems.find(i => i.asset.qrCode === qrCode);
                     return item ? (
-                      <div key={qrCode} style={{ padding: '4px 0', borderBottom: '1px solid #eee' }}>
+                      <div key={qrCode} style={{ padding: '4px 0', borderBottom: '1px solid #E1E1E1' }}>
                         {item.asset.name}
                       </div>
                     ) : null;

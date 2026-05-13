@@ -1592,7 +1592,7 @@ function RemodelApplicationContent() {
           <div style={{
             padding: '8px 16px',
             background: '#EBF5EE',
-            border: '1px solid #0092E6',
+            border: '1px solid #087CB6',
             borderRadius: '4px',
             marginBottom: '8px',
             display: 'flex',

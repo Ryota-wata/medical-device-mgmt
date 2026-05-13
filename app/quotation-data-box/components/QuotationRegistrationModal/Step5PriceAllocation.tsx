@@ -131,7 +131,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
         <div style={{
           padding: '8px 16px',
           background: '#EBF5EE',
-          border: '1px solid #0092E6',
+          border: '1px solid #087CB6',
           borderRadius: '4px',
           fontSize: '13px',
         }}>
@@ -198,7 +198,7 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
 
                 return (
                   <tr key={item.index} style={{
-                    borderBottom: '1px solid #eee',
+                    borderBottom: '1px solid #E1E1E1',
                     background: isIndividual ? '#FAFAFA' : 'transparent',
                   }}>
                     <td style={{ padding: '6px', textAlign: 'center' }}>

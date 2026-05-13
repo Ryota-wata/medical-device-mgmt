@@ -300,7 +300,7 @@ function RfqProcessContent() {
           <div style={{ fontSize: '13px', marginBottom: '24px' }}>URLのパラメータを確認してください。</div>
           <button
             onClick={() => router.push('/quotation-data-box/purchase-management')}
-            style={{ padding: '8px 24px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+            style={{ padding: '8px 24px', background: '#087CB6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
           >
             タスク管理に戻る
           </button>
@@ -327,7 +327,7 @@ function RfqProcessContent() {
         gap: '12px',
       }}>
         <span style={{
-          background: '#0092E6',
+          background: '#087CB6',
           padding: '4px 10px',
           borderRadius: '4px',
           fontSize: '12px',
@@ -378,7 +378,7 @@ function RfqProcessContent() {
                 <div style={{
                   height: '2px',
                   width: '64px',
-                  background: step.num <= 1 ? '#0092E6' : '#E1E1E1',
+                  background: step.num <= 1 ? '#087CB6' : '#E1E1E1',
                   marginTop: '13px',
                 }} />
               )}
@@ -393,7 +393,7 @@ function RfqProcessContent() {
                   fontSize: '12px',
                   fontWeight: 'bold',
                   background: step.num < 1 ? '#008C1D'
-                    : step.num === 1 ? '#0092E6'
+                    : step.num === 1 ? '#087CB6'
                     : '#E1E1E1',
                   color: step.num <= 1 ? 'white' : '#999',
                 }}>
@@ -421,7 +421,7 @@ function RfqProcessContent() {
 
           {/* ========== セクション1: 見積依頼 ========== */}
           <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #E1E1E1', overflow: 'hidden' }}>
-            <div style={{ background: '#0092E6', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ background: '#087CB6', color: 'white', padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>見積依頼</span>
               <button
                 onClick={handleAddVendor}
@@ -754,7 +754,7 @@ function RfqProcessContent() {
                 onClick={() => alert('Excel取込機能（モック）')}
                 style={{
                   padding: '8px 20px',
-                  background: '#0092E6',
+                  background: '#087CB6',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -820,7 +820,7 @@ function RfqProcessContent() {
               <span style={{ fontSize: '13px', fontWeight: 'bold' }}>見積依頼書 プレビュー</span>
               {showPreview && activeVendor && (
                 <span style={{
-                  background: '#0092E6',
+                  background: '#087CB6',
                   padding: '2px 8px',
                   borderRadius: '4px',
                   fontSize: '11px',

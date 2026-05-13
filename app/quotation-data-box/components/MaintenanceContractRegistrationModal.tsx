@@ -235,7 +235,7 @@ export function MaintenanceContractRegistrationModal({
     },
     searchButton: {
       padding: '8px 16px',
-      backgroundColor: '#0092E6',
+      backgroundColor: '#087CB6',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -262,7 +262,7 @@ export function MaintenanceContractRegistrationModal({
     },
     td: {
       padding: '8px 12px',
-      borderBottom: '1px solid #eee',
+      borderBottom: '1px solid #E1E1E1',
     },
     footer: {
       padding: '16px 24px',

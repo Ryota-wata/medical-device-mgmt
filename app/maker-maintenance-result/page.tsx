@@ -697,7 +697,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   td: {
     padding: '8px 12px',
-    borderBottom: '1px solid #eee',
+    borderBottom: '1px solid #E1E1E1',
     verticalAlign: 'middle',
   },
 };

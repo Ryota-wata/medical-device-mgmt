@@ -336,7 +336,7 @@ export function AddToEditListModal({
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: '#0092E6',
+                      color: '#087CB6',
                       fontSize: '12px',
                       cursor: 'pointer',
                       padding: '4px 0',

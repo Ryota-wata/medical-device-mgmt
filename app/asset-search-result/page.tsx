@@ -416,7 +416,7 @@ export default function AssetSearchResultPage() {
           <table style={{ borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#FAFAFA' }}>
               {/* グループヘッダー行 */}
-              <tr style={{ borderBottom: '1px solid #F1F1F1' }}>
+              <tr style={{ borderBottom: '1px solid #E1E1E1' }}>
                 <th
                   rowSpan={2}
                   style={{
@@ -426,7 +426,7 @@ export default function AssetSearchResultPage() {
                     background: '#FAFAFA',
                     position: 'relative',
                     verticalAlign: 'middle',
-                    borderRight: '1px solid #F1F1F1',
+                    borderRight: '1px solid #E1E1E1',
                   }}
                 >
                   <input type="checkbox" onChange={(e) => handleSelectAll(e.target.checked)} style={{ accentColor: '#008C1D', cursor: 'pointer' }} />
@@ -475,8 +475,8 @@ export default function AssetSearchResultPage() {
                           letterSpacing: '0.02em',
                           color: style.color,
                           background: style.bg,
-                          borderLeft: idx > 0 ? '1px solid #F1F1F1' : undefined,
-                          borderBottom: '1px solid #F1F1F1',
+                          borderLeft: idx > 0 ? '1px solid #E1E1E1' : undefined,
+                          borderBottom: '1px solid #E1E1E1',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -504,7 +504,7 @@ export default function AssetSearchResultPage() {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       background: '#FAFAFA',
-                      borderRight: '1px solid #F1F1F1',
+                      borderRight: '1px solid #E1E1E1',
                       fontSize: 12,
                     }}
                   >
@@ -538,7 +538,7 @@ export default function AssetSearchResultPage() {
                 <tr
                   key={asset.no}
                   style={{
-                    borderBottom: '1px solid #F1F1F1',
+                    borderBottom: '1px solid #E1E1E1',
                     cursor: 'pointer',
                     background: selectedItems.has(asset.no) ? '#EBF5EE' : '#FFFFFF',
                     transition: 'background 0.1s ease',
@@ -623,7 +623,7 @@ export default function AssetSearchResultPage() {
                   </div>
 
                   {/* 機器名バー（slide36 のバー風）+ QRコード */}
-                  <div style={{ background: '#FAFAFA', borderTop: '1px solid #F1F1F1', borderBottom: '1px solid #F1F1F1', padding: '6px 10px' }}>
+                  <div style={{ background: '#FAFAFA', borderTop: '1px solid #E1E1E1', borderBottom: '1px solid #E1E1E1', padding: '6px 10px' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 8, minWidth: 0 }}>
                       <span style={{ fontSize: 13, fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {asset.item || asset.name}
@@ -651,7 +651,7 @@ export default function AssetSearchResultPage() {
                           gridTemplateColumns: '60px 1fr',
                           gap: 6,
                           padding: '4px 0',
-                          borderBottom: idx < arr.length - 1 ? '1px solid #F1F1F1' : 'none',
+                          borderBottom: idx < arr.length - 1 ? '1px solid #E1E1E1' : 'none',
                           alignItems: 'baseline',
                         }}
                       >

@@ -32,7 +32,7 @@ const getInspectionStatusColor = (status: string): string => {
   if (status === '点検月超過') return '#DA0000';
   if (status === '点検週') return '#DA0000';
   if (status === '点検月') return '#4A4A4A';
-  if (status.includes('ヶ月前')) return '#0092E6';
+  if (status.includes('ヶ月前')) return '#087CB6';
   return '#8A8A8A';
 };
 
@@ -362,7 +362,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                     <td style={td}>{task.managementDepartment}</td>
                     <td style={td}>{task.installedDepartment}</td>
                     {/* 商品情報 */}
-                    <td style={{ ...td, fontFamily: 'monospace', fontWeight: 600, color: '#0092E6' }}>{task.assetId}</td>
+                    <td style={{ ...td, fontFamily: 'monospace', fontWeight: 600, color: '#087CB6' }}>{task.assetId}</td>
                     <td style={td}>{task.assetName}</td>
                     <td style={td}>{task.maker}</td>
                     <td style={td}>{task.model}</td>
@@ -463,7 +463,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                           border: 'none',
                           cursor: 'pointer',
                           fontSize: '12px',
-                          color: '#0092E6',
+                          color: '#087CB6',
                           textDecoration: 'underline',
                           padding: '4px 8px',
                         }}

@@ -235,7 +235,7 @@ export function ContractReviewModal({
       color: '#4A4A4A',
       marginBottom: '12px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #0092E6',
+      borderBottom: '2px solid #087CB6',
     },
     infoBox: {
       backgroundColor: '#FAFAFA',
@@ -332,7 +332,7 @@ export function ContractReviewModal({
       transition: 'border-color 0.2s, background-color 0.2s',
     },
     dropZoneActive: {
-      borderColor: '#0092E6',
+      borderColor: '#087CB6',
       backgroundColor: '#EBF5EE',
     },
     dropZoneIcon: {

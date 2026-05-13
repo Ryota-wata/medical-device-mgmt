@@ -45,7 +45,7 @@ const tdStyle: React.CSSProperties = {
 // ステータス別のバッジ色
 const STATUS_BADGE_COLORS: Record<RfqGroupStatus, string> = {
   '見積依頼': '#8A8A8A',
-  '見積依頼済': '#0092E6',
+  '見積依頼済': '#087CB6',
   '見積DB登録済': '#4A4A4A',
   '見積登録依頼中': '#4A4A4A',
   '発注用見積依頼済': '#4A4A4A',
@@ -88,7 +88,7 @@ const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
 };
 
 // グルーピング色（同一rfqNoが複数ある場合の左ボーダー）
-const GROUP_BORDER_COLORS = ['#0092E6', '#4A4A4A', '#008C1D', '#4A4A4A', '#DA0000', '#4A4A4A'];
+const GROUP_BORDER_COLORS = ['#087CB6', '#4A4A4A', '#008C1D', '#4A4A4A', '#DA0000', '#4A4A4A'];
 
 export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   rfqGroups,
@@ -184,7 +184,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 見積依頼 → 見積依頼（送信） → 見積依頼済へ
       case '見積依頼':
         buttons.push(
-          <button key="rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#0092E6' }}>
+          <button key="rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#087CB6' }}>
             見積依頼
           </button>
         );
@@ -192,7 +192,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 見積依頼済 → 見積登録
       case '見積依頼済':
         buttons.push(
-          <button key="quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#0092E6' }}>
+          <button key="quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#087CB6' }}>
             見積登録
           </button>
         );

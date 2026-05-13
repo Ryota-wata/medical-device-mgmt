@@ -527,7 +527,7 @@ const ContractGroupDetailModal = ({
         {/* ヘッダー */}
         <div style={{
           padding: '16px 20px',
-          borderBottom: '1px solid #eee',
+          borderBottom: '1px solid #E1E1E1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -629,7 +629,7 @@ const ContractGroupDetailModal = ({
                     </>
                   ) : (
                     <>
-                      <td style={{ ...mTd, background: '#FAFAFA', fontFamily: 'monospace', fontWeight: 600, color: '#0092E6' }}>{asset.qrLabel || '-'}</td>
+                      <td style={{ ...mTd, background: '#FAFAFA', fontFamily: 'monospace', fontWeight: 600, color: '#087CB6' }}>{asset.qrLabel || '-'}</td>
                       <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.itemName || '-'}</td>
                       <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.maker || '-'}</td>
                       <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.model || '-'}</td>
@@ -676,7 +676,7 @@ const ContractGroupDetailModal = ({
                         onClick={() => setEditingId(asset.id)}
                         style={{
                           padding: '4px 10px',
-                          background: '#0092E6',
+                          background: '#087CB6',
                           color: 'white',
                           border: 'none',
                           borderRadius: '3px',
@@ -698,7 +698,7 @@ const ContractGroupDetailModal = ({
         {/* フッター */}
         <div style={{
           padding: '12px 20px',
-          borderTop: '1px solid #eee',
+          borderTop: '1px solid #E1E1E1',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -1014,7 +1014,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                       const stepConfig: Record<number, { label: string; color: string }> = {
                         1: { label: '見積依頼', color: '#4A4A4A' },
                         2: { label: '見積登録', color: '#4A4A4A' },
-                        3: { label: '契約登録', color: '#0092E6' },
+                        3: { label: '契約登録', color: '#087CB6' },
                         4: { label: '完了登録', color: '#008C1D' },
                       };
                       if (contract.currentStep === 'completed') {
@@ -1060,7 +1060,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       {showCommentModal && selectedContract && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #E1E1E1' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>フリーコメント編集</h3>
               <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
                 {selectedContract.applicationNo} - {selectedContract.contractGroupName}
@@ -1083,7 +1083,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                 }}
               />
             </div>
-            <div style={{ padding: '12px 20px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
                 onClick={() => { setShowCommentModal(false); setSelectedContract(null); }}
                 style={{ padding: '8px 16px', background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
@@ -1092,7 +1092,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               </button>
               <button
                 onClick={handleSaveComment}
-                style={{ padding: '8px 16px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                style={{ padding: '8px 16px', background: '#087CB6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
               >
                 保存
               </button>

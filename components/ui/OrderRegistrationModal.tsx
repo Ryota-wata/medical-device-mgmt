@@ -108,7 +108,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
             onClick={handleConfirm}
             style={{
               padding: '8px 16px',
-              background: '#0092E6',
+              background: '#087CB6',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

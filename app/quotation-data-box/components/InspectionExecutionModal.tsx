@@ -526,7 +526,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   td: {
     padding: '10px 12px',
-    borderBottom: '1px solid #eee',
+    borderBottom: '1px solid #E1E1E1',
     verticalAlign: 'middle' as const,
   },
   resultButtonGroup: {

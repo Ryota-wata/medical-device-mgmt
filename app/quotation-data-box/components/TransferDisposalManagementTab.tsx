@@ -74,7 +74,7 @@ interface DisposalRfqGroup {
 // ステータスバッジ色
 const STATUS_BADGE_COLORS: Record<DisposalRfqStatus, string> = {
   '見積依頼': '#8A8A8A',
-  '見積依頼済': '#0092E6',
+  '見積依頼済': '#087CB6',
   '見積登録済': '#008C1D',
   '発注済': '#4A4A4A',
   '作業日確定': '#4A4A4A',
@@ -359,7 +359,7 @@ export function TransferDisposalManagementTab() {
     switch (group.status) {
       case '見積依頼':
         return (
-          <button style={{ ...btnBase, background: '#0092E6' }}
+          <button style={{ ...btnBase, background: '#087CB6' }}
             onClick={navigateToTask}>
             業者選定
           </button>
@@ -506,7 +506,7 @@ export function TransferDisposalManagementTab() {
                         <td style={{ ...tdStyle, color: '#8A8A8A' }}>{app.applicationDate}</td>
                         {/* 申請項目: 申請No, 種別 */}
                         <td style={tdStyle}>
-                          <span style={{ color: '#0092E6', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
+                          <span style={{ color: '#087CB6', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                           <span style={{
                             ...typeStyle,
                             padding: '2px 8px',

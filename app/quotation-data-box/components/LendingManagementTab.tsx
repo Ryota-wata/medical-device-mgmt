@@ -620,7 +620,7 @@ export const LendingManagementTab: React.FC = () => {
                   verticalAlign: 'top',
                 }}>
                   {/* 商品情報 */}
-                  <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#0092E6' }}>{device.qrCode}</td>
+                  <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#087CB6' }}>{device.qrCode}</td>
                   <td style={tdStyle}>{device.itemName}</td>
                   <td style={tdStyle}>{device.maker}</td>
                   <td style={tdStyle}>{device.model}</td>
@@ -687,7 +687,7 @@ export const LendingManagementTab: React.FC = () => {
       {showSettingModal && selectedDeviceForSetting && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
           <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #E1E1E1' }}>
               <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>貸出設定変更</h3>
               <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
                 {selectedDeviceForSetting.qrCode} - {selectedDeviceForSetting.itemName}（{selectedDeviceForSetting.maker} {selectedDeviceForSetting.model}）
@@ -753,7 +753,7 @@ export const LendingManagementTab: React.FC = () => {
             </div>
             <div style={{
               padding: '12px 20px',
-              borderTop: '1px solid #eee',
+              borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -782,7 +782,7 @@ export const LendingManagementTab: React.FC = () => {
                 </button>
                 <button
                   onClick={handleSaveSetting}
-                  style={{ padding: '8px 16px', background: '#0092E6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
+                  style={{ padding: '8px 16px', background: '#087CB6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
                 >
                   設定を保存
                 </button>

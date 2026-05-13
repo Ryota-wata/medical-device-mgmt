@@ -250,7 +250,7 @@ function PeriodicInspectionContent() {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: '#FAFAFA' }}>
         <header style={{
           background: '#FFFFFF',
-          borderBottom: '1px solid #F1F1F1',
+          borderBottom: '1px solid #E1E1E1',
           color: '#4A4A4A',
           padding: '12px 20px',
           display: 'flex',
@@ -272,7 +272,7 @@ function PeriodicInspectionContent() {
       {/* Header（Figma準拠: 白bg + 軽い罫線） */}
       <header style={{
         background: '#FFFFFF',
-        borderBottom: '1px solid #F1F1F1',
+        borderBottom: '1px solid #E1E1E1',
         color: '#4A4A4A',
         padding: isMobile ? '10px 14px' : '12px 20px',
         display: 'flex',

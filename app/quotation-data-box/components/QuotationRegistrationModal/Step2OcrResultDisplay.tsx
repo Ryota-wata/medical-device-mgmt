@@ -427,7 +427,7 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                       </thead>
                       <tbody>
                         {detailItems.map((item, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                          <tr key={index} style={{ borderBottom: '1px solid #E1E1E1' }}>
                             <td style={{ padding: '6px 8px' }}>
                               <div style={{ fontWeight: 'bold' }}>{item.itemName}</div>
                               <div style={{ fontSize: '10px', color: '#666' }}>{item.manufacturer} {item.model}</div>

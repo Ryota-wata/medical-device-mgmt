@@ -134,7 +134,7 @@ export const QuotationRegistrationModal: React.FC<QuotationRegistrationModalProp
                     gap: '6px',
                     padding: '6px 12px',
                     borderRadius: '4px',
-                    background: step === s ? '#0092E6' : step > s ? '#008C1D' : '#FAFAFA',
+                    background: step === s ? '#087CB6' : step > s ? '#008C1D' : '#FAFAFA',
                     color: step >= s ? 'white' : '#8A8A8A',
                     fontSize: '11px',
                     fontWeight: step === s ? 'bold' : 'normal',

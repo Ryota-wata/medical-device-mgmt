@@ -425,11 +425,11 @@ function InspectionResultContent() {
                 <tbody>
                   {resultData.itemResults.map((item, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '10px 12px', border: '1px solid #eee' }}>{item.itemName}</td>
-                      <td style={{ padding: '10px 12px', border: '1px solid #eee' }}>{item.content}</td>
+                      <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>{item.itemName}</td>
+                      <td style={{ padding: '10px 12px', border: '1px solid #E1E1E1' }}>{item.content}</td>
                       <td style={{
                         padding: '10px 12px',
-                        border: '1px solid #eee',
+                        border: '1px solid #E1E1E1',
                         textAlign: 'center',
                         fontWeight: 600,
                         color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#4A4A4A'

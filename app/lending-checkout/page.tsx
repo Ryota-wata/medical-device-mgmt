@@ -93,7 +93,7 @@ const STATUS_LABELS: Record<DeviceStatus, string> = {
 // ステータスに応じたバッジスタイル
 const STATUS_STYLES: Record<DeviceStatus, string> = {
   available: 'bg-[#EBF5EE] text-[#146E2E] border-cta-primary',
-  lending: 'bg-[#EBF5EE] text-[#4A4A4A] border-[#0092E6]',
+  lending: 'bg-[#EBF5EE] text-[#4A4A4A] border-[#087CB6]',
   in_use: 'bg-[#FAFAFA] text-[#4A4A4A] border-[#4A4A4A]',
   used: 'bg-[#FDF1E5] text-[#DA0000] border-[#DA0000]',
 };

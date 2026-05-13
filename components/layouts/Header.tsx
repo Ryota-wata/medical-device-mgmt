@@ -260,7 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
                 <button
                   onClick={() => { router.push('/quotation-data-box'); setIsMenuOpen(false); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#4A4A4A', fontSize: 13, textAlign: 'left', borderTop: '1px solid #F1F1F1' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#4A4A4A', fontSize: 13, textAlign: 'left', borderTop: '1px solid #E1E1E1' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = '#FAFAFA')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
@@ -268,7 +268,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
                 <button
                   onClick={handleLogout}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#DA0000', fontSize: 13, textAlign: 'left', borderTop: '1px solid #F1F1F1' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#DA0000', fontSize: 13, textAlign: 'left', borderTop: '1px solid #E1E1E1' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = '#FDF1E5')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >

@@ -151,11 +151,11 @@ export function LendingRegistrationModal({
                 <tbody>
                   {preSelectedAssets.map((asset, index) => (
                     <tr key={`${asset.qrCode}-${index}`}>
-                      <td style={{ padding: '8px 12px', border: '1px solid #eee' }}>{asset.qrCode}</td>
-                      <td style={{ padding: '8px 12px', border: '1px solid #eee' }}>{asset.item}</td>
-                      <td style={{ padding: '8px 12px', border: '1px solid #eee' }}>{asset.maker}</td>
-                      <td style={{ padding: '8px 12px', border: '1px solid #eee' }}>{asset.model}</td>
-                      <td style={{ padding: '8px 12px', border: '1px solid #eee' }}>{asset.section || asset.department}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{asset.qrCode}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{asset.item}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{asset.maker}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{asset.model}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{asset.section || asset.department}</td>
                     </tr>
                   ))}
                 </tbody>

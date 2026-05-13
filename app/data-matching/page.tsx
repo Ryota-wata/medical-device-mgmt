@@ -1166,7 +1166,7 @@ export default function DataMatchingPage() {
           <div style={{
             padding: '8px 16px',
             backgroundColor: '#EBF5EE',
-            borderBottom: '1px solid #0092E6',
+            borderBottom: '1px solid #087CB6',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

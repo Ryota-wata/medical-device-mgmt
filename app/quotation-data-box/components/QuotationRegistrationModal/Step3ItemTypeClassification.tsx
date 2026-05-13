@@ -23,7 +23,7 @@ const ITEM_TYPE_DESCRIPTIONS: Record<QuotationItemType, string> = {
 
 // 登録区分の色設定
 const ITEM_TYPE_COLORS: Record<QuotationItemType, { bg: string; text: string; border: string }> = {
-  'A_表紙明細': { bg: '#EBF5EE', text: '#4A4A4A', border: '#0092E6' },
+  'A_表紙明細': { bg: '#EBF5EE', text: '#4A4A4A', border: '#087CB6' },
   'B_明細代表': { bg: '#FAFAFA', text: '#4A4A4A', border: '#8A8A8A' },
   'C_個体管理品目': { bg: '#EBF5EE', text: '#146E2E', border: '#008C1D' },
   'D_付属品': { bg: '#FDF1E5', text: '#4A4A4A', border: '#FDF1E5' },
@@ -112,7 +112,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #0092E6' }}>
+      <div style={{ marginBottom: '16px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #087CB6' }}>
         <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
           ① 登録区分をチェック・修正してください
         </div>
@@ -193,7 +193,7 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
 
                 return (
                   <tr key={index} style={{
-                    borderBottom: '1px solid #eee',
+                    borderBottom: '1px solid #E1E1E1',
                     background: classification.isModified ? '#FAFAFA' : 'transparent',
                   }}>
                     <td style={{ padding: '6px', textAlign: 'center' }}>{item.rowNo || index + 1}</td>

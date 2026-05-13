@@ -256,7 +256,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
               </thead>
               <tbody>
                 {quotationItems.map((item, idx) => (
-                  <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
+                  <tr key={item.id} style={{ borderBottom: '1px solid #E1E1E1' }}>
                     <td style={{ padding: '8px' }}>{idx + 1}</td>
                     <td style={{ padding: '8px', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.itemName || item.originalItemName}</td>
                     <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{item.manufacturer || item.originalManufacturer || '-'}</td>
@@ -282,7 +282,7 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
         </div>
 
         {/* フッター */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #eee' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #E1E1E1' }}>
           <button onClick={onClose} style={{ padding: '10px 24px', background: '#8A8A8A', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
             キャンセル
           </button>

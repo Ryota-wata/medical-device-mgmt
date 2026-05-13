@@ -306,7 +306,7 @@ export const Step1RfqGroupSelection: React.FC<Step1RfqGroupSelectionProps> = ({
           disabled={ocrProcessing}
           style={{
             padding: '10px 20px',
-            background: ocrProcessing ? '#E1E1E1' : '#0092E6',
+            background: ocrProcessing ? '#E1E1E1' : '#087CB6',
             color: 'white',
             border: 'none',
             borderRadius: '4px',

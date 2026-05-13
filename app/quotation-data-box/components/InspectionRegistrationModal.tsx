@@ -376,7 +376,7 @@ export function InspectionRegistrationModal({
         {step === 'search' ? (
           <>
             {/* 検索フィルター（貸出機器を追加モーダルと同じレイアウト） */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee', backgroundColor: '#FAFAFA' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #E1E1E1', backgroundColor: '#FAFAFA' }}>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'flex-end' }}>
                 <div style={{ width: '120px' }}>
                   <label style={{ fontSize: '11px', color: '#555', display: 'block', marginBottom: '4px' }}>棟</label>
@@ -454,7 +454,7 @@ export function InspectionRegistrationModal({
                   onClick={handleAssetSearch}
                   style={{
                     padding: '8px 24px',
-                    backgroundColor: '#0092E6',
+                    backgroundColor: '#087CB6',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
@@ -900,8 +900,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   backButton: {
     padding: '8px 16px',
     backgroundColor: 'transparent',
-    color: '#0092E6',
-    border: '1px solid #0092E6',
+    color: '#087CB6',
+    border: '1px solid #087CB6',
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '13px',
@@ -943,7 +943,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   selectedAssetItem: {
     padding: '8px 12px',
-    borderBottom: '1px solid #eee',
+    borderBottom: '1px solid #E1E1E1',
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
@@ -980,7 +980,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '18px',
     height: '18px',
     cursor: 'pointer',
-    accentColor: '#0092E6',
+    accentColor: '#087CB6',
   },
   menuSection: {
     marginBottom: '20px',
@@ -1049,7 +1049,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '18px',
     height: '18px',
     cursor: 'pointer',
-    accentColor: '#0092E6',
+    accentColor: '#087CB6',
   },
   dateInput: {
     padding: '10px 12px',

@@ -53,7 +53,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
   return (
     <div>
       {/* 説明 */}
-      <div style={{ marginBottom: '20px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #0092E6' }}>
+      <div style={{ marginBottom: '20px', padding: '14px', background: '#EBF5EE', borderRadius: '6px', border: '1px solid #087CB6' }}>
         <p style={{ margin: '0', fontSize: '12px', color: '#4A4A4A', lineHeight: '1.5' }}>
           以下の全ての明細が見積明細情報画面に登録されます。
         </p>
@@ -95,7 +95,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
               </thead>
               <tbody>
                 {linkedApplications.map((app) => (
-                  <tr key={app.id} style={{ borderBottom: '1px solid #eee' }}>
+                  <tr key={app.id} style={{ borderBottom: '1px solid #E1E1E1' }}>
                     <td style={{ padding: '8px', fontWeight: 'bold', color: '#008C1D' }}>{app.applicationNo}</td>
                     <td style={{ padding: '8px' }}>
                       <span style={{
@@ -106,7 +106,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
                         fontWeight: 'bold',
                         background: app.applicationType === '新規申請' ? '#008C1D' :
                                    app.applicationType === '更新申請' ? '#4A4A4A' :
-                                   app.applicationType === '増設申請' ? '#0092E6' : '#8A8A8A',
+                                   app.applicationType === '増設申請' ? '#087CB6' : '#8A8A8A',
                         color: 'white',
                       }}>
                         {app.applicationType}
@@ -153,7 +153,7 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
               </thead>
               <tbody>
                 {ocrResult.items.map((item, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                  <tr key={index} style={{ borderBottom: '1px solid #E1E1E1' }}>
                     <td style={{ padding: '8px', textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</td>
                     <td style={{ padding: '8px', fontWeight: 'bold' }}>{item.itemName}</td>
                     <td style={{ padding: '8px', color: '#555' }}>{item.manufacturer || '-'}</td>

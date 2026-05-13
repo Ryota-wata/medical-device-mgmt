@@ -708,7 +708,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               </thead>
               <tbody>
                 {copyPreview.rows.map(row => (
-                  <tr key={row.assetNo} style={{ borderBottom: '1px solid #eee', background: row.matched ? (row.changes.length > 0 ? '#EBF5EE' : '#fff') : '#FDF1E5' }}>
+                  <tr key={row.assetNo} style={{ borderBottom: '1px solid #E1E1E1', background: row.matched ? (row.changes.length > 0 ? '#EBF5EE' : '#fff') : '#FDF1E5' }}>
                     <td style={{ padding: '4px 8px', fontVariantNumeric: 'tabular-nums' }}>{row.assetNo}</td>
                     <td style={{ padding: '4px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{row.assetLabel}</td>
                     <td style={{ padding: '4px 8px', textAlign: 'center' }}>

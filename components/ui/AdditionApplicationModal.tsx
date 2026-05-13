@@ -185,7 +185,7 @@ export function AdditionApplicationModal({
   // テーマカラー（増設申請用：青系）
   const themeColor = '#4A4A4A';
   const themeLightBg = '#EBF5EE';
-  const themeBorder = '#0092E6';
+  const themeBorder = '#087CB6';
 
   const tableTh: React.CSSProperties = {
     padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1',

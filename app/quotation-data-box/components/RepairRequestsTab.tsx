@@ -43,7 +43,7 @@ interface RepairRequestsTabProps {
 // ステータスバッジ色
 const STATUS_BADGE_COLORS: Record<RepairStatus, string> = {
   '見積依頼': '#8A8A8A',
-  '見積依頼済': '#0092E6',
+  '見積依頼済': '#087CB6',
   '見積登録済': '#4A4A4A',
   '発注登録済': '#4A4A4A',
   '作業日確定': '#008C1D',
@@ -134,14 +134,14 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
     switch (req.status) {
       case '見積依頼':
         buttons.push(
-          <button key="rfq" onClick={() => onSendRfq(req.id)} style={{ ...btnBase, background: '#0092E6' }}>
+          <button key="rfq" onClick={() => onSendRfq(req.id)} style={{ ...btnBase, background: '#087CB6' }}>
             見積依頼
           </button>
         );
         break;
       case '見積依頼済':
         buttons.push(
-          <button key="quote" onClick={() => onRegisterQuotation(req.id)} style={{ ...btnBase, background: '#0092E6' }}>
+          <button key="quote" onClick={() => onRegisterQuotation(req.id)} style={{ ...btnBase, background: '#087CB6' }}>
             見積登録
           </button>
         );
@@ -223,14 +223,14 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
                 <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>
                   {onClickRequestNo ? (
                     <span
-                      style={{ color: '#0092E6', cursor: 'pointer', textDecoration: 'underline' }}
+                      style={{ color: '#087CB6', cursor: 'pointer', textDecoration: 'underline' }}
                       onClick={() => onClickRequestNo(req.id)}
                     >
                       {req.requestNo}
                     </span>
                   ) : req.requestNo}
                 </td>
-                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#0092E6' }}>{req.qrLabel}</td>
+                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#087CB6' }}>{req.qrLabel}</td>
                 <td style={tdStyle}>{req.itemName}</td>
                 <td style={tdStyle}>{req.maker}</td>
                 <td style={tdStyle}>{req.applicantDepartment}</td>

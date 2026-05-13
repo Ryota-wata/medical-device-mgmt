@@ -21,7 +21,7 @@ const COLORS = {
   textMuted: '#8A8A8A',
   textOnColor: '#ffffff',
   border: '#E1E1E1',
-  borderLight: '#F1F1F1',
+  borderLight: '#E1E1E1',
   surface: '#FAFAFA',
   surfaceAlt: '#F1F1F1',
   sectionHeader: '#4A4A4A',
@@ -776,7 +776,7 @@ function RepairTaskContent() {
         <Section
           step={1}
           title="STEP1. 見積依頼"
-          accentColor="#0092E6"
+          accentColor="#087CB6"
           enabled={isStepEnabled(1)}
           completed={1 < activeStep}
           headerAction={
@@ -787,7 +787,7 @@ function RepairTaskContent() {
               style={{
                 padding: '4px 12px',
                 background: 'rgba(255,255,255,0.9)',
-                color: '#0092E6',
+                color: '#087CB6',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
@@ -803,23 +803,23 @@ function RepairTaskContent() {
           <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, marginBottom: '12px', fontSize: '13px' }}>
             <tbody>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>申請No:</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>申請No:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}`, fontVariantNumeric: 'tabular-nums' }}>{request.requestNo}</td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>品名:</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>品名:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.itemName}</td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>メーカー:</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>メーカー:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.maker}</td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>型式:</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>型式:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.model}</td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>症状:</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '8px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>症状:</th>
                 <td style={{ background: COLORS.white, padding: '8px 12px', border: `1px solid ${COLORS.border}` }}>{request.symptoms}</td>
               </tr>
             </tbody>
@@ -829,7 +829,7 @@ function RepairTaskContent() {
           <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, marginBottom: '16px', fontSize: '13px' }}>
             <tbody>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>受付部署</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>受付部署</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <input type="text" placeholder="部署名" value={formData.receptionDepartment} onChange={(e) => updateFormData({ receptionDepartment: e.target.value })} {...getInputProps(1)} style={{ ...getInputProps(1).style, width: '150px' }} />
@@ -839,7 +839,7 @@ function RepairTaskContent() {
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>代替機対応</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>代替機対応</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -879,7 +879,7 @@ function RepairTaskContent() {
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>商品引取対応</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>商品引取対応</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -900,13 +900,13 @@ function RepairTaskContent() {
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>導入業者</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>導入業者</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: COLORS.textPrimary }}>
                   {request.installerName} / {request.installerPerson} / {request.installerContact}
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>保守契約</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '140px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>保守契約</th>
                 <td style={{ background: COLORS.white, padding: '10px 12px', border: `1px solid ${COLORS.border}`, fontSize: '13px', color: request.hasMaintenanceContract ? COLORS.success : COLORS.error }}>
                   {request.hasMaintenanceContract ? '保守契約対象' : '保守契約なし'}
                   {request.warrantyEndDate && ` (期限: ${request.warrantyEndDate})`}
@@ -1007,7 +1007,7 @@ function RepairTaskContent() {
                           </td>
                           <td style={{ padding: '4px', textAlign: 'center' }}>
                             <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                              <button className="repair-btn" onClick={() => { setPreviewTab('修理依頼書'); setPreviewVendorIndex(i); }} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? '#0092E6' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? 'プレビュー表示' : '業者名とメールを入力してください'}>
+                              <button className="repair-btn" onClick={() => { setPreviewTab('修理依頼書'); setPreviewVendorIndex(i); }} disabled={!isStepEnabled(1) || !hasVendorData} style={{ padding: '4px 8px', background: hasVendorData ? '#087CB6' : COLORS.disabled, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: hasVendorData ? 'pointer' : 'not-allowed', fontSize: '11px' }} title={hasVendorData ? 'プレビュー表示' : '業者名とメールを入力してください'}>
                                 プレビュー
                               </button>
                               {!isSent && (
@@ -1141,7 +1141,7 @@ function RepairTaskContent() {
             <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}` }}>
               <tbody>
                 <tr>
-                  <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>添付ファイル</th>
+                  <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>添付ファイル</th>
                   <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
@@ -1155,7 +1155,7 @@ function RepairTaskContent() {
                   </td>
                 </tr>
                 <tr>
-                  <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
+                  <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
                   <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '発注用'} onChange={() => updateFormData({ quotationPhase: '発注用' })} disabled={!isStepEnabled(2)} /> 修理発注登録用見積</label>
@@ -1165,7 +1165,7 @@ function RepairTaskContent() {
                   </td>
                 </tr>
                 <tr>
-                  <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
+                  <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
                   <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === '電子取引'} onChange={() => updateFormData({ saveFormat: '電子取引' })} disabled={!isStepEnabled(2)} /> 電子取引</label>
@@ -1548,13 +1548,13 @@ function RepairTaskContent() {
           <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}`, marginBottom: '16px' }}>
             <tbody>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>固定資産番号</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>固定資産番号</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
                   <input type="text" value={fixedAssetNo} onChange={(e) => setFixedAssetNo(e.target.value)} placeholder="固定資産番号を入力" disabled={!isStepEnabled(4)} style={{ ...inputStyle, width: '200px' }} />
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>最終勘定科目</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>最終勘定科目</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -1572,7 +1572,7 @@ function RepairTaskContent() {
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>添付ファイル</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>添付ファイル</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                     <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
@@ -1586,7 +1586,7 @@ function RepairTaskContent() {
                 </td>
               </tr>
               <tr>
-                <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
+                <th style={{ background: COLORS.surfaceAlt, color: COLORS.textPrimary, padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '180px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
                 <td style={{ background: 'white', padding: '12px 16px', border: `1px solid ${COLORS.border}` }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {(['修理報告書', '納品書', '検収書', '請求書', 'その他'] as const).map((dt) => (
@@ -1788,7 +1788,7 @@ function RepairTaskContent() {
                 {/* 申請日・申請者情報 */}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{
-                    background: '#0092E6',
+                    background: '#087CB6',
                     color: 'white',
                     padding: '8px 12px',
                     fontSize: '13px',

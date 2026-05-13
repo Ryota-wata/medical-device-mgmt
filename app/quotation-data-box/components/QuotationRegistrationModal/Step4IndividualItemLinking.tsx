@@ -173,9 +173,9 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                 <th colSpan={5} style={{
                   padding: '6px',
                   textAlign: 'center',
-                  border: '2px solid #0092E6',
+                  border: '2px solid #087CB6',
                   fontWeight: 'bold',
-                  color: '#0092E6',
+                  color: '#087CB6',
                   background: '#EBF5EE',
                   fontSize: '11px'
                 }}>
