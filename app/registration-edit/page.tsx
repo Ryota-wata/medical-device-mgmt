@@ -1348,14 +1348,14 @@ export default function RegistrationEditPage() {
                           >
                             確定
                           </button>
-                          {/* 紐付け操作ボタン */}
+                          {/* 紐付け操作ボタン (Figma 133:6095 準拠) */}
                           {!isChild && (
                             <button
                               onClick={() => handleSetParent(row.id)}
-                              className={`px-2 py-1 text-xs rounded cursor-pointer font-semibold whitespace-nowrap ${
+                              className={`px-2 py-1 text-xs rounded cursor-pointer font-medium whitespace-nowrap ${
                                 row.detailType === '本体'
-                                  ? 'bg-[#4A4A4A] text-white border-none'
-                                  : 'bg-transparent text-[#4A4A4A] border border-[#0092E6]'
+                                  ? 'bg-white text-[#146E2E] border border-[#146E2E]'
+                                  : 'bg-white text-[#146E2E] border border-[#146E2E]'
                               }`}
                             >
                               {row.detailType === '本体' ? '明細を追加' : '本体に設定'}
