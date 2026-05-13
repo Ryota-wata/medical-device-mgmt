@@ -380,11 +380,11 @@ export default function AssetImportPage() {
             </ul>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 flex-col md:flex-row justify-between">
+          {/* Action Buttons (Figma: 左寄せコンパクト幅) */}
+          <div className="flex gap-3 flex-col md:flex-row">
             <button
               onClick={() => router.push('/main')}
-              className="md:flex-1 px-6 py-3.5 bg-surface-negative text-content-primary border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-stroke-input transition-colors min-h-[44px]"
+              className="px-6 py-3 bg-surface-negative text-content-primary border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-stroke-input transition-colors min-h-[44px] md:min-w-[200px]"
             >
               <ArrowLeft className="w-4 h-4" aria-hidden />
               <span>メイン画面に戻る</span>
@@ -392,7 +392,7 @@ export default function AssetImportPage() {
             {selectedFile && fileInfo ? (
               <button
                 onClick={handleUploadAndProceed}
-                className="md:flex-1 px-6 py-3.5 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-cta-primary-dark transition-colors min-h-[44px]"
+                className="px-6 py-3 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-cta-primary-dark transition-colors min-h-[44px] md:min-w-[260px]"
               >
                 <span>アップロードして突き合わせへ</span>
                 <ArrowRight className="w-4 h-4" aria-hidden />
@@ -400,7 +400,7 @@ export default function AssetImportPage() {
             ) : uploadedFiles.length > 0 ? (
               <button
                 onClick={handleResumeMatching}
-                className="md:flex-1 px-6 py-3.5 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-cta-primary-dark transition-colors min-h-[44px]"
+                className="px-6 py-3 bg-cta-primary text-white border-none rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-cta-primary-dark transition-colors min-h-[44px] md:min-w-[200px]"
               >
                 <span>突き合わせ画面へ</span>
                 <ArrowRight className="w-4 h-4" aria-hidden />
@@ -408,7 +408,7 @@ export default function AssetImportPage() {
             ) : (
               <button
                 onClick={() => router.push('/asset-matching')}
-                className="md:flex-1 px-6 py-3.5 bg-surface-card text-cta-primary border-2 border-cta-primary rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-surface-select transition-colors min-h-[44px]"
+                className="px-6 py-3 bg-surface-card text-cta-primary border-2 border-cta-primary rounded-lg text-sm md:text-[15px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-surface-select transition-colors min-h-[44px] md:min-w-[200px]"
               >
                 <span>次へ</span>
                 <ArrowRight className="w-4 h-4" aria-hidden />

@@ -105,7 +105,7 @@ export default function RegistrationConfirmPage() {
   const router = useRouter();
   const { addQuotationGroup, addQuotationItems, generateReceivedQuotationNo } = useQuotationStore();
   const [basicInfo] = useState<BasicInfo>(testBasicInfo);
-  const [rows, setRows] = useState<Row[]>(buildRows);
+  const [rows] = useState<Row[]>(buildRows);
   const [showOnlyIndividual, setShowOnlyIndividual] = useState(false);
 
   const displayRows = useMemo(() => {
@@ -121,10 +121,6 @@ export default function RegistrationConfirmPage() {
     }
     return total;
   }, [rows]);
-
-  const handleLocationChange = (id: string, field: 'department' | 'section' | 'roomName' | 'managingSection', value: string) => {
-    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
-  };
 
   const handleRegister = () => {
     if (confirm('見積情報をDatabaseに登録します。よろしいですか？')) {
@@ -231,13 +227,12 @@ export default function RegistrationConfirmPage() {
 
             {/* テーブル */}
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-xs min-w-[1500px]">
+              <table className="w-full border-collapse text-xs min-w-[1100px]">
                 <thead className="sticky top-0 z-[2]">
                   <tr>
                     <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❸</th>
                     <th colSpan={3} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❹ 個体管理品目</th>
-                    <th colSpan={5} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary border-r border-stroke-input">STEP❺ 個体登録／金額案分</th>
-                    <th colSpan={4} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-surface-select text-xs font-bold text-cta-primary-dark">STEP❻ 設置情報</th>
+                    <th colSpan={5} className="px-1.5 py-1.5 text-center border-b-2 border-content-primary bg-stroke-card text-xs font-bold text-content-primary">STEP❺ 個体登録／金額案分</th>
                   </tr>
                   <tr className="bg-stroke-card">
                     <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[60px]">No</th>
@@ -251,10 +246,6 @@ export default function RegistrationConfirmPage() {
                     <th className="px-2 py-2 text-center border border-stroke-input text-xs font-bold text-content-primary w-[50px]">親子<br />関</th>
                     <th className="px-2 py-2 text-right border border-stroke-input text-xs font-bold text-content-primary w-[100px]">定価金額</th>
                     <th className="px-2 py-2 text-right border border-stroke-input text-xs font-bold text-content-primary w-[110px]">購入金額<br />(税別)</th>
-                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">部門</th>
-                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">部署</th>
-                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">室名</th>
-                    <th className="px-2 py-2 text-left border border-stroke-input text-xs font-bold text-content-primary w-[120px]">管理部署</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -288,18 +279,6 @@ export default function RegistrationConfirmPage() {
                             <td rowSpan={span} className="px-2 py-2 text-right tabular-nums align-middle border border-stroke-input font-bold text-content-primary">{fmtNum(row.purchasePriceTotal)}</td>
                           </>
                         )}
-                        <td className="px-1 py-1 align-middle border border-stroke-input">
-                          <input type="text" value={row.department} onChange={e => handleLocationChange(row.id, 'department', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                        </td>
-                        <td className="px-1 py-1 align-middle border border-stroke-input">
-                          <input type="text" value={row.section} onChange={e => handleLocationChange(row.id, 'section', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                        </td>
-                        <td className="px-1 py-1 align-middle border border-stroke-input">
-                          <input type="text" value={row.roomName} onChange={e => handleLocationChange(row.id, 'roomName', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                        </td>
-                        <td className="px-1 py-1 align-middle border border-stroke-input">
-                          <input type="text" value={row.managingSection} onChange={e => handleLocationChange(row.id, 'managingSection', e.target.value)} className="w-full text-xs px-2 py-1 border border-stroke-input rounded-sm bg-surface-card box-border focus:outline-none focus:border-cta-primary" />
-                        </td>
                       </tr>
                     );
                   })}

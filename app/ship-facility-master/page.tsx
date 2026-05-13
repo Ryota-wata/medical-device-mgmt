@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Plus, Download } from 'lucide-react';
+import { Pencil, Trash2, Plus, Download } from 'lucide-react';
 import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -251,8 +251,20 @@ export default function ShipFacilityMasterPage() {
                     ))}
                     <td className="px-1.5 py-1 text-center whitespace-nowrap">
                       <div className="flex gap-1 justify-center">
-                        <button onClick={() => handleEdit(facility)} className="px-2 py-0.5 bg-content-primary text-white border-0 rounded text-[10px] font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors">編集</button>
-                        <button onClick={() => handleDelete(facility.id)} className="px-2 py-0.5 bg-content-alert text-white border-0 rounded text-[10px] font-semibold cursor-pointer hover:opacity-90 transition-colors">削除</button>
+                        <button
+                          onClick={() => handleEdit(facility)}
+                          className="inline-flex items-center justify-center w-7 h-7 bg-transparent text-content-primary border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
+                          aria-label={`${facility.facilityName} を編集`}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(facility.id)}
+                          className="inline-flex items-center justify-center w-7 h-7 bg-transparent text-content-alert border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
+                          aria-label={`${facility.facilityName} を削除`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, Suspense } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layouts/Header';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores/masterStore';
@@ -192,9 +193,21 @@ function VendorMasterContent() {
                       <td className={tdCls}>{vendor.email}</td>
                       <td className={`${tdCls} text-center`}>{vendor.isPrimaryContact ? '○' : '---'}</td>
                       <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap`}>
-                        <div className="flex gap-2 justify-center">
-                          <button onClick={() => handleEdit(vendor)} className={`px-3 py-1.5 bg-content-primary text-white border-0 rounded ${isTablet ? 'text-xs' : 'text-[13px]'} font-semibold cursor-pointer hover:bg-content-primary/90 transition-colors`}>編集</button>
-                          <button onClick={() => handleDelete(vendor.id)} className={`px-3 py-1.5 bg-content-alert text-white border-0 rounded ${isTablet ? 'text-xs' : 'text-[13px]'} font-semibold cursor-pointer hover:opacity-90 transition-colors`}>削除</button>
+                        <div className="flex gap-1 justify-center">
+                          <button
+                            onClick={() => handleEdit(vendor)}
+                            className="inline-flex items-center justify-center w-8 h-8 bg-transparent text-content-primary border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
+                            aria-label={`${vendor.vendorName} を編集`}
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(vendor.id)}
+                            className="inline-flex items-center justify-center w-8 h-8 bg-transparent text-content-alert border-0 rounded cursor-pointer hover:bg-stroke-card transition-colors"
+                            aria-label={`${vendor.vendorName} を削除`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>

@@ -68,7 +68,6 @@ export default function OcrConfirmPage() {
   });
 
   const [detailItems, setDetailItems] = useState<DetailItem[]>(testDetailItems);
-  const [accountingFilter, setAccountingFilter] = useState<AccountingCategoryType>('');
 
   const [totalAmountInput, setTotalAmountInput] = useState<string>(() => {
     const total = testDetailItems.reduce((sum, item) => sum + (item.purchaseAmount || 0), 0);
@@ -211,33 +210,18 @@ export default function OcrConfirmPage() {
                 </table>
               </div>
 
-              {/* 見積明細チェック (Figma カテゴリーフィルター + 合計金額赤字横並び) */}
+              {/* 見積明細チェック (合計金額入力のみ) */}
               <div className="flex items-center gap-3 flex-wrap py-3 border-b border-stroke-input">
                 <span className="text-sm font-bold text-content-primary whitespace-nowrap">見積明細チェック</span>
-                <div className="flex flex-1 items-center justify-between gap-4 flex-wrap min-w-0">
-                  <select
-                    value={accountingFilter}
-                    onChange={(e) => setAccountingFilter(e.target.value as AccountingCategoryType)}
-                    className={`${inputCls} w-[200px]`}
-                    aria-label="勘定区分"
-                  >
-                    <option value="">カテゴリー・利用区分</option>
-                    <option value="医療機器">医療機器</option>
-                    <option value="什器備品">什器備品</option>
-                    <option value="情報システム">情報システム</option>
-                    <option value="消耗品">消耗品</option>
-                    <option value="保守">保守</option>
-                  </select>
-                  <div className="flex items-center gap-3 pr-4">
-                    <span className="text-sm text-content-primary">合計金額（税抜）</span>
-                    <input
-                      type="text"
-                      value={totalAmountInput}
-                      onChange={(e) => setTotalAmountInput(e.target.value)}
-                      className="px-3 py-1.5 border border-stroke-input rounded text-xl font-bold w-[180px] text-right bg-surface-card tabular-nums text-content-alert focus:outline-none focus:border-cta-primary"
-                      aria-label="合計金額"
-                    />
-                  </div>
+                <div className="flex flex-1 items-center justify-end gap-3 flex-wrap min-w-0 pr-4">
+                  <span className="text-sm text-content-primary">合計金額（税抜）</span>
+                  <input
+                    type="text"
+                    value={totalAmountInput}
+                    onChange={(e) => setTotalAmountInput(e.target.value)}
+                    className="px-3 py-1.5 border border-stroke-input rounded text-xl font-bold w-[180px] text-right bg-surface-card tabular-nums text-content-alert focus:outline-none focus:border-cta-primary"
+                    aria-label="合計金額"
+                  />
                 </div>
               </div>
 
