@@ -284,10 +284,10 @@ const MOCK_GROUP_ASSETS: Record<string, ContractGroupAsset[]> = {
   ],
 };
 
-// テーブルスタイル
+// テーブルスタイル (Figma 580:32040 border token #E1E1E1 統一)
 const thGroupStyle: React.CSSProperties = {
   padding: '8px 6px',
-  border: '1px solid #4A4A4A',
+  border: '1px solid #E1E1E1',
   fontWeight: 600,
   fontSize: '12px',
   whiteSpace: 'nowrap',
@@ -296,7 +296,7 @@ const thGroupStyle: React.CSSProperties = {
 
 const thSubStyle: React.CSSProperties = {
   padding: '6px 8px',
-  border: '1px solid #8A8A8A',
+  border: '1px solid #E1E1E1',
   textAlign: 'left',
   fontWeight: 600,
   fontSize: '12px',
@@ -960,17 +960,17 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>申請No.</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約グループ名</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約種別</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>種別備考</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約日</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約期間</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約金額</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>単年度金額</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約業者</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>担当者</th>
-              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>連絡先</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>申請No.</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約グループ名</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約種別</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>種別備考</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約日</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約期間</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約金額</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>単年度金額</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>契約業者</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>担当者</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#E1E1E1' }}>連絡先</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>登録</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>フリーコメント</th>
             </tr>

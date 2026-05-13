@@ -1188,28 +1188,28 @@ function RepairTaskContent() {
             </div>
           )}
 
-          {/* 見積入力フォーム */}
+          {/* 見積入力フォーム (Figma 568:27485: 灰 #E1E1E1 罫線、灰 #F1F1F1 ラベル + 黒文字) */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>見積を追加</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #008C1D' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', border: `1px solid ${COLORS.border}` }}>
               <tbody>
                 <tr>
-                  <th style={{ background: '#008C1D', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #008C1D', whiteSpace: 'nowrap' }}>添付ファイル</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #008C1D' }}>
+                  <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap' }}>添付ファイル</th>
+                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <label style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
+                      <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(2) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(2) ? 1 : 0.6 }}>
                         ファイルの選択
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png" disabled={!isStepEnabled(2)} onChange={(e) => { const file = e.target.files?.[0]; if (file) setSelectedFileName(file.name); }} style={{ display: 'none' }} />
                       </label>
-                      <span style={{ color: selectedFileName ? COLORS.success : '#666', fontSize: '13px' }}>
+                      <span style={{ color: selectedFileName ? COLORS.success : COLORS.textMuted, fontSize: '13px' }}>
                         {selectedFileName || 'ファイルが選択されていません'}
                       </span>
                     </div>
                   </td>
                 </tr>
                 <tr>
-                  <th style={{ background: '#008C1D', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #008C1D', whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #008C1D' }}>
+                  <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>見積フェーズ</th>
+                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '発注用'} onChange={() => updateFormData({ quotationPhase: '発注用' })} disabled={!isStepEnabled(2)} /> 修理発注登録用見積</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="quotationPhase" checked={formData.quotationPhase === '参考'} onChange={() => updateFormData({ quotationPhase: '参考' })} disabled={!isStepEnabled(2)} /> 参考見積</label>
@@ -1218,8 +1218,8 @@ function RepairTaskContent() {
                   </td>
                 </tr>
                 <tr>
-                  <th style={{ background: '#008C1D', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: '1px solid #008C1D', whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
-                  <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #008C1D' }}>
+                  <th style={{ background: COLORS.borderLight, color: COLORS.textPrimary, padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '120px', border: `1px solid ${COLORS.border}`, whiteSpace: 'nowrap', verticalAlign: 'top' }}>保存形式</th>
+                  <td style={{ background: 'white', padding: '10px 12px', border: `1px solid ${COLORS.border}` }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === '電子取引'} onChange={() => updateFormData({ saveFormat: '電子取引' })} disabled={!isStepEnabled(2)} /> 電子取引</label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="saveFormat" checked={formData.saveFormat === 'スキャナ保存'} onChange={() => updateFormData({ saveFormat: 'スキャナ保存' })} disabled={!isStepEnabled(2)} /> スキャナ保存</label>
@@ -1231,9 +1231,9 @@ function RepairTaskContent() {
             </table>
           </div>
 
-          {/* 見積登録業者セクション（REQ-069: 修理/廃棄/保守契約で同一レイアウト統一） */}
-          <div style={{ marginBottom: '20px', border: `2px solid #008C1D`, borderRadius: '8px', padding: '16px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#008C1D', marginBottom: '12px' }}>
+          {/* 見積登録業者セクション (Figma: 灰 1px 枠、緑強調なし) */}
+          <div style={{ marginBottom: '20px', border: `1px solid ${COLORS.border}`, borderRadius: '8px', padding: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '12px' }}>
               見積登録業者
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1512,11 +1512,11 @@ function RepairTaskContent() {
               {/* ドキュメント入力フォーム */}
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '8px' }}>ドキュメントを追加</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #4A4A4A' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #E1E1E1' }}>
                   <tbody>
                     <tr>
-                      <th style={{ background: '#4A4A4A', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #4A4A4A', whiteSpace: 'nowrap' }}>添付ファイル</th>
-                      <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #4A4A4A' }}>
+                      <th style={{ background: '#F1F1F1', color: '#4A4A4A', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>添付ファイル</th>
+                      <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <label style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(3) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(3) ? 1 : 0.6 }}>
                             ファイルの選択
@@ -1527,8 +1527,8 @@ function RepairTaskContent() {
                       </td>
                     </tr>
                     <tr>
-                      <th style={{ background: '#4A4A4A', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
-                      <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #4A4A4A' }}>
+                      <th style={{ background: '#F1F1F1', color: '#4A4A4A', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', verticalAlign: 'top' }}>ドキュメント種別</th>
+                      <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === '修理報告書'} onChange={() => updateFormData({ documentType: '修理報告書' })} disabled={!isStepEnabled(3)} /> 修理報告書</label>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="documentType" checked={formData.documentType === '納品書'} onChange={() => updateFormData({ documentType: '納品書' })} disabled={!isStepEnabled(3)} /> 納品書</label>
@@ -1536,8 +1536,8 @@ function RepairTaskContent() {
                       </td>
                     </tr>
                     <tr>
-                      <th style={{ background: '#4A4A4A', color: 'white', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'top' }}>仮）勘定科目</th>
-                      <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #4A4A4A' }}>
+                      <th style={{ background: '#F1F1F1', color: '#4A4A4A', padding: '10px 12px', fontSize: '13px', fontWeight: 'bold', textAlign: 'left', width: '150px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', verticalAlign: 'top' }}>仮）勘定科目</th>
+                      <td style={{ background: 'white', padding: '10px 12px', border: '1px solid #E1E1E1' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="accountType" checked={formData.accountType === '修繕費'} onChange={() => updateFormData({ accountType: '修繕費' })} disabled={!isStepEnabled(3)} /> 修繕費</label>
                           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -1592,7 +1592,7 @@ function RepairTaskContent() {
             </button>
           }
         >
-          <div style={{ padding: '12px 16px', background: '#FDF1E5', borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: '#DA0000' }}>
+          <div style={{ padding: '12px 16px', background: COLORS.surface, borderRadius: '4px', marginBottom: '16px', fontSize: '13px', color: COLORS.textPrimary, border: `1px solid ${COLORS.borderLight}` }}>
             経理部にて固定資産番号、最終の勘定科目を登録してください。
           </div>
 
@@ -1618,12 +1618,12 @@ function RepairTaskContent() {
             </div>
           </FormRow>
 
-          {/* REQ-086: 完了登録の添付ファイル + ドキュメント種別 */}
-          <div style={{ marginTop: '16px', padding: '12px', border: '1px solid #DA0000', borderRadius: '4px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#DA0000', marginBottom: '12px' }}>添付ファイル / ドキュメント種別</div>
+          {/* REQ-086: 完了登録の添付ファイル + ドキュメント種別 (Figma: 灰枠、黒文字) */}
+          <div style={{ marginTop: '16px', padding: '12px', border: `1px solid ${COLORS.border}`, borderRadius: '4px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', color: COLORS.textPrimary, marginBottom: '12px' }}>添付ファイル / ドキュメント種別</div>
             <FormRow>
               <span style={{ ...labelStyle, fontWeight: 'bold', minWidth: '110px' }}>添付ファイル</span>
-              <label style={{ padding: '6px 16px', background: '#FAFAFA', border: '1px solid #ccc', borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
+              <label style={{ padding: '6px 16px', background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: '4px', cursor: isStepEnabled(4) ? 'pointer' : 'not-allowed', fontSize: '13px', whiteSpace: 'nowrap', opacity: isStepEnabled(4) ? 1 : 0.6 }}>
                 ファイルの選択（複数可）
                 <input type="file" accept=".pdf,.jpg,.png" multiple disabled={!isStepEnabled(4)} onChange={(e) => { const files = Array.from(e.target.files || []); if (files.length > 0) setStep4DocFiles((prev) => [...prev, ...files.map(f => f.name)]); e.target.value = ''; }} style={{ display: 'none' }} />
               </label>
@@ -1645,7 +1645,7 @@ function RepairTaskContent() {
           </div>
 
           <FormRow style={{ justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
-            <button className="repair-btn" onClick={handleStep4Complete} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 24px', background: '#DA0000', color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
+            <button className="repair-btn" onClick={handleStep4Complete} disabled={!isStepEnabled(4) || isSubmitting} style={{ padding: '10px 24px', background: COLORS.primary, color: COLORS.textOnColor, border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}>
               {isSubmitting ? '登録中...' : '資産登録を完了'}
             </button>
           </FormRow>
@@ -2477,7 +2477,7 @@ function RepairTaskContent() {
                         style={{
                           padding: '12px 16px',
                           background: '#FAFAFA',
-                          border: '1px solid #4A4A4A',
+                          border: '1px solid #E1E1E1',
                           borderRadius: '4px',
                           cursor: 'pointer',
                           textAlign: 'left',
