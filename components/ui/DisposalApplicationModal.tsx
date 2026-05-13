@@ -224,8 +224,8 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
         {isConfirmView ? (
           /* ===== 確認画面 ===== */
           <div>
-            <div style={{ background: '#FDF1E5', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
-              <span style={{ color: themeColor, fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+            <div style={{ color: themeColor, fontSize: '13px', fontWeight: 500, marginBottom: '16px' }}>
+              ※以下の項目に間違いがないかご確認ください
             </div>
 
             {/* 申請基本情報 */}
@@ -592,16 +592,16 @@ export const DisposalApplicationModal: React.FC<DisposalApplicationModalProps> =
                 style={{
                   padding: '12px 32px',
                   background: 'white',
-                  color: themeColor,
+                  color: '#4A4A4A',
                   border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '14px',
-                  fontWeight: 'bold',
+                  fontWeight: 500,
                   marginRight: '16px',
                 }}
               >
-                ← 修正する
+                戻る
               </button>
               <button
                 onClick={handleSubmit}
