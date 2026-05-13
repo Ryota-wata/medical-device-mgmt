@@ -1051,17 +1051,17 @@ export default function RegistrationEditPage() {
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key)}
-                    className="px-2 py-3 border-b-2 border-[#E1E1E1] whitespace-nowrap cursor-pointer select-none sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs"
+                    className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap cursor-pointer select-none sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs"
                   >
                     {col.label}{getSortIcon(col.key)}
                   </th>
                 ))}
                 {/* 写真（ソートなし、sticky top のみ） */}
-                <th className="px-2 py-3 border-b-2 border-[#E1E1E1] whitespace-nowrap sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs">写真</th>
+                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs">写真</th>
                 {/* --- 操作（sticky top + right） --- */}
-                <th className="px-2 py-3 border-b-2 border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs">操作</th>
+                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs">操作</th>
                 {/* --- チェックボックス（sticky top + right） --- */}
-                <th className="px-2 py-3 border-b-2 border-[#E1E1E1] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#FAFAFA] w-12 min-w-[48px]">
+                <th className="px-2 py-3 border border-[#E1E1E1] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#FAFAFA] w-12 min-w-[48px]">
                   <input
                     type="checkbox"
                     checked={selectedAll}
@@ -1079,20 +1079,20 @@ export default function RegistrationEditPage() {
                 return (
                 <tr key={row.id} style={{ backgroundColor: rowBgColor }}>
                   {/* ① QRコード */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {isChild && <span className="text-[#8A8A8A] mr-1">└</span>}
                     {row.sealNo}
                   </td>
                   {/* ② 階 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.floor}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.floor}</td>
                   {/* ③ 部門 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.department}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.department}</td>
                   {/* ④ 部署 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.section}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.section}</td>
                   {/* ⑤ 室名 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.roomName}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.roomName}</td>
                   {/* ⑥ Category */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.category}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.category}</td>
                   {/* ⑥ 大分類 */}
                   <td style={getFreeInputCellStyle('largeClass', editingRow === row.id && editingData ? editingData.largeClass : row.largeClass, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
                     {editingRow === row.id && editingData ? (
@@ -1116,7 +1116,7 @@ export default function RegistrationEditPage() {
                     ) : row.mediumClass}
                   </td>
                   {/* 明細区分 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.detailType}
@@ -1190,7 +1190,7 @@ export default function RegistrationEditPage() {
                     ) : row.model}
                   </td>
                   {/* ⑩ W */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1201,7 +1201,7 @@ export default function RegistrationEditPage() {
                     ) : row.width}
                   </td>
                   {/* ⑩ D */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1212,7 +1212,7 @@ export default function RegistrationEditPage() {
                     ) : row.depth}
                   </td>
                   {/* ⑩ H */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1223,7 +1223,7 @@ export default function RegistrationEditPage() {
                     ) : row.height}
                   </td>
                   {/* ⑪ 資産番号 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1234,7 +1234,7 @@ export default function RegistrationEditPage() {
                     ) : row.assetNo}
                   </td>
                   {/* ⑫ ME番号 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1245,7 +1245,7 @@ export default function RegistrationEditPage() {
                     ) : row.equipmentNo}
                   </td>
                   {/* ⑬ シリアルNo */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1256,7 +1256,7 @@ export default function RegistrationEditPage() {
                     ) : row.serialNo}
                   </td>
                   {/* ⑭ 購入年月日 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="date"
@@ -1267,7 +1267,7 @@ export default function RegistrationEditPage() {
                     ) : row.purchaseDate}
                   </td>
                   {/* ⑭ 備考 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <input
                         type="text"
@@ -1278,7 +1278,7 @@ export default function RegistrationEditPage() {
                     ) : row.remarks}
                   </td>
                   {/* ⑮ リース・借用 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.lease}
@@ -1291,11 +1291,11 @@ export default function RegistrationEditPage() {
                     ) : row.lease}
                   </td>
                   {/* ⑯ 調査日付 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyDate}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyDate}</td>
                   {/* ⑰ 担当者 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyor}</td>
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyor}</td>
                   {/* 写真 */}
-                  <td className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap">
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap">
                     <button
                       onClick={() => handlePhotoClick(row)}
                       className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
@@ -1304,7 +1304,7 @@ export default function RegistrationEditPage() {
                     </button>
                   </td>
                   <td
-                    className="px-2 py-2 border-b border-[#E1E1E1] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)]"
+                    className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)]"
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <div className="flex gap-1 flex-wrap">
@@ -1373,7 +1373,7 @@ export default function RegistrationEditPage() {
                   </td>
                   {/* チェックボックス */}
                   <td
-                    className="px-2 py-2 border-b border-[#E1E1E1] text-center sticky right-0 z-[1] w-12 min-w-[48px]"
+                    className="px-2 py-2 border border-[#E1E1E1] text-center sticky right-0 z-[1] w-12 min-w-[48px]"
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <input
