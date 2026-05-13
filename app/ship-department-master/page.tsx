@@ -134,7 +134,7 @@ export default function ShipDepartmentMasterPage() {
     const submitColorClass =
       submitColor === '#008C1D' ? 'bg-cta-primary hover:bg-cta-primary-dark' :
       submitColor === '#DA0000' ? 'bg-content-alert hover:opacity-90' :
-      submitColor === '#4527A0' ? 'bg-cta-primary hover:bg-cta-primary-dark' :
+      submitColor === '#4A4A4A' ? 'bg-cta-primary hover:bg-cta-primary-dark' :
       'bg-content-primary hover:bg-content-primary';
 
     return (
@@ -397,7 +397,7 @@ export default function ShipDepartmentMasterPage() {
         handleNewRoomSubmit,
         () => setShowNewRoomModal(false),
         '作成',
-        '#4527A0',
+        '#4A4A4A',
       )}
 
       {/* 諸室区分マスタ: 編集モーダル */}
