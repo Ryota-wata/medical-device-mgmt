@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, Suspense } from 'react';
+import { Smartphone, Monitor, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useQuotationStore } from '@/lib/stores/quotationStore';
@@ -656,57 +657,66 @@ function PurchaseManagementContent() {
         variant="danger"
       />
 
-      {/* 資産仮登録モード選択ダイアログ */}
+      {/* 資産仮登録モード選択ダイアログ (Figma 342:56859) */}
       {showModeSelection && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
-          <div style={{ background: 'white', borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#4A4A4A', marginBottom: 8, textWrap: 'balance' }}>検収登録の入力方法を選択</h2>
-            <p style={{ fontSize: 13, color: '#8A8A8A', marginBottom: 24 }}>検収登録の作業状況に応じて入力方法を選んでください。</p>
+          <div style={{ background: 'white', borderRadius: 12, padding: 24, maxWidth: 520, width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <button
+              onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
+              aria-label="閉じる"
+              style={{ position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 20, color: '#4A4A4A', lineHeight: 1, padding: '4px 8px' }}
+            >
+              ×
+            </button>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: '#4A4A4A', marginBottom: 8, textWrap: 'balance' }}>検収登録の入力方法を選択</h2>
+            <p style={{ fontSize: 13, color: '#8A8A8A', marginBottom: 20 }}>検収登録の作業状況に応じて入力方法を選んでください。</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 onClick={() => handleModeSelected('mobile')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A4A4A'; }}
+                style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, border: '1px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#146E2E'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#EBF5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 24 }}>&#128241;</span>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#EBF5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Smartphone size={20} color="#146E2E" aria-hidden />
                 </div>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#4A4A4A', marginBottom: 4 }}>モバイル（現場作業）</div>
                   <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
                     現場で納品確認・検収日入力を行います。<br />
                     1品目ずつ確認する操作フローです。
                   </div>
                 </div>
+                <ChevronRight size={20} color="#8A8A8A" aria-hidden />
               </button>
 
               <button
                 onClick={() => handleModeSelected('pc')}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: 16, border: '2px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#4A4A4A'; }}
+                style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, border: '1px solid #E1E1E1', borderRadius: 8, background: 'white', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.15s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#146E2E'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E1E1E1'; }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 8, background: '#FDF1E5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 24 }}>&#128187;</span>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#F1F1F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Monitor size={20} color="#4A4A4A" aria-hidden />
                 </div>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#4A4A4A', marginBottom: 4 }}>PC（一括入力）</div>
                   <div style={{ fontSize: 12, color: '#8A8A8A', lineHeight: 1.5 }}>
                     納品日・検収日をテーブル形式で一括入力します。<br />
                     全品目を一覧しながら効率的に登録できます。
                   </div>
                 </div>
+                <ChevronRight size={20} color="#8A8A8A" aria-hidden />
               </button>
             </div>
 
-            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
               <button
                 onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
-                style={{ padding: '8px 20px', background: 'transparent', border: '1px solid #E1E1E1', borderRadius: 6, cursor: 'pointer', fontSize: 13, color: '#8A8A8A' }}
+                style={{ padding: '4px 12px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 13, color: '#146E2E', textDecoration: 'underline' }}
               >
-                キャンセル
+                閉じる
               </button>
             </div>
           </div>
