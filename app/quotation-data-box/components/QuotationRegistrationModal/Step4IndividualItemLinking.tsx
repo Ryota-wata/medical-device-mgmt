@@ -173,7 +173,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                 <th colSpan={5} style={{
                   padding: '6px',
                   textAlign: 'center',
-                  borderBottom: '2px solid #0092E6',
+                  border: '2px solid #0092E6',
                   fontWeight: 'bold',
                   color: '#0092E6',
                   background: '#EBF5EE',
@@ -185,7 +185,7 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                 <th colSpan={6} style={{
                   padding: '6px',
                   textAlign: 'center',
-                  borderBottom: '2px solid #4A4A4A',
+                  border: '2px solid #4A4A4A',
                   fontWeight: 'bold',
                   color: '#4A4A4A',
                   background: '#FAFAFA',
@@ -196,19 +196,19 @@ export const Step4IndividualItemLinking: React.FC<Step4IndividualItemLinkingProp
                 <th style={{ padding: '6px', background: '#FAFAFA', width: '150px', fontSize: '11px' }}>操作</th>
               </tr>
               <tr style={{ background: '#FAFAFA' }}>
-                <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '30px', fontSize: '9px' }}>No</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', fontSize: '9px' }}>品名</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', fontSize: '9px' }}>メーカー</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', fontSize: '9px' }}>型式</th>
-                <th style={{ padding: '5px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', width: '40px', fontSize: '9px' }}>数量</th>
+                <th style={{ padding: '5px', textAlign: 'center', border: '1px solid #E1E1E1', width: '30px', fontSize: '9px' }}>No</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', fontSize: '9px' }}>品名</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '80px', fontSize: '9px' }}>メーカー</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '80px', fontSize: '9px' }}>型式</th>
+                <th style={{ padding: '5px', textAlign: 'center', border: '1px solid #E1E1E1', width: '40px', fontSize: '9px' }}>数量</th>
                 <th style={{ padding: '5px', background: '#FAFAFA' }}></th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>category</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '90px', fontSize: '9px', background: '#FAFAFA' }}>大分類</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '80px', fontSize: '9px', background: '#FAFAFA' }}>中分類</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', fontSize: '9px', background: '#FAFAFA' }}>個体管理品目</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>メーカー</th>
-                <th style={{ padding: '5px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>型式</th>
-                <th style={{ padding: '5px', borderBottom: '1px solid #E1E1E1' }}></th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>category</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '90px', fontSize: '9px', background: '#FAFAFA' }}>大分類</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '80px', fontSize: '9px', background: '#FAFAFA' }}>中分類</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', fontSize: '9px', background: '#FAFAFA' }}>個体管理品目</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>メーカー</th>
+                <th style={{ padding: '5px', textAlign: 'left', border: '1px solid #E1E1E1', width: '70px', fontSize: '9px', background: '#FAFAFA' }}>型式</th>
+                <th style={{ padding: '5px', border: '1px solid #E1E1E1' }}></th>
               </tr>
             </thead>
             <tbody>

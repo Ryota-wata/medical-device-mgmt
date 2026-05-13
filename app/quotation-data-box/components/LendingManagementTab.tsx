@@ -631,8 +631,8 @@ export const LendingManagementTab: React.FC = () => {
                     <span style={getStatusStyle(device.status)}>{device.status}</span>
                   </td>
                   <td style={tdStyle}>{device.installedDepartment}</td>
-                  <td style={tdStyle} className="tabular-nums">{device.lendingDate || '-'}</td>
-                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">
+                  <td style={tdStyle} className="tabular-nums border border-stroke-input">{device.lendingDate || '-'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums border border-stroke-input">
                     {isOverdue ? (
                       <span style={{ color: '#DA0000', fontWeight: 'bold' }}>{device.overdueDays}日</span>
                     ) : (
@@ -642,7 +642,7 @@ export const LendingManagementTab: React.FC = () => {
                   <td style={{ ...tdStyle, fontSize: '11px', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {device.dailyInspectionMenu || '-'}
                   </td>
-                  <td style={tdStyle} className="tabular-nums">{device.dailyInspectionDate || '-'}</td>
+                  <td style={tdStyle} className="tabular-nums border border-stroke-input">{device.dailyInspectionDate || '-'}</td>
                   <td style={tdStyle}>
                     {device.periodicInspectionStatus ? (
                       <span style={getPeriodicInspectionStyle(device.periodicInspectionStatus)}>
@@ -650,7 +650,7 @@ export const LendingManagementTab: React.FC = () => {
                       </span>
                     ) : '-'}
                   </td>
-                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">
+                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums border border-stroke-input">
                     {device.lendingCount}
                   </td>
                   {/* 操作 */}

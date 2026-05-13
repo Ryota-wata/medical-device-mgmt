@@ -235,10 +235,10 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
                 <td style={tdStyle}>{req.maker}</td>
                 <td style={tdStyle}>{req.applicantDepartment}</td>
                 <td style={tdStyle}>{req.applicantName}</td>
-                <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums">{req.applicantContact}</td>
+                <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums border border-stroke-input">{req.applicantContact}</td>
                 <td style={tdStyle}>{req.vendorName || '-'}</td>
                 <td style={tdStyle}>{req.vendorPerson || '-'}</td>
-                <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums">{req.vendorContact || '-'}</td>
+                <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums border border-stroke-input">{req.vendorContact || '-'}</td>
                 <td style={{ ...tdStyle, textAlign: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                     {getStatusBadge(req.status)}

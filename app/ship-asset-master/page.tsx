@@ -590,9 +590,9 @@ function ShipAssetMasterContent() {
                   {/* カラムヘッダー */}
                   <tr>
                     {ASSET_MASTER_COLUMNS.map(col => (
-                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
+                      <th key={col.key} style={{ padding: '4px 6px', textAlign: 'left', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>{col.label}</th>
                     ))}
-                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
+                    <th style={{ padding: '4px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'white', background: '#4A4A4A', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>

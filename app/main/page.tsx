@@ -967,20 +967,20 @@ export default function MainPage() {
                         const typeStyle = getTypeBadgeStyle(app.applicationType);
                         return (
                           <tr key={app.id} className="border-b border-[#FAFAFA] hover:bg-surface-screen">
-                            <td className="py-2.5 px-3 font-mono text-xs text-content-sub">{app.applicationNo}</td>
-                            <td className="py-2.5 px-3 text-content-sub tabular-nums">{app.applicationDate}</td>
-                            <td className="py-2.5 px-3">
+                            <td className="py-2.5 px-3 font-mono text-xs text-content-sub border border-stroke-input">{app.applicationNo}</td>
+                            <td className="py-2.5 px-3 text-content-sub tabular-nums border border-stroke-input">{app.applicationDate}</td>
+                            <td className="py-2.5 px-3 border border-stroke-input">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeStyle.bg} ${typeStyle.text}`}>
                                 {app.applicationType}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 text-content-primary max-w-[200px] truncate">{app.itemName}</td>
-                            <td className="py-2.5 px-3">
+                            <td className="py-2.5 px-3 text-content-primary max-w-[200px] truncate border border-stroke-input">{app.itemName}</td>
+                            <td className="py-2.5 px-3 border border-stroke-input">
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                                 {app.status}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 text-orange-600 font-medium tabular-nums">{app.deadline || '-'}</td>
+                            <td className="py-2.5 px-3 text-orange-600 font-medium tabular-nums border border-stroke-input">{app.deadline || '-'}</td>
                           </tr>
                         );
                       })}

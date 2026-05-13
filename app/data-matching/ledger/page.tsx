@@ -753,7 +753,7 @@ export default function LedgerWindowPage() {
               }}>
                 <thead>
                   <tr style={{ backgroundColor: '#FAFAFA' }}>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', width: '50px' }}>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', width: '50px' }}>
                       <input
                         type="checkbox"
                         checked={selectedIds.size === matchFilteredData.length && matchFilteredData.length > 0}
@@ -761,24 +761,24 @@ export default function LedgerWindowPage() {
                         style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     </th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>資産番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>部門</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>部署</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>諸室名称</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>大分類</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>中分類</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>型式</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>数量</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>取得年月日</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>突合状況</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>資産番号</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>部門</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>部署</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>諸室名称</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>大分類</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>中分類</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>品目</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>メーカー</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>型式</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>数量</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #E1E1E1', whiteSpace: 'nowrap' }}>取得年月日</th>
                   </tr>
                 </thead>
                 <tbody>
                   {matchFilteredData.map((row) => (
                     <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#EBF5EE' : 'transparent' }}>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(row.id)}
@@ -786,7 +786,7 @@ export default function LedgerWindowPage() {
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1' }}>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>
                         {row.matchingStatus ? (
                           <span style={{
                             padding: '4px 8px',
@@ -802,17 +802,17 @@ export default function LedgerWindowPage() {
                           <span style={{ color: '#999', fontSize: '12px' }}>ー</span>
                         )}
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.roomName || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.item}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>{row.quantity}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.acquisitionDate}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.roomName || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.majorCategory}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.middleCategory}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.item}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center' }}>{row.quantity}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.acquisitionDate}</td>
                     </tr>
                   ))}
                   {matchFilteredData.length === 0 && (

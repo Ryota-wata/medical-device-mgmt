@@ -240,7 +240,7 @@ export default function UserPermissionManagementPage() {
                     return (
                       <React.Fragment key={category}>
                         <tr className="bg-stroke-card border-b border-stroke-input">
-                          <td colSpan={4} className="py-2 px-4 text-xs font-semibold text-content-primary tracking-wide">
+                          <td colSpan={4} className="py-2 px-4 text-xs font-semibold text-content-primary tracking-wide border border-stroke-input">
                             {category}
                           </td>
                         </tr>
@@ -262,23 +262,23 @@ export default function UserPermissionManagementPage() {
                                       : 'hover:bg-surface-screen'
                               }`}
                             >
-                              <td className="py-2.5 px-4 text-content-primary align-top whitespace-nowrap">
+                              <td className="py-2.5 px-4 text-content-primary align-top whitespace-nowrap border border-stroke-input">
                                 <div>{unit.displayName}</div>
                                 {changed && (
                                   <span className="inline-block mt-1 text-xs text-content-alert font-medium">変更あり</span>
                                 )}
                               </td>
-                              <td className="py-2.5 px-4 text-xs text-content-primary align-top text-pretty leading-relaxed">
+                              <td className="py-2.5 px-4 text-xs text-content-primary align-top text-pretty leading-relaxed border border-stroke-input">
                                 {unit.switchContent}
                               </td>
-                              <td className="py-2.5 px-4 text-center text-xs align-top">
+                              <td className="py-2.5 px-4 text-center text-xs align-top border border-stroke-input">
                                 {facilityEnabled ? (
                                   <span className="text-cta-primary font-medium">ON</span>
                                 ) : (
                                   <span className="text-content-alert font-medium">OFF</span>
                                 )}
                               </td>
-                              <td className="py-2.5 px-4 text-center align-top">
+                              <td className="py-2.5 px-4 text-center align-top border border-stroke-input">
                                 {locked ? (
                                   <span className="text-xs text-content-sub">-</span>
                                 ) : (

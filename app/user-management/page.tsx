@@ -1030,7 +1030,7 @@ export default function UserManagementPage() {
           <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
-                <thead style={{ background: '#FAFAFA', borderBottom: '2px solid #E1E1E1' }}>
+                <thead style={{ background: '#FAFAFA', border: '2px solid #E1E1E1' }}>
                   <tr>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>所属部署</th>
                     <th style={{ padding: isTablet ? '12px' : '14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A' }}>役職</th>

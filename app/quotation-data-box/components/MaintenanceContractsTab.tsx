@@ -987,18 +987,18 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   <td style={tdStyle}>{contract.contractGroupName}</td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>{getContractTypeBadge(contract.contractType)}</td>
                   <td style={{ ...tdStyle, fontSize: '11px', color: '#555' }}>{contract.contractTypeNote || '-'}</td>
-                  <td style={tdStyle} className="tabular-nums">{contract.contractDate}</td>
-                  <td style={{ ...tdStyle, fontSize: '11px' }} className="tabular-nums">
+                  <td style={tdStyle} className="tabular-nums border border-stroke-input">{contract.contractDate}</td>
+                  <td style={{ ...tdStyle, fontSize: '11px' }} className="tabular-nums border border-stroke-input">
                     {contract.contractStartDate && contract.contractEndDate
                       ? `${contract.contractStartDate}～${contract.contractEndDate}`
                       : '-'
                     }
                   </td>
-                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">{formatAmount(contract.contractAmount)}</td>
-                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums">{formatAmount(contract.annualAmount)}</td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums border border-stroke-input">{formatAmount(contract.contractAmount)}</td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }} className="tabular-nums border border-stroke-input">{formatAmount(contract.annualAmount)}</td>
                   <td style={tdStyle}>{contract.contractorName || '-'}</td>
                   <td style={tdStyle}>{contract.contractorPerson || '-'}</td>
-                  <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums">{contract.contractorPhone || '-'}</td>
+                  <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums border border-stroke-input">{contract.contractorPhone || '-'}</td>
                   <td style={tdStyle}>
                     {(() => {
                       const status = calcStatus(contract);

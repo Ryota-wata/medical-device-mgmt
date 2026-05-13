@@ -418,19 +418,19 @@ function InspectionResultContent() {
               }}>
                 <thead>
                   <tr style={{ backgroundColor: '#FAFAFA' }}>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E1E1E1' }}>項目</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #E1E1E1' }}>点検内容</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, borderBottom: '2px solid #E1E1E1', width: '80px' }}>評価</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, border: '2px solid #E1E1E1' }}>項目</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, border: '2px solid #E1E1E1' }}>点検内容</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, border: '2px solid #E1E1E1', width: '80px' }}>評価</th>
                   </tr>
                 </thead>
                 <tbody>
                   {resultData.itemResults.map((item, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.itemName}</td>
-                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #eee' }}>{item.content}</td>
+                      <td style={{ padding: '10px 12px', border: '1px solid #eee' }}>{item.itemName}</td>
+                      <td style={{ padding: '10px 12px', border: '1px solid #eee' }}>{item.content}</td>
                       <td style={{
                         padding: '10px 12px',
-                        borderBottom: '1px solid #eee',
+                        border: '1px solid #eee',
                         textAlign: 'center',
                         fontWeight: 600,
                         color: item.result === '○' ? '#008C1D' : item.result === '×' ? '#DA0000' : '#333'

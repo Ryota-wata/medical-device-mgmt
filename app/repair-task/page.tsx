@@ -1012,13 +1012,13 @@ function RepairTaskContent() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
                   <thead>
                     <tr style={{ background: COLORS.surfaceAlt }}>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '70px' }}></th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>業者名 <span style={{ color: COLORS.error }}>*</span></th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>担当者名</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>メール <span style={{ color: COLORS.error }}>*</span></th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>連絡先</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}`, width: '130px' }}>提出期限</th>
-                      <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '210px' }}>アクション</th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}`, width: '70px' }}></th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>業者名 <span style={{ color: COLORS.error }}>*</span></th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>担当者名</th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>メール <span style={{ color: COLORS.error }}>*</span></th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>連絡先</th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}`, width: '130px' }}>提出期限</th>
+                      <th style={{ padding: '8px', textAlign: 'center', border: `1px solid ${COLORS.border}`, width: '210px' }}>アクション</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1153,12 +1153,12 @@ function RepairTaskContent() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ background: COLORS.surfaceAlt }}>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>フェーズ</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>業者名</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
-                      <th style={{ padding: '8px', textAlign: 'right', borderBottom: `1px solid ${COLORS.border}` }}>金額（税別）</th>
-                      <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>保存形式</th>
-                      <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>フェーズ</th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>業者名</th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>ファイル名</th>
+                      <th style={{ padding: '8px', textAlign: 'right', border: `1px solid ${COLORS.border}` }}>金額（税別）</th>
+                      <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>保存形式</th>
+                      <th style={{ padding: '8px', textAlign: 'center', border: `1px solid ${COLORS.border}`, width: '60px' }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1482,10 +1482,10 @@ function RepairTaskContent() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                       <thead>
                         <tr style={{ background: COLORS.surfaceAlt }}>
-                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>種別</th>
-                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>ファイル名</th>
-                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: `1px solid ${COLORS.border}` }}>仮）勘定科目</th>
-                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: `1px solid ${COLORS.border}`, width: '60px' }}></th>
+                          <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>種別</th>
+                          <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>ファイル名</th>
+                          <th style={{ padding: '8px', textAlign: 'left', border: `1px solid ${COLORS.border}` }}>仮）勘定科目</th>
+                          <th style={{ padding: '8px', textAlign: 'center', border: `1px solid ${COLORS.border}`, width: '60px' }}></th>
                         </tr>
                       </thead>
                       <tbody>

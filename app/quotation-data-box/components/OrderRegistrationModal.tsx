@@ -245,13 +245,13 @@ export const OrderRegistrationModal: React.FC<OrderRegistrationModalProps> = ({
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr style={{ background: '#4A4A4A', color: 'white', position: 'sticky', top: 0 }}>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>No</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>メーカー</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>型式</th>
-                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>数量</th>
-                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>金額（税込）</th>
-                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>個別納品日</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>No</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>品名</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>メーカー</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>型式</th>
+                  <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>数量</th>
+                  <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>金額（税込）</th>
+                  <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #4A4A4A', whiteSpace: 'nowrap', fontWeight: 'bold' }}>個別納品日</th>
                 </tr>
               </thead>
               <tbody>

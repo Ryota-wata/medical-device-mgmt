@@ -391,30 +391,30 @@ function RepairRequestsContent() {
                           }}
                           onClick={() => handleViewDetail(app)}
                         >
-                          <td style={{ padding: '8px 6px', borderBottom: '1px solid #E1E1E1' }} onClick={(e) => e.stopPropagation()}>
+                          <td style={{ padding: '8px 6px', border: '1px solid #E1E1E1' }} onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={selectedApplicationIds.has(app.id)}
                               onChange={() => handleSelectApplication(app.id)}
                             />
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', whiteSpace: 'nowrap' }}>{app.applicationDate}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>
                             <span style={{ color: '#008C1D', fontWeight: 'bold', cursor: 'pointer' }}>{app.applicationNo}</span>
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.department}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.section || '-'}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.roomName || '-'}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', fontFamily: 'monospace', color: '#008C1D', fontSize: '12px' }}>{app.qrCode}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.itemName}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.maker}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.model}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.applicantDepartment}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.applicantName}</td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.department}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.section || '-'}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.roomName || '-'}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', fontFamily: 'monospace', color: '#008C1D', fontSize: '12px' }}>{app.qrCode}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.itemName}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.maker}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.model}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>{app.applicantDepartment}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#4A4A4A' }}>{app.applicantName}</td>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', color: '#8A8A8A', fontSize: '12px' }}>
                             {app.applicantContact}
                           </td>
-                          <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                          <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleViewDetail(app)}
                               style={{

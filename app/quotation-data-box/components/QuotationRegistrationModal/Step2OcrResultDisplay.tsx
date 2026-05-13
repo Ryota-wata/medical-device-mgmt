@@ -419,10 +419,10 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                       <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA' }}>
                         <tr>
-                          <th style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>項目</th>
-                          <th style={{ padding: '8px', textAlign: 'right', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>金額</th>
-                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>category</th>
-                          <th style={{ padding: '8px', textAlign: 'center', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>会計区分</th>
+                          <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>項目</th>
+                          <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>金額</th>
+                          <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>category</th>
+                          <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>会計区分</th>
                         </tr>
                       </thead>
                       <tbody>

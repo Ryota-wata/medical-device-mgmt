@@ -1640,7 +1640,7 @@ function RemodelApplicationContent() {
                     background: '#4A4A4A',
                     boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
                     borderRight: '1px solid #4A4A4A',
-                    borderBottom: '2px solid #E1E1E1',
+                    border: '2px solid #E1E1E1',
                   }}
                 >
                   <input
@@ -1661,7 +1661,7 @@ function RemodelApplicationContent() {
                       color: 'white',
                       background: span.color,
                       borderRight: '1px solid rgba(255,255,255,0.3)',
-                      borderBottom: '1px solid rgba(255,255,255,0.2)',
+                      border: '1px solid rgba(255,255,255,0.2)',
                       whiteSpace: 'nowrap',
                       letterSpacing: '0.5px',
                     }}
@@ -1681,7 +1681,7 @@ function RemodelApplicationContent() {
                       color: 'white',
                       background: '#4A4A4A',
                       borderRight: '1px solid rgba(255,255,255,0.3)',
-                      borderBottom: '1px solid rgba(255,255,255,0.2)',
+                      border: '1px solid rgba(255,255,255,0.2)',
                       whiteSpace: 'nowrap',
                       letterSpacing: '0.5px',
                     }}
@@ -1700,7 +1700,7 @@ function RemodelApplicationContent() {
                     color: '#4A4A4A',
                     background: '#FAFAFA',
                     borderRight: '1px solid #E1E1E1',
-                    borderBottom: '2px solid #E1E1E1',
+                    border: '2px solid #E1E1E1',
                     borderTop: '2px solid #8A8A8A',
                     width: '120px',
                   }}
@@ -1880,7 +1880,7 @@ function RemodelApplicationContent() {
                       whiteSpace: 'nowrap',
                       background: '#FAFAFA',
                       borderRight: '1px solid #E1E1E1',
-                      borderBottom: '2px solid #E1E1E1',
+                      border: '2px solid #E1E1E1',
                       borderTop: '2px solid #4A4A4A',
                     }}
                   >
@@ -1931,7 +1931,7 @@ function RemodelApplicationContent() {
                     background: selectedItems.has(asset.no) ? '#EBF5EE' : 'white',
                     boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
                     borderRight: '1px solid #E1E1E1',
-                    borderBottom: '1px solid #E1E1E1',
+                    border: '1px solid #E1E1E1',
                   }}>
                     <input
                       type="checkbox"
@@ -1983,7 +1983,7 @@ function RemodelApplicationContent() {
                           position: 'relative',
                           zIndex: 0,
                           borderRight: '1px solid #E1E1E1',
-                          borderBottom: '1px solid #E1E1E1',
+                          border: '1px solid #E1E1E1',
                         }}
                         onMouseEnter={() => isEditable && setHoveredCell({ rowNo: asset.no, colKey: col.key })}
                         onMouseLeave={() => setHoveredCell(null)}
@@ -2081,7 +2081,7 @@ function RemodelApplicationContent() {
                           padding: '4px 6px',
                           background: selectedItems.has(asset.no) ? '#EBF5EE' : '#FAFAFA',
                           borderRight: '1px solid #E1E1E1',
-                          borderBottom: '1px solid #E1E1E1',
+                          border: '1px solid #E1E1E1',
                         }}
                       >
                         <input
@@ -2116,7 +2116,7 @@ function RemodelApplicationContent() {
                       whiteSpace: 'nowrap',
                       background: selectedItems.has(asset.no) ? '#EBF5EE' : 'white',
                       borderRight: '1px solid #E1E1E1',
-                      borderBottom: '1px solid #E1E1E1',
+                      border: '1px solid #E1E1E1',
                     }}
                   >
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
@@ -2236,7 +2236,7 @@ function RemodelApplicationContent() {
                       background: '#EBF5EE',
                       boxShadow: '2px 0 4px rgba(0,0,0,0.1)',
                       borderRight: '1px solid #E1E1E1',
-                      borderBottom: '2px solid #008C1D',
+                      border: '2px solid #008C1D',
                       textAlign: 'center',
                       verticalAlign: 'middle',
                     }}>
@@ -2279,7 +2279,7 @@ function RemodelApplicationContent() {
                             borderTop: 'none',
                             borderLeft: 'none',
                             borderRight: '1px solid #E1E1E1',
-                            borderBottom: '2px solid #008C1D',
+                            border: '2px solid #008C1D',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -2408,7 +2408,7 @@ function RemodelApplicationContent() {
                           padding: '4px 6px',
                           background: '#EBF5EE',
                           borderRight: '1px solid #E1E1E1',
-                          borderBottom: '1px solid #E1E1E1',
+                          border: '1px solid #E1E1E1',
                         }}
                       >
                         <span style={{ color: '#999', fontSize: '12px' }}>-</span>
@@ -2421,7 +2421,7 @@ function RemodelApplicationContent() {
                         textAlign: 'center',
                         background: '#EBF5EE',
                         borderRight: '1px solid #E1E1E1',
-                        borderBottom: '1px solid #E1E1E1',
+                        border: '1px solid #E1E1E1',
                       }}
                     >
                       <span style={{ color: '#999', fontSize: '12px' }}>-</span>

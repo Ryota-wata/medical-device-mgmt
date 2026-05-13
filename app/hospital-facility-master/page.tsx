@@ -706,16 +706,16 @@ function HospitalFacilityMasterContent() {
                 <thead>
                   {/* Row 1: グループヘッダー */}
                   <tr>
-                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       共通マスタ
                     </th>
-                    <th colSpan={7} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={7} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       旧（現状）
                     </th>
-                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#FAFAFA', borderBottom: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       新（リモデルのみ）
                     </th>
-                    <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#FAFAFA', borderBottom: '2px solid #E1E1E1' }}>操作</th>
+                    <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#FAFAFA', border: '2px solid #E1E1E1' }}>操作</th>
                   </tr>
                   {/* Row 2: カラム名 */}
                   <tr style={{ borderBottom: '2px solid #E1E1E1' }}>

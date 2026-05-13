@@ -551,7 +551,7 @@ function DailyInspectionContent() {
                   <tbody>
                     {itemResults.map((item, index) => (
                       <tr key={index} className="border-b border-stroke-card last:border-b-0">
-                        <td className="px-3 py-2.5 text-sm text-content-primary">{item.itemName}</td>
+                        <td className="px-3 py-2.5 text-sm text-content-primary border border-stroke-input">{item.itemName}</td>
                         <td className="px-3 py-2.5 text-sm text-content-primary border-l border-stroke-card">{item.content}</td>
                         <td className="px-3 py-2.5 border-l border-stroke-card">
                           {/* REQ-103: 評価項目の入力形式を 3 パターンで切替（定例0413 確定） */}
@@ -752,7 +752,7 @@ function DailyInspectionContent() {
                   <tbody>
                     {itemResults.map((item, index) => (
                       <tr key={index} className="border-b border-stroke-card last:border-b-0">
-                        <td className="px-3 py-2.5 text-sm text-content-primary">{item.itemName}</td>
+                        <td className="px-3 py-2.5 text-sm text-content-primary border border-stroke-input">{item.itemName}</td>
                         <td className="px-3 py-2.5 text-sm text-content-primary border-l border-stroke-card">{item.content}</td>
                         <td className={`px-3 py-2.5 text-sm text-center font-semibold border-l border-stroke-card ${
                           item.result === '○' ? 'text-cta-primary-dark' : item.result === '×' ? 'text-[#DA0000]' : 'text-content-primary'

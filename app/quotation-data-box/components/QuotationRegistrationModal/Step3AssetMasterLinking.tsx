@@ -86,11 +86,11 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
               <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 1 }}>
                 <tr>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '100px' }}>申請No</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '80px' }}>種別</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>品目</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>型式</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>設置場所</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '100px' }}>申請No</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '80px' }}>種別</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>品目</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>型式</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>設置場所</th>
                 </tr>
               </thead>
               <tbody>
@@ -142,13 +142,13 @@ export const Step3AssetMasterLinking: React.FC<Step3AssetMasterLinkingProps> = (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '900px' }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: '#FAFAFA' }}>
                 <tr>
-                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '40px' }}>No</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>品名</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '120px' }}>メーカー</th>
-                  <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '120px' }}>型式</th>
-                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '60px' }}>数量</th>
-                  <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '100px' }}>税込金額</th>
-                  <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '80px' }}>操作</th>
+                  <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '40px' }}>No</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A' }}>品名</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '120px' }}>メーカー</th>
+                  <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '120px' }}>型式</th>
+                  <th style={{ padding: '8px', textAlign: 'right', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '60px' }}>数量</th>
+                  <th style={{ padding: '8px', textAlign: 'right', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '100px' }}>税込金額</th>
+                  <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', fontWeight: 'bold', color: '#4A4A4A', width: '80px' }}>操作</th>
                 </tr>
               </thead>
               <tbody>

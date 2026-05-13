@@ -545,7 +545,7 @@ export default function MELedgerWindowPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#EBF5EE' }}>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', width: '50px' }}>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', width: '50px' }}>
                       <input
                         type="checkbox"
                         checked={selectedIds.size === filteredData.length && filteredData.length > 0}
@@ -553,23 +553,23 @@ export default function MELedgerWindowPage() {
                         style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                       />
                     </th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>突合状況</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>ME番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>資産番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>部門</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>部署</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>品目</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>メーカー</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>型式</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>シリアル番号</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>数量</th>
-                    <th style={{ padding: '12px 8px', borderBottom: '2px solid #008C1D', whiteSpace: 'nowrap' }}>点検日</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>突合状況</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>ME番号</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>資産番号</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>部門</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>部署</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>品目</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>メーカー</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>型式</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>シリアル番号</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>数量</th>
+                    <th style={{ padding: '12px 8px', border: '2px solid #008C1D', whiteSpace: 'nowrap' }}>点検日</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredData.map((row) => (
                     <tr key={row.id} style={{ backgroundColor: selectedIds.has(row.id) ? '#EBF5EE' : 'transparent' }}>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
                         <input
                           type="checkbox"
                           checked={selectedIds.has(row.id)}
@@ -577,7 +577,7 @@ export default function MELedgerWindowPage() {
                           style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                         />
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1' }}>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>
                         {row.matchingStatus ? (
                           <span style={{
                             padding: '4px 8px',
@@ -593,16 +593,16 @@ export default function MELedgerWindowPage() {
                           <span style={{ color: '#999', fontSize: '12px' }}>ー</span>
                         )}
                       </td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap', color: '#146E2E', fontWeight: '600' }}>{row.meNo}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.item}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.serialNo || '-'}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', textAlign: 'center' }}>{row.quantity}</td>
-                      <td style={{ padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.inspectionDate || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', color: '#146E2E', fontWeight: '600' }}>{row.meNo}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.assetNo || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.department}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.section}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.item}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.manufacturer || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.model || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.serialNo || '-'}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center' }}>{row.quantity}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{row.inspectionDate || '-'}</td>
                     </tr>
                   ))}
                   {filteredData.length === 0 && (

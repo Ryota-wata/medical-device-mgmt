@@ -176,14 +176,14 @@ export const Step3ItemTypeClassification: React.FC<Step3ItemTypeClassificationPr
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
             <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 2 }}>
               <tr>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '40px' }}>No</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', minWidth: '150px' }}>品名</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', width: '100px' }}>メーカー</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', width: '100px' }}>型式</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '50px' }}>数量</th>
-                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '100px' }}>購入金額</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '100px', background: '#EBF5EE' }}>AI判定</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '150px', background: '#FDF1E5' }}>登録区分</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '40px' }}>No</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', minWidth: '150px' }}>品名</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', width: '100px' }}>メーカー</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', width: '100px' }}>型式</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '50px' }}>数量</th>
+                <th style={{ padding: '8px', textAlign: 'right', border: '2px solid #E1E1E1', width: '100px' }}>購入金額</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '100px', background: '#EBF5EE' }}>AI判定</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '150px', background: '#FDF1E5' }}>登録区分</th>
               </tr>
             </thead>
             <tbody>

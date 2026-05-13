@@ -181,14 +181,14 @@ export const Step5PriceAllocation: React.FC<Step5PriceAllocationProps> = ({
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
             <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA', zIndex: 2 }}>
               <tr>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '50px' }}>区分</th>
-                <th style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #E1E1E1', minWidth: '150px' }}>品名</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '50px' }}>原数量</th>
-                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '100px' }}>原価格</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '60px', background: '#FDF1E5' }}>案分数量</th>
-                <th style={{ padding: '8px', textAlign: 'right', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#FDF1E5' }}>案分金額</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px', background: '#EBF5EE' }}>会計区分</th>
-                <th style={{ padding: '8px', textAlign: 'center', borderBottom: '2px solid #E1E1E1', width: '120px' }}>親品目</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '50px' }}>区分</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '2px solid #E1E1E1', minWidth: '150px' }}>品名</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '50px' }}>原数量</th>
+                <th style={{ padding: '8px', textAlign: 'right', border: '2px solid #E1E1E1', width: '100px' }}>原価格</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '60px', background: '#FDF1E5' }}>案分数量</th>
+                <th style={{ padding: '8px', textAlign: 'right', border: '2px solid #E1E1E1', width: '120px', background: '#FDF1E5' }}>案分金額</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '120px', background: '#EBF5EE' }}>会計区分</th>
+                <th style={{ padding: '8px', textAlign: 'center', border: '2px solid #E1E1E1', width: '120px' }}>親品目</th>
               </tr>
             </thead>
             <tbody>

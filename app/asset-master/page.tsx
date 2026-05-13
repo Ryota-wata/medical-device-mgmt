@@ -349,28 +349,28 @@ function AssetMasterContent() {
           <table className="w-full border-collapse text-xs md:text-sm">
             <thead className="bg-surface-screen sticky top-0 z-10">
               <tr>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-center font-semibold text-content-sub text-xs w-[50px] border-b border-stroke-input">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-center font-semibold text-content-sub text-xs w-[50px] border border-stroke-input">
                   選択
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[60px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[60px]">
                   No.
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[100px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[100px]">
                   Category
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[150px]">
                   大分類
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[150px]">
                   中分類
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[200px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[200px]">
                   個体管理品目
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[150px]">
                   メーカー
                 </th>
-                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border-b border-stroke-input min-w-[150px]">
+                <th className="px-2 py-2.5 md:px-3 md:py-3 text-left font-semibold text-content-sub text-xs border border-stroke-input min-w-[150px]">
                   型式
                 </th>
               </tr>
@@ -397,7 +397,7 @@ function AssetMasterContent() {
                   }}
                 >
                   <td
-                    className="px-2 py-2.5 md:px-3 md:py-3 text-center"
+                    className="px-2 py-2.5 md:px-3 md:py-3 text-center border border-stroke-input"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <input
@@ -409,25 +409,25 @@ function AssetMasterContent() {
                       className="cursor-pointer w-4 h-4 accent-[#008C1D]"
                     />
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary tabular-nums">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary tabular-nums border border-stroke-input">
                     {index + 1}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary border border-stroke-input">
                     {asset.category}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary border border-stroke-input">
                     {asset.largeClass}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary border border-stroke-input">
                     {asset.mediumClass}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary border border-stroke-input">
                     {asset.item}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary border border-stroke-input">
                     {asset.maker}
                   </td>
-                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary">
+                  <td className="px-2 py-2.5 md:px-3 md:py-3 text-content-primary border border-stroke-input">
                     {asset.model}
                   </td>
                 </tr>

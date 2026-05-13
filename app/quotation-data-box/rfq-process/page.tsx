@@ -967,7 +967,7 @@ function RfqProcessContent() {
                       ) : (
                         editListItems.map((item, idx) => (
                           <tr key={item.id}>
-                            <td style={{ ...previewTdStyle, textAlign: 'center' }} className="tabular-nums">{idx + 1}</td>
+                            <td style={{ ...previewTdStyle, textAlign: 'center' }} className="tabular-nums border border-stroke-input">{idx + 1}</td>
                             <td style={previewTdStyle}>{item.department || '-'}</td>
                             <td style={previewTdStyle}>{item.roomName || '-'}</td>
                             <td style={previewTdStyle}>{item.name || item.item || '-'}</td>

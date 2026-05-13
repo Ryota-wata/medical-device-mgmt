@@ -91,7 +91,7 @@ export const QuotationsTab: React.FC<QuotationsTabProps> = ({ items }) => {
               <th key={col.key} style={{
                 padding: '4px 6px', textAlign: col.align || 'left', fontSize: '10px', fontWeight: 600,
                 color: 'white', background: '#4A4A4A',
-                borderBottom: '2px solid #E1E1E1', whiteSpace: 'nowrap',
+                border: '2px solid #E1E1E1', whiteSpace: 'nowrap',
               }}>{col.label}</th>
             ))}
           </tr>
