@@ -228,31 +228,32 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxHeight: '90vh'
   },
   modalHeader: {
-    background: 'linear-gradient(135deg, #008C1D 0%, #008C1D 100%)',
-    color: 'white',
-    padding: '20px 28px',
+    background: 'white',
+    color: '#4A4A4A',
+    padding: '16px 24px',
     borderRadius: '12px 12px 0 0',
+    borderBottom: '1px solid #E1E1E1',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     flexShrink: 0
   },
   modalTitle: {
-    fontSize: '20px',
-    fontWeight: 700,
-    margin: 0
+    fontSize: '18px',
+    fontWeight: 600,
+    margin: 0,
+    color: '#4A4A4A'
   },
   closeButton: {
-    background: 'rgba(255, 255, 255, 0.2)',
-    color: 'white',
+    background: 'transparent',
+    color: '#4A4A4A',
     border: 'none',
-    borderRadius: '50%',
-    width: '36px',
-    height: '36px',
-    fontSize: '28px',
+    borderRadius: '4px',
+    width: '32px',
+    height: '32px',
+    fontSize: '20px',
     lineHeight: '1',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center'
@@ -267,12 +268,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderBottom: '1px solid #FAFAFA'
   },
   sectionTitle: {
-    fontSize: '16px',
-    fontWeight: 700,
+    fontSize: '14px',
+    fontWeight: 600,
     color: '#4A4A4A',
     marginBottom: '20px',
     paddingBottom: '8px',
-    borderBottom: '2px solid #008C1D'
+    borderBottom: '1px solid #E1E1E1'
   },
   formRow: {
     display: 'flex',
@@ -349,8 +350,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     minWidth: '120px'
   },
   cancelButton: {
-    background: '#8A8A8A',
-    color: 'white'
+    background: 'white',
+    color: '#4A4A4A',
+    border: '1px solid #E1E1E1',
+    fontWeight: 500
   },
   submitButton: {
     background: '#008C1D',
