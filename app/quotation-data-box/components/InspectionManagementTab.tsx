@@ -401,68 +401,41 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                         {task.status}
                       </span>
                     </td>
-                    {/* 操作: Action ドロップダウン */}
-                    <td style={{ ...td, textAlign: 'center', position: 'relative' }}>
-                      <div ref={openActionId === task.id ? actionRef : null} style={{ position: 'relative', display: 'inline-block' }}>
-                        <button
-                          onClick={() => setOpenActionId(openActionId === task.id ? null : task.id)}
-                          style={{
-                            padding: '4px 12px',
-                            background: '#4A4A4A',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          Action ▾
-                        </button>
-                        {openActionId === task.id && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: '2px',
-                            background: 'white',
-                            border: '1px solid #E1E1E1',
-                            borderRadius: '4px',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                            zIndex: 10,
-                            minWidth: '120px',
-                          }}>
-                            <button
-                              onClick={() => handleOpenDateModal(task)}
-                              style={dropdownItemStyle('#0092E6')}
-                            >
-                              日程調整
-                            </button>
-                            {task.inspectionType !== 'メーカー保守' && (
-                              <button
-                                onClick={() => handleStartInspection(task)}
-                                style={dropdownItemStyle('#008C1D')}
-                              >
-                                点検実施
-                              </button>
-                            )}
-                            {task.inspectionType === 'メーカー保守' && (
-                              <button
-                                onClick={() => handleResultRegistration(task)}
-                                style={dropdownItemStyle('#4A4A4A')}
-                              >
-                                結果登録
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleSkipInspection(task)}
-                              style={dropdownItemStyle('#8A8A8A')}
-                            >
-                              スキップ
-                            </button>
-                          </div>
+                    {/* 操作: Action プルダウン */}
+                    <td style={{ ...td, textAlign: 'center' }}>
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === 'schedule') handleOpenDateModal(task);
+                          else if (value === 'inspect') handleStartInspection(task);
+                          else if (value === 'result') handleResultRegistration(task);
+                          else if (value === 'skip') handleSkipInspection(task);
+                          e.target.value = '';
+                        }}
+                        aria-label="アクションを選択"
+                        style={{
+                          padding: '4px 8px',
+                          background: 'white',
+                          color: '#4A4A4A',
+                          border: '1px solid #E1E1E1',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          minWidth: '110px',
+                        }}
+                      >
+                        <option value="" disabled>選択</option>
+                        <option value="schedule">日程調整</option>
+                        {task.inspectionType !== 'メーカー保守' && (
+                          <option value="inspect">点検実施</option>
                         )}
-                      </div>
+                        {task.inspectionType === 'メーカー保守' && (
+                          <option value="result">結果登録</option>
+                        )}
+                        <option value="skip">スキップ</option>
+                      </select>
                     </td>
                     {/* 操作: 設定変更 */}
                     <td style={{ ...td, textAlign: 'center' }}>
