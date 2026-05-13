@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useInspectionStore } from '@/lib/stores';
 
@@ -235,7 +236,9 @@ function InspectionResultContent() {
           textAlign: 'center',
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center', color: '#8A8A8A' }}>
+            <AlertTriangle size={48} strokeWidth={1.5} />
+          </div>
           <h2 style={{ fontSize: '18px', color: '#4A4A4A', marginBottom: '8px' }}>点検結果がありません</h2>
           <p style={{ fontSize: '14px', color: '#8A8A8A', marginBottom: '24px' }}>
             点検を実施してからこの画面にアクセスしてください。
