@@ -236,20 +236,20 @@ export default function ShipFacilityMasterPage() {
                 </tr>
                 <tr>
                   {FACILITY_COLUMNS.map(col => (
-                    <th key={col.key} className="px-1.5 py-1 text-left text-[10px] font-semibold text-content-primary bg-surface-screen border-b border-stroke-input whitespace-nowrap">{col.label}</th>
+                    <th key={col.key} className="px-1.5 py-1 text-left text-[10px] font-semibold text-content-primary bg-surface-screen border border-stroke-input whitespace-nowrap">{col.label}</th>
                   ))}
-                  <th className="px-1.5 py-1 text-center text-[10px] font-semibold text-content-primary bg-surface-screen border-b border-stroke-input whitespace-nowrap">操作</th>
+                  <th className="px-1.5 py-1 text-center text-[10px] font-semibold text-content-primary bg-surface-screen border border-stroke-input whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredFacilities.map((facility, index) => (
-                  <tr key={facility.id} className={`border-b border-stroke-input ${index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}`}>
+                  <tr key={facility.id} className={index % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
                     {FACILITY_COLUMNS.map(col => (
-                      <td key={col.key} className="px-1.5 py-1 text-[11px] text-content-primary whitespace-nowrap">
+                      <td key={col.key} className="px-1.5 py-1 text-[11px] text-content-primary whitespace-nowrap border border-stroke-input">
                         {String((facility as unknown as Record<string, unknown>)[col.key] || '')}
                       </td>
                     ))}
-                    <td className="px-1.5 py-1 text-center whitespace-nowrap">
+                    <td className="px-1.5 py-1 text-center whitespace-nowrap border border-stroke-input">
                       <div className="flex gap-1 justify-center">
                         <button
                           onClick={() => handleEdit(facility)}

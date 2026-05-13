@@ -76,8 +76,8 @@ function VendorMasterContent() {
     if (selectedVendor) updateVendor(selectedVendor.id, data);
   };
 
-  const thCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-left font-semibold text-content-primary whitespace-nowrap`;
-  const tdCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-content-primary whitespace-nowrap`;
+  const thCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-left font-semibold text-content-primary whitespace-nowrap border border-stroke-input`;
+  const tdCls = `${isTablet ? 'p-3 text-[13px]' : 'p-3.5 text-sm'} text-content-primary whitespace-nowrap border border-stroke-input`;
 
   return (
     <div className="flex flex-col min-h-dvh bg-surface-screen">
@@ -192,7 +192,7 @@ function VendorMasterContent() {
                       <td className={`${tdCls} tabular-nums`}>{vendor.phone}</td>
                       <td className={tdCls}>{vendor.email}</td>
                       <td className={`${tdCls} text-center`}>{vendor.isPrimaryContact ? '○' : '---'}</td>
-                      <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap`}>
+                      <td className={`${isTablet ? 'p-3' : 'p-3.5'} text-center whitespace-nowrap border border-stroke-input`}>
                         <div className="flex gap-1 justify-center">
                           <button
                             onClick={() => handleEdit(vendor)}
