@@ -46,23 +46,23 @@ const tdStyle: React.CSSProperties = {
 const STATUS_BADGE_COLORS: Record<RfqGroupStatus, string> = {
   '見積依頼': '#8A8A8A',
   '見積依頼済': '#0092E6',
-  '見積DB登録済': '#0073B8',
-  '見積登録依頼中': '#A35414',
-  '発注用見積依頼済': '#4527A0',
-  '発注見積登録済': '#5E3A93',
-  '発注済': '#A35414',
+  '見積DB登録済': '#4A4A4A',
+  '見積登録依頼中': '#4A4A4A',
+  '発注用見積依頼済': '#4A4A4A',
+  '発注見積登録済': '#4A4A4A',
+  '発注済': '#4A4A4A',
   '納期確定': '#008C1D',
-  '検収済': '#16a085',
+  '検収済': '#4A4A4A',
   '完了': '#8A8A8A',
   '申請を見送る': '#DA0000',
   // 廃棄ワークフロー
-  '廃棄承認待ち': '#A35414',
+  '廃棄承認待ち': '#4A4A4A',
   '廃棄承認済み': '#008C1D',
-  '廃棄完了': '#7b1fa2',
+  '廃棄完了': '#4A4A4A',
   // 移設ワークフロー
-  '移動承認待ち': '#A35414',
+  '移動承認待ち': '#4A4A4A',
   '移動承認済み': '#008C1D',
-  '移動完了': '#3f51b5',
+  '移動完了': '#4A4A4A',
 };
 
 // ステータスに紐づく期限フィールド（そのステータスに入った時に設定済みのもの、読み取り専用）
@@ -88,7 +88,7 @@ const STATUS_DEADLINE_MAP: Partial<Record<RfqGroupStatus, DeadlineMapping>> = {
 };
 
 // グルーピング色（同一rfqNoが複数ある場合の左ボーダー）
-const GROUP_BORDER_COLORS = ['#0092E6', '#A35414', '#008C1D', '#4527A0', '#DA0000', '#16a085'];
+const GROUP_BORDER_COLORS = ['#0092E6', '#4A4A4A', '#008C1D', '#4A4A4A', '#DA0000', '#4A4A4A'];
 
 export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
   rfqGroups,
@@ -213,7 +213,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
         break;
       case '発注用見積依頼済':
         buttons.push(
-          <button key="order-rfq-reg" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#4527A0' }}>
+          <button key="order-rfq-reg" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             発注見積登録
           </button>
         );
@@ -221,7 +221,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ③発注登録
       case '発注見積登録済':
         buttons.push(
-          <button key="order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#A35414' }}>
+          <button key="order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             発注登録
           </button>
         );
@@ -237,7 +237,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ⑤検収登録
       case '納期確定':
         buttons.push(
-          <button key="inspection" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#16a085' }}>
+          <button key="inspection" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             検収登録
           </button>
         );
@@ -275,7 +275,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '廃棄承認済み':
         if (onCompleteDisposal) {
           buttons.push(
-            <button key="complete-disposal" onClick={() => onCompleteDisposal(group.id)} style={{ ...btnBase, background: '#7b1fa2' }}>
+            <button key="complete-disposal" onClick={() => onCompleteDisposal(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
               廃棄完了
             </button>
           );
@@ -304,7 +304,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '移動承認済み':
         if (onCompleteTransfer) {
           buttons.push(
-            <button key="complete-transfer" onClick={() => onCompleteTransfer(group.id)} style={{ ...btnBase, background: '#3f51b5' }}>
+            <button key="complete-transfer" onClick={() => onCompleteTransfer(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
               移動完了
             </button>
           );
