@@ -30,22 +30,22 @@ const ALL_COLUMNS = ASSET_COLUMNS.filter(
 
 // グループ表示用の定義（彩度を下げて上品に。テキストは #4A4A4A 基調 + アクセント） */
 const GROUP_STYLES: Record<string, { label: string; bg: string; color: string }> = {
-  basic: { label: '基本情報', bg: '#F5F5F5', color: '#4A4A4A' },
+  basic: { label: '基本情報', bg: '#FAFAFA', color: '#4A4A4A' },
   commonMaster: { label: '共通マスタ', bg: '#EBF5EE', color: '#146E2E' },
-  location: { label: '設置情報', bg: '#EAF3FB', color: '#1E5A9E' },
-  identity: { label: '識別情報', bg: '#FDF1E5', color: '#A35414' },
-  classification: { label: '資産分類', bg: '#F1ECF7', color: '#5E3A93' },
-  specification: { label: '機器仕様', bg: '#E6F4F5', color: '#256F76' },
-  acquisition: { label: '取得情報', bg: '#FBE9EC', color: '#9A2333' },
+  location: { label: '設置情報', bg: '#EBF5EE', color: '#4A4A4A' },
+  identity: { label: '識別情報', bg: '#FDF1E5', color: '#4A4A4A' },
+  classification: { label: '資産分類', bg: '#FAFAFA', color: '#4A4A4A' },
+  specification: { label: '機器仕様', bg: '#EBF5EE', color: '#4A4A4A' },
+  acquisition: { label: '取得情報', bg: '#FDF1E5', color: '#DA0000' },
   other: { label: 'その他', bg: '#F1F1F1', color: '#4A4A4A' },
-  contract: { label: '契約情報', bg: '#EDE7F6', color: '#4527A0' },
-  leaseDetail: { label: 'リース詳細', bg: '#E8EAF6', color: '#283593' },
-  financial: { label: '財務情報', bg: '#FFF8E1', color: '#A66F1B' },
-  lifespan: { label: '耐用年数', bg: '#EFEBE9', color: '#4E342E' },
+  contract: { label: '契約情報', bg: '#FAFAFA', color: '#4A4A4A' },
+  leaseDetail: { label: 'リース詳細', bg: '#FAFAFA', color: '#4A4A4A' },
+  financial: { label: '財務情報', bg: '#FAFAFA', color: '#4A4A4A' },
+  lifespan: { label: '耐用年数', bg: '#FAFAFA', color: '#4A4A4A' },
   application: { label: '申請内容', bg: '#EBF5EE', color: '#146E2E' },
   applicationDetail: { label: '申請詳細', bg: '#EBF5EE', color: '#146E2E' },
   connection: { label: '接続要望', bg: '#EBF5EE', color: '#146E2E' },
-  work: { label: '作業用', bg: '#FDF1E5', color: '#A35414' },
+  work: { label: '作業用', bg: '#FDF1E5', color: '#4A4A4A' },
 };
 
 export default function AssetSearchResultPage() {
@@ -401,7 +401,7 @@ export default function AssetSearchResultPage() {
             style={{
               flex: '0 0 160px',
               padding: '8px 12px',
-              border: '1px solid #4a6741',
+              border: '1px solid #008C1D',
               borderRadius: '4px',
               fontSize: '13px',
             }}
@@ -462,7 +462,7 @@ export default function AssetSearchResultPage() {
                     }
                   });
                   return groupSpans.map((span, idx) => {
-                    const style = GROUP_STYLES[span.group] || { label: span.group, bg: '#f8f9fa', color: '#495057' };
+                    const style = GROUP_STYLES[span.group] || { label: span.group, bg: '#FAFAFA', color: '#4A4A4A' };
                     return (
                       <th
                         key={`${span.group}-${idx}`}
