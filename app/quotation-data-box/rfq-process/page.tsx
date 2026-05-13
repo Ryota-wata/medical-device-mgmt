@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useRef, Suspense } from 'react';
+import { Inbox, FileText, Hourglass } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useEditListStore } from '@/lib/stores/editListStore';
@@ -294,7 +295,7 @@ function RfqProcessContent() {
       <div className="min-h-dvh flex flex-col" style={{ background: '#FAFAFA' }}>
         <Header title="見積依頼" showBackButton backHref="/quotation-data-box/purchase-management" backLabel="タスク管理に戻る" hideMenu />
         <div style={{ padding: '60px 40px', textAlign: 'center', color: '#8A8A8A' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#128203;</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><Inbox size={48} aria-hidden /></div>
           <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>見積依頼グループが見つかりません</div>
           <div style={{ fontSize: '13px', marginBottom: '24px' }}>URLのパラメータを確認してください。</div>
           <button
@@ -1020,7 +1021,7 @@ function RfqProcessContent() {
           ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
               <div style={{ textAlign: 'center', color: '#8A8A8A' }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>&#128196;</div>
+                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><FileText size={48} aria-hidden /></div>
                 <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>見積依頼書プレビュー</div>
                 <div style={{ fontSize: '12px' }}>左側の基本情報を入力し「プレビュー」ボタンを押すと、見積依頼書が表示されます</div>
               </div>
@@ -1091,7 +1092,7 @@ function RfqProcessContent() {
             textAlign: 'center',
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>&#9203;</div>
+            <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center', color: '#8A8A8A' }}><Hourglass size={32} aria-hidden /></div>
             <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>
               OCR処理中...
             </div>

@@ -527,7 +527,7 @@ function PcCompletionView({
   return (
     <div className="max-w-[560px] mx-auto mt-10 text-center">
       <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
-        <div className="text-5xl mb-4 text-cta-primary leading-none">&#10003;</div>
+        <div className="mb-4 flex justify-center text-cta-primary"><Check size={48} strokeWidth={2.5} aria-hidden /></div>
         <h2 className="text-lg font-bold text-content-primary mb-2 text-balance">
           検収登録が完了しました
         </h2>
@@ -837,8 +837,8 @@ function MobileCompletionView({
   return (
     <div className="max-w-[500px] mx-auto mt-10">
       <div className={`bg-surface-card rounded-2xl shadow-md text-center ${isMobile ? 'p-6' : 'p-8'}`}>
-        <div className="w-16 h-16 rounded-full bg-surface-select flex items-center justify-center mx-auto mb-4 text-3xl text-cta-primary">
-          &#10003;
+        <div className="w-16 h-16 rounded-full bg-surface-select flex items-center justify-center mx-auto mb-4 text-cta-primary">
+          <Check size={32} strokeWidth={2.5} aria-hidden />
         </div>
         <h2 className="text-lg font-semibold text-content-primary mb-2 text-balance">
           検収登録が完了しました

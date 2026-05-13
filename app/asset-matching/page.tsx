@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
@@ -444,7 +445,7 @@ export default function AssetMatchingPage() {
               onClick={bulkConfirmSelected}
               className="px-5 py-2.5 bg-[#008C1D] text-white border-none rounded cursor-pointer text-sm font-semibold flex items-center gap-2 hover:bg-[#008C1D]"
             >
-              <span>&#10003;</span> 選択項目を一括確定
+              <Check size={16} strokeWidth={2.5} aria-hidden /> 選択項目を一括確定
             </button>
             <button
               onClick={handleOpenAssetMaster}

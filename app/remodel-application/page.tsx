@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import { Check } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Asset } from '@/lib/types';
 import { PurchaseApplication } from '@/lib/types/purchaseApplication';
@@ -2489,7 +2490,7 @@ function RemodelApplicationContent() {
             alignItems: 'center',
             gap: '8px',
           }}>
-            <span style={{ fontSize: '16px' }}>&#10003;</span>
+            <Check size={16} strokeWidth={2.5} aria-hidden />
             {applicationFeedback}
           </div>
         )}

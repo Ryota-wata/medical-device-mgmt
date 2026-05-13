@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, Suspense } from 'react';
+import { Check } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layouts/Header';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
@@ -200,7 +201,7 @@ function CompletionView({
   return (
     <div className="max-w-[560px] mx-auto mt-10 text-center">
       <div className="bg-surface-card border border-stroke-card rounded-2xl p-8">
-        <div className="text-5xl mb-4 text-cta-primary leading-none">&#10003;</div>
+        <div className="mb-4 flex justify-center text-cta-primary"><Check size={48} strokeWidth={2.5} aria-hidden /></div>
         <h2 className="text-lg font-bold text-content-primary mb-2 text-balance">
           納品検収日を登録しました
         </h2>
