@@ -343,7 +343,7 @@ export function UpdateApplicationModal({
       flexDirection: 'column',
     },
     header: {
-      background: '#A35414',
+      background: '#4A4A4A',
       color: 'white',
       padding: '16px 24px',
       fontSize: '18px',
@@ -373,10 +373,10 @@ export function UpdateApplicationModal({
     sectionTitle: {
       fontSize: '14px',
       fontWeight: 'bold',
-      color: '#A35414',
+      color: '#4A4A4A',
       marginBottom: '16px',
       paddingBottom: '8px',
-      borderBottom: '2px solid #A35414',
+      borderBottom: '2px solid #4A4A4A',
     },
     note: {
       fontSize: '12px',
@@ -402,7 +402,7 @@ export function UpdateApplicationModal({
     },
     input: {
       padding: '8px 12px',
-      border: '1px solid #A35414',
+      border: '1px solid #4A4A4A',
       borderRadius: '4px',
       fontSize: '14px',
       boxSizing: 'border-box' as const,
@@ -417,7 +417,7 @@ export function UpdateApplicationModal({
     },
     select: {
       padding: '8px 12px',
-      border: '1px solid #A35414',
+      border: '1px solid #4A4A4A',
       borderRadius: '4px',
       fontSize: '14px',
       cursor: 'pointer',
@@ -438,7 +438,7 @@ export function UpdateApplicationModal({
       width: '100%',
       minHeight: '100px',
       padding: '12px',
-      border: '1px solid #A35414',
+      border: '1px solid #4A4A4A',
       borderRadius: '4px',
       fontSize: '14px',
       resize: 'vertical' as const,
@@ -453,7 +453,7 @@ export function UpdateApplicationModal({
     },
     confirmButton: {
       padding: '12px 48px',
-      background: '#A35414',
+      background: '#4A4A4A',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -478,7 +478,7 @@ export function UpdateApplicationModal({
           /* 確認画面 */
           <div>
             <div style={{ background: '#FDF1E5', padding: '12px 16px', borderRadius: '6px', marginBottom: '20px', textAlign: 'center' }}>
-              <span style={{ color: '#A35414', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
+              <span style={{ color: '#4A4A4A', fontWeight: 'bold' }}>以下の内容で申請します。内容をご確認ください。</span>
             </div>
 
             {/* 申請基本情報 */}
@@ -535,8 +535,8 @@ export function UpdateApplicationModal({
 
             {/* 更新対象機器 */}
             <div style={styles.section}>
-              <div style={{ ...styles.sectionTitle, color: '#A30000', borderBottomColor: '#A30000' }}>更新対象機器</div>
-              <div style={{ background: '#ffebee', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
+              <div style={{ ...styles.sectionTitle, color: '#DA0000', borderBottomColor: '#DA0000' }}>更新対象機器</div>
+              <div style={{ background: '#FDF1E5', border: '1px solid #FDF1E5', borderRadius: '8px', padding: '16px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '13px' }}>
                   <div><span style={{ color: '#666' }}>QRコード:</span> {assets[0]?.qrCode || '-'}</div>
                   <div><span style={{ color: '#666' }}>メーカー:</span> {assets[0]?.maker || '-'}</div>
@@ -562,7 +562,7 @@ export function UpdateApplicationModal({
                 <tbody>
                   {desiredEquipments.filter(e => e.item.trim() !== '').map((equipment, index) => (
                     <tr key={index}>
-                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#A35414' }}>{getHopeLabel(index)}</td>
+                      <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4A4A4A' }}>{getHopeLabel(index)}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.item}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.maker || '-'}</td>
                       <td style={{ padding: '8px', border: '1px solid #E1E1E1' }}>{equipment.model || '-'}</td>
@@ -718,7 +718,7 @@ export function UpdateApplicationModal({
           {/* 申請品目 */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>申請品目</div>
-            <div style={{ background: '#FDF1E5', border: '1px solid #ffcc80', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ background: '#FDF1E5', border: '1px solid #FDF1E5', borderRadius: '8px', padding: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
                 <div>
                   <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>品目名</div>
@@ -733,7 +733,7 @@ export function UpdateApplicationModal({
                   <div style={{ fontWeight: 500 }}>{assets[0]?.model || '-'}</div>
                 </div>
               </div>
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#A35414' }}>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#4A4A4A' }}>
                 ※ 更新対象資産から自動設定されています
               </div>
             </div>
@@ -741,10 +741,10 @@ export function UpdateApplicationModal({
 
           {/* 更新対象機器 */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#A30000', borderBottomColor: '#A30000' }}>
+            <div style={{ ...styles.sectionTitle, color: '#DA0000', borderBottomColor: '#DA0000' }}>
               更新対象機器
             </div>
-            <div style={{ background: '#fff8f8', border: '1px solid #ef9a9a', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ background: '#FDF1E5', border: '1px solid #FDF1E5', borderRadius: '8px', padding: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '13px' }}>
                 <div>
                   <div style={{ color: '#666', fontSize: '11px', marginBottom: '2px' }}>QRコード</div>
@@ -771,7 +771,7 @@ export function UpdateApplicationModal({
                 disabled={desiredEquipments.length >= MAX_EQUIPMENT}
                 style={{
                   padding: '6px 16px',
-                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#A35414',
+                  background: desiredEquipments.length >= MAX_EQUIPMENT ? '#ccc' : '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -808,7 +808,7 @@ export function UpdateApplicationModal({
                   ) : (
                     desiredEquipments.map((equipment, index) => (
                       <tr key={index} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#A35414' }}>
+                        <td style={{ padding: '8px', border: '1px solid #E1E1E1', textAlign: 'center', fontWeight: 600, color: '#4A4A4A' }}>
                           {getHopeLabel(index)}
                         </td>
                         <td style={{ padding: '4px', border: '1px solid #E1E1E1', textAlign: 'center' }}>
@@ -938,7 +938,7 @@ export function UpdateApplicationModal({
                             onClick={() => handleOpenAssetMaster(index)}
                             style={{
                               padding: '4px 8px',
-                              background: '#A35414',
+                              background: '#4A4A4A',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
@@ -1030,7 +1030,7 @@ export function UpdateApplicationModal({
             }}>
               <button style={{
                 padding: '8px 16px',
-                background: '#A35414',
+                background: '#4A4A4A',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -1179,14 +1179,14 @@ export function UpdateApplicationModal({
 
           {/* 更新対象機器の確認 */}
           <div style={styles.section}>
-            <div style={{ ...styles.sectionTitle, color: '#A30000', borderBottomColor: '#A30000' }}>
+            <div style={{ ...styles.sectionTitle, color: '#DA0000', borderBottomColor: '#DA0000' }}>
               更新対象機器の確認 <span style={{ color: '#DA0000', fontSize: '12px' }}>*</span>
             </div>
             <div style={{
               padding: '16px',
-              background: '#fff8f8',
+              background: '#FDF1E5',
               borderRadius: '8px',
-              border: '1px solid #ef9a9a',
+              border: '1px solid #FDF1E5',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
@@ -1237,7 +1237,7 @@ export function UpdateApplicationModal({
                       border: '1px solid #ccc',
                       borderRadius: '4px',
                       fontSize: '13px',
-                      background: assetHandling === 'transfer' ? '#fff' : '#f0f0f0',
+                      background: assetHandling === 'transfer' ? '#fff' : '#FAFAFA',
                       color: assetHandling === 'transfer' ? '#333' : '#999',
                     }}
                   />
@@ -1274,7 +1274,7 @@ export function UpdateApplicationModal({
                       border: '1px solid #ccc',
                       borderRadius: '4px',
                       fontSize: '13px',
-                      background: assetHandling === 'continue' ? '#fff' : '#f0f0f0',
+                      background: assetHandling === 'continue' ? '#fff' : '#FAFAFA',
                       color: assetHandling === 'continue' ? '#333' : '#999',
                     }}
                   />
@@ -1300,8 +1300,8 @@ export function UpdateApplicationModal({
                 style={{
                   padding: '12px 32px',
                   background: 'white',
-                  color: '#A35414',
-                  border: '1px solid #A35414',
+                  color: '#4A4A4A',
+                  border: '1px solid #4A4A4A',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
@@ -1315,7 +1315,7 @@ export function UpdateApplicationModal({
                 onClick={handleSubmit}
                 style={{
                   padding: '12px 32px',
-                  background: '#A35414',
+                  background: '#4A4A4A',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
