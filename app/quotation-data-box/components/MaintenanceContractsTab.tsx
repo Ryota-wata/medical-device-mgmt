@@ -946,17 +946,17 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       <div style={{ flex: 1, overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-            {/* グループヘッダー */}
-            <tr style={{ background: '#4A4A4A', color: 'white' }}>
-              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}>契約情報</th>
-              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}>業者情報</th>
+            {/* グループヘッダー (Figma: 統一されたグレー背景、色帯なし) */}
+            <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
+              <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約情報</th>
+              <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}>業者情報</th>
               <th
                 rowSpan={2}
-                style={{ ...thGroupStyle, textAlign: 'center', background: '#FDF1E5', color: '#333', borderColor: '#4A4A4A' }}
+                style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}
               >
                 契約検討開始
               </th>
-              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#DA0000', color: 'white', borderColor: '#DA0000' }}>操作</th>
+              <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
             <tr style={{ background: '#4A4A4A', color: 'white' }}>
@@ -971,8 +971,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>契約業者</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>担当者</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#333', borderColor: '#4A4A4A' }}>連絡先</th>
-              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>登録</th>
-              <th style={{ ...thSubStyle, background: '#FDF1E5', color: '#333', borderColor: '#DA0000' }}>フリーコメント</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>登録</th>
+              <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>フリーコメント</th>
             </tr>
           </thead>
           <tbody>
