@@ -150,10 +150,6 @@ export default function RegistrationConfirmPage() {
 
   const fmtNum = (n: number) => n ? n.toLocaleString() : '';
 
-  // 基本情報フォーム行: ラベル列 200px / 入力列 flex-1 / 各セル 65px h
-  const labelCellCls = 'bg-stroke-card flex items-center justify-center px-4 h-[65px] w-[200px] shrink-0 text-base text-content-primary';
-  const inputCellCls = 'flex items-center px-4 h-[65px] text-base text-content-primary';
-
   return (
     <div className="flex flex-col min-h-dvh bg-surface-screen">
       <Header title="見積登録（購入）登録確認へ" stepBadge="STEP 6" hideMenu showBackButton={false} />
@@ -168,64 +164,50 @@ export default function RegistrationConfirmPage() {
               下記の内容で見積Databaseへ登録を実施します。
             </p>
 
-            {/* 基本情報フォーム */}
-            <div className="border border-stroke-input">
-              {/* 行1 */}
-              <div className="flex border-b border-stroke-input">
-                <div className="flex shrink-0">
-                  <div className={labelCellCls}>見積日付</div>
-                  <div className={`${inputCellCls} w-[374px] tabular-nums`}>{basicInfo.quotationDate}</div>
-                </div>
-                <div className="flex w-[512px] shrink-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>見積フェーズ</div>
-                  <div className={`${inputCellCls} flex-1`}>{basicInfo.quotationPhase}</div>
-                </div>
-                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>見積依頼G名称</div>
-                  <div className={`${inputCellCls} flex-1`}>{basicInfo.rfqGroupName}</div>
-                </div>
-              </div>
-              {/* 行2 */}
-              <div className="flex border-b border-stroke-input">
-                <div className="flex shrink-0">
-                  <div className={labelCellCls}>見積依頼No.</div>
-                  <div className={`${inputCellCls} w-[374px]`}>{basicInfo.rfqNo}</div>
-                </div>
-                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>宛先（施設名）</div>
-                  <div className={`${inputCellCls} flex-1`}>{basicInfo.facilityName}</div>
-                </div>
-              </div>
-              {/* 行3 */}
-              <div className="flex border-b border-stroke-input">
-                <div className="flex shrink-0">
-                  <div className={labelCellCls}>業者・メーカー</div>
-                  <div className={`${inputCellCls} w-[374px]`}>{basicInfo.vendorName}</div>
-                </div>
-                <div className="flex w-[512px] shrink-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>連絡先</div>
-                  <div className={`${inputCellCls} flex-1 tabular-nums`}>{basicInfo.contact}</div>
-                </div>
-                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>mail</div>
-                  <div className={`${inputCellCls} flex-1`}>{basicInfo.mail}</div>
-                </div>
-              </div>
-              {/* 行4 */}
-              <div className="flex">
-                <div className="flex shrink-0">
-                  <div className={labelCellCls}>納期</div>
-                  <div className={`${inputCellCls} w-[374px] tabular-nums`}>{basicInfo.deliveryPeriod}</div>
-                </div>
-                <div className="flex w-[512px] shrink-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>見積有効期限</div>
-                  <div className={`${inputCellCls} flex-1 tabular-nums`}>{basicInfo.validityPeriod}</div>
-                </div>
-                <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                  <div className={labelCellCls}>インボイス</div>
-                  <div className={`${inputCellCls} flex-1`}>{basicInfo.invoiceNo}</div>
-                </div>
-              </div>
+            {/* 基本情報フォーム (table-fixed で列幅を CSS テーブルレイアウトに任せる) */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm table-fixed min-w-[900px]">
+                <colgroup>
+                  <col className="w-[140px]" />
+                  <col />
+                  <col className="w-[140px]" />
+                  <col />
+                  <col className="w-[140px]" />
+                  <col />
+                </colgroup>
+                <tbody>
+                  <tr>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積日付</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums">{basicInfo.quotationDate}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積フェーズ</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary">{basicInfo.quotationPhase}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積依頼G名称</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary">{basicInfo.rfqGroupName}</td>
+                  </tr>
+                  <tr>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積依頼No.</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums">{basicInfo.rfqNo}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">宛先（施設名）</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary" colSpan={3}>{basicInfo.facilityName}</td>
+                  </tr>
+                  <tr>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">業者・メーカー</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary">{basicInfo.vendorName}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">連絡先</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums">{basicInfo.contact}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">mail</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary break-all">{basicInfo.mail}</td>
+                  </tr>
+                  <tr>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">納期</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums">{basicInfo.deliveryPeriod}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積有効期限</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums">{basicInfo.validityPeriod}</td>
+                    <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">インボイス</th>
+                    <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums break-all">{basicInfo.invoiceNo}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             {/* フィルター + 合計行 (Figma 339:54069 構造: ラベル列 200px + 入力行 flex-1) */}

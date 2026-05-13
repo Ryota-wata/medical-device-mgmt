@@ -122,10 +122,7 @@ export default function OcrConfirmPage() {
   const handleBack = () => router.push('/quotation-data-box');
   const handleAiJudgment = () => router.push('/quotation-data-box/category-registration');
 
-  // 基本情報フォーム: ラベル列 200px / 入力列 flex-1 / 65px h
-  const labelCellCls = 'bg-stroke-card flex items-center justify-center px-4 h-[65px] w-[200px] shrink-0 text-base text-content-primary';
-  const inputCellCls = 'flex items-center px-4 h-[65px] text-base text-content-primary';
-  const inputCls = 'px-2 py-1.5 border border-stroke-input rounded text-base bg-surface-card focus:outline-none focus:border-cta-primary';
+  const inputCls = 'px-2 py-1.5 border border-stroke-input rounded text-sm bg-surface-card focus:outline-none focus:border-cta-primary';
   const cellInputCls = 'w-full px-2 py-1 border border-stroke-input rounded-sm text-xs bg-surface-card focus:outline-none focus:border-cta-primary';
 
   return (
@@ -146,80 +143,78 @@ export default function OcrConfirmPage() {
             style={{ width: `${leftPanelWidth}%` }}
           >
             <div className="p-4 flex flex-col gap-6">
-              {/* 基本情報 (Figma label列+入力列 構造、ヘッダー帯なし) */}
-              <div className="border border-stroke-input">
-                <div className="flex border-b border-stroke-input">
-                  <div className="flex shrink-0">
-                    <div className={labelCellCls}>見積日付</div>
-                    <div className={`${inputCellCls} w-[200px]`}>
-                      <input
-                        type="text"
-                        placeholder="yyyy/mm/dd"
-                        value={ocrResult.quotationDate}
-                        onChange={(e) => handleOcrResultChange('quotationDate', e.target.value)}
-                        className={`${inputCls} w-[160px] tabular-nums`}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                    <div className={labelCellCls}>見積フェーズ</div>
-                    <div className={`${inputCellCls} flex-1`}>{previousInput.quotationPhase}</div>
-                  </div>
-                </div>
-                <div className="flex border-b border-stroke-input">
-                  <div className={labelCellCls}>宛先（施設名）</div>
-                  <div className={`${inputCellCls} flex-1`}>{previousInput.facilityName}</div>
-                </div>
-                <div className="flex border-b border-stroke-input">
-                  <div className="flex shrink-0">
-                    <div className={labelCellCls}>見積依頼No.</div>
-                    <div className={`${inputCellCls} w-[260px] tabular-nums`}>{previousInput.rfqNo}</div>
-                  </div>
-                  <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                    <div className={labelCellCls}>見積依頼G名称</div>
-                    <div className={`${inputCellCls} flex-1`}>{previousInput.rfqGroupName}</div>
-                  </div>
-                </div>
-                <div className="flex border-b border-stroke-input">
-                  <div className={labelCellCls}>業者・メーカー</div>
-                  <div className={`${inputCellCls} flex-1`}>{previousInput.vendorName}</div>
-                </div>
-                <div className="flex">
-                  <div className="flex shrink-0">
-                    <div className={labelCellCls}>納期</div>
-                    <div className={`${inputCellCls} w-[200px]`}>
-                      <div className="flex items-center gap-1">
+              {/* 基本情報 (table-fixed で列幅を CSS テーブルレイアウトに任せる) */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm table-fixed min-w-[640px]">
+                  <colgroup>
+                    <col className="w-[120px]" />
+                    <col />
+                    <col className="w-[120px]" />
+                    <col />
+                  </colgroup>
+                  <tbody>
+                    <tr>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積日付</th>
+                      <td className="px-3 py-2 border border-stroke-input">
                         <input
                           type="text"
-                          value={ocrResult.deliveryPeriod}
-                          onChange={(e) => handleOcrResultChange('deliveryPeriod', e.target.value)}
-                          className={`${inputCls} w-[60px] tabular-nums`}
+                          placeholder="yyyy/mm/dd"
+                          value={ocrResult.quotationDate}
+                          onChange={(e) => handleOcrResultChange('quotationDate', e.target.value)}
+                          className={`${inputCls} w-full tabular-nums`}
                         />
-                        <span>ヶ月</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-1 min-w-0 border-l border-stroke-input">
-                    <div className={labelCellCls}>見積有効期限</div>
-                    <div className={`${inputCellCls} flex-1`}>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text"
-                          value={ocrResult.validityPeriod}
-                          onChange={(e) => handleOcrResultChange('validityPeriod', e.target.value)}
-                          className={`${inputCls} w-[60px] tabular-nums`}
-                        />
-                        <span>ヶ月</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </td>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積フェーズ</th>
+                      <td className="px-3 py-2 border border-stroke-input text-content-primary">{previousInput.quotationPhase}</td>
+                    </tr>
+                    <tr>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">宛先（施設名）</th>
+                      <td className="px-3 py-2 border border-stroke-input text-content-primary" colSpan={3}>{previousInput.facilityName}</td>
+                    </tr>
+                    <tr>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積依頼No.</th>
+                      <td className="px-3 py-2 border border-stroke-input text-content-primary tabular-nums">{previousInput.rfqNo}</td>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積依頼G名称</th>
+                      <td className="px-3 py-2 border border-stroke-input text-content-primary">{previousInput.rfqGroupName}</td>
+                    </tr>
+                    <tr>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">業者・メーカー</th>
+                      <td className="px-3 py-2 border border-stroke-input text-content-primary" colSpan={3}>{previousInput.vendorName}</td>
+                    </tr>
+                    <tr>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">納期</th>
+                      <td className="px-3 py-2 border border-stroke-input">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={ocrResult.deliveryPeriod}
+                            onChange={(e) => handleOcrResultChange('deliveryPeriod', e.target.value)}
+                            className={`${inputCls} w-[60px] tabular-nums`}
+                          />
+                          <span className="text-content-primary">ヶ月</span>
+                        </div>
+                      </td>
+                      <th className="px-3 py-2 bg-stroke-card text-content-primary font-normal border border-stroke-input text-left whitespace-nowrap">見積有効期限</th>
+                      <td className="px-3 py-2 border border-stroke-input">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={ocrResult.validityPeriod}
+                            onChange={(e) => handleOcrResultChange('validityPeriod', e.target.value)}
+                            className={`${inputCls} w-[60px] tabular-nums`}
+                          />
+                          <span className="text-content-primary">ヶ月</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
               {/* 見積明細チェック (Figma カテゴリーフィルター + 合計金額赤字横並び) */}
-              <div className="flex items-center h-[65px]">
-                <div className={labelCellCls}>見積明細チェック</div>
-                <div className="flex-1 flex items-center justify-between gap-4 pl-4">
+              <div className="flex items-center gap-3 flex-wrap py-3 border-b border-stroke-input">
+                <span className="text-sm font-bold text-content-primary whitespace-nowrap">見積明細チェック</span>
+                <div className="flex flex-1 items-center justify-between gap-4 flex-wrap min-w-0">
                   <select
                     value={accountingFilter}
                     onChange={(e) => setAccountingFilter(e.target.value as AccountingCategoryType)}
