@@ -86,10 +86,10 @@ function AssetDetailContent() {
   const photos = (asset.photos && asset.photos.length > 0)
     ? asset.photos
     : [
-        makePlaceholderSvg('正面', '#4A90A4'),
-        makePlaceholderSvg('側面', '#7E6C9C'),
-        makePlaceholderSvg('操作部', '#6FA66F'),
-        makePlaceholderSvg('銘板', '#C28848'),
+        makePlaceholderSvg('正面', '#4A4A4A'),
+        makePlaceholderSvg('側面', '#4A4A4A'),
+        makePlaceholderSvg('操作部', '#4A4A4A'),
+        makePlaceholderSvg('銘板', '#4A4A4A'),
       ];
   const hasPhotos = photos.length > 0;
 
@@ -504,7 +504,7 @@ function AssetDetailContent() {
               </div>
 
               {/* PDFプレビュー（黒背景 + 白い紙イメージ） */}
-              <div className="flex-1 overflow-auto bg-[#1f1f1f] p-8 flex items-start justify-center">
+              <div className="flex-1 overflow-auto bg-[#4A4A4A] p-8 flex items-start justify-center">
                 <div className="bg-white shadow-xl p-10 w-full max-w-[480px] aspect-[210/297]">
                   <h2 className="text-center text-base font-bold mb-6 text-content-primary">{doc.name.replace('.pdf', '')}</h2>
                   <div className="text-[10px] leading-relaxed text-content-primary text-justify space-y-3">
