@@ -228,7 +228,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxHeight: '90vh'
   },
   modalHeader: {
-    background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+    background: 'linear-gradient(135deg, #008C1D 0%, #008C1D 100%)',
     color: 'white',
     padding: '20px 28px',
     borderRadius: '12px 12px 0 0',
@@ -264,7 +264,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   formSection: {
     padding: '24px 28px',
-    borderBottom: '1px solid #f0f0f0'
+    borderBottom: '1px solid #FAFAFA'
   },
   sectionTitle: {
     fontSize: '16px',
@@ -272,7 +272,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#4A4A4A',
     marginBottom: '20px',
     paddingBottom: '8px',
-    borderBottom: '2px solid #4CAF50'
+    borderBottom: '2px solid #008C1D'
   },
   formRow: {
     display: 'flex',
@@ -328,7 +328,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   formActions: {
     padding: '20px 28px',
-    borderTop: '2px solid #f0f0f0',
+    borderTop: '2px solid #FAFAFA',
     display: 'flex',
     justifyContent: 'flex-end',
     gap: '12px',
@@ -353,7 +353,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white'
   },
   submitButton: {
-    background: '#4CAF50',
+    background: '#008C1D',
     color: 'white'
   }
 };
