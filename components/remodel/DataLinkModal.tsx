@@ -169,7 +169,7 @@ const editTh: React.CSSProperties = {
   fontSize: 11, fontWeight: 700, color: '#4A4A4A', whiteSpace: 'nowrap',
 };
 const editTd: React.CSSProperties = {
-  padding: '5px 6px', textAlign: 'center', fontSize: 11, color: '#4A4A4A',
+  padding: '5px 6px', textAlign: 'center', fontSize: 11, color: '#333',
   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
 };
 const quotTh: React.CSSProperties = {
@@ -177,7 +177,7 @@ const quotTh: React.CSSProperties = {
   fontSize: 11, fontWeight: 700, color: '#555', whiteSpace: 'nowrap',
 };
 const quotTd: React.CSSProperties = {
-  padding: '5px 6px', textAlign: 'center', fontSize: 11, color: '#4A4A4A',
+  padding: '5px 6px', textAlign: 'center', fontSize: 11, color: '#333',
   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
 };
 
@@ -656,7 +656,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               <input type="checkbox" checked={allChecked} disabled={!hasLinkable}
                 onChange={() => handleToggleGroup(group)} onClick={(e) => e.stopPropagation()}
                 style={{ width: 16, height: 16, accentColor: '#008C1D' }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#4A4A4A' }}>{group}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>{group}</span>
               <span style={{ fontSize: 12, color: counts.checked > 0 ? '#008C1D' : '#999', fontWeight: counts.checked > 0 ? 600 : 400 }}>
                 ({counts.checked}/{counts.total})
               </span>
@@ -754,9 +754,9 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
         <div style={{ background: 'white', borderRadius: 12, width: '90%', maxWidth: 540, boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-          <div style={{ background: 'white', color: '#4A4A4A', padding: '16px 24px', borderRadius: '12px 12px 0 0', borderBottom: '1px solid #E1E1E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Data Link</h2>
-            <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: '#4A4A4A', fontSize: 20, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
+          <div style={{ background: '#4A4A4A', color: 'white', padding: '16px 24px', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Data Link</h2>
+            <button onClick={onClose} aria-label="閉じる" style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 22, cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}>&times;</button>
           </div>
           <div style={{ padding: '40px 24px', textAlign: 'center' }}>
             <div style={{
@@ -835,7 +835,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 {isDone ? '\u2713' : step.id}
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? 'white' : isDone ? '#008C1D' : '#4A4A4A' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? 'white' : isDone ? '#008C1D' : '#333' }}>
                   {step.label}
                 </div>
                 <div style={{ fontSize: 11, color: isActive ? 'rgba(255,255,255,0.8)' : '#888' }}>{step.desc}</div>
@@ -861,9 +861,8 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
       }}>
         {/* ヘッダー */}
         <div style={{
-          background: 'white', color: '#4A4A4A', padding: '16px 24px',
+          background: '#4A4A4A', color: 'white', padding: '16px 24px',
           borderRadius: '12px 12px 0 0',
-          borderBottom: '1px solid #E1E1E1',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -873,10 +872,10 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 padding: '4px 10px', fontSize: 13, border: '1px solid rgba(255,255,255,0.4)', borderRadius: 4,
                 background: 'rgba(255,255,255,0.15)', color: 'white', fontWeight: 600,
               }}>
-                <option value="" style={{ color: '#4A4A4A' }}>選択してください</option>
-                <option value="資産Master" style={{ color: '#4A4A4A' }}>資産Master</option>
-                <option value="業者Master" style={{ color: '#4A4A4A' }}>業者Master</option>
-                <option value="原本リスト" style={{ color: '#4A4A4A' }}>原本リスト</option>
+                <option value="" style={{ color: '#333' }}>選択してください</option>
+                <option value="資産Master" style={{ color: '#333' }}>資産Master</option>
+                <option value="業者Master" style={{ color: '#333' }}>業者Master</option>
+                <option value="原本リスト" style={{ color: '#333' }}>原本リスト</option>
               </select>
             )}
             {mode === 'quotation' && (
@@ -906,7 +905,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               }}>
                 <label style={{ color: '#555', fontWeight: 600 }}>見積依頼No.</label>
                 <select value={selectedRfqNo} onChange={(e) => setSelectedRfqNo(e.target.value)} style={{
-                  padding: '4px 8px', fontSize: 12, border: '1px solid #E1E1E1', borderRadius: 4, fontWeight: 600,
+                  padding: '4px 8px', fontSize: 12, border: '1px solid #ccc', borderRadius: 4, fontWeight: 600,
                 }}>
                   <option value="">選択してください</option>
                   {availableRfqNos.map(no => (
@@ -914,12 +913,12 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                   ))}
                 </select>
                 <label style={{ color: '#555', fontWeight: 600 }}>見積グループ名</label>
-                <span style={{ fontSize: 12, color: '#4A4A4A', fontWeight: 600, padding: '4px 0' }}>
+                <span style={{ fontSize: 12, color: '#333', fontWeight: 600, padding: '4px 0' }}>
                   {selectedRfqGroup?.groupName || '-'}
                 </span>
                 <label style={{ color: '#555', fontWeight: 600 }}>見積フェーズ</label>
                 <select value={selectedPhase} onChange={(e) => setSelectedPhase(e.target.value as QuotationPhase | '')} style={{
-                  padding: '4px 8px', fontSize: 12, border: '1px solid #E1E1E1', borderRadius: 4, fontWeight: 600,
+                  padding: '4px 8px', fontSize: 12, border: '1px solid #ccc', borderRadius: 4, fontWeight: 600,
                 }} disabled={phasesForRfq.length === 0}>
                   <option value="">選択してください</option>
                   {phasesForRfq.map(p => (
@@ -1169,7 +1168,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               {qStep === 2 && (
                 <>
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#4A4A4A', marginBottom: 4 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#333', marginBottom: 4 }}>
                       未紐付けの見積明細を新規行として追加しますか？
                     </div>
                     <div style={{ fontSize: 12, color: '#888' }}>
@@ -1192,7 +1191,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                             background: isAdding ? '#EBF5EE' : 'white',
                           }}>
                             <div>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: '#4A4A4A' }}>{rec.displayLabel}</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: '#333' }}>{rec.displayLabel}</div>
                               <div style={{ fontSize: 12, color: '#888' }}>{rec.displaySub} {rec.displayPrice}</div>
                             </div>
                             <button onClick={() => {
@@ -1237,12 +1236,12 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={handleSelectAll} style={{
                     padding: '6px 14px', fontSize: 13, fontWeight: 600,
-                    background: dataSource ? '#008C1D' : '#E1E1E1', color: 'white',
+                    background: dataSource ? '#008C1D' : '#ccc', color: 'white',
                     border: 'none', borderRadius: 4, cursor: dataSource ? 'pointer' : 'default',
                   }}>全て選択</button>
                   <button onClick={handleDeselectAll} style={{
                     padding: '6px 14px', fontSize: 13, fontWeight: 600,
-                    background: '#FAFAFA', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: 4, cursor: 'pointer',
+                    background: '#FAFAFA', color: '#333', border: '1px solid #E1E1E1', borderRadius: 4, cursor: 'pointer',
                   }}>全て解除</button>
                 </div>
                 <div style={{ padding: '8px 12px', background: '#FAFAFA', borderRadius: 4, fontSize: 13, color: '#555' }}>
@@ -1275,7 +1274,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 {qStep === 1 && (
                   <button onClick={goNext} disabled={!selectedQuotationGroup} style={{
                     padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                    background: selectedQuotationGroup ? '#4A4A4A' : '#E1E1E1',
+                    background: selectedQuotationGroup ? '#4A4A4A' : '#ccc',
                     color: 'white',
                     border: 'none', borderRadius: 6, cursor: selectedQuotationGroup ? 'pointer' : 'default',
                   }}>
@@ -1285,8 +1284,8 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
                 {qStep === 2 && (
                   <button onClick={handleQuotationExecute} disabled={!canQuotationExecute} style={{
                     padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                    background: canQuotationExecute ? '#4A4A4A' : '#E1E1E1',
-                    color: canQuotationExecute ? '#4A4A4A' : '#999',
+                    background: canQuotationExecute ? '#4A4A4A' : '#ccc',
+                    color: canQuotationExecute ? '#333' : '#999',
                     border: 'none', borderRadius: 6, cursor: canQuotationExecute ? 'pointer' : 'default', minWidth: 160,
                   }}>
                     {executing ? '適用中...' : `適用する（${pairings.size}件更新${addTargets.size > 0 ? ` + ${addTargets.size}件追加` : ''}）`}
@@ -1302,7 +1301,7 @@ export const DataLinkModal: React.FC<DataLinkModalProps> = ({
               }}>閉じる</button>
               <button onClick={handleCopyExecute} disabled={!canCopyExecute} style={{
                 padding: '10px 28px', fontSize: 14, fontWeight: 700,
-                background: canCopyExecute ? '#4A4A4A' : '#E1E1E1',
+                background: canCopyExecute ? '#4A4A4A' : '#ccc',
                 color: canCopyExecute ? 'white' : '#999',
                 border: 'none', borderRadius: 6, cursor: canCopyExecute ? 'pointer' : 'default', minWidth: 140,
               }}>{executing ? '実行中...' : 'コピー実行'}</button>
