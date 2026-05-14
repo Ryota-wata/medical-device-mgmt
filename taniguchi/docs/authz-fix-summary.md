@@ -398,6 +398,7 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 | `normal_acceptance` | 通常購入管理 / 検収登録 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 購入管理タブの検収登録行 |
 | `normal_quotation` | 通常購入管理 / 見積管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 購入管理タブの見積管理行 |
 | `normal_ship_request` | 通常購入管理 / SHIP依頼機能 | `TASK` | `TASK` | `ACTION` | `OWN` | `FACILITY_USER` | 購入管理タブのSHIPへ一括依頼ボタン。施設提供設定とユーザー施設別設定の両方で制御 |
+| `ship_proxy_task` | SHIP代理作業 | `TASK` | `TASK` | `ACTION` | `OWN` | `FACILITY_USER` | 施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業。対象ユーザーが `account_type='SHIP'` の場合のみユーザー管理で表示・設定可能 |
 | `transfer_disposal` | 移動・廃棄管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 移動・廃棄管理タブ |
 | `repair_management` | 修理管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 修理管理タブ |
 | `maintenance_contract` | 保守契約管理 | `TASK` | `TASK` | `SCREEN` | `OWN` | `FACILITY_USER` | 保守管理タブ |
@@ -440,9 +441,10 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 
 - 権限管理単位は `taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シート A列を正本とする。
 - 1つの権限管理単位には、1つの `feature_code` または `column_code` を割り当てる。
-- 2026-04-27 時点の採用件数は、A列由来のユニークな `feature_code` 46件、`column_code` 4件、シート外固定導線の `feature_code` 2件である。
+- 2026-05-12 時点の採用件数は、A列由来のユニークな `feature_code` 47件、`column_code` 4件、シート外固定導線の `feature_code` 2件である。
 - `資産一覧 / 管理部署編集` は `management_department_edit` として独立管理し、`資産カルテ / 原本編集` の `original_list_edit` には束ねない。
 - `通常購入管理 / SHIP依頼機能` は `normal_ship_request` として独立管理し、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` には束ねない。`config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方で利用可否を判定する。
+- `SHIP代理作業` は `ship_proxy_task` として独立管理し、病院側からSHIPへ依頼を作成する `normal_ship_request` には束ねない。`config_scope='FACILITY_USER'` とし、施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業を制御する。ユーザー管理画面では対象ユーザーが `account_type='SHIP'` の場合のみ新規作成/変更時に表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。既存設定が残る場合も実効権限では無効として扱う。
 - `貸出・返却 / 使用中 & 使用済み` は `lending_in_use_used` として独立管理し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` には束ねない。`config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方で管理する。ただし実効利用には `lending_checkout` も有効であることを必須とし、施設提供設定・ユーザー施設別設定のいずれでも `lending_checkout` OFF 時は `lending_in_use_used` を ON にできない。施設提供設定で ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は、そのユーザーの利用可否だけを変更し、貸出データ自体は変更しない。
 - 今後さらに細かい制御が必要になった場合は、A列の粒度を崩さずに新規 `feature_code` / `column_code` を追加して対応する。
 

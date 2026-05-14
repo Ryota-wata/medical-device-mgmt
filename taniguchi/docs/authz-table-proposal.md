@@ -96,7 +96,7 @@
 - 主な使い方:
   - `config_scope='SYSTEM_FIXED'` は認証前提機能やシステム共通機能で、施設・ユーザー設定テーブルへは持たない。
   - `config_scope='FACILITY'` は施設設定のみ対象とし、ユーザー施設別設定へは持たない。現行採用コードでは原則使用しない。
-  - `config_scope='FACILITY_USER'` は施設・ユーザー設定の対象とする。`normal_ship_request` / `lending_in_use_used` もこのスコープとする。
+  - `config_scope='FACILITY_USER'` は施設・ユーザー設定の対象とする。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` もこのスコープとする。
   - `usage_context='EXTERNAL'` は、他施設閲覧用の viewer 側機能コードとしても、閲覧先施設の公開設定コードとしても使う。
 
 ### 3-2. `column_catalogs`（カラムカタログ）
@@ -213,7 +213,7 @@
   - `(user_facility_assignment_id, feature_code)` に一意制約。
 - 付記:
   - `facility_feature_settings` で `is_enabled=true` の機能のみ有効化できる。
-  - `feature_catalogs.config_scope='FACILITY_USER'` のみ登録対象とする。`normal_ship_request` / `lending_in_use_used` も本テーブルへ登録し、ユーザー施設別に ON/OFF できる。
+  - `feature_catalogs.config_scope='FACILITY_USER'` のみ登録対象とする。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` も本テーブルへ登録し、ユーザー施設別に ON/OFF できる。ただし `ship_proxy_task` は対象ユーザーが `account_type='SHIP'` の場合のみユーザー管理画面で表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。
 
 ### 4-5. `user_facility_column_settings`（ユーザー施設別カラム）
 
@@ -439,6 +439,7 @@
 - 画面側では `can(feature_code)` / `canColumn(column_code)` のようなヘルパーで表示制御を行う。
 - 資産一覧の管理部署編集ボタンと一括保存は `management_department_edit` で判定し、資産カルテの原本編集 `original_list_edit` とは独立させる。
 - 通常購入管理のSHIPへ一括依頼ボタンと実処理は `normal_ship_request` で判定し、購入管理タブ表示や見積依頼行利用の `normal_purchase` とは独立させる。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+- 施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業は `ship_proxy_task` で判定し、病院側からSHIPへ依頼を作成する `normal_ship_request` とは独立させる。`ship_proxy_task` は `config_scope='FACILITY_USER'` とし、対象ユーザーが `account_type='SHIP'` で、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ユーザー管理画面では対象ユーザーが `account_type='SHIP'` の場合のみ新規作成/変更時に表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。
 - 貸出返却画面の使用中/使用済みモーダル・ボタンと実処理は `lending_in_use_used` で判定し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` とは独立させる。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も有効であることを必須とし、施設提供設定・ユーザー施設別設定のどちらでも `lending_checkout` OFF 時は `lending_in_use_used` を ON にできない。施設提供設定で ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は当該ユーザーの権限だけを無効化し、既存の使用中/使用済みデータは権限を持つ別ユーザーまたは再付与後の同一ユーザーが後続処理する。
 - 「機能を使えないならボタン自体を表示しない」を基本とするが、DOM 改変でボタンが見えても業務APIが 403 を返す前提で設計する。
 

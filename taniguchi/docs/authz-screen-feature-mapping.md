@@ -1,7 +1,7 @@
 # 認証認可 画面表示と `feature_code` / `column_code` 対応整理
 
 本メモは、`taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シートを正本として、画面上の表示・利用要素をどの `feature_code` / `column_code` に対応づけるかを整理したものである。
-最新化の基準は 2026-04-27 時点の `権限管理単位一覧` シート A列であり、`auth_login` と `facility_select` だけはシート外の固定導線として別扱いにしている。
+最新化の基準は 2026-05-12 時点の `権限管理単位一覧` シート A列であり、`auth_login` と `facility_select` だけはシート外の固定導線として別扱いにしている。
 
 ## 1. 基本ルール
 
@@ -25,9 +25,10 @@
 
 ### 1-3. 今回の最新化で明示したこと
 
-- `権限管理単位一覧` シート A列採用分は、ユニークな `feature_code` 46件、`column_code` 4件とする。シート外固定導線の `auth_login` / `facility_select` を含めた `feature_code` は48件とする。
+- `権限管理単位一覧` シート A列採用分は、ユニークな `feature_code` 47件、`column_code` 4件とする。シート外固定導線の `auth_login` / `facility_select` を含めた `feature_code` は49件とする。
 - `資産一覧 / 管理部署編集` は `management_department_edit` として独立管理し、`資産カルテ / 原本編集` の `original_list_edit` には束ねない。
 - `通常購入管理 / SHIP依頼機能` は `normal_ship_request` として独立管理し、購入管理タブ表示や見積依頼行の利用可否を表す `normal_purchase` には束ねない。`config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+- `SHIP代理作業` は `ship_proxy_task` として独立管理し、病院側からSHIPへ依頼を作成する `normal_ship_request` には束ねない。`config_scope='FACILITY_USER'` とし、施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業を制御する。対象ユーザーが `account_type='SHIP'` の場合のみユーザー管理で表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。
 - `貸出・返却 / 使用中 & 使用済み` は `lending_in_use_used` として独立管理し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` には束ねない。`config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には親機能 `lending_checkout` も有効であることを必須とし、`lending_in_use_used` 単独ではメニュー表示・画面遷移・業務 API 実行を許可しない。
 - `application_status`、`qr_scan`、`remodel_quotation`、`periodic_inspection` は最新シートに単位がないため現行採用から外す。
 - `inventory_field` / `inventory_office` は `inventory` / `inventory_complete` に再編する。
@@ -41,7 +42,7 @@
 - 縦に並ぶ 1 行 1 項目が `config_scope='FACILITY'` / `FACILITY_USER` の `feature_code` または `column_code`
 - チェック ON/OFF は `facility_feature_settings.is_enabled` または `facility_column_settings.is_enabled` に保存する
 - 施設で OFF の機能は、その施設の全ユーザーが使えない
-- `normal_ship_request` / `lending_in_use_used` は `config_scope='FACILITY_USER'` として施設提供設定にも表示し、施設で OFF の場合はユーザー側が ON でも実効権限なしとする
+- `normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `config_scope='FACILITY_USER'` として施設提供設定にも表示し、施設で OFF の場合はユーザー側が ON でも実効権限なしとする
 - 施設提供設定で `lending_checkout` が OFF の場合、施設提供設定の `lending_in_use_used` は ON にできない。画面では非活性表示または親 OFF 時の自動 OFF とし、保存 API でも `lending_in_use_used=true` かつ `lending_checkout=false` の組み合わせを拒否する
 - 施設提供設定で `lending_in_use_used` を ON から OFF へ変更する場合、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていれば保存を拒否する。先に該当機器を返却完了させてから OFF にする
 
@@ -51,7 +52,7 @@
 - チェック ON/OFF は `user_facility_feature_settings.is_enabled` または `user_facility_column_settings.is_enabled` に保存する
 - 施設で ON の機能だけをユーザーに ON できる
 - 施設で OFF の機能は、ユーザー画面では非表示またはグレーアウトのどちらでも実装可能
-- `normal_ship_request` / `lending_in_use_used` はユーザー別設定候補に含める。ユーザー側で `lending_in_use_used` を ON にする場合も、同一担当施設の `lending_checkout` が ON であることを必須とする
+- `normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` はユーザー別設定候補に含める。`ship_proxy_task` は対象ユーザーが `account_type='SHIP'` の場合のみ新規作成/変更時に表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。ユーザー側で `lending_in_use_used` を ON にする場合も、同一担当施設の `lending_checkout` が ON であることを必須とする
 
 ## 3. メニュー表示の対応
 
@@ -68,6 +69,8 @@
 | 個体管理リスト作成メニュー | 配下機能のいずれかが有効 | `existing_survey`, `survey_data_edit`, `asset_ledger_import`, `survey_ledger_matching` |
 | マスタ管理メニュー | 配下機能のいずれかが有効 | `asset_master_list`, `asset_master_edit`, `facility_master_list`, `facility_master_edit`, `facility_feature_edit`, `ship_dept_master_list`, `ship_dept_master_edit`, `hospital_dept_master_list`, `hospital_dept_master_edit`, `vendor_master_list`, `vendor_master_edit` |
 
+付記: `ship_proxy_task` は `TASK` 分類の機能だが、タスク管理メニューの表示条件には含めない。施設選択画面の `SHIP依頼一覧へ` ボタンを直接制御する。
+
 ## 4. 画面・ボタン・カラムの対応
 
 ### 4-1. システム固定導線
@@ -75,7 +78,8 @@
 | 管理単位 | 画面上の表示・利用 | 対応コード | 種別 | 備考 |
 | --- | --- | --- | --- | --- |
 | ログイン・パスワード再設定 | ログイン画面、パスワード再設定画面を使う | `auth_login` | `feature_code` | `SYSTEM_FIXED`。権限設定画面には出さない |
-| 施設選択 | 担当施設から作業対象施設を選ぶ | `facility_select` | `feature_code` | `SYSTEM_FIXED`。権限設定画面には出さない |
+| 施設選択 | 担当施設から作業対象施設を選ぶ | `facility_select` | `feature_code` | `SYSTEM_FIXED`。権限設定画面には出さない。ログイン後は担当施設数にかかわらず `/facility-select` へ遷移する |
+| SHIP依頼一覧へ | 施設選択画面で `SHIP依頼一覧へ` を表示し、SHIP依頼一覧へ遷移する | `ship_proxy_task` | `feature_code` | `FACILITY_USER`。対象ユーザーが `account_type='SHIP'` で、いずれかの有効な担当施設で実効権限が成立する場合のみ表示する。押下時は施設選択欄の選択有無にかかわらずSHIP依頼一覧へ遷移する |
 
 ### 4-2. ユーザー管理
 
@@ -136,6 +140,7 @@
 | 通常購入管理 / 検収登録 | 購入管理タブの検収登録行を利用できる | `normal_acceptance` | `feature_code` | タスク行利用 |
 | 通常購入管理 / 見積管理 | 購入管理タブの見積管理行を利用できる | `normal_quotation` | `feature_code` | タスク行利用 |
 | 通常購入管理 / SHIP依頼機能 | 購入管理タブのSHIPへ一括依頼ボタンを利用できる | `normal_ship_request` | `feature_code` | ユーザー施設別のボタン利用 |
+| SHIP代理作業 | 施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業を利用できる | `ship_proxy_task` | `feature_code` | 対象ユーザーが `account_type='SHIP'` の場合のみユーザー管理で表示・設定可能 |
 | 移動・廃棄管理 | 移動・廃棄管理タブを表示する | `transfer_disposal` | `feature_code` | 画面利用 |
 | 修理管理 | 修理管理タブを表示する | `repair_management` | `feature_code` | 画面利用 |
 | 保守契約管理 | 保守管理タブを表示する | `maintenance_contract` | `feature_code` | 1管理単位で扱う |

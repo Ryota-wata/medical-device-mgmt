@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_ユーザー管理.docx'
   ScreenLabel = 'ユーザー管理'
-  CoverDateText = '2026年5月7日'
-  RevisionDateText = '2026/5/7'
+  CoverDateText = '2026年5月12日'
+  RevisionDateText = '2026/5/12'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -18,7 +18,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = 'ユーザー管理は、医療機器管理システムの共通管理機能として、作業対象施設に有効な担当施設割当を持つ SHIP ユーザー、病院ユーザー、SHRC ユーザーの基本情報と担当施設割当を保守し、あわせて当該施設を起点とする施設協業グループの一覧参照と構成編集を行う画面群である。' },
-    @{ Type = 'Paragraph'; Text = '認可判定はロール前提ではなく、施設単位で提供される機能・カラムと、ユーザー施設別に許可された機能・カラムの組み合わせを正本として行う。固定導線を除く現行採用機能は `config_scope=''FACILITY_USER''` に統一し、`normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象に含める。子機能など追加条件を持つコードは認証認可 API および業務 API 側の補足規定に従う。' },
+    @{ Type = 'Paragraph'; Text = '認可判定はロール前提ではなく、施設単位で提供される機能・カラムと、ユーザー施設別に許可された機能・カラムの組み合わせを正本として行う。固定導線を除く現行採用機能は `config_scope=''FACILITY_USER''` に統一し、`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` もユーザー施設別設定の対象に含める。`ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ新規作成/変更時に表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。子機能など追加条件を持つコードは認証認可 API および業務 API 側の補足規定に従う。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('ユーザー基本情報', '氏名、メールアドレス、アカウント種別、所属部門、所属部署、役職、連絡先など `users` に保持する項目'),
@@ -86,7 +86,7 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。ユーザー管理APIの `availableFeatureCodes` / `enabledFeatureCodes` は `config_scope=''FACILITY_USER''` の機能を対象とし、`normal_ship_request` / `lending_in_use_used` も候補に含める。`availableColumnCodes` / `enabledColumnCodes` は施設提供カラムを対象とする。PII を含む基本情報詳細は `user_edit` を前提とし、施設グループ API は `facility_group_list` / `facility_group_edit` を前提とする。公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は施設グループ構成とは別の公開設定であり、本 API 群では更新しない。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。ユーザー管理APIの `availableFeatureCodes` / `enabledFeatureCodes` は `config_scope=''FACILITY_USER''` の機能を対象とし、`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` も候補に含める。ただし `ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ表示・保存対象とする。`availableColumnCodes` / `enabledColumnCodes` は施設提供カラムを対象とする。PII を含む基本情報詳細は `user_edit` を前提とし、施設グループ API は `facility_group_list` / `facility_group_edit` を前提とする。公開元施設側の `facility_external_view_settings` / `facility_external_column_settings` は施設グループ構成とは別の公開設定であり、本 API 群では更新しない。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('ユーザー / 一覧', '`user_list_view`', '画面コンテキスト取得、一覧取得'),
       @('ユーザー / 新規作成・編集', '`user_edit`', 'ユーザー基本情報取得、ユーザー基本情報更新、初回設定案内再送、削除、ユーザー新規作成の基本情報側'),
@@ -103,9 +103,9 @@
       @('施設グループ作成 / 更新 / 削除', '`facility_group_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`, `facility_collaboration_groups`, `facility_collaboration_group_facilities`', '施設協業グループの変更系')
     ) },
     @{ Type = 'Heading2'; Text = '権限設定データの保存方針' },
-    @{ Type = 'Paragraph'; Text = '`user_list_view`、`user_edit`、`user_facility_assignment_edit` は本 API 群を実行するための権限である。一方、ユーザー新規作成・担当施設更新で受け取る `facilityAssignments[*].enabledFeatureCodes` / `enabledColumnCodes` は、対象ユーザーに付与する業務権限の現在値を表す。画面は担当施設詳細取得や施設候補取得で返す `availableFeatureCodes` / `availableColumnCodes` を候補集合として保持し、保存時はその候補集合に対する ON/OFF を書き戻す。`normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として `availableFeatureCodes` / `enabledFeatureCodes` に含める。なお `lending_in_use_used` の実効利用には施設提供設定とユーザー施設別設定に加えて親 `lending_checkout` の実効権限も必要であり、保存時も `lending_in_use_used` を ON にする場合は同じ担当施設の `lending_checkout` も ON であることを必須とする。' },
+    @{ Type = 'Paragraph'; Text = '`user_list_view`、`user_edit`、`user_facility_assignment_edit` は本 API 群を実行するための権限である。一方、ユーザー新規作成・担当施設更新で受け取る `facilityAssignments[*].enabledFeatureCodes` / `enabledColumnCodes` は、対象ユーザーに付与する業務権限の現在値を表す。画面は担当施設詳細取得や施設候補取得で返す `availableFeatureCodes` / `availableColumnCodes` を候補集合として保持し、保存時はその候補集合に対する ON/OFF を書き戻す。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として `availableFeatureCodes` / `enabledFeatureCodes` に含める。ただし `ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ表示・設定可能とし、`account_type!=''SHIP''` のユーザーに対してリクエストで指定された場合は保存不可とする。なお `lending_in_use_used` の実効利用には施設提供設定とユーザー施設別設定に加えて親 `lending_checkout` の実効権限も必要であり、保存時も `lending_in_use_used` を ON にする場合は同じ担当施設の `lending_checkout` も ON であることを必須とする。' },
     @{ Type = 'Table'; Headers = @('入力項目', '候補集合', '保存先', '保存ルール'); Rows = @(
-      @('`facilityAssignments[*].enabledFeatureCodes`', '`feature_catalogs.config_scope=''FACILITY_USER''` かつ対象施設の `facility_feature_settings.is_enabled=true` の `feature_code`。`auth_login` / `facility_select` は候補に含めない。`normal_ship_request` / `lending_in_use_used` は候補に含める', '`user_facility_feature_settings`', '候補集合の各 `feature_code` を現在値として管理し、リクエストに含むコードを `is_enabled=true`、含まないコードを `false` として作成・更新する。`lending_in_use_used` を ON にする場合は同じ担当施設の `lending_checkout` も ON にする'),
+      @('`facilityAssignments[*].enabledFeatureCodes`', '`feature_catalogs.config_scope=''FACILITY_USER''` かつ対象施設の `facility_feature_settings.is_enabled=true` の `feature_code`。`auth_login` / `facility_select` は候補に含めない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は候補に含める。ただし `ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ表示・設定可能', '`user_facility_feature_settings`', '候補集合の各 `feature_code` を現在値として管理し、リクエストに含むコードを `is_enabled=true`、含まないコードを `false` として作成・更新する。非SHIPユーザーへの `ship_proxy_task` 指定は拒否する。`lending_in_use_used` を ON にする場合は同じ担当施設の `lending_checkout` も ON にする'),
       @('`facilityAssignments[*].enabledColumnCodes`', '対象施設の `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` が施設提供されている `column_code`', '`user_facility_column_settings`', '候補集合の各 `column_code` を現在値として管理し、リクエストに含み、かつ対応機能が `enabledFeatureCodes` に含まれるコードを `is_enabled=true`、それ以外を `false` として作成・更新する')
     ) },
     @{ Type = 'Heading2'; Text = '施設グループ設定データの保存方針' },
@@ -151,11 +151,12 @@
     @{ Type = 'Heading2'; Text = '機能・カラム整合ルール' },
     @{ Type = 'Bullets'; Items = @(
       '`feature_catalogs` は `config_scope=FACILITY_USER` かつ `is_active=true` のものをユーザー別設定対象とする',
-      '`user_facility_feature_settings` は、`config_scope=FACILITY_USER` かつ対象施設の `facility_feature_settings.is_enabled=true` の機能のみ有効化できる。`normal_ship_request` / `lending_in_use_used` も対象に含める',
+      '`user_facility_feature_settings` は、`config_scope=FACILITY_USER` かつ対象施設の `facility_feature_settings.is_enabled=true` の機能のみ有効化できる。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` も対象に含める',
+      '`ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ新規作成/変更時に表示・設定可能とする。非SHIPユーザーに対して `enabledFeatureCodes` で指定された場合は保存を拒否し、既存設定が残っている場合も実効権限判定では無効として扱う',
       '`lending_in_use_used` は `lending_checkout` の子機能として扱い、同じ担当施設で `lending_checkout` が ON でない場合はユーザー施設別設定でも ON にできない',
       '`user_facility_column_settings` は、対象施設の `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムのみ有効化できる',
       '`facility_group_list` と `facility_group_edit` は `feature_catalogs` 上の `COMMON / FACILITY_USER` コードとして扱い、施設グループ API では施設グループ管理権限だけを要求する',
-      '`users.account_type` は表示分類・入力制御用途であり、認可判定には使わない'
+      '`users.account_type` は原則として表示分類・入力制御用途で扱う。ただし `ship_proxy_task` は `account_type=''SHIP''` を表示・保存・実効利用の追加条件とする'
     ) },
     @{ Type = 'Heading2'; Text = '初回設定案内の責務分担' },
     @{ Type = 'Bullets'; Items = @(
@@ -206,7 +207,7 @@
           'レスポンス内の操作可否は同一作業対象施設に対する `user_edit` と `user_facility_assignment_edit` の実効有無から導出する'
         )
         ProcessingLines = @(
-      '`feature_catalogs` から `config_scope=FACILITY_USER` かつ `is_active=true` の機能をユーザー別設定候補として表示順で取得する。`normal_ship_request` / `lending_in_use_used` も `FACILITY_USER` として取得する',
+      '`feature_catalogs` から `config_scope=FACILITY_USER` かつ `is_active=true` の機能をユーザー別設定候補として表示順で取得する。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` も `FACILITY_USER` として取得する。画面は新規作成/変更対象ユーザーの `accountType` が `SHIP` の場合のみ `ship_proxy_task` を表示・設定対象にする',
           '`column_catalogs` から `is_active=true` のカラムを表示順で取得する',
           '実行ユーザー自身が有効な直接担当施設割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属し、かつ当該施設に対して実効 `user_facility_assignment_edit` を持つ未削除施設を施設名昇順で先頭 20 件取得し、初期候補として返却する',
           '施設協業グループ経由の他施設閲覧候補は初期候補へ含めない',
@@ -421,7 +422,7 @@
           '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`facilities.deleted_at IS NULL` かつ `user_facility_assignments.is_active=true` の担当施設のみ返却する',
-          '各担当施設について `feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の機能コードを `availableFeatureCodes` として返却する。`auth_login` / `facility_select` は含めない。`normal_ship_request` / `lending_in_use_used` は候補に含める',
+          '各担当施設について `feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の機能コードを `availableFeatureCodes` として返却する。`auth_login` / `facility_select` は含めない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は候補に含める。ただし対象ユーザーの `users.account_type!=''SHIP''` の場合は `ship_proxy_task` を `availableFeatureCodes` / `enabledFeatureCodes` から除外する',
           '各担当施設について `facility_column_settings.is_enabled=true` かつ関連機能が施設提供されているカラムコードを `availableColumnCodes` として返却する',
           '競合検知用に `users.updated_at` を返却する'
         )
@@ -477,7 +478,7 @@
         ProcessingLines = @(
           '候補施設は、実行ユーザー自身が `user_facility_assignments.is_active=true` の直接割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属し、かつ当該施設に対して実効 `user_facility_assignment_edit` を持つ `facilities.deleted_at IS NULL` の施設に限る',
           '施設コード、施設名を部分一致で検索し、施設名昇順で返却する',
-          '各施設について `feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の機能コード一覧を返却する。`auth_login` / `facility_select` は含めない。`normal_ship_request` / `lending_in_use_used` は候補に含める',
+          '各施設について `feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の機能コード一覧を返却する。`auth_login` / `facility_select` は含めない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は候補に含める。画面は新規作成・変更対象ユーザーの `accountType` が `SHIP` の場合のみ `ship_proxy_task` を表示・設定対象にする',
           '各施設について `facility_column_settings.is_enabled=true` かつ関連機能が施設提供されているカラムコード一覧を返却する'
         )
         ResponseTitle = 'レスポンス（200：UserManagementFacilityListResponse）'
@@ -557,7 +558,8 @@
           '`users.password_hash` は認証基盤内部のユーザー作成処理でランダム初期ハッシュを設定し、平文パスワードは発行しない',
           '`user_facility_assignments` を作成し、`defaultFacilityId` のみ `is_default=true`、それ以外は `false` とする',
           '`user_facility_assignments.assignment_type` は `defaultFacilityId` の施設を `PRIMARY`、それ以外を `SECONDARY` として内部導出する',
-          '`enabledFeatureCodes` は、対象施設の `availableFeatureCodes`（`feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の `feature_code`）の部分集合でなければならない。`auth_login` と `facility_select` を含む `config_scope=''SYSTEM_FIXED''` の `feature_code` は受け付けない。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
+          '`enabledFeatureCodes` は、対象施設の `availableFeatureCodes`（`feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の `feature_code`）の部分集合でなければならない。`auth_login` と `facility_select` を含む `config_scope=''SYSTEM_FIXED''` の `feature_code` は受け付けない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
+          'リクエスト `accountType!=''SHIP''` のユーザー作成で `enabledFeatureCodes` に `ship_proxy_task` を含めた場合は 400 (`SHIP_PROXY_TASK_ACCOUNT_TYPE_INVALID`) とする',
           '`enabledFeatureCodes` に `lending_in_use_used` を含める場合は、同じ担当施設の `enabledFeatureCodes` に `lending_checkout` も含めなければならない。含まれない場合は 409 (`FACILITY_PERMISSION_SCOPE_CONFLICT`) とする',
           '`user_facility_feature_settings` は、前述の候補集合の各 `feature_code` を現在値として管理し、`enabledFeatureCodes` に含むコードを `is_enabled=true`、含まないコードを `false` として作成する',
           '`enabledColumnCodes` は、対象施設の `availableColumnCodes`（`facility_column_settings.is_enabled=true` かつ関連機能が施設提供されている `column_code`）の部分集合でなければならない',
@@ -662,7 +664,7 @@
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`lastKnownUpdatedAt` と `users.updated_at` を比較し、不一致時は 409 (`USER_CONFLICT`) を返却する',
           '自身以外に同一メールアドレスを持つ未削除ユーザーが存在しないことを確認する',
-          '担当施設関連テーブルには変更を加えない',
+          '担当施設関連テーブルには変更を加えない。`accountType` を `SHIP` 以外へ変更した場合も既存の `ship_proxy_task` 設定行は削除しないが、以後の実効権限判定・担当施設詳細取得では無効として扱い、ユーザー管理画面にも表示しない',
           '更新成功時は `users.updated_at` を現在時刻へ更新する',
           '更新処理は 1 トランザクションで実行する'
         )
@@ -760,7 +762,8 @@
           '既存担当施設との差分を比較し、削除された施設の `user_facility_feature_settings`、`user_facility_column_settings`、`user_facility_assignments` を削除する',
           '残存・追加施設について `user_facility_assignments` を更新または追加し、`defaultFacilityId` のみ `is_default=true`、それ以外は `false` とする',
           '`user_facility_assignments.assignment_type` は `defaultFacilityId` の施設を `PRIMARY`、それ以外を `SECONDARY` として内部導出する',
-          '`enabledFeatureCodes` は、対象施設の `availableFeatureCodes` の部分集合でなければならず、`auth_login` と `facility_select` を含む `config_scope=''SYSTEM_FIXED''` の `feature_code` は受け付けない。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
+          '`enabledFeatureCodes` は、対象施設の `availableFeatureCodes` の部分集合でなければならず、`auth_login` と `facility_select` を含む `config_scope=''SYSTEM_FIXED''` の `feature_code` は受け付けない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
+          '対象ユーザーの `users.account_type!=''SHIP''` の状態で `enabledFeatureCodes` に `ship_proxy_task` を含めた場合は 400 (`SHIP_PROXY_TASK_ACCOUNT_TYPE_INVALID`) とする',
           '`enabledFeatureCodes` に `lending_in_use_used` を含める場合は、同じ担当施設の `enabledFeatureCodes` に `lending_checkout` も含めなければならない。含まれない場合は 409 (`FACILITY_PERMISSION_SCOPE_CONFLICT`) とする',
           '`enabledColumnCodes` は、対象施設の `availableColumnCodes` の部分集合でなければならない',
           '残存・追加施設の `user_facility_feature_settings` / `user_facility_column_settings` は候補集合に対する現在値として総入れ替えし、`enabledFeatureCodes` / `enabledColumnCodes` に含むコードを `true`、含まないコードを `false` へ更新する',

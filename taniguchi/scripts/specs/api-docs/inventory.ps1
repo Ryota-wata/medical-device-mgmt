@@ -77,11 +77,11 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '棚卸しはロール整理上の棚卸し専用権限を使用する。画面表示、開始、明細更新、一括更新は `inventory_field`、棚卸し完了、取消、Excel出力は `inventory_office` を使用する。業務 API は `/auth/context` の表示用結果だけを信頼せず、Bearer トークン上の作業対象施設について `user_facility_assignments`、`facility_feature_settings`、`user_facility_feature_settings` を毎回再判定する。' },
+    @{ Type = 'Paragraph'; Text = '棚卸しはロール整理上の棚卸し専用権限を使用する。画面表示、開始、明細更新、一括更新は `inventory`、棚卸し完了、取消、Excel出力は `inventory_complete` を使用する。業務 API は `/auth/context` の表示用結果だけを信頼せず、Bearer トークン上の作業対象施設について `user_facility_assignments`、`facility_feature_settings`、`user_facility_feature_settings` を毎回再判定する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '説明'); Rows = @(
-      @('進行中セッション取得 / セッション詳細取得', '`inventory_field`', '作業対象施設の棚卸し状態を参照する'),
-      @('棚卸し開始 / 明細更新 / 一括更新', '`inventory_field`', '同施設ユーザーが棚卸し作業状態を共有更新する'),
-      @('棚卸し完了 / 取消', '`inventory_office`', '棚卸し完了、移動/廃棄申請自動起票、棚卸し取消を行う')
+      @('進行中セッション取得 / セッション詳細取得', '`inventory`', '作業対象施設の棚卸し状態を参照する'),
+      @('棚卸し開始 / 明細更新 / 一括更新', '`inventory`', '同施設ユーザーが棚卸し作業状態を共有更新する'),
+      @('棚卸し完了 / 取消', '`inventory_complete`', '棚卸し完了、移動/廃棄申請自動起票、棚卸し取消を行う')
     ) },
     @{ Type = 'Heading2'; Text = '施設スコープ' },
     @{ Type = 'Bullets'; Items = @(
@@ -128,13 +128,13 @@
 
     @{ Type = 'Heading1'; Text = '第4章 API一覧' },
     @{ Type = 'Table'; Headers = @('No', 'API名', 'Method', 'Path', '用途', '権限'); Rows = @(
-      @('1', '進行中セッション取得', 'GET', '/inventory/sessions/current', '作業対象施設の進行中棚卸しを取得する', '`inventory_field`'),
-      @('2', '棚卸し開始', 'POST', '/inventory/sessions', '棚卸しセッションを開始し、未確認明細を生成する', '`inventory_field`'),
-      @('3', '棚卸しセッション詳細取得', 'GET', '/inventory/sessions/{inventorySessionId}', '明細、進捗、フィルター候補、ロケーション候補を取得する', '`inventory_field`'),
-      @('4', '棚卸し明細更新', 'PATCH', '/inventory/items/{inventoryItemId}', '明細1行の状態を即時保存する', '`inventory_field`'),
-      @('5', '棚卸し明細一括更新', 'POST', '/inventory/sessions/{inventorySessionId}/items/bulk-update', '選択明細を一括で確認済または要対応へ更新する', '`inventory_field`'),
-      @('6', '棚卸し完了', 'POST', '/inventory/sessions/{inventorySessionId}/complete', '棚卸し完了と移動/廃棄申請自動起票を行う', '`inventory_office`'),
-      @('7', '棚卸し取消', 'POST', '/inventory/sessions/{inventorySessionId}/cancel', '進行中棚卸しを取消する', '`inventory_office`')
+      @('1', '進行中セッション取得', 'GET', '/inventory/sessions/current', '作業対象施設の進行中棚卸しを取得する', '`inventory`'),
+      @('2', '棚卸し開始', 'POST', '/inventory/sessions', '棚卸しセッションを開始し、未確認明細を生成する', '`inventory`'),
+      @('3', '棚卸しセッション詳細取得', 'GET', '/inventory/sessions/{inventorySessionId}', '明細、進捗、フィルター候補、ロケーション候補を取得する', '`inventory`'),
+      @('4', '棚卸し明細更新', 'PATCH', '/inventory/items/{inventoryItemId}', '明細1行の状態を即時保存する', '`inventory`'),
+      @('5', '棚卸し明細一括更新', 'POST', '/inventory/sessions/{inventorySessionId}/items/bulk-update', '選択明細を一括で確認済または要対応へ更新する', '`inventory`'),
+      @('6', '棚卸し完了', 'POST', '/inventory/sessions/{inventorySessionId}/complete', '棚卸し完了と移動/廃棄申請自動起票を行う', '`inventory_complete`'),
+      @('7', '棚卸し取消', 'POST', '/inventory/sessions/{inventorySessionId}/cancel', '進行中棚卸しを取消する', '`inventory_complete`')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 棚卸し機能設計' },
@@ -151,7 +151,7 @@
           @('targetFacilityId', 'query', 'int64', '-', '対象施設ID。Bearer トークン上の作業対象施設と一致必須')
         )
         PermissionLines = @(
-          'Bearer トークン上の作業対象施設について `inventory_field` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '`targetFacilityId` が指定された場合は Bearer トークン上の作業対象施設と一致することを確認する',
@@ -185,7 +185,7 @@
           @('200', '取得成功', 'InventoryCurrentSessionResponse'),
           @('400', '対象施設不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `inventory_field` なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `inventory` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -208,7 +208,7 @@
           @('filters', 'InventoryStartFilter', '-', '対象抽出条件。未指定時は作業対象施設の棚卸し対象資産全件')
         )
         PermissionLines = @(
-          'Bearer トークン上の作業対象施設について `inventory_field` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '`Idempotency-Key` と正規化 payload の組み合わせを検証する',
@@ -232,7 +232,7 @@
           @('200', '同一 `Idempotency-Key` の再送を既存結果で受理', 'InventorySessionCreateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `inventory_field` なし', 'ErrorResponse'),
+          @('403', '作業対象施設に対する実効 `inventory` なし', 'ErrorResponse'),
           @('409', '進行中棚卸しが既に存在、または冪等キー再利用不正', 'ErrorResponse')
         )
       },
@@ -260,7 +260,7 @@
         )
         PermissionLines = @(
           'セッションの `facility_id` が Bearer トークン上の作業対象施設と一致すること',
-          'Bearer トークン上の作業対象施設について `inventory_field` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '`inventory_sessions` を取得し、作業対象施設との一致を確認する',
@@ -318,7 +318,7 @@
           @('200', '取得成功', 'InventorySessionDetailResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設不一致または実効 `inventory_field` なし', 'ErrorResponse'),
+          @('403', '対象施設不一致または実効 `inventory` なし', 'ErrorResponse'),
           @('404', 'セッションが存在しない', 'ErrorResponse')
         )
       },
@@ -348,7 +348,7 @@
         )
         PermissionLines = @(
           '親セッションの `facility_id` が Bearer トークン上の作業対象施設と一致すること',
-          'Bearer トークン上の作業対象施設について `inventory_field` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '対象 `inventory_items` と親 `inventory_sessions` を同一トランザクションで取得し、親セッションが `IN_PROGRESS` であることを確認する',
@@ -370,7 +370,7 @@
           @('200', '更新成功、または同一 `Idempotency-Key` の再送を既存結果で受理', 'InventoryItemUpdateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設不一致または実効 `inventory_field` なし', 'ErrorResponse'),
+          @('403', '対象施設不一致または実効 `inventory` なし', 'ErrorResponse'),
           @('404', '明細または移動先が存在しない', 'ErrorResponse'),
           @('409', '明細更新競合、セッション完了済み/取消済み、冪等キー再利用不正', 'ErrorResponse')
         )
@@ -407,7 +407,7 @@
         )
         PermissionLines = @(
           'セッションの `facility_id` が Bearer トークン上の作業対象施設と一致すること',
-          'Bearer トークン上の作業対象施設について `inventory_field` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '親 `inventory_sessions` を同一トランザクションで取得し、`IN_PROGRESS` であることを確認する',
@@ -428,7 +428,7 @@
           @('200', '一括更新成功、または同一 `Idempotency-Key` の再送を既存結果で受理', 'InventoryBulkUpdateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設不一致または実効 `inventory_field` なし', 'ErrorResponse'),
+          @('403', '対象施設不一致または実効 `inventory` なし', 'ErrorResponse'),
           @('404', 'セッションまたは明細が存在しない', 'ErrorResponse'),
           @('409', '1件以上の明細更新競合、セッション完了済み/取消済み、冪等キー再利用不正', 'ErrorResponse')
         )
@@ -453,7 +453,7 @@
         )
         PermissionLines = @(
           'セッションの `facility_id` が Bearer トークン上の作業対象施設と一致すること',
-          'Bearer トークン上の作業対象施設について `inventory_office` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory_complete` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '`Idempotency-Key` と正規化 payload の組み合わせを検証する',
@@ -497,7 +497,7 @@
           @('200', '棚卸し完了成功、または同一 `Idempotency-Key` の再送を既存結果で受理', 'InventoryCompleteResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設不一致、または実効 `inventory_office` なし', 'ErrorResponse'),
+          @('403', '対象施設不一致、または実効 `inventory_complete` なし', 'ErrorResponse'),
           @('404', 'セッションが存在しない', 'ErrorResponse'),
           @('409', 'セッション競合、未確認明細あり、初期ステータス不備、冪等キー再利用不正', 'ErrorResponse')
         )
@@ -522,7 +522,7 @@
         )
         PermissionLines = @(
           'セッションの `facility_id` が Bearer トークン上の作業対象施設と一致すること',
-          'Bearer トークン上の作業対象施設について `inventory_office` の実効権限を再判定する'
+          'Bearer トークン上の作業対象施設について `inventory_complete` の実効権限を再判定する'
         )
         ProcessingLines = @(
           '対象 `inventory_sessions` を排他取得し、`IN_PROGRESS` かつ `expectedSessionLockVersion` 一致を確認する',
@@ -542,7 +542,7 @@
           @('200', '取消成功、または同一 `Idempotency-Key` の再送を既存結果で受理', 'InventoryCancelResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設不一致または実効 `inventory_office` なし', 'ErrorResponse'),
+          @('403', '対象施設不一致または実効 `inventory_complete` なし', 'ErrorResponse'),
           @('404', 'セッションが存在しない', 'ErrorResponse'),
           @('409', 'セッション競合、完了済み/取消済み、冪等キー再利用不正', 'ErrorResponse')
         )
@@ -552,9 +552,9 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '権限対応表' },
     @{ Type = 'Table'; Headers = @('API/処理', '必要 feature_code', '判定内容'); Rows = @(
-      @('セッション取得 / 詳細取得', '`inventory_field`', '作業対象施設で棚卸し状態を参照できること'),
-      @('棚卸し開始 / 明細更新 / 一括更新', '`inventory_field`', '作業対象施設で棚卸し作業を行えること'),
-      @('棚卸し完了 / 取消', '`inventory_office`', '棚卸し結果確定、移動/廃棄申請起票、棚卸し取消ができること')
+      @('セッション取得 / 詳細取得', '`inventory`', '作業対象施設で棚卸し状態を参照できること'),
+      @('棚卸し開始 / 明細更新 / 一括更新', '`inventory`', '作業対象施設で棚卸し作業を行えること'),
+      @('棚卸し完了 / 取消', '`inventory_complete`', '棚卸し結果確定、移動/廃棄申請起票、棚卸し取消ができること')
     ) },
     @{ Type = 'Heading2'; Text = '業務ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -570,7 +570,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '設計判断・将来拡張事項' },
     @{ Type = 'Table'; Headers = @('項目', '設計判断', '補足'); Rows = @(
-      @('棚卸し専用 feature_code', '`inventory_field` / `inventory_office` で制御する', 'ロール整理.xlsx の棚卸し（現場）/棚卸し（事務）に合わせる'),
+      @('棚卸し専用 feature_code', '`inventory` / `inventory_complete` で制御する', 'ロール整理.xlsx の棚卸し / 棚卸し完了に合わせる'),
       @('年度/キャンペーン管理', '単一施設の進行中セッション1件を正本とする', '年度棚卸し、部門別棚卸し、複数期間同時実行が必要になった場合は進行中一意制約の粒度を見直す'),
       @('リアルタイム同期', '再取得または画面側ポーリングで最新化する', 'WebSocket / SSE による presence 表示や即時反映は将来拡張とし、正本更新は明細単位の楽観ロックを維持する')
     ) },

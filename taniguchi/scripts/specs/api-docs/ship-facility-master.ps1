@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_SHIP施設マスタ.docx'
   ScreenLabel = 'SHIP施設マスタ'
-  CoverDateText = '2026年4月27日'
-  RevisionDateText = '2026/4/27'
+  CoverDateText = '2026年5月12日'
+  RevisionDateText = '2026/5/12'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -422,7 +422,7 @@
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
-          '`feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は候補に含めない。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として候補に含める',
+          '`feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は候補に含めない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER` として候補に含める',
           '`lending_in_use_used` は `lending_checkout` の子機能として扱う。画面は `lending_checkout` が OFF の場合に `lending_in_use_used` を非活性または自動 OFF として表示する',
           '`column_catalogs` から施設提供カラム候補を取得し、`related_feature_code` を併せて返却する',
           '`facility_feature_settings` と `facility_column_settings` の既存値を左結合し、設定行がない候補は `isEnabled=false` として返却する',
@@ -443,7 +443,7 @@
               @('featureCode', 'string', '✓', '`feature_catalogs.feature_code`'),
               @('featureName', 'string', '✓', '機能表示名'),
               @('categoryCode', 'string', '✓', 'カテゴリコード'),
-              @('configScope', 'string', '✓', '`FACILITY` または `FACILITY_USER`。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER`'),
+              @('configScope', 'string', '✓', '`FACILITY` または `FACILITY_USER`。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER`'),
               @('isEnabled', 'boolean', '✓', '対象施設で提供するかどうか')
             )
           },
@@ -490,14 +490,14 @@
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
-          '`enabledFeatureCodes` は `feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の候補集合の部分集合でなければならない。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は受け付けない。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
+          '`enabledFeatureCodes` は `feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の候補集合の部分集合でなければならない。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は受け付けない。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER` として受け付ける',
           '`enabledFeatureCodes` に `lending_in_use_used` を含める場合は `lending_checkout` も含めなければならない。含まれない場合は 400 (`FACILITY_SETTING_CODE_INVALID`) とする',
           '既存設定で `lending_in_use_used=true` の施設について、リクエストで `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、未返却の `使用中` / `使用済` 状態が存在しないことを確認する。具体的には `lending_devices.status IN (''使用中'',''使用済'')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN (''使用中'',''使用済'')` が存在する場合は 409 (`LENDING_IN_USE_USED_ACTIVE_EXISTS`) とする。返却済み履歴や対象施設外の機器は OFF 拒否条件に含めない',
           '`enabledColumnCodes` は `column_catalogs` の候補集合の部分集合でなければならない',
           '`enabledColumnCodes` に含む各 `column_code` は、`column_catalogs.related_feature_code` が `enabledFeatureCodes` に含まれている場合のみ有効化できる',
           '候補集合の各 `feature_code` について `facility_feature_settings` を UPSERT し、`enabledFeatureCodes` に含むコードを `is_enabled=true`、含まないコードを `false` とする',
           '候補集合の各 `column_code` について `facility_column_settings` を UPSERT し、`enabledColumnCodes` に含み、かつ関連 `feature_code` が有効なコードを `is_enabled=true`、それ以外を `false` とする',
-          'ユーザー施設別設定（`user_facility_feature_settings` / `user_facility_column_settings`）は本 API では更新しない。`config_scope=''FACILITY_USER''` の施設提供設定が OFF になったコードは、既存ユーザー設定が残っていても実効権限としては無効になる。`normal_ship_request` / `lending_in_use_used` もこの対象であり、`lending_in_use_used` の実効利用には親 `lending_checkout` の実効権限も必要とする'
+          'ユーザー施設別設定（`user_facility_feature_settings` / `user_facility_column_settings`）は本 API では更新しない。`config_scope=''FACILITY_USER''` の施設提供設定が OFF になったコードは、既存ユーザー設定が残っていても実効権限としては無効になる。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` もこの対象であり、`ship_proxy_task` のユーザー別表示・保存可否はユーザー管理 API 側で `account_type=''SHIP''` を追加条件として判定する。`lending_in_use_used` の実効利用には親 `lending_checkout` の実効権限も必要とする'
         )
         ResponseTitle = 'レスポンス（200：FacilityFeatureSettingsResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -514,7 +514,7 @@
               @('featureCode', 'string', '✓', '`feature_catalogs.feature_code`'),
               @('featureName', 'string', '✓', '機能表示名'),
               @('categoryCode', 'string', '✓', 'カテゴリコード'),
-              @('configScope', 'string', '✓', '`FACILITY` または `FACILITY_USER`。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER`'),
+              @('configScope', 'string', '✓', '`FACILITY` または `FACILITY_USER`。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER`'),
               @('isEnabled', 'boolean', '✓', '対象施設で提供するかどうか')
             )
           },
@@ -553,12 +553,12 @@
     ) },
     @{ Type = 'Heading2'; Text = '施設提供設定ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '施設提供機能の候補は `feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` とし、`auth_login` / `facility_select` などの固定導線は対象外とする。`normal_ship_request` / `lending_in_use_used` は `FACILITY_USER` として施設提供機能候補に含める',
+      '施設提供機能の候補は `feature_catalogs.config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` とし、`auth_login` / `facility_select` などの固定導線は対象外とする。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `FACILITY_USER` として施設提供機能候補に含める',
       '`lending_in_use_used` は `lending_checkout` の子機能であり、`lending_checkout` が OFF の場合は ON にできない。保存 API は `lending_in_use_used=true` かつ `lending_checkout=false` の組み合わせを拒否する',
       '`lending_in_use_used` を ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、`lending_devices.status IN (''使用中'',''使用済'')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN (''使用中'',''使用済'')` が存在しないことを検証する。存在する場合は 409 で拒否し、運用上は該当機器を返却完了してから OFF にする',
       '施設提供カラムの候補は `column_catalogs` を正本とする',
       '施設提供カラムは、`column_catalogs.related_feature_code` に対応する施設提供機能が ON の場合のみ ON にできる',
-      '施設提供設定を OFF にしてもユーザー施設別設定は削除しない。`config_scope=''FACILITY_USER''` では実効権限判定時に施設提供設定が OFF であれば、ユーザー側が ON でも利用不可とする。`normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象であり、`lending_in_use_used` の実効利用には親 `lending_checkout` の実効権限も必要とする',
+      '施設提供設定を OFF にしてもユーザー施設別設定は削除しない。`config_scope=''FACILITY_USER''` では実効権限判定時に施設提供設定が OFF であれば、ユーザー側が ON でも利用不可とする。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` もユーザー施設別設定の対象であり、`ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ実効利用できる。`lending_in_use_used` の実効利用には親 `lending_checkout` の実効権限も必要とする',
       '施設削除時は `facility_feature_settings` / `facility_column_settings` を削除せず保持する'
     ) },
     @{ Type = 'Heading2'; Text = '設立母体登録ルール' },

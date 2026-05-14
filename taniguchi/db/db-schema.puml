@@ -28,7 +28,9 @@ package "認証・ユーザー" {
     SYSTEM_FIXED = 固定導線
     FACILITY = 施設設定のみ
     FACILITY_USER = 施設設定 + ユーザー施設別設定
-    normal_ship_request / lending_in_use_used は FACILITY_USER とする。
+    normal_ship_request / ship_proxy_task / lending_in_use_used は FACILITY_USER とする。
+    ship_proxy_task は users.account_type = SHIP の
+    ユーザーに限り実効利用できる。
     lending_in_use_used の実効利用には lending_checkout も必須。
   end note
 
@@ -138,8 +140,10 @@ package "認証・ユーザー" {
   note right of user_facility_feature_settings
     config_scope が FACILITY_USER の
     feature_code のみ保持する。
-    normal_ship_request / lending_in_use_used も
+    normal_ship_request / ship_proxy_task / lending_in_use_used も
     FACILITY_USER として保持する。
+    ship_proxy_task は対象ユーザーの
+    account_type が SHIP の場合のみ有効。
   end note
 
   entity "user_facility_column_settings" as user_facility_column_settings {
@@ -1297,6 +1301,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     見積グループ名 / rfq_group_name : varchar
     施設ID / facility_id : bigint
     編集リストID / edit_list_id : bigint
+    管理種別 / management_type : varchar
     ステータス / status : varchar
     依頼日 / requested_on : date
     回答期限 / due_on : date
@@ -1313,6 +1318,10 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     rfq_vendors 複数行で表現する。
     同一 rfq_no の業者別RFQヘッダ複製は
     DB/API正本として採用しない。
+    management_type で
+    PURCHASE / REMODEL / DISPOSAL /
+    REPAIR / MAINTENANCE を区分し、
+    タブ別一覧の混在を防止する。
     一覧APIでは rfq_vendors を
     業者行へ展開して返す。
   end note
@@ -1328,6 +1337,16 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     RFQ申請明細一意キー / rfq_application_asset_unique_key : varchar [generated]
     作成日時 / created_at : timestamp
   }
+
+  note right of rfq_applications
+    RFQに採用した申請・申請明細・
+    編集リスト明細のリンク。
+    PURCHASE / REMODEL は
+    edit_list_id と edit_list_item_id を持つ。
+    DISPOSAL / REPAIR / MAINTENANCE は
+    application_id と application_asset_id による
+    直接リンクを許可する。
+  end note
 
   entity "rfq_vendors" as rfq_vendors {
     * 見積依頼先ID / rfq_vendor_id : bigint
@@ -1354,10 +1373,73 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     DRAFT / SENT / REPLIED / CANCELED。
     DRAFT の行のみ業者情報、
     回答期限、依頼事項を更新可能。
-    個別依頼送信/SHIP一括依頼は
-    DRAFT 行だけを SENT に更新し、
-    requested_at と requested_by_user_id を
-    同一トランザクションで設定する。
+    個別依頼送信は DRAFT 行だけを
+    SENT に更新し、requested_at と
+    requested_by_user_id を同一トランザクションで設定する。
+    SHIP一括依頼は外部送信ではなく
+    ship_proxy_requests / ship_proxy_request_vendors に
+    内部代理作業依頼を作成する。
+  end note
+
+  entity "ship_proxy_requests" as ship_proxy_requests {
+    * SHIP代理作業依頼ID / ship_proxy_request_id : bigint
+    --
+    依頼No. / request_no : varchar
+    依頼元施設ID / requesting_facility_id : bigint
+    見積依頼ID / rfq_id : bigint
+    依頼種別 / request_type : varchar
+    依頼ステータス / request_status : varchar
+    依頼事項 / request_note : varchar
+    依頼者ユーザーID / requested_by_user_id : bigint
+    依頼日時 / requested_at : timestamp
+    担当SHIPユーザーID / assigned_user_id : bigint
+    対応開始日時 / started_at : timestamp
+    完了日時 / completed_at : timestamp
+    差戻し理由 / return_reason : varchar
+    取消日時 / canceled_at : timestamp
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of ship_proxy_requests
+    request_status:
+    REQUESTED / IN_PROGRESS / RETURNED / COMPLETED / CANCELED。
+    SHIP依頼一覧はログイン中SHIPユーザーの
+    ship_proxy_task が実効利用できる担当施設群に
+    requesting_facility_id を限定して表示する。
+    同一rfq_idの未完了依頼は1件まで。
+  end note
+
+  entity "ship_proxy_request_vendors" as ship_proxy_request_vendors {
+    * SHIP代理作業依頼対象業者ID / ship_proxy_request_vendor_id : bigint
+    --
+    SHIP代理作業依頼ID / ship_proxy_request_id : bigint
+    見積依頼先ID / rfq_vendor_id : bigint
+    対象ステータス / target_status : varchar
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of ship_proxy_request_vendors
+    UNIQUE(ship_proxy_request_id, rfq_vendor_id)。
+    SHIP一括依頼時点の対象業者を固定する。
+  end note
+
+  entity "ship_proxy_request_status_histories" as ship_proxy_request_status_histories {
+    * SHIP代理作業依頼ステータス履歴ID / ship_proxy_request_status_history_id : bigint
+    --
+    SHIP代理作業依頼ID / ship_proxy_request_id : bigint
+    変更前ステータス / from_status : varchar
+    変更後ステータス / to_status : varchar
+    実行者ユーザーID / acted_by_user_id : bigint
+    実行日時 / acted_at : timestamp
+    コメント / comment : varchar
+    作成日時 / created_at : timestamp
+  }
+
+  note right of ship_proxy_request_status_histories
+    ship_proxy_requests.request_status の変更時は
+    同一トランザクションで必ず追加する。
   end note
 
   entity "quotations" as quotations {
@@ -1477,6 +1559,39 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     更新日時 / updated_at : timestamp
   }
 
+  entity "individuals" as individuals {
+    * 個体ID / individual_id : bigint
+    --
+    発注明細ID / order_item_id : bigint
+    資産台帳ID / asset_ledger_id : bigint
+    見積依頼ID / rfq_id : bigint
+    QRコード値 / qr_code_value : varchar
+    シリアルNo / serial_no : varchar
+    品目名 / item_name : varchar
+    メーカー名 / maker_name : varchar
+    型式 / model_name : varchar
+    取得金額 / acquisition_amount : decimal(14,2)
+    取得日 / acquired_on : date
+    設置ロケーションID / facility_location_id : bigint
+    階 / floor_name : varchar
+    部門 / department_name : varchar
+    部署 / section_name : varchar
+    室名 / room_name : varchar
+    仮勘定科目 / provisional_account_title : varchar
+    固定資産番号 / fixed_asset_no : varchar
+    登録状態 / registration_status : varchar
+    検収日 / inspected_on : date
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of individuals
+    資産仮登録で作成する
+    検収登録済み個体の中間正本。
+    資産登録時に asset_ledgers へ反映し、
+    registration_status を REGISTERED に更新する。
+  end note
+
   entity "maintenance_contracts" as maintenance_contracts {
     * 保守契約ID / maintenance_contract_id : bigint
     --
@@ -1516,6 +1631,24 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of maintenance_contract_status_definitions
+    保守契約管理タブの4ステップに合わせる。
+    初期データ:
+    見積依頼 / 見積依頼済 /
+    見積登録済 / 契約発注済 /
+    完了 / 申請見送り。
+    完了と申請見送りは終端状態。
+  end note
+
+  note right of maintenance_contract_status_transitions
+    少なくとも次の遷移を投入する。
+    見積依頼 -> 見積依頼済
+    見積依頼済 -> 見積登録済
+    見積登録済 -> 契約発注済
+    契約発注済 -> 完了
+    見積依頼 -> 申請見送り
+  end note
 
   entity "maintenance_contract_assets" as maintenance_contract_assets {
     * 契約対象資産ID / maintenance_contract_asset_id : bigint
@@ -1602,6 +1735,26 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of inspection_task_status_definitions
+    点検管理タブの表示に合わせる。
+    初期データ:
+    点検Nヶ月前 / 点検1ヶ月前 /
+    点検月 / 点検週 / 点検月超過 /
+    点検日調整 / 点検実施中 /
+    点検完了 / 再点検。
+    点検Nヶ月前は運用月数に応じて
+    定義テーブルへ投入する表示パターン。
+  end note
+
+  note right of inspection_task_status_transitions
+    START_INSPECTION で
+    予定系ステータスから点検実施中へ遷移。
+    COMPLETE で点検完了または再点検へ遷移。
+    SKIP / SET_DATE / RECALCULATE_SCHEDULE は
+    次回予定日を再計算し、
+    再計算後の予定系ステータスへ遷移する。
+  end note
+
   entity "inspection_results" as inspection_results {
     * 点検結果ID / inspection_result_id : bigint
     --
@@ -1653,6 +1806,29 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of lending_device_status_definitions
+    貸出管理タブの現行モックに合わせる。
+    初期データ:
+    待機中 / 貸出可 / 貸出中 /
+    使用中 / 使用済 / 返却済 / 使用不可。
+    使用中・使用済の操作は
+    lending_checkout と lending_in_use_used の
+    両方の実効権限を必須とする。
+  end note
+
+  note right of lending_device_status_transitions
+    少なくとも次の遷移を投入する。
+    待機中 -> 貸出可
+    貸出可 -> 貸出中
+    貸出中 -> 返却済
+    貸出中 -> 使用中
+    使用中 -> 使用済
+    使用済 -> 返却済
+    返却済 -> 貸出可
+    待機中/貸出可/返却済 -> 使用不可
+    使用不可 -> 待機中/貸出可
+  end note
 
   entity "lending_transactions" as lending_transactions {
     * 貸出履歴ID / lending_transaction_id : bigint
@@ -2851,6 +3027,14 @@ edit_list_items ||--o{ rfq_applications : ""
 edit_list_items ||--o{ application_documents : ""
 vendors ||--o{ rfq_vendors : ""
 users ||--o{ rfq_vendors : "requested_by"
+facilities ||--o{ ship_proxy_requests : "requesting_facility"
+rfqs ||--o{ ship_proxy_requests : ""
+users ||--o{ ship_proxy_requests : "requested_by"
+users ||--o{ ship_proxy_requests : "assigned_to"
+ship_proxy_requests ||--o{ ship_proxy_request_vendors : ""
+rfq_vendors ||--o{ ship_proxy_request_vendors : ""
+ship_proxy_requests ||--o{ ship_proxy_request_status_histories : ""
+users ||--o{ ship_proxy_request_status_histories : "acted_by"
 vendors ||--o{ quotations : ""
 vendors ||--o{ orders : ""
 vendors ||--o{ borrowing_application_details : ""
@@ -2874,6 +3058,11 @@ application_assets ||--o{ rfq_applications : ""
 
 orders ||--o{ order_items : ""
 quotation_items ||--o{ order_items : ""
+orders ||--o{ individuals : ""
+order_items ||--o{ individuals : ""
+rfqs ||--o{ individuals : ""
+asset_ledgers ||--o{ individuals : "asset_ledger_id"
+facility_locations ||--o{ individuals : ""
 
 maintenance_contracts ||--o{ maintenance_contract_assets : ""
 maintenance_contracts ||--o{ inspection_tasks : ""

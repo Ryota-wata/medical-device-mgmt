@@ -11,6 +11,7 @@
 - 画面内に複数の独立した業務アクションがある場合は、ボタン単位の `feature_code` を追加する。
 - 最新の権限管理単位では、資産一覧の管理部署編集は `management_department_edit` とし、資産カルテの原本編集を表す `original_list_edit` とは独立して判定する。
 - 通常購入管理のSHIPへ一括依頼は `normal_ship_request` とし、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` とは独立して判定する。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+- SHIP代理作業は `ship_proxy_task` とし、病院側からSHIPへ依頼を作成する `normal_ship_request` とは独立して判定する。`ship_proxy_task` は `config_scope='FACILITY_USER'` とし、施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業を制御する。対象ユーザーが `account_type='SHIP'` の場合のみユーザー管理で表示・設定可能とする。
 - 貸出・返却の使用中/使用済みフローは `lending_in_use_used` とし、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` とは独立して判定する。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も有効であることを必須とし、`lending_in_use_used` 単独ではメニュー表示・画面遷移・業務 API 実行を許可しない。
 - 単なるフィルタ操作やモーダル開閉、タブ切替などの UI 細部には原則として `feature_code` を切らない。
 - 病院ユーザーの他施設閲覧では `role_permissions` を横展開せず、資産閲覧専用ロジックを優先する。
@@ -72,6 +73,7 @@
 > 現行採用コードの正本は `authz-feature-column-catalog-draft.md` を参照する。以下は初期検討時の候補であり、最新の `権限管理単位一覧` では名称・粒度を整理済み。
 > 資産一覧・カルテ系の現行採用は `original_list_view`、`original_application`、`management_department_edit`、`inspection_management`、`maintenance_contract`、`original_list_edit`、および `column_code=original_price_column` とする。
 > 通常購入管理系では `normal_ship_request` をSHIPへ一括依頼の独立操作コードとして採用し、`normal_purchase` とは分離する。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
+> SHIP代理作業では `ship_proxy_task` を施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業コードとして採用し、`normal_ship_request` とは分離する。`ship_proxy_task` は `config_scope='FACILITY_USER'` とし、対象ユーザーが `account_type='SHIP'` の場合のみ表示・設定・実効利用できる。
 > 貸出・返却系では `lending_in_use_used` を使用中/使用済みフローの独立操作コードとして採用し、`lending_checkout` とは分離する。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も必須であり、施設提供設定・ユーザー施設別設定のどちらでも親 OFF 時の子 ON を拒否する。施設提供設定で ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で OFF にする場合は当該ユーザーの権限だけを無効化し、既存の使用中/使用済みデータは権限を持つ別ユーザーまたは再付与後の同一ユーザーが後続処理する。
 
 ### 認証/認可・初期選択

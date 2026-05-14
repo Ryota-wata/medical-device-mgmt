@@ -56,6 +56,7 @@
 | `normal_acceptance` | 通常購入管理 / 検収登録 | 通常購入管理 / 検収登録 | 既存コード継続 |
 | `normal_quotation` | 通常購入管理 / 見積管理 | 通常購入管理 / 見積管理 | 既存コード継続 |
 | `normal_ship_request` | 通常購入管理 / SHIP依頼機能 | 通常購入管理 / SHIP依頼機能 | `config_scope='FACILITY_USER'` とし、SHIPへ一括依頼ボタンをユーザー施設別に独立制御 |
+| `ship_proxy_task` | SHIP代理作業 | SHIP代理作業 | `config_scope='FACILITY_USER'` とし、施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業を独立制御。対象ユーザーが `account_type='SHIP'` の場合のみ新規作成/変更時に表示・設定可能 |
 | `transfer_disposal` | 移動・廃棄管理 | 移動・廃棄管理 | 既存コード継続 |
 | `repair_management` | 修理管理 | 修理管理 | 既存コード継続 |
 | `maintenance_contract` | 保守契約管理 | 保守契約管理 | 資産一覧 / 保守契約登録導線も同一コードで制御 |
@@ -99,10 +100,10 @@
 | `SURVEY` | `existing_survey`, `survey_data_edit`, `asset_ledger_import`, `survey_ledger_matching` |
 | `REMODEL` | `remodel_edit_list` |
 | `NORMAL_EDIT` | `normal_edit_list` |
-| `TASK` | `remodel_purchase`, `remodel_order`, `remodel_acceptance`, `normal_purchase`, `normal_order`, `normal_acceptance`, `normal_quotation`, `normal_ship_request`, `transfer_disposal`, `repair_management`, `maintenance_contract`, `inspection_management`, `lending_management` |
+| `TASK` | `remodel_purchase`, `remodel_order`, `remodel_acceptance`, `normal_purchase`, `normal_order`, `normal_acceptance`, `normal_quotation`, `normal_ship_request`, `ship_proxy_task`, `transfer_disposal`, `repair_management`, `maintenance_contract`, `inspection_management`, `lending_management` |
 | `MASTER_ADMIN` | `asset_master_list`, `asset_master_edit`, `facility_master_list`, `facility_master_edit`, `facility_feature_edit`, `ship_dept_master_list`, `ship_dept_master_edit`, `hospital_dept_master_list`, `hospital_dept_master_edit`, `vendor_master_list`, `vendor_master_edit` |
 
-付記: `lending_in_use_used` は `MAINTENANCE_REQUEST` 配下の操作機能として分類するが、メニュー表示条件には単独で使わない。実効利用には `lending_checkout` の実効権限も必須とする。
+付記: `lending_in_use_used` は `MAINTENANCE_REQUEST` 配下の操作機能として分類するが、メニュー表示条件には単独で使わない。実効利用には `lending_checkout` の実効権限も必須とする。`ship_proxy_task` は `TASK` 分類の機能として扱うが、タスク管理メニュー表示条件には含めず、施設選択画面の `SHIP依頼一覧へ` ボタンを直接制御する。
 
 ## 7. 今回外した旧候補
 
