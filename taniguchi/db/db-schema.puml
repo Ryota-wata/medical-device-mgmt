@@ -1188,6 +1188,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     廃棄理由コード / disposal_reason_code : varchar
     廃棄理由詳細 / disposal_reason_text : varchar
     関連購入申請ID / related_purchase_application_id : bigint
+    関連修理申請ID / related_repair_application_id : bigint
     廃棄業者ID / vendor_id : bigint
     廃棄業者名 / vendor_name : varchar
     受付部署 / reception_department : varchar
@@ -1655,9 +1656,20 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     --
     保守契約ID / maintenance_contract_id : bigint
     資産台帳ID / asset_ledger_id : bigint
+    点検グループ名 / inspection_group_name : varchar
+    点検種別 / inspection_type : varchar
+    点検周期(月) / inspection_cycle_months : int
     年間点検回数 / inspection_count_per_year : int
+    保証開始日 / warranty_start_on : date
+    保証終了日 / warranty_end_on : date
     部品免責条件 / parts_exemption_text : varchar
+    部品免責フラグ / parts_exemption_flag : boolean
+    免責金額 / exemption_amount : decimal(14,2)
     補償条件 / compensation_text : varchar
+    オンコール対応 / on_call_support : boolean
+    リモート対応 / remote_maintenance_available : boolean
+    法定点検フラグ / legal_inspection_flag : boolean
+    法定点検根拠 / legal_inspection_basis : varchar
     期中除外フラグ / excluded_flag : boolean
     備考 / remarks : varchar
     作成日時 / created_at : timestamp
@@ -1777,7 +1789,10 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     --
     資産台帳ID / asset_ledger_id : bigint
     ステータス / status : varchar
+    貸出グループ名 / lending_group_name : varchar
+    貸出種別名 / lending_type_name : varchar
     返却期限日数 / return_period_days : int
+    返却アラート発生日数 / return_alert_days : int
     定数配置フラグ / fixed_placement_flag : boolean
     定数配置部署 / fixed_placement_department : varchar
     フリーコメント / free_comment : varchar
@@ -2993,6 +3008,7 @@ applications ||--|| transfer_application_details : ""
 applications ||--|| disposal_application_details : ""
 applications ||--o{ transfer_application_details : "related_purchase_application_id"
 applications ||--o{ disposal_application_details : "related_purchase_application_id"
+applications ||--o{ disposal_application_details : "related_repair_application_id"
 applications ||--|| repair_request_details : ""
 applications ||--o{ rfq_applications : ""
 applications ||--o{ maintenance_contracts : ""

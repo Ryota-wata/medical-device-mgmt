@@ -2,7 +2,7 @@
   DocTitle = 'API設計書_購入管理タブ'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_購入管理タブ.docx'
   CoverDate = '2026年5月14日'
-  Revision = '2026/5/14 親設計書方針見直し'
+  Revision = '2026/5/14 親設計書方針見直し・最新モック整合'
   ScreenLabel = '購入管理タブ'
   Sections = @(
     @{
@@ -12,7 +12,8 @@
         '親設計書としての対象範囲は、起票済み購入申請の受付・詳細参照・却下、購入管理タブ起点の編集リスト取り込み/通常購入RFQグループ作成、見積（発注）グループ一覧、RFQグループ詳細、依頼先業者の保存、依頼書プレビュー、個別見積依頼送信、見積ファイル登録、見積登録/発注見積登録、発注登録、納品日登録、検収登録、資産登録、RFQグループ削除である。',
         '資産一覧画面から実行できる新規購入/増設購入/更新購入申請の起票APIはNo.16「資産申請起票」で定義し、本書には含めない。本書は起票済み購入申請を購入管理タブで受け付けた後の進行管理を対象とする。',
         'SHIP代理作業依頼の作成・一覧・担当取得・差戻し・完了・取消はNo.19a「API設計書_SHIP代理作業依頼」で定義済みのため、本書では重複定義しない。購入管理タブ/RFQ画面からSHIPへ依頼する場合は、No.19aのAPIを呼び出す。',
-        'リモデル申請画面内の編集リスト本体・明細操作およびリモデル管理タブ起点の後続進行はNo.17「リモデル管理タブ」で定義する。購入管理タブ起点の購入申請取り込み、通常購入RFQグループ作成導線、通常購入フローの見積登録から資産登録までは本書の拡張改訂で内包する。'
+        'リモデル申請画面内の編集リスト本体・明細操作およびリモデル管理タブ起点の後続進行はNo.17「リモデル管理タブ」で定義する。購入管理タブ起点の購入申請取り込み、通常購入RFQグループ作成導線、通常購入フローの見積登録から資産登録までは本書の拡張改訂で内包する。',
+        'Phase1ではOCR抽出、OCRジョブ制御、OCR結果取込APIを扱わない。現行モック上のOCR明細確認/結果表示は、見積原本を見ながら手動入力した明細の確認画面として扱う。'
       )
       Tables = @(
         @{
@@ -48,7 +49,8 @@
         'facilityIdを明示指定するAPIでは、ログインユーザーが当該施設を担当施設として参照でき、かつ対象機能コードが有効であることをサーバー側で検証する。facilityId省略時はセッションの選択中施設を既定値とする。',
         '一覧APIはlimit/cursor方式のページングを使用する。limitの既定値は50、最大値は200とする。',
         'POST/PUT/DELETE APIは、二重送信抑止のためIdempotency-KeyまたはexpectedUpdatedAtを受け付ける。競合を検出した場合は409を返却する。',
-        'RFQはrfqsをグループの正とし、rfq_vendorsを依頼先業者の正とする。APIレスポンスでは画面表示に合わせて業者行へ展開するが、rfqsを業者数分複製して登録してはならない。'
+        'RFQはrfqsをグループの正とし、rfq_vendorsを依頼先業者の正とする。APIレスポンスでは画面表示に合わせて業者行へ展開するが、rfqsを業者数分複製して登録してはならない。',
+        '購入管理タブから共通画面へ遷移するAPIは、rfqGroupId、必要に応じてquotationIdまたはdraftId、managementType=PURCHASE、returnTo=/quotation-data-box/purchase-managementを保持し、共通画面完了後の戻り先と状態遷移をぶらさない。'
       )
       Tables = @(
         @{
@@ -57,6 +59,7 @@
           Rows = @(
             @('normal_purchase', '通常購入管理', '購入申請一覧・詳細・却下、購入管理タブ起点の編集リスト取り込み、通常購入RFQ作成、RFQ詳細、業者保存、個別送信、見積登録までを扱う。'),
             @('normal_order / normal_acceptance', '通常購入の後続ステップ', '購入管理タブのRFQ進捗一覧参照、発注登録、納品日登録、検収登録、資産登録の実行可否判定に利用する。'),
+            @('normal_quotation', '通常購入の見積管理', '購入管理タブの見積管理行や見積参照系の表示可否判定に利用する。'),
             @('normal_ship_request', 'SHIP代理作業依頼', '本書対象外。No.19aのAPIで作成・一覧・担当取得・差戻し・完了・取消を扱う。')
           )
         },
@@ -66,11 +69,11 @@
           Rows = @(
             @('すべて', '完了、申請を見送るを除く全ステータス', '購入管理タブの既定表示。'),
             @('1 見積依頼/登録', '見積依頼、見積依頼済、見積DB登録済', 'RFQプロセス、業者送信、見積ファイル登録の主対象。'),
-            @('2 発注見積依頼', '見積登録依頼中、発注用見積依頼済', '購入管理タブ起点の発注見積登録APIとして本書に内包する。'),
-            @('3 発注登録', '発注見積登録済', '購入管理タブ起点の発注登録APIとして本書に内包する。'),
-            @('4 納品日登録', '発注済', '購入管理タブ起点の納品日登録APIとして本書に内包する。'),
-            @('5 検収登録', '納期確定', '購入管理タブ起点の検収登録APIとして本書に内包する。'),
-            @('6 資産登録', '検収済', '購入管理タブ起点の資産登録APIとして本書に内包する。')
+            @('2 発注登録', '発注見積登録済', '購入管理タブ起点の発注登録APIとして本書に内包する。'),
+            @('3 納品日登録', '発注済', '購入管理タブ起点の納品日登録APIとして本書に内包する。'),
+            @('4 検収登録', '納期確定', '購入管理タブ起点の検収登録APIとして本書に内包する。'),
+            @('5 資産登録', '検収済', '購入管理タブ起点の資産登録APIとして本書に内包する。'),
+            @('内部ステータス', '見積登録依頼中、発注用見積依頼済', 'RFQ/SHIP代理作業連携の内部ステータス。現行購入管理タブでは独立タブを設けず、すべてタブと行別操作判定で扱う。')
           )
         },
         @{
@@ -117,6 +120,7 @@
         'RFQ個別送信はrfq_vendors.request_statusがDRAFTの業者行に限定する。送信時にrfq_vendors.request_statusをSENTへ更新し、requested_at、requested_by_user_idを設定する。rfqs.statusは見積依頼から見積依頼済へ進める。',
         'SHIP代理作業依頼は外部送信ではなく、SHIPユーザーへの内部代理作業依頼である。RFQ個別送信とは状態更新対象が異なり、SHIP代理作業依頼の作成ではrfq_vendors.request_statusをSENTへ変更しない。',
         '見積ファイル登録APIは、ファイル実体がアップロード済みであることを前提にメタデータをapplication_documentsへ登録する。購入管理タブ起点の見積明細登録、発注見積登録、発注登録、納品日登録、検収登録、資産登録は本書の親設計書範囲に含める。OCRジョブ管理などPhase2共通化が必要な処理のみNo.20で扱う。',
+        '見積登録依頼中および発注用見積依頼済は独立した購入管理ステップタブではなく、RFQ/SHIP代理作業連携の内部状態として扱う。必要な操作はすべてタブとavailableActionsで表現する。',
         'RFQ削除は未送信・未処理のRFQに限定する。送信済み業者、見積、注文、SHIP代理作業依頼、またはRFQ配下ドキュメントが存在する場合は削除不可とする。'
       )
     }
@@ -294,7 +298,7 @@
       Method = 'GET'
       Path = '/quotation-data-box/rfq-groups'
       Summary = '購入管理タブの見積（発注）グループ一覧を取得する。'
-      Auth = 'Bearer必須。managementTypeはPURCHASEのみを対象とし、normal_purchase/normal_order/normal_acceptanceのいずれかが対象施設で有効であること。REMODELはNo.17「リモデル管理タブ」で扱う。'
+      Auth = 'Bearer必須。managementTypeはPURCHASEのみを対象とし、normal_purchase/normal_order/normal_acceptance/normal_quotationのいずれかが対象施設で有効であること。REMODELはNo.17「リモデル管理タブ」で扱う。'
       RequestTables = @(
         @{
           Title = 'クエリパラメータ'
@@ -302,7 +306,7 @@
           Rows = @(
             @('facilityId', 'int64', '任意', '対象施設ID。省略時は選択中施設。'),
             @('managementType', 'enum', '任意', 'PURCHASE。省略時はPURCHASEとして扱う。REMODELはNo.17「リモデル管理タブ」で扱う。'),
-            @('step', 'enum', '任意', 'ALL, QUOTATION, ORDER_QUOTATION, ORDER, DELIVERY_DATE, ACCEPTANCE, ASSET_REGISTRATION。既定ALL。'),
+            @('step', 'enum', '任意', 'ALL, QUOTATION, ORDER, DELIVERY_DATE, ACCEPTANCE, ASSET_REGISTRATION。既定ALL。見積登録依頼中/発注用見積依頼済は独立stepにしない。'),
             @('status', 'string', '任意', 'RFQステータスを直接指定する場合に使用。'),
             @('editListId', 'int64', '任意', '編集リストID。'),
             @('keyword', 'string', '任意', 'RFQ番号、RFQグループ名、業者名、品目名の部分一致。'),
@@ -331,7 +335,6 @@
             @('items[].availableActions[]', 'string', '画面で有効化する操作。rfqProcess, shipProxyRequest, orderRegister等。'),
             @('tabCounts.all', 'number', 'すべてタブ件数。'),
             @('tabCounts.quotation', 'number', '見積依頼/登録タブ件数。'),
-            @('tabCounts.orderQuotation', 'number', '発注見積依頼タブ件数。'),
             @('tabCounts.order', 'number', '発注登録タブ件数。'),
             @('tabCounts.deliveryDate', 'number', '納品日登録タブ件数。'),
             @('tabCounts.acceptance', 'number', '検収登録タブ件数。'),
