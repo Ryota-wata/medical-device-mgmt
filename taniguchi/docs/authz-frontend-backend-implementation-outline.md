@@ -141,7 +141,7 @@
 - 例:
   - `config_scope='FACILITY_USER'` の機能は施設提供機能更新 API で施設提供可否を管理し、ユーザー施設別機能更新 API でユーザーごとの利用可否を管理する
   - 施設側で OFF の機能をユーザー側だけ ON にできない
-  - `usage_context='EXTERNAL'` ではない機能を他施設公開設定へ登録できない
+  - 他施設公開設定へ登録できる機能は原則 `usage_context='EXTERNAL'` に限定する。資産一覧・資産詳細の公開設定は `機能要件.md` の正本に従い、既存の `original_list_view` を登録対象とする
 
 ### 3-4. 業務 API の認可
 
@@ -150,12 +150,11 @@
   - 資産一覧 API は `original_list_view` を判定する
   - 資産一覧の管理部署一括更新 API は `original_list_view` と `management_department_edit` を合わせて判定し、`original_list_edit` では代替しない
   - ユーザー管理 API は `user_list_view` / `user_edit` / `user_facility_assignment_edit` を処理単位で判定する
-  - 購入管理タブのSHIPへ一括依頼 API は `normal_ship_request` を判定し、`normal_purchase` だけでは実行できない。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合だけ許可する
-  - 施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業 API は `ship_proxy_task` を判定する。`ship_proxy_task` は `config_scope='FACILITY_USER'` とし、対象ユーザーが `account_type='SHIP'` で、施設提供設定とユーザー施設別設定の両方が ON の場合だけ許可する。ユーザー管理 API では対象ユーザーが `account_type='SHIP'` の場合のみ新規作成/変更時に表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する
+  - 購入管理タブのSHIPへ一括依頼ボタンは `normal_ship_request` を判定し、`normal_purchase` だけでは表示しない。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合だけ許可する
   - 貸出返却画面の使用中/使用済みモーダル・ボタン API は `lending_checkout` と `lending_in_use_used` の両方を判定し、どちらか一方だけでは使用中/使用済みフローを実行できない。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON で、かつ親機能 `lending_checkout` の実効権限も有効な場合だけ許可する。施設提供設定で `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、現在状態または `returned_on IS NULL` の未返却履歴に `使用中` / `使用済` 状態が残っていないことを保存時に検証する。ユーザー施設別設定で `lending_in_use_used` を OFF にする場合は当該ユーザーの権限だけを無効化し、既存の使用中/使用済みデータは権限を持つ別ユーザーまたは再付与後の同一ユーザーが後続処理する
   - QRコード発行 API は `qr_issue` を判定する
   - 棚卸し完了 API は `inventory` と `inventory_complete` を合わせて判定する
-- 他施設公開の枠組みはテーブル設計上は維持するが、最新の `権限管理単位一覧` シートには external 専用 `feature_code` / `column_code` が含まれていないため、具体コードの追加は別途設計とする
+- 施設グループ管理の `estimate` / `history` 設定値保持には、`usage_context='EXTERNAL'` の `external_estimate_view` / `external_data_history_view` を使用する
 
 ### 3-5. レスポンス整形
 

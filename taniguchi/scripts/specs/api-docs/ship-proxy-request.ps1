@@ -1,9 +1,9 @@
 ﻿@{
     TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-    OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_SHIP代理作業依頼.docx'
+    OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\feature\API設計書_SHIP代理作業依頼.docx'
     ScreenLabel = 'SHIP代理作業依頼'
-    CoverDateText = '2026年5月12日'
-    RevisionDateText = '2026/5/12'
+    CoverDateText = '2026年5月16日'
+    RevisionDateText = '2026/5/16'
     Sections = @(
         @{
             Type = 'Heading1'
@@ -15,7 +15,7 @@
         },
         @{
             Type = 'Paragraph'
-            Text = '本書は、購入管理の見積登録・マスタ紐づけ等の作業をSHIPユーザーへ内部的に代理依頼する「SHIP代理作業依頼」機能のAPI仕様を定義する。対象は、病院ユーザーによる依頼作成、SHIPユーザーによる依頼一覧参照・詳細参照・担当取得・差戻し・完了、および病院ユーザーによる依頼取消である。'
+            Text = '本書は、購入管理およびリモデル管理の見積登録・マスタ紐づけ等の作業をSHIPユーザーへ内部的に代理依頼する「SHIP代理作業依頼」機能のAPI仕様を定義する。対象は、病院ユーザーによる依頼作成、SHIPユーザーによる依頼一覧参照・詳細参照・担当取得・差戻し・完了、および病院ユーザーによる依頼取消である。本書はPhase2活用用の参考成果物であり、Phase1のFix成果物には含めない。'
         },
         @{
             Type = 'Paragraph'
@@ -51,11 +51,11 @@
             Headers = @('区分', '名称', '関連内容')
             Rows = @(
                 @('画面', '23a. /quotation-data-box/ship-proxy-requests', 'SHIP代理作業依頼一覧・詳細導線')
-                @('画面', '51. 注文書作成 / 55. リモデル履歴登録 / 60. RFQ作成管理', '依頼元RFQ・購入管理業務')
+                @('画面', '51. 購入管理 / 55. リモデル管理 / 60. RFQ作成管理', '依頼元RFQ・購入管理/リモデル管理業務')
                 @('要件', '機能要件.md 8.3.9.13', 'SHIP依頼一覧画面の表示条件、一覧、操作')
                 @('要件', '機能要件.md 12.4.2', 'SHIP代理作業依頼テーブル定義')
                 @('DB', 'db-schema.puml', 'ship_proxy_requests / ship_proxy_request_vendors / ship_proxy_request_status_histories')
-                @('API一覧', 'API設計書_一覧.md No.19', '購入管理・リモデル管理・RFQ・SHIP代理作業依頼')
+                @('API一覧', 'API設計書_一覧.md No.17 / No.19 / No.19a', 'リモデル管理・購入管理・SHIP代理作業依頼')
             )
         },
         @{
@@ -67,13 +67,14 @@
             Title = '用語定義'
             Headers = @('用語', '定義')
             Rows = @(
-                @('SHIP代理作業依頼', '病院ユーザーが、購入管理・RFQに関する作業をSHIPユーザーへ内部的に代理依頼する単位。ship_proxy_requestsで管理する。')
+                @('SHIP代理作業依頼', '病院ユーザーが、購入管理/リモデル管理のRFQに関する作業をSHIPユーザーへ内部的に代理依頼する単位。ship_proxy_requestsで管理する。')
                 @('依頼元施設', '依頼を作成した病院施設。ship_proxy_requests.requesting_facility_idで管理する。')
                 @('対象業者', '代理作業の対象となるRFQ業者行。ship_proxy_request_vendors.rfq_vendor_idで管理する。')
                 @('担当取得', 'SHIPユーザーが依頼を自分の担当としてIN_PROGRESSへ遷移させる操作。')
                 @('差戻し', 'SHIPユーザーが代理作業継続不可の理由を登録し、RETURNEDへ遷移させる操作。')
                 @('完了', 'SHIPユーザーが代理作業完了を登録し、COMPLETEDへ遷移させる操作。')
-                @('normal_ship_request', '病院ユーザー側でSHIP代理作業依頼を作成・取消できる機能コード。')
+                @('normal_ship_request', '購入管理RFQで、病院ユーザー側がSHIP代理作業依頼を作成・取消できる機能コード。')
+                @('remodel_ship_request', 'リモデル管理RFQで、病院ユーザー側がSHIP代理作業依頼を作成・取消できる機能コード。')
                 @('ship_proxy_task', 'SHIPユーザー側でSHIP代理作業依頼一覧を表示し、依頼に対して作業できる機能コード。')
             )
         },
@@ -160,8 +161,8 @@
             Title = '認可仕様'
             Headers = @('操作', '認可条件')
             Rows = @(
-                @('依頼作成', 'ログインユーザーの選択中施設が対象RFQの施設と一致し、当該施設でnormal_ship_requestの実効権限が成立すること。')
-                @('依頼取消', 'ログインユーザーの選択中施設が依頼元施設と一致し、当該施設でnormal_ship_requestの実効権限が成立すること。')
+                @('依頼作成', 'ログインユーザーの選択中施設が対象RFQの施設と一致し、対象RFQのmanagement_typeがPURCHASEの場合はnormal_ship_request、REMODELの場合はremodel_ship_requestの実効権限が当該施設で成立すること。')
+                @('依頼取消', 'ログインユーザーの選択中施設が依頼元施設と一致し、対象RFQのmanagement_typeがPURCHASEの場合はnormal_ship_request、REMODELの場合はremodel_ship_requestの実効権限が当該施設で成立すること。')
                 @('一覧取得', 'users.account_typeがSHIPであり、少なくとも1施設に対してship_proxy_taskの実効権限が成立すること。')
                 @('詳細取得', 'users.account_typeがSHIPであり、依頼元施設に対してship_proxy_taskの実効権限が成立すること。')
                 @('担当取得', '詳細取得条件を満たし、対象依頼が未担当または自分が担当中であること。')
@@ -171,7 +172,7 @@
         },
         @{
             Type = 'Paragraph'
-            Text = 'normal_ship_requestおよびship_proxy_taskはconfig_scope=FACILITY_USERの機能コードとして扱い、facility_feature_settings.is_enabled=trueかつuser_facility_feature_settings.is_enabled=trueの場合のみ実効権限が成立する。API実行時は画面表示条件に依存せず、各APIで実効権限を再判定する。'
+            Text = 'normal_ship_request、remodel_ship_requestおよびship_proxy_taskはconfig_scope=FACILITY_USERの機能コードとして扱い、facility_feature_settings.is_enabled=trueかつuser_facility_feature_settings.is_enabled=trueの場合のみ実効権限が成立する。API実行時は画面表示条件に依存せず、各APIで実効権限を再判定する。'
         },
         @{
             Type = 'Paragraph'
@@ -246,7 +247,7 @@
                     Overview = 'RFQグループに紐づく未送信業者を対象に、SHIP代理作業依頼を作成する。外部SHIP送信は行わず、内部依頼レコードのみを作成する。'
                     Method = 'POST'
                     Path = '/quotation-data-box/rfq-groups/{rfqGroupId}/ship-proxy-request'
-                    Auth = 'Bearer Token（normal_ship_request）'
+                    Auth = 'Bearer Token（PURCHASE: normal_ship_request / REMODEL: remodel_ship_request）'
                     ParametersTitle = 'パスパラメータ'
                     ParametersHeaders = @('項目', '型', '必須', '説明')
                     ParametersRows = @(
@@ -260,7 +261,7 @@
                     PermissionLines = @(
                         'ログイン済みであること。',
                         '選択中施設が対象RFQの依頼元施設と一致すること。',
-                        '選択中施設でnormal_ship_requestの実効権限が成立すること。'
+                        '対象RFQのmanagement_typeがPURCHASEの場合は選択中施設でnormal_ship_request、REMODELの場合はremodel_ship_requestの実効権限が成立すること。'
                     )
                     ProcessingLines = @(
                         '対象RFQを取得し、ログインユーザーの選択中施設とrfqs.facility_idが一致することを検証する。',
@@ -289,7 +290,7 @@
                         @('201', '作成成功', 'ShipProxyRequestCreateResponse')
                         @('400', '入力形式不正', 'ErrorResponse')
                         @('401', '未認証', 'ErrorResponse')
-                        @('403', 'normal_ship_request権限なし、または施設不一致', 'ErrorResponse')
+                        @('403', 'normal_ship_request/remodel_ship_request権限なし、または施設不一致', 'ErrorResponse')
                         @('404', 'RFQが存在しない', 'ErrorResponse')
                         @('409', 'RFQステータス不正、依頼対象業者なし、または未完了依頼が存在する', 'ErrorResponse')
                     )
@@ -638,7 +639,7 @@
                     Overview = '病院ユーザーが、未完了のSHIP代理作業依頼を取消す。IN_PROGRESSの依頼はSHIPユーザーの差戻し後に取消可能とする。'
                     Method = 'POST'
                     Path = '/quotation-data-box/ship-proxy-requests/{shipProxyRequestId}/cancel'
-                    Auth = 'Bearer Token（normal_ship_request）'
+                    Auth = 'Bearer Token（PURCHASE: normal_ship_request / REMODEL: remodel_ship_request）'
                     ParametersTitle = 'パスパラメータ'
                     ParametersHeaders = @('項目', '型', '必須', '説明')
                     ParametersRows = @(
@@ -653,7 +654,7 @@
                     PermissionLines = @(
                         'ログイン済みであること。',
                         '選択中施設が対象依頼の依頼元施設と一致すること。',
-                        '選択中施設でnormal_ship_requestの実効権限が成立すること。'
+                        '対象RFQのmanagement_typeがPURCHASEの場合は選択中施設でnormal_ship_request、REMODELの場合はremodel_ship_requestの実効権限が成立すること。'
                     )
                     ProcessingLines = @(
                         '対象依頼を行ロック付きで取得する。',
@@ -678,7 +679,7 @@
                         @('200', '取消成功', 'ShipProxyRequestCancelResponse')
                         @('400', '入力形式不正', 'ErrorResponse')
                         @('401', '未認証', 'ErrorResponse')
-                        @('403', 'normal_ship_request権限なし、または施設不一致', 'ErrorResponse')
+                        @('403', 'normal_ship_request/remodel_ship_request権限なし、または施設不一致', 'ErrorResponse')
                         @('404', '依頼が存在しない', 'ErrorResponse')
                         @('409', '状態不正、またはupdated_at不一致', 'ErrorResponse')
                     )

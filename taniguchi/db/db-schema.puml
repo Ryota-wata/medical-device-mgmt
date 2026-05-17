@@ -28,9 +28,8 @@ package "認証・ユーザー" {
     SYSTEM_FIXED = 固定導線
     FACILITY = 施設設定のみ
     FACILITY_USER = 施設設定 + ユーザー施設別設定
-    normal_ship_request / ship_proxy_task / lending_in_use_used は FACILITY_USER とする。
-    ship_proxy_task は users.account_type = SHIP の
-    ユーザーに限り実効利用できる。
+    Phase1では normal_ship_request /
+    lending_in_use_used は FACILITY_USER とする。
     lending_in_use_used の実効利用には lending_checkout も必須。
   end note
 
@@ -140,10 +139,8 @@ package "認証・ユーザー" {
   note right of user_facility_feature_settings
     config_scope が FACILITY_USER の
     feature_code のみ保持する。
-    normal_ship_request / ship_proxy_task / lending_in_use_used も
-    FACILITY_USER として保持する。
-    ship_proxy_task は対象ユーザーの
-    account_type が SHIP の場合のみ有効。
+    Phase1では normal_ship_request /
+    lending_in_use_used も FACILITY_USER として保持する。
   end note
 
   entity "user_facility_column_settings" as user_facility_column_settings {
@@ -232,7 +229,7 @@ package "施設・ロケーション" {
     * 他施設公開データ設定ID / facility_external_view_setting_id : bigint
     --
     公開元施設ID / provider_facility_id : bigint
-    機能コード / feature_code : varchar
+    共有データ種別 / sharing_data_type : varchar
     有効フラグ / is_enabled : boolean
     作成者ユーザーID / created_by : bigint
     更新者ユーザーID / updated_by : bigint
@@ -572,6 +569,28 @@ package "資産台帳" {
     未解決時は NULL を許容する。
   end note
 
+  entity "asset_ledger_histories" as asset_ledger_histories {
+    * 資産台帳履歴ID / asset_ledger_history_id : bigint
+    --
+    資産台帳ID / asset_ledger_id : bigint
+    変更元種別 / change_source_type : varchar
+    変更元ID / change_source_id : bigint
+    変更種別 / change_type : varchar
+    変更前値JSON / before_values_json : json
+    変更後値JSON / after_values_json : json
+    変更者ユーザーID / changed_by_user_id : bigint
+    変更日時 / changed_at : timestamp
+    作成日時 / created_at : timestamp
+  }
+
+  note right of asset_ledger_histories
+    リモデルダッシュボードのクローズなど、
+    原本 asset_ledgers を業務処理で更新した
+    監査履歴を保持する。
+    change_source_type='EDIT_LIST_CLOSE' の場合、
+    change_source_id は edit_list_id。
+  end note
+
   entity "asset_documents <<VIEW>>" as asset_documents {
     * 資産ドキュメントID / asset_document_id : bigint
     --
@@ -746,10 +765,23 @@ package "編集リスト" {
     リスト種別 / list_type : varchar
     ステータス / status : varchar
     最終アクセス日時 / last_accessed_at : timestamp
+    クローズ日時 / closed_at : timestamp
+    クローズ実行者ユーザーID / closed_by_user_id : bigint
+    クローズ備考 / close_note : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
   }
+
+  note right of edit_lists
+    list_type は作成導線で決定する。
+    購入管理タブの申請受付から作成する
+    通常編集リストは PURCHASE、
+    リモデル管理起点は REMODEL、
+    ホーム画面の汎用編集リストは OTHER とする。
+    status=CLOSED はリモデル管理の
+    原本反映完了後の読み取り専用状態。
+  end note
 
   entity "edit_list_facilities" as edit_list_facilities {
     * 編集リスト対象施設ID / edit_list_facility_id : bigint
@@ -767,8 +799,10 @@ package "編集リスト" {
     行番号 / row_no : int
     明細ソース種別 / source_type : varchar
     参照資産台帳ID / source_asset_ledger_id : bigint
+    更新元編集リスト明細ID / update_source_edit_list_item_id : bigint
     参照申請ID / source_application_id : bigint
     参照申請明細ID / source_application_asset_id : bigint
+    参照見積明細ID / source_quotation_item_id : bigint
     SHIP資産マスタID / ship_asset_master_id : bigint
     コピー元施設ID / source_facility_id : bigint
     原本コピー日時 / copied_from_ledger_at : timestamp
@@ -784,6 +818,14 @@ package "編集リスト" {
     諸室区分② / room_class2 : varchar
     諸室名称 / room_name : varchar
     設置場所 / installation_location : varchar
+    リモデル方針 / remodel_decision : varchar
+    リモデル後施設ID / target_facility_id : bigint
+    リモデル後棟 / target_building_name : varchar
+    リモデル後階 / target_floor_name : varchar
+    リモデル後部門名 / target_department_name : varchar
+    リモデル後部署名 / target_section_name : varchar
+    リモデル後諸室名称 / target_room_name : varchar
+    リモデル後設置場所 / target_installation_location : varchar
     品目ID / asset_item_id : bigint
     メーカーID / manufacturer_id : bigint
     型式ID / model_id : bigint
@@ -818,6 +860,7 @@ package "編集リスト" {
     End of support：メンテ終了 / end_of_support_on : date
     見積依頼No. / rfq_no : varchar
     グループ名称 / rfq_group_name : varchar
+    RFQ割当ステータス / rfq_assignment_status : varchar
     見積業者ID / rfq_vendor_id : bigint
     見積金額 / rfq_amount : decimal(14,2)
     要望区分 / application_category : varchar
@@ -828,6 +871,15 @@ package "編集リスト" {
     申請部署 / applicant_department : varchar
     申請日 / application_date : date
     優先順位 / priority : varchar
+    要望1品目 / request_item_1 : varchar
+    要望1メーカー / request_maker_1 : varchar
+    要望1型式 / request_model_1 : varchar
+    要望2品目 / request_item_2 : varchar
+    要望2メーカー / request_maker_2 : varchar
+    要望2型式 / request_model_2 : varchar
+    要望3品目 / request_item_3 : varchar
+    要望3メーカー / request_maker_3 : varchar
+    要望3型式 / request_model_3 : varchar
     用途 / usage_purpose : varchar
     症例数 / case_count : varchar
     コメント / comment_text : varchar
@@ -835,6 +887,10 @@ package "編集リスト" {
     現在の接続先 / current_connection_destination : varchar
     接続要望 / request_connection_status : varchar
     要望接続先 / request_connection_destination : varchar
+    原本反映ステータス / reflection_status : varchar
+    原本反映日時 / reflected_at : timestamp
+    原本反映者ユーザーID / reflected_by_user_id : bigint
+    原本反映エラー理由 / reflection_error_reason : varchar
     レコード状態 / record_status : varchar
     追加者ユーザーID / added_by_user_id : bigint
     追加日時 / added_at : timestamp
@@ -843,6 +899,71 @@ package "編集リスト" {
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
   }
+
+  note right of edit_list_items
+    remodel_decision:
+    NEW / REPLACE / ADDITION / DISPOSAL /
+    TRANSFER / UNDECIDED。
+    リモデル画面の 新規 / 更新 / 増設 /
+    廃棄予定 / 移設 に対応する。
+    REPLACE の追加行は
+    update_source_edit_list_item_id で
+    更新元行を参照する。
+    reflection_status:
+    PENDING / REFLECTED / SKIPPED / ERROR。
+    リモデルダッシュボードのクローズで
+    原本へ反映した結果を保持する。
+  end note
+
+  note right of edit_list_items
+    現行モックは原本資産を baseAssets、
+    追加明細を items として保持し、
+    追加明細の画面上No.を 90000+index で
+    表現している。
+    DB/APIではこの分離を採用せず、
+    edit_list_items に統合して
+    edit_list_item_id を正本キーとする。
+  end note
+
+  note right of edit_list_items
+    row_no は編集リスト内の表示順。
+    行順変更時は同一 edit_list_id 内で
+    row_no を再採番する。
+    レコード削除は deleted_at による
+    論理削除とし、原本 asset_ledgers や
+    元 applications/application_assets は
+    更新しない。
+  end note
+
+  note right of edit_list_items
+    source_type=BASE_ASSET は
+    (edit_list_id, source_type, source_asset_ledger_id)
+    で重複コピーを防止する。
+    source_type=APPLICATION は
+    (edit_list_id, source_type,
+     source_application_id, source_application_asset_id)
+    で重複取り込みを防止する。
+    source_type=QUOTATION は
+    見積DB Link の未紐付け見積明細から
+    追加した編集リスト明細を表し、
+    source_quotation_item_id と
+    quotation_item_application_links で
+    追加元見積明細を追跡する。
+    quotation_no は見積番号、
+    rfq_group_name はRFQグループ名として
+    別項目で保持し、見積番号を
+    RFQグループ名へ転記しない。
+    source_type 別必須項目は CHECK 制約で
+    担保する。
+    BASE_ASSET は source_asset_ledger_id、
+    APPLICATION は source_application_id と
+    source_application_asset_id、
+    QUOTATION は source_quotation_item_id を
+    それぞれ必須とする。
+    RFQ詳細/依頼書プレビューの対象明細は
+    rfq_applications を正本とし、
+    同一編集リスト内の全明細を返さない。
+  end note
 
   entity "edit_list_item_attachments <<VIEW>>" as edit_list_item_attachments {
     * 編集リスト添付ID / edit_list_item_attachment_id : bigint
@@ -872,6 +993,52 @@ package "編集リスト" {
     - Data Link / 資産マスタ選択時の値コピーを保持する
     - 親 SHIP資産マスタ更新には自動追従しない
     - (edit_list_item_id, ship_asset_master_custom_column_id) を一意とする
+  end note
+
+  entity "edit_list_free_columns" as edit_list_free_columns {
+    * 編集リストフリーカラムID / edit_list_free_column_id : bigint
+    --
+    編集リストID / edit_list_id : bigint
+    カラムキー / column_key : varchar(100)
+    カラム名 / column_name : varchar(200)
+    表示順 / sort_order : int
+    作成者ユーザーID / created_by_user_id : bigint
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
+  }
+
+  note right of edit_list_free_columns
+    編集リスト画面で利用者が追加する
+    リスト内限定の任意列。
+    SHIP資産マスタ任意カラムとは別管理。
+    active 行（deleted_at IS NULL）に対して
+    UNIQUE(edit_list_id, column_key)。
+    列削除時は deleted_at を設定し、
+    紐づく edit_list_free_column_values も
+    同時に無効化する。
+  end note
+
+  entity "edit_list_free_column_values" as edit_list_free_column_values {
+    * 編集リストフリーカラム値ID / edit_list_free_column_value_id : bigint
+    --
+    編集リスト明細ID / edit_list_item_id : bigint
+    編集リストフリーカラムID / edit_list_free_column_id : bigint
+    値 / value_text : varchar(1000)
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
+  }
+
+  note right of edit_list_free_column_values
+    編集リストのフリーカラム入力値。
+    Data Link / セル編集 / 一括編集で
+    フリーカラムへ転記・入力した値も
+    本テーブルに保持する。
+    原本資産、SHIP資産マスタ、申請明細には
+    自動反映しない。
+    active 行（deleted_at IS NULL）に対して
+    UNIQUE(edit_list_item_id, edit_list_free_column_id)。
   end note
 }
 
@@ -1213,6 +1380,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     申請種別 / application_type : varchar
     登録済資産フラグ / is_registered_asset : boolean
     修理区分 / repair_category : varchar
+    点検結果ID / inspection_result_id : bigint
     QRコード値 / qr_code_value : varchar
     症状 / symptom_text : varchar
     フリーコメント / free_comment : varchar
@@ -1251,6 +1419,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   }
 
   entity "rfq_status_definitions" as rfq_status_definitions {
+    * ワークフロー種別 / workflow_type : varchar
     * ステータス / status : varchar
     --
     表示順 / display_order : int
@@ -1263,6 +1432,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   entity "rfq_status_transitions" as rfq_status_transitions {
     * 遷移定義ID / rfq_status_transition_id : bigint
     --
+    ワークフロー種別 / workflow_type : varchar
     遷移元ステータス / from_status : varchar
     遷移先ステータス / to_status : varchar
     遷移アクションコード / transition_action_code : varchar
@@ -1273,17 +1443,28 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   note right of rfq_status_definitions
     RFQステータスは購入管理タブの
     モック状態名にアラインする。
-    初期データ:
+    workflow_type 別に状態を管理し、
+    初期状態は各 workflow_type で1件とする。
+    RFQ 初期データ:
     見積依頼 / 見積依頼済 /
     見積DB登録済 / 見積登録依頼中 /
     発注用見積依頼済 / 発注見積登録済 /
     発注済 / 納期確定 / 検収済 /
     完了 / 申請を見送る。
-    完了と申請を見送るは終端状態。
+    DISPOSAL 初期データ:
+    廃棄承認待ち / 廃棄承認済み /
+    廃棄完了。
+    TRANSFER 初期データ:
+    移動承認待ち /
+    移動承認済み / 移動完了。
+    完了、申請を見送る、
+    廃棄完了、移動完了は終端状態。
   end note
 
   note right of rfq_status_transitions
-    少なくとも次の遷移を投入する。
+    workflow_type 別に少なくとも
+    次の遷移を投入する。
+    RFQ:
     見積依頼 -> 見積依頼済
     見積依頼済 -> 見積DB登録済
     見積DB登録済 -> 見積登録依頼中
@@ -1293,6 +1474,14 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     発注済 -> 納期確定
     納期確定 -> 検収済
     検収済 -> 完了
+    DISPOSAL:
+    廃棄承認待ち -> 廃棄承認済み
+    廃棄承認待ち -> 申請を見送る
+    廃棄承認済み -> 廃棄完了
+    TRANSFER:
+    移動承認待ち -> 移動承認済み
+    移動承認待ち -> 申請を見送る
+    移動承認済み -> 移動完了
   end note
 
   entity "rfqs" as rfqs {
@@ -1303,9 +1492,15 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     施設ID / facility_id : bigint
     編集リストID / edit_list_id : bigint
     管理種別 / management_type : varchar
+    ワークフロー種別 / workflow_type : varchar
+    見積区分 / quotation_type : varchar
+    見積フェーズ / quotation_phase : varchar
     ステータス / status : varchar
     依頼日 / requested_on : date
     回答期限 / due_on : date
+    承認日 / approved_on : date
+    却下日 / rejected_on : date
+    完了日 / completed_on : date
     コメント / remarks : varchar
     作成者ユーザーID / created_by_user_id : bigint
     最終ステータス更新日時 / last_status_changed_at : timestamp
@@ -1323,6 +1518,16 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     PURCHASE / REMODEL / DISPOSAL /
     REPAIR / MAINTENANCE を区分し、
     タブ別一覧の混在を防止する。
+    リモデル管理タブ内の通常見積、
+    廃棄、移動は management_type=REMODEL
+    かつ workflow_type=RFQ / DISPOSAL /
+    TRANSFER で区分する。
+    workflow_type 未指定の既存データは
+    RFQ とみなす。
+    quotation_type / quotation_phase は
+    リモデル管理タブの見積区分・
+    見積フェーズ絞り込み用の
+    RFQ単位スナップショット。
     一覧APIでは rfq_vendors を
     業者行へ展開して返す。
   end note
@@ -1347,6 +1552,30 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     DISPOSAL / REPAIR / MAINTENANCE は
     application_id と application_asset_id による
     直接リンクを許可する。
+    edit_list_id と edit_list_item_id が
+    設定される場合は複合FKで
+    edit_list_items を参照する。
+    edit_list_id が設定される場合は
+    (rfq_id, edit_list_id) の複合FKで
+    rfqs を参照し、RFQヘッダと明細が
+    同一編集リスト配下であることを担保する。
+    application_id と application_asset_id が
+    設定される場合は複合FKで
+    application_assets を参照する。
+    購入/リモデル起点で
+    edit_list_items.source_type=APPLICATION の場合、
+    source_application_id / source_application_asset_id と
+    本行の application_id / application_asset_id の
+    一致を BEFORE INSERT/UPDATE トリガで検証する。
+    rfq_application_asset_unique_key は
+    application_asset_id 設定時のみ
+    CONCAT(rfq_id, ':', application_asset_id) を返す
+    Aurora MySQL 用生成列。
+    同一RFQ内の重複採用防止は、
+    edit_list_item_id が設定される場合は
+    UNIQUE(rfq_id, edit_list_item_id)、
+    application_asset_id が設定される場合は
+    UNIQUE(rfq_application_asset_unique_key) で担保する。
   end note
 
   entity "rfq_vendors" as rfq_vendors {
@@ -1377,70 +1606,10 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     個別依頼送信は DRAFT 行だけを
     SENT に更新し、requested_at と
     requested_by_user_id を同一トランザクションで設定する。
-    SHIP一括依頼は外部送信ではなく
-    ship_proxy_requests / ship_proxy_request_vendors に
-    内部代理作業依頼を作成する。
-  end note
-
-  entity "ship_proxy_requests" as ship_proxy_requests {
-    * SHIP代理作業依頼ID / ship_proxy_request_id : bigint
-    --
-    依頼No. / request_no : varchar
-    依頼元施設ID / requesting_facility_id : bigint
-    見積依頼ID / rfq_id : bigint
-    依頼種別 / request_type : varchar
-    依頼ステータス / request_status : varchar
-    依頼事項 / request_note : varchar
-    依頼者ユーザーID / requested_by_user_id : bigint
-    依頼日時 / requested_at : timestamp
-    担当SHIPユーザーID / assigned_user_id : bigint
-    対応開始日時 / started_at : timestamp
-    完了日時 / completed_at : timestamp
-    差戻し理由 / return_reason : varchar
-    取消日時 / canceled_at : timestamp
-    作成日時 / created_at : timestamp
-    更新日時 / updated_at : timestamp
-  }
-
-  note right of ship_proxy_requests
-    request_status:
-    REQUESTED / IN_PROGRESS / RETURNED / COMPLETED / CANCELED。
-    SHIP依頼一覧はログイン中SHIPユーザーの
-    ship_proxy_task が実効利用できる担当施設群に
-    requesting_facility_id を限定して表示する。
-    同一rfq_idの未完了依頼は1件まで。
-  end note
-
-  entity "ship_proxy_request_vendors" as ship_proxy_request_vendors {
-    * SHIP代理作業依頼対象業者ID / ship_proxy_request_vendor_id : bigint
-    --
-    SHIP代理作業依頼ID / ship_proxy_request_id : bigint
-    見積依頼先ID / rfq_vendor_id : bigint
-    対象ステータス / target_status : varchar
-    作成日時 / created_at : timestamp
-    更新日時 / updated_at : timestamp
-  }
-
-  note right of ship_proxy_request_vendors
-    UNIQUE(ship_proxy_request_id, rfq_vendor_id)。
-    SHIP一括依頼時点の対象業者を固定する。
-  end note
-
-  entity "ship_proxy_request_status_histories" as ship_proxy_request_status_histories {
-    * SHIP代理作業依頼ステータス履歴ID / ship_proxy_request_status_history_id : bigint
-    --
-    SHIP代理作業依頼ID / ship_proxy_request_id : bigint
-    変更前ステータス / from_status : varchar
-    変更後ステータス / to_status : varchar
-    実行者ユーザーID / acted_by_user_id : bigint
-    実行日時 / acted_at : timestamp
-    コメント / comment : varchar
-    作成日時 / created_at : timestamp
-  }
-
-  note right of ship_proxy_request_status_histories
-    ship_proxy_requests.request_status の変更時は
-    同一トランザクションで必ず追加する。
+    Phase1ではSHIP一括依頼はボタン表示・押下UI枠までとし、
+    後続の依頼作成は行わない。
+    Phase2では外部送信とは別の内部依頼として扱い、
+    本テーブルの request_status を SENT に更新しない。
   end note
 
   entity "quotations" as quotations {
@@ -1509,9 +1678,30 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     --
     見積明細ID / quotation_item_id : bigint
     申請明細ID / application_asset_id : bigint
+    編集リストID / edit_list_id : bigint
+    編集リスト明細ID / edit_list_item_id : bigint
     紐づけ数量 / linked_quantity : int
+    リンク状態 / link_status : varchar
+    有効見積明細一意キー / active_quotation_item_unique_key : varchar [generated]
+    有効編集リスト明細一意キー / active_edit_list_item_unique_key : varchar [generated]
     作成日時 / created_at : timestamp
+    削除日時 / deleted_at : timestamp
   }
+
+  note right of quotation_item_application_links
+    見積明細と申請明細または編集リスト明細の
+    対応関係を保持する。
+    application_asset_id または edit_list_item_id の
+    どちらか一方を必須とする。
+    見積DB Link では edit_list_id/edit_list_item_id を設定し、
+    未紐付け見積明細から新規行を追加した場合も
+    作成後の edit_list_item_id と紐づける。
+    見積DB Link の有効リンクは
+    見積明細1件につき編集リスト明細1件、
+    編集リスト明細1件につき見積明細1件まで。
+    差し替え時は旧リンクを削除済みにしてから
+    新リンクを作成する。
+  end note
 
   entity "orders" as orders {
     * 発注ID / order_id : bigint
@@ -1725,6 +1915,26 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of inspection_tasks
+    点検管理タブの資産別点検設定を保持する。
+    定期点検は periodic_menu_id、
+    status、next_inspection_on、
+    last_inspection_on を用いる。
+    日常点検設定は資産一覧画面の
+    点検管理登録導線から選択資産単位で
+    作成・更新し、同じ大分類・中分類・品目の
+    全資産へ自動展開しない。
+    対象メニューは資産の大分類・中分類・品目と
+    inspection_menus の分類が一致するものに限定する。
+    日常点検は daily_menu_before_id /
+    daily_menu_during_id /
+    daily_menu_after_id を用い、
+    /inspection-prep のPWAダウンロード対象とする。
+    日常点検実施時は定期点検の
+    status、next_inspection_on、
+    last_inspection_on を更新しない。
+  end note
+
   entity "inspection_task_status_definitions" as inspection_task_status_definitions {
     * 点検種別 / inspection_type : varchar
     * ステータス / status : varchar
@@ -1784,6 +1994,24 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of inspection_results
+    日常点検PWAで端末内に一時保存した結果は、
+    オンライン同期時または即時送信時に本テーブルへ登録する。
+    result_details_json には clientResultId、
+    masterDownloadedAt、dailyTiming、
+    inspectionMenuId、点検項目入力値、
+    実施時点のメニュー/項目スナップショットを保持する。
+    端末内のIndexedDB/Service Workerキャッシュは
+    サーバーDBの管理対象外とする。
+  end note
+
+  note right of repair_request_details
+    日常点検・定期点検から修理依頼へ
+    遷移した場合は inspection_result_id に
+    連携元の点検結果を保持する。
+    修理依頼単独起票では NULL とする。
+  end note
+
   entity "lending_devices" as lending_devices {
     * 貸出管理機器ID / lending_device_id : bigint
     --
@@ -1827,6 +2055,8 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     初期データ:
     待機中 / 貸出可 / 貸出中 /
     使用中 / 使用済 / 返却済 / 使用不可。
+    貸出可能台数の集計対象は
+    貸出可のみとし、待機中は含めない。
     使用中・使用済の操作は
     lending_checkout と lending_in_use_used の
     両方の実効権限を必須とする。
@@ -1939,7 +2169,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
     削除日時 / deleted_at : timestamp
-    定義元 / source : applications + purchase_application_details + application_assets
+    定義元 / source : applications + purchase_application_details + application_assets + edit_lists + rfq_applications + rfqs
   }
 
   entity "repair_requests <<VIEW>>" as repair_requests {
@@ -2106,9 +2336,17 @@ package "個人設定" {
     カラムキー / column_key : varchar(100)
     表示フラグ / is_visible : boolean
     表示順 / sort_order : int
+    列幅(px) / column_width_px : int
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of user_column_settings
+    編集リスト画面の表示列、
+    表示順、列幅リサイズ結果も保持する。
+    screen_id='edit_list' で区分する。
+    column_width_px 未設定時は画面既定幅を使う。
+  end note
 
   entity "user_column_setting_presets" as user_column_setting_presets {
     * ユーザーカラム設定プリセットID / user_column_setting_preset_id : bigint
@@ -2135,6 +2373,7 @@ package "個人設定" {
     カラムキー / column_key : varchar(100)
     表示フラグ / is_visible : boolean
     表示順 / sort_order : int
+    列幅(px) / column_width_px : int
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
@@ -2818,7 +3057,6 @@ applications -[hidden]down-> asset_survey_sessions
 feature_catalogs ||--o{ column_catalogs : "related_feature_code"
 feature_catalogs ||--o{ facility_feature_settings : ""
 feature_catalogs ||--o{ user_facility_feature_settings : ""
-feature_catalogs ||--o{ facility_external_view_settings : ""
 column_catalogs ||--o{ facility_column_settings : ""
 column_catalogs ||--o{ user_facility_column_settings : ""
 column_catalogs ||--o{ facility_external_column_settings : ""
@@ -2840,6 +3078,7 @@ user_column_setting_presets ||--o{ user_column_setting_preset_items : ""
 users ||--o{ qr_codes : ""
 users ||--o{ qr_print_jobs : ""
 users ||--o{ asset_ledgers : ""
+users ||--o{ asset_ledger_histories : "changed_by"
 users ||--o{ asset_photos : "VIEW元"
 users ||--o{ applications : ""
 users ||--o{ application_status_histories : ""
@@ -2862,6 +3101,7 @@ users ||--o{ asset_survey_integration_results : ""
 users ||--o{ edit_lists : ""
 users ||--o{ edit_list_items : ""
 users ||--o{ edit_list_item_attachments : "VIEW元"
+users ||--o{ edit_list_free_columns : ""
 
 ' 施設・ロケーション
 establishments ||--o{ facilities : ""
@@ -2938,6 +3178,7 @@ asset_items ||--o{ asset_survey_records : ""
 manufacturers ||--o{ asset_survey_records : ""
 models ||--o{ asset_survey_records : ""
 asset_items ||--o{ quotation_items : ""
+quotation_items ||--o{ edit_list_items : "source_quotation_item_id"
 asset_categories ||--o{ asset_import_rows : ""
 asset_large_classes ||--o{ asset_import_rows : ""
 asset_medium_classes ||--o{ asset_import_rows : ""
@@ -2958,6 +3199,7 @@ asset_ledgers ||--o{ inspection_tasks : ""
 asset_ledgers ||--o{ lending_devices : ""
 asset_ledgers ||--o{ asset_survey_integration_results : ""
 asset_ledgers ||--o{ edit_list_items : ""
+asset_ledgers ||--o{ asset_ledger_histories : ""
 asset_ledgers ||--o{ application_documents : ""
 asset_survey_records ||--o{ application_documents : ""
 order_items ||--o{ asset_ledgers : ""
@@ -2983,9 +3225,14 @@ qr_codes ||--o{ qr_print_job_items : ""
 ' 編集リスト
 edit_lists ||--o{ edit_list_facilities : ""
 edit_lists ||--o{ edit_list_items : ""
+edit_lists ||--o{ edit_list_free_columns : ""
+edit_lists ||--o{ asset_ledger_histories : "EDIT_LIST_CLOSE"
 edit_list_items ||--o{ edit_list_item_attachments : "VIEW元"
 edit_list_items ||--o{ edit_list_item_custom_values : ""
+edit_list_items ||--o{ edit_list_free_column_values : ""
+edit_list_items ||--o{ edit_list_items : "update_source_edit_list_item_id"
 ship_asset_master_custom_columns ||--o{ edit_list_item_custom_values : ""
+edit_list_free_columns ||--o{ edit_list_free_column_values : ""
 edit_lists ||--o{ applications : ""
 edit_lists ||--o{ rfqs : "edit_list_id"
 edit_lists ||--o{ rfq_applications : "edit_list_id"
@@ -3043,14 +3290,6 @@ edit_list_items ||--o{ rfq_applications : ""
 edit_list_items ||--o{ application_documents : ""
 vendors ||--o{ rfq_vendors : ""
 users ||--o{ rfq_vendors : "requested_by"
-facilities ||--o{ ship_proxy_requests : "requesting_facility"
-rfqs ||--o{ ship_proxy_requests : ""
-users ||--o{ ship_proxy_requests : "requested_by"
-users ||--o{ ship_proxy_requests : "assigned_to"
-ship_proxy_requests ||--o{ ship_proxy_request_vendors : ""
-rfq_vendors ||--o{ ship_proxy_request_vendors : ""
-ship_proxy_requests ||--o{ ship_proxy_request_status_histories : ""
-users ||--o{ ship_proxy_request_status_histories : "acted_by"
 vendors ||--o{ quotations : ""
 vendors ||--o{ orders : ""
 vendors ||--o{ borrowing_application_details : ""
@@ -3068,6 +3307,8 @@ quotations ||--o{ application_documents : ""
 
 quotation_items ||--o{ quotation_item_application_links : ""
 application_assets ||--o{ quotation_item_application_links : ""
+edit_lists ||--o{ quotation_item_application_links : ""
+edit_list_items ||--o{ quotation_item_application_links : ""
 application_assets ||--o{ edit_list_items : ""
 application_assets ||--o{ application_documents : ""
 application_assets ||--o{ rfq_applications : ""
@@ -3086,6 +3327,7 @@ maintenance_contracts ||--o{ inspection_tasks : ""
 inspection_menus ||--o{ inspection_menu_items : ""
 inspection_menus ||--o{ inspection_tasks : ""
 inspection_tasks ||--o{ inspection_results : ""
+inspection_results ||--o{ repair_request_details : ""
 inspection_results ||--o{ application_documents : ""
 application_documents ||--o{ asset_documents : "VIEW元"
 application_documents ||--o{ asset_photos : "VIEW元"

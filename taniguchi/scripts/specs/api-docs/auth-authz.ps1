@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_認証／認可.docx'
   ScreenLabel = '認証／認可'
-  CoverDateText = '2026年5月12日'
-  RevisionDateText = '2026/5/12'
+  CoverDateText = '2026年5月16日'
+  RevisionDateText = '2026/5/16'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -11,12 +11,12 @@
     @{ Type = 'Paragraph'; Text = '特に以下を明確にする。' },
     @{ Type = 'Bullets'; Items = @(
       'ログイン、ログアウト、トークン再発行、パスワード再設定の I/F',
-      '`/auth/me` と `/auth/context` を使った担当施設選択、SHIP依頼一覧入口、画面表示制御の成立条件',
+      '`/auth/me` と `/auth/context` を使った担当施設選択、画面表示制御の成立条件',
       '`feature_code` / `column_code` を正本とした認可判定ルール',
       '他施設閲覧時に必要な協業グループと公開元施設設定の判定条件'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = '本 API 群は、認証基盤、施設選択導線、SHIP依頼一覧入口、ホーム/各業務画面の表示制御を支える横断 API である。ログイン後は `GET /auth/me` で担当施設一覧、既定施設、SHIP依頼一覧入口の表示可否を取得し、施設決定後に `GET /auth/context?actingFacilityId=...` を呼び出して実効 `feature_code` / `column_code` を取得する。' },
+    @{ Type = 'Paragraph'; Text = '本 API 群は、認証基盤、施設選択導線、ホーム/各業務画面の表示制御を支える横断 API である。ログイン後は `GET /auth/me` で担当施設一覧と既定施設を取得し、施設決定後に `GET /auth/context?actingFacilityId=...` を呼び出して実効 `feature_code` / `column_code` を取得する。' },
     @{ Type = 'Paragraph'; Text = '認可正本はロールではなく、`feature_catalogs` / `column_catalogs` / `user_facility_assignments` / 施設別設定 / ユーザー施設別設定 / 他施設公開設定を参照して判断する。' },
     @{ Type = 'Paragraph'; Text = '権限管理で扱う `feature_code` / `column_code` は `feature_catalogs` / `column_catalogs` に登録したコードを正本とし、本API群で固定的に使用するコードと判定ルールは本設計書内で定義する。1つの管理単位に対して1つの `feature_code` または `column_code` を割り当てる。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
@@ -31,7 +31,7 @@
     @{ Type = 'Table'; Headers = @('画面名', '画面パス', '利用目的'); Rows = @(
       @('ログイン画面', '/login', '利用者認証、担当施設決定導線の開始'),
       @('パスワード再設定URL送信画面', '/password-reset', 'パスワード再設定申請'),
-      @('作業対象施設選択画面', '/facility-select', '担当施設からの作業対象施設選択、およびSHIP依頼一覧入口の表示'),
+      @('作業対象施設選択画面', '/facility-select', '担当施設からの作業対象施設選択'),
       @('ホーム画面', '/main', '選択中施設に対するメニュー表示と業務導線表示')
     ) },
 
@@ -43,7 +43,6 @@
     @{ Type = 'Numbered'; Items = @(
       'ログイン画面で `POST /auth/login` を呼び出し、認証成功後に `GET /auth/me` を呼んで `/facility-select` へ遷移する',
       '`/facility-select` では `GET /auth/me` の `assignedFacilities` / `defaultFacilityId` を用いて施設候補を表示する。担当施設数が1件でも自動で `/main` へ遷移せず、利用者の決定操作後に `GET /auth/context` を呼ぶ',
-      '`/auth/me` の `shipProxyTaskAvailable=true` の場合は `/facility-select` に `SHIP依頼一覧へ` を表示する。押下時は施設選択欄の選択有無にかかわらずSHIP依頼一覧へ遷移し、選択欄の値をSHIP依頼一覧の表示スコープには使わない',
       'ホーム画面および各業務画面は `GET /auth/context` の結果を使ってメニュー、画面、ボタン、カラムの表示制御を行う',
       '必要に応じて `POST /authorization/check` を使い、対象施設・対象機能・対象カラムの可否を補助判定する'
     ) },
@@ -62,7 +61,7 @@
       @('user_facility_column_settings', 'ユーザー施設別の利用カラム判定', 'user_facility_assignment_id, column_code, is_enabled'),
       @('facility_collaboration_groups', '他施設閲覧候補の協業グループ定義', 'facility_collaboration_group_id, group_name, is_active'),
       @('facility_collaboration_group_facilities', '協業グループ所属施設', 'facility_collaboration_group_id, facility_id'),
-      @('facility_external_view_settings', '公開元施設の他施設向け公開データ設定', 'provider_facility_id, feature_code, is_enabled'),
+      @('facility_external_view_settings', '公開元施設の他施設向け公開データ設定', 'provider_facility_id, sharing_data_type, is_enabled'),
       @('facility_external_column_settings', '公開元施設の他施設向け公開カラム設定', 'provider_facility_id, column_code, is_enabled')
     ) },
     @{ Type = 'Paragraph'; Text = 'リフレッシュトークン、remember token による current device の再認証、およびセッション失効の詳細実装は認証基盤側責務とし、DB 正本としては上記テーブルを参照する。remember token は平文保存せずハッシュ化して保持し、クライアント側は `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する前提とする。' },
@@ -84,12 +83,12 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後は Bearer トークンを用いて `GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用トークンも発行し、再訪時は認証基盤側でセッション再開を試みる。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、`config_scope=''FACILITY_USER''` の機能は施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。固定導線を除く現行採用機能は `FACILITY_USER` に統一し、`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` もユーザー施設別設定の対象に含める。ただし子機能など追加条件を持つコードは各コードの補足規定に従う。`ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ実効利用できる追加条件を持つ。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し / 完了` や `DataLINK / SHIP表示列（リモデル）` / `DataLINK / SHIP表示列（通常）` / `資産マスタ / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。他施設閲覧専用の別コードは設けず、閲覧者側は既存の `original_list_view` / `original_price_column`、公開元施設側は `facility_external_view_settings` / `facility_external_column_settings` で制御する。' },
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、`config_scope=''FACILITY_USER''` の機能は施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。固定導線を除く現行採用機能は `FACILITY_USER` に統一し、Phase1では `normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象に含める。ただし子機能など追加条件を持つコードは各コードの補足規定に従う。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し / 完了` や `DataLINK / SHIP表示列（リモデル）` / `DataLINK / SHIP表示列（通常）` / `資産マスタ / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。他施設閲覧専用の別コードは設けず、閲覧者側は既存の `original_list_view` / `original_price_column`、公開元施設側は `facility_external_view_settings` / `facility_external_column_settings` で制御する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', '種別', 'コード', '対象処理'); Rows = @(
       @('ログイン・パスワード再設定（固定導線）', 'feature_code', '`auth_login`', '`POST /auth/login`、`POST /auth/password/forgot`、`POST /auth/password/reset` の固定導線を扱う。`config_scope=''SYSTEM_FIXED''` として固定扱いにする'),
       @('施設選択（固定導線）', 'feature_code', '`facility_select`', '`GET /auth/me` の担当施設選択導線と `GET /auth/context` の `actingFacilityId` 確定に用いる。`config_scope=''SYSTEM_FIXED''` として固定扱いにする')
     ) },
-    @{ Type = 'Paragraph'; Text = '固定導線を含む本システム全体の `feature_code` / `column_code` カタログは以下の通りとする。2026-05-12 時点の採用件数は、シート外固定導線2件を含む `feature_code` 49件、`column_code` 4件である。各業務 API 設計書は当該 API 群で利用するコードだけを抜粋して記載するが、コード追加・名称変更・関連付けは本表を基準に扱う。' },
+    @{ Type = 'Paragraph'; Text = '固定導線を含む本システム全体の `feature_code` / `column_code` カタログは以下の通りとする。各業務 API 設計書は当該 API 群で利用するコードだけを抜粋して記載するが、コード追加・名称変更・関連付けは本表を基準に扱う。' },
     @{ Type = 'Heading3'; Text = 'feature_code 全量一覧' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', 'category_code', 'usage_context', 'config_scope'); Rows = @(
       @('ユーザー 一覧', '`user_list_view`', '`USER_MGMT`', '`COMMON`', '`FACILITY_USER`'),
@@ -124,7 +123,6 @@
       @('通常購入管理 / 検収登録', '`normal_acceptance`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
       @('通常購入管理 / 見積管理', '`normal_quotation`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
       @('通常購入管理 / SHIP依頼機能', '`normal_ship_request`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
-      @('SHIP代理作業', '`ship_proxy_task`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
       @('移動・廃棄管理', '`transfer_disposal`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
       @('修理管理', '`repair_management`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
       @('保守契約管理', '`maintenance_contract`', '`TASK`', '`OWN`', '`FACILITY_USER`'),
@@ -150,11 +148,11 @@
       @('`asset_master_ship_column`', '資産マスタ / SHIP表示列', '`asset_master_list`', '`OWN`')
     ) },
     @{ Type = 'Heading3'; Text = 'コードカタログの利用方針' },
-    @{ Type = 'Paragraph'; Text = '本 API 群の `/auth/context` と `/authorization/check` は、上記 `feature_code` / `column_code` カタログに登録されたコードを汎用的に評価する。各業務 API 設計書は、そのうち当該 API 群で必要なコードだけを抜粋して記載するが、コード値、管理単位名、関連付けの正本は本設計書のカタログとする。資産一覧起点の管理部署編集は `management_department_edit`、点検管理登録は `inspection_management`、保守契約登録は `maintenance_contract` を利用し、通常購入管理のSHIP依頼作成は `config_scope=''FACILITY_USER''` の `normal_ship_request`、SHIP依頼一覧と代理作業は `config_scope=''FACILITY_USER''` の `ship_proxy_task`、貸出・返却の使用中/使用済みフローは `config_scope=''FACILITY_USER''` の `lending_in_use_used` を利用する。`ship_proxy_task` は対象ユーザーが `account_type=''SHIP''` の場合のみ実効利用できる。ただし `lending_in_use_used` の実効利用には、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` も有効であることを必須とする。' },
+    @{ Type = 'Paragraph'; Text = '本 API 群の `/auth/context` と `/authorization/check` は、上記 `feature_code` / `column_code` カタログに登録されたコードを汎用的に評価する。各業務 API 設計書は、そのうち当該 API 群で必要なコードだけを抜粋して記載するが、コード値、管理単位名、関連付けの正本は本設計書のカタログとする。資産一覧起点の管理部署編集は `management_department_edit`、点検管理登録は `inspection_management`、保守契約登録は `maintenance_contract` を利用し、Phase1の通常購入管理におけるSHIPへ依頼ボタン表示は `config_scope=''FACILITY_USER''` の `normal_ship_request` を利用する。貸出・返却の使用中/使用済みフローは `config_scope=''FACILITY_USER''` の `lending_in_use_used` を利用し、実効利用には `lending_checkout` も有効であることを必須とする。' },
     @{ Type = 'Table'; Headers = @('対象', '判定に使う主な情報', '説明'); Rows = @(
       @('ログイン関連', '`users`, `user_remember_tokens`, `password_reset_tokens`', '認証とトークン管理を扱う。施設別権限は判定しない'),
       @('作業対象施設決定', '`user_facility_assignments`, `facilities`', '担当施設一覧と既定施設を決定する'),
-      @('自施設機能判定', '`feature_catalogs.config_scope`, `facility_feature_settings`, `user_facility_feature_settings`, `users.account_type`', '`FACILITY_USER` は施設提供とユーザー許可の両方を基本条件とする。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` も `FACILITY_USER` として判定し、`ship_proxy_task` は `account_type=''SHIP''`、`lending_in_use_used` は親 `lending_checkout` も必要'),
+      @('自施設機能判定', '`feature_catalogs.config_scope`, `facility_feature_settings`, `user_facility_feature_settings`', '`FACILITY_USER` は施設提供とユーザー許可の両方を基本条件とする。Phase1では `normal_ship_request` / `lending_in_use_used` も `FACILITY_USER` として判定し、`lending_in_use_used` は親 `lending_checkout` も必要'),
       @('自施設カラム判定', '`facility_column_settings`, `user_facility_column_settings`, `column_catalogs.related_feature_code`', '関連 feature が有効な場合のみ成立する'),
       @('他施設閲覧判定', '`original_list_view`, `original_price_column`, `facility_collaboration_groups`, `facility_collaboration_group_facilities`, `facility_external_view_settings`, `facility_external_column_settings`', '閲覧者側の既存実効権限と公開元施設設定の両方が必要')
     ) },
@@ -171,7 +169,7 @@
       @('ログイン', 'POST', '/auth/login', 'ユーザー認証とトークン発行を行う', '不要'),
       @('ログアウト', 'POST', '/auth/logout', '現在のセッションとトークンを失効する', '要'),
       @('トークン再発行', 'POST', '/auth/refresh', 'リフレッシュトークンでアクセストークンを再発行する', '不要'),
-      @('ログインユーザー基本情報取得', 'GET', '/auth/me', 'ログインユーザー、担当施設一覧、既定施設、SHIP依頼一覧入口の表示可否を取得する', '要'),
+      @('ログインユーザー基本情報取得', 'GET', '/auth/me', 'ログインユーザー、担当施設一覧、既定施設を取得する', '要'),
       @('認可コンテキスト取得', 'GET', '/auth/context', '選択施設に対する実効 feature / column を取得する', '要'),
       @('パスワード再設定申請', 'POST', '/auth/password/forgot', 'パスワード再設定用 URL 発行を受け付ける', '不要'),
       @('パスワード更新', 'POST', '/auth/password/reset', '再設定トークンを使ってパスワードを更新する', '不要'),
@@ -280,7 +278,7 @@
       },
       @{
         Title = 'ログインユーザー基本情報取得（/auth/me）'
-        Overview = 'ログイン中ユーザーの基本情報、担当施設一覧、既定施設、SHIP依頼一覧入口の表示可否を取得する。'
+        Overview = 'ログイン中ユーザーの基本情報、担当施設一覧、既定施設を取得する。'
         Method = 'GET'
         Path = '/auth/me'
         Auth = '要（Bearer）'
@@ -293,8 +291,7 @@
           '`user_facility_assignments` から有効な担当施設一覧を取得する',
           '`facilities` を JOIN し、`deleted_at IS NULL` の施設だけを `assignedFacilities` へ含める',
           '施設名称、契約状態を付与し、削除済み施設を既定担当に持つ場合は `defaultFacilityId` へ返さない',
-          '協業グループ経由で見える施設は `assignedFacilities` へ含めない',
-          '`shipProxyTaskAvailable` は、ログインユーザーの `users.account_type=''SHIP''` かつ有効な担当施設のいずれかで `ship_proxy_task` の施設提供設定とユーザー施設別設定がともに有効な場合に `true` とする。施設選択欄の現在値は判定に使わない'
+          '協業グループ経由で見える施設は `assignedFacilities` へ含めない'
         )
         ResponseTitle = 'レスポンス（200：AuthMeResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -306,8 +303,7 @@
           @('establishmentId', 'int64', '-', '設立母体ID'),
           @('facilityId', 'int64', '-', '主所属施設ID'),
           @('defaultFacilityId', 'int64', '-', '既定担当施設ID'),
-          @('assignedFacilities', 'AssignedFacility[]', '✓', '担当施設一覧'),
-          @('shipProxyTaskAvailable', 'boolean', '✓', '`SHIP依頼一覧へ` ボタンの表示可否。`accountType=''SHIP''` かついずれかの有効担当施設で `ship_proxy_task` が実効有効な場合のみ true')
+          @('assignedFacilities', 'AssignedFacility[]', '✓', '担当施設一覧')
         )
         ResponseSubtables = @(
           @{
@@ -352,8 +348,7 @@
           '`facilities.deleted_at IS NULL` の未削除施設であることを確認し、削除済みなら 404 とする',
           '`facilities.system_contract_status` を確認し、契約有効施設だけを認可判定対象にする',
           '`config_scope=''FACILITY_USER''` の `feature_code` は `facility_feature_settings` と `user_facility_feature_settings` の両方が `is_enabled=true` の場合に実効機能として返す',
-          '`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として `facility_feature_settings.is_enabled=true` かつ `user_facility_feature_settings.is_enabled=true` の場合だけ返却候補に含める',
-          '`ship_proxy_task` はログインユーザーの `users.account_type=''SHIP''` の場合のみ `featureCodes` に含める。非SHIPユーザーに既存設定が残っていても返却しない',
+          'Phase1では `normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として `facility_feature_settings.is_enabled=true` かつ `user_facility_feature_settings.is_enabled=true` の場合だけ返却候補に含める',
           '`lending_in_use_used` は施設提供設定とユーザー施設別設定が有効であっても、同一担当施設で `lending_checkout` の実効権限が成立しない場合は `featureCodes` から除外する',
           '`facility_column_settings` と `user_facility_column_settings` の両方が `is_enabled=true` で、かつ `related_feature_code` が有効な `column_code` を実効カラムとして返す',
           '最新の `権限管理単位一覧` シートで採用した `feature_code` / `column_code` だけを返却候補に含める',
@@ -462,9 +457,9 @@
         )
         ProcessingLines = @(
           '判定対象ユーザーは Bearer トークンから解決し、リクエストボディで `userId` は受け取らない',
-          '自施設判定では `user_facility_assignments`、`feature_catalogs.config_scope`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する。`normal_ship_request` / `ship_proxy_task` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として施設提供設定とユーザー施設別設定の両方を必須とする。`ship_proxy_task` は `users.account_type=''SHIP''` の場合のみ許可し、`lending_in_use_used` は `lending_checkout` の実効権限も成立する場合のみ許可する',
+          '自施設判定では `user_facility_assignments`、`feature_catalogs.config_scope`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する。Phase1では `normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として施設提供設定とユーザー施設別設定の両方を必須とする。`lending_in_use_used` は `lending_checkout` の実効権限も成立する場合のみ許可する',
           'カラム判定では `facility_column_settings`、`user_facility_column_settings`、`column_catalogs.related_feature_code` を用いて可否を評価する。`original_price_column` は `related_feature_code=''original_list_view''` が実効有効な場合のみ許可候補とする',
-          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、`featureCode=''original_list_view''` を必須とし、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、双方が active な同一 `facility_collaboration_groups` に所属すること、公開元施設の `facility_external_view_settings(provider_facility_id=targetFacilityId, feature_code=''original_list_view'', is_enabled=true)` が存在することを追加で評価する。`columnCodes` に `original_price_column` が含まれる場合は、閲覧者側の実効カラム権限に加え、公開元施設の `facility_external_column_settings(provider_facility_id=targetFacilityId, column_code=''original_price_column'', is_enabled=true)` が存在する場合だけ `allowedColumnCodes` へ含める',
+          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、`featureCode=''original_list_view''` を必須とし、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、双方が active な同一 `facility_collaboration_groups` に所属すること、公開元施設の `facility_external_view_settings(provider_facility_id=targetFacilityId, sharing_data_type=''asset'', is_enabled=true)` が存在することを追加で評価する。`columnCodes` に `original_price_column` が含まれる場合は、閲覧者側の実効カラム権限に加え、公開元施設の `facility_external_column_settings(provider_facility_id=targetFacilityId, column_code=''original_price_column'', is_enabled=true)` が存在する場合だけ `allowedColumnCodes` へ含める',
           '本 API は補助判定用であり、各業務 API 側でも同条件を再判定する'
         )
         ResponseTitle = 'レスポンス（200：AuthorizationCheckResponse）'
@@ -490,7 +485,7 @@
     @{ Type = 'Heading2'; Text = '認可ルール' },
     @{ Type = 'Bullets'; Items = @(
       '`auth_login` と `facility_select` は `SYSTEM_FIXED` のため、施設・ユーザー設定で ON/OFF しない',
-      '`/auth/me` は担当施設一覧とSHIP依頼一覧入口の表示可否を返し、協業グループ経由で見える施設は返さない',
+      '`/auth/me` は担当施設一覧と既定施設を返し、協業グループ経由で見える施設は返さない',
       '`/auth/me` と `/auth/context` は `facilities.deleted_at IS NULL` の未削除施設だけを対象にする',
       '`/auth/context` は選択施設に対する実効 `feature_code` / `column_code` を返す',
       'QRコードや他施設閲覧専用の別 `feature_code` / `column_code` は採用しない。他施設閲覧は既存の `original_list_view` / `original_price_column` と公開元施設設定で判定し、施設切替候補へは展開しない',
@@ -499,8 +494,7 @@
     @{ Type = 'Heading2'; Text = '施設選択・ホーム導線ルール' },
     @{ Type = 'Bullets'; Items = @(
       'ログイン後は病院ユーザー、SHRCユーザー、SHIPユーザーを問わず `/facility-select` へ遷移する',
-      '`/facility-select` では担当施設一覧、決定ボタン、条件を満たす場合の `SHIP依頼一覧へ` ボタンを同一画面上に表示する',
-      '`SHIP依頼一覧へ` は `account_type=''SHIP''` かつ有効な担当施設のいずれかで `ship_proxy_task` が実効有効な場合のみ表示する。押下時は施設選択欄で施設が選択済みか未選択かにかかわらずSHIP依頼一覧へ遷移し、選択欄の値をSHIP依頼一覧の表示スコープには使わない',
+      'Phase1の `/facility-select` では担当施設一覧と決定ボタンを表示する',
       '通常業務へ進む場合は利用者が施設を選択して決定し、`/auth/context` 取得後に `/main` へ遷移する',
       'ホーム画面の表示可否は、`/auth/context` の実効 `feature_code` / `column_code` を正本として判断する'
     ) },

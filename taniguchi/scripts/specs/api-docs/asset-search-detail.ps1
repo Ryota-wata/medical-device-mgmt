@@ -239,7 +239,7 @@ $assetDetailRows = @(
       @('named bookmark', '`user_column_setting_presets` / `user_column_setting_preset_items` に保持する列表示プリセット。現在設定とは別管理とする'),
       @('SHIP資産マスタ任意カラム', '`ship_asset_master_custom_columns` / `ship_asset_master_custom_values` で管理する可変項目'),
       @('作業対象施設閲覧', 'Bearer トークン上の作業対象施設を対象に `original_list_view` を使って資産を参照するモード'),
-      @('他施設閲覧', '作業対象施設とは異なる施設の資産を、`original_list_view`、協業グループ、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` に基づいて閲覧専用で参照するモード。施設切替候補には含めない'),
+      @('他施設閲覧', '作業対象施設とは異なる施設の資産を、`original_list_view`、協業グループ、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` に基づいて閲覧専用で参照するモード。施設切替候補には含めない'),
       @('原本編集', '資産詳細から `asset_ledgers` 正本と、資産に紐づく写真・ドキュメントを更新する処理。`original_list_edit` を前提とする'),
       @('価格カラム', '取得価格などの価格系項目。閲覧者側の `original_price_column` で制御し、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` も判定する')
     ) },
@@ -252,7 +252,7 @@ $assetDetailRows = @(
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'API の位置づけ' },
     @{ Type = 'Paragraph'; Text = '本 API 群は、資産一覧画面のコンテキスト取得、表示カラム現在設定保存、named bookmark 一覧/保存/削除/適用、資産一覧取得、一覧管理部署編集候補の取得と一括保存、一覧結果エクスポート、QRコード直接遷移解決、資産詳細取得、資産履歴取得、資産原本更新、写真追加/削除、ドキュメント一覧取得・追加・削除を提供する。' },
-    @{ Type = 'Paragraph'; Text = '本 API は最新の `権限管理単位一覧` における資産一覧・カルテ系の権限管理単位を対象とする。`targetFacilityId` は通常は作業対象施設を指す。他施設閲覧は施設切替候補には展開せず、QR直接遷移や参照系APIで `targetFacilityId` / `facilityId` が作業対象施設と異なる場合に、協業グループと公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を再判定して `EXTERNAL_READONLY` として扱う。' },
+    @{ Type = 'Paragraph'; Text = '本 API は最新の `権限管理単位一覧` における資産一覧・カルテ系の権限管理単位を対象とする。`targetFacilityId` は通常は作業対象施設を指す。他施設閲覧は施設切替候補には展開せず、QR直接遷移や参照系APIで `targetFacilityId` / `facilityId` が作業対象施設と異なる場合に、協業グループと公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を再判定して `EXTERNAL_READONLY` として扱う。' },
     @{ Type = 'Paragraph'; Text = '資産詳細の履歴表示は、申請履歴、点検結果、貸出/返却履歴を共通イベント形式へ正規化して返却し、詳細本体 API とは分離したタブ読込用 I/F として扱う。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Numbered'; Items = @(
@@ -307,9 +307,9 @@ $assetDetailRows = @(
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '画面導線・ボタン表示の `feature_code` と、表示カラムの `column_code` を処理単位で判定する。作業対象施設の資産データ参照は `original_list_view` を正本とする。他施設資産参照は、作業対象施設側で `original_list_view` が有効であることに加え、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たす場合のみ閲覧専用で許可する。申請起票ボタンは `original_application`、点検管理登録ボタンは `inspection_management`、保守契約登録ボタンは `maintenance_contract`、管理部署編集ボタンは `management_department_edit` を個別に判定し、資産詳細の原本編集系は `original_list_edit`、価格項目は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を追加判定する。' },
+    @{ Type = 'Paragraph'; Text = '画面導線・ボタン表示の `feature_code` と、表示カラムの `column_code` を処理単位で判定する。作業対象施設の資産データ参照は `original_list_view` を正本とする。他施設資産参照は、作業対象施設側で `original_list_view` が有効であることに加え、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たす場合のみ閲覧専用で許可する。申請起票ボタンは `original_application`、点検管理登録ボタンは `inspection_management`、保守契約登録ボタンは `maintenance_contract`、管理部署編集ボタンは `management_department_edit` を個別に判定し、資産詳細の原本編集系は `original_list_edit`、価格項目は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を追加判定する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要コード', '説明'); Rows = @(
-      @('一覧画面表示 / 詳細画面表示 / 一覧取得 / 詳細取得 / 履歴取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '作業対象施設の資産原本データは `original_list_view`、他施設閲覧は同じ閲覧者権限に加えて協業グループ・公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` で判定する'),
+      @('一覧画面表示 / 詳細画面表示 / 一覧取得 / 詳細取得 / 履歴取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '作業対象施設の資産原本データは `original_list_view`、他施設閲覧は同じ閲覧者権限に加えて協業グループ・公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` で判定する'),
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請系導線を表示する'),
       @('点検管理登録ボタン表示', '`inspection_management`', '一覧起点の点検管理登録導線を表示する'),
       @('保守契約登録ボタン表示', '`maintenance_contract`', '一覧起点の保守契約登録導線を表示する'),
@@ -321,7 +321,7 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       '`targetFacilityId` 未指定時は Bearer トークン上の作業対象施設を参照対象とする',
       '`targetFacilityId` または `facilityId` が作業対象施設と同一の場合は `OWN` として扱い、作業対象施設に対する `original_list_view` を判定する',
-      '`targetFacilityId` または `facilityId` が作業対象施設と異なる場合は `EXTERNAL_READONLY` 候補として扱い、作業対象施設に対する `original_list_view` が実効有効、作業対象施設・対象施設の双方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''`、双方が active な同一 `facility_collaboration_groups` に所属、公開元施設の `facility_external_view_settings(provider_facility_id=対象施設, feature_code=''original_list_view'', is_enabled=true)` が存在することを確認する',
+      '`targetFacilityId` または `facilityId` が作業対象施設と異なる場合は `EXTERNAL_READONLY` 候補として扱い、作業対象施設に対する `original_list_view` が実効有効、作業対象施設・対象施設の双方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''`、双方が active な同一 `facility_collaboration_groups` に所属、公開元施設の `facility_external_view_settings(provider_facility_id=対象施設, sharing_data_type=''asset'', is_enabled=true)` が存在することを確認する',
       '他施設閲覧は施設切替候補へ直接展開しない。`accessibleFacilities` には作業対象施設を `OWN` として返し、QR直接遷移や明示的な `targetFacilityId` 指定時だけ `EXTERNAL_READONLY` を解決する',
       '他施設閲覧時は資産閲覧のみ許可し、申請起票、点検管理登録、保守契約登録、管理部署編集、原本編集、写真追加/削除、ドキュメント追加/削除は不可とする',
       '価格項目は `OWN` では `original_price_column` が有効な場合、`EXTERNAL_READONLY` では作業対象施設に対する `original_price_column` と公開元施設の `facility_external_column_settings(provider_facility_id=対象施設, column_code=''original_price_column'', is_enabled=true)` が有効な場合だけ返却する',
@@ -738,7 +738,7 @@ $assetDetailRows = @(
         )
         PermissionLines = @(
           '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと',
-          '他施設閲覧時は協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たすこと',
+          '他施設閲覧時は協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たすこと',
           '価格項目を返す場合、閲覧者側で `original_price_column` が有効であること。`EXTERNAL_READONLY` では加えて公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` が有効であること'
         )
         ProcessingLines = @(
@@ -903,7 +903,7 @@ $assetDetailRows = @(
         )
         PermissionLines = @(
           '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと',
-          '`facilityId` が作業対象施設と異なる場合は、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たすこと'
+          '`facilityId` が作業対象施設と異なる場合は、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たすこと'
         )
         ProcessingLines = @(
           'Bearer トークン上の作業対象施設を解決し、`facilityId` が作業対象施設と同一の場合は `OWN`、異なる場合は `EXTERNAL_READONLY` 候補として他施設閲覧条件を判定する。成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する',
@@ -953,7 +953,7 @@ $assetDetailRows = @(
         )
         PermissionLines = @(
           '認可条件: 閲覧者側で `original_list_view` が有効であること。`EXTERNAL_READONLY` では加えて他施設閲覧条件を満たすこと',
-          '他施設閲覧時は協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たすこと',
+          '他施設閲覧時は協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たすこと',
           '編集可否フラグは `accessMode=OWN` かつ `original_list_edit` が有効な場合のみ `true` とする'
         )
         ProcessingLines = @(
@@ -1449,7 +1449,7 @@ $assetDetailRows = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '権限管理単位別マトリクス' },
     @{ Type = 'Table'; Headers = @('項目', '必要コード', '備考'); Rows = @(
-      @('一覧取得 / 詳細取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '自施設は作業対象施設の資産原本データを対象とする。他施設は同じ閲覧者権限、協業グループ、公開元施設の `facility_external_view_settings(feature_code=''original_list_view'')` を満たす場合のみ `EXTERNAL_READONLY` で返却する'),
+      @('一覧取得 / 詳細取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '自施設は作業対象施設の資産原本データを対象とする。他施設は同じ閲覧者権限、協業グループ、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たす場合のみ `EXTERNAL_READONLY` で返却する'),
       @('資産履歴表示', '`original_list_view`', '資産詳細取得と同じ参照可否判定に従う'),
       @('価格項目表示', '`original_price_column`', '保存済み列設定に含まれていても、閲覧者側の権限または公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は返却しない'),
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請導線のみ制御する'),

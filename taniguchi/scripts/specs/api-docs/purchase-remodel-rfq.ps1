@@ -11,7 +11,7 @@
         '本書は、タスク管理の購入管理タブを親業務単位とし、申請受付一覧、見積（発注）グループ一覧、および見積（発注）グループ一覧の操作ボタンから遷移する通常購入フローの画面で使用するAPI設計を定義する。',
         '親設計書としての対象範囲は、起票済み購入申請の受付・詳細参照・却下、購入管理タブ起点の編集リスト取り込み/通常購入RFQグループ作成、見積（発注）グループ一覧、RFQグループ詳細、依頼先業者の保存、依頼書プレビュー、個別見積依頼送信、見積ファイル登録、見積登録/発注見積登録、発注登録、納品日登録、検収登録、資産登録、RFQグループ削除である。',
         '資産一覧画面から実行できる新規購入/増設購入/更新購入申請の起票APIはNo.16「資産申請起票」で定義し、本書には含めない。本書は起票済み購入申請を購入管理タブで受け付けた後の進行管理を対象とする。',
-        'SHIP代理作業依頼の作成・一覧・担当取得・差戻し・完了・取消はNo.19a「API設計書_SHIP代理作業依頼」で定義済みのため、本書では重複定義しない。購入管理タブ/RFQ画面からSHIPへ依頼する場合は、No.19aのAPIを呼び出す。',
+        'Phase1で残すSHIP関連は、購入管理タブ/RFQ画面に表示する「SHIPへ依頼」ボタンの表示枠までとする。ボタン表示はnormal_ship_requestで判定し、SHIP代理作業依頼の作成・一覧・担当取得・差戻し・完了・取消APIはNo.19a「API設計書_SHIP代理作業依頼」をPhase2参考成果物として扱う。',
         'リモデル申請画面内の編集リスト本体・明細操作およびリモデル管理タブ起点の後続進行はNo.17「リモデル管理タブ」で定義する。購入管理タブ起点の購入申請取り込み、通常購入RFQグループ作成導線、通常購入フローの見積登録から資産登録までは本書の拡張改訂で内包する。',
         'Phase1ではOCR抽出、OCRジョブ制御、OCR結果取込APIを扱わない。現行モック上のOCR明細確認/結果表示は、見積原本を見ながら手動入力した明細の確認画面として扱う。'
       )
@@ -33,7 +33,7 @@
           Title = '本書で扱わない関連機能'
           Columns = @('機能', '定義先', '本書での扱い')
           Rows = @(
-            @('SHIP代理作業依頼', 'No.19a API設計書_SHIP代理作業依頼', 'RFQ画面上の依頼ボタンはNo.19a APIを呼び出す。認可コードnormal_ship_requestもNo.19aで定義する。'),
+            @('SHIP代理作業依頼', 'No.19a API設計書_SHIP代理作業依頼 / taniguchi/work/SHIP代理作業依頼_Phase2方針.md', 'Phase1ではRFQ画面上の依頼ボタン表示のみを扱い、依頼作成API本体はPhase2対象とする。ボタン表示権限normal_ship_requestは本書でも明記する。'),
             @('資産一覧起点の購入申請起票', 'No.16 資産申請起票', '新規購入/増設購入/更新購入申請の起票はNo.16で扱い、本書は起票後の受付以降を扱う。'),
             @('リモデル管理タブ', 'No.17 リモデル管理タブ', 'リモデル申請画面内の編集リスト本体・明細操作、リモデル管理タブ一覧、リモデル起点の後続進行はNo.17で扱う。'),
             @('見積管理の横断一覧・Phase2 OCRジョブ管理', 'No.20 見積登録・見積管理', '購入管理タブ起点の見積登録/発注見積登録は本書に内包し、横断一覧やPhase2共通化が必要な場合はNo.20で扱う。')
@@ -60,7 +60,7 @@
             @('normal_purchase', '通常購入管理', '購入申請一覧・詳細・却下、購入管理タブ起点の編集リスト取り込み、通常購入RFQ作成、RFQ詳細、業者保存、個別送信、見積登録までを扱う。'),
             @('normal_order / normal_acceptance', '通常購入の後続ステップ', '購入管理タブのRFQ進捗一覧参照、発注登録、納品日登録、検収登録、資産登録の実行可否判定に利用する。'),
             @('normal_quotation', '通常購入の見積管理', '購入管理タブの見積管理行や見積参照系の表示可否判定に利用する。'),
-            @('normal_ship_request', 'SHIP代理作業依頼', '本書対象外。No.19aのAPIで作成・一覧・担当取得・差戻し・完了・取消を扱う。')
+            @('normal_ship_request', 'SHIPへ依頼ボタン', 'Phase1では購入管理タブ/RFQ画面のボタン表示可否に利用する。依頼作成・一覧・担当取得・差戻し・完了・取消APIはPhase2対象。')
           )
         },
         @{
@@ -73,7 +73,7 @@
             @('3 納品日登録', '発注済', '購入管理タブ起点の納品日登録APIとして本書に内包する。'),
             @('4 検収登録', '納期確定', '購入管理タブ起点の検収登録APIとして本書に内包する。'),
             @('5 資産登録', '検収済', '購入管理タブ起点の資産登録APIとして本書に内包する。'),
-            @('内部ステータス', '見積登録依頼中、発注用見積依頼済', 'RFQ/SHIP代理作業連携の内部ステータス。現行購入管理タブでは独立タブを設けず、すべてタブと行別操作判定で扱う。')
+            @('内部ステータス', '見積登録依頼中、発注用見積依頼済', 'Phase2のRFQ/SHIP代理作業連携で利用する内部ステータス。現行購入管理タブでは独立タブを設けない。')
           )
         },
         @{
@@ -83,6 +83,7 @@
             @('購入申請参照', 'purchase_applications, applications, application_assets, application_documents', '申請受付一覧・詳細、添付ファイル、申請対象資産を返却する。'),
             @('購入申請却下', 'applications, application_status_histories', '申請ステータスを却下へ更新し、履歴を登録する。'),
             @('RFQグループ参照', 'rfqs, rfq_applications, rfq_vendors, edit_lists, edit_list_items', 'RFQ一覧・詳細・対象明細・依頼先業者を返却する。'),
+            @('編集リスト連携', 'edit_lists, edit_list_facilities, edit_list_items, asset_ledgers, applications, application_status_histories', '購入管理タブからの編集リスト新規作成、購入申請明細取り込み、申請ステータス更新を実行する。'),
             @('見積関連参照/更新', 'quotations, quotation_items', 'RFQ一覧の見積登録状況、見積登録/発注見積登録、後続ステップ遷移可否を判定する。'),
             @('発注・検収・資産登録', 'orders, order_items, individuals, asset_ledgers', '購入管理タブ起点の発注登録、納品日登録、検収登録、資産登録を実行する。'),
             @('見積ファイル登録', 'application_documents', 'RFQまたはRFQ業者に紐づく見積書ファイルのメタデータを登録する。')
@@ -92,7 +93,7 @@
     },
     @{
       Heading = '3. API一覧'
-      Paragraphs = @('現行初版でAPI詳細化済みの範囲は以下の10件である。購入管理タブ親設計書としての拡張改訂では、購入管理タブ起点の編集リスト取り込み、通常購入RFQグループ作成、見積登録/発注見積登録、発注登録、納品日登録、検収登録、資産登録のAPI詳細を本書へ追加する。')
+      Paragraphs = @('現行改訂でAPI詳細化済みの範囲は以下の14件である。購入管理タブ親設計書として、購入申請受付、編集リスト候補取得、編集リスト新規作成と購入申請取り込み、既存編集リストへの購入申請取り込み、通常購入RFQグループ作成、RFQ一覧/詳細、依頼先業者保存、依頼書プレビュー、個別送信、見積ファイル登録、RFQ削除を本書で扱う。SHIP代理作業依頼の依頼作成APIはPhase2対象のため、本書のAPI一覧には含めない。')
       Tables = @(
         @{
           Title = 'API一覧'
@@ -107,7 +108,11 @@
             @('19-07', 'GET', '/quotation-data-box/rfq-groups/{rfqGroupId}/preview', '見積依頼書プレビューを取得する。'),
             @('19-08', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendors/{rfqVendorId}/send', 'RFQを業者へ個別送信する。'),
             @('19-09', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/quotation-files', 'RFQに見積ファイルを登録する。'),
-            @('19-10', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}', '未送信RFQグループを削除する。')
+            @('19-10', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}', '未送信RFQグループを削除する。'),
+            @('19-11', 'GET', '/purchase-management/edit-list-options', '購入申請を追加可能な編集リスト候補を取得する。'),
+            @('19-12', 'POST', '/purchase-management/edit-lists', '購入管理タブから編集リストを新規作成し、購入申請を取り込む。'),
+            @('19-13', 'POST', '/purchase-management/edit-lists/{editListId}/purchase-applications', '購入申請を既存編集リストへ取り込む。'),
+            @('19-14', 'POST', '/purchase-management/edit-lists/{editListId}/rfq-groups', '編集リストの選択明細から通常購入RFQグループを作成する。')
           )
         }
       )
@@ -118,10 +123,10 @@
         '購入申請の却下は、application_typeがPURCHASE、かつstatusが申請中の申請に限定する。却下後に再受付するAPIは本書では定義しない。',
         'RFQ一覧はrfqsを1グループとして取得し、rfq_vendorsを表示行へ展開する。依頼先業者が未登録の場合もRFQグループ単位の1行を返却し、業者未設定状態を画面で表示できるようにする。',
         'RFQ個別送信はrfq_vendors.request_statusがDRAFTの業者行に限定する。送信時にrfq_vendors.request_statusをSENTへ更新し、requested_at、requested_by_user_idを設定する。rfqs.statusは見積依頼から見積依頼済へ進める。',
-        'SHIP代理作業依頼は外部送信ではなく、SHIPユーザーへの内部代理作業依頼である。RFQ個別送信とは状態更新対象が異なり、SHIP代理作業依頼の作成ではrfq_vendors.request_statusをSENTへ変更しない。',
+        'Phase1ではSHIPへ依頼ボタンの表示枠のみを扱い、SHIP代理作業依頼の作成APIは実装対象外とする。Phase2で実装する場合は外部送信ではなくSHIPユーザーへの内部代理作業依頼として扱い、rfq_vendors.request_statusをSENTへ変更しない。',
         '見積ファイル登録APIは、ファイル実体がアップロード済みであることを前提にメタデータをapplication_documentsへ登録する。購入管理タブ起点の見積明細登録、発注見積登録、発注登録、納品日登録、検収登録、資産登録は本書の親設計書範囲に含める。OCRジョブ管理などPhase2共通化が必要な処理のみNo.20で扱う。',
-        '見積登録依頼中および発注用見積依頼済は独立した購入管理ステップタブではなく、RFQ/SHIP代理作業連携の内部状態として扱う。必要な操作はすべてタブとavailableActionsで表現する。',
-        'RFQ削除は未送信・未処理のRFQに限定する。送信済み業者、見積、注文、SHIP代理作業依頼、またはRFQ配下ドキュメントが存在する場合は削除不可とする。'
+        '見積登録依頼中および発注用見積依頼済は独立した購入管理ステップタブではなく、Phase2のRFQ/SHIP代理作業連携で利用する内部状態として扱う。',
+        'RFQ削除は未送信・未処理のRFQに限定する。送信済み業者、見積、注文、またはRFQ配下ドキュメントが存在する場合は削除不可とする。Phase2でSHIP代理作業依頼を追加する場合は、未完了依頼の存在も削除不可条件に加える。'
       )
     }
   )
@@ -349,7 +354,7 @@
         'rfqsを基点にrfq_vendors、edit_lists、rfq_applications、quotations、quotation_itemsを参照して一覧を取得する。',
         'rfq_vendorsが存在するRFQは業者行へ展開し、業者未設定のRFQはrfqVendorId=nullのグループ行として返却する。',
         '同一検索条件でステップ別件数を集計しtabCountsへ設定する。',
-        'availableActionsはRFQステータス、業者依頼ステータス、ユーザー機能コードに基づいて算出する。SHIP代理作業依頼ボタンの実行可否はNo.19aのnormal_ship_request要件を参照する。'
+        'availableActionsはRFQステータス、業者依頼ステータス、ユーザー機能コードに基づいて算出する。Phase1ではSHIPへ依頼ボタンの表示可否をnormal_ship_requestで判定し、依頼作成API本体はPhase2対象とする。'
       )
       Errors = @(
         @('400', 'VALIDATION_ERROR', 'managementType、step、日付などのクエリパラメータが不正。'),
@@ -404,15 +409,15 @@
             @('items[].quantity', 'number', '数量。'),
             @('documents[].documentId', 'int64', 'RFQまたはRFQ業者に紐づくドキュメントID。'),
             @('documents[].ownerType', 'string', 'RFQまたはRFQ_VENDOR。'),
-            @('availableActions[]', 'string', '保存、個別送信、SHIP代理依頼、見積登録へ等の操作可否。')
+            @('availableActions[]', 'string', '保存、個別送信、SHIPへ依頼ボタン表示、見積登録へ等の操作可否。')
           )
         }
       )
       Process = @(
         'rfqsを取得し、通常購入RFQであること、施設スコープ、normal_purchase機能コードを検証する。',
-        'rfq_vendors、rfq_applications、edit_lists、edit_list_items、applications、application_assetsを取得してRFQプロセス表示用に整形する。',
+        'rfq_vendors、rfq_applications、edit_lists、edit_list_items、applications、application_assetsを取得してRFQプロセス表示用に整形する。対象明細はrfq_applicationsに紐づく行に限定し、同一編集リスト内の未選択明細は含めない。',
         'application_documentsからowner_typeがRFQまたはRFQ_VENDORのドキュメントを取得する。',
-        'RFQステータス、業者依頼ステータス、機能コードからavailableActionsを算出する。SHIP代理依頼の詳細可否はNo.19aを参照する。'
+        'RFQステータス、業者依頼ステータス、機能コードからavailableActionsを算出する。Phase1ではSHIPへ依頼ボタンの表示可否のみをnormal_ship_requestで返す。'
       )
       Errors = @(
         @('401', 'AUTH_REQUIRED', '未認証。'),
@@ -517,7 +522,7 @@
       Process = @(
         'RFQ詳細取得と同じ権限・施設スコープを検証する。',
         'rfqVendorId指定時は当該業者が対象RFQに属することを確認する。',
-        'rfqs、rfq_vendors、rfq_applications、edit_list_items、applications、application_assetsからプレビュー情報を構築する。',
+        'rfqs、rfq_vendors、rfq_applications、edit_list_items、applications、application_assetsからプレビュー情報を構築する。対象明細はrfq_applicationsに紐づく行に限定し、同一編集リスト内の未選択明細は含めない。',
         '本APIはDB更新を行わない。依頼書ファイルの保存が必要な場合は、生成後に見積ファイル登録APIまたは別紙ドキュメント登録APIを使用する。'
       )
       Errors = @(
@@ -683,7 +688,7 @@
         'expectedUpdatedAt指定時はrfqs.updated_atと一致することを確認する。',
         'RFQステータスが見積依頼であることを確認する。',
         'rfq_vendorsにDRAFT以外の行が存在しないことを確認する。SENT、REPLIED、CANCELEDの業者行がある場合は削除不可とする。',
-        'quotations、quotation_items、注文関連データ、未完了のSHIP代理作業依頼、application_documentsが存在しないことを確認する。',
+        'quotations、quotation_items、注文関連データ、application_documentsが存在しないことを確認する。Phase2でSHIP代理作業依頼を追加する場合は未完了依頼の存在も確認する。',
         'rfq_vendors、rfq_applications、rfqsを同一トランザクションで削除する。編集リスト本体および編集リスト明細は削除しない。',
         '削除結果を返却する。'
       )
@@ -692,7 +697,240 @@
         @('403', 'FORBIDDEN', '対象RFQの購入管理権限がない。'),
         @('404', 'RFQ_GROUP_NOT_FOUND', 'RFQグループが存在しない。'),
         @('409', 'CONFLICT_UPDATED_AT', 'RFQが他ユーザーにより更新されている。'),
-        @('409', 'RFQ_DELETE_BLOCKED', '送信済み業者、見積、注文、SHIP代理作業依頼、またはドキュメントが存在するため削除できない。')
+        @('409', 'RFQ_DELETE_BLOCKED', '送信済み業者、見積、注文、またはドキュメントが存在するため削除できない。Phase2でSHIP代理作業依頼を追加する場合は未完了依頼も削除不可条件に含める。')
+      )
+    },
+    @{
+      Id = '19-11'
+      Name = '編集リスト候補取得API'
+      Method = 'GET'
+      Path = '/purchase-management/edit-list-options'
+      Summary = '購入管理タブの申請受付一覧から購入申請を追加できる編集リスト候補を取得する。'
+      Auth = 'Bearer必須。対象施設および候補編集リストの対象施設でnormal_purchaseが有効なユーザーのみ実行可能。'
+      RequestTables = @(
+        @{
+          Title = 'クエリパラメータ'
+          Columns = @('項目', '型', '必須', '説明')
+          Rows = @(
+            @('facilityId', 'int64', '任意', '作業対象施設ID。省略時は選択中施設。'),
+            @('keyword', 'string', '任意', '編集リスト名の部分一致。'),
+            @('limit', 'number', '任意', '取得件数。既定50、最大200。'),
+            @('cursor', 'string', '任意', '次ページ取得カーソル。')
+          )
+        }
+      )
+      ResponseTables = @(
+        @{
+          Title = 'レスポンス'
+          Columns = @('項目', '型', '説明')
+          Rows = @(
+            @('items[].editListId', 'int64', '編集リストID。'),
+            @('items[].listName', 'string', '編集リスト名。'),
+            @('items[].listType', 'string', 'PURCHASEまたはOTHER。OTHERは購入申請取り込みまたは通常購入RFQ作成時にPURCHASEへ昇格する。'),
+            @('items[].primaryFacilityId', 'int64', '主施設ID。'),
+            @('items[].facilities[].facilityId', 'int64', '対象施設ID。'),
+            @('items[].facilities[].facilityName', 'string', '対象施設名。'),
+            @('items[].itemCount', 'number', '編集リスト明細件数。'),
+            @('items[].applicationItemCount', 'number', '購入申請起点明細件数。'),
+            @('items[].updatedAt', 'datetime', '最終更新日時。'),
+            @('nextCursor', 'string|null', '次ページカーソル。')
+          )
+        }
+      )
+      Process = @(
+        'facilityIdの施設スコープとnormal_purchase権限を検証する。',
+        'edit_lists.status=ACTIVE、deleted_at IS NULL、list_type IN (PURCHASE, OTHER)の編集リストを対象とする。REMODELは候補に含めない。',
+        'edit_list_facilitiesの全対象施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
+        'keyword指定時はlist_name部分一致で絞り込み、last_accessed_at降順、updated_at降順で返却する。',
+        'edit_list_itemsを集計し、総明細件数とsource_type=APPLICATIONの明細件数を設定する。'
+      )
+      Errors = @(
+        @('400', 'VALIDATION_ERROR', 'クエリパラメータが不正。'),
+        @('401', 'AUTH_REQUIRED', '未認証。'),
+        @('403', 'FORBIDDEN', '対象施設または編集リスト対象施設の購入管理権限がない。')
+      )
+    },
+    @{
+      Id = '19-12'
+      Name = '購入管理起点編集リスト作成・購入申請取込API'
+      Method = 'POST'
+      Path = '/purchase-management/edit-lists'
+      Summary = '購入管理タブから編集リストを新規作成し、対象施設の原本資産コピーと選択購入申請明細の取り込みを同一トランザクションで実行する。'
+      Auth = 'Bearer必須。targetFacilityIds全施設でnormal_purchaseが有効なユーザーのみ実行可能。'
+      RequestTables = @(
+        @{
+          Title = 'リクエストボディ'
+          Columns = @('項目', '型', '必須', '説明')
+          Rows = @(
+            @('listName', 'string', '必須', '編集リスト名。最大200文字。'),
+            @('targetFacilityIds[]', 'int64[]', '必須', '対象施設ID。1件以上。複数施設を許可する。'),
+            @('primaryFacilityId', 'int64', '任意', '主施設ID。省略時はtargetFacilityIdsの先頭。'),
+            @('purchaseApplicationIds[]', 'int64[]', '必須', '取り込む購入申請ID。1件以上。'),
+            @('expectedApplicationUpdatedAts', 'object', '任意', 'キー=購入申請ID、値=画面表示時のapplications.updated_at。競合検出に使用する。')
+          )
+        }
+      )
+      ResponseTables = @(
+        @{
+          Title = 'レスポンス'
+          Columns = @('項目', '型', '説明')
+          Rows = @(
+            @('editList.editListId', 'int64', '作成した編集リストID。'),
+            @('editList.listName', 'string', '編集リスト名。'),
+            @('editList.listType', 'string', 'PURCHASE。'),
+            @('editList.facilityIds[]', 'int64[]', '対象施設ID一覧。'),
+            @('baseAssetItemCount', 'number', '原本資産コピー件数。'),
+            @('importedApplicationCount', 'number', '取り込んだ購入申請件数。'),
+            @('importedItemCount', 'number', '作成した購入申請起点明細件数。'),
+            @('applications[].purchaseApplicationId', 'int64', '更新した購入申請ID。'),
+            @('applications[].status', 'string', '編集中。')
+          )
+        }
+      )
+      Process = @(
+        'Idempotency-Keyが指定されている場合は二重実行を検査する。',
+        'listName、targetFacilityIds、primaryFacilityId、purchaseApplicationIdsを検証する。',
+        'targetFacilityIds全施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
+        '対象購入申請を行ロックし、application_type=PURCHASE、status=申請中、削除なし、施設スコープ内であることを確認する。',
+        'expectedApplicationUpdatedAts指定時はapplications.updated_atと一致することを確認する。',
+        'edit_listsをlist_type=PURCHASE、status=ACTIVEで作成し、edit_list_facilitiesへPRIMARY/ADDITIONALを登録する。',
+        'targetFacilityIdsのasset_ledgersをsource_type=BASE_ASSETとしてedit_list_itemsへスナップショットコピーする。',
+        '購入申請のapplication_assetsをsource_type=APPLICATIONとしてedit_list_itemsへ追加する。source_application_id/source_application_asset_idを必ず保持する。',
+        'applications.edit_list_idを作成したedit_list_idへ設定し、statusを編集中へ更新し、application_status_historiesへ履歴を登録する。',
+        '同一トランザクションで確定し、作成件数を返却する。'
+      )
+      Errors = @(
+        @('400', 'VALIDATION_ERROR', '編集リスト名、対象施設、購入申請IDが不正。'),
+        @('401', 'AUTH_REQUIRED', '未認証。'),
+        @('403', 'FORBIDDEN', '対象施設または購入申請の購入管理権限がない。'),
+        @('404', 'PURCHASE_APPLICATION_NOT_FOUND', '購入申請が存在しない、または参照できない。'),
+        @('409', 'CONFLICT_UPDATED_AT', '購入申請が他ユーザーにより更新されている。'),
+        @('409', 'PURCHASE_APPLICATION_STATUS_INVALID', '申請中ではない購入申請は取り込めない。')
+      )
+    },
+    @{
+      Id = '19-13'
+      Name = '既存編集リスト購入申請取込API'
+      Method = 'POST'
+      Path = '/purchase-management/edit-lists/{editListId}/purchase-applications'
+      Summary = '購入管理タブで選択した購入申請を既存編集リストへ取り込み、購入申請を編集中へ更新する。'
+      Auth = 'Bearer必須。編集リスト対象施設および購入申請施設でnormal_purchaseが有効なユーザーのみ実行可能。'
+      RequestTables = @(
+        @{
+          Title = 'パスパラメータ'
+          Columns = @('項目', '型', '必須', '説明')
+          Rows = @(
+            @('editListId', 'int64', '必須', '編集リストID。')
+          )
+        },
+        @{
+          Title = 'リクエストボディ'
+          Columns = @('項目', '型', '必須', '説明')
+          Rows = @(
+            @('purchaseApplicationIds[]', 'int64[]', '必須', '取り込む購入申請ID。1件以上。'),
+            @('expectedEditListUpdatedAt', 'datetime', '任意', '画面表示時のedit_lists.updated_at。競合検出に使用する。'),
+            @('expectedApplicationUpdatedAts', 'object', '任意', 'キー=購入申請ID、値=画面表示時のapplications.updated_at。競合検出に使用する。')
+          )
+        }
+      )
+      ResponseTables = @(
+        @{
+          Title = 'レスポンス'
+          Columns = @('項目', '型', '説明')
+          Rows = @(
+            @('editListId', 'int64', '編集リストID。'),
+            @('importedApplicationCount', 'number', '取り込んだ購入申請件数。'),
+            @('importedItemCount', 'number', '作成した購入申請起点明細件数。'),
+            @('applications[].purchaseApplicationId', 'int64', '更新した購入申請ID。'),
+            @('applications[].status', 'string', '編集中。')
+          )
+        }
+      )
+      Process = @(
+        'Idempotency-Keyが指定されている場合は二重実行を検査する。',
+        'edit_listsを行ロックして取得し、status=ACTIVE、deleted_at IS NULL、list_typeがPURCHASEまたはOTHERであることを確認する。REMODELは対象外とする。',
+        'expectedEditListUpdatedAt指定時はedit_lists.updated_atと一致することを確認する。',
+        'edit_list_facilities全施設と購入申請施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
+        '対象購入申請を行ロックし、application_type=PURCHASE、status=申請中であることを確認する。',
+        'source_type=APPLICATIONの一意制約により同一購入申請明細の重複取り込みを防止する。Idempotency-Key一致の再実行は既存結果を返す。',
+        'application_assetsをedit_list_itemsへ追加し、applications.edit_list_idとstatus=編集中、application_status_historiesを同一トランザクションで更新する。edit_lists.list_typeがOTHERの場合はPURCHASEへ更新する。',
+        'edit_lists.updated_at、last_accessed_atを更新し、取り込み件数を返却する。'
+      )
+      Errors = @(
+        @('400', 'VALIDATION_ERROR', '購入申請IDが不正。'),
+        @('401', 'AUTH_REQUIRED', '未認証。'),
+        @('403', 'FORBIDDEN', '編集リストまたは購入申請の購入管理権限がない。'),
+        @('404', 'EDIT_LIST_NOT_FOUND', '編集リストが存在しない、または参照できない。'),
+        @('404', 'PURCHASE_APPLICATION_NOT_FOUND', '購入申請が存在しない、または参照できない。'),
+        @('409', 'CONFLICT_UPDATED_AT', '編集リストまたは購入申請が他ユーザーにより更新されている。'),
+        @('409', 'PURCHASE_APPLICATION_STATUS_INVALID', '申請中ではない購入申請は取り込めない。'),
+        @('409', 'EDIT_LIST_TYPE_INVALID', 'REMODELの編集リストへ購入申請は取り込めない。'),
+        @('409', 'EDIT_LIST_APPLICATION_DUPLICATED', '同一購入申請明細が既に編集リストへ取り込まれている。')
+      )
+    },
+    @{
+      Id = '19-14'
+      Name = '通常購入RFQグループ作成API'
+      Method = 'POST'
+      Path = '/purchase-management/edit-lists/{editListId}/rfq-groups'
+      Summary = '購入管理タブ起点の編集リストで選択した明細から通常購入RFQグループを作成する。'
+      Auth = 'Bearer必須。編集リスト対象施設でnormal_purchaseが有効なユーザーのみ実行可能。'
+      RequestTables = @(
+        @{
+          Title = 'パスパラメータ'
+          Columns = @('項目', '型', '必須', '説明')
+          Rows = @(
+            @('editListId', 'int64', '必須', '編集リストID。')
+          )
+        },
+        @{
+          Title = 'リクエストボディ'
+          Columns = @('項目', '型', '必須', '説明')
+          Rows = @(
+            @('rfqGroupName', 'string', '必須', '見積依頼グループ名。最大150文字。'),
+            @('editListItemIds[]', 'int64[]', '必須', 'RFQに採用する編集リスト明細ID。1件以上。'),
+            @('dueOn', 'date', '任意', 'グループ回答期限。'),
+            @('remarks', 'string', '任意', '備考。'),
+            @('expectedEditListUpdatedAt', 'datetime', '任意', '画面表示時のedit_lists.updated_at。競合検出に使用する。')
+          )
+        }
+      )
+      ResponseTables = @(
+        @{
+          Title = 'レスポンス'
+          Columns = @('項目', '型', '説明')
+          Rows = @(
+            @('rfqGroupId', 'int64', '作成したrfqs.rfq_id。'),
+            @('rfqNo', 'string', '採番された見積依頼No。'),
+            @('rfqGroupName', 'string', '見積依頼グループ名。'),
+            @('status', 'string', '見積依頼。'),
+            @('managementType', 'string', 'PURCHASE。'),
+            @('editListId', 'int64', '編集リストID。'),
+            @('linkedItemCount', 'number', 'rfq_applicationsへ登録した明細件数。')
+          )
+        }
+      )
+      Process = @(
+        'Idempotency-Keyが指定されている場合は二重実行を検査する。',
+        'edit_listsを行ロックして取得し、status=ACTIVE、deleted_at IS NULL、list_typeがPURCHASEまたはOTHERであることを確認する。REMODELは対象外とする。',
+        'expectedEditListUpdatedAt指定時はedit_lists.updated_atと一致することを確認する。',
+        'edit_list_facilities全施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
+        'editListItemIdsの全明細を行ロックし、指定編集リストに属し、record_status=ACTIVEであることを確認する。',
+        '既に未完了RFQへ紐づく明細は重複採用不可とする。再作成が必要な場合は既存RFQ削除または終端状態を経由する。',
+        'rfqsをmanagement_type=PURCHASE、status=見積依頼、edit_list_id指定で作成し、rfq_noを採番する。edit_lists.list_typeがOTHERの場合はPURCHASEへ更新する。',
+        '選択されたedit_list_itemsだけをrfq_applicationsへ登録する。source_type=APPLICATIONの明細ではapplication_id/application_asset_idへ出所を設定する。',
+        '採用明細のedit_list_items.rfq_no、rfq_group_name、rfq_assignment_status=RFQ_ASSIGNEDを更新する。',
+        '作成結果を返却する。RFQ詳細・依頼書プレビューはrfq_applicationsに登録された明細だけを対象とする。'
+      )
+      Errors = @(
+        @('400', 'VALIDATION_ERROR', '見積依頼グループ名または編集リスト明細IDが不正。'),
+        @('401', 'AUTH_REQUIRED', '未認証。'),
+        @('403', 'FORBIDDEN', '編集リスト対象施設の購入管理権限がない。'),
+        @('404', 'EDIT_LIST_NOT_FOUND', '編集リストが存在しない、または参照できない。'),
+        @('404', 'EDIT_LIST_ITEM_NOT_FOUND', '編集リスト明細が存在しない、または参照できない。'),
+        @('409', 'CONFLICT_UPDATED_AT', '編集リストが他ユーザーにより更新されている。'),
+        @('409', 'EDIT_LIST_TYPE_INVALID', 'REMODELの編集リストから通常購入RFQは作成できない。'),
+        @('409', 'EDIT_LIST_ITEM_ALREADY_LINKED_TO_RFQ', '指定明細が未完了RFQへ既に紐づいている。')
       )
     }
   )

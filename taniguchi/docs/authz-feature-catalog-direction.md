@@ -108,10 +108,6 @@
 - 通常購入管理のSHIP依頼
   - `通常購入管理 / SHIP依頼機能` は `normal_ship_request` として独立管理し、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` には束ねない
 - `normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供機能設定で候補範囲を管理したうえで、ユーザー施設別機能設定でも ON/OFF する
-- SHIP代理作業
-  - `SHIP代理作業` は `ship_proxy_task` として独立管理し、病院側からSHIPへ依頼を作成する `normal_ship_request` には束ねない
-  - `ship_proxy_task` は `config_scope='FACILITY_USER'` とし、施設選択画面の `SHIP依頼一覧へ` 導線とSHIP依頼一覧での代理作業を制御する
-  - ユーザー管理画面では対象ユーザーが `account_type='SHIP'` の場合のみ新規作成/変更時に表示・設定可能とし、非SHIPユーザーへの保存指定は拒否する。既存設定が残る場合も実効権限では無効として扱う
 - 貸出・返却の使用中/使用済みフロー
   - `貸出・返却 / 使用中 & 使用済み` は `lending_in_use_used` として独立管理し、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` には束ねない
 - `lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供機能設定で候補範囲を管理したうえで、ユーザー施設別機能設定でも ON/OFF する
@@ -120,7 +116,7 @@
 - 表示カラム
   - `original_price_column`、`remodel_ship_column`、`normal_ship_column`、`asset_master_ship_column` は、`権限管理単位一覧` シート A列の最新粒度に合わせて分離維持する
 - 表示分類
-  - `users.account_type` を保持し、原則として表示分類や入力制御用途に限定する。ただし `ship_proxy_task` は対象ユーザーが `account_type='SHIP'` の場合のみ表示・保存・実効利用できる追加条件を持つ
+  - `users.account_type` を保持し、原則として表示分類や入力制御用途に限定する
 
 ### 認証認可APIで見直しが必要な点
 

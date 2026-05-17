@@ -27,6 +27,7 @@ $script:wdAutoFitFixed = 0
 $script:wdAutoFitContent = 1
 $script:wdAutoFitWindow = 2
 $script:wdPageBreak = 7
+$script:wdFieldTOC = 13
 $script:tableHeaderShade = -738132173
 
 function Release-ComObjectSafely {
@@ -687,7 +688,11 @@ function Rebuild-TableOfContents {
   $tocRange.Text = ''
   $tocRange.SetRange($tocStart, $tocStart)
 
-  $Document.TablesOfContents.Add($tocRange, $true, 1, 3) | Out-Null
+  # TablesOfContents.Add can materialize static TOC text with this template/Word
+  # combination. Insert the TOC field explicitly so regenerated docs remain
+  # updateable and satisfy the API document template contract.
+  $tocField = $Document.Fields.Add($tocRange, $script:wdFieldTOC, '\o "1-3" \h \z \u', $true)
+  $tocField.Update() | Out-Null
 }
 
 function Normalize-ApiDocParagraphStyles {
@@ -819,25 +824,18 @@ function New-ApiWordDocumentFromSpec {
     $selection = Set-ReplacementBodyStart -Document $doc -WordApp $word
     Write-ApiDocSections -Document $doc -Selection $selection -Sections $Spec.Sections
     Normalize-ApiDocParagraphStyles -Document $doc
+    try {
+      Apply-ApiDocFormatting -Document $doc
+    }
+    catch {
+      Write-Warning ("Apply-ApiDocFormatting failed. Continuing before TOC rebuild. {0}" -f $_.Exception.Message)
+    }
     Rebuild-TableOfContents -Document $doc
 
     if ($doc.TablesOfContents.Count -ge 1) {
       $doc.TablesOfContents.Item(1).Update() | Out-Null
     }
     $doc.Fields.Update() | Out-Null
-    $doc.Save()
-    try {
-      Apply-ApiDocFormatting -Document $doc
-      $doc.Save()
-    }
-    catch {
-      Write-Warning ("Apply-ApiDocFormatting failed. Saved document without final formatting pass. {0}" -f $_.Exception.Message)
-    }
-
-    if ($doc.TablesOfContents.Count -ge 1) {
-      $doc.TablesOfContents.Item(1).Update() | Out-Null
-      $doc.TablesOfContents.Item(1).Range.Fields.Unlink() | Out-Null
-    }
     $doc.Save()
   }
   finally {
