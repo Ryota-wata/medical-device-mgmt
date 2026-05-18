@@ -785,12 +785,46 @@ package "編集リスト" {
 
   note right of edit_lists
     list_type は作成導線で決定する。
-    購入管理タブの申請受付から作成する
-    通常編集リストは PURCHASE、
-    リモデル管理起点は REMODEL、
-    ホーム画面の汎用編集リストは OTHER とする。
+    通常編集リスト導線・購入管理タブから
+    作成するリストは PURCHASE、
+    リモデル編集リスト導線・
+    リモデル管理起点は REMODEL とする。
+    作成後の通常/リモデル切替や
+    list_type変更APIは提供しない。
     status=CLOSED はリモデル管理の
     原本反映完了後の読み取り専用状態。
+    deleted_at 設定時は選択候補・
+    編集対象から除外するが、RFQ、
+    申請、見積、履歴は削除せず
+    edit_list_id の参照を保持する。
+  end note
+
+  entity "edit_list_work_locks" as edit_list_work_locks {
+    * 編集リスト作業ロックID / edit_list_work_lock_id : bigint
+    --
+    編集リストID / edit_list_id : bigint
+    ロック保持ユーザーID / locked_by_user_id : bigint
+    ロックトークン / lock_token : varchar
+    ロック取得日時 / locked_at : timestamp
+    最終heartbeat日時 / last_heartbeat_at : timestamp
+    ロック有効期限 / lock_expires_at : timestamp
+    解除日時 / released_at : timestamp
+    解除理由 / release_reason : varchar
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of edit_list_work_locks
+    編集リスト単位の作業ロックを
+    DBで管理する運用状態テーブル。
+    有効ロックは released_at IS NULL
+    かつ lock_expires_at > 現在時刻。
+    heartbeatまたは編集系API成功時に
+    last_heartbeat_at と lock_expires_at を更新する。
+    lock_token は編集系API検証に用いる。
+    強制解除機能は提供しない。
+    解除済み・期限切れ行は長期保管せず
+    定期削除対象とする。
   end note
 
   entity "edit_list_facilities" as edit_list_facilities {
@@ -2277,6 +2311,7 @@ package "調査・登録・履歴" {
     調査セッションID / asset_survey_session_id : bigint
     施設ID / facility_id : bigint
     施設ロケーションID / facility_location_id : bigint
+    SHIP資産マスタID / ship_asset_master_id : bigint
     カテゴリID / category_id : bigint
     大分類ID / large_class_id : bigint
     中分類ID / medium_class_id : bigint
@@ -2323,6 +2358,8 @@ package "調査・登録・履歴" {
     の各階層で、マスタ選択済みの値と
     自由記述値が混在する
     ケースを扱うため。
+    資産マスタ選択時は
+    ship_asset_master_id も保持し、
     自由記述時は対応IDを NULL とする。
     部門/部署は facility_locations
     由来の値を正本とし、
@@ -2648,6 +2685,7 @@ package "インポート・マッチング" {
     QR識別子 / qr_identifier : varchar
     QR解決状態 / qr_resolution_status : varchar
     作成資産台帳ID / created_asset_ledger_id : bigint
+    SHIP資産マスタID / ship_asset_master_id : bigint
     資産番号 / asset_no : varchar
     ME番号 / equipment_no : varchar
     資産名 / asset_name : varchar
@@ -2721,6 +2759,18 @@ package "インポート・マッチング" {
     `asset_ledgers.asset_ledger_id`
     を保持する監査 /
     画面遷移キー。
+    `ship_asset_master_id` は
+    原本確定時に
+    `asset_ledgers.ship_asset_master_id`
+    へ引き継ぐ。
+    台帳代表行は
+    selected_ship_asset_master_id
+    suggested_ship_asset_master_id
+    の順で採用し、
+    現有品調査のみの行は
+    asset_survey_records 側の
+    ship_asset_master_id を採用。
+    未設定時は NULL。
     更新系 API は
     判定履歴または
     論理統合状態を保存後
@@ -2741,7 +2791,12 @@ package "インポート・マッチング" {
     のいずれでも成立可。
     台帳n + 現有品調査1
     および n:n は許容しない。
-    台帳反映時の分類優先順位は
+    台帳反映時は
+    ship_asset_master_id が
+    `selected_ship_asset_master_id`
+    `suggested_ship_asset_master_id`
+    既存 snapshot、
+    分類 ID / 名称が
     `selected_*`
     `suggested_*`
     既存 snapshot。
@@ -3142,6 +3197,7 @@ users ||--o{ asset_import_survey_mappings : ""
 users ||--o{ asset_survey_integration_sessions : ""
 users ||--o{ asset_survey_integration_results : ""
 users ||--o{ edit_lists : ""
+users ||--o{ edit_list_work_locks : ""
 users ||--o{ edit_list_items : ""
 users ||--o{ edit_list_item_attachments : "VIEW元"
 users ||--o{ edit_list_free_columns : ""
@@ -3220,6 +3276,7 @@ ship_asset_masters ||--o{ edit_list_items : ""
 asset_items ||--o{ asset_survey_records : ""
 manufacturers ||--o{ asset_survey_records : ""
 models ||--o{ asset_survey_records : ""
+ship_asset_masters ||--o{ asset_survey_records : ""
 asset_items ||--o{ quotation_items : ""
 quotation_items ||--o{ edit_list_items : "source_quotation_item_id"
 asset_categories ||--o{ asset_import_rows : ""
@@ -3267,6 +3324,7 @@ qr_codes ||--o{ qr_print_job_items : ""
 
 ' 編集リスト
 edit_lists ||--o{ edit_list_facilities : ""
+edit_lists ||--o{ edit_list_work_locks : ""
 edit_lists ||--o{ edit_list_items : ""
 edit_lists ||--o{ edit_list_free_columns : ""
 edit_lists ||--o{ asset_ledger_histories : "EDIT_LIST_CLOSE"
@@ -3419,6 +3477,7 @@ asset_medium_classes ||--o{ asset_data_matching_items : ""
 asset_items ||--o{ asset_data_matching_items : ""
 manufacturers ||--o{ asset_data_matching_items : ""
 models ||--o{ asset_data_matching_items : ""
+ship_asset_masters ||--o{ asset_data_matching_items : ""
 asset_ledgers ||--o{ asset_data_matching_items : "created_asset_ledger_id"
 asset_import_jobs ||--o{ asset_import_survey_mappings : ""
 asset_import_rows ||--o{ asset_import_survey_mappings : ""

@@ -688,7 +688,7 @@
         'expectedUpdatedAt指定時はrfqs.updated_atと一致することを確認する。',
         'RFQステータスが発注済到達前（見積依頼、見積依頼済、見積DB登録済、見積登録依頼中、発注用見積依頼済、発注見積登録済）であることを確認する。発注済以降は削除不可とする。',
         'orders、order_items、individuals、asset_ledgersへの資産登録結果など発注以降の後続データが存在しないことを確認する。存在する場合は削除不可とする。',
-        'rfqs.deleted_atを設定し、関連するrfq_vendors、quotations、quotation_items、quotation_item_application_linksを同一トランザクションで論理削除する。RFQ/QUOTATION/RFQ_VENDOR所有の添付・生成ファイルメタデータはapplication_documents.deleted_atを設定する。ただし外部送付済み帳票の確定値保持/再出力方針は機能要件の確認待ち事項に従う。',
+        'rfqs.deleted_atを設定し、関連するrfq_vendors、quotations、quotation_items、quotation_item_application_linksを同一トランザクションで論理削除する。RFQ/QUOTATION/RFQ_VENDOR所有の添付・生成ファイルメタデータはapplication_documents.deleted_atを設定する。',
         'rfq_applicationsは削除済みRFQとの採用履歴として保持する。編集リスト本体および編集リスト明細は削除しない。',
         '削除対象RFQが編集リスト行の現在表示中RFQである場合は、対象edit_list_itemsのrfq_no、rfq_group_name、rfq_assignment_statusを未割当状態へ更新する。過去RFQの再表示は行わない。',
         '削除結果を返却する。'
@@ -727,7 +727,7 @@
           Rows = @(
             @('items[].editListId', 'int64', '編集リストID。'),
             @('items[].listName', 'string', '編集リスト名。'),
-            @('items[].listType', 'string', 'PURCHASEまたはOTHER。OTHERは購入申請取り込みまたは通常購入RFQ作成時にPURCHASEへ昇格する。'),
+            @('items[].listType', 'string', 'PURCHASE。購入管理タブから選択できる通常編集リストのみを返す。'),
             @('items[].primaryFacilityId', 'int64', '主施設ID。'),
             @('items[].facilities[].facilityId', 'int64', '対象施設ID。'),
             @('items[].facilities[].facilityName', 'string', '対象施設名。'),
@@ -740,7 +740,7 @@
       )
       Process = @(
         'facilityIdの施設スコープとnormal_purchase権限を検証する。',
-        'edit_lists.status=ACTIVE、deleted_at IS NULL、list_type IN (PURCHASE, OTHER)の編集リストを対象とする。REMODELは候補に含めない。',
+        'edit_lists.status=ACTIVE、deleted_at IS NULL、list_type=PURCHASEの通常編集リストを対象とする。REMODELは候補に含めない。',
         'edit_list_facilitiesの全対象施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
         'keyword指定時はlist_name部分一致で絞り込み、last_accessed_at降順、updated_at降順で返却する。',
         'edit_list_itemsを集計し、総明細件数とsource_type=APPLICATIONの明細件数を設定する。'
@@ -849,12 +849,12 @@
       )
       Process = @(
         'Idempotency-Keyが指定されている場合は二重実行を検査する。',
-        'edit_listsを行ロックして取得し、status=ACTIVE、deleted_at IS NULL、list_typeがPURCHASEまたはOTHERであることを確認する。REMODELは対象外とする。',
+        'edit_listsを行ロックして取得し、status=ACTIVE、deleted_at IS NULL、list_type=PURCHASEであることを確認する。REMODELは対象外とする。',
         'expectedEditListUpdatedAt指定時はedit_lists.updated_atと一致することを確認する。',
         'edit_list_facilities全施設と購入申請施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
         '対象購入申請を行ロックし、application_type=PURCHASE、status=申請中であることを確認する。',
         'source_type=APPLICATIONの一意制約により同一購入申請明細の重複取り込みを防止する。Idempotency-Key一致の再実行は既存結果を返す。',
-        'application_assetsをedit_list_itemsへ追加し、applications.edit_list_idとstatus=編集中、application_status_historiesを同一トランザクションで更新する。edit_lists.list_typeがOTHERの場合はPURCHASEへ更新する。',
+        'application_assetsをedit_list_itemsへ追加し、applications.edit_list_idとstatus=編集中、application_status_historiesを同一トランザクションで更新する。編集リストのlist_typeは作成時に確定済みのため更新しない。',
         'edit_lists.updated_at、last_accessed_atを更新し、取り込み件数を返却する。'
       )
       Errors = @(
@@ -913,12 +913,12 @@
       )
       Process = @(
         'Idempotency-Keyが指定されている場合は二重実行を検査する。',
-        'edit_listsを行ロックして取得し、status=ACTIVE、deleted_at IS NULL、list_typeがPURCHASEまたはOTHERであることを確認する。REMODELは対象外とする。',
+        'edit_listsを行ロックして取得し、status=ACTIVE、deleted_at IS NULL、list_type=PURCHASEであることを確認する。REMODELは対象外とする。',
         'expectedEditListUpdatedAt指定時はedit_lists.updated_atと一致することを確認する。',
         'edit_list_facilities全施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
         'editListItemIdsの全明細を行ロックし、指定編集リストに属し、record_status=ACTIVEであることを確認する。',
         '同じ編集リスト明細が既に別RFQへ紐づいていても新規RFQ作成は許可する。削除済みRFQは現在割当判定から除外し、有効な過去RFQとのリンクはrfq_applicationsで履歴として追跡する。',
-        'rfqsをmanagement_type=PURCHASE、status=見積依頼、edit_list_id指定で作成し、rfq_noを採番する。edit_lists.list_typeがOTHERの場合はPURCHASEへ更新する。',
+        'rfqsをmanagement_type=PURCHASE、status=見積依頼、edit_list_id指定で作成し、rfq_noを採番する。編集リストのlist_typeは作成時にPURCHASEとして確定済みのため更新しない。',
         '選択されたedit_list_itemsだけをrfq_applicationsへ登録する。source_type=APPLICATIONの明細ではapplication_id/application_asset_idへ出所を設定する。',
         '採用明細のedit_list_items.rfq_no、rfq_group_name、rfq_assignment_status=RFQ_ASSIGNEDを更新する。',
         '作成結果を返却する。RFQ詳細・依頼書プレビューはrfq_applicationsに登録された明細だけを対象とする。'
