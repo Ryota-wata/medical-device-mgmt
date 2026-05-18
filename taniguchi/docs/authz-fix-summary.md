@@ -5,9 +5,12 @@
 
 ## 1. 今回の設計で確定していること
 
-- 事前定義ロールを認可の正本にする考え方は廃止する。
+- 通常アカウントでは、事前定義ロールを認可の正本にする考え方は廃止する。
 - 施設ごとに「その施設で提供する機能」を ON/OFF 管理する。
 - 施設に紐づくユーザーごとに「その施設で利用可能にする機能」を ON/OFF 管理する。
+- システム管理者は通常アカウントへ付与するロールではなく、`users.account_type='SYSTEM_ADMIN'` の共有アカウント1件として運用する。
+- 共有システム管理者アカウントは、未削除の全施設、全 `feature_code`、全 `column_code` を利用可能とする。
+- 共有システム管理者アカウントの監査ログは当該共有アカウントの `user_id` として記録し、実際にログインしていた個人は追跡しない。
 - 設立母体を問わない任意の施設協業グループを持ち、同一グループ内の他施設データを閲覧できるようにする。
 - 他施設閲覧は、閲覧者側の利用可否だけでなく、公開元施設側の公開設定も満たした場合のみ許可する。
 - 一部の一覧カラムは、機能とは別にカラム単位で ON/OFF 管理する。
@@ -55,7 +58,8 @@
   - 氏名
   - 所属
   - アカウント状態
-  - `account_type` は表示分類・入力制御用に保持してよいが、認可判定には使わない。
+  - `account_type` は通常アカウントでは表示分類・入力制御用に保持してよく、認可判定には使わない。
+  - `account_type='SYSTEM_ADMIN'` は共有システム管理者アカウントを表す特別値として認可サービスで例外判定する。有効な共有システム管理者アカウントは1件のみとし、ユーザー管理画面/APIから通常ユーザーへ付与できない。
 - `facilities`
   - 施設正本。
   - 契約状態もここで管理する。
@@ -167,6 +171,8 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 
 自施設の機能を使える条件は次のとおり。
 
+共有システム管理者アカウントは、作業対象施設が未削除である限り以下の通常判定をバイパスし、全機能・全カラムを利用可能とする。
+
 1. `user_facility_assignments` に、当該ユーザーと作業対象施設の割当がある
 2. `facilities.deleted_at IS NULL` で、その施設が未削除である
 3. `facility_feature_settings` で、その施設の当該 `feature_code` が `true`
@@ -189,8 +195,10 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 ## 6. フロントエンドで行うこと
 
 - ログイン後に `GET /auth/me` で担当施設一覧と基本情報を取得する。
-- `GET /auth/me` では `facilities.deleted_at IS NULL` の担当施設だけを `assignedFacilities` に表示し、削除済み施設は見せない。
+- `GET /auth/me` では、通常アカウントは `facilities.deleted_at IS NULL` の担当施設だけを `assignedFacilities` に表示し、削除済み施設は見せない。
+- 共有システム管理者アカウントでは、`GET /auth/me` が未削除の全施設を `assignedFacilities` に返す。
 - 施設選択後に `GET /auth/context?actingFacilityId=...` で、その施設における実効 `feature_code` / `column_code` を取得する。
+- 共有システム管理者アカウントでは、`GET /auth/context` が選択施設に対して全 `feature_code` / 全 `column_code` を有効として返す。
 - 論理削除済み施設は施設選択候補に含めない。再契約等で施設を復活させた場合は、保持済み設定を使って再度候補に現れる。
 - フロントエンドは `can(featureCode)` / `canColumn(columnCode)` を使って次を制御する。
   - メニュー表示
@@ -209,9 +217,11 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
   - `accountType`
   - 未削除の担当施設一覧
   - 未削除施設に限定した既定施設
+  - 共有システム管理者アカウントの場合は未削除の全施設一覧
 - `GET /auth/context?actingFacilityId=...`
   - 指定施設に対する実効 `feature_code` 一覧
   - 指定施設に対する実効 `column_code` 一覧
+  - 共有システム管理者アカウントの場合は指定施設が未削除であることを検証したうえで全コードを返す
 
 バックエンドは共通の認可サービスを持ち、すべての業務 API で毎回再判定する。
 
@@ -219,6 +229,8 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
   - `user_id` と `actingFacilityId` と `feature_code` で判定する
 - 他施設 API
   - `user_id`、`actingFacilityId`、`targetFacilityId`、`feature_code`、必要な `column_code` で判定する
+- 共有システム管理者アカウント
+  - `accountType='SYSTEM_ADMIN'` かつ対象施設が未削除である場合は許可する
 
 バックエンドは、許可されていないデータやカラムをレスポンスに含めない。  
 ブラウザで DOM を改変してボタンを見せても、API 側で 403 になるか、データ自体が返らない状態にする。
@@ -264,6 +276,7 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
   - いつ
   - どの設定を
   - どう変更したか
+- 共有システム管理者アカウントで実行した操作は、当該共有アカウントの `user_id` を「誰が」として扱う。実際の利用者個人を別途記録する要件は持たない。
 - 対象は少なくとも次とする。
   - `user_facility_assignments`
   - `facility_feature_settings`
@@ -281,7 +294,7 @@ user_facility_assignment_id = 100, feature_code = 'qr_issue', is_enabled = false
 - `auth_login` は認証前提機能であり、施設・ユーザー権限設定の対象に含めない。
 - `facility_select_all` は採用しない。
 - `original_price_column`、`remodel_ship_column`、`normal_ship_column`、`asset_master_ship_column` は、`権限管理単位一覧` シート A列の最新粒度に合わせて分離維持する。
-- `users.account_type` は認可判定に使わない。
+- `users.account_type` は通常アカウントの認可判定には使わない。ただし `SYSTEM_ADMIN` は共有システム管理者アカウントの特別値として全権限例外に使う。
 - 病院ユーザーでは `users.facility_id` と `user_facility_assignments.is_default=true` の施設を一致させる。
 - モックは画面イメージの根拠であり、実装ベースではない。
 - 施設論理削除時は認可設定を削除せず保持し、削除済み施設だけを実行時に無効扱いする。

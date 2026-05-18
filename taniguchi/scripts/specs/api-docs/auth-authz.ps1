@@ -13,16 +13,19 @@
       'ログイン、ログアウト、トークン再発行、パスワード再設定の I/F',
       '`/auth/me` と `/auth/context` を使った担当施設選択、画面表示制御の成立条件',
       '`feature_code` / `column_code` を正本とした認可判定ルール',
+      '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の全施設・全機能利用例外',
       '他施設閲覧時に必要な協業グループと公開元施設設定の判定条件'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '本 API 群は、認証基盤、施設選択導線、ホーム/各業務画面の表示制御を支える横断 API である。ログイン後は `GET /auth/me` で担当施設一覧と既定施設を取得し、施設決定後に `GET /auth/context?actingFacilityId=...` を呼び出して実効 `feature_code` / `column_code` を取得する。' },
     @{ Type = 'Paragraph'; Text = '認可正本はロールではなく、`feature_catalogs` / `column_catalogs` / `user_facility_assignments` / 施設別設定 / ユーザー施設別設定 / 他施設公開設定を参照して判断する。' },
+    @{ Type = 'Paragraph'; Text = '例外として、`users.account_type=''SYSTEM_ADMIN''` の共有システム管理者アカウントは通常ユーザーへ付与するロールではなく、運用上1件のみ用意する共有アカウントとして扱う。このアカウントでログインした場合は、未削除の全施設、全 `feature_code`、全 `column_code` を利用可能とし、担当施設割当、施設提供設定、ユーザー施設別設定、協業グループ、他施設公開設定による通常判定をバイパスする。監査ログ上は共有アカウントの `user_id` の操作として記録し、実際にログインしていた個人は追跡しない。' },
     @{ Type = 'Paragraph'; Text = '権限管理で扱う `feature_code` / `column_code` は `feature_catalogs` / `column_catalogs` に登録したコードを正本とし、本API群で固定的に使用するコードと判定ルールは本設計書内で定義する。1つの管理単位に対して1つの `feature_code` または `column_code` を割り当てる。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('担当施設', '`user_facility_assignments` に直接登録された、ユーザーが作業対象として選択できる施設'),
       @('作業対象施設', 'ログイン後に現在の操作文脈として選択した施設。`actingFacilityId` で表す'),
+      @('共有システム管理者アカウント', '`users.account_type=''SYSTEM_ADMIN''` の共有アカウント。未削除施設を対象とする限り通常認可判定をバイパスし、全機能・全カラムを利用可能とする'),
         @('実効 feature_code', '`config_scope` に応じて判定済みの利用可能機能コード。`FACILITY_USER` は施設提供機能とユーザー施設別機能の両方を基本条件として判定する。`FACILITY` は施設単位のみで完結するスコープとし、現行採用コードでは固定導線を除く業務機能を `FACILITY_USER` に統一する'),
       @('実効 column_code', '施設提供カラムとユーザー施設別カラムの両方が有効で、かつ関連 feature が有効な場合に表示できるカラムコード'),
       @('他施設閲覧', '作業対象施設とは別の施設データを、協業グループと公開元施設設定に基づいて閲覧すること')
@@ -48,7 +51,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
-      @('users', '認証、ユーザー基本情報、アカウント状態、最終ログイン更新', 'user_id, email_address, password_hash, name, account_type, is_active, locked_at, last_login_at'),
+      @('users', '認証、ユーザー基本情報、アカウント状態、最終ログイン更新、共有システム管理者例外判定', 'user_id, email_address, password_hash, name, account_type, is_active, locked_at, last_login_at'),
       @('user_remember_tokens', 'current device のログイン状態保持トークンの発行・更新・失効', 'token_id, user_id, token, expires_at, last_used_at'),
       @('password_reset_tokens', 'パスワード再設定トークンの発行・使用済み管理、管理者起点の初回設定案内送信時の内部利用', 'token_id, user_id, token, expires_at, used_at'),
       @('user_facility_assignments', '担当施設一覧、既定施設、施設アクセス可否判定', 'user_facility_assignment_id, user_id, facility_id, is_default, is_active, valid_from, valid_to'),
@@ -78,12 +81,14 @@
       '認証済み API は Bearer トークンを `Authorization` ヘッダーに付与する',
       '`rememberMe=true` の場合は current device 用の remember token を `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する',
       '`facilities.deleted_at IS NOT NULL` の施設は `/auth/me`、`/auth/context`、`/authorization/check`、各業務 API の対象外とする',
+      '`users.account_type=''SYSTEM_ADMIN''` の共有システム管理者アカウントは、未削除施設を対象とする限り担当施設割当や施設別・ユーザー別設定に依存せず全機能・全カラムを利用できる',
       '画面表示制御用の `GET /auth/context` は UX 用キャッシュであり、業務 API の認可判定を代替しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後は Bearer トークンを用いて `GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用トークンも発行し、再訪時は認証基盤側でセッション再開を試みる。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
     @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、`config_scope=''FACILITY_USER''` の機能は施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。固定導線を除く現行採用機能は `FACILITY_USER` に統一し、Phase1では `normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象に含める。ただし子機能など追加条件を持つコードは各コードの補足規定に従う。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し / 完了` や `DataLINK / SHIP表示列（リモデル）` / `DataLINK / SHIP表示列（通常）` / `資産マスタ / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。他施設閲覧専用の別コードは設けず、閲覧者側は既存の `original_list_view` / `original_price_column`、公開元施設側は `facility_external_view_settings` / `facility_external_column_settings` で制御する。' },
+    @{ Type = 'Paragraph'; Text = '共有システム管理者アカウント（`account_type=''SYSTEM_ADMIN''`）は通常ユーザーのロールではなく、初期データまたは運用設定で1件のみ用意する特別アカウントである。認可サービスはこの値を検出した場合、選択施設または対象施設が未削除であることだけを確認し、担当施設割当、施設提供設定、ユーザー施設別設定、協業グループ、公開元施設設定の通常判定を行わず許可する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', '種別', 'コード', '対象処理'); Rows = @(
       @('ログイン・パスワード再設定（固定導線）', 'feature_code', '`auth_login`', '`POST /auth/login`、`POST /auth/password/forgot`、`POST /auth/password/reset` の固定導線を扱う。`config_scope=''SYSTEM_FIXED''` として固定扱いにする'),
       @('施設選択（固定導線）', 'feature_code', '`facility_select`', '`GET /auth/me` の担当施設選択導線と `GET /auth/context` の `actingFacilityId` 確定に用いる。`config_scope=''SYSTEM_FIXED''` として固定扱いにする')
@@ -151,7 +156,7 @@
     @{ Type = 'Paragraph'; Text = '本 API 群の `/auth/context` と `/authorization/check` は、上記 `feature_code` / `column_code` カタログに登録されたコードを汎用的に評価する。各業務 API 設計書は、そのうち当該 API 群で必要なコードだけを抜粋して記載するが、コード値、管理単位名、関連付けの正本は本設計書のカタログとする。資産一覧起点の管理部署編集は `management_department_edit`、点検管理登録は `inspection_management`、保守契約登録は `maintenance_contract` を利用し、Phase1の通常購入管理におけるSHIPへ依頼ボタン表示は `config_scope=''FACILITY_USER''` の `normal_ship_request` を利用する。貸出・返却の使用中/使用済みフローは `config_scope=''FACILITY_USER''` の `lending_in_use_used` を利用し、実効利用には `lending_checkout` も有効であることを必須とする。' },
     @{ Type = 'Table'; Headers = @('対象', '判定に使う主な情報', '説明'); Rows = @(
       @('ログイン関連', '`users`, `user_remember_tokens`, `password_reset_tokens`', '認証とトークン管理を扱う。施設別権限は判定しない'),
-      @('作業対象施設決定', '`user_facility_assignments`, `facilities`', '担当施設一覧と既定施設を決定する'),
+      @('作業対象施設決定', '`users.account_type`, `user_facility_assignments`, `facilities`', '通常アカウントは担当施設一覧と既定施設を決定する。共有システム管理者アカウントは未削除の全施設を選択候補とする'),
       @('自施設機能判定', '`feature_catalogs.config_scope`, `facility_feature_settings`, `user_facility_feature_settings`', '`FACILITY_USER` は施設提供とユーザー許可の両方を基本条件とする。Phase1では `normal_ship_request` / `lending_in_use_used` も `FACILITY_USER` として判定し、`lending_in_use_used` は親 `lending_checkout` も必要'),
       @('自施設カラム判定', '`facility_column_settings`, `user_facility_column_settings`, `column_catalogs.related_feature_code`', '関連 feature が有効な場合のみ成立する'),
       @('他施設閲覧判定', '`original_list_view`, `original_price_column`, `facility_collaboration_groups`, `facility_collaboration_group_facilities`, `facility_external_view_settings`, `facility_external_column_settings`', '閲覧者側の既存実効権限と公開元施設設定の両方が必要')
@@ -288,10 +293,11 @@
         )
         ProcessingLines = @(
           '認証済みユーザーの `users` を取得する',
-          '`user_facility_assignments` から有効な担当施設一覧を取得する',
-          '`facilities` を JOIN し、`deleted_at IS NULL` の施設だけを `assignedFacilities` へ含める',
-          '施設名称、契約状態を付与し、削除済み施設を既定担当に持つ場合は `defaultFacilityId` へ返さない',
-          '協業グループ経由で見える施設は `assignedFacilities` へ含めない'
+          '通常アカウントの場合は `user_facility_assignments` から有効な担当施設一覧を取得する',
+          '共有システム管理者アカウント（`account_type=''SYSTEM_ADMIN''`）の場合は `user_facility_assignments` に依存せず、`facilities.deleted_at IS NULL` の全施設を `assignedFacilities` へ含める',
+          '施設名称、契約状態を付与する。通常アカウントが削除済み施設を既定担当に持つ場合は `defaultFacilityId` へ返さない',
+          '共有システム管理者アカウントでは `defaultFacilityId` を自動固定せず、作業対象施設選択画面で明示選択させる',
+          '協業グループ経由で見える施設は通常アカウントの `assignedFacilities` へ含めない'
         )
         ResponseTitle = 'レスポンス（200：AuthMeResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -340,20 +346,23 @@
         PermissionLines = @(
           '認証済みセッションであること',
           '認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること',
-          '指定 `actingFacilityId` が `user_facility_assignments` 上の有効な担当施設であること',
+          '通常アカウントの場合、指定 `actingFacilityId` が `user_facility_assignments` 上の有効な担当施設であること',
+          '共有システム管理者アカウントの場合、指定 `actingFacilityId` が未削除施設であること',
           '指定 `actingFacilityId` に対応する `facilities.deleted_at IS NULL` であること'
         )
         ProcessingLines = @(
-          '`user_facility_assignments` で対象施設への割当を確認する',
+          '認証済みユーザーの `users.account_type` を確認する',
+          '通常アカウントの場合は `user_facility_assignments` で対象施設への割当を確認する',
           '`facilities.deleted_at IS NULL` の未削除施設であることを確認し、削除済みなら 404 とする',
-          '`facilities.system_contract_status` を確認し、契約有効施設だけを認可判定対象にする',
+          '通常アカウントの場合は `facilities.system_contract_status` を確認し、契約有効施設だけを認可判定対象にする',
+          '共有システム管理者アカウントの場合は選択施設が未削除であれば、`feature_catalogs.is_active=true` の全 `feature_code` と `column_catalogs.is_active=true` の全 `column_code` を返す',
           '`config_scope=''FACILITY_USER''` の `feature_code` は `facility_feature_settings` と `user_facility_feature_settings` の両方が `is_enabled=true` の場合に実効機能として返す',
           'Phase1では `normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として `facility_feature_settings.is_enabled=true` かつ `user_facility_feature_settings.is_enabled=true` の場合だけ返却候補に含める',
           '`lending_in_use_used` は施設提供設定とユーザー施設別設定が有効であっても、同一担当施設で `lending_checkout` の実効権限が成立しない場合は `featureCodes` から除外する',
           '`facility_column_settings` と `user_facility_column_settings` の両方が `is_enabled=true` で、かつ `related_feature_code` が有効な `column_code` を実効カラムとして返す',
           '最新の `権限管理単位一覧` シートで採用した `feature_code` / `column_code` だけを返却候補に含める',
           '他施設閲覧の具体的な対象施設可否は本 API では解決せず、協業グループ、対象施設契約状態、公開元施設設定を `/authorization/check` または業務 API 側で再判定する。QRコードや他施設閲覧専用の別コードは返却せず、既存の `original_list_view` / `original_price_column` の実効有無を返す',
-          '`config_scope=''SYSTEM_FIXED''` の `auth_login` / `facility_select` は返却対象に含めない'
+          '通常アカウントでは `config_scope=''SYSTEM_FIXED''` の `auth_login` / `facility_select` は返却対象に含めない。共有システム管理者アカウントでは全 `feature_code` 返却方針に合わせてこれらも返却してよいが、UI と業務 API は固定導線として扱い、施設・ユーザー単位の ON/OFF 対象にはしない'
         )
         ResponseTitle = 'レスポンス（200：AuthContextResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -452,14 +461,16 @@
         PermissionLines = @(
           '認証済みセッションであること',
           '認証済みユーザーが `users.is_active=true` かつ `locked_at IS NULL` であること',
-          '指定 `actingFacilityId` が担当施設であること',
+          '通常アカウントの場合、指定 `actingFacilityId` が担当施設であること',
+          '共有システム管理者アカウントの場合、指定 `actingFacilityId` が未削除施設であること',
           '指定 `actingFacilityId` に対応する施設が未削除であること'
         )
         ProcessingLines = @(
           '判定対象ユーザーは Bearer トークンから解決し、リクエストボディで `userId` は受け取らない',
-          '自施設判定では `user_facility_assignments`、`feature_catalogs.config_scope`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する。Phase1では `normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として施設提供設定とユーザー施設別設定の両方を必須とする。`lending_in_use_used` は `lending_checkout` の実効権限も成立する場合のみ許可する',
-          'カラム判定では `facility_column_settings`、`user_facility_column_settings`、`column_catalogs.related_feature_code` を用いて可否を評価する。`original_price_column` は `related_feature_code=''original_list_view''` が実効有効な場合のみ許可候補とする',
-          '`targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、`featureCode=''original_list_view''` を必須とし、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、双方が active な同一 `facility_collaboration_groups` に所属すること、公開元施設の `facility_external_view_settings(provider_facility_id=targetFacilityId, sharing_data_type=''asset'', is_enabled=true)` が存在することを追加で評価する。`columnCodes` に `original_price_column` が含まれる場合は、閲覧者側の実効カラム権限に加え、公開元施設の `facility_external_column_settings(provider_facility_id=targetFacilityId, column_code=''original_price_column'', is_enabled=true)` が存在する場合だけ `allowedColumnCodes` へ含める',
+          '共有システム管理者アカウント（`account_type=''SYSTEM_ADMIN''`）の場合は、`actingFacilityId` と指定された `targetFacilityId` が未削除であることだけを確認し、全 `feature_code` と全 `column_code` を許可する。協業グループ、施設提供設定、ユーザー施設別設定、公開元施設設定は判定しない',
+          '通常アカウントの自施設判定では `user_facility_assignments`、`feature_catalogs.config_scope`、`facility_feature_settings`、`user_facility_feature_settings` を用いて `featureCode` の可否を評価する。Phase1では `normal_ship_request` / `lending_in_use_used` は `config_scope=''FACILITY_USER''` として施設提供設定とユーザー施設別設定の両方を必須とする。`lending_in_use_used` は `lending_checkout` の実効権限も成立する場合のみ許可する',
+          '通常アカウントのカラム判定では `facility_column_settings`、`user_facility_column_settings`、`column_catalogs.related_feature_code` を用いて可否を評価する。`original_price_column` は `related_feature_code=''original_list_view''` が実効有効な場合のみ許可候補とする',
+          '通常アカウントで `targetFacilityId` が指定され、`actingFacilityId` と異なる場合は、`featureCode=''original_list_view''` を必須とし、閲覧者側施設と公開元施設の両方が `deleted_at IS NULL` かつ `system_contract_status=''ACTIVE''` であること、双方が active な同一 `facility_collaboration_groups` に所属すること、公開元施設の `facility_external_view_settings(provider_facility_id=targetFacilityId, sharing_data_type=''asset'', is_enabled=true)` が存在することを追加で評価する。`columnCodes` に `original_price_column` が含まれる場合は、閲覧者側の実効カラム権限に加え、公開元施設の `facility_external_column_settings(provider_facility_id=targetFacilityId, column_code=''original_price_column'', is_enabled=true)` が存在する場合だけ `allowedColumnCodes` へ含める',
           '本 API は補助判定用であり、各業務 API 側でも同条件を再判定する'
         )
         ResponseTitle = 'レスポンス（200：AuthorizationCheckResponse）'
@@ -486,6 +497,7 @@
     @{ Type = 'Bullets'; Items = @(
       '`auth_login` と `facility_select` は `SYSTEM_FIXED` のため、施設・ユーザー設定で ON/OFF しない',
       '`/auth/me` は担当施設一覧と既定施設を返し、協業グループ経由で見える施設は返さない',
+      '共有システム管理者アカウントでは `/auth/me` が未削除の全施設を `assignedFacilities` に返し、`/auth/context` と `/authorization/check` は未削除施設を対象とする限り全機能・全カラムを許可する',
       '`/auth/me` と `/auth/context` は `facilities.deleted_at IS NULL` の未削除施設だけを対象にする',
       '`/auth/context` は選択施設に対する実効 `feature_code` / `column_code` を返す',
       'QRコードや他施設閲覧専用の別 `feature_code` / `column_code` は採用しない。他施設閲覧は既存の `original_list_view` / `original_price_column` と公開元施設設定で判定し、施設切替候補へは展開しない',
@@ -494,7 +506,7 @@
     @{ Type = 'Heading2'; Text = '施設選択・ホーム導線ルール' },
     @{ Type = 'Bullets'; Items = @(
       'ログイン後は病院ユーザー、SHRCユーザー、SHIPユーザーを問わず `/facility-select` へ遷移する',
-      'Phase1の `/facility-select` では担当施設一覧と決定ボタンを表示する',
+      'Phase1の `/facility-select` では担当施設一覧と決定ボタンを表示する。共有システム管理者アカウントでは未削除の全施設を選択候補として表示する',
       '通常業務へ進む場合は利用者が施設を選択して決定し、`/auth/context` 取得後に `/main` へ遷移する',
       'ホーム画面の表示可否は、`/auth/context` の実効 `feature_code` / `column_code` を正本として判断する'
     ) },

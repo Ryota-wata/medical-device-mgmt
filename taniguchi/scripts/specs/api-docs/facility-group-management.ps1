@@ -9,7 +9,7 @@
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
-    @{ Type = 'Paragraph'; Text = '本書は、施設グループ管理画面（`/facility-group-management`）で利用する API の設計内容を整理し、SHIPシステム管理者が施設グループ、所属施設、他施設向け公開設定を管理するための実装基準を明確にすることを目的とする。' },
+    @{ Type = 'Paragraph'; Text = '本書は、施設グループ管理画面（`/facility-group-management`）で利用する API の設計内容を整理し、共有システム管理者アカウントが施設グループ、所属施設、他施設向け公開設定を管理するための実装基準を明確にすることを目的とする。' },
     @{ Type = 'Paragraph'; Text = '本API群は SHIP施設マスタ API から分離し、施設基本情報管理ではなく、他施設閲覧候補範囲と公開元施設の公開設定を扱う。' },
     @{ Type = 'Paragraph'; Text = '特に以下を明確にする。' },
     @{ Type = 'Bullets'; Items = @(
@@ -20,7 +20,7 @@
       '権限・バリデーション・エラーレスポンス'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = '施設グループ管理は、メイン画面のマスタ管理モーダルから遷移する独立画面である。SHIPシステム管理者が任意の施設グループを作成し、グループに所属する施設を管理する。' },
+    @{ Type = 'Paragraph'; Text = '施設グループ管理は、メイン画面のマスタ管理モーダルから遷移する独立画面である。共有システム管理者アカウントが任意の施設グループを作成し、グループに所属する施設を管理する。' },
     @{ Type = 'Paragraph'; Text = '施設グループは他施設閲覧の候補範囲を定義する。実際に閲覧できるかどうかは、閲覧者側施設の実効権限、有効な施設グループ所属、公開元施設の公開設定、施設の契約状態を組み合わせて業務 API 側で判定する。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
@@ -85,15 +85,15 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。画面要件上、施設グループ管理は SHIPシステム管理者のみが利用できる。API 実行時は認証コンテキストが SHIPシステム管理者であることに加え、認証／認可 API 設計書の共通認可モデルに従って作業対象施設に対する実効 `feature_code` を都度再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。画面要件上、施設グループ管理は共有システム管理者アカウントのみが利用できる。API 実行時は認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であることに加え、認証／認可 API 設計書の共通認可モデルに従って作業対象施設に対する実効 `feature_code` を都度再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('施設グループ / 一覧', '`facility_group_list`', '施設グループ一覧取得、施設候補取得'),
       @('施設グループ / 新規作成・編集', '`facility_group_edit`', '施設グループ作成、更新、無効化、所属施設追加・解除、共有設定保存')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('施設グループ一覧取得 / 施設候補取得', '`facility_group_list`', '認証コンテキストが SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_list` を持つこと', '参照系の処理'),
-      @('施設グループ作成 / 更新 / 無効化', '`facility_group_edit`', '認証コンテキストが SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', 'グループ本体の変更処理'),
-      @('所属施設追加 / 解除 / 共有設定保存', '`facility_group_edit`', '認証コンテキストが SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', 'グループ詳細の変更処理')
+      @('施設グループ一覧取得 / 施設候補取得', '`facility_group_list`', '認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_list` を持つこと', '参照系の処理'),
+      @('施設グループ作成 / 更新 / 無効化', '`facility_group_edit`', '認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', 'グループ本体の変更処理'),
+      @('所属施設追加 / 解除 / 共有設定保存', '`facility_group_edit`', '認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', 'グループ詳細の変更処理')
     ) },
     @{ Type = 'Heading2'; Text = '他施設閲覧判定との関係' },
     @{ Type = 'Bullets'; Items = @(
@@ -181,7 +181,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_list` が有効であること'
         )
         ProcessingLines = @(
@@ -200,7 +200,7 @@
         StatusRows = @(
           @('200', '取得成功', 'FacilityGroupListResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_list` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_list` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -217,7 +217,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_edit` が有効であること'
         )
         ProcessingLines = @(
@@ -240,7 +240,7 @@
           @('201', '作成成功', 'FacilityGroupSummary'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
           @('409', '有効グループ名が重複している', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -264,7 +264,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_edit` が有効であること'
         )
         ProcessingLines = @(
@@ -288,7 +288,7 @@
           @('200', '更新成功', 'FacilityGroupSummary'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
           @('404', '対象グループが存在しない', 'ErrorResponse'),
           @('409', '有効グループ名が重複している', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -307,7 +307,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_edit` が有効であること'
         )
         ProcessingLines = @(
@@ -324,7 +324,7 @@
         StatusRows = @(
           @('204', '無効化成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
           @('404', '対象グループが存在しない、または既に無効', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -344,7 +344,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_list` が有効であること'
         )
         ProcessingLines = @(
@@ -363,7 +363,7 @@
           @('200', '取得成功', 'FacilityCandidateListResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_list` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_list` なし', 'ErrorResponse'),
           @('404', 'groupId 指定時に対象グループが存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -386,7 +386,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_edit` が有効であること'
         )
         ProcessingLines = @(
@@ -408,7 +408,7 @@
           @('201', '追加成功', 'FacilityGroupSummary'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
           @('404', '対象グループまたは施設が存在しない', 'ErrorResponse'),
           @('409', '対象施設が既に所属している', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -428,7 +428,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_edit` が有効であること'
         )
         ProcessingLines = @(
@@ -445,7 +445,7 @@
         StatusRows = @(
           @('204', '解除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
           @('404', '対象グループ、施設、または所属行が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -488,7 +488,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキストが SHIPシステム管理者であること',
+          '認可条件: 認証コンテキストが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
           '認可条件: 作業対象施設に対する実効 `facility_group_edit` が有効であること'
         )
         ProcessingLines = @(
@@ -515,7 +515,7 @@
           @('200', '保存成功', 'FacilityGroupSummary'),
           @('400', '入力不正、未知の共有データ種別 / column_code、必要な共有データ種別不足', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない、または実効 `facility_group_edit` なし', 'ErrorResponse'),
           @('404', '対象グループまたは公開元施設が存在しない', 'ErrorResponse'),
           @('409', '対象グループに所属施設が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -526,11 +526,11 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('施設グループ一覧取得', '`facility_group_list`', 'SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_list` を持つこと', '施設グループ一覧と所属施設を参照する'),
-      @('施設候補取得', '`facility_group_list`', 'SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_list` を持つこと', '追加候補施設を参照する'),
-      @('施設グループ作成 / 更新 / 無効化', '`facility_group_edit`', 'SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', '施設グループ本体を管理する'),
-      @('所属施設追加 / 解除', '`facility_group_edit`', 'SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', 'グループ所属施設を管理する'),
-      @('共有データ種別設定保存', '`facility_group_edit`', 'SHIPシステム管理者であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', '公開元施設単位の公開設定を管理する')
+      @('施設グループ一覧取得', '`facility_group_list`', '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_list` を持つこと', '施設グループ一覧と所属施設を参照する'),
+      @('施設候補取得', '`facility_group_list`', '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_list` を持つこと', '追加候補施設を参照する'),
+      @('施設グループ作成 / 更新 / 無効化', '`facility_group_edit`', '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', '施設グループ本体を管理する'),
+      @('所属施設追加 / 解除', '`facility_group_edit`', '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', 'グループ所属施設を管理する'),
+      @('共有データ種別設定保存', '`facility_group_edit`', '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であり、作業対象施設に対する実効 `facility_group_edit` を持つこと', '公開元施設単位の公開設定を管理する')
     ) },
     @{ Type = 'Heading2'; Text = '施設グループ管理ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -565,8 +565,8 @@
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '入力不正、必須不足、形式不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_FACILITY_GROUP_LIST_DENIED', '403', 'SHIPシステム管理者ではない、または作業対象施設に対する実効 `facility_group_list` がない'),
-      @('AUTH_403_FACILITY_GROUP_EDIT_DENIED', '403', 'SHIPシステム管理者ではない、または作業対象施設に対する実効 `facility_group_edit` がない'),
+      @('AUTH_403_FACILITY_GROUP_LIST_DENIED', '403', '共有システム管理者アカウントではない、または作業対象施設に対する実効 `facility_group_list` がない'),
+      @('AUTH_403_FACILITY_GROUP_EDIT_DENIED', '403', '共有システム管理者アカウントではない、または作業対象施設に対する実効 `facility_group_edit` がない'),
       @('FACILITY_GROUP_NOT_FOUND', '404', '対象施設グループが存在しない、または無効化済み'),
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('FACILITY_GROUP_NAME_DUPLICATE', '409', '有効な施設グループ名が重複している'),

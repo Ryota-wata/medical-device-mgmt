@@ -2,7 +2,6 @@
   @('columnKey', 'string', '✓', 'カラム識別子。固定列は `facilityName` など、任意カラムは `ship_asset_custom:{column_key}` を用いる')
   @('columnLabel', 'string', '✓', '画面表示名')
   @('groupCode', 'string', '✓', '表示グループ。`basic` / `commonMaster` / `location` / `identity` / `classification` / `specification` / `acquisition` / `other` / `shipAssetCustom`')
-  @('sortOrder', 'int32', '✓', '表示順')
   @('isCustom', 'boolean', '✓', 'SHIP資産マスタ任意カラムかどうか')
   @('isVisible', 'boolean', '✓', '現在ユーザー設定で表示対象かどうか')
   @('isLocked', 'boolean', '✓', '権限により現在ターゲット施設では表示不可かどうか')
@@ -42,7 +41,7 @@ $cursorPaginationParameterRows = @(
 $bookmarkSummaryRows = @(
   @('bookmarkId', 'int64', '✓', 'ブックマークID'),
   @('bookmarkName', 'string', '✓', 'ブックマーク名'),
-  @('columnCount', 'int32', '✓', '保存列数'),
+  @('columnCount', 'int32', '✓', '保存設定数'),
   @('isDefault', 'boolean', '✓', '既定ブックマークかどうか'),
   @('createdAt', 'datetime', '✓', '作成日時'),
   @('updatedAt', 'datetime', '✓', '更新日時')
@@ -50,8 +49,7 @@ $bookmarkSummaryRows = @(
 
 $bookmarkWriteRows = @(
   @('columnKey', 'string', '✓', '固定列キーまたは `ship_asset_custom:{column_key}`'),
-  @('isVisible', 'boolean', '✓', '表示フラグ'),
-  @('sortOrder', 'int32', '✓', '表示順')
+  @('isVisible', 'boolean', '✓', '表示フラグ')
 )
 
 $assetHistoryRows = @(
@@ -235,8 +233,8 @@ $assetDetailRows = @(
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('資産原本', '`asset_ledgers` に保持する現物資産台帳。資産一覧と資産詳細の主対象'),
-      @('表示カラム設定', '`user_column_settings` に保持するユーザー単位の現在列表示設定。画面IDは `asset_search` を用いる'),
-      @('named bookmark', '`user_column_setting_presets` / `user_column_setting_preset_items` に保持する列表示プリセット。現在設定とは別管理とする'),
+      @('表示カラム設定', '`user_column_settings` に保持するユーザー単位の表示/非表示設定。画面IDは `asset_search` を用いる'),
+      @('named bookmark', '`user_column_setting_presets` / `user_column_setting_preset_items` に保持する表示/非表示プリセット。現在設定とは別管理とする'),
       @('SHIP資産マスタ任意カラム', '`ship_asset_master_custom_columns` / `ship_asset_master_custom_values` で管理する可変項目'),
       @('作業対象施設閲覧', 'Bearer トークン上の作業対象施設を対象に `original_list_view` を使って資産を参照するモード'),
       @('他施設閲覧', '作業対象施設とは異なる施設の資産を、`original_list_view`、協業グループ、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` に基づいて閲覧専用で参照するモード。施設切替候補には含めない'),
@@ -256,7 +254,7 @@ $assetDetailRows = @(
     @{ Type = 'Paragraph'; Text = '資産詳細の履歴表示は、申請履歴、点検結果、貸出/返却履歴を共通イベント形式へ正規化して返却し、詳細本体 API とは分離したタブ読込用 I/F として扱う。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Numbered'; Items = @(
-      '画面初期表示時に `GET /asset-search-result/context` を呼び出し、現在参照施設、フィルタ候補、列定義、現在列設定、操作可否を取得する',
+      '画面初期表示時に `GET /asset-search-result/context` を呼び出し、現在参照施設、フィルタ候補、列定義、現在の表示/非表示設定、操作可否を取得する',
       '表示カラム変更の保存時に `PUT /asset-search-result/column-settings` を呼び出す',
       'named bookmark モーダル表示時に `GET /asset-search-result/column-bookmarks` を呼び出し、保存時は `POST`、削除時は `DELETE`、適用時は `POST /asset-search-result/column-bookmarks/{bookmarkId}/apply` を呼び出す',
       '検索条件変更または表示切替時に `GET /asset-search-result/assets` を呼び出し、一覧データを再取得する',
@@ -337,9 +335,10 @@ $assetDetailRows = @(
       '固定列の `column_key` は画面契約として固定し、SHIP資産マスタ任意カラムは `ship_asset_custom:{column_key}` 形式で保存する',
       '既定 bookmark は active 行（`deleted_at IS NULL`）に対して `user_id + screen_id` 単位で 0..1 件とし、現在設定が未保存の場合のみ初期表示へ適用する',
       'current settings が存在する場合はそれを最優先とし、bookmark の保存・削除・既定切替では current settings を自動変更しない',
-      '未保存ユーザーの初期表示順は API 側既定値を採用し、任意カラムは `ship_asset_master_custom_columns.sort_order ASC` で末尾追加する',
+      '未保存ユーザーの初期表示/非表示は API 側既定値を採用する',
       '権限要件を満たさず返却不可な列は `isLocked=true` として返し、一覧データ本体にも値を含めない',
-      'bookmark 適用時は preset の列構成で `user_column_settings` を置換更新し、次回表示時はその current settings を返却する'
+      'bookmark 適用時は preset の表示/非表示設定で `user_column_settings` を置換更新し、次回表示時はその current settings を返却する',
+      '列順と列幅は画面上の一時的な表示調整に留め、`user_column_settings` や bookmark へ保存しない'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込みルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -380,10 +379,10 @@ $assetDetailRows = @(
 
     @{ Type = 'Heading1'; Text = '第4章 API 一覧' },
     @{ Type = 'Table'; Headers = @('No', 'API 名', 'Method', 'Path', '用途', '権限'); Rows = @(
-      @('1', '一覧画面コンテキスト取得', 'GET', '/asset-search-result/context', '対象施設、フィルタ候補、列定義、現在列設定、操作可否を取得する', '`original_list_view`'),
-      @('2', '表示カラム設定保存', 'PUT', '/asset-search-result/column-settings', '現在の列表示/順序設定を保存する', '`original_list_view`'),
+      @('1', '一覧画面コンテキスト取得', 'GET', '/asset-search-result/context', '対象施設、フィルタ候補、列定義、現在の表示/非表示設定、操作可否を取得する', '`original_list_view`'),
+      @('2', '表示カラム設定保存', 'PUT', '/asset-search-result/column-settings', '現在の表示/非表示設定を保存する', '`original_list_view`'),
       @('3', 'named bookmark 一覧取得', 'GET', '/asset-search-result/column-bookmarks', '保存済み named bookmark 一覧を取得する', '`original_list_view`'),
-      @('4', 'named bookmark 保存', 'POST', '/asset-search-result/column-bookmarks', '現在の列表示設定を named bookmark として保存する', '`original_list_view`'),
+      @('4', 'named bookmark 保存', 'POST', '/asset-search-result/column-bookmarks', '現在の表示/非表示設定を named bookmark として保存する', '`original_list_view`'),
       @('5', 'named bookmark 削除', 'DELETE', '/asset-search-result/column-bookmarks/{bookmarkId}', '保存済み named bookmark を削除する', '`original_list_view`'),
       @('6', 'named bookmark 適用', 'POST', '/asset-search-result/column-bookmarks/{bookmarkId}/apply', '保存済み named bookmark を current settings へ適用する', '`original_list_view`'),
       @('7', '資産一覧取得', 'GET', '/asset-search-result/assets', '資産一覧を検索・絞り込み・ページング取得する', '`original_list_view`'),
@@ -404,7 +403,7 @@ $assetDetailRows = @(
     @{ Type = 'EndpointBlocks'; Items = @(
       @{
         Title = '一覧画面コンテキスト取得（/asset-search-result/context）'
-        Overview = '資産一覧画面の初期表示に必要な対象施設、フィルタ候補、列定義、現在列設定、操作可否を取得する。'
+        Overview = '資産一覧画面の初期表示に必要な対象施設、フィルタ候補、列定義、現在の表示/非表示設定、操作可否を取得する。'
         Method = 'GET'
         Path = '/asset-search-result/context'
         Auth = '要（Bearer）'
@@ -424,9 +423,9 @@ $assetDetailRows = @(
           '`accessMode=OWN` かつ `management_department_edit` が有効な場合は、対象施設の active `facility_locations` から `department_id IS NOT NULL` の行を `department_id` 単位で重複排除した管理部署編集候補を解決し、`displayLabel` を付与して `displayLabel ASC, department_id ASC` で返す。権限がない場合または `EXTERNAL_READONLY` の場合は空配列を返す',
           '既存資産で `management_department_id` が未解決の行は `managementDepartmentId=null` のまま返し、編集モードでは未選択状態として再選択させる',
           '`ship_asset_master_custom_columns.is_active=true` の任意カラム定義を `sort_order ASC` で取得する',
-          '`user_column_settings(screen_id=asset_search)` を読み込み、現在列設定へマージする。設定がない列は API 既定値を採用する',
+          '`user_column_settings(screen_id=asset_search)` を読み込み、現在の表示/非表示設定へマージする。設定がない列は API 既定値を採用する',
           '`user_column_setting_presets(screen_id=asset_search)` を読み込み、named bookmark 一覧と既定 bookmark を解決する',
-          '現在列設定が未保存で既定 bookmark が存在する場合は、その列構成を current settings として返却する',
+          '現在設定が未保存で既定 bookmark が存在する場合は、その表示/非表示設定を current settings として返却する',
           '価格カラムのロック状態は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` の実効有無を元に算出する',
           '`accessMode=OWN` の場合は `original_application`、`inspection_management`、`maintenance_contract`、`management_department_edit`、`original_list_edit`、`original_price_column`、`original_list_view` の実効有無から、申請起票導線、点検管理登録、保守契約登録、一覧管理部署編集、詳細編集モード遷移、価格表示、履歴タブ表示の可否フラグを返却する。`EXTERNAL_READONLY` の場合は `original_list_view` と `original_price_column` の実効有無、および公開元施設設定を判定し、閲覧系以外の操作可否を `false` とする'
         )
@@ -522,7 +521,7 @@ $assetDetailRows = @(
         RequestTitle = 'リクエストボディ'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('columns', 'AssetSearchColumnSettingWriteModel[]', '✓', '保存対象の列設定一覧')
+          @('columns', 'AssetSearchColumnSettingWriteModel[]', '✓', '保存対象の表示/非表示設定一覧')
         )
         RequestSubtables = @(
           @{
@@ -537,8 +536,8 @@ $assetDetailRows = @(
         ProcessingLines = @(
           '保存単位は `screen_id=asset_search` とする',
           '未知の固定列キー、無効化された任意カラム、`ship_asset_custom:` プレフィックス不正のキーは 400 とする',
-          '受信した配列を画面の完全な現在状態として扱い、対象ユーザー・画面の既存 `user_column_settings` を置換更新する',
-          '列設定そのものは保存できても、実際の一覧返却時には権限要件により `isLocked=true` となりデータが返らない列があり得る'
+          '受信した配列を画面の完全な表示/非表示状態として扱い、対象ユーザー・画面の既存 `user_column_settings` を置換更新する',
+          '表示/非表示設定そのものは保存できても、実際の一覧返却時には権限要件により `isLocked=true` となりデータが返らない列があり得る'
         )
         ResponseTitle = 'レスポンス（200：AssetSearchColumnSettingsResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -565,7 +564,7 @@ $assetDetailRows = @(
         ProcessingLines = @(
           '`user_column_setting_presets(screen_id=asset_search)` を対象ユーザーで取得する',
           '削除済み bookmark を除外し、`is_default DESC, updated_at DESC, user_column_setting_preset_id ASC` で返却する',
-          'bookmark ごとの保存列数は `user_column_setting_preset_items` から算出する'
+          'bookmark ごとの保存設定数は `user_column_setting_preset_items` から算出する'
         )
         ResponseTitle = 'レスポンス（200：ColumnBookmarkListResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -589,7 +588,7 @@ $assetDetailRows = @(
       },
       @{
         Title = 'named bookmark 保存（/asset-search-result/column-bookmarks）'
-        Overview = '現在の列表示構成を named bookmark として保存する。'
+        Overview = '現在の表示/非表示設定を named bookmark として保存する。'
         Method = 'POST'
         Path = '/asset-search-result/column-bookmarks'
         Auth = '要（Bearer）'
@@ -598,7 +597,7 @@ $assetDetailRows = @(
         RequestRows = @(
           @('bookmarkName', 'string', '✓', 'ブックマーク名'),
           @('isDefault', 'boolean', '-', '既定 bookmark として保存するかどうか。未指定時は `false`'),
-          @('columns', 'AssetSearchColumnSettingWriteModel[]', '✓', '保存対象の列設定一覧')
+          @('columns', 'AssetSearchColumnSettingWriteModel[]', '✓', '保存対象の表示/非表示設定一覧')
         )
         RequestSubtables = @(
           @{
@@ -686,7 +685,7 @@ $assetDetailRows = @(
         )
         ProcessingLines = @(
           '対象 bookmark が対象ユーザー・`screen_id=asset_search` に属することを確認する',
-          '`user_column_setting_preset_items` を current settings として `user_column_settings(screen_id=asset_search)` へ置換反映する',
+          '`user_column_setting_preset_items` の表示/非表示設定を current settings として `user_column_settings(screen_id=asset_search)` へ置換反映する',
           '適用後の列定義に対し、権限要件に起因する `isLocked` を再計算して返却する'
         )
         ResponseTitle = 'レスポンス（200：ColumnBookmarkApplyResponse）'
@@ -1451,7 +1450,7 @@ $assetDetailRows = @(
     @{ Type = 'Table'; Headers = @('項目', '必要コード', '備考'); Rows = @(
       @('一覧取得 / 詳細取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '自施設は作業対象施設の資産原本データを対象とする。他施設は同じ閲覧者権限、協業グループ、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たす場合のみ `EXTERNAL_READONLY` で返却する'),
       @('資産履歴表示', '`original_list_view`', '資産詳細取得と同じ参照可否判定に従う'),
-      @('価格項目表示', '`original_price_column`', '保存済み列設定に含まれていても、閲覧者側の権限または公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は返却しない'),
+      @('価格項目表示', '`original_price_column`', '保存済み表示/非表示設定に含まれていても、閲覧者側の権限または公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は返却しない'),
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請導線のみ制御する'),
       @('点検管理登録ボタン表示', '`inspection_management`', '一覧起点の点検管理登録導線のみ制御する'),
       @('保守契約登録ボタン表示', '`maintenance_contract`', '一覧起点の保守契約登録導線のみ制御する'),
@@ -1462,7 +1461,7 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       '固定列のラベル変更やグループ変更は API 契約変更として扱う',
       '任意カラムは `ship_asset_master_custom_columns.is_active=true` の列だけを返却し、無効列の既存値は保持しても新規一覧候補へは出さない',
-      '価格列は保存済み列設定に含まれていても、閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は `isLocked=true` とし、値も返却しない',
+      '価格列は保存済み表示/非表示設定に含まれていても、閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は `isLocked=true` とし、値も返却しない',
       'named bookmark は current settings とは別に `user_column_setting_presets` / `user_column_setting_preset_items` で管理する',
       '既定 bookmark は active 行に対して `user_id + screen_id` 単位で 0..1 件とし、current settings 未保存時の初期表示へ適用する',
       'current settings は bookmark 保存/削除/既定切替では変化させず、bookmark 適用時だけ置換更新する'

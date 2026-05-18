@@ -1,7 +1,7 @@
 ﻿# feature_code 設計方針（たたき台）
 
 ## 目的
-- `role_permissions.feature_code` を `permissions` テーブルなしで運用する前提で、権限コードの粒度と命名規則を揃える。
+- `feature_catalogs.feature_code` を認可カタログ識別子として運用する前提で、権限コードの粒度と命名規則を揃える。
 - 画面ごとの閲覧可否だけでなく、画面内の主要な業務操作ボタンの表示・活性制御にも使える粒度を定める。
 - 本書は認証認可の詳細設計たたき台である。現行の正本は `ロール整理.xlsx` の `権限管理単位一覧` シート、`authz-screen-feature-mapping.md`、`authz-feature-column-catalog-draft.md`、および `機能要件.md` へ反映した内容とする。
 
@@ -13,12 +13,13 @@
 - 通常購入管理のSHIPへ一括依頼は `normal_ship_request` とし、購入管理タブ表示や見積依頼行利用を表す `normal_purchase` とは独立して判定する。`normal_ship_request` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。
 - 貸出・返却の使用中/使用済みフローは `lending_in_use_used` とし、貸出可能機器閲覧・貸出返却画面の入口を表す `lending_checkout` とは独立して判定する。`lending_in_use_used` は `config_scope='FACILITY_USER'` とし、施設提供設定とユーザー施設別設定の両方が ON の場合のみ利用できる。ただし実効利用には `lending_checkout` も有効であることを必須とし、`lending_in_use_used` 単独ではメニュー表示・画面遷移・業務 API 実行を許可しない。
 - 単なるフィルタ操作やモーダル開閉、タブ切替などの UI 細部には原則として `feature_code` を切らない。
-- 病院ユーザーの他施設閲覧では `role_permissions` を横展開せず、資産閲覧専用ロジックを優先する。
+- 病院ユーザーの他施設閲覧では個別ロールを横展開せず、閲覧者側の既存 `feature_code` / `column_code` と公開元施設の公開設定を組み合わせて判定する。
+- 共有システム管理者アカウント（`account_type='SYSTEM_ADMIN'`）は機能コードの通常判定をバイパスし、未削除の全施設・全機能・全カラムを利用可能とする。
 
 ## 設計メモ（比較検討の経緯）
 - `vendor_master_view` のように `resource_action` を1カラムで持つ案と、`resource_code + action_code` の2カラムに正規化する案の両方を検討した。
 - `resource_code + action_code` は概念的には整理しやすいが、本案件ではレビュー・設定・実装時にほぼ同じ組み合わせを毎回扱うことになり、現工程では抽象化の効果よりも運用負荷が大きいと判断した。
-- そのため、現時点では `role_permissions.feature_code` に `resource_action` 形式の1カラム文字列を保持する案を採用する。
+- そのため、現時点では `feature_catalogs.feature_code` に `resource_action` 形式の1カラム文字列を保持する案を採用する。
 - ただし、将来 `feature_code` の件数増加や重複設定が保守上の問題になった場合は、`resource_code + action_code` への正規化を再検討する余地を残す。
 
 ## 命名規則
@@ -175,11 +176,12 @@
 ## 運用メモ
 - 初期導入時は、画面表示系 `*_view` と主要な登録/更新/削除/確定系だけを先に定義し、細かい補助機能は必要時に追加する。
 - `feature_code` を追加した場合は、少なくとも以下を更新する。
-  - `role_permissions`
+  - `feature_catalogs`
+  - 必要に応じて `facility_feature_settings` / `user_facility_feature_settings`
   - 画面要件または API設計書内の必要権限記述
   - 実装側の権限制御辞書または参照ロジック
-- 同一画面で複数ロールに表示差分がある場合は、画面 `*_view` と操作 `*_create/update/delete/...` を分けて制御する。
+- 同一画面で利用者ごとの表示差分がある場合は、画面 `*_view` と操作 `*_create/update/delete/...` を分けて制御する。
 
 ## 未確定事項
-- SHRC ユーザーに対して、上記 `feature_code` を全施設へ一律適用するか、施設単位で差分適用するかは認証認可の未確定事項とする。
-- `roles.user_type` を `HOSPITAL` / `SHIP` の2区分のまま運用するか、外部ユーザー系ロール分類を拡張するかは別途要確認。
+- SHRC ユーザーは `user_facility_assignments` とユーザー施設別設定で施設ごとの差分適用を行う。
+- システム管理者は通常ユーザーへのロール付与ではなく、共有システム管理者アカウント1件で運用する。

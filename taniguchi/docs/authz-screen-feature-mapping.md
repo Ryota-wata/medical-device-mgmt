@@ -19,6 +19,7 @@
 
 自施設文脈の実効権限は、まず `user_facility_assignments` に対象ユーザーと作業対象施設の割当があることを前提に、設定スコープ別に判定する。
 
+- 共有システム管理者アカウント（`accountType='SYSTEM_ADMIN'`）では、選択施設が未削除である限り下記の通常判定をバイパスし、全 `feature_code` / 全 `column_code` を有効とみなす。
 - `config_scope='FACILITY_USER'` の `feature_code`: `facility_feature_settings.is_enabled=true` かつ `user_facility_feature_settings.is_enabled=true`
 - `config_scope='FACILITY'` の `feature_code`: `facility_feature_settings.is_enabled=true`。ユーザー施設別設定は参照しない。現行採用コードでは固定導線を除く機能を `FACILITY_USER` に統一するため、原則として使用しない
 - `column_code`: `facility_column_settings.is_enabled=true` かつ `user_facility_column_settings.is_enabled=true`。さらに `related_feature_code` の実効権限が有効

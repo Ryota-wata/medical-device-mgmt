@@ -71,6 +71,12 @@
 - UI は有効な `feature_code` / `column_code` をもとに表示を絞り込む。
 - ただし、ブラウザ上の DOM は利用者が変更できるため、最終的な security boundary はバックエンド側の認可判定とする。
 
+### 2-5. 共有システム管理者アカウント
+
+- システム管理者は通常ユーザーへ付与するロールではなく、`users.account_type='SYSTEM_ADMIN'` の共有アカウント1件として運用する。
+- 共有システム管理者アカウントは、未削除施設を対象とする限り、担当施設割当、施設提供設定、ユーザー施設別設定、他施設公開設定の通常判定をバイパスし、全機能・全カラムを利用可能とする。
+- 共有システム管理者アカウントの操作履歴は共有アカウントの `user_id` に紐づけ、実際にログインしていた個人は追跡しない。
+
 ## 3. カタログ系テーブル
 
 ### 3-1. `feature_catalogs`（機能カタログ）
@@ -345,8 +351,9 @@
     - 認可判定の正本としては廃止する。
     - 移行期間の互換用途が不要なら削除候補とする。
   - `account_type`
-    - 表示分類、入力制御、一覧フィルタ用途で保持する。
-    - 認可判定には使わない。
+    - 通常アカウントでは、表示分類、入力制御、一覧フィルタ用途で保持する。
+    - 通常アカウントの認可判定には使わない。
+    - `SYSTEM_ADMIN` は共有システム管理者アカウントを表す特別値として認可サービスで例外判定する。有効な共有システム管理者アカウントは1件のみとし、ユーザー管理画面/APIから通常ユーザーへ付与できない。
 - `facility_id` の扱い:
   - 病院ユーザーの主所属施設として継続利用する。
   - SHRCユーザーなど複数担当施設を持つユーザーでは NULL 許容または「既定所属」のみに用途を縮小し、実際の作業対象施設は `user_facility_assignments` を正本とする。
@@ -375,6 +382,8 @@
 - 見たい機能は `original_list_view`
 
 判定:
+
+共有システム管理者アカウント（`account_type='SYSTEM_ADMIN'`）の場合は、施設Aが未削除であれば以下の通常判定をバイパスし、全機能・全カラムを利用可能とする。
 
 1. `user_facility_assignments` に `(user_id, facilityA, is_active=true)` が存在する。
 2. `facility_feature_settings` の `(facilityA, original_list_view)` が `is_enabled=true` である。
@@ -413,6 +422,7 @@
   - `defaultFacilityId`
   - `accountType`
 - `allowedFacilities` は `user_facility_assignments` 由来の担当施設一覧へ置き換える。
+- 共有システム管理者アカウントでは、`user_facility_assignments` に依存せず、未削除の全施設を `assignedFacilities` として返す。
 - `facilityFeatures` と `facilityColumns` は `GET /auth/context` で返却する。
 - 他施設閲覧グループ経由で見える施設は、`allowedFacilities` へ直接展開せず、業務APIまたは別コンテキスト情報で解決する。
 
@@ -421,6 +431,7 @@
 - 施設選択後の画面表示制御用に、`actingFacilityId` を受けて実効機能・実効カラムを一括返却する API を用意する。
 - フロントエンドはこのレスポンスを使ってメニュー、ボタン、画面内導線、列表示を制御する。
 - 一方で、業務APIは `GET /auth/context` の結果を信用して省略せず、毎回サーバー側で再判定する。
+- 共有システム管理者アカウントでは、`actingFacilityId` の施設が未削除であることを検証したうえで全 `feature_code` / 全 `column_code` を返す。
 
 ### `POST /authorization/check`
 
@@ -430,6 +441,7 @@
   - `user_facility_feature_settings`
   - 必要に応じて `facility_column_settings` / `user_facility_column_settings`
   - 他施設閲覧時は `facility_collaboration_groups` / `facility_collaboration_group_facilities` / `facility_external_view_settings` / `facility_external_column_settings`
+- 共有システム管理者アカウントでは、対象施設が未削除である限り許可する。
 
 ## 9. 実装・運用上の補足
 
@@ -456,6 +468,7 @@
   - `facility_external_view_settings`
   - `facility_external_column_settings`
 - さらに、必要に応じて設定変更履歴を別テーブルまたは監査ログで保持し、「誰が」「いつ」「何を」「どう変更したか」を追えるようにする。
+- 共有システム管理者アカウントで行った操作は、共有アカウントの `user_id` を「誰が」として扱う。実際にログインしていた個人を識別する追加ログは持たない。
 
 ### 9-3. パフォーマンスと認可境界の方針
 

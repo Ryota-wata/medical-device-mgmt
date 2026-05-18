@@ -69,6 +69,16 @@ package "認証・ユーザー" {
     削除日時 / deleted_at : timestamp
   }
 
+  note right of users
+    account_type:
+    HOSPITAL / SHRC / SHIP = 通常アカウント
+    SYSTEM_ADMIN = 共有システム管理者アカウント
+    SYSTEM_ADMIN は有効アカウント1件のみ。
+    未削除の全施設・全機能・全カラムを利用可能。
+    監査ログは共有アカウントの user_id として記録し、
+    実利用者個人は追跡しない。
+  end note
+
   entity "user_facility_assignments" as user_facility_assignments {
     * ユーザー施設割当ID / user_facility_assignment_id : bigint
     --
@@ -933,6 +943,9 @@ package "編集リスト" {
     論理削除とし、原本 asset_ledgers や
     元 applications/application_assets は
     更新しない。
+    RFQ紐づき済み行も削除可能とし、
+    既存RFQは rfq_applications 経由で
+    削除済み行を参照できる。
   end note
 
   note right of edit_list_items
@@ -963,6 +976,12 @@ package "編集リスト" {
     RFQ詳細/依頼書プレビューの対象明細は
     rfq_applications を正本とし、
     同一編集リスト内の全明細を返さない。
+    rfq_no / rfq_group_name は
+    編集リスト画面の現在表示用であり、
+    新しいRFQ作成時に上書きする。
+    同じ編集リスト明細を複数RFQへ
+    紐づける場合、過去リンクは
+    rfq_applications で追跡する。
   end note
 
   entity "edit_list_item_attachments <<VIEW>>" as edit_list_item_attachments {
@@ -1001,7 +1020,6 @@ package "編集リスト" {
     編集リストID / edit_list_id : bigint
     カラムキー / column_key : varchar(100)
     カラム名 / column_name : varchar(200)
-    表示順 / sort_order : int
     作成者ユーザーID / created_by_user_id : bigint
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
@@ -1506,6 +1524,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     最終ステータス更新日時 / last_status_changed_at : timestamp
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
   }
 
   note right of rfqs
@@ -1528,6 +1547,17 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     リモデル管理タブの見積区分・
     見積フェーズ絞り込み用の
     RFQ単位スナップショット。
+    見積依頼グループの削除は
+    発注済到達前のステータスのみ許可し、
+    発注済 / 納期確定 / 検収済 /
+    完了以降は削除不可とする。
+    削除時は rfqs.deleted_at を設定し、
+    関連する rfq_vendors、quotations、
+    quotation_items、
+    quotation_item_application_links も
+    同一トランザクションで論理削除する。
+    rfq_applications は採用履歴として保持し、
+    有効判定は rfqs.deleted_at IS NULL を用いる。
     一覧APIでは rfq_vendors を
     業者行へ展開して返す。
   end note
@@ -1595,6 +1625,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     依頼実行者ユーザーID / requested_by_user_id : bigint
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
   }
 
   note right of rfq_vendors
@@ -1630,6 +1661,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     ステータス / status : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
   }
 
   entity "quotation_items" as quotation_items {
@@ -1671,6 +1703,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     仕様テキスト / specification_text : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
+    削除日時 / deleted_at : timestamp
   }
 
   entity "quotation_item_application_links" as quotation_item_application_links {
@@ -1911,28 +1944,38 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     次回予定日 / next_inspection_on : date
     前回実施日 / last_inspection_on : date
     ステータス / status : varchar
+    有効フラグ / is_active : boolean
+    削除日時 / deleted_at : timestamp
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
 
   note right of inspection_tasks
-    点検管理タブの資産別点検設定を保持する。
-    定期点検は periodic_menu_id、
-    status、next_inspection_on、
-    last_inspection_on を用いる。
+    点検管理タブ一覧に表示する
+    定期点検タスクと日常点検設定行を保持する。
+    定期点検は periodic_menu_id、status、
+    next_inspection_on、last_inspection_on を用いる。
+    1資産に複数の定期点検メニューを登録でき、
+    有効な同一資産・同一点検種別・同一定期メニューは
+    重複登録不可とする。
     日常点検設定は資産一覧画面の
     点検管理登録導線から選択資産単位で
     作成・更新し、同じ大分類・中分類・品目の
     全資産へ自動展開しない。
     対象メニューは資産の大分類・中分類・品目と
     inspection_menus の分類が一致するものに限定する。
+    日常点検は inspection_type='日常点検' の
+    1資産1有効行として点検管理タブ一覧へ表示する。
     日常点検は daily_menu_before_id /
     daily_menu_during_id /
     daily_menu_after_id を用い、
     /inspection-prep のPWAダウンロード対象とする。
-    日常点検実施時は定期点検の
-    status、next_inspection_on、
-    last_inspection_on を更新しない。
+    日常点検行は status、next_inspection_on、
+    last_inspection_on を NULL とし、画面では '-' 表示する。
+    日常点検実施時は inspection_tasks を更新せず、
+    inspection_results に実施履歴を記録する。
+    設定解除時は is_active=false と deleted_at を設定し、
+    過去結果は保持する。
   end note
 
   entity "inspection_task_status_definitions" as inspection_task_status_definitions {
@@ -1958,12 +2001,14 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   }
 
   note right of inspection_task_status_definitions
-    点検管理タブの表示に合わせる。
+    点検管理タブの定期点検系ステータス表示に合わせる。
     初期データ:
     点検Nヶ月前 / 点検1ヶ月前 /
     点検月 / 点検週 / 点検月超過 /
     点検日調整 / 点検実施中 /
     点検完了 / 再点検。
+    日常点検はステータスを持たないため
+    本定義の対象外。
     点検Nヶ月前は運用月数に応じて
     定義テーブルへ投入する表示パターン。
   end note
@@ -1975,6 +2020,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     SKIP / SET_DATE / RECALCULATE_SCHEDULE は
     次回予定日を再計算し、
     再計算後の予定系ステータスへ遷移する。
+    日常点検はステータス遷移対象外。
   end note
 
   entity "inspection_results" as inspection_results {
@@ -2335,17 +2381,16 @@ package "個人設定" {
     画面ID / screen_id : varchar
     カラムキー / column_key : varchar(100)
     表示フラグ / is_visible : boolean
-    表示順 / sort_order : int
-    列幅(px) / column_width_px : int
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
 
   note right of user_column_settings
-    編集リスト画面の表示列、
-    表示順、列幅リサイズ結果も保持する。
-    screen_id='edit_list' で区分する。
-    column_width_px 未設定時は画面既定幅を使う。
+    画面ごとの表示列の表示/非表示を保持する。
+    screen_id で画面を区分する。
+    列順変更と列幅変更は
+    画面上の一時表示調整に留め、
+    DBへ保存しない。
   end note
 
   entity "user_column_setting_presets" as user_column_setting_presets {
@@ -2372,8 +2417,6 @@ package "個人設定" {
     ユーザーカラム設定プリセットID / user_column_setting_preset_id : bigint
     カラムキー / column_key : varchar(100)
     表示フラグ / is_visible : boolean
-    表示順 / sort_order : int
-    列幅(px) / column_width_px : int
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }

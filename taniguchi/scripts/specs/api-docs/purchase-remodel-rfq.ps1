@@ -1,9 +1,9 @@
 ﻿$raw = @{
-  DocTitle = 'API設計書_購入管理タブ'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_購入管理タブ.docx'
+  DocTitle = 'API設計書_購入管理'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_購入管理.docx'
   CoverDate = '2026年5月14日'
   Revision = '2026/5/14 親設計書方針見直し・最新モック整合'
-  ScreenLabel = '購入管理タブ'
+  ScreenLabel = '購入管理'
   Sections = @(
     @{
       Heading = '1. 概要'
@@ -108,7 +108,7 @@
             @('19-07', 'GET', '/quotation-data-box/rfq-groups/{rfqGroupId}/preview', '見積依頼書プレビューを取得する。'),
             @('19-08', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendors/{rfqVendorId}/send', 'RFQを業者へ個別送信する。'),
             @('19-09', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/quotation-files', 'RFQに見積ファイルを登録する。'),
-            @('19-10', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}', '未送信RFQグループを削除する。'),
+            @('19-10', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}', '発注済到達前のRFQグループを論理削除する。'),
             @('19-11', 'GET', '/purchase-management/edit-list-options', '購入申請を追加可能な編集リスト候補を取得する。'),
             @('19-12', 'POST', '/purchase-management/edit-lists', '購入管理タブから編集リストを新規作成し、購入申請を取り込む。'),
             @('19-13', 'POST', '/purchase-management/edit-lists/{editListId}/purchase-applications', '購入申請を既存編集リストへ取り込む。'),
@@ -126,7 +126,7 @@
         'Phase1ではSHIPへ依頼ボタンの表示枠のみを扱い、SHIP代理作業依頼の作成APIは実装対象外とする。Phase2で実装する場合は外部送信ではなくSHIPユーザーへの内部代理作業依頼として扱い、rfq_vendors.request_statusをSENTへ変更しない。',
         '見積ファイル登録APIは、ファイル実体がアップロード済みであることを前提にメタデータをapplication_documentsへ登録する。購入管理タブ起点の見積明細登録、発注見積登録、発注登録、納品日登録、検収登録、資産登録は本書の親設計書範囲に含める。OCRジョブ管理などPhase2共通化が必要な処理のみNo.20で扱う。',
         '見積登録依頼中および発注用見積依頼済は独立した購入管理ステップタブではなく、Phase2のRFQ/SHIP代理作業連携で利用する内部状態として扱う。',
-        'RFQ削除は未送信・未処理のRFQに限定する。送信済み業者、見積、注文、またはRFQ配下ドキュメントが存在する場合は削除不可とする。Phase2でSHIP代理作業依頼を追加する場合は、未完了依頼の存在も削除不可条件に加える。'
+        'RFQ削除は発注済到達前のRFQに限定する。見積依頼、見積依頼済、見積DB登録済、見積登録依頼中、発注用見積依頼済、発注見積登録済は削除可とし、発注済、納期確定、検収済、完了以降は削除不可とする。削除時はRFQ本体と関連する依頼先、見積ヘッダ、見積明細、見積明細リンクを論理削除する。'
       )
     }
   )
@@ -351,7 +351,7 @@
       Process = @(
         'managementTypeがPURCHASEまたは省略であることを確認し、通常購入系機能コードと施設スコープを検証する。',
         'step指定をRFQステータス条件へ変換する。ALLは完了、申請を見送るを除外する。',
-        'rfqsを基点にrfq_vendors、edit_lists、rfq_applications、quotations、quotation_itemsを参照して一覧を取得する。',
+        'rfqs.deleted_at IS NULLのRFQを基点に、未削除のrfq_vendors、edit_lists、rfq_applications、quotations、quotation_itemsを参照して一覧を取得する。',
         'rfq_vendorsが存在するRFQは業者行へ展開し、業者未設定のRFQはrfqVendorId=nullのグループ行として返却する。',
         '同一検索条件でステップ別件数を集計しtabCountsへ設定する。',
         'availableActionsはRFQステータス、業者依頼ステータス、ユーザー機能コードに基づいて算出する。Phase1ではSHIPへ依頼ボタンの表示可否をnormal_ship_requestで判定し、依頼作成API本体はPhase2対象とする。'
@@ -414,9 +414,9 @@
         }
       )
       Process = @(
-        'rfqsを取得し、通常購入RFQであること、施設スコープ、normal_purchase機能コードを検証する。',
-        'rfq_vendors、rfq_applications、edit_lists、edit_list_items、applications、application_assetsを取得してRFQプロセス表示用に整形する。対象明細はrfq_applicationsに紐づく行に限定し、同一編集リスト内の未選択明細は含めない。',
-        'application_documentsからowner_typeがRFQまたはRFQ_VENDORのドキュメントを取得する。',
+        'rfqs.deleted_at IS NULLのRFQを取得し、通常購入RFQであること、施設スコープ、normal_purchase機能コードを検証する。',
+        '未削除のrfq_vendors、rfq_applications、edit_lists、edit_list_items、applications、application_assetsを取得してRFQプロセス表示用に整形する。対象明細はrfq_applicationsに紐づく行に限定し、同一編集リスト内の未選択明細は含めない。',
+        'application_documentsからowner_typeがRFQまたはRFQ_VENDOR、かつdeleted_at IS NULLのドキュメントを取得する。',
         'RFQステータス、業者依頼ステータス、機能コードからavailableActionsを算出する。Phase1ではSHIPへ依頼ボタンの表示可否のみをnormal_ship_requestで返す。'
       )
       Errors = @(
@@ -470,10 +470,10 @@
         }
       )
       Process = @(
-        'rfqsを行ロックして取得し、通常購入RFQであること、施設スコープ、normal_purchase権限を確認する。',
+        'rfqs.deleted_at IS NULLのRFQを行ロックして取得し、通常購入RFQであること、施設スコープ、normal_purchase権限を確認する。',
         'expectedRfqUpdatedAt指定時はrfqs.updated_atと一致することを確認する。',
         '既存rfq_vendorsのうちrequest_statusがDRAFTではない行は、業者情報更新・削除対象にできない。',
-        'deletedRfqVendorIdsの各行がDRAFTであることを確認して削除する。',
+        'deletedRfqVendorIdsの各行がDRAFTであることを確認し、rfq_vendors.deleted_atを設定して論理削除する。',
         'vendors配列の既存行を更新し、新規行はrequest_status=DRAFTでrfq_vendorsへ登録する。',
         '保存後に有効な業者行が1件以上残ることを確認する。',
         'rfqs.updated_atを更新し、保存後の業者一覧を返却する。'
@@ -522,7 +522,7 @@
       Process = @(
         'RFQ詳細取得と同じ権限・施設スコープを検証する。',
         'rfqVendorId指定時は当該業者が対象RFQに属することを確認する。',
-        'rfqs、rfq_vendors、rfq_applications、edit_list_items、applications、application_assetsからプレビュー情報を構築する。対象明細はrfq_applicationsに紐づく行に限定し、同一編集リスト内の未選択明細は含めない。',
+        '未削除のrfqs、rfq_vendors、rfq_applications、edit_list_items、applications、application_assetsからプレビュー情報を構築する。対象明細はrfq_applicationsに紐づく行に限定し、同一編集リスト内の未選択明細は含めない。',
         '本APIはDB更新を行わない。依頼書ファイルの保存が必要な場合は、生成後に見積ファイル登録APIまたは別紙ドキュメント登録APIを使用する。'
       )
       Errors = @(
@@ -661,7 +661,7 @@
       Name = 'RFQグループ削除API'
       Method = 'DELETE'
       Path = '/quotation-data-box/rfq-groups/{rfqGroupId}'
-      Summary = '未送信・未処理のRFQグループを削除する。'
+      Summary = '発注済到達前のRFQグループを論理削除する。'
       Auth = 'Bearer必須。通常購入RFQとしてnormal_purchaseが対象施設で有効であること。'
       RequestTables = @(
         @{
@@ -684,12 +684,13 @@
         }
       )
       Process = @(
-        'rfqsを行ロックして取得し、通常購入RFQであること、施設スコープ、normal_purchase権限を確認する。',
+        'rfqs.deleted_at IS NULLのRFQを行ロックして取得し、通常購入RFQであること、施設スコープ、normal_purchase権限を確認する。',
         'expectedUpdatedAt指定時はrfqs.updated_atと一致することを確認する。',
-        'RFQステータスが見積依頼であることを確認する。',
-        'rfq_vendorsにDRAFT以外の行が存在しないことを確認する。SENT、REPLIED、CANCELEDの業者行がある場合は削除不可とする。',
-        'quotations、quotation_items、注文関連データ、application_documentsが存在しないことを確認する。Phase2でSHIP代理作業依頼を追加する場合は未完了依頼の存在も確認する。',
-        'rfq_vendors、rfq_applications、rfqsを同一トランザクションで削除する。編集リスト本体および編集リスト明細は削除しない。',
+        'RFQステータスが発注済到達前（見積依頼、見積依頼済、見積DB登録済、見積登録依頼中、発注用見積依頼済、発注見積登録済）であることを確認する。発注済以降は削除不可とする。',
+        'orders、order_items、individuals、asset_ledgersへの資産登録結果など発注以降の後続データが存在しないことを確認する。存在する場合は削除不可とする。',
+        'rfqs.deleted_atを設定し、関連するrfq_vendors、quotations、quotation_items、quotation_item_application_linksを同一トランザクションで論理削除する。RFQ/QUOTATION/RFQ_VENDOR所有の添付・生成ファイルメタデータはapplication_documents.deleted_atを設定する。ただし外部送付済み帳票の確定値保持/再出力方針は機能要件の確認待ち事項に従う。',
+        'rfq_applicationsは削除済みRFQとの採用履歴として保持する。編集リスト本体および編集リスト明細は削除しない。',
+        '削除対象RFQが編集リスト行の現在表示中RFQである場合は、対象edit_list_itemsのrfq_no、rfq_group_name、rfq_assignment_statusを未割当状態へ更新する。過去RFQの再表示は行わない。',
         '削除結果を返却する。'
       )
       Errors = @(
@@ -697,7 +698,7 @@
         @('403', 'FORBIDDEN', '対象RFQの購入管理権限がない。'),
         @('404', 'RFQ_GROUP_NOT_FOUND', 'RFQグループが存在しない。'),
         @('409', 'CONFLICT_UPDATED_AT', 'RFQが他ユーザーにより更新されている。'),
-        @('409', 'RFQ_DELETE_BLOCKED', '送信済み業者、見積、注文、またはドキュメントが存在するため削除できない。Phase2でSHIP代理作業依頼を追加する場合は未完了依頼も削除不可条件に含める。')
+        @('409', 'RFQ_DELETE_BLOCKED', '発注済以降のステータス、または発注以降の後続データが存在するため削除できない。')
       )
     },
     @{
@@ -916,7 +917,7 @@
         'expectedEditListUpdatedAt指定時はedit_lists.updated_atと一致することを確認する。',
         'edit_list_facilities全施設について、ログインユーザーの施設スコープとnormal_purchase権限を検証する。',
         'editListItemIdsの全明細を行ロックし、指定編集リストに属し、record_status=ACTIVEであることを確認する。',
-        '既に未完了RFQへ紐づく明細は重複採用不可とする。再作成が必要な場合は既存RFQ削除または終端状態を経由する。',
+        '同じ編集リスト明細が既に別RFQへ紐づいていても新規RFQ作成は許可する。削除済みRFQは現在割当判定から除外し、有効な過去RFQとのリンクはrfq_applicationsで履歴として追跡する。',
         'rfqsをmanagement_type=PURCHASE、status=見積依頼、edit_list_id指定で作成し、rfq_noを採番する。edit_lists.list_typeがOTHERの場合はPURCHASEへ更新する。',
         '選択されたedit_list_itemsだけをrfq_applicationsへ登録する。source_type=APPLICATIONの明細ではapplication_id/application_asset_idへ出所を設定する。',
         '採用明細のedit_list_items.rfq_no、rfq_group_name、rfq_assignment_status=RFQ_ASSIGNEDを更新する。',
@@ -929,8 +930,7 @@
         @('404', 'EDIT_LIST_NOT_FOUND', '編集リストが存在しない、または参照できない。'),
         @('404', 'EDIT_LIST_ITEM_NOT_FOUND', '編集リスト明細が存在しない、または参照できない。'),
         @('409', 'CONFLICT_UPDATED_AT', '編集リストが他ユーザーにより更新されている。'),
-        @('409', 'EDIT_LIST_TYPE_INVALID', 'REMODELの編集リストから通常購入RFQは作成できない。'),
-        @('409', 'EDIT_LIST_ITEM_ALREADY_LINKED_TO_RFQ', '指定明細が未完了RFQへ既に紐づいている。')
+        @('409', 'EDIT_LIST_TYPE_INVALID', 'REMODELの編集リストから通常購入RFQは作成できない。')
       )
     }
   )

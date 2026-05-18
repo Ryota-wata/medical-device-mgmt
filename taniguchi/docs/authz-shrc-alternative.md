@@ -1,7 +1,9 @@
 # SHRC認可 代替案メモ
 
-本ファイルは、SHRCユーザーに施設単位の実効ロール管理が必要になった場合の未採用差分案メモである。  
-現時点の正本は [機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) と [db-schema.puml](/C:/Projects/mock/medical-device-mgmt/taniguchi/db/db-schema.puml) とする。
+本ファイルは、SHRCユーザーに施設単位の実効ロール管理が必要になった場合の旧未採用差分案メモである。
+現時点の正本は [機能要件.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/機能要件.md) と [authz-fix-summary.md](/C:/Projects/mock/medical-device-mgmt/taniguchi/docs/authz-fix-summary.md) とする。
+
+> 現方針では本案を採用しない。SHRCユーザーは `user_facility_assignments` とユーザー施設別設定で管理し、システム管理者は通常ユーザーへのロール付与ではなく `account_type='SYSTEM_ADMIN'` の共有アカウント1件として運用する。
 
 ## 位置づけ
 

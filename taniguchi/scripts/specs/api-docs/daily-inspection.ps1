@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_日常点検.docx'
   ScreenLabel = '日常点検'
-  CoverDateText = '2026年5月16日'
-  RevisionDateText = '2026/5/16'
+  CoverDateText = '2026年5月18日'
+  RevisionDateText = '2026/5/18'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -17,16 +17,16 @@
       '点検結果画面および報告書出力データ取得 I/F'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = '日常点検は、医療機器を QR コードで特定し、使用前・使用中・使用後のタイミングに応じた点検メニューを実施し、結果を記録する業務である。`/inspection-prep` を日常点検PWAの入口とし、オンライン状態で有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、資産別日常点検設定を端末内に全量ダウンロードした上で、点検開始後はダウンロード済みデータを用いてQR読取から点検実施までを継続する。' },
+    @{ Type = 'Paragraph'; Text = '日常点検は、医療機器を QR コードで特定し、使用前・使用中・使用後のタイミングに応じた点検メニューを実施し、結果を記録する業務である。`/inspection-prep` を日常点検PWAの入口とし、オンライン状態で有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、点検管理タブで有効な資産別日常点検設定行を端末内に全量ダウンロードした上で、点検開始後はダウンロード済みデータを用いてQR読取から点検実施までを継続する。' },
     @{ Type = 'Paragraph'; Text = '点検結果は端末内の未送信キューに保持し、オンライン復帰後に同期する。オンライン状態で即時登録する場合も、PWA上で利用したダウンロード済みメニューと項目スナップショットを保持し、同期APIと同じ検証・永続化ルールを適用する。' },
-    @{ Type = 'Paragraph'; Text = '点検メニュー登録、資産一覧画面の選択資産から起動する点検管理登録、点検予定表 CSV 出力、定期点検実施、メーカー保守結果登録は No.26 点検管理タブ API 設計書の対象とし、本書では日常点検の準備・実施・結果参照を対象とする。' },
+    @{ Type = 'Paragraph'; Text = '点検メニュー登録、資産一覧画面の選択資産から起動する点検管理登録、日常点検設定行の一覧表示・設定変更・設定解除、点検予定表 CSV 出力、定期点検実施、メーカー保守結果登録は No.28 点検管理タブ API 設計書の対象とし、本書では日常点検の準備・実施・結果参照を対象とする。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('日常点検', 'QR 読取した資産に対して、使用前・使用中・使用後のいずれかのタイミングで実施する点検'),
       @('日常点検タイミング', '`BEFORE` / `DURING` / `AFTER`。画面表示では `使用前` / `使用中` / `使用後` とする'),
       @('日常点検メニュー', '`inspection_menus.menu_type=''DAILY''` の点検メニュー。`daily_timing` と資産分類により選択する'),
-      @('資産別日常点検設定', '`inspection_tasks` の `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` に保持する、資産一覧画面の点検管理登録導線で登録された資産単位の設定'),
-      @('日常点検PWAパッケージ', '`/inspection-prep/master/download` で全量取得し、端末内ストレージへ置換保存する有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、資産別日常点検設定の集合'),
+      @('資産別日常点検設定', '`inspection_tasks.inspection_type=''日常点検''`、`is_active=true` の1資産1有効行。`daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` に使用前・使用中・使用後メニューを保持する'),
+      @('日常点検PWAパッケージ', '`/inspection-prep/master/download` で全量取得し、端末内ストレージへ置換保存する有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、有効な資産別日常点検設定行の集合。設定未登録資産もQR照合と警告表示のため資産側に含める'),
       @('点検結果明細', '点検項目ごとの入力値。`inspection_results.result_details_json` に JSON として保持する')
     ) },
     @{ Type = 'Heading2'; Text = '対象画面' },
@@ -43,12 +43,12 @@
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
       @('`/inspection-prep` 初期表示', '`GET /inspection-prep/context`', 'ダウンロード状況、対象件数、最終同期情報を取得する'),
-      @('データをダウンロード', '`GET /inspection-prep/master/download`', '有効QR識別子付き資産、QR識別子、日常点検メニュー、点検項目、資産別日常点検設定を全量取得し、端末側ストレージへ置換保存する'),
+      @('データをダウンロード', '`GET /inspection-prep/master/download`', '有効QR識別子付き資産、QR識別子、日常点検メニュー、点検項目、有効な資産別日常点検設定行を全量取得し、端末側ストレージへ置換保存する。設定未登録資産もQR照合と警告表示のため資産側に含める'),
       @('点検結果を送信', '`POST /inspection-prep/results/sync`', '端末側に保持した未送信日常点検結果を一括送信する'),
-      @('QR 読取または手入力後の対象資産特定', 'APIなし（端末内PWAパッケージを検索）', 'ダウンロード済みQR識別子、資産、資産別日常点検設定、日常点検メニューから対象資産と点検メニューを決定する'),
+      @('QR 読取または手入力後の対象資産特定', 'APIなし（端末内PWAパッケージを検索）', 'ダウンロード済みQR識別子、資産、資産別日常点検設定、日常点検メニューから対象資産と点検メニューを決定する。設定行または対象タイミングのメニューがない場合は点検入力画面へ遷移しない'),
       @('オンライン時のQR再検証', '`GET /daily-inspection/assets/by-qr/{qrCode}`', 'PWAパッケージ不整合、未登録警告、オンライン補助確認が必要な場合だけ利用する補助API'),
       @('確認ステップの完了または修理申請連携', '`POST /daily-inspection/results`', 'オンライン実施結果を登録し、修理申請連携用 seed を返す'),
-      @('`/inspection-result` 表示または報告書出力', '`GET /inspection-result/reports/{inspectionResultId}`', '日常点検結果の表示と報告書出力に必要なデータを取得する。定期点検結果の参照は No.26 点検管理タブ API 設計書で扱う')
+      @('`/inspection-result` 表示または報告書出力', '`GET /inspection-result/reports/{inspectionResultId}`', '日常点検結果の表示と報告書出力に必要なデータを取得する。定期点検結果の参照は No.28 点検管理タブ API 設計書で扱う')
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル名', '利用種別', '用途'); Rows = @(
@@ -66,7 +66,7 @@
       @('`users`', 'READ', '実施者ユーザーIDと表示名の解決'),
       @('`facilities`', 'READ', '作業対象施設の存在確認、契約状態、論理削除確認')
     ) },
-    @{ Type = 'Paragraph'; Text = '`inspection_results.inspection_task_id` は DB 定義上必須であるため、日常点検結果は `inspection_tasks` に保持された資産別日常点検設定へ紐づけて登録する。端末内PWAパッケージまたはオンラインQR再検証で対象タイミングの `inspectionTaskId` を解決できない場合、結果登録 API は `DAILY_INSPECTION_TASK_REQUIRED` を返し、点検管理タブで日常点検設定を登録させる。' },
+    @{ Type = 'Paragraph'; Text = '`inspection_results.inspection_task_id` は DB 定義上必須であるため、日常点検結果は `inspection_tasks.inspection_type=''日常点検''`、`is_active=true` の資産別日常点検設定行へ紐づけて登録する。端末内PWAパッケージまたはオンラインQR再検証で対象タイミングの `inspectionTaskId` を解決できない場合、点検入力画面へ遷移させず、結果登録 API は `DAILY_INSPECTION_TASK_REQUIRED` または `DAILY_TIMING_MENU_REQUIRED` を返し、点検管理タブで日常点検設定を登録・変更させる。' },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
@@ -100,7 +100,8 @@
     ) },
     @{ Type = 'Heading2'; Text = 'オフライン同期方針' },
     @{ Type = 'Bullets'; Items = @(
-      'オフラインパッケージは作業対象施設内の有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、資産別日常点検設定を含める',
+      'オフラインパッケージは作業対象施設内の有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、有効な資産別日常点検設定行を含める',
+      '有効QR識別子付き点検対象資産は、日常点検設定行の有無にかかわらず含める。これにより、QRは資産に紐づくが日常点検メニューが未設定である状態を、QR未登録エラーと区別して表示できる',
       'QR削除・再割当・資産状態変更を安全に反映するため、PWAパッケージ取得は差分マージではなく全量取得結果による端末内データ置換を正とする',
       '初回、期限切れ、または未ダウンロードの場合は、オンラインでパッケージを取得するまで点検開始を許可しない',
       '点検開始後のQR照合と点検メニュー解決は端末内PWAパッケージを正とし、サーバー照会を必須にしない',
@@ -111,7 +112,7 @@
     @{ Type = 'Heading2'; Text = 'PWAクライアント処理境界' },
     @{ Type = 'Bullets'; Items = @(
       '`/inspection-prep` は日常点検PWAの入口として、オンライン時にPWAパッケージを取得し、端末内ストレージへ保存する',
-      '`/daily-inspection` はQR読取後、端末内PWAパッケージのQR識別子、資産、資産別日常点検設定、日常点検メニュー、点検項目を検索して点検実施画面へ進む',
+      '`/daily-inspection` はQR読取後、端末内PWAパッケージのQR識別子、資産、資産別日常点検設定、日常点検メニュー、点検項目を検索する。資産別日常点検設定行がない場合、または選択タイミングのメニューが未設定の場合は警告を表示し、点検実施画面へ進めない',
       '点検結果は端末内の未送信キューへ保存し、`/inspection-prep/results/sync` が成功するまで削除しない',
       '端末内キャッシュ、Service Worker、IndexedDBの実装詳細はフロントエンド実装範囲とし、サーバーDBには保存しない'
     ) },
@@ -161,8 +162,8 @@
         ProcessingLines = @(
           '作業対象施設の `facilities.deleted_at IS NULL` を確認する',
           '`asset_ledgers.facility_id` が作業対象施設 ID と一致し、`status=''ACTIVE''` かつ有効な `qr_codes` が紐づく資産件数を取得する',
-          '`inspection_menus.menu_type=''DAILY''` かつ `is_active=true` のメニュー件数を取得する',
-          '`inspection_tasks` から作業対象施設内の資産別日常点検設定件数を取得する',
+          '`inspection_tasks` から作業対象施設内の `inspection_type=''日常点検''` かつ `is_active=true` の資産別日常点検設定件数を取得する',
+          '有効な資産別日常点検設定行から参照される `inspection_menus.menu_type=''DAILY''` のメニュー件数を取得する',
           'サーバー管理の同期履歴がある場合は `clientDeviceId` と認証ユーザーに対応する最終ダウンロード日時・最終送信日時を返す',
           'サーバーは端末内の未送信件数を保持しないため、`serverUnsyncedCount` は常に 0 とし、画面の未送信件数はクライアント側ストレージの件数を優先表示する'
         )
@@ -186,7 +187,7 @@
       },
       @{
         Title = 'PWAパッケージ取得（/inspection-prep/master/download）'
-        Overview = 'オフライン日常点検で利用する有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、資産別日常点検設定を全量取得する。クライアントは取得結果でIndexedDB等の端末内ストレージを置換し、点検開始後のQR照合と点検メニュー解決に使用する。'
+        Overview = 'オフライン日常点検で利用する有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、有効な資産別日常点検設定行を全量取得する。クライアントは取得結果でIndexedDB等の端末内ストレージを置換し、点検開始後のQR照合と点検メニュー解決に使用する。日常点検設定が未登録の資産も資産側に含め、QR読取時に設定未登録警告を表示できるようにする。'
         Method = 'GET'
         Path = '/inspection-prep/master/download'
         Auth = '要（Bearer）'
@@ -201,11 +202,12 @@
         )
         ProcessingLines = @(
           '作業対象施設の `facilities.deleted_at IS NULL` を確認する',
-          '`asset_ledgers.facility_id` が作業対象施設 ID と一致し、`status=''ACTIVE''` かつ有効な `qr_codes` が1件以上紐づく資産を取得する',
+          '`asset_ledgers.facility_id` が作業対象施設 ID と一致し、`status=''ACTIVE''` かつ有効な `qr_codes` が1件以上紐づく資産を、日常点検設定行の有無にかかわらず取得する',
           '`qr_codes.facility_id` が作業対象施設 ID と一致し、`deleted_at IS NULL`、`asset_ledger_id IS NOT NULL` のQR識別子を取得し、対象資産に紐づけて返す',
-          '`inspection_menus.menu_type=''DAILY''` かつ `is_active=true` のメニューを取得する',
+          '`inspection_tasks` から、取得対象資産に紐づく `inspection_type=''日常点検''`、`is_active=true` の資産別日常点検設定行を取得する。`status`、`last_inspection_on`、`next_inspection_on` は日常点検では使用しない',
+          'PWAへ配信する `inspection_menus` は、取得した有効な資産別日常点検設定行の `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` から参照される有効な日常点検メニューに限定する。設定行から参照されない日常点検メニューは、メニュー候補や管理用データとして配信しない',
           '取得対象メニューに紐づく `inspection_menu_items` を `display_order ASC` で取得する',
-          '`inspection_tasks` から、取得対象資産に紐づき `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` のいずれかを持つ資産別設定を取得する',
+          '資産に有効な日常点検設定行がない場合、資産データは返すが `settings` には含めない。クライアントはQR読取後に該当設定がないことを検出し、点検入力画面へ遷移させない',
           'レスポンスは常に全量パッケージとし、クライアントは既存の端末内PWAパッケージをマージせず置換する',
           '同期履歴に最終ダウンロード日時を記録できる場合は `clientDeviceId` と認証ユーザーに紐づけて更新する。サーバー側同期履歴テーブルを持たない構成では端末側の最終ダウンロード日時を画面表示の正とする'
         )
@@ -218,7 +220,7 @@
           @('validUntil', 'datetime', '-', '再ダウンロード推奨期限。期限切れ後は点検開始前にオンライン再取得を促す'),
           @('assets', 'DailyInspectionAsset[]', '✓', '点検対象資産'),
           @('menus', 'DailyInspectionMenu[]', '✓', '日常点検メニュー'),
-          @('settings', 'DailyInspectionAssetSetting[]', '✓', '資産別日常点検設定')
+          @('settings', 'DailyInspectionAssetSetting[]', '✓', '有効な資産別日常点検設定行')
         )
         ResponseSubtables = @(
           @{
@@ -235,7 +237,9 @@
               @('manufacturerName', 'string', '-', 'メーカー'),
               @('modelName', 'string', '-', '型式'),
               @('managementDepartmentName', 'string', '-', '管理部署'),
-              @('installationLocation', 'string', '-', '設置場所')
+              @('installationLocation', 'string', '-', '設置場所'),
+              @('dailyInspectionConfigured', 'boolean', '✓', '有効な資産別日常点検設定行が存在する場合 true。false の場合、QR照合後に未設定警告を表示し点検開始不可とする'),
+              @('configuredTimings', 'string[]', '✓', '設定済みタイミング。`BEFORE` / `DURING` / `AFTER` の配列。未設定時は空配列')
             )
           },
           @{
@@ -248,7 +252,7 @@
               @('largeClassName', 'string', '-', '対象大分類'),
               @('mediumClassName', 'string', '-', '対象中分類'),
               @('itemName', 'string', '-', '対象品目'),
-              @('isActive', 'boolean', '✓', '有効な日常点検メニューのため true'),
+              @('isActive', 'boolean', '✓', 'PWA配信時点で有効な日常点検メニューのため true'),
               @('updatedAt', 'datetime', '✓', 'メニュー更新日時'),
               @('items', 'DailyInspectionMenuItem[]', '✓', '点検項目')
             )
@@ -273,9 +277,11 @@
             Rows = @(
               @('inspectionTaskId', 'int64', '✓', '結果登録時に指定する点検タスク ID'),
               @('assetLedgerId', 'int64', '✓', '資産台帳 ID'),
+              @('inspectionType', 'string', '✓', '`日常点検` 固定'),
               @('beforeMenuId', 'int64', '-', '使用前日常点検メニュー ID'),
               @('duringMenuId', 'int64', '-', '使用中日常点検メニュー ID'),
-              @('afterMenuId', 'int64', '-', '使用後日常点検メニュー ID')
+              @('afterMenuId', 'int64', '-', '使用後日常点検メニュー ID'),
+              @('isActive', 'boolean', '✓', 'PWA配信対象のため true')
             )
           }
         )
@@ -296,7 +302,7 @@
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
           @('clientDeviceId', 'string', '-', '端末を識別する任意 ID'),
-          @('masterDownloadedAt', 'datetime', '-', '端末が利用したオフラインマスタの取得日時。サーバー側の診断・競合判定に使用する'),
+          @('masterDownloadedAt', 'datetime', '✓', '端末が利用したオフラインマスタの取得日時。設定解除後の同期可否判定と再送診断に使用する'),
           @('packageVersion', 'string', '-', '端末が利用したPWAパッケージバージョン。同期結果の監査と再送診断に使用する'),
           @('results', 'DailyInspectionResultInput[]', '✓', '同期対象の日常点検結果')
         )
@@ -311,7 +317,7 @@
               @('inspectionMenuId', 'int64', '✓', '実施した日常点検メニュー ID'),
               @('dailyTiming', 'string', '✓', '`BEFORE` / `DURING` / `AFTER`'),
               @('inspectedOn', 'date', '✓', '点検実施日'),
-              @('inspectedAt', 'datetime', '-', '端末上の点検完了日時'),
+              @('inspectedAt', 'datetime', '✓', '端末上の点検完了日時。設定解除日時との前後判定に使用する'),
               @('inspectorName', 'string', '✓', '実施者名'),
               @('overallResult', 'string', '✓', '`PASS` / `REPAIR_REQUEST`。画面表示の `合格` / `異常あり` を正規化する'),
               @('resultDetails', 'DailyInspectionResultDetailInput[]', '✓', '点検項目ごとの結果'),
@@ -324,9 +330,10 @@
           '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
         )
         ProcessingLines = @(
-          '各結果について `inspectionTaskId` が存在し、紐づく `asset_ledgers.facility_id` が作業対象施設 ID と一致し、`asset_ledgers.status=''ACTIVE''` であることを検証する',
+          '各結果について `inspectionTaskId` が `inspection_type=''日常点検''`、`status IS NULL` の日常点検設定行として存在し、紐づく `asset_ledgers.facility_id` が作業対象施設 ID と一致し、`asset_ledgers.status=''ACTIVE''` であることを検証する',
+          'オフライン同期では、対象日常点検設定行が同期時点で `is_active=false` でも、`masterDownloadedAt` 時点でPWAパッケージに含まれ、かつ `deleted_at IS NULL` または `inspectedAt <= deleted_at` の場合は実施済み結果として登録を許可する。`masterDownloadedAt` が解除後、または `inspectedAt` が解除後の場合は `DAILY_INSPECTION_TASK_REQUIRED` とする',
           '`assetLedgerId` が `inspection_tasks.asset_ledger_id` と一致することを検証する',
-          '`inspectionMenuId` が対象タスクの `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` の指定タイミングと一致することを検証する',
+          '`inspectionMenuId` が対象設定行の `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` の指定タイミングと一致することを検証する。対象タイミングのメニューIDが `NULL` の場合は `DAILY_TIMING_MENU_REQUIRED` とする',
           '`inspection_menus.menu_type=''DAILY''` と `daily_timing` を検証する。オフライン同期ではダウンロード後に `is_active=false` へ変更されたメニューでも、メニュー ID と項目 ID が存在し、対象タスクの該当日常メニュー ID と一致する場合は登録を許可する',
           '`resultDetails[*].inspectionMenuItemId` が対象メニュー配下の `inspection_menu_items` であることを検証する',
           '未登録の `clientResultId` は `inspection_results` に登録し、登録済みの `clientResultId` は既存 `inspectionResultId` を返す。現行 DB に `clientResultId` 専用カラムがないため、Phase1 では `clientDeviceId`、認証ユーザー、`clientResultId` の組み合わせをアプリケーションロックし、`result_details_json.clientResultId` を検索して再送を検出する。DB 一意制約による完全な同時実行保証は今後拡張事項とする',
@@ -345,7 +352,7 @@
               @('`inspection_results`', '`inspected_on`', 'リクエスト `inspectedOn`', '点検日'),
               @('`inspection_results`', '`inspector_user_id` / `inspector_name`', '認証ユーザー ID / リクエスト `inspectorName`', '業務上の表示名は入力値を保持する'),
               @('`inspection_results`', '`overall_result`', '`PASS` または `REPAIR_REQUEST`', '画面の `異常あり` は修理申請導線を持つため `REPAIR_REQUEST` に正規化する'),
-              @('`inspection_results`', '`result_details_json`', '点検項目結果、`clientResultId`、`masterDownloadedAt`、`packageVersion`、`dailyTiming`、`inspectionMenuId`、実施時点のメニュー/項目スナップショットを JSON 保存', '項目別結果は正規化テーブルを持たない'),
+              @('`inspection_results`', '`result_details_json`', '点検項目結果、`clientResultId`、`masterDownloadedAt`、`packageVersion`、`inspectedAt`、`dailyTiming`、`inspectionMenuId`、実施時点のメニュー/項目スナップショットを JSON 保存', '項目別結果は正規化テーブルを持たない'),
               @('`inspection_results`', '`remarks`', 'リクエスト `remarks`', '備考'),
               @('`lending_devices`', '`status` / `updated_at`', '合格時 `貸出可`、異常時 `使用不可` / 現在時刻', '`lending_device_status_transitions` で許可される場合のみ')
             )
@@ -401,12 +408,12 @@
         ProcessingLines = @(
           '通常フローでは、端末内PWAパッケージの `assets[*].qrIdentifiers` を検索して対象資産を決定する。本 API はオンライン再検証用であり、点検開始の必須条件にしない',
           'QR コードを `qr_codes.qr_identifier` として解決し、`qr_codes.facility_id` が作業対象施設 ID と一致し、`qr_codes.deleted_at IS NULL`、`qr_codes.asset_ledger_id IS NOT NULL` であることを確認する',
-          'QR 識別子で一致しない場合のみ、手入力補助として `asset_ledgers.management_no` との完全一致検索を行う',
           '対象資産の `facility_id` が作業対象施設 ID と一致することを確認する',
           '対象資産の `status` が `ACTIVE` 以外の場合は、資産情報を返しつつ `canRegisterResult=false`、`warningCode=DAILY_INSPECTION_ASSET_NOT_TARGET` とする',
-          '対象資産に紐づく `inspection_tasks` のうち、日常メニュー ID を持つ行を取得する',
+          '対象資産に紐づく `inspection_tasks` のうち、`inspection_type=''日常点検''`、`is_active=true` の日常点検設定行を取得する',
           '`dailyTiming` 指定時は対応する `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` のメニューを返す',
-          '資産別設定がない場合でも、資産の大分類・中分類・品目に一致する有効な日常点検メニュー候補を返す。ただし結果登録には `inspectionTaskId` が必要であるため、`canRegisterResult=false` とする',
+          '資産別設定がない場合でも、資産の大分類・中分類・品目に一致する有効な日常点検メニュー候補を返す。ただし結果登録には `inspectionTaskId` が必要であるため、`canRegisterResult=false`、`warningCode=DAILY_INSPECTION_TASK_REQUIRED` とし、画面は点検入力画面へ遷移しない。一致する日常点検メニュー候補もない場合は `warningCode=NO_DAILY_MENU` とする',
+          '資産別設定行はあるが `dailyTiming` に対応するメニューIDが `NULL` の場合は、`canRegisterResult=false`、`warningCode=DAILY_TIMING_MENU_REQUIRED` とし、該当タイミングの点検入力画面へ遷移しない',
           'メニュー候補は `inspection_menus.menu_type=''DAILY''`、`is_active=true`、資産の大分類/中分類/品目一致、`daily_timing` 一致で絞り込む',
           '条件一致メニューがない場合は 200 で資産情報と空のメニュー配列を返し、画面側で警告を表示できるようにする'
         )
@@ -417,7 +424,7 @@
           @('setting', 'DailyInspectionAssetSetting', '-', '資産別日常点検設定。未登録時は null'),
           @('menus', 'DailyInspectionMenu[]', '✓', '利用可能な日常点検メニュー候補'),
           @('canRegisterResult', 'boolean', '✓', '結果登録に必要な `inspectionTaskId` が解決できる場合 true'),
-          @('warningCode', 'string', '-', '`NO_DAILY_MENU` / `DAILY_INSPECTION_TASK_REQUIRED` / `DAILY_INSPECTION_ASSET_NOT_TARGET`')
+          @('warningCode', 'string', '-', '`NO_DAILY_MENU` / `DAILY_INSPECTION_TASK_REQUIRED` / `DAILY_TIMING_MENU_REQUIRED` / `DAILY_INSPECTION_ASSET_NOT_TARGET`')
         )
         StatusRows = @(
           @('200', '取得成功。メニュー未登録時も 200 で警告コードを返す', 'DailyInspectionAssetByQrResponse'),
@@ -445,6 +452,7 @@
           @('inspectionMenuId', 'int64', '✓', '実施した日常点検メニュー ID'),
           @('dailyTiming', 'string', '✓', '`BEFORE` / `DURING` / `AFTER`'),
           @('inspectedOn', 'date', '✓', '点検実施日'),
+          @('inspectedAt', 'datetime', '✓', '端末上の点検完了日時'),
           @('inspectorName', 'string', '✓', '実施者名'),
           @('overallResult', 'string', '✓', '`PASS` / `REPAIR_REQUEST`'),
           @('resultDetails', 'DailyInspectionResultDetailInput[]', '✓', '点検項目ごとの結果'),
@@ -473,9 +481,9 @@
           '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
         )
         ProcessingLines = @(
-          '`inspectionTaskId`、`assetLedgerId`、`inspectionMenuId`、`dailyTiming` の整合を検証する',
+          '`inspectionTaskId`、`assetLedgerId`、`inspectionMenuId`、`dailyTiming` の整合を検証する。`inspectionTaskId` は `inspection_type=''日常点検''`、`is_active=true`、`status IS NULL` の日常点検設定行でなければならない',
           '対象資産が作業対象施設内に存在し、`asset_ledgers.status=''ACTIVE''` であることを検証する',
-          '対象メニューが有効な日常点検メニューであり、タイミングが一致することを検証する',
+          '対象メニューが日常点検メニューであり、タイミングが一致することを検証する。対象タイミングの `daily_menu_*_id` が `NULL` の場合は `DAILY_TIMING_MENU_REQUIRED` とする',
           '点検項目結果が対象メニュー配下の項目と一致し、必須項目に入力値があることを検証する',
           '`clientResultId` が指定された場合は同期APIと同じ冪等判定を行い、再送であれば既存 `inspectionResultId` を返す',
           '`inspection_results` に点検結果を登録する',
@@ -528,7 +536,7 @@
       },
       @{
         Title = '点検結果報告データ取得（/inspection-result/reports/{inspectionResultId}）'
-        Overview = '点検結果画面表示および報告書出力に必要な日常点検結果、対象資産、点検メニュー、項目結果を取得する。本書では日常点検結果のみを対象とし、定期点検結果の参照は No.26 点検管理タブ API 設計書で扱う。'
+        Overview = '点検結果画面表示および報告書出力に必要な日常点検結果、対象資産、点検メニュー、項目結果を取得する。本書では日常点検結果のみを対象とし、定期点検結果の参照は No.28 点検管理タブ API 設計書で扱う。'
         Method = 'GET'
         Path = '/inspection-result/reports/{inspectionResultId}'
         Auth = '要（Bearer）'
@@ -543,7 +551,7 @@
         )
         ProcessingLines = @(
           '`inspection_results`、`inspection_tasks`、`asset_ledgers` を結合し、対象結果が作業対象施設内の資産に紐づくことを確認する',
-          '対象 `inspection_tasks` が `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` のいずれかを持つ日常点検設定であることを確認する。定期点検結果の場合は本 API の対象外として 403 を返す',
+          '対象 `inspection_tasks` が `inspection_type=''日常点検''` の日常点検設定行であることを確認する。定期点検結果の場合は本 API の対象外として 403 を返す',
           '`result_details_json` から点検メニュー ID、日常点検タイミング、項目結果を復元する',
           '`application_documents.owner_type=''INSPECTION_RESULT''`、`inspection_result_id=:inspectionResultId`、`document_category<>''PHOTO''`、`deleted_at IS NULL` に一致する点検結果報告書がある場合はメタデータを返す',
           '日常点検結果の `returnTo` は `/inspection-prep` を返す',
@@ -614,17 +622,18 @@
     ) },
     @{ Type = 'Heading2'; Text = '点検管理タブとの責務境界' },
     @{ Type = 'Bullets'; Items = @(
-      '点検メニュー登録・更新・削除は No.26 点検管理タブ API 設計書で扱う',
-      '資産一覧画面の選択資産から起動する点検管理登録による `inspection_tasks` 作成・更新は No.26 点検管理タブ API 設計書で扱う。日常点検では `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` がPWAパッケージの資産別日常点検設定として配信される',
-      '本 API は No.26 で登録された日常点検メニューと資産別日常点検設定を参照する',
-      '点検予定表 CSV 出力は No.26 の責務であり、本書では扱わない'
+      '点検メニュー登録・更新・削除は No.28 点検管理タブ API 設計書で扱う',
+      '資産一覧画面の選択資産から起動する点検管理登録による `inspection_tasks` 作成・更新は No.28 点検管理タブ API 設計書で扱う。日常点検では `inspection_type=''日常点検''`、`is_active=true` の設定行に保持された `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` がPWAパッケージの資産別日常点検設定として配信される',
+      '日常点検設定行の一覧表示、設定変更、一部解除、設定解除は No.28 点検管理タブ API 設計書で扱う',
+      '本 API は No.28 で登録された日常点検メニューと資産別日常点検設定行を参照する',
+      '点検予定表 CSV 出力は No.28 の責務であり、本書では扱わない'
     ) },
     @{ Type = 'Heading2'; Text = '日常点検結果登録ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '`inspection_results.inspection_task_id` は必須であるため、日常点検結果は資産別日常点検設定を持つ `inspection_tasks` に紐づける',
-      '端末内PWAパッケージまたはオンラインQR再検証で `canRegisterResult=false` となった場合、画面は点検結果登録 API を呼び出さず、点検管理タブで日常点検設定が必要であることを表示する',
+      '`inspection_results.inspection_task_id` は必須であるため、日常点検結果は `inspection_type=''日常点検''`、`is_active=true` の資産別日常点検設定行に紐づける',
+      '端末内PWAパッケージまたはオンラインQR再検証で `canRegisterResult=false` となった場合、画面は点検入力画面へ遷移せず、点検結果登録 API も呼び出さない。点検管理タブで日常点検設定が必要であることを表示する',
       '画面表示の `合格` は `PASS`、`異常あり` は `REPAIR_REQUEST` として保存する',
-      '日常点検では `inspection_tasks.status`、`last_inspection_on`、`next_inspection_on` を更新しない。定期点検タスクの状態更新は No.26 の責務とする',
+      '日常点検では `inspection_tasks.status`、`last_inspection_on`、`next_inspection_on` を更新しない。定期点検タスクの状態更新は No.28 の責務とする',
       '貸出管理対象機器の場合、合格時は `貸出可`、異常あり時は `使用不可` への更新を行う。ただし `lending_device_status_transitions` で許可されない遷移は実行せず、点検結果登録は成功させた上でレスポンスに警告状態を返す'
     ) },
     @{ Type = 'Heading2'; Text = 'オフライン同期ルール' },
@@ -633,12 +642,13 @@
       '同一 `clientResultId` の再送を検出できた場合は二重登録せず、既存 `inspectionResultId` を返す',
       '点検開始後のQR照合と点検メニュー解決は端末内PWAパッケージを用いて行う。オンラインQR資産再検証APIは補助用途であり、オフライン点検の必須経路にしない',
       '同期時点でメニューまたは点検項目が無効化されていても、端末がダウンロード時に取得した `inspectionMenuId` と項目 ID が存在する場合は結果登録を許可し、実施時点のスナップショットを `result_details_json` に保持する',
+      '同期時点で日常点検設定行が設定解除済みでも、ダウンロード時点でPWAパッケージに含まれ、実施日時が解除日時以前であれば実施済み結果として登録を許可する',
       '同期時点で資産が他施設へ移動済み、削除済み、または作業対象施設外になった場合は登録を拒否する'
     ) },
     @{ Type = 'Heading2'; Text = '設計判断・制約' },
     @{ Type = 'Bullets'; Items = @(
       '現行 DB にはオフライン同期用の専用履歴テーブルおよび `clientResultId` カラムがないため、本版では `result_details_json.clientResultId` に保持し、アプリケーションロックで同一端末・同一利用者・同一 `clientResultId` の同時登録を直列化する。DB 一意制約による完全な冪等保証は専用カラム追加時の拡張事項とし、その場合は `client_device_id` / `client_result_id` に一意制約を設ける',
-      '日常点検専用の `inspection_type` は DB 上に定義されていないため新設しない。日常点検結果は資産別日常点検設定を保持する既存 `inspection_tasks` に紐づける',
+      '`inspection_type=''日常点検''` は点検予定日・ステータス遷移を持たない資産別日常点検設定行として扱う。日常点検結果登録時は `inspection_tasks.status`、`last_inspection_on`、`next_inspection_on` を更新せず、履歴は `inspection_results` に保存する',
       'PWAの端末内キャッシュ、未送信キュー、Service Worker、IndexedDBはクライアント実装責務であり、サーバーDBのテーブルとしては定義しない'
     ) },
 
@@ -647,12 +657,14 @@
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効', 'Bearer トークン未付与、期限切れ、署名不正'),
       @('AUTH_403_DAILY_INSPECTION_DENIED', '403', '作業対象施設に対する実効 `daily_inspection` がない、または対象施設不一致', '施設割当なし、施設/ユーザー機能設定 OFF、対象資産が作業対象施設外'),
       @('DAILY_INSPECTION_400_INVALID_INPUT', '400', '入力形式、必須項目、日付形式が不正', '必須不足、列挙値外、日付/日時形式不正、`results` 空'),
-      @('DAILY_INSPECTION_404_ASSET_NOT_FOUND', '404', 'QR コードに一致する資産が存在しない', '`qr_codes.qr_identifier` または `asset_ledgers.management_no` に一致する資産がない'),
+      @('DAILY_INSPECTION_404_ASSET_NOT_FOUND', '404', 'QR コードに一致する資産が存在しない', '`qr_codes.qr_identifier` に一致する有効QRがない'),
       @('DAILY_INSPECTION_404_TASK_NOT_FOUND', '404', '点検タスクが存在しない', '指定 `inspectionTaskId` が存在しない、または作業対象施設外'),
       @('DAILY_INSPECTION_404_MENU_NOT_FOUND', '404', '日常点検メニューが存在しない', '指定 `inspectionMenuId` が存在しない、または `menu_type<>DAILY`'),
       @('DAILY_INSPECTION_404_RESULT_NOT_FOUND', '404', '点検結果が存在しない', '指定 `inspectionResultId` が存在しない、または作業対象施設外'),
+      @('NO_DAILY_MENU', '200', '資産分類に一致する日常点検メニュー候補が存在しない', 'オンラインQR再検証で、資産別設定がなく、かつ大分類・中分類・品目に一致する有効な日常点検メニュー候補もない'),
       @('DAILY_INSPECTION_ASSET_NOT_TARGET', '409', '日常点検対象外の資産', '`asset_ledgers.status` が `ACTIVE` ではない資産に対して結果登録しようとした'),
       @('DAILY_INSPECTION_TASK_REQUIRED', '409', '日常点検結果登録に必要な資産別日常点検設定が未登録', '端末内PWAパッケージまたはオンラインQR再検証で対象タイミングの `inspectionTaskId` を解決できない'),
+      @('DAILY_TIMING_MENU_REQUIRED', '409', '対象タイミングの日常点検メニューが未設定', '資産別日常点検設定行は存在するが、指定 `dailyTiming` に対応する `daily_menu_*_id` が `NULL`'),
       @('DAILY_INSPECTION_MENU_MISMATCH', '409', '指定タイミングのメニューが資産別日常点検設定と一致しない', '指定 `dailyTiming` と `inspection_tasks.daily_menu_*_id` が一致しない'),
       @('DAILY_INSPECTION_422_RESULT_DETAIL_INVALID', '422', '点検結果明細の項目、入力方式、評価方式がメニュー定義と一致しない', '点検項目 ID 不一致、入力方式不一致、必須入力不足'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー', '想定外例外')
@@ -662,13 +674,13 @@
     @{ Type = 'Heading2'; Text = 'マスタ保守方針' },
     @{ Type = 'Bullets'; Items = @(
       '日常点検メニューの正本は `inspection_menus` と `inspection_menu_items` とし、登録・編集は点検管理タブ側 API で行う。資産へ適用できるメニューは対象資産の大分類・中分類・品目と一致する有効メニューに限定する',
-      '資産別日常点検設定の正本は `inspection_tasks` の `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` とし、資産一覧画面の点検管理登録導線から選択資産単位で作成・更新する。同分類の全資産へ自動展開しない',
+      '資産別日常点検設定の正本は `inspection_tasks.inspection_type=''日常点検''`、`is_active=true` の1資産1有効行とし、`daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` を保持する。作成・変更・解除は点検管理タブ側 API で行い、同分類の全資産へ自動展開しない',
       '日常点検実施画面は、オンライン状態で事前取得したPWAパッケージを用いてQR照合とメニュー解決を行う。オフライン実施ではダウンロード時点のメニューと項目スナップショットに基づいて記録する'
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(
       'オフライン同期の冪等性を強化する場合は、`inspection_results` に `client_result_id` と `client_device_id` を追加し、一意制約を設定する',
-      '日常点検専用のタスク種別を追加する場合は、`inspection_tasks.inspection_type`、ステータス定義、点検管理タブのフィルター表示に影響するため No.26 と同時に見直す',
+      '`inspection_type=''日常点検''` にステータスや予定日を追加する場合は、点検管理タブの一覧表示、PWA配信対象、ステータス定義・遷移定義に影響するため No.28 と同時に見直す',
       '点検結果報告書をサーバー生成する場合は、`application_documents.owner_type=''INSPECTION_RESULT''` として保存し、取得 API の `reportDocument` に返却する',
       '修理申請 API 実装時は、日常点検結果登録 API が返す `inspectionResultId` を `repair_request_details.inspection_result_id` へ引き継ぐ'
     ) }

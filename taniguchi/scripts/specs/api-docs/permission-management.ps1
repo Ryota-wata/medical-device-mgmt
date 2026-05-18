@@ -7,7 +7,7 @@
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
-    @{ Type = 'Paragraph'; Text = '本書は、権限管理画面（`/permission-management`）で利用する API の設計内容を整理し、SHIPシステム管理者が施設単位の提供機能・提供カラムを管理するための実装基準を明確にすることを目的とする。' },
+    @{ Type = 'Paragraph'; Text = '本書は、権限管理画面（`/permission-management`）で利用する API の設計内容を整理し、共有システム管理者アカウントが施設単位の提供機能・提供カラムを管理するための実装基準を明確にすることを目的とする。' },
     @{ Type = 'Paragraph'; Text = 'SHIP施設マスタ API に混在していた施設提供設定の責務を本書へ切り出し、施設基本情報管理と権限設定管理の境界を明確にする。' },
     @{ Type = 'Paragraph'; Text = '特に以下を明確にする。' },
     @{ Type = 'Bullets'; Items = @(
@@ -19,7 +19,7 @@
       '権限・バリデーション・エラーレスポンス'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = '権限管理は、メイン画面のマスタ管理モーダルから遷移する独立画面である。SHIPシステム管理者が対象施設を選択し、当該施設で提供する機能および表示カラムを ON/OFF 設定する。' },
+    @{ Type = 'Paragraph'; Text = '権限管理は、メイン画面のマスタ管理モーダルから遷移する独立画面である。共有システム管理者アカウントが対象施設を選択し、当該施設で提供する機能および表示カラムを ON/OFF 設定する。' },
     @{ Type = 'Paragraph'; Text = '施設単位の提供設定は、その施設に所属または担当するユーザーが利用できる機能・カラムの上限として働く。`config_scope=''FACILITY_USER''` の機能は、施設提供設定とユーザー施設別設定の両方が有効な場合にのみ実効利用できる。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
@@ -78,10 +78,10 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群は施設提供設定そのものを管理する管理者 API であるため、対象施設の `facility_feature_settings` / `user_facility_feature_settings` による自己参照型の feature_code 判定は行わない。Bearer トークンの認証コンテキストで SHIPシステム管理者（画面要件上は `user.role === ''system_admin''`）と判定できる場合のみ実行を許可する。' },
+    @{ Type = 'Paragraph'; Text = '本API群は施設提供設定そのものを管理する管理者 API であるため、対象施設の `facility_feature_settings` / `user_facility_feature_settings` による自己参照型の feature_code 判定は行わない。Bearer トークンの認証コンテキストで共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）と判定できる場合のみ実行を許可する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要条件', '説明'); Rows = @(
       @('全API', 'Bearer トークンが有効であること', '未認証または期限切れの場合は 401'),
-      @('全API', '認証コンテキスト上のユーザーが SHIPシステム管理者であること', '画面要件上は `user.role === ''system_admin''`。SHIPシステム管理者以外は 403'),
+      @('全API', '認証コンテキスト上のユーザーが共有システム管理者アカウントであること', '`users.account_type=''SYSTEM_ADMIN''` で判定する。共有システム管理者アカウント以外は 403'),
       @('設定取得 / 保存 / コピー', '対象施設が未削除であること', '存在しない、または論理削除済みの場合は 404')
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
@@ -131,7 +131,7 @@
       @('disabledReason', 'string', '-', '操作不可理由。操作可能な場合は null')
     ) },
 
-    @{ Type = 'Heading1'; Text = '第4章 API一覧' },
+    @{ Type = 'Heading1'; Text = '第4章 API 一覧' },
     @{ Type = 'Heading2'; Text = '権限管理（/permission-management）' },
     @{ Type = 'Table'; Headers = @('機能名', 'Method', 'Path', '概要', '認証'); Rows = @(
       @('権限管理コンテキスト取得', 'GET', '/permission-management/context', '初期表示に必要な対象施設候補、機能カタログ、カラムカタログ、現在の施設提供設定を取得する', '要'),
@@ -155,7 +155,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが SHIPシステム管理者（画面要件上は `user.role === ''system_admin''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
         )
         ProcessingLines = @(
           '`facilities.deleted_at IS NULL` の施設を対象施設候補として取得する',
@@ -218,7 +218,7 @@
         StatusRows = @(
           @('200', '取得成功', 'PermissionManagementContextResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -235,7 +235,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが SHIPシステム管理者（画面要件上は `user.role === ''system_admin''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
@@ -295,7 +295,7 @@
         StatusRows = @(
           @('200', '取得成功', 'PermissionFacilitySettingsResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない', 'ErrorResponse'),
           @('404', '対象施設が存在しない、または論理削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -319,7 +319,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが SHIPシステム管理者（画面要件上は `user.role === ''system_admin''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
@@ -347,7 +347,7 @@
           @('200', '保存成功', 'PermissionFacilitySettingsResponse'),
           @('400', '未知のコード、固定導線コード指定、親 feature 不足、または関連 feature が無効な column_code 指定', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない', 'ErrorResponse'),
           @('404', '対象施設が存在しない、または論理削除済み', 'ErrorResponse'),
           @('409', '`lending_in_use_used` を OFF にできない未返却の使用中/使用済データが存在する', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -371,7 +371,7 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが SHIPシステム管理者（画面要件上は `user.role === ''system_admin''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
         )
         ProcessingLines = @(
           'コピー先施設とコピー元施設が存在し、未削除であることを確認する',
@@ -398,7 +398,7 @@
           @('200', 'コピー成功', 'PermissionFacilitySettingsResponse'),
           @('400', 'コピー元施設が未指定、同一施設指定、またはコピー後設定が業務制約に違反', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', 'SHIPシステム管理者ではない', 'ErrorResponse'),
+          @('403', '共有システム管理者アカウントではない', 'ErrorResponse'),
           @('404', 'コピー元施設またはコピー先施設が存在しない、または論理削除済み', 'ErrorResponse'),
           @('409', '`lending_in_use_used` を OFF にできない未返却の使用中/使用済データが存在する', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -409,10 +409,10 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要条件', '判定基準', '説明'); Rows = @(
-      @('権限管理コンテキスト取得', 'SHIPシステム管理者', 'Bearer トークンの認証コンテキストで SHIPシステム管理者と判定できること', '初期表示用の対象施設候補とカタログ候補を参照する'),
-      @('施設提供設定取得', 'SHIPシステム管理者', 'Bearer トークンの認証コンテキストで SHIPシステム管理者と判定できること', '対象施設の現在設定を参照する'),
-      @('施設提供設定保存', 'SHIPシステム管理者', 'Bearer トークンの認証コンテキストで SHIPシステム管理者と判定できること', '対象施設の施設提供設定を更新する'),
-      @('施設提供設定コピー', 'SHIPシステム管理者', 'Bearer トークンの認証コンテキストで SHIPシステム管理者と判定できること', 'コピー元施設の設定を対象施設へ反映する')
+      @('権限管理コンテキスト取得', '共有システム管理者アカウント', 'Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること', '初期表示用の対象施設候補とカタログ候補を参照する'),
+      @('施設提供設定取得', '共有システム管理者アカウント', 'Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること', '対象施設の現在設定を参照する'),
+      @('施設提供設定保存', '共有システム管理者アカウント', 'Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること', '対象施設の施設提供設定を更新する'),
+      @('施設提供設定コピー', '共有システム管理者アカウント', 'Bearer トークンの認証コンテキストで共有システム管理者アカウントと判定できること', 'コピー元施設の設定を対象施設へ反映する')
     ) },
     @{ Type = 'Heading2'; Text = '施設提供設定ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -443,7 +443,7 @@
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTPステータス', '内容'); Rows = @(
       @('UNAUTHORIZED', '401', 'Bearer トークン未指定、期限切れ、または不正'),
-      @('PERMISSION_MANAGEMENT_FORBIDDEN', '403', 'SHIPシステム管理者ではないユーザーが権限管理 API を呼び出した'),
+      @('PERMISSION_MANAGEMENT_FORBIDDEN', '403', '共有システム管理者アカウントではないユーザーが権限管理 API を呼び出した'),
       @('PERMISSION_TARGET_FACILITY_NOT_FOUND', '404', '対象施設、コピー元施設、またはコピー先施設が存在しない、または論理削除済み'),
       @('PERMISSION_SETTING_CODE_INVALID', '400', '未知の `feature_code` / `column_code`、非アクティブコード、または固定導線コードが指定された'),
       @('PERMISSION_SETTING_PARENT_FEATURE_REQUIRED', '400', '`lending_in_use_used` が ON だが `lending_checkout` が OFF である'),

@@ -12,15 +12,18 @@
     @{ Type = 'Bullets'; Items = @(
       '一覧 API と詳細 API の責務分担',
       'ユーザー基本情報編集と担当施設編集の権限境界',
+      '共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）を通常ユーザー管理の作成・編集・削除対象から除外するルール',
       '複数テーブル更新時のトランザクション、競合検知、削除ガード',
       '初回パスワード設定案内を認証基盤へ委譲する連携方式'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = 'ユーザー管理は、医療機器管理システムの共通管理機能として、作業対象施設に有効な担当施設割当を持つ SHIP ユーザー、病院ユーザー、SHRC ユーザーの基本情報と担当施設割当を保守する画面である。' },
     @{ Type = 'Paragraph'; Text = '認可判定はロール前提ではなく、施設単位で提供される機能・カラムと、ユーザー施設別に許可された機能・カラムの組み合わせを正本として行う。固定導線を除く現行採用機能は `config_scope=''FACILITY_USER''` に統一し、Phase1では `normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象に含める。子機能など追加条件を持つコードは認証認可 API および業務 API 側の補足規定に従う。' },
+    @{ Type = 'Paragraph'; Text = '共有システム管理者アカウントは通常ユーザーへ付与するロールではなく、`users.account_type=''SYSTEM_ADMIN''` の共有アカウント1件として初期データまたは運用設定で用意する。本画面/APIでは `SYSTEM_ADMIN` をアカウント種別候補に含めず、新規作成、基本情報更新、担当施設更新、初回設定案内送信、削除の対象にしない。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('ユーザー基本情報', '氏名、メールアドレス、アカウント種別、所属部門、所属部署、役職、連絡先など `users` に保持する項目'),
+      @('共有システム管理者アカウント', '`users.account_type=''SYSTEM_ADMIN''` の共有アカウント。全施設・全機能利用の例外として認証／認可 API が扱い、ユーザー管理 API では通常ユーザー管理対象外とする'),
       @('担当施設設定', '既定施設、担当施設、施設別機能設定、施設別表示カラム設定をまとめた更新単位'),
       @('既定施設', 'ユーザーの主所属施設として扱う施設。`users.facility_id` と `user_facility_assignments.is_default=true` を同期する'),
       @('担当施設', 'ユーザーへ直接割り当てる作業対象施設。`user_facility_assignments` に保持する'),
@@ -51,7 +54,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用種別', '用途'); Rows = @(
-      @('users', 'READ / CREATE / UPDATE / DELETE', 'ユーザー基本情報の参照、登録、更新、論理削除、集約更新トークン管理'),
+      @('users', 'READ / CREATE / UPDATE / DELETE', '通常ユーザー基本情報の参照、登録、更新、論理削除、集約更新トークン管理。`account_type=''SYSTEM_ADMIN''` は通常ユーザー管理対象外'),
       @('user_facility_assignments', 'READ / CREATE / UPDATE / DELETE', '担当施設、既定施設、割当種別の参照と更新'),
       @('feature_catalogs', 'READ', '担当施設ごとの利用機能設定に使う機能カタログの取得'),
       @('column_catalogs', 'READ', '担当施設ごとの表示カラム設定に使うカラムカタログの取得'),
@@ -76,7 +79,7 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。ユーザー管理APIの `availableFeatureCodes` / `enabledFeatureCodes` は `config_scope=''FACILITY_USER''` の機能を対象とし、Phase1では `normal_ship_request` / `lending_in_use_used` も候補に含める。`availableColumnCodes` / `enabledColumnCodes` は施設提供カラムを対象とする。PII を含む基本情報詳細は `user_edit` を前提とする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。業務 API は `/auth/context` の返却値だけを信頼せず、Bearer トークン上の作業対象施設に対して `user_facility_assignments` の有効割当、`facility_feature_settings` の施設提供設定、`user_facility_feature_settings` のユーザー施設別設定を毎回再判定する。ユーザー管理APIの `availableFeatureCodes` / `enabledFeatureCodes` は `config_scope=''FACILITY_USER''` の機能を対象とし、Phase1では `normal_ship_request` / `lending_in_use_used` も候補に含める。`availableColumnCodes` / `enabledColumnCodes` は施設提供カラムを対象とする。PII を含む基本情報詳細は `user_edit` を前提とする。実行ユーザーが共有システム管理者アカウント（`account_type=''SYSTEM_ADMIN''`）の場合は、認証／認可 API の例外規定により、作業対象施設が未削除である限り必要 feature を満たすものとして扱う。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('ユーザー / 一覧', '`user_list_view`', '画面コンテキスト取得、一覧取得'),
       @('ユーザー / 新規作成・編集', '`user_edit`', 'ユーザー基本情報取得、ユーザー基本情報更新、初回設定案内再送、削除、ユーザー新規作成の基本情報側'),
@@ -104,15 +107,18 @@
     ) },
     @{ Type = 'Heading2'; Text = '管理対象スコープ' },
     @{ Type = 'Bullets'; Items = @(
-      '管理対象ユーザーは、Bearer トークン上の作業対象施設に対して `user_facility_assignments.is_active=true` の有効割当を持ち、かつ当該施設が `facilities.deleted_at IS NULL` のユーザーに限る',
+      '管理対象ユーザーは、`users.account_type <> ''SYSTEM_ADMIN''` で、Bearer トークン上の作業対象施設に対して `user_facility_assignments.is_active=true` の有効割当を持ち、かつ当該施設が `facilities.deleted_at IS NULL` のユーザーに限る',
+      '共有システム管理者アカウント自体は、一覧、詳細、基本情報更新、担当施設更新、初回設定案内送信、削除の対象外とする',
+      '実行ユーザーが共有システム管理者アカウントの場合は、作業対象施設が未削除であれば本 API 群の呼び出しを許可し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による実行可否制限は受けない',
       '一覧 API は上記条件を満たすユーザーだけを返却する',
       '新規作成および担当施設更新では、更新後の `facilityAssignments` に作業対象施設を必ず含める',
       '詳細取得、更新、初回設定案内送信、削除で管理対象外ユーザーが指定された場合は、存在隠蔽のため 404 (`USER_NOT_FOUND`) を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '施設・担当施設整合ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '担当施設候補は、実行ユーザー自身が `user_facility_assignments.is_active=true` の直接割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属する未削除施設に限る',
-      '上記候補のうち、実行ユーザーが当該施設に対して実効 `user_facility_assignment_edit` を持つ施設だけを `/user-management/context` と `/user-management/facilities` で返却する',
+      '通常アカウントの担当施設候補は、実行ユーザー自身が `user_facility_assignments.is_active=true` の直接割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属する未削除施設に限る',
+      '共有システム管理者アカウントの担当施設候補は、`facilities.deleted_at IS NULL` の全施設とする',
+      '通常アカウントでは、上記候補のうち実行ユーザーが当該施設に対して実効 `user_facility_assignment_edit` を持つ施設だけを `/user-management/context` と `/user-management/facilities` で返却する',
       '他施設閲覧候補は担当施設候補へ含めない',
       '新規割当・更新対象とする施設は、管理可能な担当施設候補に含まれる施設のみとする',
       '既定施設は担当施設配列に必ず含め、登録時・担当施設更新時に `users.facility_id` と `user_facility_assignments.is_default=true` を同期する',
@@ -126,7 +132,7 @@
       '`user_facility_feature_settings` は、`config_scope=FACILITY_USER` かつ対象施設の `facility_feature_settings.is_enabled=true` の機能のみ有効化できる。Phase1では `normal_ship_request` / `lending_in_use_used` も対象に含める',
       '`lending_in_use_used` は `lending_checkout` の子機能として扱い、同じ担当施設で `lending_checkout` が ON でない場合はユーザー施設別設定でも ON にできない',
       '`user_facility_column_settings` は、対象施設の `facility_column_settings.is_enabled=true` かつ `column_catalogs.related_feature_code` に対応する `user_facility_feature_settings.is_enabled=true` のカラムのみ有効化できる',
-      '`users.account_type` は原則として表示分類・入力制御用途で扱う'
+      '`users.account_type` は通常アカウントでは表示分類・入力制御用途で扱う。`SYSTEM_ADMIN` は共有システム管理者アカウントを表す特別値であり、本 API の作成・更新入力としては受け付けない'
     ) },
     @{ Type = 'Heading2'; Text = '初回設定案内の責務分担' },
     @{ Type = 'Bullets'; Items = @(
@@ -167,15 +173,17 @@
         Path = '/user-management/context'
         Auth = '要（Bearer）'
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_list_view` が有効であること',
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_list_view` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること',
           'レスポンス内の操作可否は同一作業対象施設に対する `user_edit` と `user_facility_assignment_edit` の実効有無から導出する'
         )
         ProcessingLines = @(
       '`feature_catalogs` から `config_scope=FACILITY_USER` かつ `is_active=true` の機能をユーザー別設定候補として表示順で取得する。Phase1では `normal_ship_request` / `lending_in_use_used` も `FACILITY_USER` として取得する',
           '`column_catalogs` から `is_active=true` のカラムを表示順で取得する',
-          '実行ユーザー自身が有効な直接担当施設割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属し、かつ当該施設に対して実効 `user_facility_assignment_edit` を持つ未削除施設を施設名昇順で先頭 20 件取得し、初期候補として返却する',
+          '通常アカウントでは、実行ユーザー自身が有効な直接担当施設割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属し、かつ当該施設に対して実効 `user_facility_assignment_edit` を持つ未削除施設を施設名昇順で先頭 20 件取得し、初期候補として返却する',
+          '共有システム管理者アカウントでは、`facilities.deleted_at IS NULL` の全施設を施設名昇順で先頭 20 件取得し、初期候補として返却する',
           '他施設閲覧用の間接参照候補は初期候補へ含めない',
-          'アカウント種別候補は `SHIP`、`SHRC`、`HOSPITAL` を固定値として返却する',
+          'アカウント種別候補は `SHIP`、`SHRC`、`HOSPITAL` を固定値として返却し、`SYSTEM_ADMIN` は含めない',
           '新規作成可否は `user_edit` と `user_facility_assignment_edit` の両方が有効な場合のみ `true` とする'
         )
         ResponseTitle = 'レスポンス（200：UserManagementContextResponse）'
@@ -204,7 +212,7 @@
             Title = 'accountTypes要素（AccountTypeOption）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = @(
-              @('accountType', 'string', '✓', 'アカウント種別コード。`SHIP` / `SHRC` / `HOSPITAL`'),
+              @('accountType', 'string', '✓', 'アカウント種別コード。`SHIP` / `SHRC` / `HOSPITAL`。`SYSTEM_ADMIN` は返却しない'),
               @('label', 'string', '✓', '画面表示用ラベル')
             )
           },
@@ -272,11 +280,12 @@
           @('sortOrder', 'query', 'string', '-', '並び順。`asc` / `desc`')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_list_view` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_list_view` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '`users.deleted_at IS NULL` かつ Bearer トークン上の作業対象施設に有効な担当施設割当を持つユーザーを対象とする',
-          'ユーザー名、メールアドレス、既定施設、アカウント種別で AND 条件検索する',
+          '`users.deleted_at IS NULL`、`users.account_type <> ''SYSTEM_ADMIN''`、かつ Bearer トークン上の作業対象施設に有効な担当施設割当を持つユーザーを対象とする',
+          'ユーザー名、メールアドレス、既定施設、アカウント種別で AND 条件検索する。`accountType=SYSTEM_ADMIN` は検索条件として受け付けない',
           '既定施設は `users.facility_id` を用い、施設名は `facilities.deleted_at IS NULL` の施設だけ解決する',
           '一覧 API では担当施設明細や施設別権限明細は返却しない',
           '既定並び順は `updated_at DESC, user_id ASC` とする'
@@ -325,10 +334,11 @@
           @('userId', 'path', 'int64', '✓', '対象ユーザーID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
+          '対象 `users` が `deleted_at IS NULL` かつ `account_type <> ''SYSTEM_ADMIN''` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '基本情報編集で扱う `users` の項目を返却する',
           '競合検知用に `updated_at` を返却する'
@@ -380,10 +390,11 @@
           @('userId', 'path', 'int64', '✓', '対象ユーザーID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
+          '対象 `users` が `deleted_at IS NULL` かつ `account_type <> ''SYSTEM_ADMIN''` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`facilities.deleted_at IS NULL` かつ `user_facility_assignments.is_active=true` の担当施設のみ返却する',
           '各担当施設について `feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の機能コードを `availableFeatureCodes` として返却する。`auth_login` / `facility_select` は含めない。Phase1では `normal_ship_request` / `lending_in_use_used` を候補に含める',
@@ -437,10 +448,12 @@
           @('pageSize', 'query', 'int32', '-', 'ページサイズ。既定値 `20`、上限 `100`')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '候補施設は、実行ユーザー自身が `user_facility_assignments.is_active=true` の直接割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属し、かつ当該施設に対して実効 `user_facility_assignment_edit` を持つ `facilities.deleted_at IS NULL` の施設に限る',
+          '通常アカウントの候補施設は、実行ユーザー自身が `user_facility_assignments.is_active=true` の直接割当を持ち、Bearer トークン上の作業対象施設と同一 `establishment_id` に属し、かつ当該施設に対して実効 `user_facility_assignment_edit` を持つ `facilities.deleted_at IS NULL` の施設に限る',
+          '共有システム管理者アカウントの候補施設は、`facilities.deleted_at IS NULL` の全施設とする',
           '施設コード、施設名を部分一致で検索し、施設名昇順で返却する',
           '各施設について `feature_catalogs.config_scope=''FACILITY_USER''` かつ `facility_feature_settings.is_enabled=true` の機能コード一覧を返却する。`auth_login` / `facility_select` は含めない。Phase1では `normal_ship_request` / `lending_in_use_used` を候補に含める',
           '各施設について `facility_column_settings.is_enabled=true` かつ関連機能が施設提供されているカラムコード一覧を返却する'
@@ -487,7 +500,7 @@
         RequestRows = @(
           @('name', 'string', '✓', 'ユーザー名'),
           @('emailAddress', 'string', '✓', 'メールアドレス（ログイン ID）'),
-          @('accountType', 'string', '✓', 'アカウント種別。`SHIP` / `SHRC` / `HOSPITAL`'),
+          @('accountType', 'string', '✓', 'アカウント種別。`SHIP` / `SHRC` / `HOSPITAL`。`SYSTEM_ADMIN` は指定不可'),
           @('defaultFacilityId', 'int64', '✓', '既定施設ID'),
           @('departmentName', 'string', '-', '所属部門'),
           @('sectionName', 'string', '-', '所属部署'),
@@ -508,11 +521,13 @@
           }
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_edit` が有効であること',
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_edit` が有効であること',
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
           '未削除ユーザー間で `users.email_address` の重複を禁止する',
+          'リクエスト `accountType` は `SHIP` / `SHRC` / `HOSPITAL` のみ受け付け、`SYSTEM_ADMIN` は 400 とする',
           '作業対象施設が `facilityAssignments.facilityId` に含まれていることを確認し、含まれない場合は 400 を返却する',
           '`defaultFacilityId` は `facilityAssignments.facilityId` のいずれかと一致しなければならない',
           '担当施設は重複不可とし、すべて実行ユーザーにとって管理可能な担当施設候補に含まれることを確認する。候補外施設が含まれる場合は 404 (`FACILITY_NOT_FOUND`) を返却する',
@@ -537,7 +552,7 @@
               @('`users`', '`user_id`', '新規採番する', 'レスポンスの `userId` として返却する'),
               @('`users`', '`name`', 'リクエスト `name` を保存する', '-'),
               @('`users`', '`email_address`', 'リクエスト `emailAddress` を保存する', '未削除ユーザー間で一意に保つ'),
-              @('`users`', '`account_type`', 'リクエスト `accountType` を保存する', '`SHIP` / `SHRC` / `HOSPITAL`'),
+              @('`users`', '`account_type`', 'リクエスト `accountType` を保存する', '`SHIP` / `SHRC` / `HOSPITAL` のみ。`SYSTEM_ADMIN` は保存しない'),
               @('`users`', '`establishment_id`', '`defaultFacilityId` に紐づく `facilities.establishment_id` を保存する', '既定施設と同一設立母体に統一する'),
               @('`users`', '`facility_id`', 'リクエスト `defaultFacilityId` を保存する', '主所属施設。`user_facility_assignments.is_default=true` の施設と同期する'),
               @('`users`', '`department_name` / `section_name` / `position_name` / `contact_person_name` / `phone_number`', 'リクエスト `departmentName` / `sectionName` / `positionName` / `contactPersonName` / `phoneNumber` を対応カラムへ保存する', '未指定項目は `NULL` を許容する'),
@@ -612,7 +627,7 @@
           @('lastKnownUpdatedAt', 'string(datetime)', '✓', '取得時点の `updatedAt`。競合検知に用いる'),
           @('name', 'string', '✓', 'ユーザー名'),
           @('emailAddress', 'string', '✓', 'メールアドレス'),
-          @('accountType', 'string', '✓', 'アカウント種別'),
+          @('accountType', 'string', '✓', 'アカウント種別。`SHIP` / `SHRC` / `HOSPITAL`。`SYSTEM_ADMIN` は指定不可'),
           @('departmentName', 'string', '-', '所属部門'),
           @('sectionName', 'string', '-', '所属部署'),
           @('positionName', 'string', '-', '役職'),
@@ -620,12 +635,14 @@
           @('phoneNumber', 'string', '-', '電話番号')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
+          '対象 `users` が `deleted_at IS NULL` かつ `account_type <> ''SYSTEM_ADMIN''` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`lastKnownUpdatedAt` と `users.updated_at` を比較し、不一致時は 409 (`USER_CONFLICT`) を返却する',
+          'リクエスト `accountType` は `SHIP` / `SHRC` / `HOSPITAL` のみ受け付け、`SYSTEM_ADMIN` は 400 とする',
           '自身以外に同一メールアドレスを持つ未削除ユーザーが存在しないことを確認する',
           '担当施設関連テーブルには変更を加えない',
           '更新成功時は `users.updated_at` を現在時刻へ更新する',
@@ -636,7 +653,7 @@
             Title = '永続化マッピング'
             Headers = @('テーブル', '対象カラム / 操作', '設定値 / 反映内容', '備考')
             Rows = @(
-              @('`users`', '`name` / `email_address` / `account_type` / `department_name` / `section_name` / `position_name` / `contact_person_name` / `phone_number`', '対応するリクエスト項目で上書き更新する', '未指定可の項目は `NULL` を許容する'),
+              @('`users`', '`name` / `email_address` / `account_type` / `department_name` / `section_name` / `position_name` / `contact_person_name` / `phone_number`', '対応するリクエスト項目で上書き更新する', '`account_type` は `SHIP` / `SHRC` / `HOSPITAL` のみ。`SYSTEM_ADMIN` への変更は不可'),
               @('`users`', '`updated_at`', '更新時点の日時へ更新する', '`lastKnownUpdatedAt` による競合チェック後に反映する'),
               @('`users`', '`establishment_id` / `facility_id` / `password_hash` / `is_active` / `locked_at` / `lock_reason` / `last_login_at` / `created_at` / `deleted_at`', '変更しない', '担当施設、認証状態、作成日時、論理削除状態は本 API の対象外'),
               @('`user_facility_assignments` / `user_facility_feature_settings` / `user_facility_column_settings`', '行更新なし', '変更しない', '担当施設設定は `PUT /user-management/users/{userId}/facility-assignments` でのみ更新する')
@@ -710,10 +727,11 @@
           }
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_facility_assignment_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
+          '対象 `users` が `deleted_at IS NULL` かつ `account_type <> ''SYSTEM_ADMIN''` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`lastKnownUpdatedAt` と `users.updated_at` を比較し、不一致時は 409 (`USER_CONFLICT`) を返却する',
           '更新後の `facilityAssignments` に作業対象施設が含まれていることを確認し、含まれない場合は 400 を返却する',
@@ -801,10 +819,11 @@
           @('userId', 'path', 'int64', '✓', '対象ユーザーID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
+          '対象 `users` が `deleted_at IS NULL` かつ `account_type <> ''SYSTEM_ADMIN''` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`last_login_at IS NOT NULL` の既利用ユーザーには送信しない。既利用ユーザーの再設定は認証 API の `/auth/password/forgot` を利用する',
           '認証基盤内部サービスへ、旧未使用トークン無効化、新規招待トークン発行、メール送信を一括依頼し、成功時は 202 を返却する',
@@ -838,10 +857,11 @@
           @('lastKnownUpdatedAt', 'query', 'string(datetime)', '✓', '取得時点の `updatedAt`。競合検知に用いる')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_edit` が有効であること'
+          '認可条件: 通常アカウントでは Bearer トークン上の作業対象施設について `user_edit` が有効であること',
+          '認可条件: 共有システム管理者アカウントでは作業対象施設が未削除であること'
         )
         ProcessingLines = @(
-          '対象 `users` が `deleted_at IS NULL` で存在することを確認する',
+          '対象 `users` が `deleted_at IS NULL` かつ `account_type <> ''SYSTEM_ADMIN''` で存在することを確認する',
           '対象ユーザーが Bearer トークン上の作業対象施設に対する有効な担当施設割当を持つことを確認し、管理対象外なら 404 (`USER_NOT_FOUND`) を返却する',
           '`lastKnownUpdatedAt` と `users.updated_at` を比較し、不一致時は 409 (`USER_CONFLICT`) を返却する',
           '実行ユーザー自身を削除対象にすることはできない',
@@ -889,10 +909,12 @@
     ) },
     @{ Type = 'Heading2'; Text = '一意性・整合性ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '管理対象ユーザーは作業対象施設に有効な担当施設割当を持つユーザーに限る',
+      '管理対象ユーザーは `users.account_type <> ''SYSTEM_ADMIN''` で、作業対象施設に有効な担当施設割当を持つ通常ユーザーに限る',
+      '共有システム管理者アカウント自体は通常ユーザー管理の作成・編集・削除・初回設定案内対象に含めない',
       '`users.email_address` は未削除ユーザー間で一意に保つ',
       '`user_facility_assignments` は `(user_id, facility_id)` を一意に保つ',
-      '担当施設候補は、実行ユーザーが直接割当を持ち、作業対象施設と同一 `establishment_id` に属し、かつ当該施設で実効 `user_facility_assignment_edit` を持つ未削除施設に限る',
+      '通常アカウントの担当施設候補は、実行ユーザーが直接割当を持ち、作業対象施設と同一 `establishment_id` に属し、かつ当該施設で実効 `user_facility_assignment_edit` を持つ未削除施設に限る',
+      '共有システム管理者アカウントで実行する場合、担当施設候補は未削除の全施設とする',
       '他施設閲覧候補は担当施設候補へ含めない',
       '新規作成および担当施設更新では、更新後の担当施設に作業対象施設を必ず含める',
       '既定施設は担当施設に必ず含め、`users.facility_id` と `is_default=true` の担当施設を一致させる',
@@ -913,7 +935,7 @@
       '一覧 API は要約情報のみ返し、詳細情報は `GET /user-management/users/{userId}` と `GET /user-management/users/{userId}/facility-assignments` に分離する',
       '基本情報更新と担当施設更新は API を分離し、`user_edit` と `user_facility_assignment_edit` の境界に一致させる',
       '管理対象スコープは作業対象施設への有効割当で定義し、新規作成/担当施設更新でもこのスコープを維持する',
-      '担当施設候補 API は、管理可能な直接担当施設だけを返し、他施設閲覧用の間接参照候補は返さない',
+      '担当施設候補 API は、通常アカウントでは管理可能な直接担当施設だけを返し、共有システム管理者アカウントでは未削除の全施設を返す。いずれも他施設閲覧用の間接参照候補は返さない',
       '新規作成は利用可能な担当施設が存在しないと意味を持たないため、作成時だけは両権限を必須とする',
       '平文パスワードやトークン文字列はユーザー管理 API の入出力へ含めず、認証基盤へ委譲する',
       '競合検知は `users.updated_at` を集約更新トークンとして扱う方式を採用し、HTTP 条件付き更新ヘッダーは採用しない'
