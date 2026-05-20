@@ -11,7 +11,7 @@ $errorRows = @(
   @('401', '未認証', 'ErrorResponse'),
   @('403', '作業対象施設に対する実効 feature_code なし', 'ErrorResponse'),
   @('404', '対象申請、対象資産、対象ドキュメントが存在しない', 'ErrorResponse'),
-  @('409', '現在ステータス不整合、競合更新、登録済み資産専用操作を未登録資産へ実行', 'ErrorResponse'),
+  @('409', '現在ステータス不整合、競合更新、対象条件不整合', 'ErrorResponse'),
   @('500', 'サーバー内部エラー', 'ErrorResponse')
 )
 
@@ -121,8 +121,8 @@ $repairOrderRows = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_修理管理.docx'
   ScreenLabel = '修理管理'
-  CoverDateText = '2026年5月19日'
-  RevisionDateText = '2026/5/19'
+  CoverDateText = '2026年5月20日'
+  RevisionDateText = '2026/5/20'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -133,8 +133,8 @@ $repairOrderRows = @(
       'タスク管理配下の修理管理一覧・詳細・工程進行 I/F',
       '登録済み資産と未登録資産の修理管理上の扱い',
       '院内修理と院外修理のステータス遷移',
-      '通常却下と修理不能終端の内部識別',
-      '登録済み資産のみを対象とする廃棄申請接続',
+      '通常却下と修理不能による廃棄申請接続の内部識別',
+      '登録済み資産および修理申請経由の未登録資産を対象とする廃棄申請接続',
       '申請者情報のログインユーザー自動取得と feature_code 分離'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
@@ -148,7 +148,7 @@ $repairOrderRows = @(
       @('未登録資産', '資産台帳に登録せず、`repair_request_details.manual_item_name` 等の手入力列と `application_assets` スナップショットで保持する修理対象'),
       @('院内修理', '`repair_request_details.repair_category=''IN_HOUSE''`。外部見積・発注工程をスキップし、`applications.status=''納期確定''` としてSTEP3へ進む'),
       @('院外修理', '`repair_request_details.repair_category=''OUTSOURCED''`。見積依頼、見積登録、発注、検収へ進む'),
-      @('修理不能', '通常却下と区別するため `application_task_steps.completion_reason=''UNREPAIRABLE''` を保持する終端理由')
+      @('修理不能', '通常却下と区別するため `application_task_steps.completion_reason=''UNREPAIRABLE''` を保持し、廃棄申請接続APIで後続廃棄申請を作成する判断')
     ) },
     @{ Type = 'Heading2'; Text = '対象画面' },
     @{ Type = 'Table'; Headers = @('画面名', '画面パス', '利用目的'); Rows = @(
@@ -159,14 +159,14 @@ $repairOrderRows = @(
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'API の位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、起票済み修理申請の受付から修理管理タスクの完了までを扱う。修理申請の起票前準備と起票登録は No.6 修理申請API設計書を正本とし、本書では `/repair-request` 系APIを定義しない。' },
-    @{ Type = 'Paragraph'; Text = '修理不能から廃棄申請へ接続する場合は、登録済み資産のみを対象とし、廃棄申請側の `disposal_application_details.related_repair_application_id` に元修理申請IDを保持する。修理申請を経由しない未登録資産の単独廃棄申請は本書の対象外である。' },
+    @{ Type = 'Paragraph'; Text = '修理不能から廃棄申請へ接続する場合は、登録済み資産と未登録資産の両方を対象とし、廃棄申請側の `disposal_application_details.related_repair_application_id` に元修理申請IDを保持する。未登録資産の場合も資産台帳へ登録せず、修理申請内の手入力情報と申請明細スナップショットを廃棄対象物品情報として引き継ぐ。修理申請を経由しない未登録資産の単独廃棄申請は本書の対象外である。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
       @('修理管理タブ初期表示/フィルター', '`GET /quotation-data-box/repair-requests/tasks`', '受付一覧と修理タスク一覧を取得する'),
       @('修理タスク削除', '`DELETE /repair-task/tasks/{repairTaskId}`', '見積登録済かつ発注前の修理タスクを論理削除し、修理管理タブ一覧から除外する'),
       @('修理タスク詳細表示', '`GET /repair-task/tasks/{repairTaskId}`', 'STEP表示、入力済み内容、プレビュー、添付を取得する'),
       @('院内/院外振り分け', '`POST /repair-task/tasks/{repairTaskId}/approve`', 'STEP1の受付判定を保存する'),
-      @('申請却下・修理不能終端', '`POST /repair-task/tasks/{repairTaskId}/reject`', 'STEP1またはSTEP2の却下、未登録資産の修理不能終端を保存する'),
+      @('申請却下', '`POST /repair-task/tasks/{repairTaskId}/reject`', 'STEP1またはSTEP2の通常却下を保存する'),
       @('見積依頼先登録・依頼送信', '`POST /repair-task/tasks/{repairTaskId}/vendor-requests`', '院外修理の見積依頼先と送付情報を保存する'),
       @('見積依頼完了', '`POST /repair-task/tasks/{repairTaskId}/vendor-requests/complete`', '送信済み見積依頼が1件以上あることを確認し、STEP2へ進める'),
       @('見積登録', '`POST /repair-task/tasks/{repairTaskId}/quotations`', '見積ヘッダー、見積明細、見積原本添付を保存する'),
@@ -176,18 +176,18 @@ $repairOrderRows = @(
       @('検収登録', '`POST /repair-task/tasks/{repairTaskId}/inspection`', '修理報告書、検収金額、仮勘定科目を保存し `検収登録` へ進める。院外発注修理では `orders` / `order_items` を更新し、登録済み資産の院外発注修理では `individuals` も更新する'),
       @('完了登録', '`POST /repair-task/tasks/{repairTaskId}/complete`', '固定資産番号を、登録済み資産の院外発注修理で作成済みの `individuals` がある場合に保存する。最終勘定科目は `quotation_items` または `application_documents` に保存し `完了` へ進める'),
       @('ドキュメント追加/削除', '`POST /repair-task/tasks/{repairTaskId}/documents` / `DELETE /repair-task/tasks/{repairTaskId}/documents/{documentId}`', '修理依頼書、見積書、発注書、修理報告書、納品書等のファイルメタデータを管理する'),
-      @('対象品の廃棄申請へ', '`POST /repair-task/tasks/{repairTaskId}/disposal-application`', 'STEP2の見積登録済かつ登録済み資産のみ対象。元修理申請を `却下` / `UNREPAIRABLE` で終端し、廃棄申請を作成する')
+      @('対象品の廃棄申請へ', '`POST /repair-task/tasks/{repairTaskId}/disposal-application`', 'STEP2の見積登録済で、登録済み資産または未登録資産の修理不能から廃棄申請を作成する。元修理申請は `却下` / `UNREPAIRABLE` で終端する')
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル名', '利用種別', '用途'); Rows = @(
-      @('`applications`', 'READ / UPDATE', '修理申請ヘッダー、申請者情報、状態、却下情報'),
+      @('`applications`', 'READ / CREATE / UPDATE', '修理申請ヘッダー、申請者情報、状態、却下情報。修理不能から廃棄申請へ接続する場合は廃棄申請ヘッダーを作成する'),
       @('`repair_request_details`', 'READ / UPDATE', '修理対象の登録済/未登録区分、症状、修理区分、受付情報、現在担当業者、期限、代替機情報。`repair_category` は修理管理STEP1で設定する'),
-      @('`application_assets`', 'READ', '修理対象機器の明細。登録済み資産は `asset_ledger_id`、未登録資産は表示用スナップショットを保持する'),
+      @('`application_assets`', 'READ / CREATE', '修理対象機器の明細。登録済み資産は `asset_ledger_id`、未登録資産は表示用スナップショットを保持する。修理不能から廃棄申請へ接続する場合は廃棄対象明細を作成する'),
       @('`application_task_steps`', 'READ / CREATE / UPDATE', '修理タスク工程、スキップ工程、通常却下/修理不能の完了理由'),
       @('`application_status_histories`', 'CREATE / READ', '状態遷移履歴'),
       @('`application_status_definitions`', 'READ', 'REPAIRの保存ステータス、表示順、終端判定'),
       @('`repair_requests` VIEW', 'READ', '修理管理タブ一覧、絞り込み、期限列、タスク遷移用の投影'),
-      @('`asset_ledgers`', 'READ', '登録済み資産の施設スコープ確認、廃棄申請接続可否確認'),
+      @('`asset_ledgers`', 'READ', '登録済み資産の施設スコープ確認。未登録資産の廃棄申請接続では作成・更新しない'),
       @('`inspection_results`', 'READ', '修理申請に紐づく点検結果の参照・詳細表示補助'),
       @('`application_documents`', 'READ / CREATE / UPDATE / DELETE', '修理依頼写真、見積書、発注書、修理報告書、納品書等のファイルメタデータ。削除は `deleted_at` 更新による論理削除'),
       @('`rfqs`', 'READ / CREATE / UPDATE', '院外修理の見積依頼グループ。`management_type=''REPAIR''`'),
@@ -197,7 +197,7 @@ $repairOrderRows = @(
       @('`quotation_items`', 'READ / CREATE / UPDATE / DELETE', '修理見積明細。見積削除時は `deleted_at` を更新する'),
       @('`orders` / `order_items`', 'CREATE / READ / UPDATE', '院外発注修理の発注情報、発注明細。検収登録時に納品日、検収日、金額を更新する。院内修理では作成しない'),
       @('`individuals`', 'CREATE / READ / UPDATE', '登録済み資産かつ院外発注修理の検収金額、仮勘定科目、固定資産番号、検収日を保持する中間正本。`order_item_id` / `rfq_id` が必須のため院内修理では作成しない。未登録資産では作成しない'),
-      @('`disposal_application_details`', 'CREATE', '登録済み資産の修理不能から廃棄申請を作成する場合の関連修理申請ID'),
+      @('`disposal_application_details`', 'CREATE', '登録済み資産または未登録資産の修理不能から廃棄申請を作成する場合の関連修理申請ID'),
       @('`vendors`', 'READ', '業者マスタID指定時の見積依頼先・見積業者存在確認'),
       @('`users`', 'READ', 'ログインユーザーの表示名、所属、連絡先、処理者情報')
     ) },
@@ -224,7 +224,7 @@ $repairOrderRows = @(
       '修理管理で受け付ける起票済み申請は `新規申請` とする。画面表示上の `依頼受付` は保存値にしない',
       '修理管理タブの表示上の `発注登録済` は `発注済`、`作業日確定` は `納期確定` に対応させる',
       '通常却下は `applications.status=''却下''`、`application_task_steps.completion_reason=''REJECTED''` とする',
-      '修理不能は `applications.status=''却下''`、`application_task_steps.completion_reason=''UNREPAIRABLE''` とし、履歴コメント入力は要求しない',
+      '修理不能から廃棄申請へ接続する場合は `applications.status=''却下''`、`application_task_steps.completion_reason=''UNREPAIRABLE''` とし、履歴コメント入力は要求しない',
       '院内修理は `repair_category=''IN_HOUSE''` と `status=''納期確定''` を保存し、外部見積・発注工程は `application_task_steps` で `SKIPPED_IN_HOUSE_REPAIR` として扱う',
       '院外修理は `repair_category=''OUTSOURCED''` とし、見積依頼、見積登録、発注、納期確定、検収登録、完了へ進行する'
     ) },
@@ -233,8 +233,8 @@ $repairOrderRows = @(
       '登録済み資産は `application_assets.asset_ledger_id` を保持し、申請時点の品目、メーカー、型式、シリアルNo.、設置場所を `application_assets` にスナップショット保存する',
       '未登録資産は `asset_ledgers` へ登録しない。`repair_request_details.manual_item_name`、`manual_maker_name`、`manual_model_name`、`manual_serial_no`、`manual_department_name`、`manual_room_name` と `application_assets` の表示用スナップショットに保持する',
       '未登録資産の修理が完了しても資産台帳に対する CRUD は行わない',
-      '登録済み資産のみ、修理不能から廃棄申請へ接続できる',
-      '未登録資産の修理不能は廃棄申請を作成せず、修理申請側で `UNREPAIRABLE` 終端とする'
+      '修理不能から廃棄申請へ接続する場合は登録済み資産と未登録資産の両方を対象とする',
+      '未登録資産の廃棄申請は修理申請経由のみ対象とし、修理申請を経由しない未登録資産の単独廃棄申請は扱わない'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = @(
@@ -258,11 +258,11 @@ $repairOrderRows = @(
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $repairOrderRows },
 
     @{ Type = 'Heading1'; Text = '第4章 API 一覧' },
-    @{ Type = 'Table'; Headers = @('No', 'API名', 'Method', 'Path', '用途', '権限'); Rows = @(
+    @{ Type = 'Table'; Headers = @('No', 'API名', 'メソッド', 'パス', '用途', '権限'); Rows = @(
       @('1', '修理管理タブ一覧取得', 'GET', '/quotation-data-box/repair-requests/tasks', '申請受付一覧と修理タスク一覧を取得する', '`repair_management`'),
       @('2', '修理タスク詳細取得', 'GET', '/repair-task/tasks/{repairTaskId}', '修理タスク詳細とSTEP表示情報を取得する', '`repair_management`'),
       @('3', '受付判定登録', 'POST', '/repair-task/tasks/{repairTaskId}/approve', '院内/院外振り分けを登録する', '`repair_management`'),
-      @('4', '申請却下・修理不能終端', 'POST', '/repair-task/tasks/{repairTaskId}/reject', '申請却下または廃棄申請を伴わない修理不能終端を登録する', '`repair_management`'),
+      @('4', '申請却下', 'POST', '/repair-task/tasks/{repairTaskId}/reject', '通常却下を登録する。修理不能として廃棄申請へ接続する場合は廃棄申請接続APIを使用する', '`repair_management`'),
       @('5', '見積依頼先登録・送信', 'POST', '/repair-task/tasks/{repairTaskId}/vendor-requests', '院外修理の見積依頼先を登録し依頼送信する', '`repair_management`'),
       @('6', '見積依頼完了', 'POST', '/repair-task/tasks/{repairTaskId}/vendor-requests/complete', '送信済み見積依頼を確認しSTEP2へ進める', '`repair_management`'),
       @('7', '修理見積登録', 'POST', '/repair-task/tasks/{repairTaskId}/quotations', '修理見積ヘッダー・明細・添付を登録する', '`repair_management`'),
@@ -274,7 +274,7 @@ $repairOrderRows = @(
       @('13', 'ドキュメント登録', 'POST', '/repair-task/tasks/{repairTaskId}/documents', '修理関連ドキュメントを追加する', '`repair_management`'),
       @('14', 'ドキュメント削除', 'DELETE', '/repair-task/tasks/{repairTaskId}/documents/{documentId}', '修理関連ドキュメントを削除する', '`repair_management`'),
       @('15', '修理タスク削除', 'DELETE', '/repair-task/tasks/{repairTaskId}', '見積登録済かつ発注前の修理タスクを論理削除する', '`repair_management`'),
-      @('16', '廃棄申請接続', 'POST', '/repair-task/tasks/{repairTaskId}/disposal-application', '登録済み資産の修理不能から廃棄申請を作成する', '`repair_management`')
+      @('16', '廃棄申請接続', 'POST', '/repair-task/tasks/{repairTaskId}/disposal-application', '登録済み資産または未登録資産の修理不能から廃棄申請を作成する', '`repair_management`')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 修理管理機能設計' },
@@ -345,7 +345,7 @@ $repairOrderRows = @(
           '登録済み資産は `application_assets.asset_ledger_id`、未登録資産は `repair_request_details.manual_item_name` 等の手入力列を優先して表示値を組み立てる',
           '`rfqs`、`rfq_vendors`、`quotations`、`quotation_items`、`orders`、`order_items`、`individuals`、`application_documents` を必要に応じて結合する',
           'ステータスから初期表示STEPを算出し、URL IDやモック固定mapには依存しない',
-          '登録済み資産かつ `status=''見積登録済''` の場合のみ `availableActions` に `CREATE_DISPOSAL_APPLICATION` を含める。未登録資産、院内修理、STEP2以外では含めない'
+          '`status=''見積登録済''` かつ `repair_category=''OUTSOURCED''` の場合は、登録済み資産・未登録資産のどちらでも `availableActions` に `CREATE_DISPOSAL_APPLICATION` を含める。院内修理、STEP2以外、または修理対象物品情報が不足する場合は含めない'
         )
         ResponseTitle = 'レスポンス（200：RepairTaskDetailResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -434,7 +434,7 @@ $repairOrderRows = @(
       },
       @{
         Title = '受付判定登録（/repair-task/tasks/{repairTaskId}/approve）'
-        Overview = 'STEP1で修理申請を受付し、院内修理または院外修理の振り分けを登録する。却下または修理不能終端は専用の reject API で扱う。'
+        Overview = 'STEP1で修理申請を受付し、院内修理または院外修理の振り分けを登録する。通常却下は reject API、修理不能として廃棄申請へ接続する処理は disposal-application API で扱う。'
         Method = 'POST'
         Path = '/repair-task/tasks/{repairTaskId}/approve'
         Auth = '要（Bearer）'
@@ -485,8 +485,8 @@ $repairOrderRows = @(
         )
       },
       @{
-        Title = '申請却下・修理不能終端（/repair-task/tasks/{repairTaskId}/reject）'
-        Overview = 'STEP1またはSTEP2で修理申請を却下終端する。通常却下と修理不能を `application_task_steps.completion_reason` で区別し、未登録資産の修理不能は廃棄申請を作成せず本APIで終端する。'
+        Title = '申請却下（/repair-task/tasks/{repairTaskId}/reject）'
+        Overview = 'STEP1またはSTEP2で修理申請を通常却下として終端する。修理不能として廃棄申請へ接続する場合は、本APIではなく廃棄申請接続APIを使用する。'
         Method = 'POST'
         Path = '/repair-task/tasks/{repairTaskId}/reject'
         Auth = '要（Bearer）'
@@ -498,16 +498,15 @@ $repairOrderRows = @(
         RequestTitle = 'リクエストボディ'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('completionReason', 'string', '✓', '`REJECTED` / `UNREPAIRABLE`')
+          @('completionReason', 'string', '-', '`REJECTED` 固定。未指定時も `REJECTED` として扱う')
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
           '対象は `application_type=''REPAIR''` かつ `status=''新規申請''` または `status=''見積登録済''` の修理申請に限定する',
-          '`completionReason=REJECTED` の場合は通常却下として扱う',
-          '`completionReason=UNREPAIRABLE` の場合は修理不能終端として扱う。登録済み資産で廃棄申請も作成する場合は本APIではなく廃棄申請接続APIを使用する',
-          '未登録資産の `UNREPAIRABLE` は廃棄申請を作成せず、修理申請側で終端する',
+          '`completionReason` は未指定または `REJECTED` のみ許可し、通常却下として扱う',
+          '`completionReason=UNREPAIRABLE` は受け付けない。修理不能として廃棄申請へ接続する場合は廃棄申請接続APIを使用する',
           '`applications.status=''却下''`、`applications.rejected_by_user_id`、`rejected_by_name`、`rejected_at` を更新する',
-          '`application_task_steps.completion_reason` に `REJECTED` または `UNREPAIRABLE` を保存する。却下理由コメント入力は要求しない',
+          '`application_task_steps.completion_reason` に `REJECTED` を保存する。却下理由コメント入力は要求しない',
           '状態変更、履歴、工程完了は同一トランザクションで行う'
         )
         ResponseTitle = 'レスポンス（200：RepairTaskActionResponse）'
@@ -515,7 +514,7 @@ $repairOrderRows = @(
         ResponseRows = @(
           @('repairTaskId', 'int64', '✓', '修理申請ID'),
           @('status', 'string', '✓', '`却下`'),
-          @('completionReason', 'string', '✓', '`REJECTED` / `UNREPAIRABLE`'),
+          @('completionReason', 'string', '✓', '`REJECTED`'),
           @('updatedAt', 'datetime', '✓', '更新日時')
         )
         StatusRows = @(
@@ -1033,7 +1032,7 @@ $repairOrderRows = @(
       },
       @{
         Title = '廃棄申請接続（/repair-task/tasks/{repairTaskId}/disposal-application）'
-        Overview = '修理不能となった登録済み資産について、元修理申請を却下終端し、廃棄申請を作成する。未登録資産は対象外である。'
+        Overview = '修理不能となった登録済み資産または未登録資産について、元修理申請を却下終端し、廃棄申請を作成する。未登録資産の場合も資産台帳へ登録せず、修理申請内の手入力情報と申請明細スナップショットを廃棄対象物品情報として引き継ぐ。'
         Method = 'POST'
         Path = '/repair-task/tasks/{repairTaskId}/disposal-application'
         Auth = '要（Bearer）'
@@ -1044,11 +1043,13 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
-          '対象は `application_type=''REPAIR''`、`status=''見積登録済''` の修理申請で、登録済み資産 `is_registered_asset=true` かつ代表 `application_assets.asset_ledger_id` が存在する場合に限定する',
-          '未登録資産の場合は廃棄申請を作成せず409を返す',
+          '対象は `application_type=''REPAIR''`、`status=''見積登録済''`、`repair_request_details.repair_category=''OUTSOURCED''` の修理申請に限定する',
+          '登録済み資産の場合は代表 `application_assets.asset_ledger_id` が存在し、作業対象施設の資産であることを検証する',
+          '未登録資産の場合は `repair_request_details.is_registered_asset=false`、代表 `application_assets.asset_ledger_id IS NULL`、`repair_request_details.manual_item_name` など廃棄対象物品の表示に必要な手入力情報が存在することを検証する',
           '元修理申請は `applications.status=''却下''` に更新し、`application_task_steps.completion_reason=''UNREPAIRABLE''` を保存する',
           '`applications` に `application_type=''DISPOSAL''` の廃棄申請ヘッダーを作成する',
-          '`application_assets` に `asset_role=''DISPOSAL''`、元修理対象の登録済み資産IDとスナップショットを保存する',
+          '登録済み資産では `application_assets` に `asset_role=''DISPOSAL''`、元修理対象の `asset_ledger_id` とスナップショットを保存する',
+          '未登録資産では `application_assets` に `asset_role=''DISPOSAL''`、`asset_ledger_id=NULL`、元修理申請の `application_assets` スナップショットおよび `repair_request_details.manual_*` から引き継いだ品目、メーカー、型式、シリアルNo.、設置部署、室名を保存する。`asset_ledgers` の作成・更新は行わない',
           '`disposal_application_details` に `disposal_reason_code=''UNREPAIRABLE''`、`related_repair_application_id=元修理申請ID` を保存する',
           '元修理申請の却下終端、廃棄申請作成、履歴作成は同一トランザクションで行う'
         )
@@ -1068,7 +1069,7 @@ $repairOrderRows = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', '作業対象施設に対する実効 `repair_management` なし', 'ErrorResponse'),
           @('404', '対象修理申請が存在しない', 'ErrorResponse'),
-          @('409', '未登録資産、対象資産なし、または現在ステータス不整合', 'ErrorResponse'),
+          @('409', '対象物品情報不足、院内修理、または現在ステータス不整合', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -1078,14 +1079,15 @@ $repairOrderRows = @(
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
       @('修理管理一覧・詳細・工程操作・削除', '`repair_management`', '作業対象施設に対して実効 `repair_management` を持つこと', '修理管理タブと修理タスクの進行・発注前削除'),
-      @('廃棄申請接続', '`repair_management`', '作業対象施設に対して実効 `repair_management` を持つこと', '登録済み資産の修理不能から廃棄申請を作成する')
+      @('廃棄申請接続', '`repair_management`', '作業対象施設に対して実効 `repair_management` を持つこと', '登録済み資産または未登録資産の修理不能から廃棄申請を作成する')
     ) },
     @{ Type = 'Heading2'; Text = '登録済み資産・未登録資産ルール' },
     @{ Type = 'Bullets'; Items = @(
       '登録済み資産は `asset_ledger_id` 必須とし、作業対象施設の資産であることを検証する',
       '未登録資産は `manualItemName` を必須とし、`asset_ledgers` への登録、更新、削除を行わない',
       '未登録資産でも修理依頼写真は添付できる',
-      '未登録資産は修理不能になっても廃棄申請ボタンを表示せず、廃棄申請接続APIも409を返す。未登録資産からは廃棄申請を作成しない',
+      '未登録資産は修理不能になった場合、修理申請経由の廃棄申請として廃棄申請接続APIで廃棄申請を作成できる',
+      '修理申請を経由しない未登録資産の単独廃棄申請は本書では定義せず、入口UI/APIを設けない',
       '未登録資産の修理完了は申請履歴としてDBに保存するだけで、原本資産CRUDは発生しない'
     ) },
     @{ Type = 'Heading2'; Text = '状態遷移ルール' },
@@ -1100,7 +1102,7 @@ $repairOrderRows = @(
       @('検収登録', '納期確定', '検収登録', '修理報告書、納品書等を保存する。院外発注修理では `orders` / `order_items` を更新し、登録済み資産の院外発注修理では `individuals` も更新する'),
       @('完了登録', '検収登録', '完了', '未登録資産でも資産CRUDは行わない。未登録資産または `individuals` がない院内修理では固定資産番号を保存しない'),
       @('通常却下', '新規申請 / 見積登録済', '却下', '`completion_reason=REJECTED`'),
-      @('修理不能', '見積登録済', '却下', '`completion_reason=UNREPAIRABLE`。登録済み資産のみ廃棄申請作成可')
+      @('修理不能', '見積登録済', '却下', '`completion_reason=UNREPAIRABLE`。登録済み資産または未登録資産の修理申請経由廃棄申請を作成する')
     ) },
     @{ Type = 'Heading2'; Text = '他機能との責務境界' },
     @{ Type = 'Bullets'; Items = @(
@@ -1120,7 +1122,7 @@ $repairOrderRows = @(
       @('REPAIR_STATUS_CONFLICT', '409', '現在ステータスが対象操作を許可しない'),
       @('REPAIR_TASK_DELETE_NOT_ALLOWED', '409', '発注済み以降または削除対象外ステータスのため修理タスクを削除できない'),
       @('REPAIR_QUOTATION_DELETE_NOT_ALLOWED', '409', '採用済み、発注済み以降、または削除対象外ステータスのため修理見積を削除できない'),
-      @('REPAIR_UNREGISTERED_ASSET_DISPOSAL_NOT_ALLOWED', '409', '未登録資産に対して廃棄申請接続を実行した'),
+      @('REPAIR_DISPOSAL_APPLICATION_NOT_ALLOWED', '409', '現在ステータス、院内修理、または対象物品情報不足により廃棄申請接続を実行できない'),
       @('REPAIR_RFQ_NOT_FOUND', '409', '院外修理の見積依頼グループが未作成'),
       @('REPAIR_VENDOR_REQUEST_NOT_SENT', '409', '見積依頼完了に必要な送信済み依頼先が存在しない'),
       @('REPAIR_QUOTATION_NOT_LINKED', '409', '指定見積が対象修理申請に紐づかない'),

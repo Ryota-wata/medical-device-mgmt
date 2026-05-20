@@ -579,6 +579,14 @@ package "資産台帳" {
     未解決時は NULL を許容する。
   end note
 
+  note right of asset_ledgers
+    is_rented_out は貸出状態の正本ではなく
+    検索/一覧表示用の派生フラグ。
+    有効な lending_devices.status が
+    貸出中 / 使用中 / 使用済 の場合に true とし、
+    貸出・返却更新と同一トランザクションで同期する。
+  end note
+
   entity "asset_ledger_histories" as asset_ledger_histories {
     * 資産台帳履歴ID / asset_ledger_history_id : bigint
     --
@@ -2101,6 +2109,9 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     貸出種別名 / lending_type_name : varchar
     返却期限日数 / return_period_days : int
     返却アラート発生日数 / return_alert_days : int
+    有効フラグ / is_active : boolean
+    解除日時 / released_at : timestamp
+    排他制御版 / lock_version : bigint
     定数配置フラグ / fixed_placement_flag : boolean
     定数配置部署 / fixed_placement_department : varchar
     フリーコメント / free_comment : varchar
@@ -2129,6 +2140,25 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of lending_devices
+    貸出管理対象機器の正本。
+    貸出・返却更新APIの正本IDは
+    lending_device_id とする。
+    同一 asset_ledger_id の有効行
+    (is_active=true) は1件のみ許可する。
+    貸出機解除は物理削除せず
+    is_active=false と released_at を設定する。
+    貸出中 / 使用中 / 使用済 または
+    未返却履歴がある場合は解除不可。
+    貸出・返却画面の操作では
+    貸出可 -> 貸出中 -> 使用中 -> 使用済 -> 返却済
+    を基本遷移とし、lending_in_use_used 無効時は
+    貸出中 -> 返却済 へ直接遷移する。
+    lock_version は貸出設定変更、
+    貸出機解除、貸出・返却更新の
+    競合検知に使用する。
+  end note
 
   note right of lending_device_status_definitions
     貸出管理タブの現行モックに合わせる。
@@ -2170,6 +2200,15 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of lending_transactions
+    due_on は貸出時または使用開始時に
+    確定した返却予定日。
+    lending_devices.return_period_days は
+    due_on の初期値算出にだけ使用し、
+    変更後も既存履歴の due_on は自動更新しない。
+    未返却行は returned_on IS NULL で判定する。
+  end note
 
   entity "lending_transaction_status_definitions" as lending_transaction_status_definitions {
     * ステータス / status : varchar

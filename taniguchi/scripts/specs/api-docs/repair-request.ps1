@@ -58,8 +58,8 @@ $repairRequestCreatedRows = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_修理申請.docx'
   ScreenLabel = '修理申請'
-  CoverDateText = '2026年5月19日'
-  RevisionDateText = '2026/5/19'
+  CoverDateText = '2026年5月20日'
+  RevisionDateText = '2026/5/20'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -70,12 +70,13 @@ $repairRequestCreatedRows = @(
       '申請部署、申請者、申請者連絡先をログインユーザー情報から自動取得する方針',
       '登録済み資産と未登録資産の入力条件および保存先',
       '未登録資産を資産台帳へ登録せず、申請内スナップショットとして保持する方針',
+      '未登録資産の対象スコープを修理申請と修理申請経由の廃棄申請のみに限定する方針',
       '修理依頼時の機器写真・添付を `application_documents` に保存する方針',
       '修理管理（`/quotation-data-box/repair-requests`、`/repair-task`）との feature_code とAPI設計書の分離'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '修理申請は、現場担当者がメニュー画面から修理依頼画面へ遷移し、登録済み資産または資産台帳に登録されていない物品の修理依頼を起票する機能である。起票後の受付判定、院内/院外修理の振り分け、見積、発注、検収、完了、却下、廃棄申請接続は No.27 修理管理API設計書で扱う。' },
-    @{ Type = 'Paragraph'; Text = '修理申請では、資産台帳に登録済みの資産だけでなく未登録資産も受け付ける。ただし未登録資産は `asset_ledgers` へ登録せず、申請内の手入力情報および `application_assets` の表示用スナップショットとして保持する。未登録資産の修理が完了しても資産台帳に対する CRUD は行わない。' },
+    @{ Type = 'Paragraph'; Text = '修理申請では、資産台帳に登録済みの資産だけでなく未登録資産も受け付ける。ただし未登録資産は `asset_ledgers` へ登録せず、申請内の手入力情報および `application_assets` の表示用スナップショットとして保持する。本システム未登録資産の対象スコープは修理申請と修理申請経由の廃棄申請のみであり、未登録資産の修理が完了しても資産台帳に対する CRUD は行わない。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('修理申請', 'メニュー画面から `/repair-request` で起票する現場依頼。`repair_request_create` で認可する'),
@@ -92,7 +93,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'API の位置づけ' },
     @{ Type = 'Paragraph'; Text = '本API群は、修理申請の起票前準備と起票登録までを扱う。点検結果から修理申請へ遷移する場合は、日常点検APIまたは点検管理APIが返す初期値を `/repair-request` へ渡し、本書の修理依頼起票APIで `repair_request_details.inspection_result_id` として保存する。' },
-    @{ Type = 'Paragraph'; Text = '起票後の修理管理タブ表示、修理タスク詳細、受付判定、却下、見積依頼、見積登録、発注、検収、完了、廃棄申請接続は No.27 修理管理API設計書を正本とし、本書では定義しない。' },
+    @{ Type = 'Paragraph'; Text = '起票後の修理管理タブ表示、修理タスク詳細、受付判定、却下、見積依頼、見積登録、発注、検収、完了、修理不能からの廃棄申請接続は No.27 修理管理API設計書を正本とし、本書では定義しない。修理申請を経由しない未登録資産の単独廃棄申請はPhase1対象外であり、本書にも入口UI/APIを設けない。' },
     @{ Type = 'Heading2'; Text = '画面と API の関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
       @('修理依頼画面初期表示', '`GET /repair-request/context`', 'ログインユーザー由来の申請者情報、連携元点検結果、採番候補を返す'),
@@ -142,7 +143,8 @@ $repairRequestCreatedRows = @(
       '登録済み資産は `application_assets.asset_ledger_id` を保持し、申請時点の品目、メーカー、型式、シリアルNo.、設置場所を `application_assets` にスナップショット保存する',
       '未登録資産は `asset_ledgers` へ登録しない。`repair_request_details.manual_item_name`、`manual_maker_name`、`manual_model_name`、`manual_serial_no`、`manual_department_name`、`manual_room_name` と `application_assets` の表示用スナップショットに保持する',
       '登録済み資産と未登録資産のどちらでも修理依頼時の機器写真・添付を保存できる',
-      '未登録資産の修理申請が完了しても資産台帳に対する CRUD は行わない'
+      '未登録資産の修理申請が完了しても資産台帳に対する CRUD は行わない',
+      '未登録資産が修理不能となった場合の廃棄申請接続は No.27 修理管理API設計書で扱い、元修理申請の手入力情報と `application_assets` スナップショットを廃棄対象物品情報として引き継ぐ'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = @(
@@ -162,7 +164,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $repairRequestCreatedRows },
 
     @{ Type = 'Heading1'; Text = '第4章 API 一覧' },
-    @{ Type = 'Table'; Headers = @('No', 'API名', 'Method', 'Path', '用途', '権限'); Rows = @(
+    @{ Type = 'Table'; Headers = @('No', 'API名', 'メソッド', 'パス', '用途', '権限'); Rows = @(
       @('1', '修理依頼画面コンテキスト取得', 'GET', '/repair-request/context', 'ログインユーザー情報、連携元点検結果、採番候補を取得する', '`repair_request_create`'),
       @('2', 'QR指定資産取得', 'GET', '/repair-request/assets/by-qr/{qrCode}', 'QRラベルから登録済み資産の修理申請用スナップショットを取得する', '`repair_request_create`'),
       @('3', '修理依頼起票', 'POST', '/repair-request/requests', '修理依頼を起票する', '`repair_request_create`')
@@ -282,7 +284,7 @@ $repairRequestCreatedRows = @(
           '`application_assets` に `asset_role=''REPAIR''`、行番号1、`quantity=1`、`unit=''台''`、登録済み資産または未登録資産の表示用スナップショットを保存する',
           '写真は `application_documents` に `owner_type=''APPLICATION''` または `APPLICATION_ASSET`、`document_category=''PHOTO''`、`document_type=''機器写真''` として保存する',
           '補足添付は `application_documents` に `owner_type=''APPLICATION''`、`document_category=''REQUEST_ATTACHMENT''` として保存する',
-          '`DocumentCreateInput.storageKey` は `application_documents.file_path`、`contentType` は `mime_type`、`fileSize` は `file_size_bytes` に保存し、生成列 `owner_key` は直接書き込まない',
+          '`storageKey` は `application_documents.file_path`、`contentType` は `mime_type`、`fileSize` は `file_size_bytes` に保存し、生成列 `owner_key` は直接書き込まない',
           '`application_status_histories` に初期ステータス履歴を作成する',
           '`application_no` はDB採番または採番サービスで一意確定し、一意性競合時は409を返す',
           '上記の `applications`、`repair_request_details`、`application_assets`、`application_documents`、`application_status_histories` 作成は同一トランザクションで行う'
@@ -321,6 +323,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Bullets'; Items = @(
       '日常点検APIと点検管理APIは修理申請連携用の初期値までを返し、修理申請の作成は本書の `POST /repair-request/requests` を正本とする',
       '修理申請起票後の受付判定、院内/院外振り分け、見積、発注、検収、完了、却下、廃棄申請接続は No.27 修理管理API設計書を正本とする',
+      '未登録資産が修理不能となった場合は、No.27 修理管理API設計書の廃棄申請接続APIで修理申請経由の廃棄申請を作成する',
       '修理申請を経由しない未登録資産の単独廃棄申請はPhase1対象外であり、本書では定義しない'
     ) },
 
@@ -340,7 +343,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Bullets'; Items = @(
       '修理申請の状態変更は `application_status_histories` に履歴を残す',
       '機器写真・添付メタデータは `application_documents` で管理し、ファイル実体は別ストレージ、DB上の保管キーは `application_documents.file_path` を正本とする',
-      '未登録資産は修理申請内の履歴として保持し、資産台帳への自動登録や原本資産CRUDを行わない',
+      '未登録資産は修理申請内の履歴として保持し、修理申請経由の廃棄申請へ接続する場合を除いて他申請種別の入口には展開しない。資産台帳への自動登録や原本資産CRUDは行わない',
       '申請者情報はログインユーザー情報から自動取得するため、ユーザー所属情報の更新漏れが申請表示へ影響する点を運用上の注意事項とする',
       '修理管理側で院内/院外振り分けを行うまでは `repair_category` 未設定として扱い、一覧やタスクの表示では未受付状態として扱う'
     ) }
