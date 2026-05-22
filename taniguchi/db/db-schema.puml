@@ -2149,24 +2149,31 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     (is_active=true) は1件のみ許可する。
     貸出機解除は物理削除せず
     is_active=false と released_at を設定する。
-    貸出中 / 使用中 / 使用済 または
+    貸出中 / 使用中 / 使用済 / 返却済 または
     未返却履歴がある場合は解除不可。
+    貸出機器登録直後は貸出可。
+    待機中は使用しない。
     貸出・返却画面の操作では
-    貸出可 -> 貸出中 -> 使用中 -> 使用済 -> 返却済
-    を基本遷移とし、lending_in_use_used 無効時は
-    貸出中 -> 返却済 へ直接遷移する。
+    貸出可 -> 貸出中 -> 使用中 -> 使用済
+    を基本遷移とする。
+    返却時、使用後日常点検メニューがある場合は
+    返却済として点検待ちにし、点検合格で貸出可、
+    異常ありで使用不可へ遷移する。
+    使用後日常点検メニューがない場合は
+    返却時に返却済を経由せず貸出可へ戻す。
+    使用不可からの復帰は日常点検合格で行い、
+    貸出管理タブの手動変更では行わない。
     lock_version は貸出設定変更、
     貸出機解除、貸出・返却更新の
     競合検知に使用する。
   end note
 
   note right of lending_device_status_definitions
-    貸出管理タブの現行モックに合わせる。
     初期データ:
-    待機中 / 貸出可 / 貸出中 /
-    使用中 / 使用済 / 返却済 / 使用不可。
+    貸出可 / 貸出中 / 使用中 /
+    使用済 / 返却済 / 使用不可。
     貸出可能台数の集計対象は
-    貸出可のみとし、待機中は含めない。
+    貸出可のみとする。
     使用中・使用済の操作は
     lending_checkout と lending_in_use_used の
     両方の実効権限を必須とする。
@@ -2174,15 +2181,22 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
 
   note right of lending_device_status_transitions
     少なくとも次の遷移を投入する。
-    待機中 -> 貸出可
     貸出可 -> 貸出中
-    貸出中 -> 返却済
     貸出中 -> 使用中
     使用中 -> 使用済
-    使用済 -> 返却済
+    貸出中/使用済 -> 返却済
+      (使用後日常点検メニューあり)
+    貸出中/使用済 -> 貸出可
+      (使用後日常点検メニューなし)
     返却済 -> 貸出可
-    待機中/貸出可/返却済 -> 使用不可
-    使用不可 -> 待機中/貸出可
+      (使用後日常点検合格)
+    返却済 -> 使用不可
+      (使用後日常点検異常あり)
+    貸出可/返却済 -> 使用不可
+      (日常点検異常あり)
+    使用不可 -> 貸出可
+      (日常点検合格)
+    定期点検周期到来だけでは使用不可へ自動変更しない。
   end note
 
   entity "lending_transactions" as lending_transactions {
@@ -2193,8 +2207,6 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     返却予定日 / due_on : date
     返却日 / returned_on : date
     貸出先部署 / lent_department : varchar
-    担当者ユーザーID / handled_by_user_id : bigint
-    担当者名 / handled_by_name : varchar
     ステータス / status : varchar
     備考 / remarks : varchar
     作成日時 / created_at : timestamp
@@ -3226,7 +3238,6 @@ users ||--o{ application_task_steps : ""
 users ||--o{ rfqs : ""
 users ||--o{ inspection_menus : ""
 users ||--o{ inspection_results : ""
-users ||--o{ lending_transactions : ""
 users ||--o{ asset_survey_sessions : ""
 users ||--o{ asset_survey_records : ""
 users ||--o{ asset_survey_photos : "VIEW元"

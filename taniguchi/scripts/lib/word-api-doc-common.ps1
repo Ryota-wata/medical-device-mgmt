@@ -553,6 +553,75 @@ function Add-Table {
   $Selection.TypeParagraph()
 }
 
+function Set-RevisionTableCell {
+  param(
+    [Parameter(Mandatory = $true)]$Table,
+    [Parameter(Mandatory = $true)][int]$Row,
+    [Parameter(Mandatory = $true)][int]$Column,
+    [Parameter(Mandatory = $true)][string]$Text,
+    [bool]$Bold = $false
+  )
+
+  $cell = $Table.Cell($Row, $Column)
+  $range = $cell.Range
+  $range.Text = $Text
+  $range.Bold = if ($Bold) { 1 } else { 0 }
+  $range.Font.Name = 'Meiryo UI'
+  $range.Font.Size = 11
+}
+
+function Normalize-RevisionHistoryTable {
+  param(
+    [Parameter(Mandatory = $true)]$Document,
+    [Parameter(Mandatory = $true)]$Spec
+  )
+
+  $headingRange = Find-RangeByText -Document $Document -Text '改訂履歴'
+  $revisionTable = $null
+  foreach ($table in $Document.Tables) {
+    if ($table.Range.Start -gt $headingRange.End) {
+      $revisionTable = $table
+      break
+    }
+  }
+
+  if ($null -eq $revisionTable) {
+    return
+  }
+
+  while ($revisionTable.Columns.Count -lt 4) {
+    $revisionTable.Columns.Add() | Out-Null
+  }
+  while ($revisionTable.Columns.Count -gt 4) {
+    $revisionTable.Columns.Item($revisionTable.Columns.Count).Delete()
+  }
+  if ($revisionTable.Rows.Count -lt 2) {
+    $revisionTable.Rows.Add() | Out-Null
+  }
+
+  $revisionVersion = if ($Spec.ContainsKey('RevisionVersionText') -and -not [string]::IsNullOrWhiteSpace($Spec.RevisionVersionText)) { $Spec.RevisionVersionText } else { '1.0' }
+  $revisionDate = if ($Spec.ContainsKey('RevisionDateText') -and -not [string]::IsNullOrWhiteSpace($Spec.RevisionDateText)) { $Spec.RevisionDateText } else { '' }
+  $revisionSummary = if ($Spec.ContainsKey('RevisionSummaryText') -and -not [string]::IsNullOrWhiteSpace($Spec.RevisionSummaryText)) { $Spec.RevisionSummaryText } else { '初版作成' }
+  $revisionAuthor = if ($Spec.ContainsKey('RevisionAuthorText') -and -not [string]::IsNullOrWhiteSpace($Spec.RevisionAuthorText)) { $Spec.RevisionAuthorText } else { '-' }
+
+  $revisionTable.Style = $script:wdStyleTableGrid
+  $headers = @('版数', '日付', '変更概要', '変更者')
+  $values = @($revisionVersion, $revisionDate, $revisionSummary, $revisionAuthor)
+  for ($column = 1; $column -le 4; $column++) {
+    Set-RevisionTableCell -Table $revisionTable -Row 1 -Column $column -Text $headers[$column - 1] -Bold $true
+    Set-RevisionTableCell -Table $revisionTable -Row 2 -Column $column -Text $values[$column - 1] -Bold $false
+    $revisionTable.Cell(1, $column).Shading.Texture = $script:wdTextureNone
+    $revisionTable.Cell(1, $column).Shading.BackgroundPatternColor = $script:tableHeaderShade
+  }
+
+  $revisionTable.Rows.Item(1).HeadingFormat = $true
+  try {
+    $revisionTable.AutoFitBehavior($script:wdAutoFitWindow) | Out-Null
+  }
+  catch {
+  }
+}
+
 function Add-ApiEndpointBlock {
   param(
     [Parameter(Mandatory = $true)]$Document,
@@ -820,6 +889,7 @@ function New-ApiWordDocumentFromSpec {
     }
 
     Replace-DocumentPlaceholders -Document $doc -ReplacementMap $replacementMap
+    Normalize-RevisionHistoryTable -Document $doc -Spec $Spec
 
     $selection = Set-ReplacementBodyStart -Document $doc -WordApp $word
     Write-ApiDocSections -Document $doc -Selection $selection -Sections $Spec.Sections

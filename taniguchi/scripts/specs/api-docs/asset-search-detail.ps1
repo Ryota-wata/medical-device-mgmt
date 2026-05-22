@@ -224,12 +224,13 @@ $assetDetailRows = @(
       '資産一覧の検索・絞り込み・ページング・カード/リスト表示・管理部署インライン編集・エクスポート I/F',
       '表示カラム現在設定と named bookmark の取得・保存・適用 I/F',
       '資産詳細の参照、QRコード直接遷移解決、履歴表示、協業グループ経由の他施設閲覧、および作業対象施設原本に限定した編集・写真・ドキュメント管理 I/F',
-      '資産一覧・カルテ閲覧、価格カラム表示、申請起票導線、点検管理登録、保守契約登録、原本編集の権限境界'
+      '資産一覧・カルテ閲覧、価格カラム表示、申請起票導線、点検管理登録、保守契約登録、貸出登録導線、原本編集の権限境界'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '資産一覧は `asset_ledgers` を正本として、施設・ロケーション・分類・識別情報・調達情報・ライフサイクル情報を一覧表示し、表示カラム設定に応じて SHIP資産マスタ任意カラムも可変表示する画面である。作業対象施設かつ編集権限がある場合は、一覧上から管理部署をインライン編集できる。' },
     @{ Type = 'Paragraph'; Text = '資産詳細は、一覧から選択した資産の詳細情報、QR情報、写真、ドキュメントを表示する画面であり、作業対象施設の資産に対してのみ原本編集、写真追加/削除、ドキュメント追加/削除を許可する。協業グループ経由で他施設資産を参照できる場合は閲覧専用とし、編集系操作および申請系導線は許可しない。' },
     @{ Type = 'Paragraph'; Text = '資産一覧から起動する新規購入/更新/増設/移動/廃棄などの申請処理は、本 API 群ではなく各業務機能の API 設計書で扱う。本書では一覧側から必要となる表示可否と選択対象データの返却までを対象とする。' },
+    @{ Type = 'Paragraph'; Text = '資産一覧画面の「貸出登録」ボタンおよび貸出機器登録モーダルで利用する API は、本書では定義しない。貸出管理対象機器の登録、登録可否、貸出グループ候補、返却アラート発生日数の保存仕様は「貸出管理 API 設計書」を参照する。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('資産原本', '`asset_ledgers` に保持する現物資産台帳。資産一覧と資産詳細の主対象'),
@@ -266,7 +267,7 @@ $assetDetailRows = @(
       '作業対象施設資産の保存時に `PUT /asset-detail/assets/{assetId}` を呼び出す',
       '写真追加/削除時に `POST /asset-detail/assets/{assetId}/photos` または `DELETE /asset-detail/assets/{assetId}/photos/{photoId}` を呼び出す',
       'ドキュメント領域の表示時に `GET /asset-detail/assets/{assetId}/documents` を呼び出し、追加/削除時は `POST` / `DELETE` を呼び出す',
-      '一覧起点の各種申請 API は別設計書で扱い、本 API では `canOpenOriginalApplications` / `canRegisterInspectionManagement` / `canRegisterMaintenanceContract` などの表示制御用フラグのみ返却する'
+      '一覧起点の各種申請 API、貸出機器登録 API は別設計書で扱い、本 API では `canOpenOriginalApplications` / `canRegisterInspectionManagement` / `canRegisterMaintenanceContract` / `canRegisterLendingManagement` などの表示制御用フラグのみ返却する'
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用種別', '用途'); Rows = @(
@@ -305,12 +306,13 @@ $assetDetailRows = @(
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '画面導線・ボタン表示の `feature_code` と、表示カラムの `column_code` を処理単位で判定する。作業対象施設の資産データ参照は `original_list_view` を正本とする。他施設資産参照は、作業対象施設側で `original_list_view` が有効であることに加え、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たす場合のみ閲覧専用で許可する。申請起票ボタンは `original_application`、点検管理登録ボタンは `inspection_management`、保守契約登録ボタンは `maintenance_contract`、管理部署編集ボタンは `management_department_edit` を個別に判定し、資産詳細の原本編集系は `original_list_edit`、価格項目は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を追加判定する。' },
+    @{ Type = 'Paragraph'; Text = '画面導線・ボタン表示の `feature_code` と、表示カラムの `column_code` を処理単位で判定する。作業対象施設の資産データ参照は `original_list_view` を正本とする。他施設資産参照は、作業対象施設側で `original_list_view` が有効であることに加え、協業グループ、施設契約状態、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` を満たす場合のみ閲覧専用で許可する。申請起票ボタンは `original_application`、点検管理登録ボタンは `inspection_management`、保守契約登録ボタンは `maintenance_contract`、貸出登録ボタンは `lending_management`、管理部署編集ボタンは `management_department_edit` を個別に判定し、資産詳細の原本編集系は `original_list_edit`、価格項目は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を追加判定する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要コード', '説明'); Rows = @(
       @('一覧画面表示 / 詳細画面表示 / 一覧取得 / 詳細取得 / 履歴取得 / QR解決 / ドキュメント一覧取得', '`original_list_view`', '作業対象施設の資産原本データは `original_list_view`、他施設閲覧は同じ閲覧者権限に加えて協業グループ・公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` で判定する'),
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請系導線を表示する'),
       @('点検管理登録ボタン表示', '`inspection_management`', '一覧起点の点検管理登録導線を表示する'),
       @('保守契約登録ボタン表示', '`maintenance_contract`', '一覧起点の保守契約登録導線を表示する'),
+      @('貸出登録ボタン表示', '`lending_management`', '一覧起点の貸出機器登録導線を表示する。貸出機器登録モーダルの API は「貸出管理 API 設計書」を参照する'),
       @('一覧管理部署編集', '`original_list_view` + `management_department_edit`', '作業対象施設原本の管理部署列だけを一覧上で更新する'),
       @('資産詳細の原本編集 / 写真操作 / ドキュメント追加削除', '`original_list_view` + `original_list_edit`', '作業対象施設原本に限定した詳細編集系処理'),
       @('価格項目の返却 / 更新', '`original_price_column`', '返却は閲覧者側の権限に従い、他施設閲覧では公開元施設の公開カラム設定も判定する。更新は `OWN` かつ `original_price_column` 有効時のみ許可する')
@@ -427,7 +429,7 @@ $assetDetailRows = @(
           '`user_column_setting_presets(screen_id=asset_search)` を読み込み、named bookmark 一覧と既定 bookmark を解決する',
           '現在設定が未保存で既定 bookmark が存在する場合は、その表示/非表示設定を current settings として返却する',
           '価格カラムのロック状態は閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` の実効有無を元に算出する',
-          '`accessMode=OWN` の場合は `original_application`、`inspection_management`、`maintenance_contract`、`management_department_edit`、`original_list_edit`、`original_price_column`、`original_list_view` の実効有無から、申請起票導線、点検管理登録、保守契約登録、一覧管理部署編集、詳細編集モード遷移、価格表示、履歴タブ表示の可否フラグを返却する。`EXTERNAL_READONLY` の場合は `original_list_view` と `original_price_column` の実効有無、および公開元施設設定を判定し、閲覧系以外の操作可否を `false` とする'
+          '`accessMode=OWN` の場合は `original_application`、`inspection_management`、`maintenance_contract`、`lending_management`、`management_department_edit`、`original_list_edit`、`original_price_column`、`original_list_view` の実効有無から、申請起票導線、点検管理登録、保守契約登録、貸出登録、一覧管理部署編集、詳細編集モード遷移、価格表示、履歴タブ表示の可否フラグを返却する。`EXTERNAL_READONLY` の場合は `original_list_view` と `original_price_column` の実効有無、および公開元施設設定を判定し、閲覧系以外の操作可否を `false` とする'
         )
         ResponseTitle = 'レスポンス（200：AssetSearchContextResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -496,6 +498,7 @@ $assetDetailRows = @(
               @('canOpenOriginalApplications', 'boolean', '✓', '新規・更新・増設・移動・廃棄申請ボタンを表示できるかどうか'),
               @('canRegisterInspectionManagement', 'boolean', '✓', '点検管理登録ボタンを表示できるかどうか'),
               @('canRegisterMaintenanceContract', 'boolean', '✓', '保守契約登録ボタンを表示できるかどうか'),
+              @('canRegisterLendingManagement', 'boolean', '✓', '貸出登録ボタンを表示できるかどうか。登録可否、貸出グループ候補、保存仕様は「貸出管理 API 設計書」を参照する'),
               @('canEditManagementDepartmentList', 'boolean', '✓', '一覧の管理部署編集ボタンを表示し、一括保存できるかどうか'),
               @('canEditAsset', 'boolean', '✓', '資産詳細で編集モードへ遷移できるかどうか'),
               @('canViewPrice', 'boolean', '✓', '価格系項目が返却対象かどうか'),
@@ -1454,6 +1457,7 @@ $assetDetailRows = @(
       @('新規・更新・増設・移動・廃棄申請ボタン表示', '`original_application`', '一覧起点の申請導線のみ制御する'),
       @('点検管理登録ボタン表示', '`inspection_management`', '一覧起点の点検管理登録導線のみ制御する'),
       @('保守契約登録ボタン表示', '`maintenance_contract`', '一覧起点の保守契約登録導線のみ制御する'),
+      @('貸出登録ボタン表示', '`lending_management`', '一覧起点の貸出機器登録導線のみ制御する。貸出機器登録モーダルの API は「貸出管理 API 設計書」を参照する'),
       @('一覧の管理部署編集', '`original_list_view` + `management_department_edit`', '一覧上の管理部署列更新だけを制御する'),
       @('原本編集 / 写真 / ドキュメント更新', '`original_list_view` + `original_list_edit`', '詳細画面起点の変更系は作業対象施設原本に限定する')
     ) },
@@ -1498,19 +1502,14 @@ $assetDetailRows = @(
     @{ Type = 'Heading1'; Text = '第8章 運用・前提事項' },
     @{ Type = 'Heading2'; Text = '本版で明示した前提' },
     @{ Type = 'Bullets'; Items = @(
-      '資産一覧と資産詳細は `taniguchi/api/API設計書_一覧.md` の機能粒度に合わせて1冊に統合する',
       '一覧起点の各種申請 API は別設計書で扱い、本書では表示可否と参照対象返却までを対象とする',
+      '資産一覧画面の「貸出登録」ボタンおよび貸出機器登録モーダルの API は「貸出管理 API 設計書」で扱い、本書では `canRegisterLendingManagement` による表示可否までを対象とする',
       'named bookmark は current settings と分離し、`user_column_setting_presets` / `user_column_setting_preset_items` を追加してサーバー永続化する',
       '管理部署は検索・表示では `asset_ledgers.management_department_name` を用い、更新時は `facility_locations` 由来の `management_department_id` と `management_department_name` を同時更新する',
       '一覧の管理部署編集候補は、対象施設の active `facility_locations` のうち `department_id IS NOT NULL` の行を `department_id` 単位で重複排除して生成し、同名候補は `displayLabel=department_name / section_name` で識別する。同一施設・同一 `department_id` では `department_name` / `section_name` が一致している前提で扱う',
       '`management_department_id` 追加時は既存 active 資産を一意一致 backfill し、未解決行は `managementDepartmentId=null` のまま返して編集時に再選択させる',
       'QRコード直接遷移は QRラベルURL上の `facilityId` + `qr_identifier` を入力とし、画面側で resolve-by-qr API へ橋渡しして詳細画面へ入る',
       '分類更新は `classificationMode=LINKED` / `MANUAL` を明示し、SHIP資産マスタ再紐付けと手動管理切替の両方を許容する'
-    ) },
-    @{ Type = 'Heading2'; Text = '今後の運用設計で整理する事項' },
-    @{ Type = 'Table'; Headers = @('論点', '現状の扱い', '今後の整理方針'); Rows = @(
-      @('一覧 export の大規模件数対応', '現時点では同期出力を継続する', '件数・処理時間の実測に応じて非同期ジョブ化とダウンロード通知を追加検討する'),
-      @('履歴ソースの拡張', '本版では申請履歴、点検結果、貸出/返却履歴を対象とする', '修理、保守契約、棚卸などを表示対象へ追加する場合は `eventType` を追加して同一 I/F を拡張する')
     ) }
   )
 }
