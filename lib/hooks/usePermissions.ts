@@ -6,27 +6,30 @@ import { useMemo } from 'react';
 import {
   useAuthStore,
   useFacilityGroupStore,
-  useFacilityFeatureStore,
-  useUserFeatureStore,
 } from '../stores';
-import { isShipRole, isHospitalRole, getRoleCategory } from '../types/user';
+import { getRoleCategory } from '../types/user';
 import type { SharingDataType } from '../types/facilityGroup';
 import type { RoleCategory } from '../types/user';
 import {
   FeatureId,
   MainButtonId,
   PermissionLevel,
-  getPermissionLevel,
-  canAccess,
-  canView,
-  canEdit,
-  canCreate,
-  hasFullAccess,
-  isMainButtonVisible,
-  getVisibleMainButtons,
-  canAccessFacility,
-  createStoreBackedOverride,
 } from '../utils/permissions';
+
+// メイン画面ボタン全 ID (ロール撤廃で全表示)
+const ALL_MAIN_BUTTONS: MainButtonId[] = [
+  'asset_list',
+  'edit_list',
+  'purchase_management',
+  'maintenance_inspection',
+  'lending_management',
+  'repair_request',
+  'asset_survey',
+  'inventory',
+  'master_management',
+  'quotation_management',
+  'user_management',
+];
 
 export interface UsePermissionsReturn {
   /** ユーザーのロール */
@@ -64,26 +67,15 @@ export interface UsePermissionsReturn {
 }
 
 export function usePermissions(): UsePermissionsReturn {
+  // ロール撤廃: 全ユーザーをシステム管理者として扱い、すべての機能/画面を許可する。
+  // 機能権限は別途「機能権限管理 (PU-xxx)」画面で施設/ユーザー単位の ON/OFF を制御する設計に移行したが、
+  // mock 動作および画面設計書作成のため、ここでは全機能を可視化する。
   const user = useAuthStore((s) => s.user);
-  const selectedFacility = useAuthStore((s) => s.selectedFacility);
-  // zustand のメソッド参照は stable なので useMemo の deps では検知できない。
-  // state 配列そのものを購読することで設定変更時に getOverride を再生成する。
-  const facilitySettings = useFacilityFeatureStore((s) => s.settings);
-  const userSettings = useUserFeatureStore((s) => s.settings);
-  const getFacilitySetting = useFacilityFeatureStore((s) => s.getSetting);
-  const getUserSetting = useUserFeatureStore((s) => s.getSetting);
-  const canShareData = useFacilityGroupStore((s) => s.canShareData);
   const role = user?.role ?? null;
-  // 新 2段階権限モデル（facilityFeatureStore + userFeatureStore）を旧 GetOverrideFn 互換のクロージャに包む。
-  // FEATURE_TO_PU マッピングが定義された FeatureId のみ override が効き、それ以外は PERMISSION_MATRIX の
-  // ロール別デフォルトに従う。settings 配列を deps に入れることで OFF/ON 切替が下流に伝播する。
-  const getOverride = useMemo(
-    () => createStoreBackedOverride(user?.id, getFacilitySetting, getUserSetting),
-    [user?.id, getFacilitySetting, getUserSetting, facilitySettings, userSettings],
-  );
+  const roleCategory = role ? getRoleCategory(role) : null;
 
   return useMemo(() => {
-    // ロールがない場合はすべて不可
+    // 未ログイン時のみすべて不可 (ログインガード維持)
     if (!role) {
       return {
         role: null,
@@ -105,37 +97,23 @@ export function usePermissions(): UsePermissionsReturn {
       };
     }
 
-    const isAdmin = role === 'system_admin';
-    const isShipUserFlag = isShipRole(role);
-    const isHospitalUserFlag = isHospitalRole(role);
-    const isFacilityAdmin = role === 'hospital_sys_admin';
-    const roleCategory = getRoleCategory(role);
-
-    // 施設名（オーバーライドチェック用）
-    const facility = selectedFacility ?? undefined;
-
     return {
       role,
-      getPermission: (featureId: FeatureId) => getPermissionLevel(featureId, role, facility, getOverride),
-      canAccess: (featureId: FeatureId) => canAccess(featureId, role, facility, getOverride),
-      canView: (featureId: FeatureId) => canView(featureId, role, facility, getOverride),
-      canEdit: (featureId: FeatureId) => canEdit(featureId, role, facility, getOverride),
-      canCreate: (featureId: FeatureId) => canCreate(featureId, role, facility, getOverride),
-      hasFullAccess: (featureId: FeatureId) => hasFullAccess(featureId, role, facility, getOverride),
-      isMainButtonVisible: (buttonId: MainButtonId) => isMainButtonVisible(buttonId, role),
-      visibleMainButtons: getVisibleMainButtons(role),
-      canAccessFacility: (facilityName: string) =>
-        canAccessFacility(role, facilityName, user?.hospital, user?.accessibleFacilities),
-      isAdmin,
-      isShipUser: isShipUserFlag,
-      isHospitalUser: isHospitalUserFlag,
-      isFacilityAdmin,
+      getPermission: () => 'F' as PermissionLevel,
+      canAccess: () => true,
+      canView: () => true,
+      canEdit: () => true,
+      canCreate: () => true,
+      hasFullAccess: () => true,
+      isMainButtonVisible: () => true,
+      visibleMainButtons: ALL_MAIN_BUTTONS,
+      canAccessFacility: () => true,
+      isAdmin: true,
+      isShipUser: true,
+      isHospitalUser: true,
+      isFacilityAdmin: true,
       roleCategory,
-      canAccessSharedData: (facilityName: string, dataType: SharingDataType) => {
-        const myFacility = selectedFacility ?? user?.hospital ?? '';
-        if (!myFacility) return false;
-        return canShareData(myFacility, facilityName, dataType);
-      },
+      canAccessSharedData: () => true,
     };
-  }, [role, user?.hospital, user?.accessibleFacilities, selectedFacility, getOverride, canShareData]);
+  }, [role, roleCategory]);
 }
