@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AssetMaster } from '@/lib/types/master';
 import { useMasterStore } from '@/lib/stores';
@@ -27,6 +27,31 @@ function AssetMasterContent() {
     maker: '',
     model: ''
   });
+
+  // REQ-032(突き合わせ): 台帳側の突き合わせ対象（品目名/メーカー/型式(原)）を表示し、その値で初期絞り込み
+  const [matchTarget, setMatchTarget] = useState<{ item: string; maker: string; model: string } | null>(null);
+  useEffect(() => {
+    const applyTarget = (item: string, maker: string, model: string) => {
+      if (!item && !maker && !model) return;
+      setMatchTarget({ item, maker, model });
+      // 対象の品目名で初期絞り込み（候補を提示）
+      setFilters(prev => ({ ...prev, globalSearch: item || maker || model }));
+    };
+    // 1) 起動時: クエリパラメータから対象を取得
+    applyTarget(searchParams.get('item') || '', searchParams.get('maker') || '', searchParams.get('model') || '');
+    // 2) 開いたまま行を切替えた場合: 親からの postMessage で対象を更新
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === 'SET_MATCH_TARGET' && e.data.target) {
+        const t = e.data.target;
+        applyTarget(t.item || '', t.maker || '', t.model || '');
+        setAppliedMessage('');
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // マスタデータからフィルターoptionsを生成（資産マスタから）
   const categoryOptions = useMemo(() => {
@@ -172,6 +197,17 @@ function AssetMasterContent() {
           資産マスタ選択画面
         </h1>
       </div>
+
+      {/* REQ-032(突き合わせ): 突き合わせ対象（台帳側）を提示 */}
+      {matchTarget && (
+        <div className="bg-surface-select border-b border-cta-primary px-5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="font-bold text-cta-primary-dark">突き合わせ対象（台帳）:</span>
+          <span className="text-content-primary"><span className="text-content-sub">品目名</span> {matchTarget.item || '—'}</span>
+          <span className="text-content-primary"><span className="text-content-sub">メーカー</span> {matchTarget.maker || '—'}</span>
+          <span className="text-content-primary"><span className="text-content-sub">型式</span> {matchTarget.model || '—'}</span>
+          <span className="text-xs text-content-sub">※上記で絞り込み済み。該当マスタを選んで「適用」</span>
+        </div>
+      )}
 
       {/* フィルターヘッダー */}
       <div className="bg-surface-card mx-4 mt-4 rounded-lg border border-stroke-input p-4">

@@ -139,10 +139,14 @@ export default function AssetMatchingPage() {
     }
   };
 
-  // REQ-032: 開いた資産マスタは開いた状態を保持（再クリックではリロードせずフォーカスのみ）
+  // REQ-032(突き合わせ): 編集中の台帳行を突き合わせ対象として資産マスタへ渡し、
+  // 開いたまま連続突き合わせ（行を切替えたら対象を更新してフォーカス）
   const assetMasterWinRef = useRef<Window | null>(null);
   const handleOpenAssetMaster = () => {
+    const row = data.find(r => r.id === editingRow);
+    const target = row ? { item: row.originalItemName, maker: row.manufacturer, model: row.model } : null;
     if (assetMasterWinRef.current && !assetMasterWinRef.current.closed) {
+      if (target) assetMasterWinRef.current.postMessage({ type: 'SET_MATCH_TARGET', target }, window.location.origin);
       assetMasterWinRef.current.focus();
       return;
     }
@@ -151,8 +155,11 @@ export default function AssetMatchingPage() {
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const qs = target
+      ? `?item=${encodeURIComponent(target.item)}&maker=${encodeURIComponent(target.maker)}&model=${encodeURIComponent(target.model)}`
+      : '';
     assetMasterWinRef.current = window.open(
-      `${basePath}/asset-master`,
+      `${basePath}/asset-master${qs}`,
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
