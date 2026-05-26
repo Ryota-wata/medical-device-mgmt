@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useMasterStore } from '@/lib/stores';
@@ -26,7 +26,7 @@ interface RegistrationData {
   assetNo: string;
   equipmentNo: string;
   serialNo: string;
-  detailType: '本体' | '明細' | '付属品' | '';
+  detailType: '本体' | '明細' | '';
   parentId: number | null;
   purchaseDate: string;
   lease: string;
@@ -41,6 +41,7 @@ interface RegistrationData {
   width: string;
   depth: string;
   height: string;
+  quantity?: string;
   remarks: string;
   masterId: string;
 }
@@ -290,7 +291,7 @@ export default function RegistrationEditPage() {
       assetNo: '',
       equipmentNo: '',
       serialNo: '',
-      detailType: '付属品',
+      detailType: '本体',
       parentId: null,
       purchaseDate: '',
       lease: 'なし',
@@ -349,6 +350,23 @@ export default function RegistrationEditPage() {
 
   const [data, setData] = useState(sampleData);
 
+  // REQ-029: 入力状態を常に一時保存（編集を自動保持し、メイン画面に戻っても復元）
+  const STORAGE_KEY = 'registrationEditData';
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    // マウント時に一時保存から復元（SSRハイドレーション後）
+    try {
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      if (saved) setData(JSON.parse(saved));
+    } catch { /* 破損時は初期データのまま */ }
+    restoredRef.current = true;
+  }, []);
+  useEffect(() => {
+    // 復元完了後、変更の都度 自動で一時保存
+    if (!restoredRef.current) return;
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* 容量超過等は無視 */ }
+  }, [data]);
+
   // フィルターoptionsを生成（施設マスタから）
   const buildingOptions = useMemo(() => {
     const uniqueBuildings = Array.from(new Set(facilities.map(f => f.building)));
@@ -385,12 +403,6 @@ export default function RegistrationEditPage() {
     const uniqueMediumClasses = Array.from(new Set(assetMasters.map(a => a.mediumClass)));
     return uniqueMediumClasses.filter(Boolean);
   }, [assetMasters]);
-
-  // 担当者オプションを生成（サンプルデータから）
-  const surveyorOptions = useMemo(() => {
-    const uniqueSurveyors = Array.from(new Set(data.map(d => d.surveyor)));
-    return uniqueSurveyors.filter(Boolean);
-  }, [data]);
 
   // フィルタリングされたデータ
   const filteredData = useMemo(() => {
@@ -569,17 +581,6 @@ export default function RegistrationEditPage() {
     setSelectedAll(false);
   };
 
-  // 選択行を付属品として紐付け
-  const handleLinkAsAccessory = () => {
-    if (linkingParentId === null || selectedRows.size === 0) return;
-    setData(prev => prev.map(row =>
-      selectedRows.has(row.id)
-        ? { ...row, detailType: '付属品' as const, parentId: linkingParentId }
-        : row
-    ));
-    setSelectedRows(new Set());
-    setSelectedAll(false);
-  };
 
   // 個別の紐付け解除（1行ずつ）
   const handleUnlinkSingle = (id: number) => {
@@ -915,16 +916,7 @@ export default function RegistrationEditPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[120px]">
-            <SearchableSelect
-              label="担当者"
-              value={filters.surveyor}
-              onChange={(value) => setFilters({...filters, surveyor: value})}
-              options={surveyorOptions}
-              placeholder="全て"
-              isMobile={false}
-            />
-          </div>
+          {/* REQ-025: 調査担当者の絞込みは不要 → 削除 */}
 
           <div className="flex-1 min-w-[120px]">
             <SearchableSelect
@@ -1004,12 +996,6 @@ export default function RegistrationEditPage() {
                 >
                   明細として紐付ける
                 </button>
-                <button
-                  onClick={handleLinkAsAccessory}
-                  className="px-5 py-2 bg-[#4A4A4A] text-white border-none rounded cursor-pointer text-[13px] font-semibold"
-                >
-                  付属品として紐付ける
-                </button>
               </>
             )}
           </div>
@@ -1023,6 +1009,7 @@ export default function RegistrationEditPage() {
             <thead>
               <tr>
                 {/* --- 通常カラム（sticky top のみ） --- */}
+                {/* REQ-026: 要求の並び。明細親機=parentIdで親行を導出、数量を追加、リース・借用/調査日付/担当者は不要 */}
                 {([
                   { key: 'sealNo' as const, label: 'QRコード' },
                   { key: 'floor' as const, label: '階' },
@@ -1032,10 +1019,12 @@ export default function RegistrationEditPage() {
                   { key: 'category' as const, label: 'Category' },
                   { key: 'largeClass' as const, label: '大分類' },
                   { key: 'mediumClass' as const, label: '中分類' },
-                  { key: 'detailType' as const, label: '明細区分' },
                   { key: 'item' as const, label: '個体管理品目' },
+                  { key: 'detailType' as const, label: '明細区分' },
+                  { key: 'parentId' as const, label: '明細親機' },
                   { key: 'manufacturer' as const, label: 'メーカー' },
                   { key: 'model' as const, label: '型式' },
+                  { key: 'quantity' as const, label: '数量' },
                   { key: 'width' as const, label: 'W' },
                   { key: 'depth' as const, label: 'D' },
                   { key: 'height' as const, label: 'H' },
@@ -1044,9 +1033,6 @@ export default function RegistrationEditPage() {
                   { key: 'serialNo' as const, label: 'シリアルNo' },
                   { key: 'purchaseDate' as const, label: '購入年月日' },
                   { key: 'remarks' as const, label: '備考' },
-                  { key: 'lease' as const, label: 'リース・借用' },
-                  { key: 'surveyDate' as const, label: '調査日付' },
-                  { key: 'surveyor' as const, label: '担当者' },
                 ]).map(col => (
                   <th
                     key={col.key}
@@ -1056,10 +1042,10 @@ export default function RegistrationEditPage() {
                     {col.label}{getSortIcon(col.key)}
                   </th>
                 ))}
-                {/* 写真（ソートなし、sticky top のみ） */}
-                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 z-[2] bg-[#FAFAFA] text-left text-[#4A4A4A] font-semibold text-xs">写真</th>
-                {/* --- 操作（sticky top + right） --- */}
-                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs">操作</th>
+                {/* 写真（REQ-028: 操作欄の左に sticky right で固定） */}
+                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[288px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs w-[64px] min-w-[64px]">写真</th>
+                {/* --- 操作（sticky top + right、固定幅） --- */}
+                <th className="px-2 py-3 border border-[#E1E1E1] whitespace-nowrap sticky top-0 right-[48px] z-[3] bg-[#FAFAFA] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] text-left text-[#4A4A4A] font-semibold text-xs w-[240px] min-w-[240px]">操作</th>
                 {/* --- チェックボックス（sticky top + right） --- */}
                 <th className="px-2 py-3 border border-[#E1E1E1] text-center whitespace-nowrap sticky top-0 right-0 z-[3] bg-[#FAFAFA] w-12 min-w-[48px]">
                   <input
@@ -1115,18 +1101,33 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.mediumClass}
                   </td>
+                  {/* ⑥ 個体管理品目（REQ-026: 明細区分の前へ） */}
+                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.item || ''}
+                        onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
+                        className="w-full p-1 border border-[#E1E1E1] rounded"
+                      />
+                    ) : row.item}
+                  </td>
                   {/* 明細区分 */}
                   <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap">
                     {editingRow === row.id && editingData ? (
                       <select
                         value={editingData.detailType}
-                        onChange={(e) => setEditingData({ ...editingData, detailType: e.target.value as RegistrationData['detailType'] })}
+                        onChange={(e) => {
+                          const v = e.target.value as RegistrationData['detailType'];
+                          // 本体/未設定は親機を持たないので明細親機(parentId)をクリア
+                          const keepParent = v === '明細';
+                          setEditingData({ ...editingData, detailType: v, parentId: keepParent ? editingData.parentId : null });
+                        }}
                         className="w-full p-1 border border-[#E1E1E1] rounded text-xs"
                       >
                         <option value="">未設定</option>
                         <option value="本体">本体</option>
                         <option value="明細">明細</option>
-                        <option value="付属品">付属品</option>
                       </select>
                     ) : (
                       row.detailType ? (
@@ -1156,16 +1157,24 @@ export default function RegistrationEditPage() {
                       )
                     )}
                   </td>
-                  {/* ⑥ 個体管理品目 */}
-                  <td style={getFreeInputCellStyle('item', editingRow === row.id && editingData ? editingData.item : row.item, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
-                    {editingRow === row.id && editingData ? (
-                      <input
-                        type="text"
-                        value={editingData.item || ''}
-                        onChange={(e) => setEditingData({ ...editingData, item: e.target.value })}
-                        className="w-full p-1 border border-[#E1E1E1] rounded"
-                      />
-                    ) : row.item}
+                  {/* 明細親機（REQ-026 + 明細追加UX: 編集中の明細行はインラインで親(本体)を選択。紐付けモードも併存） */}
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A] text-xs">
+                    {editingRow === row.id && editingData && editingData.detailType === '明細' ? (
+                      <select
+                        value={editingData.parentId ?? ''}
+                        onChange={(e) => setEditingData({ ...editingData, parentId: e.target.value ? Number(e.target.value) : null })}
+                        className="w-full p-1 border border-[#E1E1E1] rounded text-xs"
+                      >
+                        <option value="">親機を選択</option>
+                        {data.filter(d => d.detailType === '本体' && d.id !== row.id).map(p => (
+                          <option key={p.id} value={p.id}>{(p.item || p.sealNo)}（{p.sealNo}）</option>
+                        ))}
+                      </select>
+                    ) : (
+                      row.parentId != null
+                        ? (data.find(d => d.id === row.parentId)?.item ?? '—')
+                        : <span className="text-[#E1E1E1] text-[11px]">ー</span>
+                    )}
                   </td>
                   {/* ⑦ メーカー */}
                   <td style={getFreeInputCellStyle('manufacturer', editingRow === row.id && editingData ? editingData.manufacturer : row.manufacturer, row.masterId, { padding: '8px', borderBottom: '1px solid #E1E1E1', whiteSpace: 'nowrap' })}>
@@ -1188,6 +1197,17 @@ export default function RegistrationEditPage() {
                         className="w-full p-1 border border-[#E1E1E1] rounded"
                       />
                     ) : row.model}
+                  </td>
+                  {/* ⑨ 数量（REQ-026） */}
+                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A] text-right">
+                    {editingRow === row.id && editingData ? (
+                      <input
+                        type="text"
+                        value={editingData.quantity ?? ''}
+                        onChange={(e) => setEditingData({ ...editingData, quantity: e.target.value })}
+                        className="w-full p-1 border border-[#E1E1E1] rounded text-right"
+                      />
+                    ) : (row.quantity ?? '1')}
                   </td>
                   {/* ⑩ W */}
                   <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
@@ -1277,25 +1297,12 @@ export default function RegistrationEditPage() {
                       />
                     ) : row.remarks}
                   </td>
-                  {/* ⑮ リース・借用 */}
-                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">
-                    {editingRow === row.id && editingData ? (
-                      <select
-                        value={editingData.lease}
-                        onChange={(e) => setEditingData({ ...editingData, lease: e.target.value })}
-                        className="w-full p-1 border border-[#E1E1E1] rounded"
-                      >
-                        <option value="あり">あり</option>
-                        <option value="なし">なし</option>
-                      </select>
-                    ) : row.lease}
-                  </td>
-                  {/* ⑯ 調査日付 */}
-                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyDate}</td>
-                  {/* ⑰ 担当者 */}
-                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap text-[#4A4A4A]">{row.surveyor}</td>
-                  {/* 写真 */}
-                  <td className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap">
+                  {/* REQ-026: リース・借用/調査日付/担当者 は不要のため削除 */}
+                  {/* 写真（REQ-028: 操作欄の左に sticky right で固定） */}
+                  <td
+                    className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap sticky right-[288px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] w-[64px] min-w-[64px]"
+                    style={{ backgroundColor: rowBgColor }}
+                  >
                     <button
                       onClick={() => handlePhotoClick(row)}
                       className="px-2 py-1 text-xs bg-[#EBF5EE] text-[#4A4A4A] border-none rounded cursor-pointer"
@@ -1304,7 +1311,7 @@ export default function RegistrationEditPage() {
                     </button>
                   </td>
                   <td
-                    className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)]"
+                    className="px-2 py-2 border border-[#E1E1E1] whitespace-nowrap sticky right-[48px] z-[1] shadow-[-2px_0_4px_rgba(0,0,0,0.06)] w-[240px] min-w-[240px]"
                     style={{ backgroundColor: rowBgColor }}
                   >
                     <div className="flex gap-1 flex-wrap">
