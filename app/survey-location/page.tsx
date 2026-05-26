@@ -28,13 +28,15 @@ function SurveyLocationContent() {
     return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
   }, []);
 
+  // REQ-018: 入力項目 = 調査日・カテゴリ・棟・階・部門・部署 (部門/部署は個別部署マスタ採用)
   const [category, setCategory] = useState('');
+  const [building, setBuilding] = useState('');
+  const [floor, setFloor] = useState('');
   const [department, setDepartment] = useState('');
   const [section, setSection] = useState('');
-  const [room, setRoom] = useState('');
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
 
-  const isFormDirty = category !== '' || department !== '' || section !== '' || room !== '';
+  const isFormDirty = category !== '' || building !== '' || floor !== '' || department !== '' || section !== '';
 
   const handleHomeClick = () => {
     if (isFormDirty) {
@@ -49,6 +51,17 @@ function SurveyLocationContent() {
     return uniqueCategories.filter(Boolean);
   }, [assetMasters]);
 
+  const buildingOptions = useMemo(() => {
+    return Array.from(new Set(facilityMasterData.map(f => f.oldBuilding).filter((b): b is string => !!b)));
+  }, [facilityMasterData]);
+
+  const floorOptions = useMemo(() => {
+    const filtered = building
+      ? facilityMasterData.filter(f => f.oldBuilding === building)
+      : facilityMasterData;
+    return Array.from(new Set(filtered.map(f => f.oldFloor).filter((d): d is string => !!d)));
+  }, [facilityMasterData, building]);
+
   const departmentOptions = useMemo(() => {
     const uniqueDivisions = Array.from(new Set(facilityMasterData.map(f => f.oldShipDivision).filter((d): d is string => !!d)));
     return uniqueDivisions;
@@ -62,6 +75,18 @@ function SurveyLocationContent() {
     return uniqueDepartments;
   }, [facilityMasterData, department]);
 
+
+  const handleBuildingChange = (value: string) => {
+    setBuilding(value);
+    if (value) {
+      const validFloors = facilityMasterData
+        .filter(f => f.oldBuilding === value)
+        .map(f => f.oldFloor);
+      if (!validFloors.includes(floor)) {
+        setFloor('');
+      }
+    }
+  };
 
   const handleDepartmentChange = (value: string) => {
     setDepartment(value);
@@ -91,11 +116,11 @@ function SurveyLocationContent() {
   };
 
   const handleNext = () => {
-    if (!category || !department || !section) {
-      alert('Category・部門・部署を選択してください');
+    if (!category || !building || !floor || !department || !section) {
+      alert('Category・棟・階・部門・部署を選択してください');
       return;
     }
-    const queryParams = new URLSearchParams({ category, department, section, room, surveyDate });
+    const queryParams = new URLSearchParams({ category, building, floor, department, section, surveyDate });
     router.push(`/asset-survey-integrated?${queryParams.toString()}`);
   };
 
@@ -152,6 +177,30 @@ function SurveyLocationContent() {
             />
           </div>
 
+          {/* 棟 */}
+          <div className="mb-6">
+            <SearchableSelect
+              label="棟"
+              value={building}
+              onChange={handleBuildingChange}
+              options={buildingOptions}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+          </div>
+
+          {/* 階 */}
+          <div className="mb-6">
+            <SearchableSelect
+              label="階"
+              value={floor}
+              onChange={setFloor}
+              options={floorOptions}
+              placeholder="選択してください"
+              isMobile={isMobile}
+            />
+          </div>
+
           {/* 部門 */}
           <div className="mb-6">
             <SearchableSelect
@@ -165,7 +214,7 @@ function SurveyLocationContent() {
           </div>
 
           {/* 部署 */}
-          <div className="mb-6">
+          <div>
             <SearchableSelect
               label="部署"
               value={section}
@@ -173,18 +222,6 @@ function SurveyLocationContent() {
               options={sectionOptions}
               placeholder="選択してください"
               isMobile={isMobile}
-            />
-          </div>
-
-          {/* 諸室 */}
-          <div>
-            <label className="block text-sm font-bold text-content-primary mb-2">諸室</label>
-            <input
-              type="text"
-              value={room}
-              onChange={(e) => setRoom(e.target.value)}
-              placeholder="諸室名を入力"
-              className="w-full px-3 py-2.5 text-sm border border-stroke-input rounded-md outline-none focus:border-cta-primary transition-colors"
             />
           </div>
         </div>
