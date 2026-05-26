@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -139,13 +139,19 @@ export default function AssetMatchingPage() {
     }
   };
 
+  // REQ-032: 開いた資産マスタは開いた状態を保持（再クリックではリロードせずフォーカスのみ）
+  const assetMasterWinRef = useRef<Window | null>(null);
   const handleOpenAssetMaster = () => {
+    if (assetMasterWinRef.current && !assetMasterWinRef.current.closed) {
+      assetMasterWinRef.current.focus();
+      return;
+    }
     const width = 1400;
     const height = 900;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.open(
+    assetMasterWinRef.current = window.open(
       `${basePath}/asset-master`,
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
