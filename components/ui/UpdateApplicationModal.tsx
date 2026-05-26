@@ -79,9 +79,7 @@ export function UpdateApplicationModal({
   // 添付ファイル
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
-  // システム接続要望
-  const [currentConnectionStatus, setCurrentConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
-  const [currentConnectionDestination, setCurrentConnectionDestination] = useState('');
+  // システム接続要望 (REQ-121: 現在の接続状況/接続先は申請モーダルで非表示=保持しない)
   const [requestConnectionStatus, setRequestConnectionStatus] = useState<'wired' | 'wireless' | 'not-required'>('not-required');
   const [requestConnectionDestination, setRequestConnectionDestination] = useState('');
 
@@ -311,8 +309,6 @@ export function UpdateApplicationModal({
     setCaseCountUnit('件／月');
     setComment('');
     setAttachedFiles([]);
-    setCurrentConnectionStatus('not-required');
-    setCurrentConnectionDestination('');
     setRequestConnectionStatus('not-required');
     setRequestConnectionDestination('');
     setAssetHandling('');
@@ -630,12 +626,7 @@ export function UpdateApplicationModal({
               <div style={styles.sectionTitle}>システム接続要望</div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <tbody>
-                  <tr>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '180px' }}>現在の接続状況</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{currentConnectionStatus === 'wired' ? '有線接続' : currentConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
-                    <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left', width: '150px' }}>接続先</th>
-                    <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{currentConnectionDestination || '-'}</td>
-                  </tr>
+                  {/* REQ-121: 現在の接続状況は申請モーダルに表示しない(4/30決定) */}
                   <tr>
                     <th style={{ padding: '8px 12px', background: '#FAFAFA', border: '1px solid #E1E1E1', textAlign: 'left' }}>要望機器の接続要望</th>
                     <td style={{ padding: '8px 12px', border: '1px solid #E1E1E1' }}>{requestConnectionStatus === 'wired' ? '有線接続' : requestConnectionStatus === 'wireless' ? '無線接続' : '接続不要'}</td>
@@ -1101,44 +1092,7 @@ export function UpdateApplicationModal({
           <div style={styles.section}>
             <div style={styles.sectionTitle}>システム接続要望</div>
             <div style={{ display: 'grid', gap: '16px' }}>
-              <div>
-                <label style={styles.label}>現在の接続状況</label>
-                <div style={{ ...styles.radioGroup, marginTop: '8px' }}>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      checked={currentConnectionStatus === 'wired'}
-                      onChange={() => setCurrentConnectionStatus('wired')}
-                    />
-                    有線接続
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      checked={currentConnectionStatus === 'wireless'}
-                      onChange={() => setCurrentConnectionStatus('wireless')}
-                    />
-                    無線接続
-                  </label>
-                  <label style={styles.radioLabel}>
-                    <input
-                      type="radio"
-                      checked={currentConnectionStatus === 'not-required'}
-                      onChange={() => setCurrentConnectionStatus('not-required')}
-                    />
-                    接続不要
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label style={styles.label}>現在の接続先</label>
-                <input
-                  style={{ ...styles.input, width: '100%', marginTop: '6px' }}
-                  value={currentConnectionDestination}
-                  onChange={(e) => setCurrentConnectionDestination(e.target.value)}
-                  placeholder="接続先を入力してください"
-                />
-              </div>
+              {/* REQ-121: 現在の接続状況/接続先は申請モーダルに表示しない(4/30決定) */}
               <div>
                 <label style={styles.label}>要望機器の接続要望</label>
                 <div style={{ ...styles.radioGroup, marginTop: '8px' }}>
