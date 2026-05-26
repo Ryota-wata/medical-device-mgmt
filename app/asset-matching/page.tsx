@@ -165,6 +165,20 @@ export default function AssetMatchingPage() {
     );
   };
 
+  // REQ-032(突き合わせ): 台帳側の対象(編集行)を切替えたら、開いている資産マスタへ自動反映
+  useEffect(() => {
+    if (assetMasterWinRef.current && !assetMasterWinRef.current.closed && editingRow !== null) {
+      const row = data.find(r => r.id === editingRow);
+      if (row) {
+        assetMasterWinRef.current.postMessage(
+          { type: 'SET_MATCH_TARGET', target: { item: row.originalItemName, maker: row.manufacturer, model: row.model } },
+          window.location.origin
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingRow]);
+
   // 資産マスタからのメッセージを受信
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

@@ -33,9 +33,8 @@ function AssetMasterContent() {
   useEffect(() => {
     const applyTarget = (item: string, maker: string, model: string) => {
       if (!item && !maker && !model) return;
+      // 自動絞り込みはしない（台帳名とマスタ名は異なるため正候補を隠す恐れ）。対象は参照表示のみ
       setMatchTarget({ item, maker, model });
-      // 対象の品目名で初期絞り込み（候補を提示）
-      setFilters(prev => ({ ...prev, globalSearch: item || maker || model }));
     };
     // 1) 起動時: クエリパラメータから対象を取得
     applyTarget(searchParams.get('item') || '', searchParams.get('maker') || '', searchParams.get('model') || '');
@@ -205,7 +204,7 @@ function AssetMasterContent() {
           <span className="text-content-primary"><span className="text-content-sub">品目名</span> {matchTarget.item || '—'}</span>
           <span className="text-content-primary"><span className="text-content-sub">メーカー</span> {matchTarget.maker || '—'}</span>
           <span className="text-content-primary"><span className="text-content-sub">型式</span> {matchTarget.model || '—'}</span>
-          <span className="text-xs text-content-sub">※上記で絞り込み済み。該当マスタを選んで「適用」</span>
+          <span className="text-xs text-content-sub">※該当する資産マスタを検索・選択して「適用」</span>
         </div>
       )}
 
