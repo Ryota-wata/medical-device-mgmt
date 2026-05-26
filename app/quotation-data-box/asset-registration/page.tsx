@@ -28,6 +28,9 @@ export default function AssetRegistrationPage() {
   const handleRfqGroupIdRead = useCallback((id: number | null) => setRfqGroupId(id), []);
 
   const [fixedAssetNos, setFixedAssetNos] = useState<Record<number, string>>({});
+  // REQ-065/066: 会計区分・勘定科目 (本システムで保持する会計連携項目)
+  const [accountingCategories, setAccountingCategories] = useState<Record<number, string>>({});
+  const [accountTitles, setAccountTitles] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [registrationComplete, setRegistrationComplete] = useState<{
@@ -113,6 +116,14 @@ export default function AssetRegistrationPage() {
               fixedAssetNos={fixedAssetNos}
               onChangeFixedAssetNo={(id, v) =>
                 setFixedAssetNos(prev => ({ ...prev, [id]: v }))
+              }
+              accountingCategories={accountingCategories}
+              onChangeAccountingCategory={(id, v) =>
+                setAccountingCategories(prev => ({ ...prev, [id]: v }))
+              }
+              accountTitles={accountTitles}
+              onChangeAccountTitle={(id, v) =>
+                setAccountTitles(prev => ({ ...prev, [id]: v }))
               }
             />
 
@@ -317,7 +328,25 @@ type DetailTableCardProps = {
   getIndividualForItem: (orderItemId: number) => IndividualLite;
   fixedAssetNos: Record<number, string>;
   onChangeFixedAssetNo: (id: number, value: string) => void;
+  accountingCategories: Record<number, string>;
+  onChangeAccountingCategory: (id: number, value: string) => void;
+  accountTitles: Record<number, string>;
+  onChangeAccountTitle: (id: number, value: string) => void;
 };
+
+// REQ-065: 会計区分 選択肢
+const ACCOUNTING_CATEGORIES = [
+  '有形固定資産', '無形固定資産', 'その他の資産', '流動資産',
+  '医用費用（委託費）', '医用費用（経費）', '医用費用（研究研修費）', '医用費用（材料費）', '医用費用（設備関係費）',
+  '医業外費用', '医業外収益', '医業費用（給与費）', '法人税、住民税及び事業税負担額',
+  '臨時収益', '臨時費用', '流動負債', '固定負債',
+] as const;
+
+// REQ-066: 勘定科目 選択肢
+const ACCOUNT_TITLES = [
+  '医療用器械備品', '医療消耗器具備品費', 'その他器械備品', 'ソフトウェア', '車両及び船舶', '放射性同位元素',
+  '建物', '構築物', 'その他の有形固定資産', '器機保守料', '修繕費', '器機賃借料', '診療材料費', '医療消耗器具備品費',
+] as const;
 
 const COL = {
   no: 'w-[56px]',
@@ -330,7 +359,8 @@ const COL = {
   maker: 'w-[180px]',
   model: 'w-[140px]',
   amount: 'w-[150px]',
-  account: 'w-[150px]',
+  category: 'w-[180px]',
+  account: 'w-[180px]',
   fixedAsset: 'w-[220px]',
 } as const;
 
@@ -340,6 +370,10 @@ function DetailTableCard({
   getIndividualForItem,
   fixedAssetNos,
   onChangeFixedAssetNo,
+  accountingCategories,
+  onChangeAccountingCategory,
+  accountTitles,
+  onChangeAccountTitle,
 }: DetailTableCardProps) {
   return (
     <section className="bg-surface-card border border-stroke-card rounded-2xl p-4 flex flex-col gap-4">
@@ -363,14 +397,14 @@ function DetailTableCard({
 
       {/* 明細テーブル */}
       <div className="border border-stroke-input overflow-x-auto">
-        <table className="w-full border-collapse min-w-[1640px]">
+        <table className="w-full border-collapse min-w-[1900px]">
           <thead>
             {/* グループ行 */}
             <tr className="bg-stroke-card border-b border-stroke-input text-left">
-              <th className="px-4 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input" colSpan={11}>
+              <th className="px-4 py-2 text-sm font-semibold text-content-primary border-r border-stroke-input" colSpan={10}>
                 商品分類
               </th>
-              <th className="px-4 py-2 text-sm font-semibold text-content-primary bg-[#FAFAFA]">
+              <th className="px-4 py-2 text-sm font-semibold text-content-primary bg-[#FAFAFA] border-r border-stroke-input" colSpan={3}>
                 入力項目
               </th>
             </tr>
@@ -386,7 +420,8 @@ function DetailTableCard({
               <th className={`${COL.maker} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>メーカー名</th>
               <th className={`${COL.model} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>型式</th>
               <th className={`${COL.amount} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input text-right`}>案分金額（税別）</th>
-              <th className={`${COL.account} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input`}>仮勘定科目</th>
+              <th className={`${COL.category} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input bg-[#FAFAFA]`}>会計区分</th>
+              <th className={`${COL.account} px-4 py-2 text-sm font-normal text-content-primary border-r border-stroke-input bg-[#FAFAFA]`}>勘定科目</th>
               <th className={`${COL.fixedAsset} px-4 py-2 text-sm font-normal text-content-primary bg-[#FAFAFA]`}>固定資産番号</th>
             </tr>
           </thead>
@@ -407,7 +442,32 @@ function DetailTableCard({
                   <td className="px-4 py-2 text-sm text-content-primary border-r border-stroke-input text-right tabular-nums font-semibold">
                     ¥{item.totalPrice.toLocaleString()}
                   </td>
-                  <Cell muted>---</Cell>
+                  <td className="px-4 py-2 align-middle border-r border-stroke-input">
+                    <select
+                      value={accountingCategories[item.id] || ''}
+                      onChange={(e) => onChangeAccountingCategory(item.id, e.target.value)}
+                      aria-label="会計区分"
+                      className="w-full h-[42px] px-2 rounded-lg bg-surface-card border border-stroke-input text-sm text-content-primary focus:border-cta-primary focus:outline-none transition-colors"
+                    >
+                      <option value="">選択してください</option>
+                      {ACCOUNTING_CATEGORIES.map((v) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-2 align-middle border-r border-stroke-input">
+                    <select
+                      value={accountTitles[item.id] || ''}
+                      onChange={(e) => onChangeAccountTitle(item.id, e.target.value)}
+                      aria-label="勘定科目"
+                      className="w-full h-[42px] px-2 rounded-lg bg-surface-card border border-stroke-input text-sm text-content-primary focus:border-cta-primary focus:outline-none transition-colors"
+                    >
+                      <option value="">選択してください</option>
+                      {ACCOUNT_TITLES.map((v, i) => (
+                        <option key={`${v}-${i}`} value={v}>{v}</option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="px-4 py-2 align-middle">
                     <input
                       type="text"
@@ -422,7 +482,7 @@ function DetailTableCard({
             })}
             {orderItems.length === 0 && (
               <tr>
-                <td colSpan={12} className="px-4 py-12 text-center text-content-sub">
+                <td colSpan={13} className="px-4 py-12 text-center text-content-sub">
                   <p className="text-sm font-semibold text-content-primary mb-2 text-balance">明細がありません</p>
                 </td>
               </tr>
