@@ -60,8 +60,8 @@ const initialContracts: MaintenanceContract[] = [
     contractorName: 'GEヘルスケアジャパン',
     contractorPerson: '佐藤花子',
     contractorPhone: '03-9876-5432',
-    warrantyEndDate: '2026-04-30',
-    comment: '次回点検: 2026年4月',
+    warrantyEndDate: '2026-09-30',
+    comment: '次回点検: 2026年9月',
     currentStep: 2,
   },
   {
@@ -78,7 +78,7 @@ const initialContracts: MaintenanceContract[] = [
     contractorName: 'オリンパスメディカルサービス',
     contractorPerson: '鈴木一郎',
     contractorPhone: '03-5555-1234',
-    warrantyEndDate: '2025-12-31',
+    warrantyEndDate: '2026-12-31',
     comment: '',
     currentStep: 3,
   },
@@ -98,7 +98,7 @@ const initialContracts: MaintenanceContract[] = [
     contractorPhone: '03-3333-4444',
     warrantyEndDate: '2026-03-31',
     comment: '契約更新要検討',
-    currentStep: 4,
+    currentStep: 3,
   },
   {
     id: '5',
@@ -158,7 +158,42 @@ export interface ContractGroupAsset {
   legalInspection: boolean;
   legalInspectionBasis: string;
   comment: string;
+  // REQ-101: 機器毎の概算保守金額 (任意・会計非連動・ライフサイクルコスト把握用)
+  estimatedMaintenanceCost: string;
 }
+
+// 契約グループごとの個体管理品目 初期データ (旧 MaintenanceContractsTab.MOCK_GROUP_ASSETS を集約)
+const emptyInspection = {
+  inspectionGroupName: '', inspectionType: '', inspectionCycle: '',
+  warrantyStart: '', warrantyEnd: '', partsExemption: false, exemptionAmount: '',
+  onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '',
+  comment: '', estimatedMaintenanceCost: '',
+};
+const initialContractAssets: Record<string, ContractGroupAsset[]> = {
+  '1': [
+    { id: 1, managementDept: '臨床工学部', installDept: '放射線科', qrLabel: 'QR-2025-0101', itemName: 'CT装置', maker: 'シーメンス', model: 'SOMATOM go.Top', ...emptyInspection, warrantyStart: '2025/04/01' },
+  ],
+  '2': [
+    { id: 2, managementDept: '臨床工学部', installDept: '外科', qrLabel: 'QR-2025-0001', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', ...emptyInspection, warrantyStart: '2025/04/01' },
+    { id: 3, managementDept: '臨床工学部', installDept: 'ICU', qrLabel: 'QR-2025-0016', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', ...emptyInspection, warrantyStart: '2025/04/01' },
+  ],
+  '3': [
+    { id: 4, managementDept: '臨床工学部', installDept: '手術室', qrLabel: 'QR-2025-0030', itemName: '電気手術器', maker: 'オリンパス', model: 'ESG-400', ...emptyInspection, warrantyStart: '2025/04/01' },
+    { id: 5, managementDept: '臨床工学部', installDept: '手術室', qrLabel: 'QR-2025-0031', itemName: '電気手術器', maker: 'オリンパス', model: 'ESG-400', ...emptyInspection, warrantyStart: '2025/04/01' },
+  ],
+  '4': [
+    { id: 6, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0050', itemName: '透析装置', maker: '日機装', model: 'DBG-03', ...emptyInspection, warrantyStart: '2024/04/01' },
+    { id: 7, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0051', itemName: '透析装置', maker: '日機装', model: 'DBG-03', ...emptyInspection, warrantyStart: '2024/04/01' },
+    { id: 8, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0052', itemName: '透析装置', maker: '日機装', model: 'DBG-03', ...emptyInspection, warrantyStart: '2024/04/01' },
+  ],
+  '5': [
+    { id: 9, managementDept: '臨床工学部', installDept: '放射線科', qrLabel: 'QR-2025-0070', itemName: 'MRI装置', maker: 'フィリップス', model: 'Ingenia Ambition', ...emptyInspection, warrantyStart: '2026/02/01' },
+  ],
+  '6': [
+    { id: 10, managementDept: '施設管理部', installDept: '本館', qrLabel: 'QR-2025-0090', itemName: 'エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', ...emptyInspection, warrantyStart: '2025/04/01', legalInspection: true, legalInspectionBasis: '資産M' },
+    { id: 11, managementDept: '施設管理部', installDept: '別館', qrLabel: 'QR-2025-0091', itemName: 'エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', ...emptyInspection, warrantyStart: '2025/04/01', legalInspection: true, legalInspectionBasis: '資産M' },
+  ],
+};
 
 interface SelectedAsset {
   qrCode: string;
@@ -187,7 +222,7 @@ interface MaintenanceContractStore {
 
 export const useMaintenanceContractStore = create<MaintenanceContractStore>((set) => ({
   contracts: initialContracts,
-  contractAssets: {},
+  contractAssets: initialContractAssets,
 
   addContract: (data) => {
     const contractId = `MC-${Date.now()}`;
@@ -231,6 +266,7 @@ export const useMaintenanceContractStore = create<MaintenanceContractStore>((set
       legalInspection: false,
       legalInspectionBasis: '',
       comment: '',
+      estimatedMaintenanceCost: '',
     }));
 
     set((state) => ({
