@@ -570,7 +570,7 @@ function RepairTaskContent() {
     setQuotationAmount('');
     setQuotationAccountDivision('');
 
-    alert('見積を登録しました');
+    alert('見積書を登録しました');
   };
 
   // STEP3: 見積削除
@@ -2524,7 +2524,7 @@ function RepairTaskContent() {
                   <div style={{ textAlign: 'center', color: '#8A8A8A', padding: '32px' }}>
                     <div style={{ fontSize: '36px', marginBottom: '12px' }}>📁</div>
                     <div>登録済みの見積はありません</div>
-                    <div style={{ fontSize: '12px', marginTop: '8px' }}>STEP3で見積を登録してください</div>
+                    <div style={{ fontSize: '12px', marginTop: '8px' }}>STEP3で見積書を登録してください</div>
                   </div>
                 )}
               </div>

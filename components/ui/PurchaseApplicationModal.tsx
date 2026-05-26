@@ -56,6 +56,8 @@ export function PurchaseApplicationModal({
   const [installationSection, setInstallationSection] = useState('');
   const [installationRoomName, setInstallationRoomName] = useState('');
   const [priority, setPriority] = useState('1');
+  // REQ-119: 優先順位は10位まで選択、それ以上はフリー入力
+  const [priorityFree, setPriorityFree] = useState(false);
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
   const [basicItem, setBasicItem] = useState('');
@@ -650,11 +652,32 @@ export function PurchaseApplicationModal({
               </div>
               <div style={styles.formItem}>
                 <label style={styles.label}>優先順位</label>
-                <select style={styles.select} value={priority} onChange={(e) => setPriority(e.target.value)}>
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select
+                    style={styles.select}
+                    value={priorityFree ? 'その他' : priority}
+                    onChange={(e) => {
+                      if (e.target.value === 'その他') { setPriorityFree(true); setPriority(''); }
+                      else { setPriorityFree(false); setPriority(e.target.value); }
+                    }}
+                  >
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                    <option value="その他">その他（11位以上）</option>
+                  </select>
+                  {priorityFree && (
+                    <input
+                      type="number"
+                      min={11}
+                      style={{ ...styles.select, width: '90px' }}
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value)}
+                      placeholder="順位"
+                      aria-label="優先順位（自由入力）"
+                    />
+                  )}
+                </div>
               </div>
               <div style={styles.formItem}>
                 <label style={styles.label}>希望納期</label>

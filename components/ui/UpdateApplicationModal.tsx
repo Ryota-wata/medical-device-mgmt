@@ -59,6 +59,8 @@ export function UpdateApplicationModal({
   const [installationSection, setInstallationSection] = useState('');
   const [installationRoomName, setInstallationRoomName] = useState('');
   const [priority, setPriority] = useState('1');
+  // REQ-119: 優先順位は10位まで選択、それ以上はフリー入力
+  const [priorityFree, setPriorityFree] = useState(false);
   const [desiredDeliveryYear, setDesiredDeliveryYear] = useState(() => String(new Date().getFullYear() + 1));
   const [desiredDeliveryMonth, setDesiredDeliveryMonth] = useState('3');
 
@@ -677,11 +679,32 @@ export function UpdateApplicationModal({
                 <tr>
                   <th style={tableTh}>優先順位</th>
                   <td style={tableTd}>
-                    <select style={{ ...styles.select, width: '80px' }} value={priority} onChange={(e) => setPriority(e.target.value)}>
-                      {[1, 2, 3, 4, 5].map(n => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <select
+                        style={{ ...styles.select, width: '80px' }}
+                        value={priorityFree ? 'その他' : priority}
+                        onChange={(e) => {
+                          if (e.target.value === 'その他') { setPriorityFree(true); setPriority(''); }
+                          else { setPriorityFree(false); setPriority(e.target.value); }
+                        }}
+                      >
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                        <option value="その他">その他（11位以上）</option>
+                      </select>
+                      {priorityFree && (
+                        <input
+                          type="number"
+                          min={11}
+                          style={{ ...styles.select, width: '80px' }}
+                          value={priority}
+                          onChange={(e) => setPriority(e.target.value)}
+                          placeholder="順位"
+                          aria-label="優先順位（自由入力）"
+                        />
+                      )}
+                    </div>
                   </td>
                   <th style={tableTh}>希望納期</th>
                   <td style={tableTd} colSpan={3}>

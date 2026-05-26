@@ -117,7 +117,7 @@ export default function CategoryRegistrationPage() {
         <section className="bg-surface-card border border-stroke-input rounded mb-4">
           <div className="flex items-center justify-between px-4 py-3 bg-surface-card border-b border-stroke-input">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-content-primary">登録区分登録</span>
+              <span className="text-sm font-semibold text-content-primary">明細区分登録</span>
               <span className="text-xs text-content-sub tabular-nums">登録: {registeredCount} / {detailItems.length}件</span>
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function CategoryRegistrationPage() {
             onClick={handleNext}
             className="h-12 px-7 bg-cta-primary text-white border-0 rounded cursor-pointer text-sm font-bold hover:bg-cta-primary-dark transition-colors"
           >
-            個体品目AI判定へ
+            資産マスタ登録へ
           </button>
         </div>
       </div>

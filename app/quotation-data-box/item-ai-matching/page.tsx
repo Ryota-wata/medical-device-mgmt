@@ -195,7 +195,7 @@ export default function ItemAiMatchingPage() {
 
   return (
     <div className="flex flex-col h-dvh bg-surface-screen">
-      <Header title="見積登録（購入）個体品目AI判定" stepBadge="STEP 4" hideMenu showBackButton={false} />
+      <Header title="見積登録（購入）資産マスタ登録" stepBadge="STEP 4" hideMenu showBackButton={false} />
       <StepProgressBar currentStep={4} />
 
       <div className="flex-1 overflow-auto p-4">
@@ -205,7 +205,7 @@ export default function ItemAiMatchingPage() {
             {/* 説明エリア (Figma 338:49207 構造: ラベル列 200px + 入力 flex-1, 両子を items-stretch で高さ揃え) */}
             <div className="flex items-stretch border border-stroke-input rounded">
               <div className="flex items-center justify-center px-4 w-[200px] shrink-0 bg-stroke-card text-base text-content-primary text-center">
-                個体品目AI判定
+                資産マスタ登録
               </div>
               <div className="flex-1 flex flex-col justify-center px-4 py-3 bg-surface-select gap-1">
                 <p className="text-sm font-semibold text-cta-primary-dark">

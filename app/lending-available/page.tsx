@@ -90,9 +90,9 @@ export default function LendingAvailablePage() {
       <div className="flex-1 w-full max-w-[1080px] mx-auto px-4 py-6">
         <div className="bg-surface-card rounded-lg border border-stroke-card overflow-hidden">
 
-          {/* 貸出種別名 */}
+          {/* 貸出グループ名 */}
           <section className="px-6 py-4 border-b border-stroke-card">
-            <h2 className="text-base font-bold text-content-primary mb-3">貸出種別名</h2>
+            <h2 className="text-base font-bold text-content-primary mb-3">貸出グループ名</h2>
             <div className="max-w-[350px]">
               <SearchableSelect
                 value={selectedGroup}
