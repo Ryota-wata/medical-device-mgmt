@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
-import { useAuthStore, useAssetStore, useMaintenanceContractStore } from '@/lib/stores';
+import { useAuthStore, useAssetStore, useMaintenanceContractStore, useInspectionStore } from '@/lib/stores';
 import type { ContractGroupAsset } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
@@ -282,6 +282,7 @@ function MaintenanceQuoteRegistrationContent() {
   // === 明細登録 (REQ-096/100/101) ===
   const { contractAssets, setContractAssets } = useMaintenanceContractStore();
   const { assets: masterAssets } = useAssetStore();
+  const addInspectionTask = useInspectionStore((s) => s.addTask);
   // 確定済み明細 (保守登録の必須判定)
   const [lineItems, setLineItems] = useState<ContractGroupAsset[]>([]);
   // REQ-096: 明細登録を実行したか (契約登録の前提条件)
@@ -412,9 +413,47 @@ function MaintenanceQuoteRegistrationContent() {
       alert('先に「明細の登録」を実行してください（対象資産を1件以上登録）。');
       return;
     }
+    // REQ-100: メーカー点検の明細を点検タスク管理へ連携（点検タスク=メーカー保守を生成）
+    const fallbackDate = () => {
+      const d = new Date();
+      d.setDate(d.getDate() + 90);
+      return d.toISOString().split('T')[0];
+    };
+    const makerItems = lineItems.filter(a => a.inspectionType === 'メーカー点検');
+    const vendorName = registeredQuotations[0]?.vendorName || '';
+    makerItems.forEach(a => {
+      const next = (a.warrantyEnd && a.warrantyEnd.replace(/\//g, '-'))
+        || formData.contractPeriodEnd
+        || fallbackDate();
+      addInspectionTask(
+        {
+          assetId: a.qrLabel,
+          inspectionType: 'メーカー保守',
+          periodicMenuIds: [],
+          hasDailyInspection: false,
+          dailyMenus: {},
+          vendorName,
+          nextInspectionDate: next,
+        },
+        {
+          assetName: a.itemName,
+          maker: a.maker,
+          model: a.model,
+          managementDepartment: a.managementDept,
+          installedDepartment: a.installDept,
+          inspectionGroupName: a.inspectionGroupName || formData.contractGroupName,
+          lendingStatus: '待機中',
+        }
+      );
+    });
+
     setIsSubmitting(true);
     setTimeout(() => {
-      alert('保守契約の登録が完了しました。');
+      alert(
+        makerItems.length > 0
+          ? `保守契約の登録が完了しました。\nメーカー点検 ${makerItems.length} 件を点検タスク管理へ連携しました。`
+          : '保守契約の登録が完了しました。'
+      );
       router.push('/quotation-data-box/maintenance-contracts');
       setIsSubmitting(false);
     }, 500);
@@ -506,11 +545,17 @@ function MaintenanceQuoteRegistrationContent() {
       annualAmount: parseInt(annualAmount.replace(/,/g, ''), 10) || 0,
     };
     setRegisteredQuotations(prev => [...prev, newQuotation]);
+    const wasOrderQuote = quotationPhase === '発注登録用見積';
     setSelectedQuotationFile('');
     setQuotationAmount('');
     setQuotationAccountDivision('');
     setAnnualAmount('');
     setSelectedQuotationVendorId('');
+    // REQ-092: 発注登録用見積のときだけ「見積書の登録」でSTEP③へ移動
+    if (wasOrderQuote) {
+      setCurrentStep(3);
+      setPreviewTab(3);
+    }
   };
 
   const handleQuotationDelete = (id: number) => {
