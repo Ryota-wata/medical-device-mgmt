@@ -36,24 +36,6 @@ export default function FacilityGroupManagementPage() {
   const [editNameValue, setEditNameValue] = useState('');
   const [facilitySearchQuery, setFacilitySearchQuery] = useState('');
 
-  // system_admin のみ
-  if (user?.role !== 'system_admin') {
-    return (
-      <div className="min-h-dvh flex items-center justify-center bg-surface-screen">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-          <p className="text-lg font-semibold text-content-alert text-pretty">アクセス権限がありません</p>
-          <p className="mt-2 text-sm text-content-sub text-pretty">この画面はシステム管理者のみ利用できます</p>
-          <button
-            onClick={() => router.push('/main')}
-            className="mt-4 px-4 py-2 bg-content-primary text-white rounded text-sm font-semibold transition-colors hover:bg-content-primary"
-          >
-            メイン画面へ戻る
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) || null;
   const facilityOptions = facilities.map((f) => f.facilityName);
 

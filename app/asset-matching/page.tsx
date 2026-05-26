@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useResponsive } from '@/lib/hooks/useResponsive';
@@ -16,8 +16,6 @@ export default function AssetMatchingPage() {
   const router = useRouter();
   const { isMobile } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
-  const [selectedAll, setSelectedAll] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [editingLinked, setEditingLinked] = useState<LinkedMasterData | null>(null);
   const [data, setData] = useState(assetMatchingSampleData);
@@ -74,24 +72,6 @@ export default function AssetMatchingPage() {
     router.push('/main');
   };
 
-  const toggleSelectAll = (checked: boolean) => {
-    setSelectedAll(checked);
-    if (checked) {
-      setSelectedRows(new Set(filteredData.map(row => row.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
-  };
-
-  const toggleRowSelection = (id: number) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedRows(newSelected);
-  };
 
   const toggleEditMode = (id: number) => {
     if (editingRow === id) {
@@ -159,18 +139,45 @@ export default function AssetMatchingPage() {
     }
   };
 
+  // REQ-032(突き合わせ): 編集中の台帳行を突き合わせ対象として資産マスタへ渡し、
+  // 開いたまま連続突き合わせ（行を切替えたら対象を更新してフォーカス）
+  const assetMasterWinRef = useRef<Window | null>(null);
   const handleOpenAssetMaster = () => {
+    const row = data.find(r => r.id === editingRow);
+    const target = row ? { item: row.originalItemName, maker: row.manufacturer, model: row.model } : null;
+    if (assetMasterWinRef.current && !assetMasterWinRef.current.closed) {
+      if (target) assetMasterWinRef.current.postMessage({ type: 'SET_MATCH_TARGET', target }, window.location.origin);
+      assetMasterWinRef.current.focus();
+      return;
+    }
     const width = 1400;
     const height = 900;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-    window.open(
-      `${basePath}/asset-master`,
+    const qs = target
+      ? `?item=${encodeURIComponent(target.item)}&maker=${encodeURIComponent(target.maker)}&model=${encodeURIComponent(target.model)}`
+      : '';
+    assetMasterWinRef.current = window.open(
+      `${basePath}/asset-master${qs}`,
       'AssetMasterWindow',
       `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
   };
+
+  // REQ-032(突き合わせ): 台帳側の対象(編集行)を切替えたら、開いている資産マスタへ自動反映
+  useEffect(() => {
+    if (assetMasterWinRef.current && !assetMasterWinRef.current.closed && editingRow !== null) {
+      const row = data.find(r => r.id === editingRow);
+      if (row) {
+        assetMasterWinRef.current.postMessage(
+          { type: 'SET_MATCH_TARGET', target: { item: row.originalItemName, maker: row.manufacturer, model: row.model } },
+          window.location.origin
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingRow]);
 
   // 資産マスタからのメッセージを受信
   useEffect(() => {
@@ -244,23 +251,18 @@ export default function AssetMatchingPage() {
   const confirmRow = (id: number) => {
     if (confirm(`No.${id} のレコードを確定しますか？\n確定後、このレコードは画面から削除されます。`)) {
       setData(data.filter(r => r.id !== id));
-      setSelectedRows(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
     }
   };
 
   const bulkConfirmSelected = () => {
-    if (selectedRows.size === 0) {
-      alert('確定する項目を選択してください');
+    // REQ-033: ✅選択ではなく「採用(aiApplied)」した項目を一括確定
+    const appliedCount = data.filter(row => row.aiApplied).length;
+    if (appliedCount === 0) {
+      alert('採用した項目がありません');
       return;
     }
-    if (confirm(`選択した${selectedRows.size}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
-      setData(data.filter(row => !selectedRows.has(row.id)));
-      setSelectedRows(new Set());
-      setSelectedAll(false);
+    if (confirm(`採用した${appliedCount}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
+      setData(data.filter(row => !row.aiApplied));
     }
   };
 
@@ -296,16 +298,15 @@ export default function AssetMatchingPage() {
     );
   }
 
-  // 固定列の累積left位置（px）: チェックボックス(36) + No.(40) + 台帳データ6列
+  // 固定列の累積left位置（px）: No.(40) + 台帳データ6列（REQ-033で✅列廃止につき各-36）
   const stickyLeft = {
-    checkbox: 0,
-    no: 36,
-    department: 76,
-    section: 166,
-    itemName: 276,
-    maker: 426,
-    model: 556,
-    qty: 676,
+    no: 0,
+    department: 40,
+    section: 130,
+    itemName: 240,
+    maker: 390,
+    model: 520,
+    qty: 640,
   };
 
   const thBase = 'py-2 px-1.5 border-b-2 border-[#E1E1E1] whitespace-nowrap text-[11px]';
@@ -445,7 +446,7 @@ export default function AssetMatchingPage() {
               onClick={bulkConfirmSelected}
               className="px-5 py-2.5 bg-[#008C1D] text-white border-none rounded cursor-pointer text-sm font-semibold flex items-center gap-2 hover:bg-[#008C1D]"
             >
-              <Check size={16} strokeWidth={2.5} aria-hidden /> 選択項目を一括確定
+              <Check size={16} strokeWidth={2.5} aria-hidden /> 採用項目を一括確定
             </button>
             <button
               onClick={handleOpenAssetMaster}
@@ -465,17 +466,7 @@ export default function AssetMatchingPage() {
               <thead>
                 {/* 1段目: グループヘッダー */}
                 <tr className="bg-[#FAFAFA]">
-                  <th
-                    rowSpan={2}
-                    className="p-2 border-b-2 border-[#E1E1E1] text-center sticky z-[4] bg-[#FAFAFA]"
-                    style={{ left: stickyLeft.checkbox }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAll}
-                      onChange={(e) => toggleSelectAll(e.target.checked)}
-                    />
-                  </th>
+                  {/* REQ-033: ✅選択ボックスは廃止（採用ボタンで一括確定） */}
                   <th
                     rowSpan={2}
                     className="p-2 border-b-2 border-[#E1E1E1] whitespace-nowrap sticky z-[4] bg-[#FAFAFA]"
@@ -510,10 +501,7 @@ export default function AssetMatchingPage() {
                     style={{ left: stickyLeft.qty }}
                   ></th>
                   <th colSpan={7} className="p-2 border-b border-[#E1E1E1] bg-[#FDF1E5] font-semibold">
-                    AI判定（推薦）
-                  </th>
-                  <th colSpan={6} className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] font-semibold">
-                    SHIP資産マスタ紐づけ
+                    AI判定（推薦：上段）／ SHIP資産マスタ修正（下段）
                   </th>
                   <th colSpan={2} className="p-2 border-b border-[#E1E1E1] sticky right-0 bg-[#FAFAFA] z-[4]">
                     操作
@@ -558,21 +546,14 @@ export default function AssetMatchingPage() {
                   >
                     数量
                   </th>
-                  {/* AI判定（推薦） */}
+                  {/* AI判定(上段)／SHIP修正(下段) 共通列（REQ-034: 2段表示で列を統合） */}
                   <th className={`${thBase} text-center`}>採用</th>
-                  <th className={thBase}>category</th>
-                  <th className={`${thBase} min-w-[120px]`}>大分類</th>
-                  <th className={`${thBase} min-w-[120px]`}>中分類</th>
-                  <th className={`${thBase} min-w-[150px]`}>品目</th>
-                  <th className={thBase}>メーカー名</th>
-                  <th className={thBase}>型式</th>
-                  {/* SHIP資産マスタ紐づけ */}
-                  <th className={thBase}>category</th>
-                  <th className={`${thBase} min-w-[120px]`}>大分類</th>
-                  <th className={`${thBase} min-w-[120px]`}>中分類</th>
-                  <th className={`${thBase} min-w-[150px]`}>品目</th>
-                  <th className={thBase}>メーカー名</th>
-                  <th className={thBase}>型式</th>
+                  <th className={`${thBase} min-w-[160px]`}>category</th>
+                  <th className={`${thBase} min-w-[140px]`}>大分類</th>
+                  <th className={`${thBase} min-w-[140px]`}>中分類</th>
+                  <th className={`${thBase} min-w-[160px]`}>品目</th>
+                  <th className={`${thBase} min-w-[140px]`}>メーカー名</th>
+                  <th className={`${thBase} min-w-[140px]`}>型式</th>
                   {/* 操作 */}
                   <th className={`${thBase} sticky right-[60px] bg-[#FAFAFA] z-[2] min-w-[60px] text-center`}>
                     編集
@@ -590,17 +571,7 @@ export default function AssetMatchingPage() {
                   return (
                     <React.Fragment key={row.id}>
                       <tr className="bg-white">
-                        {/* チェックボックス（sticky） */}
-                        <td
-                          className={`${tdBase} text-center sticky z-[2] bg-white`}
-                          style={{ left: stickyLeft.checkbox }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedRows.has(row.id)}
-                            onChange={() => toggleRowSelection(row.id)}
-                          />
-                        </td>
+                        {/* REQ-033: ✅選択ボックスは廃止 */}
                         <td
                           className={`${tdBase} sticky z-[2] bg-white`}
                           style={{ left: stickyLeft.no }}
@@ -657,102 +628,53 @@ export default function AssetMatchingPage() {
                             {row.aiApplied ? '解除' : '採用'}
                           </button>
                         </td>
-                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.category}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[120px]`}>{row.aiRecommendation.major}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[120px]`}>{row.aiRecommendation.middle}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[150px]`}>{row.aiRecommendation.item}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.manufacturer}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.model}</td>
-
-                        {/* SHIP資産マスタ紐づけ（編集対象） */}
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        {/* REQ-034: 各列 上段=AI判定(推薦) / 下段=SHIP資産マスタ修正 の2段表示 */}
+                        <td className={`${tdBase} min-w-[160px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.category || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.category}
-                              onChange={(value) => setEditingLinked({ ...editingLinked, category: value })}
-                              options={categoryOptions}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="200px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.category} onChange={(value) => setEditingLinked({ ...editingLinked, category: value })} options={categoryOptions} placeholder="選択" isMobile={isMobile} dropdownMinWidth="200px" />
                           ) : (
-                            displayLinked.category
+                            <div>{displayLinked.category}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.major || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.majorCategory}
-                              onChange={(value) => handleEditFieldChange('majorCategory', value)}
-                              options={majorCategoryOptions}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.majorCategory} onChange={(value) => handleEditFieldChange('majorCategory', value)} options={majorCategoryOptions} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.majorCategory
+                            <div>{displayLinked.majorCategory}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.middle || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.middleCategory}
-                              onChange={(value) => handleEditFieldChange('middleCategory', value)}
-                              options={middleCategoryOptions}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.middleCategory} onChange={(value) => handleEditFieldChange('middleCategory', value)} options={middleCategoryOptions} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.middleCategory
+                            <div>{displayLinked.middleCategory}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[150px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[160px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.item || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.item}
-                              onChange={(value) => handleEditFieldChange('item', value)}
-                              options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="400px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.item} onChange={(value) => handleEditFieldChange('item', value)} options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)} placeholder="選択" isMobile={isMobile} dropdownMinWidth="400px" />
                           ) : (
-                            displayLinked.item
+                            <div>{displayLinked.item}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.manufacturer || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.manufacturer}
-                              onChange={(value) => handleEditFieldChange('manufacturer', value)}
-                              options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.manufacturer} onChange={(value) => handleEditFieldChange('manufacturer', value)} options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.manufacturer
+                            <div>{displayLinked.manufacturer}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.model || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.model}
-                              onChange={(value) => handleEditFieldChange('model', value)}
-                              options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.model} onChange={(value) => handleEditFieldChange('model', value)} options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.model
+                            <div>{displayLinked.model}</div>
                           )}
                         </td>
 

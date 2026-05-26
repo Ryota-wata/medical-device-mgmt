@@ -3,17 +3,18 @@
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
-import { useAuthStore } from '@/lib/stores';
+import { useAuthStore, useAssetStore, useMaintenanceContractStore, useInspectionStore } from '@/lib/stores';
+import type { ContractGroupAsset } from '@/lib/stores';
 import { Header } from '@/components/layouts/Header';
 import { ACCOUNT_DIVISIONS } from '@/lib/data/account-divisions';
 import { OrderRegistrationModal } from '@/components/ui/OrderRegistrationModal';
 
 /** 保守契約登録のステップ定義 */
+// 260524 定例確定: STEP④(完了登録)を STEP③(契約登録)へ統合し3段構成に
 const MAINTENANCE_STEPS = [
   { step: 1, label: '見積依頼' },
   { step: 2, label: '見積登録' },
   { step: 3, label: '契約登録' },
-  { step: 4, label: '完了登録' },
 ];
 
 // 依頼先業者
@@ -278,6 +279,30 @@ function MaintenanceQuoteRegistrationContent() {
 
   const [registeredDocuments, setRegisteredDocuments] = useState<RegisteredDocument[]>([]);
 
+  // === 明細登録 (REQ-096/100/101) ===
+  const { contractAssets, setContractAssets } = useMaintenanceContractStore();
+  const { assets: masterAssets } = useAssetStore();
+  const addInspectionTask = useInspectionStore((s) => s.addTask);
+  // 確定済み明細 (保守登録の必須判定)
+  const [lineItems, setLineItems] = useState<ContractGroupAsset[]>([]);
+  // REQ-096: 明細登録を実行したか (契約登録の前提条件)
+  const [lineItemsRegistered, setLineItemsRegistered] = useState(false);
+  const [isLineItemModalOpen, setIsLineItemModalOpen] = useState(false);
+  // モーダル内の編集ワークコピーと新規追加行ID
+  const [modalAssets, setModalAssets] = useState<ContractGroupAsset[]>([]);
+  // 資産追加の曖昧検索クエリ
+  const [assetSearchQuery, setAssetSearchQuery] = useState('');
+
+  // 契約グループの対象資産をストアから読み込み
+  useEffect(() => {
+    setLineItems(contractAssets[contractId] || []);
+  }, [contractId, contractAssets]);
+
+  // 契約が変わったら明細登録フラグをリセット (この契約で改めて明細登録が必要)
+  useEffect(() => {
+    setLineItemsRegistered(false);
+  }, [contractId]);
+
   // Figma 構造: 右サイドバーは単一プレビュー (activeStep 連動、宣言は下の方なので関数経由)
   const [previewQuotationIndex, setPreviewQuotationIndex] = useState<number | null>(null);
   const [previewDocumentIndex, setPreviewDocumentIndex] = useState<number | null>(null);
@@ -382,23 +407,113 @@ function MaintenanceQuoteRegistrationContent() {
     }, 300);
   };
 
-  const handleStep3Complete = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setCurrentStep(4);
-      setPreviewTab(4);
-      setIsSubmitting(false);
-    }, 300);
-  };
-
   const handleFinalComplete = () => {
+    // REQ-096: 明細登録を実行しないと契約登録できない
+    if (!lineItemsRegistered || lineItems.length === 0) {
+      alert('先に「明細の登録」を実行してください（対象資産を1件以上登録）。');
+      return;
+    }
+    // REQ-100: メーカー点検の明細を点検タスク管理へ連携（点検タスク=メーカー保守を生成）
+    const fallbackDate = () => {
+      const d = new Date();
+      d.setDate(d.getDate() + 90);
+      return d.toISOString().split('T')[0];
+    };
+    const makerItems = lineItems.filter(a => a.inspectionType === 'メーカー点検');
+    const vendorName = registeredQuotations[0]?.vendorName || '';
+    makerItems.forEach(a => {
+      const next = (a.warrantyEnd && a.warrantyEnd.replace(/\//g, '-'))
+        || formData.contractPeriodEnd
+        || fallbackDate();
+      addInspectionTask(
+        {
+          assetId: a.qrLabel,
+          inspectionType: 'メーカー保守',
+          periodicMenuIds: [],
+          hasDailyInspection: false,
+          dailyMenus: {},
+          vendorName,
+          nextInspectionDate: next,
+        },
+        {
+          assetName: a.itemName,
+          maker: a.maker,
+          model: a.model,
+          managementDepartment: a.managementDept,
+          installedDepartment: a.installDept,
+          inspectionGroupName: a.inspectionGroupName || formData.contractGroupName,
+          lendingStatus: '待機中',
+        }
+      );
+    });
+
     setIsSubmitting(true);
     setTimeout(() => {
-      alert('保守契約の登録が完了しました。');
+      alert(
+        makerItems.length > 0
+          ? `保守契約の登録が完了しました。\nメーカー点検 ${makerItems.length} 件を点検タスク管理へ連携しました。`
+          : '保守契約の登録が完了しました。'
+      );
       router.push('/quotation-data-box/maintenance-contracts');
       setIsSubmitting(false);
     }, 500);
   };
+
+  // === 明細登録ハンドラ (REQ-096/100/101) ===
+  const openLineItemModal = () => {
+    setModalAssets(lineItems.map(a => ({ ...a })));
+    setAssetSearchQuery('');
+    setIsLineItemModalOpen(true);
+  };
+  const updateLineItem = (id: number, updates: Partial<ContractGroupAsset>) => {
+    setModalAssets(prev => prev.map(a => (a.id === id ? { ...a, ...updates } : a)));
+  };
+  const removeLineItem = (id: number) => {
+    setModalAssets(prev => prev.filter(a => a.id !== id));
+  };
+  // 曖昧検索で選んだ個体マスタ資産を明細に追加 (情報は選択時点で確定表示・CLAUDE.md §5)
+  const addAssetFromCandidate = (m: typeof masterAssets[number]) => {
+    const maxId = modalAssets.length > 0 ? Math.max(...modalAssets.map(a => a.id)) : 0;
+    const na: ContractGroupAsset = {
+      id: maxId + 1,
+      managementDept: m.shipDivision || m.managementDept || '',
+      installDept: m.shipDepartment || m.department || '',
+      qrLabel: m.qrCode,
+      itemName: m.item || m.name || '',
+      maker: m.maker || '',
+      model: m.model || '',
+      inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '', warrantyEnd: '',
+      partsExemption: false, exemptionAmount: '', onCall: false, remote: false,
+      legalInspection: false, legalInspectionBasis: '', comment: '', estimatedMaintenanceCost: '',
+    };
+    setModalAssets(prev => [...prev, na]);
+    setAssetSearchQuery('');
+  };
+  const handleSaveLineItems = () => {
+    if (modalAssets.length === 0) {
+      alert('明細（対象資産）を1件以上追加してください。');
+      return;
+    }
+    setLineItems(modalAssets);
+    setContractAssets(contractId, modalAssets);
+    setLineItemsRegistered(true);
+    setIsLineItemModalOpen(false);
+    alert(`明細 ${modalAssets.length} 件を登録しました。`);
+  };
+  // 資産追加の検索候補 (個体マスタを曖昧検索・登録済みは除外)
+  const assetCandidates = (() => {
+    const q = assetSearchQuery.trim().toLowerCase();
+    if (!q) return [];
+    const existing = new Set(modalAssets.map(a => a.qrLabel));
+    return masterAssets
+      .filter(m => !existing.has(m.qrCode) && (
+        m.qrCode.toLowerCase().includes(q) ||
+        (m.item || '').toLowerCase().includes(q) ||
+        (m.maker || '').toLowerCase().includes(q) ||
+        (m.model || '').toLowerCase().includes(q)
+      ))
+      .slice(0, 20);
+  })();
 
   const updateVendor = (id: number, updates: Partial<RfqVendor>) => {
     setRfqVendors(prev => prev.map(v => v.id === id ? { ...v, ...updates } : v));
@@ -430,11 +545,17 @@ function MaintenanceQuoteRegistrationContent() {
       annualAmount: parseInt(annualAmount.replace(/,/g, ''), 10) || 0,
     };
     setRegisteredQuotations(prev => [...prev, newQuotation]);
+    const wasOrderQuote = quotationPhase === '発注登録用見積';
     setSelectedQuotationFile('');
     setQuotationAmount('');
     setQuotationAccountDivision('');
     setAnnualAmount('');
     setSelectedQuotationVendorId('');
+    // REQ-092: 発注登録用見積のときだけ「見積書の登録」でSTEP③へ移動
+    if (wasOrderQuote) {
+      setCurrentStep(3);
+      setPreviewTab(3);
+    }
   };
 
   const handleQuotationDelete = (id: number) => {
@@ -965,29 +1086,17 @@ function MaintenanceQuoteRegistrationContent() {
                     </div>
                   </TdCell>
                 </tr>
-              </tbody>
-            </table>
-
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleStep3Complete}
-                disabled={!isStepEnabled(3) || isSubmitting}
-                className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                契約登録完了→STEP④へ
-              </button>
-            </div>
-          </Section>
-
-          {/* ===== STEP④ ===== */}
-          <Section step={4} title="STEP④. 完了登録（添付ドキュメントの登録）" enabled={isStepEnabled(4)} completed={4 < activeStep}>
-            <table className="w-full border-collapse text-sm">
-              <tbody>
+                {/* 260524 統合: 旧STEP④ 各種ドキュメント登録 */}
+                <tr>
+                  <td colSpan={2} className="px-3 py-2 bg-surface-select text-cta-primary-dark font-bold border border-stroke-input text-sm">
+                    各種ドキュメントの登録
+                  </td>
+                </tr>
                 <tr>
                   <ThLabelCell>添付ファイル</ThLabelCell>
                   <TdCell>
                     <div className="flex items-center gap-3">
-                      <label className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm hover:bg-stroke-input transition-colors ${isStepEnabled(4) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                      <label className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm hover:bg-stroke-input transition-colors ${isStepEnabled(3) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                         ファイルの選択
                         <input
                           type="file"
@@ -1007,7 +1116,7 @@ function MaintenanceQuoteRegistrationContent() {
                               alert(`ドキュメント「${file.name}」を登録しました。`);
                             }
                           }}
-                          disabled={!isStepEnabled(4)}
+                          disabled={!isStepEnabled(3)}
                         />
                       </label>
                       <span className="text-sm text-content-sub">ファイルが選択されていません</span>
@@ -1024,7 +1133,7 @@ function MaintenanceQuoteRegistrationContent() {
                           name="documentType"
                           checked={formData.documentType === '契約書'}
                           onChange={() => updateFormData({ documentType: '契約書' })}
-                          disabled={!isStepEnabled(4)}
+                          disabled={!isStepEnabled(3)}
                           className="accent-cta-primary"
                         />
                         契約書
@@ -1035,7 +1144,7 @@ function MaintenanceQuoteRegistrationContent() {
                           name="documentType"
                           checked={formData.documentType === 'その他（免責部品一覧など）'}
                           onChange={() => updateFormData({ documentType: 'その他（免責部品一覧など）' })}
-                          disabled={!isStepEnabled(4)}
+                          disabled={!isStepEnabled(3)}
                           className="accent-cta-primary"
                         />
                         その他（免責部品一覧など）
@@ -1046,16 +1155,39 @@ function MaintenanceQuoteRegistrationContent() {
               </tbody>
             </table>
 
-            <div className="flex justify-between mt-4">
+            {/* 明細の状態 (必須アクションの可視化) */}
+            {(() => {
+              const uninput = lineItems.filter(a => !a.inspectionType).length;
+              return !lineItemsRegistered ? (
+                <div className="mt-4 px-3 py-2.5 rounded-lg border border-content-alert bg-surface-screen text-sm font-bold text-content-alert">
+                  明細が未登録です。契約登録の前に「明細の登録」を実行してください。
+                </div>
+              ) : (
+                <div className="mt-4 px-3 py-2.5 rounded-lg border border-stroke-input bg-surface-screen text-sm text-content-primary">
+                  明細登録済 <strong className="tabular-nums">{lineItems.length}</strong> 件
+                  {uninput > 0
+                    ? <span className="ml-3 text-content-sub">点検情報 未入力 {uninput}件</span>
+                    : <span className="ml-3 text-cta-primary-dark">点検情報 入力済</span>}
+                </div>
+              );
+            })()}
+
+            <div className="flex justify-between mt-3">
               <button
-                disabled={!isStepEnabled(4) || isSubmitting}
-                className="h-10 px-6 rounded-lg bg-surface-card text-cta-primary border-2 border-cta-primary text-sm font-bold cursor-pointer hover:bg-surface-select transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={openLineItemModal}
+                disabled={!isStepEnabled(3) || isSubmitting}
+                className={
+                  !lineItemsRegistered
+                    ? 'h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+                    : 'h-10 px-6 rounded-lg bg-surface-card text-cta-primary border-2 border-cta-primary text-sm font-bold cursor-pointer hover:bg-surface-select transition-colors disabled:opacity-60 disabled:cursor-not-allowed'
+                }
               >
-                明細の登録
+                {lineItemsRegistered ? `明細を編集（${lineItems.length}件）` : '明細の登録'}
               </button>
               <button
                 onClick={handleFinalComplete}
-                disabled={!isStepEnabled(4) || isSubmitting}
+                disabled={!isStepEnabled(3) || isSubmitting || !lineItemsRegistered || lineItems.length === 0}
+                title={!lineItemsRegistered ? '先に明細の登録が必要です' : undefined}
                 className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-base font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 保守登録
@@ -1084,7 +1216,7 @@ function MaintenanceQuoteRegistrationContent() {
                   onClick={() => {
                     setPreviewTab(item.step);
                     if (item.step !== 2) setPreviewQuotationIndex(null);
-                    if (item.step !== 4) setPreviewDocumentIndex(null);
+                    if (item.step !== 3) setPreviewDocumentIndex(null);
                   }}
                   className={`flex-1 px-3 py-3 text-xs font-bold cursor-pointer border-0 border-b-[3px] transition-colors ${
                     isActive
@@ -1111,10 +1243,9 @@ function MaintenanceQuoteRegistrationContent() {
               {previewTab === 2 && (previewQuotationIndex !== null
                 ? `見積プレビュー - ${registeredQuotations[previewQuotationIndex]?.fileName || ''}`
                 : '登録済み見積一覧')}
-              {previewTab === 3 && '契約情報プレビュー'}
-              {previewTab === 4 && (previewDocumentIndex !== null
+              {previewTab === 3 && (previewDocumentIndex !== null
                 ? `ドキュメントプレビュー - ${registeredDocuments[previewDocumentIndex]?.fileName || ''}`
-                : '登録済みドキュメント一覧')}
+                : '契約情報・ドキュメントプレビュー')}
             </h3>
           </div>
 
@@ -1250,8 +1381,8 @@ function MaintenanceQuoteRegistrationContent() {
             )}
 
             {/* STEP③: 契約情報プレビュー */}
-            {previewTab === 3 && (
-              <div className="bg-surface-card border border-stroke-input rounded-2xl p-6">
+            {previewTab === 3 && previewDocumentIndex === null && (
+              <div className="bg-surface-card border border-stroke-input rounded-2xl p-6 mb-4">
                 <h4 className="text-sm font-bold mb-4 text-cta-primary-dark">契約情報サマリー</h4>
                 <table className="w-full border-collapse text-sm">
                   <tbody>
@@ -1284,8 +1415,8 @@ function MaintenanceQuoteRegistrationContent() {
               </div>
             )}
 
-            {/* STEP④: ドキュメント一覧 */}
-            {previewTab === 4 && previewDocumentIndex === null && (
+            {/* STEP③(統合): ドキュメント一覧 */}
+            {previewTab === 3 && previewDocumentIndex === null && (
               <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
                 <h4 className="text-sm font-bold mb-3 text-cta-primary-dark">登録済みドキュメント一覧</h4>
                 {registeredDocuments.length > 0 ? (
@@ -1328,14 +1459,14 @@ function MaintenanceQuoteRegistrationContent() {
                   <div className="text-center text-content-sub p-8">
                     <p className="text-4xl mb-3">📁</p>
                     <p>登録済みのドキュメントはありません</p>
-                    <p className="text-xs mt-2">STEP④でドキュメントを登録してください</p>
+                    <p className="text-xs mt-2">STEP③でドキュメントを登録してください</p>
                   </div>
                 )}
               </div>
             )}
 
-            {/* STEP④: ドキュメントプレビュー */}
-            {previewTab === 4 && previewDocumentIndex !== null && registeredDocuments[previewDocumentIndex] && (
+            {/* STEP③(統合): ドキュメントプレビュー */}
+            {previewTab === 3 && previewDocumentIndex !== null && registeredDocuments[previewDocumentIndex] && (
               <div className="bg-surface-card border border-stroke-input rounded-2xl p-4">
                 <button
                   onClick={() => setPreviewDocumentIndex(null)}
@@ -1369,6 +1500,175 @@ function MaintenanceQuoteRegistrationContent() {
 
         {/* Figma 構造: 単一プレビュー (activeStep 連動)、縦タブバーは撤去 */}
       </div>
+
+      {/* 明細登録モーダル (REQ-096/100/101) */}
+      {isLineItemModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-surface-card rounded-2xl w-[96%] max-w-[1400px] max-h-[88vh] flex flex-col shadow-2xl">
+            {/* ヘッダー */}
+            <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-stroke-input">
+              <h3 className="m-0 text-sm font-bold text-content-primary">明細登録 — 点検情報・契約単価</h3>
+              <button onClick={() => setIsLineItemModalOpen(false)} aria-label="閉じる" className="bg-transparent border-0 text-xl cursor-pointer text-content-sub px-2">×</button>
+            </div>
+
+            {/* テーブル */}
+            <div className="flex-1 overflow-auto p-4">
+              {/* 資産の追加: 曖昧検索 → 候補から選択（情報を見て確定） */}
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-content-primary mb-1.5">資産を追加（QR・品目・メーカー・型式で検索）</label>
+                <input
+                  type="text"
+                  value={assetSearchQuery}
+                  onChange={(e) => setAssetSearchQuery(e.target.value)}
+                  placeholder="QRコード / 品目 / メーカー / 型式 で検索"
+                  className="w-full max-w-[480px] h-9 px-3 rounded-lg border border-stroke-input text-sm focus:outline-none focus:border-cta-primary"
+                />
+                {assetSearchQuery.trim() && (
+                  <div className="mt-2 border border-stroke-input rounded-lg overflow-hidden max-w-[920px]">
+                    {assetCandidates.length > 0 ? (
+                      <table className="w-full border-collapse text-xs">
+                        <thead>
+                          <tr className="bg-stroke-card text-content-primary">
+                            <th className="px-2 py-1.5 text-left border-b border-stroke-input">QRラベル</th>
+                            <th className="px-2 py-1.5 text-left border-b border-stroke-input">品目</th>
+                            <th className="px-2 py-1.5 text-left border-b border-stroke-input">メーカー</th>
+                            <th className="px-2 py-1.5 text-left border-b border-stroke-input">型式</th>
+                            <th className="px-2 py-1.5 text-left border-b border-stroke-input">設置部署</th>
+                            <th className="px-2 py-1.5 text-center border-b border-stroke-input w-16">操作</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assetCandidates.map((m, i) => (
+                            <tr key={`${m.qrCode}-${i}`} className={i % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                              <td className="px-2 py-1.5 border-b border-stroke-input font-mono text-cta-primary-dark">{m.qrCode}</td>
+                              <td className="px-2 py-1.5 border-b border-stroke-input">{m.item || m.name || '-'}</td>
+                              <td className="px-2 py-1.5 border-b border-stroke-input">{m.maker || '-'}</td>
+                              <td className="px-2 py-1.5 border-b border-stroke-input">{m.model || '-'}</td>
+                              <td className="px-2 py-1.5 border-b border-stroke-input">{m.shipDepartment || m.department || '-'}</td>
+                              <td className="px-2 py-1.5 border-b border-stroke-input text-center">
+                                <button onClick={() => addAssetFromCandidate(m)} className="px-2.5 py-1 rounded bg-cta-primary text-white border-0 text-[11px] font-bold cursor-pointer hover:bg-cta-primary-dark">追加</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="px-3 py-2.5 text-xs text-content-sub">該当する資産がありません（登録済みは除外）</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {modalAssets.length === 0 ? (
+                <div className="text-center text-content-sub py-12">
+                  <p className="text-4xl mb-3">📋</p>
+                  <p>明細がありません。上の検索から対象資産を追加してください。</p>
+                </div>
+              ) : (
+              <table className="border-collapse text-xs min-w-[1500px]">
+                <thead>
+                  <tr className="bg-stroke-card text-content-primary">
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">管理部署</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">設置部署</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">QRラベル</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">品目</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">メーカー</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">型式</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">点検グループ名</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">点検種別</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">点検周期</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">保証期間</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">部品免責</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">免責金額</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">オンコール</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">リモート</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">契約単価</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">コメント</th>
+                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modalAssets.map((a, idx) => {
+                    const cell = 'px-2 py-1.5 border border-stroke-input align-middle';
+                    const ci = 'w-full px-2 py-1 rounded border border-stroke-input text-xs bg-surface-card focus:outline-none focus:border-cta-primary';
+                    return (
+                      <tr key={a.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
+                        {/* 部署情報・商品情報 (検索選択で確定・表示のみ) */}
+                        <td className={cell}>{a.managementDept || '-'}</td>
+                        <td className={cell}>{a.installDept || '-'}</td>
+                        <td className={`${cell} font-mono font-semibold text-cta-primary-dark`}>{a.qrLabel || '-'}</td>
+                        <td className={cell}>{a.itemName || '-'}</td>
+                        <td className={cell}>{a.maker || '-'}</td>
+                        <td className={cell}>{a.model || '-'}</td>
+                        {/* 点検情報 (常時編集可) */}
+                        <td className={cell}><input type="text" value={a.inspectionGroupName} onChange={(e) => updateLineItem(a.id, { inspectionGroupName: e.target.value })} placeholder={formData.contractGroupName || '-'} className={`${ci} w-[130px]`} /></td>
+                        <td className={cell}>
+                          <select value={a.inspectionType} onChange={(e) => updateLineItem(a.id, { inspectionType: e.target.value })} className={`${ci} w-[110px]`}>
+                            <option value="">-</option>
+                            <option value="院内点検">院内点検</option>
+                            <option value="メーカー点検">メーカー点検</option>
+                            <option value="スポット点検">スポット点検</option>
+                          </select>
+                        </td>
+                        <td className={cell}>
+                          <div className="flex items-center gap-1">
+                            <input type="number" min="0" max="120" value={a.inspectionCycle} onChange={(e) => updateLineItem(a.id, { inspectionCycle: e.target.value })} placeholder="-" className={`${ci} w-[50px] text-right tabular-nums`} />
+                            <span className="text-[10px] text-content-sub">ヶ月</span>
+                          </div>
+                        </td>
+                        <td className={cell}>
+                          <div className="flex items-center gap-1">
+                            <input type="date" value={a.warrantyStart ? a.warrantyStart.replace(/\//g, '-') : ''} onChange={(e) => updateLineItem(a.id, { warrantyStart: e.target.value })} className={`${ci} w-[125px]`} />
+                            <span className="text-[10px]">〜</span>
+                            <input type="date" value={a.warrantyEnd ? a.warrantyEnd.replace(/\//g, '-') : ''} onChange={(e) => updateLineItem(a.id, { warrantyEnd: e.target.value })} className={`${ci} w-[125px]`} />
+                          </div>
+                        </td>
+                        <td className={`${cell} text-center`}>
+                          <input type="checkbox" checked={a.partsExemption} onChange={(e) => updateLineItem(a.id, { partsExemption: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="部品免責" />
+                        </td>
+                        <td className={cell}><input type="text" value={a.exemptionAmount} onChange={(e) => updateLineItem(a.id, { exemptionAmount: e.target.value })} placeholder="-" className={`${ci} w-[80px]`} /></td>
+                        <td className={`${cell} text-center`}>
+                          <input type="checkbox" checked={a.onCall} onChange={(e) => updateLineItem(a.id, { onCall: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="オンコール" />
+                        </td>
+                        <td className={`${cell} text-center`}>
+                          <input type="checkbox" checked={a.remote} onChange={(e) => updateLineItem(a.id, { remote: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="リモート" />
+                        </td>
+                        {/* 概算保守金額 (REQ-101: 任意・会計非連動) */}
+                        <td className={cell}>
+                          <div className="flex items-center gap-1 justify-end">
+                            <span className="text-[10px] text-content-sub">¥</span>
+                            <input type="number" min="0" value={a.estimatedMaintenanceCost} onChange={(e) => updateLineItem(a.id, { estimatedMaintenanceCost: e.target.value })} placeholder="-" className={`${ci} w-[110px] text-right tabular-nums`} />
+                          </div>
+                        </td>
+                        <td className={cell}><input type="text" value={a.comment} onChange={(e) => updateLineItem(a.id, { comment: e.target.value })} placeholder="-" className={`${ci} w-[120px]`} /></td>
+                        <td className={`${cell} text-center`}>
+                          <button onClick={() => removeLineItem(a.id)} className="px-2 py-1 rounded bg-content-alert text-white border-0 text-[11px] cursor-pointer hover:opacity-90" aria-label="行を削除">削除</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              )}
+            </div>
+
+            {/* フッター */}
+            <div className="flex items-center justify-between px-5 py-3 border-t border-stroke-input">
+              <span className="text-sm text-content-primary">
+                明細 <strong className="tabular-nums">{modalAssets.length}</strong> 件
+                {(() => {
+                  const total = modalAssets.reduce((s, a) => s + (parseInt(a.estimatedMaintenanceCost, 10) || 0), 0);
+                  return total > 0 ? <span className="ml-3 text-content-sub">契約単価 合計 ¥{total.toLocaleString()}</span> : null;
+                })()}
+              </span>
+              <div className="flex gap-2">
+                <button onClick={() => setIsLineItemModalOpen(false)} className="h-10 px-5 rounded-lg bg-surface-card text-content-primary border border-stroke-input text-sm font-bold cursor-pointer hover:bg-stroke-card transition-colors">キャンセル</button>
+                <button onClick={handleSaveLineItems} className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors">明細を保存</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <OrderRegistrationModal
         isOpen={isOrderRegisterModalOpen}

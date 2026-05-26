@@ -49,13 +49,34 @@ interface MaintenanceContract {
   assets: ContractAsset[];
 }
 
-// 見直し結果データ
+// 追加候補 (検索結果)
+export interface AddCandidateAsset {
+  qrLabel: string;
+  item: string;
+  maker: string;
+  model: string;
+  managementDepartment: string;
+  installationDepartment: string;
+}
+
+// 見直し結果データ (0525 拡張: 廃棄 + 追加 両対応)
 export interface ContractReviewResult {
   removedAssetQrLabels: string[];
+  addedAssetQrLabels: string[];
   newContractAmount: number;
   reviewReason: string;
   uploadedFiles: File[];
 }
+
+// QR検索のモック候補 (実運用では原本リストから検索)
+const MOCK_SEARCH_POOL: AddCandidateAsset[] = [
+  { qrLabel: 'QR-2025-0200', item: 'CT装置', maker: 'シーメンス', model: 'SOMATOM go.Top', managementDepartment: '臨床工学部', installationDepartment: '放射線科' },
+  { qrLabel: 'QR-2025-0201', item: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', managementDepartment: '臨床工学部', installationDepartment: '外科' },
+  { qrLabel: 'QR-2025-0202', item: '電気手術器', maker: 'オリンパス', model: 'ESG-400', managementDepartment: '臨床工学部', installationDepartment: '手術室' },
+  { qrLabel: 'QR-2025-0203', item: '透析装置', maker: '日機装', model: 'DBG-03', managementDepartment: '臨床工学部', installationDepartment: '透析室' },
+  { qrLabel: 'QR-2025-0204', item: 'MRI装置', maker: 'フィリップス', model: 'Ingenia Ambition', managementDepartment: '臨床工学部', installationDepartment: '放射線科' },
+  { qrLabel: 'QR-2025-0205', item: '人工呼吸器', maker: 'ドレーゲル', model: 'Evita V800', managementDepartment: '臨床工学部', installationDepartment: 'ICU' },
+];
 
 interface ContractReviewModalProps {
   isOpen: boolean;
@@ -71,6 +92,8 @@ export function ContractReviewModal({
   onSubmit,
 }: ContractReviewModalProps) {
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
+  const [addedAssets, setAddedAssets] = useState<AddCandidateAsset[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [newAmount, setNewAmount] = useState('');
   const [reviewReason, setReviewReason] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -81,11 +104,30 @@ export function ContractReviewModal({
   React.useEffect(() => {
     if (isOpen && contract) {
       setSelectedAssets(new Set());
+      setAddedAssets([]);
+      setSearchQuery('');
       setNewAmount(contract.contractAmount.toString());
       setReviewReason('');
       setUploadedFiles([]);
     }
   }, [isOpen, contract]);
+
+  // QR検索: 既存契約資産・既追加分は除外 (early return の前に置く: Rules of Hooks)
+  const searchResults = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || !contract) return [];
+    const existingQrs = new Set([
+      ...contract.assets.map(a => a.qrLabel),
+      ...addedAssets.map(a => a.qrLabel),
+    ]);
+    return MOCK_SEARCH_POOL.filter(c =>
+      !existingQrs.has(c.qrLabel) &&
+      (c.qrLabel.toLowerCase().includes(q) ||
+       c.item.toLowerCase().includes(q) ||
+       c.maker.toLowerCase().includes(q) ||
+       c.model.toLowerCase().includes(q))
+    );
+  }, [searchQuery, contract, addedAssets]);
 
   if (!isOpen || !contract) return null;
 
@@ -125,10 +167,19 @@ export function ContractReviewModal({
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleAddAsset = (asset: AddCandidateAsset) => {
+    setAddedAssets(prev => [...prev, asset]);
+    setSearchQuery('');
+  };
+
+  const handleRemoveAddedAsset = (qrLabel: string) => {
+    setAddedAssets(prev => prev.filter(a => a.qrLabel !== qrLabel));
+  };
+
   const handleSubmit = () => {
-    // バリデーション
-    if (selectedAssets.size === 0) {
-      alert('除外する資産を1件以上選択してください');
+    // バリデーション: 廃棄 0 件 かつ 追加 0 件 はエラー
+    if (selectedAssets.size === 0 && addedAssets.length === 0) {
+      alert('廃棄または追加する資産を1件以上選択してください');
       return;
     }
 
@@ -138,10 +189,7 @@ export function ContractReviewModal({
       return;
     }
 
-    if (amount > contract.contractAmount) {
-      alert('見直し後の契約金額は現在の金額以下にしてください');
-      return;
-    }
+    // 0525 仕様変更: 上限制約撤去 (追加で金額増加もありうるため)
 
     if (!reviewReason.trim()) {
       alert('見直し理由を入力してください');
@@ -160,6 +208,7 @@ export function ContractReviewModal({
     const confirmMessage = `以下の内容で契約内容を見直します。よろしいですか？
 
 除外資産: ${selectedAssets.size}件
+追加資産: ${addedAssets.length}件
 見直し後金額: ¥${amount.toLocaleString()}（税別）
 見直し理由: ${reviewReason}
 添付ファイル: ${uploadedFiles.length}件`;
@@ -168,6 +217,7 @@ export function ContractReviewModal({
 
     onSubmit(contract.id, {
       removedAssetQrLabels: Array.from(selectedAssets),
+      addedAssetQrLabels: addedAssets.map(a => a.qrLabel),
       newContractAmount: amount,
       reviewReason: reviewReason.trim(),
       uploadedFiles,
@@ -461,9 +511,9 @@ export function ContractReviewModal({
 
           {/* 廃棄対象資産の選択 */}
           <div style={styles.section}>
-            <div style={styles.sectionTitle}>廃棄対象資産の選択</div>
+            <div style={styles.sectionTitle}>廃棄対象資産の選択（任意）</div>
             <p style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '12px' }}>
-              契約から除外する資産にチェックを入れてください
+              契約から除外する資産にチェックを入れてください（追加のみの場合はスキップ可）
             </p>
             <div style={styles.tableContainer}>
               <table style={styles.table}>
@@ -517,6 +567,124 @@ export function ContractReviewModal({
             </div>
           </div>
 
+          {/* 追加対象資産の選択 (0525 仕様追加) */}
+          <div style={styles.section}>
+            <div style={styles.sectionTitle}>追加対象資産の選択（任意）</div>
+            <p style={{ fontSize: '13px', color: '#8A8A8A', marginBottom: '12px' }}>
+              契約期間中に新たに保守対象に加える資産を、QRラベルまたは品目・メーカー・型式で検索して追加してください
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="QRラベル / 品目 / メーカー / 型式 で曖昧検索"
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  border: '1px solid #E1E1E1',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                }}
+              />
+            </div>
+            {searchQuery.trim() && searchResults.length > 0 && (
+              <div style={{ ...styles.tableContainer, marginBottom: '12px' }}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>QRラベル</th>
+                      <th style={styles.th}>品目</th>
+                      <th style={styles.th}>メーカー</th>
+                      <th style={styles.th}>型式</th>
+                      <th style={styles.th}>設置部署</th>
+                      <th style={{ ...styles.th, width: '80px', textAlign: 'center' }}>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchResults.map((cand, index) => (
+                      <tr key={cand.qrLabel} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                        <td style={{ ...styles.td, fontFamily: 'monospace', color: '#087CB6', fontWeight: 600 }}>{cand.qrLabel}</td>
+                        <td style={styles.td}>{cand.item}</td>
+                        <td style={styles.td}>{cand.maker}</td>
+                        <td style={styles.td}>{cand.model}</td>
+                        <td style={styles.td}>{cand.installationDepartment}</td>
+                        <td style={{ ...styles.td, textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleAddAsset(cand)}
+                            style={{
+                              padding: '4px 10px',
+                              background: '#008C1D',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                            }}
+                          >
+                            追加
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {searchQuery.trim() && searchResults.length === 0 && (
+              <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '12px' }}>
+                該当する資産がありません（既存契約資産・既追加分は除外）
+              </p>
+            )}
+            {addedAssets.length > 0 && (
+              <div style={styles.tableContainer}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>QRラベル</th>
+                      <th style={styles.th}>品目</th>
+                      <th style={styles.th}>メーカー</th>
+                      <th style={styles.th}>型式</th>
+                      <th style={styles.th}>設置部署</th>
+                      <th style={{ ...styles.th, width: '80px', textAlign: 'center' }}>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {addedAssets.map((added, index) => (
+                      <tr key={added.qrLabel} style={{ backgroundColor: index % 2 === 0 ? '#EBF5EE' : '#FAFAFA' }}>
+                        <td style={{ ...styles.td, fontFamily: 'monospace', color: '#087CB6', fontWeight: 600 }}>{added.qrLabel}</td>
+                        <td style={styles.td}>{added.item}</td>
+                        <td style={styles.td}>{added.maker}</td>
+                        <td style={styles.td}>{added.model}</td>
+                        <td style={styles.td}>{added.installationDepartment}</td>
+                        <td style={{ ...styles.td, textAlign: 'center' }}>
+                          <button
+                            onClick={() => handleRemoveAddedAsset(added.qrLabel)}
+                            style={{
+                              padding: '4px 10px',
+                              background: '#DA0000',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                            }}
+                            aria-label="追加を取消"
+                          >
+                            取消
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div style={{ ...styles.selectedCount, color: '#008C1D' }}>
+              追加: {addedAssets.length}件
+            </div>
+          </div>
+
           {/* 見直し後の契約情報 */}
           <div style={styles.section}>
             <div style={styles.sectionTitle}>見直し後の契約情報</div>
@@ -532,7 +700,6 @@ export function ContractReviewModal({
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
                   min="0"
-                  max={contract.contractAmount}
                 />
                 <span style={{ fontSize: '14px', color: '#8A8A8A' }}>（税別）</span>
               </div>

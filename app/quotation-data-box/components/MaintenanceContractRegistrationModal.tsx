@@ -18,7 +18,9 @@ export interface MaintenanceContractFormData {
   contractGroupName: string;
   contractType: ContractType;
   otherContractName: string;
-  reviewStartDate: string;
+  // REQ-088⑥: 保証期間終了日 or 契約期間終了日 のどちらかを登録
+  endDateType: '保証期間終了' | '契約期間終了';
+  endDate: string;
   comment: string;
   selectedAssets: Asset[];
 }
@@ -75,7 +77,8 @@ export function MaintenanceContractRegistrationModal({
   const [contractGroupName, setContractGroupName] = useState('');
   const [contractType, setContractType] = useState<ContractType>('保守契約');
   const [otherContractName, setOtherContractName] = useState('');
-  const [reviewStartDate, setReviewStartDate] = useState('');
+  const [endDateType, setEndDateType] = useState<'保証期間終了' | '契約期間終了'>('保証期間終了');
+  const [endDate, setEndDate] = useState('');
   const [comment, setComment] = useState('');
   const buildings = useMemo(() => [...new Set(assets.map((a) => a.building))], [assets]);
   const floors = useMemo(() => {
@@ -144,7 +147,8 @@ export function MaintenanceContractRegistrationModal({
       contractGroupName,
       contractType,
       otherContractName: contractType === 'その他' ? otherContractName : '',
-      reviewStartDate,
+      endDateType,
+      endDate,
       comment,
       selectedAssets,
     });
@@ -160,7 +164,8 @@ export function MaintenanceContractRegistrationModal({
     setContractGroupName('');
     setContractType('保守契約');
     setOtherContractName('');
-    setReviewStartDate('');
+    setEndDateType('保証期間終了');
+    setEndDate('');
     setComment('');
     onClose();
   };
@@ -503,20 +508,34 @@ export function MaintenanceContractRegistrationModal({
                 </div>
               )}
 
-              {/* 契約検討開始 */}
+              {/* REQ-088⑥: 保証期間終了日 or 契約期間終了日（どちらか） */}
               <div>
                 <div style={styles.formRow}>
-                  <label style={styles.formLabel}>契約検討開始</label>
-                  <input
-                    type="month"
-                    style={{ ...styles.input, flex: 1 }}
-                    value={reviewStartDate}
-                    onChange={(e) => setReviewStartDate(e.target.value)}
-                    placeholder="例）yyyy/mm"
-                  />
+                  <label style={styles.formLabel}>終了日</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      {(['保証期間終了', '契約期間終了'] as const).map((t) => (
+                        <label key={t} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          <input
+                            type="radio"
+                            name="endDateType"
+                            checked={endDateType === t}
+                            onChange={() => setEndDateType(t)}
+                          />
+                          {t}日
+                        </label>
+                      ))}
+                    </div>
+                    <input
+                      type="date"
+                      style={{ ...styles.input, width: '180px' }}
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <p style={{ fontSize: '12px', color: '#8A8A8A', marginTop: '4px', marginLeft: '136px' }}>
-                  ※新規導入機器の保証期間終了前など任意で保守等の検討開始時期を登録できます
+                  ※保証期間終了日 または 契約期間終了日 のどちらかを登録（契約検討開始の算出に使用）
                 </p>
               </div>
 
@@ -589,7 +608,7 @@ export function MaintenanceContractRegistrationModal({
                 }
               }}>戻る</button>
               <button style={styles.primaryButton} onClick={handleRegister}>
-                保守管理タスクリストに追加する
+                契約管理タスクリストに追加する
               </button>
             </>
           )}

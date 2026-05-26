@@ -55,6 +55,8 @@ interface ContractGroupAsset {
   legalInspection: boolean;
   legalInspectionBasis: string;
   comment: string;
+  // REQ-101: 機器毎の概算保守金額 (任意・会計非連動)
+  estimatedMaintenanceCost: string;
 }
 
 // ステータス表示の算出結果
@@ -258,32 +260,8 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
   },
 ];
 
-// 契約グループごとの個体管理品目モックデータ
-const MOCK_GROUP_ASSETS: Record<string, ContractGroupAsset[]> = {
-  '1': [
-    { id: 1, managementDept: '臨床工学部', installDept: '放射線科', qrLabel: 'QR-2025-0101', itemName: 'CT装置', maker: 'シーメンス', model: 'SOMATOM go.Top', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-  ],
-  '2': [
-    { id: 2, managementDept: '臨床工学部', installDept: '外科', qrLabel: 'QR-2025-0001', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-    { id: 3, managementDept: '臨床工学部', installDept: 'ICU', qrLabel: 'QR-2025-0016', itemName: '超音波診断装置', maker: 'GEヘルスケア', model: 'LOGIQ E10', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-  ],
-  '3': [
-    { id: 4, managementDept: '臨床工学部', installDept: '手術室', qrLabel: 'QR-2025-0030', itemName: '電気手術器', maker: 'オリンパス', model: 'ESG-400', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-    { id: 5, managementDept: '臨床工学部', installDept: '手術室', qrLabel: 'QR-2025-0031', itemName: '電気手術器', maker: 'オリンパス', model: 'ESG-400', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-  ],
-  '4': [
-    { id: 6, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0050', itemName: '透析装置', maker: '日機装', model: 'DBG-03', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2024/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-    { id: 7, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0051', itemName: '透析装置', maker: '日機装', model: 'DBG-03', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2024/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-    { id: 8, managementDept: '臨床工学部', installDept: '透析室', qrLabel: 'QR-2025-0052', itemName: '透析装置', maker: '日機装', model: 'DBG-03', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2024/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-  ],
-  '5': [
-    { id: 9, managementDept: '臨床工学部', installDept: '放射線科', qrLabel: 'QR-2025-0070', itemName: 'MRI装置', maker: 'フィリップス', model: 'Ingenia Ambition', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2026/02/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: false, legalInspectionBasis: '', comment: '' },
-  ],
-  '6': [
-    { id: 10, managementDept: '施設管理部', installDept: '本館', qrLabel: 'QR-2025-0090', itemName: 'エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: true, legalInspectionBasis: '資産M', comment: '' },
-    { id: 11, managementDept: '施設管理部', installDept: '別館', qrLabel: 'QR-2025-0091', itemName: 'エレベーター', maker: '三菱電機', model: 'NEXIEZ-MR', inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '2025/04/01', warrantyEnd: '', partsExemption: false, exemptionAmount: '', onCall: false, remote: false, legalInspection: true, legalInspectionBasis: '資産M', comment: '' },
-  ],
-};
+// 契約グループごとの個体管理品目データは maintenanceContractStore.contractAssets に集約済み
+// (両画面で共有: タスク詳細モーダル / 明細登録画面)
 
 // テーブルスタイル (Figma 580:32040 border token #E1E1E1 統一)
 const thGroupStyle: React.CSSProperties = {
@@ -317,16 +295,15 @@ const ContractGroupDetailModal = ({
   onClose,
   contract,
   assets,
-  onAssetsUpdate,
+  onContractRenewal,
 }: {
   isOpen: boolean;
   onClose: () => void;
   contract: MaintenanceContract;
   assets: ContractGroupAsset[];
-  onAssetsUpdate: (assets: ContractGroupAsset[]) => void;
+  onContractRenewal: (sourceContract: MaintenanceContract, sourceAssets: ContractGroupAsset[]) => void;
 }) => {
   const [localAssets, setLocalAssets] = useState<ContractGroupAsset[]>(assets);
-  const [editingId, setEditingId] = useState<number | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   // assets が変わったら同期
@@ -336,61 +313,9 @@ const ContractGroupDetailModal = ({
 
   if (!isOpen) return null;
 
-  const updateAsset = (assetId: number, updates: Partial<ContractGroupAsset>) => {
-    setLocalAssets(prev => prev.map(a => a.id === assetId ? { ...a, ...updates } : a));
-  };
-
-  const handleSaveRow = (assetId: number) => {
-    setEditingId(null);
-    setNewAssetIds(prev => { const next = new Set(prev); next.delete(assetId); return next; });
-  };
-
-  // 新規追加した資産IDを追跡（キャンセル時に行削除するため）
-  const [newAssetIds, setNewAssetIds] = useState<Set<number>>(new Set());
-
-  const handleCancelEdit = (assetId: number) => {
-    if (newAssetIds.has(assetId)) {
-      // 新規追加行はキャンセルで行ごと削除
-      setLocalAssets(prev => prev.filter(a => a.id !== assetId));
-      setNewAssetIds(prev => { const next = new Set(prev); next.delete(assetId); return next; });
-    }
-    setEditingId(null);
-  };
-
-  // 資産追加
-  const handleAddAsset = () => {
-    const maxId = localAssets.length > 0 ? Math.max(...localAssets.map(a => a.id)) : 0;
-    const newAsset: ContractGroupAsset = {
-      id: maxId + 1,
-      managementDept: '',
-      installDept: '',
-      qrLabel: '',
-      itemName: '',
-      maker: '',
-      model: '',
-      inspectionGroupName: '',
-      inspectionType: '',
-      inspectionCycle: '',
-      warrantyStart: '',
-      warrantyEnd: '',
-      partsExemption: false,
-      exemptionAmount: '',
-      onCall: false,
-      remote: false,
-      legalInspection: false,
-      legalInspectionBasis: '',
-      comment: '',
-    };
-    setLocalAssets(prev => [...prev, newAsset]);
-    setNewAssetIds(prev => new Set(prev).add(newAsset.id));
-    setEditingId(newAsset.id);
-  };
-
-  const handleRegister = () => {
-    onAssetsUpdate(localAssets);
-    alert('点検管理リストに登録しました。');
-    onClose();
-  };
+  // REQ-100: タスク詳細モーダルは閲覧のみ（点検情報の編集・資産追加はSTEP3明細登録へ移設）。
+  // 完了レコードのみ「契約内容見直し」「契約更新」を表示 (ユーザー決定: 閲覧モーダル内に残す)。
+  const isCompleted = contract.currentStep === 'completed';
 
   // モーダル内テーブルスタイル
   const mThGroup: React.CSSProperties = {
@@ -417,14 +342,6 @@ const ContractGroupDetailModal = ({
     whiteSpace: 'nowrap',
     verticalAlign: 'middle',
   };
-  const cellInput: React.CSSProperties = {
-    padding: '3px 6px',
-    border: '1px solid #E1E1E1',
-    borderRadius: '3px',
-    fontSize: '11px',
-    boxSizing: 'border-box' as const,
-  };
-
   // ○/× 表示
   const boolDisplay = (val: boolean) => (
     <span style={{ color: val ? '#008C1D' : '#8A8A8A', fontWeight: val ? 'bold' : 'normal' }}>
@@ -432,78 +349,24 @@ const ContractGroupDetailModal = ({
     </span>
   );
 
-  // 点検情報の10列を表示モード or 編集モードで描画
-  const renderInspectionCells = (asset: ContractGroupAsset) => {
-    const isEditing = editingId === asset.id;
-
-    if (isEditing) {
-      return (
-        <>
-          <td style={mTd}>
-            <input type="text" value={asset.inspectionGroupName} onChange={(e) => updateAsset(asset.id, { inspectionGroupName: e.target.value })} placeholder={contract.contractGroupName || '-'} style={{ ...cellInput, width: '120px' }} />
-          </td>
-          <td style={mTd}>
-            <select value={asset.inspectionType} onChange={(e) => updateAsset(asset.id, { inspectionType: e.target.value })} style={{ ...cellInput, width: '110px' }}>
-              <option value="">-</option>
-              <option value="院内点検">院内点検</option>
-              <option value="メーカー点検">メーカー点検</option>
-              <option value="スポット点検">スポット点検</option>
-            </select>
-          </td>
-          <td style={mTd}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-              <input type="number" min="0" max="120" value={asset.inspectionCycle} onChange={(e) => updateAsset(asset.id, { inspectionCycle: e.target.value })} placeholder="-" style={{ ...cellInput, width: '45px', textAlign: 'right' }} />
-              <span style={{ fontSize: '10px', color: '#8A8A8A' }}>ヶ月</span>
-            </div>
-          </td>
-          <td style={mTd}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-              <input type="date" value={asset.warrantyStart ? asset.warrantyStart.replace(/\//g, '-') : ''} onChange={(e) => updateAsset(asset.id, { warrantyStart: e.target.value })} style={{ ...cellInput, width: '120px', fontSize: '10px' }} />
-              <span style={{ fontSize: '10px' }}>〜</span>
-              <input type="date" value={asset.warrantyEnd ? asset.warrantyEnd.replace(/\//g, '-') : ''} onChange={(e) => updateAsset(asset.id, { warrantyEnd: e.target.value })} style={{ ...cellInput, width: '120px', fontSize: '10px' }} />
-            </div>
-          </td>
-          <td style={{ ...mTd, textAlign: 'center' }}>
-            <select value={asset.partsExemption ? '有' : '無'} onChange={(e) => updateAsset(asset.id, { partsExemption: e.target.value === '有' })} style={{ ...cellInput, width: '50px' }}>
-              <option value="無">無</option>
-              <option value="有">有</option>
-            </select>
-          </td>
-          <td style={mTd}>
-            <input type="text" value={asset.exemptionAmount} onChange={(e) => updateAsset(asset.id, { exemptionAmount: e.target.value })} placeholder="-" style={{ ...cellInput, width: '80px' }} />
-          </td>
-          <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { onCall: !asset.onCall })}>
-            {boolDisplay(asset.onCall)}
-          </td>
-          <td style={{ ...mTd, textAlign: 'center', cursor: 'pointer' }} onClick={() => updateAsset(asset.id, { remote: !asset.remote })}>
-            {boolDisplay(asset.remote)}
-          </td>
-          <td style={mTd}>
-            <input type="text" value={asset.comment} onChange={(e) => updateAsset(asset.id, { comment: e.target.value })} placeholder="-" style={{ ...cellInput, width: '100px' }} />
-          </td>
-        </>
-      );
-    }
-
-    // 表示モード
-    return (
-      <>
-        <td style={mTd}>{asset.inspectionGroupName || '-'}</td>
-        <td style={mTd}>{asset.inspectionType || '-'}</td>
-        <td style={mTd}>{asset.inspectionCycle ? `${asset.inspectionCycle}ヶ月` : '-'}</td>
-        <td style={mTd}>
-          {asset.warrantyStart || asset.warrantyEnd
-            ? `${asset.warrantyStart || ''}〜${asset.warrantyEnd || ''}`
-            : '-'}
-        </td>
-        <td style={{ ...mTd, textAlign: 'center' }}>{asset.partsExemption ? '有' : '-'}</td>
-        <td style={mTd}>{asset.exemptionAmount || '-'}</td>
-        <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.onCall)}</td>
-        <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.remote)}</td>
-        <td style={mTd}>{asset.comment || '-'}</td>
-      </>
-    );
-  };
+  // 点検情報の表示 (REQ-100: 閲覧のみ。編集はSTEP3明細登録へ)
+  const renderInspectionCells = (asset: ContractGroupAsset) => (
+    <>
+      <td style={mTd}>{asset.inspectionGroupName || '-'}</td>
+      <td style={mTd}>{asset.inspectionType || '-'}</td>
+      <td style={mTd}>{asset.inspectionCycle ? `${asset.inspectionCycle}ヶ月` : '-'}</td>
+      <td style={mTd}>
+        {asset.warrantyStart || asset.warrantyEnd
+          ? `${asset.warrantyStart || ''}〜${asset.warrantyEnd || ''}`
+          : '-'}
+      </td>
+      <td style={{ ...mTd, textAlign: 'center' }}>{asset.partsExemption ? '有' : '-'}</td>
+      <td style={mTd}>{asset.exemptionAmount || '-'}</td>
+      <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.onCall)}</td>
+      <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.remote)}</td>
+      <td style={mTd}>{asset.comment || '-'}</td>
+    </>
+  );
 
   return (
     <div style={{
@@ -537,21 +400,6 @@ const ContractGroupDetailModal = ({
             <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>
               契約グループ詳細: {contract.contractGroupName || '未設定'}
             </h3>
-            <button
-              onClick={handleAddAsset}
-              style={{
-                padding: '6px 14px',
-                background: '#4A4A4A',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 600,
-              }}
-            >
-              資産を追加
-            </button>
           </div>
           <button
             onClick={onClose}
@@ -577,8 +425,7 @@ const ContractGroupDetailModal = ({
               <tr>
                 <th colSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>部署情報</th>
                 <th colSpan={4} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>商品情報</th>
-                <th colSpan={10} style={{ ...mThGroup, background: '#FAFAFA', color: '#4A4A4A' }}>点検情報</th>
-                <th rowSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>操作</th>
+                <th colSpan={9} style={{ ...mThGroup, background: '#FAFAFA', color: '#4A4A4A' }}>点検情報</th>
               </tr>
               {/* サブカラムヘッダー行 */}
               <tr>
@@ -603,95 +450,20 @@ const ContractGroupDetailModal = ({
               </tr>
             </thead>
             <tbody>
-              {localAssets.map((asset, idx) => {
-                const isEditing = editingId === asset.id;
-                const isNewAsset = !asset.qrLabel && !asset.itemName;
-                return (
-                <tr key={asset.id} style={{ background: isEditing ? '#FAFAFA' : idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
-                  {/* 部署情報（新規追加時は編集可能） */}
-                  {isEditing && isNewAsset ? (
-                    <>
-                      <td style={mTd}><input type="text" value={asset.managementDept} onChange={(e) => updateAsset(asset.id, { managementDept: e.target.value })} placeholder="管理部署" style={{ ...cellInput, width: '90px' }} /></td>
-                      <td style={mTd}><input type="text" value={asset.installDept} onChange={(e) => updateAsset(asset.id, { installDept: e.target.value })} placeholder="設置部署" style={{ ...cellInput, width: '90px' }} /></td>
-                    </>
-                  ) : (
-                    <>
-                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.managementDept || '-'}</td>
-                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.installDept || '-'}</td>
-                    </>
-                  )}
-                  {/* 商品情報（新規追加時は編集可能） */}
-                  {isEditing && isNewAsset ? (
-                    <>
-                      <td style={mTd}><input type="text" value={asset.qrLabel} onChange={(e) => updateAsset(asset.id, { qrLabel: e.target.value })} placeholder="QRラベル" style={{ ...cellInput, width: '120px', fontFamily: 'monospace' }} /></td>
-                      <td style={mTd}><input type="text" value={asset.itemName} onChange={(e) => updateAsset(asset.id, { itemName: e.target.value })} placeholder="品目" style={{ ...cellInput, width: '140px' }} /></td>
-                      <td style={mTd}><input type="text" value={asset.maker} onChange={(e) => updateAsset(asset.id, { maker: e.target.value })} placeholder="メーカー" style={{ ...cellInput, width: '100px' }} /></td>
-                      <td style={mTd}><input type="text" value={asset.model} onChange={(e) => updateAsset(asset.id, { model: e.target.value })} placeholder="型式" style={{ ...cellInput, width: '100px' }} /></td>
-                    </>
-                  ) : (
-                    <>
-                      <td style={{ ...mTd, background: '#FAFAFA', fontFamily: 'monospace', fontWeight: 600, color: '#087CB6' }}>{asset.qrLabel || '-'}</td>
-                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.itemName || '-'}</td>
-                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.maker || '-'}</td>
-                      <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.model || '-'}</td>
-                    </>
-                  )}
-                  {/* 点検情報（表示 or 編集） */}
+              {localAssets.map((asset, idx) => (
+                <tr key={asset.id} style={{ background: idx % 2 === 0 ? 'white' : '#FAFAFA' }}>
+                  {/* 部署情報 */}
+                  <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.managementDept || '-'}</td>
+                  <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.installDept || '-'}</td>
+                  {/* 商品情報 */}
+                  <td style={{ ...mTd, background: '#FAFAFA', fontFamily: 'monospace', fontWeight: 600, color: '#087CB6' }}>{asset.qrLabel || '-'}</td>
+                  <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.itemName || '-'}</td>
+                  <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.maker || '-'}</td>
+                  <td style={{ ...mTd, background: '#FAFAFA' }}>{asset.model || '-'}</td>
+                  {/* 点検情報 (閲覧のみ) */}
                   {renderInspectionCells(asset)}
-                  {/* 操作 */}
-                  <td style={{ ...mTd, textAlign: 'center' }}>
-                    {isEditing ? (
-                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                        <button
-                          onClick={() => handleSaveRow(asset.id)}
-                          style={{
-                            padding: '4px 10px',
-                            background: '#008C1D',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          保存
-                        </button>
-                        <button
-                          onClick={() => handleCancelEdit(asset.id)}
-                          style={{
-                            padding: '4px 10px',
-                            background: '#8A8A8A',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                          }}
-                        >
-                          取消
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setEditingId(asset.id)}
-                        style={{
-                          padding: '4px 10px',
-                          background: '#087CB6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '3px',
-                          cursor: 'pointer',
-                          fontSize: '11px',
-                        }}
-                      >
-                        編集
-                      </button>
-                    )}
-                  </td>
                 </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>
@@ -704,37 +476,48 @@ const ContractGroupDetailModal = ({
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <button
-            onClick={() => setShowReviewModal(true)}
-            style={{
-              padding: '10px 20px',
-              background: '#DA0000',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 600,
-            }}
-          >
-            契約内容見直し
-          </button>
+          {/* 完了レコードのみ: ③契約内容見直し(廃棄+追加) と ④契約更新(複製) */}
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={handleRegister}
-              style={{
-                padding: '10px 20px',
-                background: '#008C1D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 600,
-              }}
-            >
-              点検管理リストに登録
-            </button>
+            {isCompleted && (
+              <>
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#DA0000',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                  }}
+                >
+                  契約内容見直し
+                </button>
+                <button
+                  onClick={() => {
+                    if (!confirm(`現在の契約「${contract.contractGroupName}」の部署情報・商品情報を複製して、新規の契約レコードを作成します。\n\n新レコードは見積依頼ステップから開始します。よろしいですか？`)) return;
+                    onContractRenewal(contract, localAssets);
+                    onClose();
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#087CB6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                  }}
+                >
+                  契約更新
+                </button>
+              </>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={onClose}
               style={{
@@ -827,20 +610,32 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   // 契約グループ詳細モーダル
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailContract, setDetailContract] = useState<MaintenanceContract | null>(null);
-  const mergedAssets = useMemo(() => ({ ...MOCK_GROUP_ASSETS, ...storeContractAssets }), [storeContractAssets]);
-  const [groupAssets, setGroupAssets] = useState<Record<string, ContractGroupAsset[]>>(mergedAssets);
+  const [groupAssets, setGroupAssets] = useState<Record<string, ContractGroupAsset[]>>(storeContractAssets as Record<string, ContractGroupAsset[]>);
 
   React.useEffect(() => {
-    setGroupAssets({ ...MOCK_GROUP_ASSETS, ...storeContractAssets });
+    setGroupAssets(storeContractAssets as Record<string, ContractGroupAsset[]>);
   }, [storeContractAssets]);
 
   // ソート状態
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  // 期限切れ表示トグル (0525 仕様: デフォルト非表示)
+  const [showExpired, setShowExpired] = useState(false);
 
-  // ソート適用
+  // 契約期間切れフィルタ + ソート適用
   const sortedContracts = useMemo(() => {
-    if (!sortDirection) return contracts;
-    const sorted = [...contracts];
+    // 契約期間切れ (contractEndDate < 今日) を除外
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const filtered = contracts.filter(c => {
+      if (showExpired) return true;
+      if (!c.contractEndDate) return true;
+      const end = new Date(c.contractEndDate);
+      end.setHours(0, 0, 0, 0);
+      return end.getTime() >= today.getTime();
+    });
+
+    if (!sortDirection) return filtered;
+    const sorted = [...filtered];
     const multiplier = sortDirection === 'asc' ? 1 : -1;
     sorted.sort((a, b) => {
       const statusA = calcStatus(a);
@@ -848,7 +643,67 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       return (statusA.sortValue - statusB.sortValue) * multiplier;
     });
     return sorted;
-  }, [contracts, sortDirection]);
+  }, [contracts, sortDirection, showExpired]);
+
+  // 期限切れ件数 (バッジ表示用)
+  const expiredCount = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return contracts.filter(c => {
+      if (!c.contractEndDate) return false;
+      const end = new Date(c.contractEndDate);
+      end.setHours(0, 0, 0, 0);
+      return end.getTime() < today.getTime();
+    }).length;
+  }, [contracts]);
+
+  // 契約更新 (複製): 部署情報 + 商品情報のみ複製し、新契約タスクを生成
+  const handleContractRenewal = (sourceContract: MaintenanceContract, sourceAssets: ContractGroupAsset[]) => {
+    const newId = `renewal-${Date.now()}`;
+    // 申請No. 採番 (MC-2026-0XX)
+    const maxApplicationNo = Math.max(0, ...contracts
+      .map(c => parseInt(c.applicationNo.replace(/[^0-9]/g, '').slice(-3), 10) || 0));
+    const year = new Date().getFullYear();
+    const newApplicationNo = `MC-${year}-${String(maxApplicationNo + 1).padStart(3, '0')}`;
+
+    const newContract: MaintenanceContract = {
+      ...sourceContract,
+      id: newId,
+      applicationNo: newApplicationNo,
+      contractGroupName: `${sourceContract.contractGroupName}（更新）`,
+      contractDate: '',
+      contractStartDate: '',
+      contractEndDate: '',
+      contractAmount: 0,
+      annualAmount: 0,
+      warrantyEndDate: '',
+      comment: `${sourceContract.applicationNo} を複製して更新作成`,
+      currentStep: 1, // 見積依頼から開始
+      reviewStartDate: undefined,
+    };
+    // 商品情報 (部署・QR・品目・メーカー・型式) のみ複製、点検情報はクリア
+    const newAssets: ContractGroupAsset[] = sourceAssets.map((a, idx) => ({
+      ...a,
+      id: idx + 1,
+      // 点検情報はクリア
+      inspectionGroupName: '',
+      inspectionType: '',
+      inspectionCycle: '',
+      warrantyStart: '',
+      warrantyEnd: '',
+      partsExemption: false,
+      exemptionAmount: '',
+      onCall: false,
+      remote: false,
+      legalInspection: false,
+      legalInspectionBasis: '',
+      comment: '',
+      estimatedMaintenanceCost: '',
+    }));
+    setContracts(prev => [newContract, ...prev]);
+    setGroupAssets(prev => ({ ...prev, [newId]: newAssets }));
+    alert(`新規契約タスク「${newContract.contractGroupName}」(${newApplicationNo}) を作成しました。\n見積依頼ステップから開始してください。`);
+  };
 
   // ソートトグル
   const handleSortToggle = () => {
@@ -890,11 +745,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   const handleRowDoubleClick = (contract: MaintenanceContract) => {
     setDetailContract(contract);
     setShowDetailModal(true);
-  };
-
-  const handleAssetsUpdate = (updatedAssets: ContractGroupAsset[]) => {
-    if (!detailContract) return;
-    setGroupAssets(prev => ({ ...prev, [detailContract.id]: updatedAssets }));
   };
 
   // 金額フォーマット
@@ -940,7 +790,23 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       }}>
         <span style={{ fontSize: '13px', color: '#4A4A4A' }}>
           <strong>{sortedContracts.length}件</strong>表示
+          {expiredCount > 0 && !showExpired && (
+            <span style={{ marginLeft: '12px', color: '#8A8A8A', fontSize: '12px' }}>
+              (期限切れ {expiredCount} 件を非表示)
+            </span>
+          )}
         </span>
+        {expiredCount > 0 && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#4A4A4A', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showExpired}
+              onChange={(e) => setShowExpired(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            期限切れも表示
+          </label>
+        )}
       </div>
 
       {/* テーブル */}
@@ -1012,11 +878,11 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   </td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     {(() => {
+                      // 260524 統合: STEP④(完了登録)廃止。契約登録が最終ステップ
                       const stepConfig: Record<number, { label: string; color: string }> = {
                         1: { label: '見積依頼', color: '#4A4A4A' },
                         2: { label: '見積登録', color: '#4A4A4A' },
                         3: { label: '契約登録', color: '#087CB6' },
-                        4: { label: '完了登録', color: '#008C1D' },
                       };
                       if (contract.currentStep === 'completed') {
                         return <span style={{ color: '#8A8A8A', fontSize: '12px' }}>完了</span>;
@@ -1110,7 +976,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
           onClose={() => { setShowDetailModal(false); setDetailContract(null); }}
           contract={detailContract}
           assets={groupAssets[detailContract.id] || []}
-          onAssetsUpdate={handleAssetsUpdate}
+          onContractRenewal={handleContractRenewal}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AssetMaster } from '@/lib/types/master';
 import { useMasterStore } from '@/lib/stores';
@@ -14,6 +14,8 @@ function AssetMasterContent() {
   const { assets: assetMasters } = useMasterStore();
   const { isMobile } = useResponsive();
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  // REQ-032: 適用してもウィンドウを閉じず連続適用。適用結果のフィードバック
+  const [appliedMessage, setAppliedMessage] = useState('');
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -25,6 +27,30 @@ function AssetMasterContent() {
     maker: '',
     model: ''
   });
+
+  // REQ-032(突き合わせ): 台帳側の突き合わせ対象（品目名/メーカー/型式(原)）を表示し、その値で初期絞り込み
+  const [matchTarget, setMatchTarget] = useState<{ item: string; maker: string; model: string } | null>(null);
+  useEffect(() => {
+    const applyTarget = (item: string, maker: string, model: string) => {
+      if (!item && !maker && !model) return;
+      // 自動絞り込みはしない（台帳名とマスタ名は異なるため正候補を隠す恐れ）。対象は参照表示のみ
+      setMatchTarget({ item, maker, model });
+    };
+    // 1) 起動時: クエリパラメータから対象を取得
+    applyTarget(searchParams.get('item') || '', searchParams.get('maker') || '', searchParams.get('model') || '');
+    // 2) 開いたまま行を切替えた場合: 親からの postMessage で対象を更新
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === 'SET_MATCH_TARGET' && e.data.target) {
+        const t = e.data.target;
+        applyTarget(t.item || '', t.maker || '', t.model || '');
+        setAppliedMessage('');
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // マスタデータからフィルターoptionsを生成（資産マスタから）
   const categoryOptions = useMemo(() => {
@@ -125,7 +151,8 @@ function AssetMasterContent() {
         assets: [assetData],
         scope: 'all'
       }, window.location.origin);
-      window.close();
+      // REQ-032: 連続適用のためウィンドウは閉じない。適用結果を表示
+      setAppliedMessage(`「${selectedAsset.item || selectedAsset.model}」を適用しました（このウィンドウは開いたままです）`);
     } else {
       alert('親ウィンドウが見つかりません');
     }
@@ -153,7 +180,8 @@ function AssetMasterContent() {
         type: 'ASSET_SELECTED',
         assets: [assetData]
       }, window.location.origin);
-      window.close();
+      // REQ-032: 連続適用のためウィンドウは閉じない。適用結果を表示
+      setAppliedMessage(`「${selectedAsset.item || selectedAsset.model}」を適用しました（このウィンドウは開いたままです）`);
     } else {
       alert('親ウィンドウが見つかりません');
     }
@@ -168,6 +196,17 @@ function AssetMasterContent() {
           資産マスタ選択画面
         </h1>
       </div>
+
+      {/* REQ-032(突き合わせ): 突き合わせ対象（台帳側）を提示 */}
+      {matchTarget && (
+        <div className="bg-surface-select border-b border-cta-primary px-5 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="font-bold text-cta-primary-dark">突き合わせ対象（台帳）:</span>
+          <span className="text-content-primary"><span className="text-content-sub">品目名</span> {matchTarget.item || '—'}</span>
+          <span className="text-content-primary"><span className="text-content-sub">メーカー</span> {matchTarget.maker || '—'}</span>
+          <span className="text-content-primary"><span className="text-content-sub">型式</span> {matchTarget.model || '—'}</span>
+          <span className="text-xs text-content-sub">※該当する資産マスタを検索・選択して「適用」</span>
+        </div>
+      )}
 
       {/* フィルターヘッダー */}
       <div className="bg-surface-card mx-4 mt-4 rounded-lg border border-stroke-input p-4">
@@ -290,17 +329,17 @@ function AssetMasterContent() {
                   }
                 }}
               >
-                選択
+                適用
               </button>
               <button
                 onClick={() => window.close()}
                 className="px-3 py-2 md:px-5 md:py-2.5 bg-white text-content-primary border border-stroke-input rounded-lg text-xs md:text-sm font-medium cursor-pointer transition-colors hover:bg-surface-screen"
               >
-                キャンセル
+                閉じる
               </button>
             </>
           ) : (
-            // 通常モード: 確定 + キャンセル
+            // 通常モード: 適用(連続) + 閉じる
             <>
               <button
                 onClick={handleConfirmSelection}
@@ -321,17 +360,21 @@ function AssetMasterContent() {
                   }
                 }}
               >
-                確定
+                適用
               </button>
               <button
                 onClick={() => window.close()}
                 className="px-3 py-2 md:px-5 md:py-2.5 bg-white text-content-primary border border-stroke-input rounded-lg text-xs md:text-sm font-medium cursor-pointer transition-colors hover:bg-surface-screen"
               >
-                キャンセル
+                閉じる
               </button>
             </>
           )}
         </div>
+        {/* REQ-032: 適用フィードバック（閉じないため明示） */}
+        {appliedMessage && (
+          <span className="text-xs md:text-sm font-bold text-cta-primary-dark">{appliedMessage}</span>
+        )}
       </div>
 
       {/* 資産テーブル */}

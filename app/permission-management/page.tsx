@@ -50,23 +50,6 @@ export default function PermissionManagementPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasPendingChanges]);
 
-  if (user?.role !== 'system_admin') {
-    return (
-      <div className="min-h-dvh flex items-center justify-center bg-surface-card p-6">
-        <div className="text-center">
-          <p className="text-base font-semibold text-content-alert mb-2">アクセス権限がありません</p>
-          <p className="text-sm text-content-sub mb-4">この画面はシステム管理者のみ利用できます</p>
-          <button
-            onClick={() => router.push('/main')}
-            className="px-4 py-2 bg-content-sub text-white rounded text-sm hover:bg-content-primary transition-colors"
-          >
-            メイン画面へ戻る
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const getDisplayEnabled = (unitId: string): boolean => {
     if (unitId in pendingChanges) return pendingChanges[unitId];
     return getSetting(selectedFacility, unitId);
