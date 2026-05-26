@@ -16,8 +16,6 @@ export default function AssetMatchingPage() {
   const router = useRouter();
   const { isMobile } = useResponsive();
   const { assets: assetMasters } = useMasterStore();
-  const [selectedAll, setSelectedAll] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [editingLinked, setEditingLinked] = useState<LinkedMasterData | null>(null);
   const [data, setData] = useState(assetMatchingSampleData);
@@ -74,24 +72,6 @@ export default function AssetMatchingPage() {
     router.push('/main');
   };
 
-  const toggleSelectAll = (checked: boolean) => {
-    setSelectedAll(checked);
-    if (checked) {
-      setSelectedRows(new Set(filteredData.map(row => row.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
-  };
-
-  const toggleRowSelection = (id: number) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedRows(newSelected);
-  };
 
   const toggleEditMode = (id: number) => {
     if (editingRow === id) {
@@ -244,23 +224,18 @@ export default function AssetMatchingPage() {
   const confirmRow = (id: number) => {
     if (confirm(`No.${id} のレコードを確定しますか？\n確定後、このレコードは画面から削除されます。`)) {
       setData(data.filter(r => r.id !== id));
-      setSelectedRows(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
     }
   };
 
   const bulkConfirmSelected = () => {
-    if (selectedRows.size === 0) {
-      alert('確定する項目を選択してください');
+    // REQ-033: ✅選択ではなく「採用(aiApplied)」した項目を一括確定
+    const appliedCount = data.filter(row => row.aiApplied).length;
+    if (appliedCount === 0) {
+      alert('採用した項目がありません');
       return;
     }
-    if (confirm(`選択した${selectedRows.size}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
-      setData(data.filter(row => !selectedRows.has(row.id)));
-      setSelectedRows(new Set());
-      setSelectedAll(false);
+    if (confirm(`採用した${appliedCount}件のレコードを一括確定しますか？\n確定後、これらのレコードは画面から削除されます。`)) {
+      setData(data.filter(row => !row.aiApplied));
     }
   };
 
@@ -296,16 +271,15 @@ export default function AssetMatchingPage() {
     );
   }
 
-  // 固定列の累積left位置（px）: チェックボックス(36) + No.(40) + 台帳データ6列
+  // 固定列の累積left位置（px）: No.(40) + 台帳データ6列（REQ-033で✅列廃止につき各-36）
   const stickyLeft = {
-    checkbox: 0,
-    no: 36,
-    department: 76,
-    section: 166,
-    itemName: 276,
-    maker: 426,
-    model: 556,
-    qty: 676,
+    no: 0,
+    department: 40,
+    section: 130,
+    itemName: 240,
+    maker: 390,
+    model: 520,
+    qty: 640,
   };
 
   const thBase = 'py-2 px-1.5 border-b-2 border-[#E1E1E1] whitespace-nowrap text-[11px]';
@@ -445,7 +419,7 @@ export default function AssetMatchingPage() {
               onClick={bulkConfirmSelected}
               className="px-5 py-2.5 bg-[#008C1D] text-white border-none rounded cursor-pointer text-sm font-semibold flex items-center gap-2 hover:bg-[#008C1D]"
             >
-              <Check size={16} strokeWidth={2.5} aria-hidden /> 選択項目を一括確定
+              <Check size={16} strokeWidth={2.5} aria-hidden /> 採用項目を一括確定
             </button>
             <button
               onClick={handleOpenAssetMaster}
@@ -465,17 +439,7 @@ export default function AssetMatchingPage() {
               <thead>
                 {/* 1段目: グループヘッダー */}
                 <tr className="bg-[#FAFAFA]">
-                  <th
-                    rowSpan={2}
-                    className="p-2 border-b-2 border-[#E1E1E1] text-center sticky z-[4] bg-[#FAFAFA]"
-                    style={{ left: stickyLeft.checkbox }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAll}
-                      onChange={(e) => toggleSelectAll(e.target.checked)}
-                    />
-                  </th>
+                  {/* REQ-033: ✅選択ボックスは廃止（採用ボタンで一括確定） */}
                   <th
                     rowSpan={2}
                     className="p-2 border-b-2 border-[#E1E1E1] whitespace-nowrap sticky z-[4] bg-[#FAFAFA]"
@@ -590,17 +554,7 @@ export default function AssetMatchingPage() {
                   return (
                     <React.Fragment key={row.id}>
                       <tr className="bg-white">
-                        {/* チェックボックス（sticky） */}
-                        <td
-                          className={`${tdBase} text-center sticky z-[2] bg-white`}
-                          style={{ left: stickyLeft.checkbox }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedRows.has(row.id)}
-                            onChange={() => toggleRowSelection(row.id)}
-                          />
-                        </td>
+                        {/* REQ-033: ✅選択ボックスは廃止 */}
                         <td
                           className={`${tdBase} sticky z-[2] bg-white`}
                           style={{ left: stickyLeft.no }}
