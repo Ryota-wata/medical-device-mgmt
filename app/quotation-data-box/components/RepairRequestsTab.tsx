@@ -132,6 +132,18 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
 
     const buttons: React.ReactNode[] = [];
 
+    // REQ-076: 院内対応の修理は見積依頼/見積登録/発注登録を経ず「作業日登録」から開始する
+    const preWorkStatuses: RepairStatus[] = ['見積依頼', '見積依頼済', '見積登録済', '発注登録済'];
+    if (req.repairCategory === '院内対応' && preWorkStatuses.includes(req.status)) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
+          <button key="work" onClick={() => onRegisterWorkDate(req.id)} style={{ ...btnBase, background: '#008C1D' }}>
+            作業日登録
+          </button>
+        </div>
+      );
+    }
+
     switch (req.status) {
       case '見積依頼':
         buttons.push(
