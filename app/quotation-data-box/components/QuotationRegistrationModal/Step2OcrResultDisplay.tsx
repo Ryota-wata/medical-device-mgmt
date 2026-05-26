@@ -125,6 +125,11 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
     });
   };
 
+  // REQ-052: OCR取込後の行削除（品目/型式が別行に分かれた場合に統合し不要行を削除）
+  const handleDeleteRow = (index: number) => {
+    setDetailItems(prev => prev.filter((_, i) => i !== index));
+  };
+
   // 資産情報紐チェック
   const handleAssetInfoCheck = () => {
     console.log('資産情報紐チェック実行');
@@ -419,18 +424,32 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                       <thead style={{ position: 'sticky', top: 0, background: '#FAFAFA' }}>
                         <tr>
-                          <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>項目</th>
+                          <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>品目 / 型式</th>
                           <th style={{ padding: '8px', textAlign: 'right', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>金額</th>
                           <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>category</th>
                           <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>会計区分</th>
+                          <th style={{ padding: '8px', textAlign: 'center', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', width: '52px' }}>操作</th>
                         </tr>
                       </thead>
                       <tbody>
                         {detailItems.map((item, index) => (
                           <tr key={index} style={{ borderBottom: '1px solid #E1E1E1' }}>
                             <td style={{ padding: '6px 8px' }}>
-                              <div style={{ fontWeight: 'bold' }}>{item.itemName}</div>
-                              <div style={{ fontSize: '10px', color: '#8A8A8A' }}>{item.manufacturer} {item.model}</div>
+                              <input
+                                type="text"
+                                value={item.itemName}
+                                onChange={(e) => handleDetailChange(index, 'itemName', e.target.value)}
+                                aria-label="品目"
+                                style={{ width: '100%', padding: '3px 4px', fontSize: '11px', fontWeight: 'bold', border: '1px solid #E1E1E1', borderRadius: '3px', marginBottom: '2px' }}
+                              />
+                              <input
+                                type="text"
+                                value={item.model}
+                                onChange={(e) => handleDetailChange(index, 'model', e.target.value)}
+                                aria-label="型式"
+                                placeholder="型式"
+                                style={{ width: '100%', padding: '3px 4px', fontSize: '10px', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: '3px' }}
+                              />
                             </td>
                             <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
                               ¥{item.totalPrice.toLocaleString()}
@@ -459,8 +478,25 @@ export const Step2OcrResultDisplay: React.FC<Step2OcrResultDisplayProps> = ({
                                 ))}
                               </select>
                             </td>
+                            <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleDeleteRow(index)}
+                                aria-label={`${item.itemName || '明細'}行を削除`}
+                                title="この行を削除"
+                                style={{ padding: '4px 8px', background: 'white', color: '#DA0000', border: '1px solid #DA0000', borderRadius: '3px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}
+                              >
+                                削除
+                              </button>
+                            </td>
                           </tr>
                         ))}
+                        {detailItems.length === 0 && (
+                          <tr>
+                            <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: '#8A8A8A', fontSize: '11px' }}>
+                              明細がありません
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
