@@ -474,10 +474,7 @@ export default function AssetMatchingPage() {
                     style={{ left: stickyLeft.qty }}
                   ></th>
                   <th colSpan={7} className="p-2 border-b border-[#E1E1E1] bg-[#FDF1E5] font-semibold">
-                    AI判定（推薦）
-                  </th>
-                  <th colSpan={6} className="p-2 border-b border-[#E1E1E1] bg-[#EBF5EE] font-semibold">
-                    SHIP資産マスタ紐づけ
+                    AI判定（推薦：上段）／ SHIP資産マスタ修正（下段）
                   </th>
                   <th colSpan={2} className="p-2 border-b border-[#E1E1E1] sticky right-0 bg-[#FAFAFA] z-[4]">
                     操作
@@ -522,21 +519,14 @@ export default function AssetMatchingPage() {
                   >
                     数量
                   </th>
-                  {/* AI判定（推薦） */}
+                  {/* AI判定(上段)／SHIP修正(下段) 共通列（REQ-034: 2段表示で列を統合） */}
                   <th className={`${thBase} text-center`}>採用</th>
-                  <th className={thBase}>category</th>
-                  <th className={`${thBase} min-w-[120px]`}>大分類</th>
-                  <th className={`${thBase} min-w-[120px]`}>中分類</th>
-                  <th className={`${thBase} min-w-[150px]`}>品目</th>
-                  <th className={thBase}>メーカー名</th>
-                  <th className={thBase}>型式</th>
-                  {/* SHIP資産マスタ紐づけ */}
-                  <th className={thBase}>category</th>
-                  <th className={`${thBase} min-w-[120px]`}>大分類</th>
-                  <th className={`${thBase} min-w-[120px]`}>中分類</th>
-                  <th className={`${thBase} min-w-[150px]`}>品目</th>
-                  <th className={thBase}>メーカー名</th>
-                  <th className={thBase}>型式</th>
+                  <th className={`${thBase} min-w-[160px]`}>category</th>
+                  <th className={`${thBase} min-w-[140px]`}>大分類</th>
+                  <th className={`${thBase} min-w-[140px]`}>中分類</th>
+                  <th className={`${thBase} min-w-[160px]`}>品目</th>
+                  <th className={`${thBase} min-w-[140px]`}>メーカー名</th>
+                  <th className={`${thBase} min-w-[140px]`}>型式</th>
                   {/* 操作 */}
                   <th className={`${thBase} sticky right-[60px] bg-[#FAFAFA] z-[2] min-w-[60px] text-center`}>
                     編集
@@ -611,102 +601,53 @@ export default function AssetMatchingPage() {
                             {row.aiApplied ? '解除' : '採用'}
                           </button>
                         </td>
-                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.category}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[120px]`}>{row.aiRecommendation.major}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[120px]`}>{row.aiRecommendation.middle}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA] min-w-[150px]`}>{row.aiRecommendation.item}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.manufacturer}</td>
-                        <td className={`${tdBase} bg-[#FAFAFA]`}>{row.aiRecommendation.model}</td>
-
-                        {/* SHIP資産マスタ紐づけ（編集対象） */}
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        {/* REQ-034: 各列 上段=AI判定(推薦) / 下段=SHIP資産マスタ修正 の2段表示 */}
+                        <td className={`${tdBase} min-w-[160px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.category || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.category}
-                              onChange={(value) => setEditingLinked({ ...editingLinked, category: value })}
-                              options={categoryOptions}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="200px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.category} onChange={(value) => setEditingLinked({ ...editingLinked, category: value })} options={categoryOptions} placeholder="選択" isMobile={isMobile} dropdownMinWidth="200px" />
                           ) : (
-                            displayLinked.category
+                            <div>{displayLinked.category}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.major || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.majorCategory}
-                              onChange={(value) => handleEditFieldChange('majorCategory', value)}
-                              options={majorCategoryOptions}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.majorCategory} onChange={(value) => handleEditFieldChange('majorCategory', value)} options={majorCategoryOptions} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.majorCategory
+                            <div>{displayLinked.majorCategory}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[120px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.middle || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.middleCategory}
-                              onChange={(value) => handleEditFieldChange('middleCategory', value)}
-                              options={middleCategoryOptions}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.middleCategory} onChange={(value) => handleEditFieldChange('middleCategory', value)} options={middleCategoryOptions} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.middleCategory
+                            <div>{displayLinked.middleCategory}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} min-w-[150px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[160px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.item || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.item}
-                              onChange={(value) => handleEditFieldChange('item', value)}
-                              options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="400px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.item} onChange={(value) => handleEditFieldChange('item', value)} options={Array.from(new Set(assetMasters.map(a => a.item))).filter(Boolean)} placeholder="選択" isMobile={isMobile} dropdownMinWidth="400px" />
                           ) : (
-                            displayLinked.item
+                            <div>{displayLinked.item}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.manufacturer || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.manufacturer}
-                              onChange={(value) => handleEditFieldChange('manufacturer', value)}
-                              options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.manufacturer} onChange={(value) => handleEditFieldChange('manufacturer', value)} options={Array.from(new Set(assetMasters.map(a => a.maker))).filter(Boolean)} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.manufacturer
+                            <div>{displayLinked.manufacturer}</div>
                           )}
                         </td>
-                        <td className={`${tdBase} ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                        <td className={`${tdBase} min-w-[140px] ${isEditing ? 'bg-[#FAFAFA]' : 'bg-[#EBF5EE]'}`}>
+                          <div className="text-[10px] text-[#8A8A8A] mb-1 whitespace-nowrap">AI: {row.aiRecommendation.model || '—'}</div>
                           {isEditing && editingLinked ? (
-                            <SearchableSelect
-                              label=""
-                              value={editingLinked.model}
-                              onChange={(value) => handleEditFieldChange('model', value)}
-                              options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)}
-                              placeholder="選択"
-                              isMobile={isMobile}
-                              dropdownMinWidth="300px"
-                            />
+                            <SearchableSelect label="" value={editingLinked.model} onChange={(value) => handleEditFieldChange('model', value)} options={Array.from(new Set(assetMasters.map(a => a.model))).filter(Boolean)} placeholder="選択" isMobile={isMobile} dropdownMinWidth="300px" />
                           ) : (
-                            displayLinked.model
+                            <div>{displayLinked.model}</div>
                           )}
                         </td>
 
