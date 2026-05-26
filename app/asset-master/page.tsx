@@ -14,6 +14,8 @@ function AssetMasterContent() {
   const { assets: assetMasters } = useMasterStore();
   const { isMobile } = useResponsive();
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  // REQ-032: 適用してもウィンドウを閉じず連続適用。適用結果のフィードバック
+  const [appliedMessage, setAppliedMessage] = useState('');
 
   // フィルター状態
   const [filters, setFilters] = useState({
@@ -125,7 +127,8 @@ function AssetMasterContent() {
         assets: [assetData],
         scope: 'all'
       }, window.location.origin);
-      window.close();
+      // REQ-032: 連続適用のためウィンドウは閉じない。適用結果を表示
+      setAppliedMessage(`「${selectedAsset.item || selectedAsset.model}」を適用しました（このウィンドウは開いたままです）`);
     } else {
       alert('親ウィンドウが見つかりません');
     }
@@ -153,7 +156,8 @@ function AssetMasterContent() {
         type: 'ASSET_SELECTED',
         assets: [assetData]
       }, window.location.origin);
-      window.close();
+      // REQ-032: 連続適用のためウィンドウは閉じない。適用結果を表示
+      setAppliedMessage(`「${selectedAsset.item || selectedAsset.model}」を適用しました（このウィンドウは開いたままです）`);
     } else {
       alert('親ウィンドウが見つかりません');
     }
@@ -290,17 +294,17 @@ function AssetMasterContent() {
                   }
                 }}
               >
-                選択
+                適用
               </button>
               <button
                 onClick={() => window.close()}
                 className="px-3 py-2 md:px-5 md:py-2.5 bg-white text-content-primary border border-stroke-input rounded-lg text-xs md:text-sm font-medium cursor-pointer transition-colors hover:bg-surface-screen"
               >
-                キャンセル
+                閉じる
               </button>
             </>
           ) : (
-            // 通常モード: 確定 + キャンセル
+            // 通常モード: 適用(連続) + 閉じる
             <>
               <button
                 onClick={handleConfirmSelection}
@@ -321,17 +325,21 @@ function AssetMasterContent() {
                   }
                 }}
               >
-                確定
+                適用
               </button>
               <button
                 onClick={() => window.close()}
                 className="px-3 py-2 md:px-5 md:py-2.5 bg-white text-content-primary border border-stroke-input rounded-lg text-xs md:text-sm font-medium cursor-pointer transition-colors hover:bg-surface-screen"
               >
-                キャンセル
+                閉じる
               </button>
             </>
           )}
         </div>
+        {/* REQ-032: 適用フィードバック（閉じないため明示） */}
+        {appliedMessage && (
+          <span className="text-xs md:text-sm font-bold text-cta-primary-dark">{appliedMessage}</span>
+        )}
       </div>
 
       {/* 資産テーブル */}
