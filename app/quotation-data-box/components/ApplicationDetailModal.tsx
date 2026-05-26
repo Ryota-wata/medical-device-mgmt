@@ -149,27 +149,26 @@ export function ApplicationDetailModal({
 
         {/* ボディ */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-          {/* 基本情報テーブル */}
+          {/* REQ-043: 依頼情報 */}
           <div style={sectionStyle}>
+            <div style={sectionTitleStyle}>依頼情報</div>
             <table style={tableStyle}>
               <tbody>
                 <tr>
-                  <th style={thStyle}>設置部門</th>
-                  <td style={tdStyle}>{application.department || '-'}</td>
-                  <th style={thStyle}>設置部署</th>
-                  <td style={tdStyle}>{application.section || '-'}</td>
+                  <th style={thStyle}>依頼No.</th>
+                  <td style={tdStyle}>{application.applicationNo || '-'}</td>
+                  <th style={thStyle}>申請部署</th>
+                  <td style={tdStyle}>{application.applicantDepartment || '-'}</td>
                 </tr>
                 <tr>
-                  <th style={thStyle}>設置室名</th>
-                  <td style={tdStyle}>{application.roomName || '-'}</td>
-                  <th style={thStyle}>希望納期</th>
-                  <td style={tdStyle}>{application.desiredDeliveryDate || '-'}</td>
+                  <th style={thStyle}>申請者</th>
+                  <td style={tdStyle} colSpan={3}>{application.applicantName || '-'}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* 申請品目 */}
+          {/* REQ-043: 申請品目（品目名・数量・優先順位・設置部署・設置室名・希望納期） */}
           <div style={sectionStyle}>
             <div style={sectionTitleStyle}>申請品目</div>
             <table style={tableStyle}>
@@ -177,12 +176,24 @@ export function ApplicationDetailModal({
                 <tr>
                   <th style={thStyle}>品目名</th>
                   <td style={tdStyle}>{application.assets[0]?.name || '-'}</td>
-                  <th style={thStyle}>台数</th>
+                  <th style={thStyle}>数量</th>
                   <td style={tdStyle}>
                     {application.assets[0]
                       ? `${application.assets[0].quantity} ${application.assets[0].unit}`
                       : '-'}
                   </td>
+                </tr>
+                <tr>
+                  <th style={thStyle}>優先順位</th>
+                  <td style={tdStyle}>{application.priority || '-'}</td>
+                  <th style={thStyle}>希望納期</th>
+                  <td style={tdStyle}>{application.desiredDeliveryDate || '-'}</td>
+                </tr>
+                <tr>
+                  <th style={thStyle}>設置部署</th>
+                  <td style={tdStyle}>{application.section || '-'}</td>
+                  <th style={thStyle}>設置室名</th>
+                  <td style={tdStyle}>{application.roomName || '-'}</td>
                 </tr>
               </tbody>
             </table>
@@ -355,6 +366,22 @@ export function ApplicationDetailModal({
               }}
             >
               編集リストへ追加
+            </button>
+            {/* REQ-043: フッターにキャンセルを追加 */}
+            <button
+              onClick={onClose}
+              style={{
+                padding: '10px 20px',
+                background: 'white',
+                color: '#4A4A4A',
+                border: '2px solid #E1E1E1',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+              }}
+            >
+              キャンセル
             </button>
           </div>
         </div>
