@@ -122,27 +122,44 @@ export default function RegistrationConfirmPage() {
     return total;
   }, [rows]);
 
+  // REQ-058: 見積DB登録の中核処理（確認/遷移を分離して発注登録ボタンと共用）
+  const registerQuotation = (): string => {
+    const quotationNo = generateReceivedQuotationNo();
+    const groupId = addQuotationGroup({
+      receivedQuotationNo: quotationNo, rfqNo: basicInfo.rfqNo, vendorName: basicInfo.vendorName,
+      vendorContact: basicInfo.contact, vendorEmail: basicInfo.mail, quotationDate: basicInfo.quotationDate,
+      validityPeriod: 1, deliveryPeriod: 3, phase: basicInfo.quotationPhase === '定価' ? '定価見積' : '確定見積',
+      totalAmount,
+    });
+    const itemsToAdd = rows.map(r => ({
+      quotationGroupId: groupId, receivedQuotationNo: quotationNo, rowNo: r.rowNo,
+      originalItemName: r.itemName, originalManufacturer: r.manufacturer, originalModel: r.model,
+      originalQuantity: r.quantity, itemType: detailClassificationToItemType(r.detailClassification),
+      category: r.category, itemName: r.itemName, manufacturer: r.manufacturer, model: r.model,
+      aiQuantity: 1, unit: r.unit, seqId: r.seqId || undefined, linkedApplicationIds: [],
+    }));
+    addQuotationItems(itemsToAdd);
+    return quotationNo;
+  };
+
   const handleRegister = () => {
     if (confirm('見積情報をDatabaseに登録します。よろしいですか？')) {
-      const quotationNo = generateReceivedQuotationNo();
-      const groupId = addQuotationGroup({
-        receivedQuotationNo: quotationNo, rfqNo: basicInfo.rfqNo, vendorName: basicInfo.vendorName,
-        vendorContact: basicInfo.contact, vendorEmail: basicInfo.mail, quotationDate: basicInfo.quotationDate,
-        validityPeriod: 1, deliveryPeriod: 3, phase: basicInfo.quotationPhase === '定価' ? '定価見積' : '確定見積',
-        totalAmount,
-      });
-      const itemsToAdd = rows.map(r => ({
-        quotationGroupId: groupId, receivedQuotationNo: quotationNo, rowNo: r.rowNo,
-        originalItemName: r.itemName, originalManufacturer: r.manufacturer, originalModel: r.model,
-        originalQuantity: r.quantity, itemType: detailClassificationToItemType(r.detailClassification),
-        category: r.category, itemName: r.itemName, manufacturer: r.manufacturer, model: r.model,
-        aiQuantity: 1, unit: r.unit, seqId: r.seqId || undefined, linkedApplicationIds: [],
-      }));
-      addQuotationItems(itemsToAdd);
+      const quotationNo = registerQuotation();
       alert(`登録が完了しました（見積番号: ${quotationNo}）`);
       router.push('/quotation-data-box/purchase-management');
     }
   };
+
+  // REQ-058: 発注登録用見積のときは登録後そのまま発注登録へ進む
+  const handleRegisterAndOrder = () => {
+    if (confirm('見積情報をDatabaseに登録し、続けて発注登録に進みます。よろしいですか？')) {
+      const quotationNo = registerQuotation();
+      alert(`登録が完了しました（見積番号: ${quotationNo}）。発注登録に進みます。`);
+      router.push('/quotation-data-box/purchase-management');
+    }
+  };
+
+  const isOrderQuotation = basicInfo.quotationPhase === '発注登録用見積';
 
   const fmtNum = (n: number) => n ? n.toLocaleString() : '';
 
@@ -302,6 +319,15 @@ export default function RegistrationConfirmPage() {
           >
             見積情報Databaseに登録
           </button>
+          {/* REQ-058: 発注登録用見積のときのみ「発注登録」を併設 */}
+          {isOrderQuotation && (
+            <button
+              onClick={handleRegisterAndOrder}
+              className="h-12 w-[254px] bg-cta-primary-dark text-white border-0 rounded-lg cursor-pointer text-base font-bold hover:opacity-90 transition-opacity"
+            >
+              発注登録
+            </button>
+          )}
         </div>
       </div>
     </div>
