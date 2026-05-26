@@ -618,24 +618,11 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
 
   // ソート状態
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  // 期限切れ表示トグル (0525 仕様: デフォルト非表示)
-  const [showExpired, setShowExpired] = useState(false);
 
-  // 契約期間切れフィルタ + ソート適用
+  // ソート適用 (全契約を表示)
   const sortedContracts = useMemo(() => {
-    // 契約期間切れ (contractEndDate < 今日) を除外
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const filtered = contracts.filter(c => {
-      if (showExpired) return true;
-      if (!c.contractEndDate) return true;
-      const end = new Date(c.contractEndDate);
-      end.setHours(0, 0, 0, 0);
-      return end.getTime() >= today.getTime();
-    });
-
-    if (!sortDirection) return filtered;
-    const sorted = [...filtered];
+    if (!sortDirection) return contracts;
+    const sorted = [...contracts];
     const multiplier = sortDirection === 'asc' ? 1 : -1;
     sorted.sort((a, b) => {
       const statusA = calcStatus(a);
@@ -643,19 +630,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       return (statusA.sortValue - statusB.sortValue) * multiplier;
     });
     return sorted;
-  }, [contracts, sortDirection, showExpired]);
-
-  // 期限切れ件数 (バッジ表示用)
-  const expiredCount = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return contracts.filter(c => {
-      if (!c.contractEndDate) return false;
-      const end = new Date(c.contractEndDate);
-      end.setHours(0, 0, 0, 0);
-      return end.getTime() < today.getTime();
-    }).length;
-  }, [contracts]);
+  }, [contracts, sortDirection]);
 
   // 契約更新 (複製): 部署情報 + 商品情報のみ複製し、新契約タスクを生成
   const handleContractRenewal = (sourceContract: MaintenanceContract, sourceAssets: ContractGroupAsset[]) => {
@@ -790,23 +765,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       }}>
         <span style={{ fontSize: '13px', color: '#4A4A4A' }}>
           <strong>{sortedContracts.length}件</strong>表示
-          {expiredCount > 0 && !showExpired && (
-            <span style={{ marginLeft: '12px', color: '#8A8A8A', fontSize: '12px' }}>
-              (期限切れ {expiredCount} 件を非表示)
-            </span>
-          )}
         </span>
-        {expiredCount > 0 && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#4A4A4A', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showExpired}
-              onChange={(e) => setShowExpired(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            期限切れも表示
-          </label>
-        )}
       </div>
 
       {/* テーブル */}
