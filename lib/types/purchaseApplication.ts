@@ -91,6 +91,9 @@ export interface PurchaseApplicationAsset {
   item?: string;
   quantity: number;
   unit: string;
+  // REQ-044/045: 更新・増設対象機器の確認情報
+  serialNo?: string;         // シリアルNo
+  purchaseDate?: string;     // 購入年月日
 }
 
 /**

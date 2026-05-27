@@ -226,6 +226,49 @@ export function ApplicationDetailModal({
             </table>
           </div>
 
+          {/* REQ-044/045: 更新・増設対象機器（既存機器の情報） */}
+          {(application.applicationType === '更新申請' || application.applicationType === '増設申請') && (
+            <div style={sectionStyle}>
+              <div style={sectionTitleStyle}>
+                {application.applicationType === '更新申請' ? '更新対象機器' : '増設対象機器'}
+              </div>
+              <table style={tableStyle}>
+                <tbody>
+                  <tr>
+                    <th style={thStyle}>QRコード</th>
+                    <td style={tdStyle}>{application.assets[0]?.qrCode || '-'}</td>
+                    <th style={thStyle}>シリアルNo.</th>
+                    <td style={tdStyle}>{application.assets[0]?.serialNo || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>品目</th>
+                    <td style={tdStyle}>{application.assets[0]?.name || '-'}</td>
+                    <th style={thStyle}>メーカー</th>
+                    <td style={tdStyle}>{application.assets[0]?.maker || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>型式</th>
+                    <td style={tdStyle}>{application.assets[0]?.model || '-'}</td>
+                    <th style={thStyle}>購入年月日</th>
+                    <td style={tdStyle}>{application.assets[0]?.purchaseDate || '-'}</td>
+                  </tr>
+                  <tr>
+                    <th style={thStyle}>設置部署</th>
+                    <td style={tdStyle}>{application.section || '-'}</td>
+                    <th style={thStyle}>設置室名</th>
+                    <td style={tdStyle}>{application.roomName || '-'}</td>
+                  </tr>
+                  {application.applicationType === '更新申請' && (
+                    <tr>
+                      <th style={thStyle}>更新対象機器の確認情報</th>
+                      <td style={tdStyle} colSpan={3}>廃棄処理／他部署へ移動／継続して使用（予算執行後に原本側で申請）</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* 使用用途及び件数 */}
           <div style={sectionStyle}>
             <div style={sectionTitleStyle}>使用用途及び件数</div>
