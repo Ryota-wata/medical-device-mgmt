@@ -877,17 +877,21 @@ export function TransferDisposalManagementTab() {
                   {app.comment || '-'}
                 </div>
 
-                {/* 添付ファイル */}
-                <div style={sectionLabel}>添付ファイル</div>
-                <div style={{
-                  background: 'white', padding: '10px 12px', borderRadius: '4px',
-                  fontSize: '13px', color: '#4A4A4A', border: '1px solid #E1E1E1',
-                  marginBottom: '4px',
-                }}>
-                  {app.attachments.length > 0 ? app.attachments.map((f, i) => (
-                    <div key={i} style={{ padding: '2px 0' }}>{f}</div>
-                  )) : '-'}
-                </div>
+                {/* REQ-068: 添付ファイルは廃棄申請のみ（移動申請にはなし） */}
+                {!isTransfer && (
+                  <>
+                    <div style={sectionLabel}>添付ファイル</div>
+                    <div style={{
+                      background: 'white', padding: '10px 12px', borderRadius: '4px',
+                      fontSize: '13px', color: '#4A4A4A', border: '1px solid #E1E1E1',
+                      marginBottom: '4px',
+                    }}>
+                      {app.attachments.length > 0 ? app.attachments.map((f, i) => (
+                        <div key={i} style={{ padding: '2px 0' }}>{f}</div>
+                      )) : '-'}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* フッターボタン (Figma 階層: 戻る=Secondary グレー / 中央=Outline / Primary=緑塗り) */}
