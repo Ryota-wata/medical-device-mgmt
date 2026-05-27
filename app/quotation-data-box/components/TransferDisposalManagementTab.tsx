@@ -794,75 +794,81 @@ export function TransferDisposalManagementTab() {
 
               {/* コンテンツ */}
               <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
-                {/* 設置情報 */}
+                {/* REQ-067/068: 依頼情報 */}
+                <div style={sectionLabel}>依頼情報</div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
                   <tbody>
                     <tr>
-                      <th style={modalTh}>設置部門</th>
-                      <td style={modalTd}>{app.department}</td>
-                      <th style={modalTh}>設置部署</th>
-                      <td style={modalTd}>{app.section}</td>
+                      <th style={modalTh}>依頼No.</th>
+                      <td style={modalTd}>{app.applicationNo}</td>
+                      <th style={modalTh}>申請日</th>
+                      <td style={modalTd}>{app.applicationDate || '-'}</td>
                     </tr>
                     <tr>
-                      <th style={modalTh}>設置室名</th>
-                      <td style={modalTd}>{app.roomName}</td>
-                      <th style={modalTh}>希望納期</th>
-                      <td style={modalTd}>{app.desiredDelivery}</td>
+                      <th style={modalTh}>申請部署</th>
+                      <td style={modalTd}>{app.applicantDepartment || '-'}</td>
+                      <th style={modalTh}>申請者</th>
+                      <td style={modalTd}>{app.applicantName || '-'}</td>
                     </tr>
                   </tbody>
                 </table>
 
-                {/* 申請品目 */}
-                <div style={sectionLabel}>申請品目</div>
+                {/* REQ-067/068: 品目情報 */}
+                <div style={sectionLabel}>品目情報</div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
                   <tbody>
                     <tr>
-                      <th style={modalTh}>品目名</th>
-                      <td style={modalTd}>{app.itemName}</td>
-                      <th style={{ ...modalTh, width: '80px' }}>台数</th>
-                      <td style={{ ...modalTd, width: '80px' }}>{app.quantity}</td>
+                      <th style={modalTh}>QRコード</th>
+                      <td style={modalTd}>{app.qrCode || '-'}</td>
+                      <th style={modalTh}>シリアルNo.</th>
+                      <td style={modalTd}>-</td>
                     </tr>
-                  </tbody>
-                </table>
-
-                {/* 要望機器 */}
-                <div style={sectionLabel}>要望機器</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
-                  <thead>
                     <tr>
-                      <th style={{ ...modalTh, width: '80px' }}>希望順</th>
                       <th style={modalTh}>品目</th>
+                      <td style={modalTd}>{app.itemName || '-'}</td>
                       <th style={modalTh}>メーカー</th>
-                      <th style={modalTh}>型式</th>
+                      <td style={modalTd}>{app.maker || '-'}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {app.desiredEquipments.map((eq, i) => (
-                      <tr key={i}>
-                        <td style={modalTd}>{eq.rank}</td>
-                        <td style={modalTd}>{eq.itemName}</td>
-                        <td style={modalTd}>{eq.maker}</td>
-                        <td style={modalTd}>{eq.model}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                {/* 使用用途及び件数 */}
-                <div style={sectionLabel}>使用用途及び件数</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
-                  <tbody>
                     <tr>
-                      <th style={modalTh}>用途</th>
-                      <td style={modalTd}>{app.purpose}</td>
-                      <th style={{ ...modalTh, width: '80px' }}>件数</th>
-                      <td style={{ ...modalTd, width: '120px' }}>{app.usageCount}</td>
+                      <th style={modalTh}>型式</th>
+                      <td style={modalTd}>{app.model || '-'}</td>
+                      <th style={modalTh}>購入年月日</th>
+                      <td style={modalTd}>-</td>
+                    </tr>
+                    <tr>
+                      <th style={modalTh}>設置部署</th>
+                      <td style={modalTd}>{app.section || '-'}</td>
+                      <th style={modalTh}>設置室名</th>
+                      <td style={modalTd}>{app.roomName || '-'}</td>
                     </tr>
                   </tbody>
                 </table>
 
-                {/* コメント（必要理由 他） */}
-                <div style={sectionLabel}>コメント（必要理由 他）</div>
+                {/* REQ-067: 移動先（移動申請のみ） */}
+                {isTransfer && (
+                  <>
+                    <div style={sectionLabel}>移動先</div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                      <tbody>
+                        <tr>
+                          <th style={modalTh}>設置部門</th>
+                          <td style={modalTd}>{app.destDepartment || '-'}</td>
+                          <th style={modalTh}>設置部署</th>
+                          <td style={modalTd}>{app.destSection || '-'}</td>
+                        </tr>
+                        <tr>
+                          <th style={modalTh}>設置室名</th>
+                          <td style={modalTd}>{app.destRoomName || '-'}</td>
+                          <th style={modalTh}>QRコード（親機変更時）</th>
+                          <td style={modalTd}>-</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </>
+                )}
+
+                {/* REQ-067/068: コメント */}
+                <div style={sectionLabel}>{isTransfer ? 'コメント（移動理由 他）' : 'コメント（廃棄理由 他）'}</div>
                 <div style={{
                   background: '#FAFAFA', padding: '10px 12px', borderRadius: '4px',
                   fontSize: '13px', color: '#4A4A4A', border: '1px solid #E1E1E1',
@@ -882,19 +888,6 @@ export function TransferDisposalManagementTab() {
                     <div key={i} style={{ padding: '2px 0' }}>{f}</div>
                   )) : '-'}
                 </div>
-
-                {/* システム接続要望 */}
-                <div style={sectionLabel}>システム接続要望</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    <tr>
-                      <th style={modalTh}>接続要望</th>
-                      <td style={modalTd}>{app.connectionRequired}</td>
-                      <th style={modalTh}>接続先</th>
-                      <td style={modalTd}>{app.connectionTarget}</td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
 
               {/* フッターボタン (Figma 階層: 戻る=Secondary グレー / 中央=Outline / Primary=緑塗り) */}
@@ -935,14 +928,14 @@ export function TransferDisposalManagementTab() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => alert('添付ファイルを表示します（モック）')}
+                    onClick={() => alert('添付ファイルをダウンロードします（モック）')}
                     style={{
                       padding: '10px 24px', background: 'white', color: '#146E2E',
                       border: '1px solid #146E2E', borderRadius: '6px', cursor: 'pointer',
                       fontSize: '14px', fontWeight: 500, minWidth: '140px',
                     }}
                   >
-                    添付ファイル
+                    添付ファイルDL
                   </button>
                 )}
               </div>
