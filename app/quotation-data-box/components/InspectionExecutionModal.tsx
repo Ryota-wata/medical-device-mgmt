@@ -199,8 +199,29 @@ export function InspectionExecutionModal({
     <div style={styles.overlay} onClick={handleClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
-          <div style={styles.title}>
-            {mode === 'daily' ? '日常点検の実施' : '点検の実施'}
+          <div style={{ ...styles.title, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <span>{mode === 'daily' ? '日常点検の実施' : '点検の実施'}</span>
+            {/* REQ-115: 点検中にカルテを別ウィンドウで参照 */}
+            {qrCode && (
+              <button
+                type="button"
+                onClick={() => {
+                  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+                  window.open(
+                    `${basePath}/asset-detail?qrCode=${encodeURIComponent(qrCode)}&readonly=true&from=inspection`,
+                    'KarteWindow',
+                    'width=1100,height=800,resizable=yes,scrollbars=yes'
+                  );
+                }}
+                style={{
+                  padding: '6px 14px', background: 'white', color: '#146E2E',
+                  border: '1px solid #146E2E', borderRadius: '6px', cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap',
+                }}
+              >
+                カルテを開く
+              </button>
+            )}
           </div>
 
           {/* 基本情報 */}
