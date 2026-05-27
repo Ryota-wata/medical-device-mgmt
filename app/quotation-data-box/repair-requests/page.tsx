@@ -10,6 +10,8 @@ import { RepairRequestsTab, RepairRequest, RepairStatus } from '../components/Re
 interface RepairApplication {
   id: string;
   applicationDate: string;
+  requestTime?: string;      // REQ-075: 依頼時間
+  purchaseDate?: string;     // REQ-075: 購入年月日
   applicationNo: string;
   department: string;
   section: string;
@@ -624,7 +626,7 @@ function RepairRequestsContent() {
                         <th style={modalThStyle}>修理依頼No.</th>
                         <td style={modalTdStyle}>{selectedApplication.applicationNo}</td>
                         <th style={modalThStyle}>依頼日</th>
-                        <td style={modalTdStyle}>{selectedApplication.applicationDate}</td>
+                        <td style={modalTdStyle}>{selectedApplication.applicationDate}{selectedApplication.requestTime ? ` ${selectedApplication.requestTime}` : ''}</td>
                       </tr>
                       <tr>
                         <th style={modalThStyle}>申請部署</th>
@@ -659,6 +661,10 @@ function RepairRequestsContent() {
                         <td style={modalTdStyle}>{selectedApplication.model}</td>
                         <th style={modalThStyle}>シリアルNo.</th>
                         <td style={modalTdStyle}>{selectedApplication.serialNo}</td>
+                      </tr>
+                      <tr>
+                        <th style={modalThStyle}>購入年月日</th>
+                        <td colSpan={3} style={modalTdStyle}>{selectedApplication.purchaseDate || '-'}</td>
                       </tr>
                       <tr>
                         <th style={modalThStyle}>設置部署</th>
@@ -700,6 +706,13 @@ function RepairRequestsContent() {
                     style={{ padding: '10px 24px', background: 'white', border: '1px solid #E1E1E1', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
                   >
                     印刷
+                  </button>
+                  {/* REQ-075: 添付写真DL */}
+                  <button
+                    onClick={() => alert('添付写真をダウンロードします（モック）')}
+                    style={{ padding: '10px 24px', background: 'white', border: '1px solid #E1E1E1', borderRadius: 4, cursor: 'pointer', fontSize: 13, color: '#4A4A4A', fontWeight: 600 }}
+                  >
+                    添付写真DL
                   </button>
                   <button
                     onClick={() => { setShowDetailModal(false); setSelectedApplication(null); }}
