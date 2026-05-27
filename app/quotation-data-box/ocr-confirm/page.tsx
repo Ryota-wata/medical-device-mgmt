@@ -114,6 +114,11 @@ export default function OcrConfirmPage() {
     });
   };
 
+  // REQ-052: OCR取込後の行削除（品目/型式が別行に分かれた場合に統合し不要行を削除）
+  const handleDeleteRow = (index: number) => {
+    setDetailItems(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleExcelImport = () => {
     alert('Excel取込機能は今後実装予定です。\nOCR結果の明細データをExcelファイルで差し替えます。');
   };
@@ -233,6 +238,7 @@ export default function OcrConfirmPage() {
                       <th rowSpan={2} className="px-2 py-2 text-center border border-stroke-input w-[40px] font-bold text-content-primary">No.</th>
                       <th colSpan={4} className="px-2 py-2 text-center border border-stroke-input font-bold text-content-primary">商品情報（原本情報）</th>
                       <th colSpan={4} className="px-2 py-2 text-center border border-stroke-input font-bold text-content-primary">価格情報（原本情報）</th>
+                      <th rowSpan={2} className="px-2 py-2 text-center border border-stroke-input w-[56px] font-bold text-content-primary">操作</th>
                     </tr>
                     <tr>
                       <th className="px-2 py-2 text-left border border-stroke-input font-normal text-content-primary">品名（見積名称）</th>
@@ -328,8 +334,23 @@ export default function OcrConfirmPage() {
                             className={`${cellInputCls} text-right tabular-nums`}
                           />
                         </td>
+                        <td className="px-1.5 py-1 border border-stroke-input text-center">
+                          <button
+                            onClick={() => handleDeleteRow(index)}
+                            aria-label={`${item.itemName || '明細'}行を削除`}
+                            title="この行を削除"
+                            className="px-2 py-1 text-[11px] font-bold text-content-alert border border-content-alert rounded-sm bg-surface-card hover:bg-surface-negative transition-colors"
+                          >
+                            削除
+                          </button>
+                        </td>
                       </tr>
                     ))}
+                    {detailItems.length === 0 && (
+                      <tr>
+                        <td colSpan={10} className="px-2 py-8 text-center text-content-sub text-xs">明細がありません</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
