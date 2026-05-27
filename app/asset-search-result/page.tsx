@@ -113,6 +113,30 @@ export default function AssetSearchResultPage() {
     getCellValue,
   } = useAssetTable(ALL_COLUMNS);
 
+  // REQ-169: 列の並べ替え（ヘッダークリックで昇順→降順→解除）
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const handleSort = (key: string) => {
+    if (sortKey !== key) { setSortKey(key); setSortDir('asc'); }
+    else if (sortDir === 'asc') { setSortDir('desc'); }
+    else { setSortKey(null); }
+  };
+  const sortedAssets = useMemo(() => {
+    if (!sortKey) return filteredAssets;
+    const arr = [...filteredAssets];
+    arr.sort((a, b) => {
+      const av = String(getCellValue(a, sortKey) ?? '');
+      const bv = String(getCellValue(b, sortKey) ?? '');
+      const an = parseFloat(av.replace(/[^0-9.-]/g, ''));
+      const bn = parseFloat(bv.replace(/[^0-9.-]/g, ''));
+      const cmp = (!isNaN(an) && !isNaN(bn) && av !== '' && bv !== '')
+        ? an - bn
+        : av.localeCompare(bv, 'ja');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [filteredAssets, sortKey, sortDir, getCellValue]);
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(new Set(filteredAssets.map(a => a.no)));
@@ -506,7 +530,17 @@ export default function AssetSearchResultPage() {
                       fontSize: 12,
                     }}
                   >
-                    {col.label}
+                    {/* REQ-169: クリックで並べ替え */}
+                    <span
+                      onClick={() => handleSort(col.key)}
+                      style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-flex', alignItems: 'center', gap: 2 }}
+                      title="クリックで並べ替え"
+                    >
+                      {col.label}
+                      <span style={{ fontSize: 10, color: sortKey === col.key ? '#008C1D' : '#C8C8C8' }}>
+                        {sortKey === col.key ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                      </span>
+                    </span>
                     <div
                       onMouseDown={(e) => handleResizeStart(e, col.key)}
                       style={{
@@ -532,7 +566,7 @@ export default function AssetSearchResultPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredAssets.map((asset) => (
+              {sortedAssets.map((asset) => (
                 <tr
                   key={asset.no}
                   style={{
