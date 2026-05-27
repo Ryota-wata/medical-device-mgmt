@@ -440,8 +440,9 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                     {/* 操作: 設定変更 */}
                     <td style={{ ...td, textAlign: 'center' }}>
                       <button
-                        onClick={() => alert(`設定変更: ${task.assetName}（未実装）`)}
+                        onClick={() => setIsRegistrationModalOpen(true)}
                         aria-label="設定変更"
+                        title={`${task.assetName} の点検設定を変更`}
                         style={{
                           background: 'transparent',
                           border: 'none',
