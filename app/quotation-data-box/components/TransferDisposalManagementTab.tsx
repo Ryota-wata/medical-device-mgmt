@@ -906,7 +906,7 @@ export function TransferDisposalManagementTab() {
                     fontSize: '14px', fontWeight: 500, minWidth: '120px',
                   }}
                 >
-                  戻る
+                  キャンセル
                 </button>
                 <button
                   onClick={() => alert('印刷プレビューを表示します（モック）')}
