@@ -472,7 +472,15 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                     {/* 操作: カルテ */}
                     <td style={{ ...td, textAlign: 'center' }}>
                       <button
-                        onClick={() => alert(`点検カルテ: ${task.assetName}（未実装）`)}
+                        onClick={() => {
+                          const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+                          window.open(
+                            `${basePath}/asset-detail?qrCode=${encodeURIComponent(task.assetId)}&readonly=true&from=inspection`,
+                            'KarteWindow',
+                            'width=1100,height=800,resizable=yes,scrollbars=yes'
+                          );
+                        }}
+                        title={`${task.assetName} のカルテを開く`}
                         style={{
                           background: 'transparent',
                           border: 'none',
