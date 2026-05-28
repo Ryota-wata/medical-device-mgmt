@@ -504,6 +504,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
       <InspectionRegistrationModal
         isOpen={isRegistrationModalOpen}
         preSelectedAssets={settingTargetAsset ? [settingTargetAsset] : undefined}
+        isSettingChange={!!settingTargetAsset}
         onClose={() => { setIsRegistrationModalOpen(false); setSettingTargetAsset(null); }}
       />
 

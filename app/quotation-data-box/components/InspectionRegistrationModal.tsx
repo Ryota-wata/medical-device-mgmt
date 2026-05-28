@@ -20,12 +20,15 @@ interface InspectionRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
   preSelectedAssets?: Asset[];
+  /** REQ-113: 登録済み機器の設定変更モード（新規登録ではなく既存設定の変更） */
+  isSettingChange?: boolean;
 }
 
 export function InspectionRegistrationModal({
   isOpen,
   onClose,
   preSelectedAssets,
+  isSettingChange = false,
 }: InspectionRegistrationModalProps) {
   const { assets } = useAssetStore();
   const { menus, addTask, tasks } = useInspectionStore();
@@ -366,7 +369,7 @@ export function InspectionRegistrationModal({
         {/* ヘッダー */}
         <div style={styles.header}>
           <h3 style={styles.title}>
-            {step === 'search' ? '点検管理 登録 - 対象資産を選択' : '点検管理 登録 - 点検設定'}
+            {isSettingChange ? '点検管理 設定変更 - 点検設定' : (step === 'search' ? '点検管理 登録 - 対象資産を選択' : '点検管理 登録 - 点検設定')}
           </h3>
           <button style={styles.closeButton} onClick={handleClose} aria-label="閉じる">
             ×
@@ -704,22 +707,25 @@ export function InspectionRegistrationModal({
                         <option key={name} value={name}>{name}</option>
                       ))}
                     </select>
-                    <button
-                      type="button"
-                      onClick={() => { setIsNewGroup(true); setInspectionGroupName(''); }}
-                      style={{
-                        padding: '8px 14px',
-                        fontSize: '13px',
-                        background: '#008C1D',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      新規作成
-                    </button>
+                    {/* REQ-113: 設定変更では新規グループ作成は不可（既存からの選択のみ）。新規作成は登録/マスタ整備の行為のため */}
+                    {!isSettingChange && (
+                      <button
+                        type="button"
+                        onClick={() => { setIsNewGroup(true); setInspectionGroupName(''); }}
+                        style={{
+                          padding: '8px 14px',
+                          fontSize: '13px',
+                          background: '#008C1D',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        新規作成
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -765,16 +771,19 @@ export function InspectionRegistrationModal({
             {/* フッター */}
             <div style={styles.footer}>
               <div style={styles.footerLeft}>
-                <button style={styles.backButton} onClick={backToSearch}>
-                  ← 資産選択に戻る
-                </button>
+                {/* 設定変更モードは資産選択ステップが無いため戻る不要 */}
+                {!isSettingChange && (
+                  <button style={styles.backButton} onClick={backToSearch}>
+                    ← 資産選択に戻る
+                  </button>
+                )}
               </div>
               <div style={styles.footerRight}>
                 <button style={styles.cancelButton} onClick={handleClose}>
                   キャンセル
                 </button>
                 <button style={styles.submitButton} onClick={handleSubmit}>
-                  点検タスクに登録
+                  {isSettingChange ? '変更を保存' : '点検タスクに登録'}
                 </button>
               </div>
             </div>
