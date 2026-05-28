@@ -412,14 +412,31 @@ function HospitalFacilityMasterContent() {
     </div>
   );
 
-  // ── 編集行レンダー（テーブル: 17列 + 操作） REQ-016 並び: 共通⇒旧⇒新⇒ID ──
+  // ── 編集行レンダー（テーブル: 17列 + 操作） REQ-016 並び: 旧→新→ID→共通M→共通諸室M ──
   const renderEditRow = (key: string) => {
     const editBg = '#FAFAFA';
     return (
       <tr key={key} style={{ background: editBg, borderBottom: '2px solid #008C1D' }}>
-        {/* 共通マスタ (4列) */}
+        {/* 旧 (5列: 棟・階・部門・部署・室名) */}
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldBuilding', '棟')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldFloor', '階')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldDepartment', '部門')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldSection', '部署')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderTextInput('oldRoomName', '室名')}</td>
+        {/* 新 (5列: 棟・階・部門・部署・室名) */}
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newBuilding', '棟', '#FAFAFA')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newFloor', '階', '#FAFAFA')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newDepartment', '部門', '#FAFAFA')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newSection', '部署', '#FAFAFA')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderTextInput('newRoomName', '室名', '#FAFAFA')}</td>
+        {/* ID (3列: 部門ID・部署ID・室名ID) */}
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('divisionId', 'ID')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('departmentId', 'ID')}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderTextInput('roomId', 'ID')}</td>
+        {/* 共通M (2列: 部門・部署) */}
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipDivision', divisionOptions, '部門')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipDepartment', oldDeptOptions, '部署', !editForm.oldShipDivision)}</td>
+        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderShipSelect('oldShipDepartment', oldDeptOptions, '部署', !editForm.oldShipDivision)}</td>
+        {/* 共通諸室M (2列: 諸室区分①・諸室区分②) */}
         <td style={{ ...tdBase(isTablet), background: editBg }}>{renderShipSelect('oldShipRoomCategory', oldRoomCatOptions, '諸室①')}</td>
         <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>
           <SearchableSelect
@@ -432,29 +449,13 @@ function HospitalFacilityMasterContent() {
             dropdownMinWidth="160px"
           />
         </td>
-        {/* 旧（現状） (5列: 棟・階・部門・部署・室名) */}
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldBuilding', '棟')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldFloor', '階')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldDepartment', '部門')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('oldSection', '部署')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderTextInput('oldRoomName', '室名')}</td>
-        {/* 新（リモデルのみ） (5列: 棟・階・部門・部署・室名) */}
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newBuilding', '棟', '#FAFAFA')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newFloor', '階', '#FAFAFA')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newDepartment', '部門', '#FAFAFA')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('newSection', '部署', '#FAFAFA')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderTextInput('newRoomName', '室名', '#FAFAFA')}</td>
-        {/* ID (3列: 部門ID・部署ID・室名ID) — 末尾、必要時登録 */}
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('divisionId', 'ID')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg }}>{renderTextInput('departmentId', 'ID')}</td>
-        <td style={{ ...tdBase(isTablet), background: editBg, borderRight: '2px solid #E1E1E1' }}>{renderTextInput('roomId', 'ID')}</td>
         {/* 操作 */}
         <td style={{ ...tdBase(isTablet), background: editBg, textAlign: 'center' }}>{renderSaveCancelButtons(isTablet)}</td>
       </tr>
     );
   };
 
-  // ── 表示行レンダー（テーブル: 17列 + 操作） REQ-016 並び: 共通⇒旧⇒新⇒ID ──
+  // ── 表示行レンダー（テーブル: 17列 + 操作） REQ-016 並び: 旧→新→ID→共通M→共通諸室M ──
   const renderDisplayRow = (facility: HospitalFacilityMaster, index: number) => {
     const isEven = index % 2 === 0;
     const rowBg = isEven ? 'white' : '#FAFAFA';
@@ -462,27 +463,28 @@ function HospitalFacilityMasterContent() {
     const hospBg = isEven ? '#EBF5EE' : '#EBF5EE';
     return (
       <tr key={facility.id} style={{ borderBottom: '1px solid #E1E1E1', background: rowBg }}>
-        {/* 共通マスタ (4列) */}
-        <td style={tdBase(isTablet)}>{facility.oldShipDivision}</td>
-        <td style={tdBase(isTablet)}>{facility.oldShipDepartment}</td>
-        <td style={tdBase(isTablet)}>{facility.oldShipRoomCategory}</td>
-        <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.shipRoomCategory2}</td>
-        {/* 旧（現状） (5列: 棟・階・部門・部署・室名) */}
+        {/* 旧 (5列: 棟・階・部門・部署・室名) */}
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldBuilding}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldFloor || '-'}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldDepartment}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldSection}</td>
         <td style={{ ...tdBase(isTablet), background: hospBg, borderRight: '2px solid #E1E1E1' }}>{facility.oldRoomName}</td>
-        {/* 新（リモデルのみ） (5列: 棟・階・部門・部署・室名) */}
+        {/* 新 (5列: 棟・階・部門・部署・室名) */}
         <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newBuilding || '-'}</td>
         <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newFloor || '-'}</td>
         <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newDepartment || '-'}</td>
         <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newSection || '-'}</td>
         <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg, borderRight: '2px solid #E1E1E1' }}>{facility.newRoomName || '-'}</td>
-        {/* ID (3列: 部門ID・部署ID・室名ID) — 末尾、必要時登録 */}
+        {/* ID (3列: 部門ID・部署ID・室名ID) */}
         <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.divisionId || '-'}</td>
         <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.departmentId || '-'}</td>
         <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg, borderRight: '2px solid #E1E1E1' }}>{facility.roomId || '-'}</td>
+        {/* 共通M (2列: 部門・部署) */}
+        <td style={tdBase(isTablet)}>{facility.oldShipDivision}</td>
+        <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.oldShipDepartment}</td>
+        {/* 共通諸室M (2列: 諸室区分①・諸室区分②) */}
+        <td style={tdBase(isTablet)}>{facility.oldShipRoomCategory}</td>
+        <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.shipRoomCategory2}</td>
         {/* 操作 */}
         <td style={{ ...tdBase(isTablet), textAlign: 'center' }}>{renderActionButtons(facility, isTablet)}</td>
       </tr>
@@ -497,27 +499,8 @@ function HospitalFacilityMasterContent() {
     const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#146E2E', marginBottom: '4px' };
     return (
       <div key={key} style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', border: '2px solid #008C1D' }}>
-        {/* 共通マスタ */}
-        <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #E1E1E1', fontSize: '14px' }}>共通マスタ</div>
-        <div style={{ marginBottom: '8px' }}>
-          <div style={selectLabelStyle}>SHIP部門</div>
-          <SearchableSelect value={editForm.oldShipDivision} onChange={(v) => updateField('oldShipDivision', v)} options={['', ...divisionOptions]} placeholder="選択" isMobile />
-        </div>
-        <div style={{ marginBottom: '8px' }}>
-          <div style={selectLabelStyle}>SHIP部署</div>
-          <SearchableSelect value={editForm.oldShipDepartment} onChange={(v) => updateField('oldShipDepartment', v)} options={['', ...oldDeptOptions]} placeholder={editForm.oldShipDivision ? '選択' : '-'} isMobile disabled={!editForm.oldShipDivision} />
-        </div>
-        <div style={{ marginBottom: '8px' }}>
-          <div style={selectLabelStyle}>諸室区分①</div>
-          <SearchableSelect value={editForm.oldShipRoomCategory} onChange={(v) => updateField('oldShipRoomCategory', v)} options={['', ...oldRoomCatOptions]} placeholder="選択" isMobile />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <div style={selectLabelStyle}>諸室区分②</div>
-          <SearchableSelect value={editForm.shipRoomCategory2} onChange={(v) => updateField('shipRoomCategory2', v)} options={['', ...roomCat2Options]} placeholder={editForm.oldShipRoomCategory ? '選択' : '-'} isMobile disabled={!editForm.oldShipRoomCategory} />
-        </div>
-
-        {/* 旧（現状） 棟・階・部門・部署・室名 */}
-        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>旧（現状）</div>
+        {/* 旧 棟・階・部門・部署・室名 */}
+        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>旧</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
           <div><div style={inputLabelStyle}>棟</div><input type="text" value={editForm.oldBuilding} onChange={(e) => updateField('oldBuilding', e.target.value)} placeholder="棟" style={cellInputStyle} /></div>
           <div><div style={inputLabelStyle}>階</div><input type="text" value={editForm.oldFloor} onChange={(e) => updateField('oldFloor', e.target.value)} placeholder="階" style={cellInputStyle} /></div>
@@ -526,8 +509,8 @@ function HospitalFacilityMasterContent() {
           <div style={{ gridColumn: '1 / -1' }}><div style={inputLabelStyle}>室名</div><input type="text" value={editForm.oldRoomName} onChange={(e) => updateField('oldRoomName', e.target.value)} placeholder="室名" style={cellInputStyle} /></div>
         </div>
 
-        {/* 新（リモデルのみ） 棟・階・部門・部署・室名 */}
-        <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #FAFAFA', fontSize: '14px' }}>新（リモデルのみ）</div>
+        {/* 新 棟・階・部門・部署・室名 */}
+        <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #FAFAFA', fontSize: '14px' }}>新</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
           <div><div style={purpleLabelStyle}>棟</div><input type="text" value={editForm.newBuilding} onChange={(e) => updateField('newBuilding', e.target.value)} placeholder="棟" style={{ ...cellInputStyle, borderColor: '#FAFAFA' }} /></div>
           <div><div style={purpleLabelStyle}>階</div><input type="text" value={editForm.newFloor} onChange={(e) => updateField('newFloor', e.target.value)} placeholder="階" style={{ ...cellInputStyle, borderColor: '#FAFAFA' }} /></div>
@@ -536,12 +519,34 @@ function HospitalFacilityMasterContent() {
           <div style={{ gridColumn: '1 / -1' }}><div style={purpleLabelStyle}>室名</div><input type="text" value={editForm.newRoomName} onChange={(e) => updateField('newRoomName', e.target.value)} placeholder="室名" style={{ ...cellInputStyle, borderColor: '#FAFAFA' }} /></div>
         </div>
 
-        {/* ID（必要時登録） 部門ID・部署ID・室名ID — 末尾 */}
-        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>ID（必要時登録）</div>
+        {/* ID 部門ID・部署ID・室名ID */}
+        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>ID</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
           <div><div style={greenLabelStyle}>部門ID</div><input type="text" value={editForm.divisionId} onChange={(e) => updateField('divisionId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
           <div><div style={greenLabelStyle}>部署ID</div><input type="text" value={editForm.departmentId} onChange={(e) => updateField('departmentId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
           <div><div style={greenLabelStyle}>室名ID</div><input type="text" value={editForm.roomId} onChange={(e) => updateField('roomId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
+        </div>
+
+        {/* 共通M 部門・部署 */}
+        <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #E1E1E1', fontSize: '14px' }}>共通M</div>
+        <div style={{ marginBottom: '8px' }}>
+          <div style={selectLabelStyle}>部門</div>
+          <SearchableSelect value={editForm.oldShipDivision} onChange={(v) => updateField('oldShipDivision', v)} options={['', ...divisionOptions]} placeholder="選択" isMobile />
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+          <div style={selectLabelStyle}>部署</div>
+          <SearchableSelect value={editForm.oldShipDepartment} onChange={(v) => updateField('oldShipDepartment', v)} options={['', ...oldDeptOptions]} placeholder={editForm.oldShipDivision ? '選択' : '-'} isMobile disabled={!editForm.oldShipDivision} />
+        </div>
+
+        {/* 共通諸室M 諸室区分①・諸室区分② */}
+        <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #E1E1E1', fontSize: '14px' }}>共通諸室M</div>
+        <div style={{ marginBottom: '8px' }}>
+          <div style={selectLabelStyle}>諸室区分①</div>
+          <SearchableSelect value={editForm.oldShipRoomCategory} onChange={(v) => updateField('oldShipRoomCategory', v)} options={['', ...oldRoomCatOptions]} placeholder="選択" isMobile />
+        </div>
+        <div style={{ marginBottom: '16px' }}>
+          <div style={selectLabelStyle}>諸室区分②</div>
+          <SearchableSelect value={editForm.shipRoomCategory2} onChange={(v) => updateField('shipRoomCategory2', v)} options={['', ...roomCat2Options]} placeholder={editForm.oldShipRoomCategory ? '選択' : '-'} isMobile disabled={!editForm.oldShipRoomCategory} />
         </div>
 
         {/* 保存/取消 */}
@@ -557,29 +562,33 @@ function HospitalFacilityMasterContent() {
   const renderMobileDisplayCard = (facility: HospitalFacilityMaster) => (
     <div key={facility.id} style={{ background: 'white', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-        {/* 共通マスタ */}
-        <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
-          <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '6px' }}>共通マスタ</div>
-          <div style={{ marginBottom: '4px' }}><span style={{ color: '#8A8A8A', fontSize: '12px' }}>部門/部署: </span>{facility.oldShipDivision} / {facility.oldShipDepartment}</div>
-          <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>諸室区分: </span>{facility.oldShipRoomCategory} / {facility.shipRoomCategory2}</div>
-        </div>
-        {/* 旧（現状） 棟・階・部門・部署・室名 */}
+        {/* 旧 棟・階・部門・部署・室名 */}
         <div style={{ background: '#EBF5EE', padding: '12px', borderRadius: '6px' }}>
-          <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>旧（現状）</div>
+          <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>旧</div>
           <div><span style={{ color: '#008C1D', fontSize: '12px' }}>場所: </span>{facility.oldBuilding || '-'} / {facility.oldFloor || '-'} / {facility.oldDepartment || '-'} / {facility.oldSection || '-'} / {facility.oldRoomName || '-'}</div>
         </div>
-        {/* 新（リモデルのみ） 棟・階・部門・部署・室名 */}
+        {/* 新 棟・階・部門・部署・室名 */}
         <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
-          <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '6px' }}>新（リモデルのみ）</div>
+          <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '6px' }}>新</div>
           <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>場所: </span>{facility.newBuilding || '-'} / {facility.newFloor || '-'} / {facility.newDepartment || '-'} / {facility.newSection || '-'} / {facility.newRoomName || '-'}</div>
         </div>
-        {/* ID（必要時登録） — 末尾 */}
+        {/* ID 部門ID・部署ID・室名ID */}
         {(facility.divisionId || facility.departmentId || facility.roomId) && (
           <div style={{ background: '#EBF5EE', padding: '12px', borderRadius: '6px' }}>
-            <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>ID（必要時登録）</div>
+            <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>ID</div>
             <div><span style={{ color: '#008C1D', fontSize: '12px' }}>部門/部署/室名: </span>{facility.divisionId || '-'} / {facility.departmentId || '-'} / {facility.roomId || '-'}</div>
           </div>
         )}
+        {/* 共通M 部門・部署 */}
+        <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
+          <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '6px' }}>共通M</div>
+          <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>部門/部署: </span>{facility.oldShipDivision || '-'} / {facility.oldShipDepartment || '-'}</div>
+        </div>
+        {/* 共通諸室M 諸室区分①・諸室区分② */}
+        <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
+          <div style={{ fontWeight: 600, color: '#8A8A8A', marginBottom: '6px' }}>共通諸室M</div>
+          <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>諸室区分①/②: </span>{facility.oldShipRoomCategory || '-'} / {facility.shipRoomCategory2 || '-'}</div>
+        </div>
       </div>
       <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
         <button onClick={() => handleStartEdit(facility)} disabled={editingId !== null} style={{ flex: 1, padding: '8px', background: editingId !== null ? '#F1F1F1' : 'white', color: editingId !== null ? '#8A8A8A' : '#146E2E', border: editingId !== null ? '1px solid #E1E1E1' : '1px solid #146E2E', borderRadius: '4px', fontSize: '13px', fontWeight: 500, cursor: editingId !== null ? 'not-allowed' : 'pointer' }}>編集</button>
@@ -684,36 +693,34 @@ function HospitalFacilityMasterContent() {
             <div style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-                  {/* Row 1: グループヘッダー REQ-016 並び: 共通4 → 旧5 → 新5 → ID3 → 操作 */}
+                  {/* Row 1: グループヘッダー REQ-016 並び: 旧5 → 新5 → ID3 → 共通M2 → 共通諸室M2 → 操作 */}
                   <tr>
-                    <th colSpan={4} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
-                      共通マスタ
-                    </th>
                     <th colSpan={5} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
-                      旧（現状）
+                      旧
                     </th>
                     <th colSpan={5} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
-                      新（リモデルのみ）
+                      新
                     </th>
                     <th colSpan={3} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
-                      ID（必要時登録）
+                      ID
+                    </th>
+                    <th colSpan={2} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                      共通M
+                    </th>
+                    <th colSpan={2} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                      共通諸室M
                     </th>
                     <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#F1F1F1', border: '1px solid #E1E1E1' }}>操作</th>
                   </tr>
                   {/* Row 2: カラム名 */}
                   <tr style={{ borderBottom: '2px solid #E1E1E1' }}>
-                    {/* 共通マスタ 4列 */}
-                    <th style={thStyleOld(isTablet)}>部門</th>
-                    <th style={thStyleOld(isTablet)}>部署</th>
-                    <th style={thStyleOld(isTablet)}>諸室区分①</th>
-                    <th style={{ ...thStyleOld(isTablet), borderRight: '2px solid #E1E1E1' }}>諸室区分②</th>
-                    {/* 旧（現状） 5列: 棟・階・部門・部署・室名 */}
+                    {/* 旧 5列: 棟・階・部門・部署・室名 */}
                     <th style={thStyleHosp(isTablet)}>棟</th>
                     <th style={thStyleHosp(isTablet)}>階</th>
                     <th style={thStyleHosp(isTablet)}>部門</th>
                     <th style={thStyleHosp(isTablet)}>部署</th>
                     <th style={{ ...thStyleHosp(isTablet), borderRight: '2px solid #E1E1E1' }}>室名</th>
-                    {/* 新（リモデルのみ） 5列: 棟・階・部門・部署・室名 */}
+                    {/* 新 5列: 棟・階・部門・部署・室名 */}
                     <th style={thStyleNew(isTablet)}>棟</th>
                     <th style={thStyleNew(isTablet)}>階</th>
                     <th style={thStyleNew(isTablet)}>部門</th>
@@ -723,6 +730,12 @@ function HospitalFacilityMasterContent() {
                     <th style={thStyleHosp(isTablet)}>部門ID</th>
                     <th style={thStyleHosp(isTablet)}>部署ID</th>
                     <th style={{ ...thStyleHosp(isTablet), borderRight: '2px solid #E1E1E1' }}>室名ID</th>
+                    {/* 共通M 2列: 部門・部署 */}
+                    <th style={thStyleOld(isTablet)}>部門</th>
+                    <th style={{ ...thStyleOld(isTablet), borderRight: '2px solid #E1E1E1' }}>部署</th>
+                    {/* 共通諸室M 2列: 諸室区分①・諸室区分② */}
+                    <th style={thStyleOld(isTablet)}>諸室区分①</th>
+                    <th style={{ ...thStyleOld(isTablet), borderRight: '2px solid #E1E1E1' }}>諸室区分②</th>
                   </tr>
                 </thead>
                 <tbody>
