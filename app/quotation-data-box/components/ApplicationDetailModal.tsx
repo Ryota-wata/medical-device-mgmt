@@ -94,7 +94,7 @@ export function ApplicationDetailModal({
           background: 'white',
           borderRadius: '8px',
           width: '95%',
-          maxWidth: '900px',
+          maxWidth: '800px',
           maxHeight: '90vh',
           overflow: 'hidden',
           display: 'flex',

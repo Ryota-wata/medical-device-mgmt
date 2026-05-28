@@ -733,18 +733,19 @@ export function TransferDisposalManagementTab() {
         const app = selectedApplication;
         const isTransfer = app.applicationType === '移動申請';
         const typeLabel = isTransfer ? '移動申請' : '廃棄申請';
+        // 申請内容確認モーダル 共通スタイル(購入/修理と統一)
         const modalTh: React.CSSProperties = {
-          background: '#F1F1F1', padding: '8px 12px', fontSize: '13px',
+          background: '#FAFAFA', padding: '8px 12px', fontSize: '13px',
           fontWeight: 600, textAlign: 'left', border: '1px solid #E1E1E1',
-          whiteSpace: 'nowrap', width: '120px', color: '#4A4A4A',
+          whiteSpace: 'nowrap', width: '150px', color: '#4A4A4A',
         };
         const modalTd: React.CSSProperties = {
           background: 'white', padding: '8px 12px', fontSize: '13px',
           border: '1px solid #E1E1E1', color: '#4A4A4A',
         };
         const sectionLabel: React.CSSProperties = {
-          fontSize: '13px', fontWeight: 600, color: '#4A4A4A',
-          borderBottom: '1px solid #E1E1E1', paddingBottom: '4px', marginTop: '16px', marginBottom: '8px',
+          fontSize: '14px', fontWeight: 'bold', color: '#008C1D',
+          borderBottom: '2px solid #008C1D', paddingBottom: '8px', marginTop: '16px', marginBottom: '12px',
         };
         return (
           <div
@@ -759,32 +760,30 @@ export function TransferDisposalManagementTab() {
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
-                background: '#FAFAFA', borderRadius: '8px',
-                width: '90%', maxWidth: '700px', maxHeight: '90vh',
+                background: 'white', borderRadius: '8px',
+                width: '95%', maxWidth: '800px', maxHeight: '90vh',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                display: 'flex', flexDirection: 'column',
+                display: 'flex', flexDirection: 'column', overflow: 'hidden',
               }}
             >
-              {/* ヘッダー */}
+              {/* ヘッダー(購入/修理と統一: 緑背景+白文字+No.バッジ) */}
               <div style={{
-                background: 'white', padding: '16px 20px',
-                borderRadius: '8px 8px 0 0', color: '#4A4A4A',
-                borderBottom: '1px solid #E1E1E1',
-                display: 'flex', alignItems: 'center', gap: '16px',
+                background: '#008C1D', padding: '16px 24px',
+                color: 'white',
+                display: 'flex', alignItems: 'center', gap: '12px',
               }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>
-                    {typeLabel}：内容確認
-                  </span>
-                  <span style={{ fontSize: '12px', color: '#8A8A8A' }}>
-                    {typeLabel}No, {app.applicationNo}
-                  </span>
-                </div>
+                <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{typeLabel} - 内容確認</span>
+                <span style={{
+                  background: 'white', color: '#008C1D', padding: '4px 12px',
+                  borderRadius: '4px', fontSize: '13px', fontWeight: 'bold',
+                }}>
+                  {typeLabel}No. {app.applicationNo}
+                </span>
                 <button
                   onClick={() => setIsApprovalModalOpen(false)}
                   style={{
-                    marginLeft: 'auto', background: 'transparent', border: 'none',
-                    color: '#4A4A4A', fontSize: '20px', cursor: 'pointer', padding: '4px 8px', lineHeight: 1,
+                    marginLeft: 'auto', background: 'none', border: 'none',
+                    color: 'white', fontSize: '24px', cursor: 'pointer', padding: '0', width: '30px', height: '30px', lineHeight: 1,
                   }}
                   aria-label="閉じる"
                 >

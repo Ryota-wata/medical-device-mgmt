@@ -594,17 +594,17 @@ function RepairRequestsContent() {
           borderRadius: 8, padding: '20px 24px', marginBottom: 16,
         };
         const sectionTitleStyle: React.CSSProperties = {
-          fontSize: 14, fontWeight: 700, color: '#4A4A4A', marginBottom: 12,
-          borderBottom: '2px solid #E1E1E1', paddingBottom: 6,
+          fontSize: 14, fontWeight: 'bold', color: '#008C1D', marginBottom: 12,
+          borderBottom: '2px solid #008C1D', paddingBottom: 8,
         };
         return (
           <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
-            <div style={{ background: 'white', borderRadius: 8, maxWidth: 700, width: '95%', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {/* ヘッダー */}
-              <div style={{ padding: '14px 24px', background: '#008C1D', color: 'white', display: 'flex', alignItems: 'center', gap: 24 }}>
-                <span style={{ fontWeight: 700, fontSize: 15, border: '1px solid rgba(255,255,255,0.4)', padding: '4px 16px', borderRadius: 4 }}>修理申請 内容確認</span>
-                <span style={{ fontSize: 14, background: 'rgba(255,255,255,0.15)', padding: '4px 16px', borderRadius: 4 }}>
-                  移動申請No. {selectedApplication.applicationNo}
+            <div style={{ background: 'white', borderRadius: 8, maxWidth: 800, width: '95%', boxShadow: '0 4px 20px rgba(0,0,0,0.3)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {/* ヘッダー(購入/移動廃棄と統一: 緑背景+白文字+白No.バッジ) */}
+              <div style={{ padding: '16px 24px', background: '#008C1D', color: 'white', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontWeight: 'bold', fontSize: 18 }}>修理申請 - 内容確認</span>
+                <span style={{ background: 'white', color: '#008C1D', padding: '4px 12px', borderRadius: 4, fontSize: 13, fontWeight: 'bold' }}>
+                  修理申請No. {selectedApplication.applicationNo}
                 </span>
                 <button
                   onClick={() => { setShowDetailModal(false); setSelectedApplication(null); }}
@@ -669,7 +669,7 @@ function RepairRequestsContent() {
                       <tr>
                         <th style={modalThStyle}>設置部署</th>
                         <td style={modalTdStyle}>{selectedApplication.section}</td>
-                        <th style={modalThStyle}>室名</th>
+                        <th style={modalThStyle}>設置室名</th>
                         <td style={modalTdStyle}>{selectedApplication.roomName}</td>
                       </tr>
                     </tbody>
