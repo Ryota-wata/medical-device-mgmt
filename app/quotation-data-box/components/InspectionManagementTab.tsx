@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useInspectionStore } from '@/lib/stores';
 import { InspectionTask, LendingStatus } from '@/lib/types';
+import { Asset } from '@/lib/types/asset';
 import { InspectionMenuModal } from './InspectionMenuModal';
 import { InspectionRegistrationModal } from './InspectionRegistrationModal';
 
@@ -84,6 +85,19 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
   // モーダル状態
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
+  // REQ-113: 設定変更 = 登録済み機器の点検メニュー変更（対象資産は確定済みなので選択をスキップ）
+  const [settingTargetAsset, setSettingTargetAsset] = useState<Asset | null>(null);
+  const taskToAsset = (t: InspectionTask): Asset => ({
+    qrCode: t.assetId, no: 0, facility: '', building: '', floor: '',
+    department: t.managementDepartment, section: t.installedDepartment,
+    category: '', largeClass: t.largeClass, mediumClass: t.mediumClass,
+    item: t.assetName, name: t.assetName, maker: t.maker, model: t.model,
+    quantity: 1, width: '', depth: '', height: '',
+  });
+  const handleOpenSettingChange = (t: InspectionTask) => {
+    setSettingTargetAsset(taskToAsset(t));
+    setIsRegistrationModalOpen(true);
+  };
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [selectedTaskForDate, setSelectedTaskForDate] = useState<InspectionTask | null>(null);
   const [newDate, setNewDate] = useState('');
@@ -440,7 +454,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                     {/* 操作: 設定変更 */}
                     <td style={{ ...td, textAlign: 'center' }}>
                       <button
-                        onClick={() => setIsRegistrationModalOpen(true)}
+                        onClick={() => handleOpenSettingChange(task)}
                         aria-label="設定変更"
                         title={`${task.assetName} の点検設定を変更`}
                         style={{
@@ -489,7 +503,8 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
       {/* 点検登録モーダル */}
       <InspectionRegistrationModal
         isOpen={isRegistrationModalOpen}
-        onClose={() => setIsRegistrationModalOpen(false)}
+        preSelectedAssets={settingTargetAsset ? [settingTargetAsset] : undefined}
+        onClose={() => { setIsRegistrationModalOpen(false); setSettingTargetAsset(null); }}
       />
 
       {/* 日程調整モーダル (Figma 345:62213) */}
