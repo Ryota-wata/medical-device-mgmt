@@ -263,14 +263,15 @@ function HospitalFacilityMasterContent() {
     border: '1px solid #E1E1E1',
   });
 
+  // 旧/ID 列も中性色に統一 (REQ-016 訂正: 意図のない強調を除去、グループ区切りは罫線のみで表現)
   const thStyleHosp = (isTab: boolean) => ({
     padding: isTab ? '10px 8px' : '12px 10px',
     textAlign: 'left' as const,
     fontSize: isTab ? '12px' : '13px',
     fontWeight: 600,
-    color: '#146E2E',
+    color: '#4A4A4A',
     whiteSpace: 'nowrap' as const,
-    background: '#EBF5EE',
+    background: '#FAFAFA',
     border: '1px solid #E1E1E1',
   });
 
@@ -455,30 +456,28 @@ function HospitalFacilityMasterContent() {
     );
   };
 
-  // ── 表示行レンダー（テーブル: 17列 + 操作） REQ-016 並び: 旧→新→ID→共通M→共通諸室M ──
+  // ── 表示行レンダー（テーブル: 17列 + 操作） REQ-016 並び: 旧→新→ID→共通M→共通諸室M (色差し別なし、罫線で区切り) ──
   const renderDisplayRow = (facility: HospitalFacilityMaster, index: number) => {
     const isEven = index % 2 === 0;
     const rowBg = isEven ? 'white' : '#FAFAFA';
-    const newBg = isEven ? '#FAFAFA' : '#FAFAFA';
-    const hospBg = isEven ? '#EBF5EE' : '#EBF5EE';
     return (
       <tr key={facility.id} style={{ borderBottom: '1px solid #E1E1E1', background: rowBg }}>
         {/* 旧 (5列: 棟・階・部門・部署・室名) */}
-        <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldBuilding}</td>
-        <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldFloor || '-'}</td>
-        <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldDepartment}</td>
-        <td style={{ ...tdBase(isTablet), background: hospBg }}>{facility.oldSection}</td>
-        <td style={{ ...tdBase(isTablet), background: hospBg, borderRight: '2px solid #E1E1E1' }}>{facility.oldRoomName}</td>
+        <td style={tdBase(isTablet)}>{facility.oldBuilding}</td>
+        <td style={tdBase(isTablet)}>{facility.oldFloor || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.oldDepartment}</td>
+        <td style={tdBase(isTablet)}>{facility.oldSection}</td>
+        <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.oldRoomName}</td>
         {/* 新 (5列: 棟・階・部門・部署・室名) */}
-        <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newBuilding || '-'}</td>
-        <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newFloor || '-'}</td>
-        <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newDepartment || '-'}</td>
-        <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg }}>{facility.newSection || '-'}</td>
-        <td style={{ ...tdBase(isTablet), color: '#4A4A4A', background: newBg, borderRight: '2px solid #E1E1E1' }}>{facility.newRoomName || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.newBuilding || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.newFloor || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.newDepartment || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.newSection || '-'}</td>
+        <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.newRoomName || '-'}</td>
         {/* ID (3列: 部門ID・部署ID・室名ID) */}
-        <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.divisionId || '-'}</td>
-        <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg }}>{facility.departmentId || '-'}</td>
-        <td style={{ ...tdBase(isTablet), color: '#146E2E', background: hospBg, borderRight: '2px solid #E1E1E1' }}>{facility.roomId || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.divisionId || '-'}</td>
+        <td style={tdBase(isTablet)}>{facility.departmentId || '-'}</td>
+        <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.roomId || '-'}</td>
         {/* 共通M (2列: 部門・部署) */}
         <td style={tdBase(isTablet)}>{facility.oldShipDivision}</td>
         <td style={{ ...tdBase(isTablet), borderRight: '2px solid #E1E1E1' }}>{facility.oldShipDepartment}</td>
@@ -496,11 +495,12 @@ function HospitalFacilityMasterContent() {
     const selectLabelStyle = { fontSize: '12px', color: '#8A8A8A', marginBottom: '4px' };
     const inputLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#4A4A4A', marginBottom: '4px' };
     const purpleLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#4A4A4A', marginBottom: '4px' };
-    const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#146E2E', marginBottom: '4px' };
+    // 旧/ID 列も中性色に統一 (意図のない強調を除去)
+    const greenLabelStyle = { fontSize: '12px', fontWeight: 600 as const, color: '#4A4A4A', marginBottom: '4px' };
     return (
       <div key={key} style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', border: '2px solid #008C1D' }}>
         {/* 旧 棟・階・部門・部署・室名 */}
-        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>旧</div>
+        <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #E1E1E1', fontSize: '14px' }}>旧</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '16px' }}>
           <div><div style={inputLabelStyle}>棟</div><input type="text" value={editForm.oldBuilding} onChange={(e) => updateField('oldBuilding', e.target.value)} placeholder="棟" style={cellInputStyle} /></div>
           <div><div style={inputLabelStyle}>階</div><input type="text" value={editForm.oldFloor} onChange={(e) => updateField('oldFloor', e.target.value)} placeholder="階" style={cellInputStyle} /></div>
@@ -520,7 +520,7 @@ function HospitalFacilityMasterContent() {
         </div>
 
         {/* ID 部門ID・部署ID・室名ID */}
-        <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #EBF5EE', fontSize: '14px' }}>ID</div>
+        <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '12px', paddingBottom: '6px', borderBottom: '2px solid #E1E1E1', fontSize: '14px' }}>ID</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
           <div><div style={greenLabelStyle}>部門ID</div><input type="text" value={editForm.divisionId} onChange={(e) => updateField('divisionId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
           <div><div style={greenLabelStyle}>部署ID</div><input type="text" value={editForm.departmentId} onChange={(e) => updateField('departmentId', e.target.value)} placeholder="ID" style={cellInputStyle} /></div>
@@ -562,21 +562,21 @@ function HospitalFacilityMasterContent() {
   const renderMobileDisplayCard = (facility: HospitalFacilityMaster) => (
     <div key={facility.id} style={{ background: 'white', borderRadius: '8px', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-        {/* 旧 棟・階・部門・部署・室名 */}
-        <div style={{ background: '#EBF5EE', padding: '12px', borderRadius: '6px' }}>
-          <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>旧</div>
-          <div><span style={{ color: '#008C1D', fontSize: '12px' }}>場所: </span>{facility.oldBuilding || '-'} / {facility.oldFloor || '-'} / {facility.oldDepartment || '-'} / {facility.oldSection || '-'} / {facility.oldRoomName || '-'}</div>
+        {/* 旧 棟・階・部門・部署・室名 (色差し別なし) */}
+        <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
+          <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '6px' }}>旧</div>
+          <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>場所: </span>{facility.oldBuilding || '-'} / {facility.oldFloor || '-'} / {facility.oldDepartment || '-'} / {facility.oldSection || '-'} / {facility.oldRoomName || '-'}</div>
         </div>
         {/* 新 棟・階・部門・部署・室名 */}
         <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
           <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '6px' }}>新</div>
           <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>場所: </span>{facility.newBuilding || '-'} / {facility.newFloor || '-'} / {facility.newDepartment || '-'} / {facility.newSection || '-'} / {facility.newRoomName || '-'}</div>
         </div>
-        {/* ID 部門ID・部署ID・室名ID */}
+        {/* ID 部門ID・部署ID・室名ID (色差し別なし) */}
         {(facility.divisionId || facility.departmentId || facility.roomId) && (
-          <div style={{ background: '#EBF5EE', padding: '12px', borderRadius: '6px' }}>
-            <div style={{ fontWeight: 600, color: '#146E2E', marginBottom: '6px' }}>ID</div>
-            <div><span style={{ color: '#008C1D', fontSize: '12px' }}>部門/部署/室名: </span>{facility.divisionId || '-'} / {facility.departmentId || '-'} / {facility.roomId || '-'}</div>
+          <div style={{ background: '#FAFAFA', padding: '12px', borderRadius: '6px' }}>
+            <div style={{ fontWeight: 600, color: '#4A4A4A', marginBottom: '6px' }}>ID</div>
+            <div><span style={{ color: '#8A8A8A', fontSize: '12px' }}>部門/部署/室名: </span>{facility.divisionId || '-'} / {facility.departmentId || '-'} / {facility.roomId || '-'}</div>
           </div>
         )}
         {/* 共通M 部門・部署 */}
@@ -693,21 +693,21 @@ function HospitalFacilityMasterContent() {
             <div style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-                  {/* Row 1: グループヘッダー REQ-016 並び: 旧5 → 新5 → ID3 → 共通M2 → 共通諸室M2 → 操作 */}
+                  {/* Row 1: グループヘッダー REQ-016 並び: 旧5 → 新5 → ID3 → 共通M2 → 共通諸室M2 → 操作 (中性色で統一、グループ区切りは罫線で表現) */}
                   <tr>
-                    <th colSpan={5} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={5} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       旧
                     </th>
-                    <th colSpan={5} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#FAFAFA', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={5} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       新
                     </th>
-                    <th colSpan={3} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#146E2E', background: '#EBF5EE', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={3} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       ID
                     </th>
-                    <th colSpan={2} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={2} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       共通M
                     </th>
-                    <th colSpan={2} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#8A8A8A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
+                    <th colSpan={2} style={{ padding: isTablet ? '8px' : '10px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 700, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', borderRight: '2px solid #E1E1E1' }}>
                       共通諸室M
                     </th>
                     <th rowSpan={2} style={{ padding: isTablet ? '10px 8px' : '12px 10px', textAlign: 'center', fontSize: isTablet ? '12px' : '13px', fontWeight: 600, color: '#4A4A4A', whiteSpace: 'nowrap', verticalAlign: 'middle', background: '#F1F1F1', border: '1px solid #E1E1E1' }}>操作</th>
