@@ -618,6 +618,7 @@ package "資産台帳" {
     見積依頼ID / rfq_id : bigint
     見積依頼先ID / rfq_vendor_id : bigint
     見積ID / quotation_id : bigint
+    保守契約見直しID / maintenance_contract_review_id : bigint
     点検結果ID / inspection_result_id : bigint
     資産台帳ID / asset_ledger_id : bigint
     ドキュメント区分 / document_category : varchar
@@ -866,6 +867,8 @@ package "編集リスト" {
     階 / floor_name : varchar
     部門名 / department_name : varchar
     部署名 / section_name : varchar
+    共通部門名 / common_division_name : varchar
+    共通部署名 / common_department_name : varchar
     諸室区分① / room_class1 : varchar
     諸室区分② / room_class2 : varchar
     諸室名称 / room_name : varchar
@@ -884,12 +887,18 @@ package "編集リスト" {
     Category / category_name : varchar
     大分類 / large_class_name : varchar
     中分類 / medium_class_name : varchar
+    明細区分 / item_type : varchar
+    明細親機 / parent_item_name : varchar
     品目 / item_name : varchar
     個体管理名称 / asset_name : varchar
     メーカー名 / maker_name : varchar
     型式 / model_name : varchar
     数量 / quantity : int
     単位 / unit : varchar
+    機器種別 / device_type : varchar
+    資産グループ名称 / asset_group_name : varchar
+    使用目的 / asset_usage_purpose : varchar
+    備考 / remarks : varchar
     幅(mm) / width_mm : varchar
     奥行(mm) / depth_mm : varchar
     高さ(mm) / height_mm : varchar
@@ -914,8 +923,20 @@ package "編集リスト" {
     グループ名称 / rfq_group_name : varchar
     RFQ割当ステータス / rfq_assignment_status : varchar
     見積業者ID / rfq_vendor_id : bigint
+    業者マスタID / vendor_id : bigint
+    業者名 / vendor_name : varchar
     見積金額 / rfq_amount : decimal(14,2)
+    見積フェーズ / quotation_phase : varchar
+    見積日付 / quotation_date : date
+    会計区分 / account_category : varchar
+    定価単価 / list_price_unit : decimal(14,2)
+    定価金額 / list_price_total : decimal(14,2)
+    見積単価 / quotation_price_unit : decimal(14,2)
+    見積金額（税別） / quotation_price_ex_tax : decimal(14,2)
+    見積金額（税込） / quotation_price_in_tax : decimal(14,2)
     要望区分 / application_category : varchar
+    申請種別 / application_type : varchar
+    執行年度 / execution_year : char(4)
     申請No. / application_no : varchar
     申請理由 / application_reason : varchar
     希望納期 / desired_delivery_on : date
@@ -923,6 +944,8 @@ package "編集リスト" {
     申請部署 / applicant_department : varchar
     申請日 / application_date : date
     優先順位 / priority : varchar
+    システム接続 / system_connection : varchar
+    システム接続先 / system_target : varchar
     要望1品目 / request_item_1 : varchar
     要望1メーカー / request_maker_1 : varchar
     要望1型式 / request_model_1 : varchar
@@ -965,6 +988,10 @@ package "編集リスト" {
     PENDING / REFLECTED / SKIPPED / ERROR。
     リモデルダッシュボードのクローズで
     原本へ反映した結果を保持する。
+    rfq_assignment_status:
+    UNASSIGNED / RFQ_ASSIGNED / COMPLETED。
+    画面上の pending / rfq_assigned /
+    completed に対応する。
   end note
 
   note right of edit_list_items
@@ -998,6 +1025,21 @@ package "編集リスト" {
     (edit_list_id, source_type,
      source_application_id, source_application_asset_id)
     で重複取り込みを防止する。
+    インライン新規要望は登録時に
+    applications / purchase_application_details /
+    application_assets を作成し、
+    edit_list_id と status='編集中' を
+    設定した APPLICATION として扱う。
+    source_type=MANUAL は
+    編集リスト画面内で生成した
+    更新/増設などの明細を表し、
+    外部参照元IDを必須にしない。
+    MANUAL / QUOTATION の新規作業行は
+    QRコード、固定資産番号、管理機器番号、
+    シリアル番号など個体識別子を
+    元行から引き継がない。
+    分類、設置場所、数量、見積情報などの
+    作業スナップショットのみコピーする。
     source_type=QUOTATION は
     見積DB Link の未紐付け見積明細から
     追加した編集リスト明細を表し、
@@ -1008,6 +1050,14 @@ package "編集リスト" {
     rfq_group_name はRFQグループ名として
     別項目で保持し、見積番号を
     RFQグループ名へ転記しない。
+    品目/メーカー/型式のセル編集時は
+    ship_asset_masters を
+    品目+メーカー+型式、
+    品目+メーカー、品目の順で
+    再解決し、一意に解決できた場合のみ
+    ship_asset_master_id を更新する。
+    一意に決まらない場合は NULL とし、
+    表示値スナップショットを保持する。
     source_type 別必須項目は CHECK 制約で
     担保する。
     BASE_ASSET は source_asset_ledger_id、
@@ -1015,6 +1065,8 @@ package "編集リスト" {
     source_application_asset_id、
     QUOTATION は source_quotation_item_id を
     それぞれ必須とする。
+    MANUAL は外部参照元IDを
+    必須にしない。
     RFQ詳細/依頼書プレビューの対象明細は
     rfq_applications を正本とし、
     同一編集リスト内の全明細を返さない。
@@ -1074,6 +1126,12 @@ package "編集リスト" {
     SHIP資産マスタ任意カラムとは別管理。
     active 行（deleted_at IS NULL）に対して
     UNIQUE(edit_list_id, column_key)。
+    column_key はサーバー生成の不変キー。
+    column_name は前後空白除去後に空文字を拒否し、
+    最大200文字とする。
+    同一編集リスト内の表示名重複は許容し、
+    識別は edit_list_free_column_id /
+    column_key で行う。
     列削除時は deleted_at を設定し、
     紐づく edit_list_free_column_values も
     同時に無効化する。
@@ -1276,6 +1334,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     見積依頼ID / rfq_id : bigint
     見積依頼先ID / rfq_vendor_id : bigint
     見積ID / quotation_id : bigint
+    保守契約見直しID / maintenance_contract_review_id : bigint
     点検結果ID / inspection_result_id : bigint
     資産台帳ID / asset_ledger_id : bigint
     調査レコードID / asset_survey_record_id : bigint
@@ -1408,6 +1467,16 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     更新日時 / updated_at : timestamp
   }
 
+  note right of transfer_application_details
+    通常の移動申請ではAPI検証で
+    destination_facility_location_id
+    または移動先スナップショットを必須とする。
+    リモデル編集リスト起点の移設申請は
+    作成時点の移設先未入力を許容し、
+    リモデルクローズ前に
+    新設置場所入力を必須検証する。
+  end note
+
   entity "disposal_application_details" as disposal_application_details {
     * 申請ID / application_id : bigint
     --
@@ -1526,6 +1595,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     次の遷移を投入する。
     RFQ:
     見積依頼 -> 見積依頼済
+    見積依頼 -> 申請を見送る
     見積依頼済 -> 見積DB登録済
     見積DB登録済 -> 見積登録依頼中
     見積登録依頼中 -> 発注用見積依頼済
@@ -1583,12 +1653,27 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     廃棄、移動は management_type=REMODEL
     かつ workflow_type=RFQ / DISPOSAL /
     TRANSFER で区分する。
+    rfq_no は workflow_type=RFQ では
+    RFQ-yyyyMMdd-nnnn、DISPOSAL では
+    DISP-yyyyMMdd-nnnn、TRANSFER では
+    TRAN-yyyyMMdd-nnnn の表示番号として
+    サーバー採番する。
     workflow_type 未指定の既存データは
     RFQ とみなす。
     quotation_type / quotation_phase は
     リモデル管理タブの見積区分・
     見積フェーズ絞り込み用の
     RFQ単位スナップショット。
+    quotation_type は PURCHASE / LEASE /
+    INSTALLMENT / RENTAL / TRIAL / BORROW /
+    REPAIR / MAINTENANCE / INSPECTION / OTHER。
+    quotation_phase は LIST_PRICE / ESTIMATE /
+    ORDER_REGISTRATION / FINAL_ASSET_REGISTRATION。
+    DISPOSAL / TRANSFER の rfq_group_name は
+    サーバー側で既定生成する。
+    廃棄は 廃棄：{品目名または個体管理名称}、
+    移動は 移設：{品目名または個体管理名称}
+    （→{移設先部署}{移設先室名}）。
     見積依頼グループの削除は
     発注済到達前のステータスのみ許可し、
     発注済 / 納期確定 / 検収済 /
@@ -1621,9 +1706,22 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     編集リスト明細のリンク。
     PURCHASE / REMODEL は
     edit_list_id と edit_list_item_id を持つ。
-    DISPOSAL / REPAIR / MAINTENANCE は
+    DISPOSAL / TRANSFER / REPAIR は
     application_id と application_asset_id による
     直接リンクを許可する。
+    編集リスト起点の DISPOSAL / TRANSFER は
+    application_id / application_asset_id と
+    edit_list_id / edit_list_item_id を
+    どちらも保持し、申請明細と
+    編集リスト明細の対応を追跡する。
+    同一 edit_list_item_id に対して
+    未削除RFQの同一 workflow_type
+    （DISPOSAL または TRANSFER）が
+    既に存在する場合は重複作成不可。
+    MAINTENANCE 単独登録は applications を
+    作成しないため、maintenance_contracts.rfq_id と
+    maintenance_contract_assets を対象資産正本とし、
+    rfq_applications は必須にしない。
     edit_list_id と edit_list_item_id が
     設定される場合は複合FKで
     edit_list_items を参照する。
@@ -1676,13 +1774,12 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     DRAFT / SENT / REPLIED / CANCELED。
     DRAFT の行のみ業者情報、
     回答期限、依頼事項を更新可能。
-    個別依頼送信は DRAFT 行だけを
+    個別依頼送信とRFQプロセスのSHIP一括依頼は
+    DRAFT 行だけを
     SENT に更新し、requested_at と
     requested_by_user_id を同一トランザクションで設定する。
-    Phase1ではSHIP一括依頼はボタン表示・押下UI枠までとし、
-    後続の依頼作成は行わない。
-    Phase2では外部送信とは別の内部依頼として扱い、
-    本テーブルの request_status を SENT に更新しない。
+    SHIP代理作業依頼は別テーブル/別APIの責務で、
+    本テーブルの request_status 更新とは分離する。
   end note
 
   entity "quotations" as quotations {
@@ -1700,6 +1797,8 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     納期（月） / delivery_period_months : int
     見積フェーズ / quotation_phase : varchar
     合計金額(税抜) / total_amount_excl_tax : decimal(14,2)
+    単年度金額(税抜) / annual_amount_excl_tax : decimal(14,2)
+    会計区分コード / account_division_code : varchar
     ステータス / status : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
@@ -1791,6 +1890,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     申請者名 / applicant_name : varchar
     申請者メール / applicant_email : varchar
     発注形態 / order_type : varchar
+    決済No. / settlement_no : varchar
     支払条件 / payment_terms : varchar
     支払期日 / payment_due_on : date
     リース会社名 / lease_company_name : varchar
@@ -1861,22 +1961,53 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   entity "maintenance_contracts" as maintenance_contracts {
     * 保守契約ID / maintenance_contract_id : bigint
     --
+    保守契約No. / maintenance_contract_no : varchar
     契約グループ名 / contract_group_name : varchar
+    更新元保守契約ID / renewal_source_maintenance_contract_id : bigint
     申請ID / application_id : bigint
     見積依頼ID / rfq_id : bigint
+    決済No. / settlement_no : varchar
     契約業者ID / vendor_id : bigint
     契約業者名 / vendor_name : varchar
-    保守種別 / maintenance_type : varchar
+    契約業者担当者名 / vendor_contact_person : varchar
+    契約業者メール / vendor_email : varchar
+    契約業者連絡先 / vendor_phone : varchar
+    契約種別 / maintenance_type : varchar
+    種別備考 / maintenance_type_note : varchar
+    契約日 / contracted_on : date
     契約開始日 / contract_start_on : date
     契約終了日 / contract_end_on : date
+    契約検討開始日 / contract_review_start_on : date
     契約金額(税抜) / contract_amount_excl_tax : decimal(14,2)
+    単年度金額(税抜) / annual_amount_excl_tax : decimal(14,2)
     リモート保守可否 / remote_maintenance_available : boolean
     オンコール可否 / on_call_support : boolean
     ステータス / status : varchar
+    受付部署名 / reception_department_name : varchar
+    受付担当者名 / reception_person_name : varchar
+    受付連絡先 / reception_contact : varchar
     コメント / comment : varchar
+    最終ステータス更新日時 / last_status_changed_at : timestamp
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of maintenance_contracts
+    保守契約登録は applications を作成せず、
+    maintenance_contracts と
+    maintenance_contract_assets を正本にする。
+    見積依頼は rfqs.management_type='MAINTENANCE'
+    のRFQを rfq_id で参照する。
+    タスク管理側の一覧は進行中契約と
+    契約終了日前の完了契約を既定表示し、
+    期限切れ契約は期限切れも表示指定時のみ含める。
+    契約内容見直しは完了契約の
+    資産追加・除外と金額変更履歴を保持する。
+    契約更新は元契約を直接戻さず、
+    新しい保守契約を作成し、元契約IDを保持する。
+    画面表示用 currentStep は status から算出し、
+    DBには保持しない。
+  end note
 
   entity "maintenance_contract_status_definitions" as maintenance_contract_status_definitions {
     * ステータス / status : varchar
@@ -1899,11 +2030,10 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
   }
 
   note right of maintenance_contract_status_definitions
-    保守契約管理タブの4ステップに合わせる。
+    保守契約管理タブの3ステップに合わせる。
     初期データ:
     見積依頼 / 見積依頼済 /
-    見積登録済 / 契約発注済 /
-    完了 / 申請見送り。
+    見積登録済 / 完了 / 申請見送り。
     完了と申請見送りは終端状態。
   end note
 
@@ -1911,9 +2041,58 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     少なくとも次の遷移を投入する。
     見積依頼 -> 見積依頼済
     見積依頼済 -> 見積登録済
-    見積登録済 -> 契約発注済
-    契約発注済 -> 完了
+    見積登録済 -> 完了
     見積依頼 -> 申請見送り
+    点検管理連携、契約内容見直し、契約更新は
+    契約ステータスを変えない業務アクションとして扱う。
+  end note
+
+  entity "maintenance_contract_reviews" as maintenance_contract_reviews {
+    * 保守契約見直しID / maintenance_contract_review_id : bigint
+    --
+    保守契約ID / maintenance_contract_id : bigint
+    見直しNo. / review_no : varchar
+    見直し種別 / review_type : varchar
+    見直し前契約金額(税抜) / previous_contract_amount_excl_tax : decimal(14,2)
+    見直し後契約金額(税抜) / new_contract_amount_excl_tax : decimal(14,2)
+    見直し理由 / review_reason : varchar
+    登録者ユーザーID / reviewed_by_user_id : bigint
+    登録日時 / reviewed_at : timestamp
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of maintenance_contract_reviews
+    契約内容見直しの履歴。
+    完了かつ契約中の保守契約に対してのみ作成する。
+    契約ステータスは完了のまま維持し、
+    見直し後契約金額を maintenance_contracts へ反映する。
+    契約変更覚書などの添付は
+    application_documents.owner_type='MAINTENANCE_CONTRACT_REVIEW'
+    で保持する。
+  end note
+
+  entity "maintenance_contract_review_assets" as maintenance_contract_review_assets {
+    * 見直し対象資産ID / maintenance_contract_review_asset_id : bigint
+    --
+    保守契約見直しID / maintenance_contract_review_id : bigint
+    保守契約ID / maintenance_contract_id : bigint
+    契約対象資産ID / maintenance_contract_asset_id : bigint
+    資産台帳ID / asset_ledger_id : bigint
+    変更区分 / change_type : varchar
+    備考 / remarks : varchar
+    作成日時 / created_at : timestamp
+    更新日時 / updated_at : timestamp
+  }
+
+  note right of maintenance_contract_review_assets
+    change_type は ADD / REMOVE。
+    REMOVE は既存 maintenance_contract_assets の
+    excluded_flag=true 更新と同時に登録する。
+    ADD は同一契約への maintenance_contract_assets
+    新規作成と同時に登録する。
+    1回の見直し内で同一資産を
+    ADD と REMOVE の両方に含めない。
   end note
 
   entity "maintenance_contract_assets" as maintenance_contract_assets {
@@ -1935,11 +2114,21 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     リモート対応 / remote_maintenance_available : boolean
     法定点検フラグ / legal_inspection_flag : boolean
     法定点検根拠 / legal_inspection_basis : varchar
+    契約単価(税抜) / contract_unit_price_excl_tax : decimal(14,2)
     期中除外フラグ / excluded_flag : boolean
     備考 / remarks : varchar
     作成日時 / created_at : timestamp
     更新日時 / updated_at : timestamp
   }
+
+  note right of maintenance_contract_assets
+    同一 maintenance_contract_id 内の
+    asset_ledger_id 重複を禁止する。
+    excluded_flag=true の行は
+    点検管理リスト登録から除外する。
+    点検管理リスト登録では同一契約由来の
+    inspection_tasks を作成または更新する。
+  end note
 
   entity "inspection_menus" as inspection_menus {
     * 点検メニューID / inspection_menu_id : bigint
@@ -3236,6 +3425,7 @@ users ||--o{ application_approval_step_assignees : ""
 users ||--o{ application_documents : ""
 users ||--o{ application_task_steps : ""
 users ||--o{ rfqs : ""
+users ||--o{ maintenance_contract_reviews : "reviewed_by"
 users ||--o{ inspection_menus : ""
 users ||--o{ inspection_results : ""
 users ||--o{ asset_survey_sessions : ""
@@ -3345,6 +3535,7 @@ asset_ledgers ||--o{ asset_photos : "VIEW元"
 asset_ledgers ||--o{ qr_codes : ""
 asset_ledgers ||--o{ application_assets : ""
 asset_ledgers ||--o{ maintenance_contract_assets : ""
+asset_ledgers ||--o{ maintenance_contract_review_assets : ""
 asset_ledgers ||--o{ inspection_tasks : ""
 asset_ledgers ||--o{ lending_devices : ""
 asset_ledgers ||--o{ asset_survey_integration_results : ""
@@ -3410,6 +3601,9 @@ applications ||--o{ disposal_application_details : "related_repair_application_i
 applications ||--|| repair_request_details : ""
 applications ||--o{ rfq_applications : ""
 applications ||--o{ maintenance_contracts : ""
+maintenance_contracts ||--o{ maintenance_contracts : "renewal_source"
+maintenance_contracts ||--o{ maintenance_contract_reviews : ""
+maintenance_contracts ||--o{ maintenance_contract_review_assets : ""
 applications ||--o{ purchase_applications : "VIEW元"
 applications ||--o{ repair_requests : "VIEW元"
 feature_catalogs ||--o{ application_approval_step_assignees : "approver_feature_code"
@@ -3428,6 +3622,9 @@ rfqs ||--o{ application_documents : ""
 
 maintenance_contract_status_definitions ||--o{ maintenance_contracts : ""
 maintenance_contract_status_definitions ||--o{ maintenance_contract_status_transitions : ""
+maintenance_contract_reviews ||--o{ maintenance_contract_review_assets : ""
+maintenance_contract_reviews ||--o{ application_documents : ""
+maintenance_contract_assets ||--o{ maintenance_contract_review_assets : ""
 
 inspection_task_status_definitions ||--o{ inspection_tasks : ""
 inspection_task_status_definitions ||--o{ inspection_task_status_transitions : ""
