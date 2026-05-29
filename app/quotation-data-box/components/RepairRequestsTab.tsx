@@ -153,9 +153,10 @@ export const RepairRequestsTab: React.FC<RepairRequestsTabProps> = ({
         );
         break;
       case '見積依頼済':
+        // REQ-081: ボタンラベルを要求原文「見積書の登録」に統一
         buttons.push(
           <button key="quote" onClick={() => onRegisterQuotation(req.id)} style={{ ...btnBase, background: '#087CB6' }}>
-            見積登録
+            見積書の登録
           </button>
         );
         break;
