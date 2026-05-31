@@ -35,6 +35,21 @@ export default function InspectionRegistrationPage() {
   const [inspectionDate, setInspectionDate] = useState('');
   const [inspectionCertType, setInspectionCertType] = useState<InspectionCertType>('本体のみ');
   const [itemDeliveryDates, setItemDeliveryDates] = useState<Record<number, string>>({});
+  // REQ-060: 一括納品日 (検収日の左に配置、空欄の各品目納品日に反映)
+  const [bulkDeliveryDate, setBulkDeliveryDate] = useState('');
+
+  // 一括納品日 設定時、明細テーブル側で空欄の行を上書き (個別設定済の行は維持)
+  const handleBulkDeliveryDateChange = (value: string) => {
+    setBulkDeliveryDate(value);
+    if (!value) return;
+    setItemDeliveryDates(prev => {
+      const next: Record<number, string> = { ...prev };
+      orderItems.forEach(item => {
+        if (!next[item.id]) next[item.id] = value;
+      });
+      return next;
+    });
+  };
 
   const [inspectionDateError, setInspectionDateError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,7 +117,7 @@ export default function InspectionRegistrationPage() {
       </Suspense>
 
       <Header
-        title={registrationComplete ? '納品検収日登録完了' : '納品日登録（検収準備）'}
+        title={registrationComplete ? '納品検収日登録完了' : '納品検収登録'}
         hideMenu={true}
         showBackButton={false}
       />
@@ -121,7 +136,7 @@ export default function InspectionRegistrationPage() {
         ) : (
           <div className="flex flex-col gap-6">
             <InfoBanner>
-              検収日を入力し「納品検収日を登録」を押してください。
+              納品日と検収日を入力し「納品検収日を登録」を押してください。納品日は一括設定でき、品目ごとに異なる場合は明細から個別に変更できます。
             </InfoBanner>
 
             <BasicInfoCard
@@ -133,6 +148,8 @@ export default function InspectionRegistrationPage() {
             />
 
             <InspectionForm
+              bulkDeliveryDate={bulkDeliveryDate}
+              onBulkDeliveryDateChange={handleBulkDeliveryDateChange}
               inspectionDate={inspectionDate}
               inspectionDateError={inspectionDateError}
               onInspectionDateChange={(v) => {
@@ -336,12 +353,16 @@ function InfoCell({
 // Inspection form
 // ============================================================
 function InspectionForm({
+  bulkDeliveryDate,
+  onBulkDeliveryDateChange,
   inspectionDate,
   inspectionDateError,
   onInspectionDateChange,
   inspectionCertType,
   onInspectionCertTypeChange,
 }: {
+  bulkDeliveryDate: string;
+  onBulkDeliveryDateChange: (value: string) => void;
   inspectionDate: string;
   inspectionDateError: string;
   onInspectionDateChange: (value: string) => void;
@@ -351,25 +372,43 @@ function InspectionForm({
   return (
     <section className="bg-surface-card border border-stroke-card rounded-2xl p-4">
       <div className="border border-stroke-input">
-        {/* 検収日 */}
+        {/* REQ-060: 納品日(左) と 検収日(右) を同じ行に並べる。納品日が一括設定、空欄の各品目納品日に反映 */}
         <div className="flex w-full border-b border-stroke-input">
-          <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
-            <p className="text-base text-content-primary whitespace-nowrap">
-              検収日 <span className="text-content-alert">*</span>
-            </p>
+          {/* 納品日 (一括) */}
+          <div className="flex-1 min-w-0 flex border-r border-stroke-input">
+            <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+              <p className="text-base text-content-primary whitespace-nowrap">納品日</p>
+            </div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-4 gap-1">
+              <input
+                type="date"
+                value={bulkDeliveryDate}
+                onChange={(e) => onBulkDeliveryDateChange(e.target.value)}
+                className="w-[180px] h-[42px] px-3 rounded-lg bg-surface-card border border-stroke-input text-base text-content-primary tabular-nums focus:outline-none focus:border-cta-primary transition-colors"
+              />
+              <p className="text-xs text-content-sub">設定すると、明細の空欄に一括反映します</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-4 gap-1">
-            <input
-              type="date"
-              value={inspectionDate}
-              onChange={(e) => onInspectionDateChange(e.target.value)}
-              className={`w-[180px] h-[42px] px-3 rounded-lg bg-surface-card border text-base text-content-primary tabular-nums focus:outline-none focus:border-cta-primary transition-colors ${
-                inspectionDateError ? 'border-content-alert' : 'border-stroke-input'
-              }`}
-            />
-            {inspectionDateError && (
-              <p className="text-xs text-content-alert">{inspectionDateError}</p>
-            )}
+          {/* 検収日 */}
+          <div className="flex-1 min-w-0 flex">
+            <div className="w-[200px] shrink-0 flex items-center justify-center px-4 py-4 bg-stroke-card border-r border-stroke-input">
+              <p className="text-base text-content-primary whitespace-nowrap">
+                検収日 <span className="text-content-alert">*</span>
+              </p>
+            </div>
+            <div className="flex-1 min-w-0 flex flex-col justify-center px-4 py-4 gap-1">
+              <input
+                type="date"
+                value={inspectionDate}
+                onChange={(e) => onInspectionDateChange(e.target.value)}
+                className={`w-[180px] h-[42px] px-3 rounded-lg bg-surface-card border text-base text-content-primary tabular-nums focus:outline-none focus:border-cta-primary transition-colors ${
+                  inspectionDateError ? 'border-content-alert' : 'border-stroke-input'
+                }`}
+              />
+              {inspectionDateError && (
+                <p className="text-xs text-content-alert">{inspectionDateError}</p>
+              )}
+            </div>
           </div>
         </div>
         {/* 検収書の発行 */}
