@@ -17,11 +17,25 @@ function RemodelManagementContent() {
 
   const [selectedEditListId, setSelectedEditListId] = useState<string>('');
 
+  // REQ-146: リモデル管理内サブタブ ('purchase' / 'disposalTransfer')
+  // 廃棄・移動の申請をまとめて扱う管理タブを追加
+  const [remodelSubTab, setRemodelSubTab] = useState<'purchase' | 'disposalTransfer'>('purchase');
+  const isDisposalOrTransferStatus = (s: RfqGroupStatus | undefined): boolean =>
+    !!s && (s.includes('廃棄') || s.includes('移動'));
+
   const [rfqStatusFilter, setRfqStatusFilter] = useState<RfqGroupStatus | ''>('');
   const filteredRfqGroups = useMemo(() => {
-    if (!rfqStatusFilter) return rfqGroups;
-    return rfqGroups.filter(g => g.status === rfqStatusFilter);
-  }, [rfqGroups, rfqStatusFilter]);
+    // REQ-146: サブタブで一次絞り込み
+    let groups = rfqGroups.filter(g =>
+      remodelSubTab === 'disposalTransfer'
+        ? isDisposalOrTransferStatus(g.status)
+        : !isDisposalOrTransferStatus(g.status),
+    );
+    if (rfqStatusFilter) {
+      groups = groups.filter(g => g.status === rfqStatusFilter);
+    }
+    return groups;
+  }, [rfqGroups, rfqStatusFilter, remodelSubTab]);
 
   const handleNavigateToRfqProcess = (rfqGroupId: number) => {
     router.push(`/quotation-data-box/rfq-process?rfqGroupId=${rfqGroupId}`);
@@ -131,6 +145,35 @@ function RemodelManagementContent() {
         <div className="flex-1 flex flex-col p-4 overflow-y-auto">
           <SubTabNavigation activeTab="remodelManagement" />
 
+          {/* REQ-146: リモデル管理内サブタブ — 購入 / 廃棄・移動 */}
+          <div className="bg-surface-card border-b border-stroke-input flex">
+            {(
+              [
+                { key: 'purchase', label: '購入' },
+                { key: 'disposalTransfer', label: '廃棄・移動' },
+              ] as const
+            ).map((t) => {
+              const isActive = remodelSubTab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => {
+                    setRemodelSubTab(t.key);
+                    setRfqStatusFilter('');
+                  }}
+                  className={`px-4 py-2 text-xs cursor-pointer bg-transparent border-0 border-b-2 transition-colors ${
+                    isActive
+                      ? 'border-cta-primary text-cta-primary-dark font-semibold'
+                      : 'border-transparent text-content-primary font-medium hover:bg-stroke-card'
+                  }`}
+                  style={{ marginBottom: '-1px' }}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="bg-surface-card px-4 py-3 border-b border-stroke-input flex gap-4 items-center flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-xs text-content-primary">見積区分</label>
@@ -165,23 +208,31 @@ function RemodelManagementContent() {
                 className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary"
               >
                 <option value="">すべて</option>
-                <option value="見積依頼">見積依頼</option>
-                <option value="見積依頼済">見積依頼済</option>
-                <option value="見積DB登録済">見積DB登録済</option>
-                <option value="見積登録依頼中">見積登録依頼中</option>
-                <option value="発注用見積依頼済">発注用見積依頼済</option>
-                <option value="発注見積登録済">発注見積登録済</option>
-                <option value="発注済">発注済</option>
-                <option value="納期確定">納期確定</option>
-                <option value="検収済">検収済</option>
-                <option value="完了">完了</option>
-                <option value="申請を見送る">申請を見送る</option>
-                <option value="廃棄承認待ち">廃棄承認待ち</option>
-                <option value="廃棄承認済み">廃棄承認済み</option>
-                <option value="廃棄完了">廃棄完了</option>
-                <option value="移動承認待ち">移動承認待ち</option>
-                <option value="移動承認済み">移動承認済み</option>
-                <option value="移動完了">移動完了</option>
+                {remodelSubTab === 'purchase' ? (
+                  <>
+                    <option value="見積依頼">見積依頼</option>
+                    <option value="見積依頼済">見積依頼済</option>
+                    <option value="見積DB登録済">見積DB登録済</option>
+                    <option value="見積登録依頼中">見積登録依頼中</option>
+                    <option value="発注用見積依頼済">発注用見積依頼済</option>
+                    <option value="発注見積登録済">発注見積登録済</option>
+                    <option value="発注済">発注済</option>
+                    <option value="納期確定">納期確定</option>
+                    <option value="検収済">検収済</option>
+                    <option value="完了">完了</option>
+                    <option value="申請を見送る">申請を見送る</option>
+                  </>
+                ) : (
+                  <>
+                    {/* REQ-146: 廃棄・移動サブタブ用ステータス */}
+                    <option value="廃棄承認待ち">廃棄承認待ち</option>
+                    <option value="廃棄承認済み">廃棄承認済み</option>
+                    <option value="廃棄完了">廃棄完了</option>
+                    <option value="移動承認待ち">移動承認待ち</option>
+                    <option value="移動承認済み">移動承認済み</option>
+                    <option value="移動完了">移動完了</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
