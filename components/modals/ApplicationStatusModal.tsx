@@ -111,13 +111,15 @@ export function ApplicationStatusModal({ isOpen, onClose }: ApplicationStatusMod
   const { requests: repairRequests } = useRepairRequestStore();
 
   const userDepartment = user?.department || '';
+  // 部署フィルタ: userDepartment が空 (未ログイン/全施設管理者等で部署未設定) なら全件表示にフォールバック
+  const matchesDept = (dept: string) => !userDepartment || dept === userDepartment;
 
   const cards = useMemo((): UnifiedCard[] => {
     const result: UnifiedCard[] = [];
 
     // 修理申請
     repairRequests
-      .filter((req) => req.applicantDepartment === userDepartment)
+      .filter((req) => matchesDept(req.applicantDepartment))
       .forEach((req) => {
         const { steps, index } = resolveStep('修理申請', req.status);
         const details: Detail[] = [
@@ -158,7 +160,7 @@ export function ApplicationStatusModal({ isOpen, onClose }: ApplicationStatusMod
 
     // 購入 (新規/更新/増設)
     purchaseApps
-      .filter((app) => app.applicantDepartment === userDepartment)
+      .filter((app) => matchesDept(app.applicantDepartment))
       .forEach((app) => {
         const { steps, index } = resolveStep(app.applicationType, app.status);
         const asset = app.assets[0];
@@ -207,7 +209,7 @@ export function ApplicationStatusModal({ isOpen, onClose }: ApplicationStatusMod
     generalApps
       .filter((app) =>
         (app.applicationType === '移動申請' || app.applicationType === '廃棄申請') &&
-        app.facility.department === userDepartment
+        matchesDept(app.facility.department)
       )
       .forEach((app) => {
         const { steps, index } = resolveStep(app.applicationType, app.status);
@@ -342,7 +344,7 @@ export function ApplicationStatusModal({ isOpen, onClose }: ApplicationStatusMod
         >
           <span className={`text-content-sub ${isMobile ? 'text-xs' : 'text-sm'}`}>申請部署</span>
           <span className={`font-semibold text-content-primary ${isMobile ? 'text-xs' : 'text-sm'}`}>
-            {userDepartment || '-'}
+            {userDepartment || '全部署 (デモ表示)'}
           </span>
           <span className={`ml-auto text-content-sub tabular-nums ${isMobile ? 'text-xs' : 'text-sm'}`}>
             {cards.length}件
