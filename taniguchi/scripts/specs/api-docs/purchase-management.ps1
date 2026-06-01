@@ -1,38 +1,47 @@
 ﻿$purchasePermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: 対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_purchase` が有効であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_purchase` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_purchase` が有効であること'
 )
 
 $quotationPermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: 対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_quotation` が有効であること',
-  '認可条件: 対象RFQは `rfqs.management_type=''PURCHASE''` かつ `deleted_at IS NULL` であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_quotation` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_quotation` が有効であること',
+  '認可条件: 対象RFQは `rfqs.management_type=''PURCHASE''` かつ `workflow_type=''RFQ''` かつ `deleted_at IS NULL` であること'
 )
 
 $orderPermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: 対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_order` が有効であること',
-  '認可条件: 対象RFQは `rfqs.management_type=''PURCHASE''` かつ `deleted_at IS NULL` であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_order` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_order` が有効であること',
+  '認可条件: 対象RFQは `rfqs.management_type=''PURCHASE''` かつ `workflow_type=''RFQ''` かつ `deleted_at IS NULL` であること'
 )
 
 $acceptancePermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: 対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_acceptance` が有効であること',
-  '認可条件: 対象RFQは `rfqs.management_type=''PURCHASE''` かつ `deleted_at IS NULL` であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_acceptance` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_acceptance` が有効であること',
+  '認可条件: 対象RFQは `rfqs.management_type=''PURCHASE''` かつ `workflow_type=''RFQ''` かつ `deleted_at IS NULL` であること'
 )
 
 $contextPermissionLines = @(
-  '認可条件: 購入管理タブ入口は `normal_purchase` / `normal_order` / `normal_acceptance` / `normal_quotation` のいずれかが実効有効であれば参照可能とする',
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_purchase` / `normal_order` / `normal_acceptance` / `normal_quotation` 判定をバイパスする。`normal_ship_request` はSHIPへ一括依頼ボタンの表示可否として有効扱いにする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、購入管理タブ入口は作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `normal_purchase` / `normal_order` / `normal_acceptance` / `normal_quotation` のいずれかが有効であれば参照可能とする',
   '認可条件: 個別操作APIでは、各操作に対応する `feature_code` をサーバー側で再判定する',
-  '認可条件: `normal_ship_request` は購入管理タブ表示権限とは独立し、SHIPへ一括依頼ボタンの表示可否だけに使用する'
+  '認可条件: 通常アカウントの `normal_ship_request` は購入管理タブ表示権限とは独立し、SHIPへ一括依頼ボタンの表示可否だけに使用する'
 )
+
+$workFacilityProcessingLine = 'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。'
 
 $commonErrorRows = @(
   @('AUTH_401_UNAUTHORIZED', '401', '認証情報が存在しない、または無効', 'Bearer トークン未指定、期限切れ、署名不正'),
-  @('AUTH_403_PURCHASE_DENIED', '403', '作業対象施設に対する実効 `normal_purchase` がない', '購入申請受付、編集リスト取り込み、RFQ詳細/削除などの購入管理操作を実行した'),
-  @('AUTH_403_QUOTATION_DENIED', '403', '作業対象施設に対する実効 `normal_quotation` がない', '見積管理、見積登録、見積確定を実行した'),
-  @('AUTH_403_ORDER_DENIED', '403', '作業対象施設に対する実効 `normal_order` がない', '発注登録を実行した'),
-  @('AUTH_403_ACCEPTANCE_DENIED', '403', '作業対象施設に対する実効 `normal_acceptance` がない', '納品日登録、検収登録、資産登録を実行した'),
+  @('FACILITY_NOT_FOUND', '404', '作業対象施設を参照できない', 'Bearer トークン上の作業対象施設が存在しない、または削除済み'),
+  @('AUTH_403_PURCHASE_DENIED', '403', '購入管理の実効権限がない', '通常アカウントで `normal_purchase` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+  @('AUTH_403_QUOTATION_DENIED', '403', '通常購入の見積登録・見積参照権限がない', '通常アカウントで `normal_quotation` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+  @('AUTH_403_ORDER_DENIED', '403', '通常購入の発注権限がない', '通常アカウントで `normal_order` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+  @('AUTH_403_ACCEPTANCE_DENIED', '403', '通常購入の検収・原本登録権限がない', '通常アカウントで `normal_acceptance` が実効無効。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
   @('PURCHASE_APPLICATION_NOT_FOUND', '404', '購入申請を参照できない', 'ID不存在、施設不一致、削除済み、購入申請以外、または権限外'),
   @('PURCHASE_APPLICATION_STATUS_CONFLICT', '409', '購入申請の状態が操作条件を満たさない', '申請中以外の却下または編集リスト取り込み、既に取り込み済みの申請を処理した'),
   @('EDIT_LIST_NOT_FOUND', '404', '編集リストを参照できない', 'ID不存在、施設不一致、削除済み、または `list_type=''PURCHASE''` ではない'),
@@ -195,8 +204,14 @@ function New-EndpointBlock {
     $block.PermissionLines = $PermissionLines
   }
 
-  if ($ProcessingLines.Count -gt 0) {
-    $block.ProcessingLines = $ProcessingLines
+  $effectiveProcessingLines = @()
+  if ($Auth -match 'Bearer') {
+    $effectiveProcessingLines += $workFacilityProcessingLine
+  }
+  $effectiveProcessingLines += $ProcessingLines
+
+  if ($effectiveProcessingLines.Count -gt 0) {
+    $block.ProcessingLines = $effectiveProcessingLines
   }
 
   if ($ExtraTables.Count -gt 0) {
@@ -248,6 +263,7 @@ $endpointBlocks = @(
       @('200', '取得成功', 'PurchaseManagementContextResponse'),
       @('401', '未認証', 'ErrorResponse'),
       @('403', '購入管理タブ入口権限なし', 'ErrorResponse'),
+      @('404', '作業対象施設なし', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
@@ -299,6 +315,7 @@ $endpointBlocks = @(
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
       @('403', '購入管理タブ入口権限なし', 'ErrorResponse'),
+      @('404', '作業対象施設なし', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
@@ -424,6 +441,7 @@ $endpointBlocks = @(
       @('200', '取得成功', 'EditListCandidateListResponse'),
       @('401', '未認証', 'ErrorResponse'),
       @('403', '実効 `normal_purchase` なし', 'ErrorResponse'),
+      @('404', '作業対象施設なし', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
@@ -549,6 +567,7 @@ $endpointBlocks = @(
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
       @('403', '購入管理タブ入口権限なし', 'ErrorResponse'),
+      @('404', '作業対象施設なし', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
@@ -814,6 +833,7 @@ $endpointBlocks = @(
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
       @('403', '実効 `normal_quotation` なし', 'ErrorResponse'),
+      @('404', '作業対象施設なし', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
@@ -1038,7 +1058,7 @@ $endpointBlocks = @(
 
 @{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_購入管理.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_購入管理.docx'
   ScreenLabel = '購入管理'
   CoverDateText = '2026年5月27日'
   RevisionDateText = '2026/5/27'
@@ -1129,7 +1149,11 @@ $endpointBlocks = @(
       @('`order_items`', 'READ / CREATE / UPDATE', '発注明細、個体登録対象、納品日'),
       @('`individuals`', 'READ / CREATE / UPDATE', '検収登録済み個体の中間正本。資産登録時に `asset_ledgers` へ反映する'),
       @('`vendors`', 'READ', '依頼先業者・見積業者のマスタ参照'),
-      @('`users`', 'READ', 'ログインユーザー、依頼送信者、申請者表示')
+      @('`users`', 'READ', 'ログインユーザー、依頼送信者、申請者表示、共有システム管理者判定'),
+      @('`facilities`', 'READ', 'Bearer トークン上の作業対象施設、申請対象施設、編集リスト対象施設、RFQ対象施設の存在確認・未削除判定'),
+      @('`user_facility_assignments`', 'READ', '通常アカウントの作業対象施設割当判定'),
+      @('`facility_feature_settings`', 'READ', '通常アカウントの作業対象施設における購入、見積、発注、検収、SHIP依頼表示機能の提供有無判定'),
+      @('`user_facility_feature_settings`', 'READ', '通常アカウントのユーザー×作業対象施設単位の購入、見積、発注、検収、SHIP依頼表示機能の利用可否判定')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -1146,13 +1170,22 @@ $endpointBlocks = @(
       '論理削除は各テーブルの `deleted_at` を設定する。削除済み行は通常一覧から除外し、監査・履歴参照では必要に応じて保持する'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
-    @{ Type = 'Paragraph'; Text = '本API群は、ロール固定ではなく対象施設に対する実効 `feature_code` で認可する。タブ入口は `normal_purchase` / `normal_order` / `normal_acceptance` / `normal_quotation` のいずれかが有効であれば表示可能とし、個別操作では操作ごとの機能コードを再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群は、ロール固定ではなく対象施設に対する実効 `feature_code` で認可する。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、通常購入、通常購入見積、通常購入発注、通常購入検収・原本登録、SHIP依頼表示の対象 `feature_code` を有効として扱う。' },
     @{ Type = 'Table'; Headers = @('機能コード', '対象操作', '説明'); Rows = @(
       @('`normal_purchase`', '購入申請受付、申請却下、編集リスト取り込み、RFQ一覧・詳細、依頼先保存、個別依頼送信、RFQ削除', '購入管理タブの基礎操作'),
       @('`normal_quotation`', '見積ドラフト保存、見積確定、見積管理一覧', '通常購入の見積登録・見積参照'),
       @('`normal_order`', '発注登録', '通常購入の発注工程'),
       @('`normal_acceptance`', '納品日登録、検収登録、資産登録', '通常購入の検収・原本登録工程'),
       @('`normal_ship_request`', 'SHIPへ一括依頼ボタン表示', 'ボタン表示・押下UI枠だけに使用し、依頼作成APIは呼び出さない')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
+    @{ Type = 'Bullets'; Items = @(
+      '各 API は Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
+      '通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `feature_code` を都度再判定する',
+      '共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする',
+      '`applications.application_type=''PURCHASE''`、`rfqs.management_type=''PURCHASE''`、`workflow_type=''RFQ''`、対象申請・RFQ・編集リストの未削除、ステータス遷移順序、発注登録用見積確定、検収済み個体不足、有効な編集リスト作業ロックといった業務制約は共有システム管理者でもバイパスしない',
+      '通常アカウントで作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する',
+      '作業対象施設が存在しない、または削除済みの場合は 404 を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '共通エラーレスポンス' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = @(

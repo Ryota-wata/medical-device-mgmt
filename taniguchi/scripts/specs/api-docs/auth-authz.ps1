@@ -67,7 +67,7 @@
       @('facility_external_view_settings', '公開元施設の他施設向け公開データ設定', 'provider_facility_id, sharing_data_type, is_enabled'),
       @('facility_external_column_settings', '公開元施設の他施設向け公開カラム設定', 'provider_facility_id, column_code, is_enabled')
     ) },
-    @{ Type = 'Paragraph'; Text = 'リフレッシュトークン、remember token による current device の再認証、およびセッション失効の詳細実装は認証基盤側責務とし、DB 正本としては上記テーブルを参照する。remember token は平文保存せずハッシュ化して保持し、クライアント側は `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する前提とする。' },
+    @{ Type = 'Paragraph'; Text = 'current device の再認証、アクセストークン再発行、およびセッション失効の詳細実装は認証基盤側責務とし、DB 正本としては上記テーブルを参照する。長期保持する remember token は平文保存せずハッシュ化して `user_remember_tokens` に保持し、クライアント側は `HttpOnly` / `Secure` / `SameSite=Lax` cookie でのみ保持する前提とする。レスポンスボディやリクエストボディでは長期保持トークンを扱わない。' },
     @{ Type = 'Paragraph'; Text = '管理者がユーザー管理画面から初回設定案内を送信・再送する場合も、公開契約はユーザー管理 API 側に置き、旧トークン無効化・新規トークン発行・メール送信は認証基盤内部処理として本 API 群と同じ責務で扱う。' },
     @{ Type = 'Paragraph'; Text = '`facilities.deleted_at` が設定された施設は、担当施設一覧、施設選択、認可判定、業務 API の対象外とする。一方で `user_facility_assignments` や各種 `*_feature_settings` / `*_column_settings` は削除せず保持し、再契約等で `deleted_at` を解除した場合は既存設定を再利用する。' },
 
@@ -79,13 +79,16 @@
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-04-13T00:00:00Z`）',
       '認証済み API は Bearer トークンを `Authorization` ヘッダーに付与する',
-      '`rememberMe=true` の場合は current device 用の remember token を `HttpOnly` / `Secure` / `SameSite=Lax` cookie で保持する',
+      '`rememberMe=true` の場合は current device 用の remember token を `Set-Cookie` で `HttpOnly` / `Secure` / `SameSite=Lax` cookie として設定し、JavaScript から参照できる領域には保持しない',
+      '`/auth/refresh` はリクエストボディではなく、cookie の remember token を検証してアクセストークンを再発行する',
+      'remember token cookie を利用する API は POST のみで受け付け、信頼済み Origin 以外への credentialed CORS を許可しない。必要に応じて `Origin` / `Referer` を検証する',
+      '認証・トークン系レスポンスは `Cache-Control: no-store` を付与し、共有キャッシュやブラウザキャッシュに保存させない',
       '`facilities.deleted_at IS NOT NULL` の施設は `/auth/me`、`/auth/context`、`/authorization/check`、各業務 API の対象外とする',
       '`users.account_type=''SYSTEM_ADMIN''` の共有システム管理者アカウントは、未削除施設を対象とする限り担当施設割当や施設別・ユーザー別設定に依存せず全機能・全カラムを利用できる',
       '画面表示制御用の `GET /auth/context` は UX 用キャッシュであり、業務 API の認可判定を代替しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
-    @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後は Bearer トークンを用いて `GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用トークンも発行し、再訪時は認証基盤側でセッション再開を試みる。未認証時は 401 を返却する。' },
+    @{ Type = 'Paragraph'; Text = 'ログインはメールアドレスとパスワードで行う。`POST /auth/login` 成功後はレスポンスボディで返却されたアクセストークンを Bearer トークンとして用い、`GET /auth/me`、`GET /auth/context`、各業務 API を呼び出す。`rememberMe=true` の場合は current device のログイン状態保持用 remember token も `HttpOnly` cookie として発行し、アクセストークン期限切れ時や再訪時は `/auth/refresh` で cookie を検証して新しいアクセストークンを再発行する。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
     @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` / `column_code` を正本とし、`config_scope=''FACILITY_USER''` の機能は施設単位設定とユーザー施設別設定の両方が有効な場合に成立する。固定導線を除く現行採用機能は `FACILITY_USER` に統一し、Phase1では `normal_ship_request` / `lending_in_use_used` もユーザー施設別設定の対象に含める。ただし子機能など追加条件を持つコードは各コードの補足規定に従う。`auth_login` と `facility_select` は `config_scope=''SYSTEM_FIXED''` のため、施設・ユーザー単位の ON/OFF 対象に含めない。`棚卸し / 完了` や `DataLINK / SHIP表示列（リモデル）` / `DataLINK / SHIP表示列（通常）` / `資産マスタ / SHIP表示列` のように、管理単位がボタン群や列群を含む場合も、当該管理単位に対応する1つの `feature_code` / `column_code` で扱う。他施設閲覧専用の別コードは設けず、閲覧者側は既存の `original_list_view` / `original_price_column`、公開元施設側は `facility_external_view_settings` / `facility_external_column_settings` で制御する。' },
     @{ Type = 'Paragraph'; Text = '共有システム管理者アカウント（`account_type=''SYSTEM_ADMIN''`）は通常ユーザーのロールではなく、初期データまたは運用設定で1件のみ用意する特別アカウントである。認可サービスはこの値を検出した場合、選択施設または対象施設が未削除であることだけを確認し、担当施設割当、施設提供設定、ユーザー施設別設定、協業グループ、公開元施設設定の通常判定を行わず許可する。' },
@@ -173,7 +176,7 @@
     @{ Type = 'Table'; Headers = @('機能名', 'Method', 'Path', '概要', '認証'); Rows = @(
       @('ログイン', 'POST', '/auth/login', 'ユーザー認証とトークン発行を行う', '不要'),
       @('ログアウト', 'POST', '/auth/logout', '現在のセッションとトークンを失効する', '要'),
-      @('トークン再発行', 'POST', '/auth/refresh', 'リフレッシュトークンでアクセストークンを再発行する', '不要'),
+      @('トークン再発行', 'POST', '/auth/refresh', 'remember token cookie を検証してアクセストークンを再発行する', '不要（remember token cookie 必須）'),
       @('ログインユーザー基本情報取得', 'GET', '/auth/me', 'ログインユーザー、担当施設一覧、既定施設を取得する', '要'),
       @('認可コンテキスト取得', 'GET', '/auth/context', '選択施設に対する実効 feature / column を取得する', '要'),
       @('パスワード再設定申請', 'POST', '/auth/password/forgot', 'パスワード再設定用 URL 発行を受け付ける', '不要'),
@@ -185,7 +188,7 @@
     @{ Type = 'EndpointBlocks'; Items = @(
       @{
         Title = 'ログイン（/auth/login）'
-        Overview = 'メールアドレスとパスワードで利用者認証を行い、アクセストークン／リフレッシュトークンを発行する。'
+        Overview = 'メールアドレスとパスワードで利用者認証を行い、アクセストークンを発行する。`rememberMe=true` の場合は current device 用の remember token を cookie として発行する。'
         Method = 'POST'
         Path = '/auth/login'
         Auth = '不要'
@@ -202,19 +205,27 @@
         )
         ProcessingLines = @(
           '`users.email_address` で対象ユーザーを特定し、`password_hash` と入力パスワードを照合する',
-          '認証成功時はアクセストークン／リフレッシュトークンを発行し、`users.last_login_at` を更新する',
-          '`rememberMe=true` の場合は `user_remember_tokens` に current device のログイン状態保持用トークンを発行または更新する',
+          '認証成功時はアクセストークンを発行し、`users.last_login_at` を更新する',
+          '`rememberMe=true` の場合は `user_remember_tokens` に current device のログイン状態保持用 remember token を発行または更新する',
           'remember token は平文を保持せず、ハッシュ化した値を `user_remember_tokens` へ保存する',
-          'クライアント側には remember token を `HttpOnly` / `Secure` / `SameSite=Lax` cookie として設定する',
-          '`rememberMe=false` の場合は記憶トークンを新規発行しない',
-          '次回アクセス時に有効な remember token が存在する場合は、認証基盤側で current device のセッション再開を試みる',
+          'クライアント側には remember token を `Set-Cookie` で `HttpOnly` / `Secure` / `SameSite=Lax` cookie として設定し、レスポンスボディには含めない',
+          '`rememberMe=false` の場合は remember token を新規発行せず、既存の remember token cookie が同一 device に存在する場合は削除し、対応する `user_remember_tokens` も失効対象とする',
+          '次回アクセス時またはアクセストークン期限切れ時に有効な remember token が存在する場合は、`/auth/refresh` でアクセストークン再発行を試みる',
           '作業対象施設の確定や `feature_code` / `column_code` の返却は本 API では行わず、後続の `/auth/me` と `/auth/context` で解決する'
+        )
+        ExtraSections = @(
+          @{
+            Title = 'Cookie 設定'
+            Lines = @(
+              'remember token cookie は `HttpOnly`、`Secure`、`SameSite=Lax`、`Path=/auth` を基本属性とし、`Max-Age` または `Expires` は `user_remember_tokens.expires_at` と整合させる',
+              'cookie 名、`Domain` の有無、具体的な有効期間は認証基盤の環境設定で定義し、削除時は発行時と同じ `Path` / `Domain` 属性で期限切れ cookie を返す'
+            )
+          }
         )
         ResponseTitle = 'レスポンス（200：AuthLoginResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
         ResponseRows = @(
           @('accessToken', 'string', '✓', 'アクセストークン'),
-          @('refreshToken', 'string', '✓', 'リフレッシュトークン'),
           @('tokenType', 'string', '✓', '通常は `Bearer`')
         )
         StatusRows = @(
@@ -230,14 +241,15 @@
         Overview = '現在のセッションとトークンを失効する。'
         Method = 'POST'
         Path = '/auth/logout'
-        Auth = '要（Bearer）'
+        Auth = '要（Bearer または remember token cookie）'
         PermissionLines = @(
-          '認証済みセッションであること'
+          '認証済みセッション、または有効な remember token cookie に紐づく current device であること'
         )
         ProcessingLines = @(
-          'Authorization ヘッダーで識別される current device の現在セッションを失効対象とする',
-          '同一 device に紐づくリフレッシュトークンも同時に失効させる',
+          'Authorization ヘッダーまたは remember token cookie で識別される current device の現在セッションを失効対象とする',
           '同一 device に紐づくログイン状態保持トークンが存在する場合は同時に無効化する',
+          'remember token cookie が存在する場合は、発行時と同じ `Path` / `Domain` 属性で期限切れ cookie を返して削除する',
+          'remember token cookie が不正または期限切れの場合も、期限切れ cookie を返してクライアント側の cookie を削除する',
           '他 device のセッションやトークンは本 API の失効対象に含めない'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
@@ -252,32 +264,35 @@
       },
       @{
         Title = 'トークン再発行（/auth/refresh）'
-        Overview = 'リフレッシュトークンを用いてアクセストークンを再発行する。'
+        Overview = 'HttpOnly cookie の remember token を用いてアクセストークンを再発行する。'
         Method = 'POST'
         Path = '/auth/refresh'
-        Auth = '不要'
-        RequestTitle = 'リクエストボディ（AuthRefreshRequest）'
+        Auth = '不要（remember token cookie 必須）'
+        RequestTitle = 'リクエストボディ（なし）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('refreshToken', 'string', '✓', '再発行対象のリフレッシュトークン')
+          @('-', '-', '-', 'リクエストボディは使用しない。再発行対象の remember token は `HttpOnly` cookie から取得する')
         )
         ProcessingLines = @(
-          'リフレッシュトークンの有効性を検証する',
+          'remember token cookie が存在することを確認する',
+          '受信した remember token をハッシュ化し、`user_remember_tokens.token` の保存値と照合する',
+          '`user_remember_tokens.expires_at` と失効状態を確認し、期限切れまたは失効済みの場合は 401 とし、期限切れ cookie を返して削除する',
           'トークンに紐づくユーザーについて `users.is_active=true` かつ `locked_at IS NULL` を再確認する',
           '有効であれば新しいアクセストークンを発行する',
-          'リフレッシュトークンのローテーション方式を採る場合は、更新後トークンを返却する'
+          '再発行成功時は `user_remember_tokens.last_used_at` を更新する',
+          'remember token をローテーションする場合は、更新後トークンをレスポンスボディではなく `Set-Cookie` で返し、旧トークンは再利用不可にする',
+          'credentialed CORS は信頼済み Origin のみに限定し、必要に応じて `Origin` / `Referer` を検証する'
         )
         ResponseTitle = 'レスポンス（200：AuthRefreshResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
         ResponseRows = @(
           @('accessToken', 'string', '✓', '再発行したアクセストークン'),
-          @('refreshToken', 'string', '-', 'ローテーション時の新しいリフレッシュトークン'),
           @('tokenType', 'string', '✓', '通常は `Bearer`')
         )
         StatusRows = @(
           @('200', '再発行成功', 'AuthRefreshResponse'),
           @('400', '入力不正', 'ErrorResponse'),
-          @('401', 'リフレッシュトークン不正または失効', 'ErrorResponse'),
+          @('401', 'remember token 不正、期限切れ、または失効', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -430,7 +445,7 @@
           '`password_reset_tokens` の存在、有効期限、未使用状態を確認する',
           '有効なトークンであれば `users.password_hash` を更新する',
           '`password_reset_tokens.used_at` を更新して再利用不可にする',
-          '既存の認証セッション、リフレッシュトークン、ログイン情報記憶トークンを失効対象とする'
+          '既存の認証セッションとログイン情報記憶トークンを失効対象とし、対象 device の remember token cookie が存在する場合は削除する'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
         ResponseLines = @(

@@ -1,6 +1,7 @@
 ﻿$repairRequestPermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `repair_request_create` が有効であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `repair_request_create` が有効であること'
 )
 
 $errorRows = @(
@@ -8,7 +9,7 @@ $errorRows = @(
   @('201', '登録成功', '各API定義のレスポンス'),
   @('400', '入力値不正、登録済/未登録資産の条件不整合', 'ErrorResponse'),
   @('401', '未認証', 'ErrorResponse'),
-  @('403', '作業対象施設に対する実効 `repair_request_create` なし', 'ErrorResponse'),
+  @('403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` なし、または共有システム管理者で作業対象施設が削除済み', 'ErrorResponse'),
   @('404', '対象資産または点検結果が存在しない', 'ErrorResponse'),
   @('409', '採番競合または競合更新', 'ErrorResponse'),
   @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -111,7 +112,8 @@ $repairRequestCreatedRows = @(
       @('`qr_codes`', 'READ', 'QRラベルから現行有効QRを解決する'),
       @('`asset_ledgers`', 'READ', '登録済み資産のQR解決、施設スコープ確認、表示用スナップショット取得'),
       @('`inspection_results`', 'READ', '点検結果から修理申請へ遷移する場合の対象資産・症状初期値'),
-      @('`users`', 'READ', 'ログインユーザーの表示名、所属、連絡先')
+      @('`users`', 'READ', 'ログインユーザーの表示名、所属、連絡先、共有システム管理者アカウント判定'),
+      @('`facilities`', 'READ', '作業対象施設の存在確認、論理削除確認')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -126,9 +128,9 @@ $repairRequestCreatedRows = @(
       '各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `repair_request_create` である。タスク管理配下の修理管理APIで使用する `repair_management` とは分離し、画面表示用の `/auth/context` に依存せず各業務APIでも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `repair_request_create` である。タスク管理配下の修理管理APIで使用する `repair_management` とは分離する。通常アカウントでは、画面表示用の `/auth/context` に依存せず、各業務APIで Bearer トークン上の作業対象施設に対する担当施設割当、施設提供設定、ユーザー施設別設定を再判定する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。ただし、登録済み資産や点検結果を指定する場合は、対象データが作業対象施設に属することをアカウント種別にかかわらず必ず確認する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('修理依頼画面初期表示、QR資産取得、修理依頼起票', '`repair_request_create`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '現場担当者が修理依頼を作成する')
+      @('修理依頼画面初期表示、QR資産取得、修理依頼起票', '`repair_request_create`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは作業対象施設で `repair_request_create` が実効有効であること。共有システム管理者は作業対象施設が未削除であること')
     ) },
     @{ Type = 'Heading2'; Text = 'ステータス・工程共通ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -213,7 +215,7 @@ $repairRequestCreatedRows = @(
           @('200', '取得成功', 'RepairRequestContextResponse'),
           @('400', 'パラメータ不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `repair_request_create` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '指定した点検結果または資産が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -243,7 +245,7 @@ $repairRequestCreatedRows = @(
           @('200', '取得成功', 'RepairAssetSnapshot'),
           @('400', 'QRコード形式不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `repair_request_create` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', 'QRに紐づく登録済み資産が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -296,7 +298,7 @@ $repairRequestCreatedRows = @(
           @('201', '起票成功', 'RepairRequestCreatedResponse'),
           @('400', '必須不足、登録済/未登録資産条件不正、症状未入力', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `repair_request_create` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '指定した登録済み資産または点検結果が存在しない', 'ErrorResponse'),
           @('409', '採番競合または競合更新', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -307,9 +309,9 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '権限マトリクス' },
     @{ Type = 'Table'; Headers = @('処理', 'feature_code', '判定条件', '説明'); Rows = @(
-      @('修理依頼画面コンテキスト取得', '`repair_request_create`', '作業対象施設に対して実効 `repair_request_create` を持つこと', '現場修理依頼の初期表示'),
-      @('登録済み資産のQR取得', '`repair_request_create`', '作業対象施設に対して実効 `repair_request_create` を持つこと', '修理申請起票前の資産取得'),
-      @('修理依頼起票', '`repair_request_create`', '作業対象施設に対して実効 `repair_request_create` を持つこと', '修理申請の作成')
+      @('修理依頼画面コンテキスト取得', '`repair_request_create`', '通常アカウントは作業対象施設に対して実効 `repair_request_create` を持つこと。共有システム管理者は作業対象施設が未削除であること', '現場修理依頼の初期表示'),
+      @('登録済み資産のQR取得', '`repair_request_create`', '通常アカウントは作業対象施設に対して実効 `repair_request_create` を持つこと。共有システム管理者は作業対象施設が未削除であること。対象資産は作業対象施設内に限定する', '修理申請起票前の資産取得'),
+      @('修理依頼起票', '`repair_request_create`', '通常アカウントは作業対象施設に対して実効 `repair_request_create` を持つこと。共有システム管理者は作業対象施設が未削除であること。登録済み資産または点検結果を指定する場合は対象施設一致を確認する', '修理申請の作成')
     ) },
     @{ Type = 'Heading2'; Text = '入力制御ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -330,7 +332,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('コード', 'HTTP', '内容'); Rows = @(
       @('AUTH_401_UNAUTHORIZED', '401', '認証情報が存在しない、または無効'),
-      @('AUTH_403_REPAIR_REQUEST_CREATE_DENIED', '403', '作業対象施設に対する実効 `repair_request_create` がない'),
+      @('AUTH_403_REPAIR_REQUEST_CREATE_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` がない、共有システム管理者で作業対象施設が削除済み、または対象施設不一致'),
       @('REPAIR_ASSET_NOT_FOUND', '404', '指定した登録済み資産またはQRに紐づく資産が存在しない'),
       @('REPAIR_INSPECTION_RESULT_NOT_FOUND', '404', '指定した点検結果が存在しない'),
       @('REPAIR_REQUEST_INPUT_INVALID', '400', '登録済/未登録資産条件、症状、添付メタデータが不正'),

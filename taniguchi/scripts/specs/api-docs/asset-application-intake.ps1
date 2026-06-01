@@ -49,7 +49,9 @@
       @('application_status_histories', 'CREATE', '申請作成時の初期ステータス履歴を保存する'),
       @('asset_ledgers', 'READ', '選択済み既存資産の施設所属、状態、分類、設置場所、数量を確認する'),
       @('facility_locations', 'READ', '設置先、移動先、部署/室名候補を確認し、スナップショットを取得する'),
-      @('users / user_facility_assignments / facility_feature_settings / user_facility_feature_settings', 'READ', '申請者スナップショットと `original_application` の実効権限を判定する'),
+      @('facilities', 'READ', '作業対象施設の存在確認、論理削除判定、共有システム管理者アカウントの未削除施設判定に使用する'),
+      @('users', 'READ', '申請者スナップショット、共有システム管理者アカウント判定、監査記録の実行ユーザー解決に使用する'),
+      @('user_facility_assignments / facility_feature_settings / user_facility_feature_settings', 'READ', '通常アカウントの担当施設割当、施設提供設定、ユーザー施設別設定から `original_list_view` / `original_application` の実効権限を判定する'),
       @('purchase_applications', 'READ', '購入管理側の互換VIEW。起票 API は直接 DML しない')
     ) },
     @{ Type = 'Heading2'; Text = '責務境界' },
@@ -70,23 +72,25 @@
       '文字コード: UTF-8',
       '日時形式: ISO 8601。日付のみの項目は `YYYY-MM-DD` とする',
       '更新系 API は `Idempotency-Key` ヘッダーを必須とし、同一ユーザー、同一施設、同一 API パス、同一 payload の再送は初回応答を返す',
-      '添付ファイルの実体はオブジェクトストレージに保存し、DB には `application_documents` のメタデータを保存する。レスポンスに物理 `file_path` は返さない'
+      '添付ファイルの実体はオブジェクトストレージに保存し、DB には `application_documents` のメタデータを保存する。レスポンスに物理 `file_path` は返さない',
+      '共有システム管理者アカウントは、作業対象施設が未削除である限り通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする。ただし、選択資産、設置先、移動先、添付保存先などの業務データは作業対象施設に属することを必ず確認する'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本 API 群は `original_application` を起票実行権限として使用する。既存資産スナップショットを取得する処理では、同じ作業対象施設に対する `original_list_view` も前提とする。業務 API は `/auth/context` の表示用結果だけを信頼せず、Bearer トークン上の作業対象施設について `user_facility_assignments`、`facility_feature_settings`、`user_facility_feature_settings` を毎回再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本 API 群は `original_application` を起票実行権限として使用する。既存資産スナップショットを取得する処理では、同じ作業対象施設に対する `original_list_view` も前提とする。業務 API は `/auth/context` の表示用結果だけを信頼せず、Bearer トークン上の作業対象施設について通常アカウントでは `user_facility_assignments`、`facility_feature_settings`、`user_facility_feature_settings` を毎回再判定する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、`original_application` および必要な参照系 `feature_code` を有効として扱う。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '説明'); Rows = @(
-      @('申請モーダルコンテキスト取得', '`original_list_view` + `original_application`', '選択資産スナップショットと申請可否を返す'),
-      @('購入申請作成', '`original_application`', '新規購入/増設購入/更新購入申請を作成する'),
-      @('移動申請作成', '`original_application`', '選択資産の移動申請を作成する'),
-      @('廃棄申請作成', '`original_application`', '選択資産の廃棄申請を作成する')
+      @('申請モーダルコンテキスト取得', '`original_list_view` + `original_application`', '通常アカウントは両 feature の実効有効を判定する。共有システム管理者は作業対象施設が未削除であれば許可する。選択資産スナップショットと申請可否を返す'),
+      @('購入申請作成', '`original_application`', '通常アカウントは実効 `original_application` を判定する。共有システム管理者は作業対象施設が未削除であれば許可する。新規購入/増設購入/更新購入申請を作成する'),
+      @('移動申請作成', '`original_application`', '通常アカウントは実効 `original_application` を判定する。共有システム管理者は作業対象施設が未削除であれば許可する。選択資産の移動申請を作成する'),
+      @('廃棄申請作成', '`original_application`', '通常アカウントは実効 `original_application` を判定する。共有システム管理者は作業対象施設が未削除であれば許可する。選択資産の廃棄申請を作成する')
     ) },
     @{ Type = 'Heading2'; Text = '施設スコープ' },
     @{ Type = 'Bullets'; Items = @(
-      '全 API は Bearer トークン上の作業対象施設を `targetFacilityId` として扱う。リクエストに `targetFacilityId` がある場合は作業対象施設と一致することを必須とする',
-      '既存資産を対象にする場合は、`asset_ledgers.facility_id` が作業対象施設と一致する未削除相当の資産だけを許可する',
-      '病院ユーザーが協業グループ経由で他施設資産を閲覧できる場合でも、申請起票は作業対象施設の自施設資産に限定する',
+      '全 API は Bearer トークン上の作業対象施設を `targetFacilityId` として扱う。リクエストに `targetFacilityId` がある場合は作業対象施設と一致することを必須とする。共有システム管理者アカウントでも、起票対象施設は現在選択中の作業対象施設に限定する',
+      '作業対象施設が存在しない、または `facilities.deleted_at IS NOT NULL` の場合は 404 とする。通常アカウントで作業対象施設に対する実効権限がない場合は 403 とする',
+      '既存資産を対象にする場合は、`asset_ledgers.facility_id` が作業対象施設と一致する資産だけを許可する',
+      '病院ユーザーが協業グループ経由で他施設資産を閲覧できる場合でも、申請起票は作業対象施設の自施設資産に限定する。共有システム管理者が別施設の資産を起票対象にする場合は、その施設を作業対象施設として選択してから本 API を呼び出す',
       '設置先/移動先は同一施設の `facility_locations.deleted_at IS NULL` の候補から選択する'
     ) },
     @{ Type = 'Heading2'; Text = '申請番号・初期ステータス' },
@@ -129,8 +133,10 @@
           @('assetLedgerIds', 'query', 'int64[]', '-', '選択済み資産台帳ID。新規購入では空、その他では1件以上')
         )
         PermissionLines = @(
-          'Bearer トークン上の作業対象施設について `original_list_view` と `original_application` の両方を再判定する',
-          '協業グループ経由の他施設閲覧資産は起票対象にできない'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `original_list_view` / `original_application` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `original_list_view` と `original_application` が有効であること',
+          '業務条件: 選択資産、設置先、移動先は作業対象施設に属すること。協業グループ経由の他施設閲覧資産は、共有システム管理者であっても対象施設を作業対象施設として選択し直すまで起票対象にしない'
         )
         ProcessingLines = @(
           '`applicationKind` を検証し、購入系は `PURCHASE`、移動は `TRANSFER`、廃棄は `DISPOSAL` の初期ステータスを `application_status_definitions` から取得する',
@@ -179,8 +185,8 @@
           @('200', '取得成功', 'AssetApplicationContextResponse'),
           @('400', '申請種別または対象施設指定が不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効権限なし', 'ErrorResponse'),
-          @('404', '指定資産または設置場所候補が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `original_list_view` + `original_application` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、削除済み、または指定資産・設置場所候補が存在しない/作業対象施設に属さない', 'ErrorResponse'),
           @('409', '初期ステータス定義不備', 'ErrorResponse')
         )
       },
@@ -268,8 +274,10 @@
           }
         )
         PermissionLines = @(
-          'Bearer トークン上の作業対象施設について `original_application` の実効権限を再判定する',
-          '既存資産を対象にする場合は、同じ作業対象施設に対する `original_list_view` 相当の参照可否も満たすこと'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `original_application` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `original_application` が有効であること',
+          '業務条件: 既存資産を指定する場合は、対象資産が作業対象施設に属すること。通常アカウントで既存資産スナップショットを取得する文脈では `original_list_view` も満たすこと'
         )
         ProcessingLines = @(
           '`Idempotency-Key` と正規化 payload の組み合わせを検証し、同一内容の再送は初回応答を返す。異なる payload の再送は 409 (`IDEMPOTENCY_KEY_REUSED`) とする',
@@ -314,8 +322,8 @@
           @('200', '同一 `Idempotency-Key` の再送を既存結果で受理', 'AssetApplicationCreateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `original_application` なし', 'ErrorResponse'),
-          @('404', '指定資産または設置場所が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `original_application` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、削除済み、または指定資産・設置場所が存在しない/作業対象施設に属さない', 'ErrorResponse'),
           @('409', '更新競合、初期ステータス不備、冪等キー再利用', 'ErrorResponse')
         )
       },
@@ -340,7 +348,10 @@
           @('requestedOn', 'date', '-', '申請日。未指定時はサーバー日付')
         )
         PermissionLines = @(
-          'Bearer トークン上の作業対象施設について `original_application` の実効権限を再判定する'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `original_application` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `original_application` が有効であること',
+          '業務条件: 既存資産を指定する場合は、対象資産が作業対象施設に属すること'
         )
         ProcessingLines = @(
           '`Idempotency-Key` と正規化 payload の組み合わせを検証する',
@@ -366,8 +377,8 @@
           @('200', '同一 `Idempotency-Key` の再送を既存結果で受理', 'AssetApplicationCreateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `original_application` なし', 'ErrorResponse'),
-          @('404', '指定資産または移動先が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `original_application` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、削除済み、または指定資産・移動先が存在しない/作業対象施設に属さない', 'ErrorResponse'),
           @('409', '初期ステータス不備、冪等キー再利用', 'ErrorResponse')
         )
       },
@@ -407,7 +418,10 @@
           }
         )
         PermissionLines = @(
-          'Bearer トークン上の作業対象施設について `original_application` の実効権限を再判定する'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `original_application` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `original_application` が有効であること',
+          '業務条件: 既存資産を指定する場合は、対象資産が作業対象施設に属すること'
         )
         ProcessingLines = @(
           '`Idempotency-Key` と正規化 payload の組み合わせを検証する',
@@ -435,8 +449,8 @@
           @('200', '同一 `Idempotency-Key` の再送を既存結果で受理', 'AssetApplicationCreateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `original_application` なし', 'ErrorResponse'),
-          @('404', '指定資産が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `original_application` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、削除済み、または指定資産が存在しない/作業対象施設に属さない', 'ErrorResponse'),
           @('409', '初期ステータス不備、冪等キー再利用', 'ErrorResponse')
         )
       }
@@ -463,7 +477,7 @@
       'POST API は `Idempotency-Key` を必須とし、キー未指定は 400 (`IDEMPOTENCY_KEY_REQUIRED`) とする',
       '同一キー、同一ユーザー、同一施設、同一 API パス、同一 payload の再送は初回レスポンスを返す',
       '同一キーで payload が異なる場合は 409 (`IDEMPOTENCY_KEY_REUSED`) とする',
-      '既存資産を対象にする作成処理では、対象 `asset_ledgers` を同一トランザクション内で検証し、施設違い、削除相当、更新競合を拒否する'
+      '既存資産を対象にする作成処理では、対象 `asset_ledgers` を同一トランザクション内で検証し、施設違い、存在なし、更新競合を拒否する'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
@@ -471,7 +485,7 @@
       @('VALIDATION_ERROR', '400', '必須不足、形式不正、件数上限超過'),
       @('IDEMPOTENCY_KEY_REQUIRED', '400', 'POST API に `Idempotency-Key` が指定されていない'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('FORBIDDEN', '403', '作業対象施設に対する実効 `original_application` がない'),
+      @('FORBIDDEN', '403', '通常アカウントで作業対象施設に対する実効 `original_application` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
       @('TARGET_FACILITY_NOT_SUPPORTED', '400', '指定施設が Bearer トークン上の作業対象施設と一致しない'),
       @('ASSET_NOT_FOUND', '404', '指定資産が存在しない、または作業対象施設に属さない'),
       @('LOCATION_NOT_FOUND', '404', '指定した設置場所/移動先が存在しない、または削除済み'),

@@ -1,7 +1,13 @@
 ﻿$permissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `maintenance_contract` が有効であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `maintenance_contract` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `maintenance_contract` が有効であること'
 )
+
+$workFacilityProcessingLine = 'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。'
+$auth401StatusRow = @('401', '未認証', 'ErrorResponse')
+$auth403StatusRow = @('403', '通常アカウントで作業対象施設に対する実効 `maintenance_contract` なし', 'ErrorResponse')
+$workFacility404StatusRow = @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse')
 
 $contractStatusRows = @(
   @('見積依頼', '初期状態。保守契約グループ作成後、業者登録・見積依頼書作成・送信を行う'),
@@ -169,7 +175,8 @@ $documentInputRows = @(
 
 $errorRows = @(
   @('AUTH_401_UNAUTHORIZED', '401', '認証情報が存在しない、または無効', 'Bearer トークン未指定、期限切れ、署名不正'),
-  @('AUTH_403_MAINTENANCE_CONTRACT_DENIED', '403', '作業対象施設に対する実効 `maintenance_contract` がない', '施設提供設定またはユーザー施設別設定で無効'),
+  @('AUTH_403_MAINTENANCE_CONTRACT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `maintenance_contract` がない', '共有システム管理者アカウントでは作業対象施設が未削除であれば通常権限判定をバイパスする'),
+  @('FACILITY_NOT_FOUND', '404', '作業対象施設が存在しない、または削除済み', 'Bearer トークン上の作業対象施設を参照できない'),
   @('MAINTENANCE_CONTRACT_NOT_FOUND', '404', '保守契約を参照できない', 'ID不存在、施設不一致、削除済み、または権限外'),
   @('MAINTENANCE_CONTRACT_ASSET_NOT_FOUND', '404', '契約対象資産を参照できない', '対象資産ID不存在、施設不一致、または契約に属さない'),
   @('MAINTENANCE_CONTRACT_ASSET_DUPLICATE', '409', '同一契約内に同じ資産が重複している', '新規作成、明細登録、契約内容見直し追加で重複'),
@@ -185,9 +192,9 @@ $errorRows = @(
   @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー', '想定外例外')
 )
 
-@{
+$spec = @{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_保守契約管理.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_保守契約管理.docx'
   ScreenLabel = '保守契約管理'
   CoverDateText = '2026年5月27日'
   RevisionDateText = '2026/5/27'
@@ -257,7 +264,11 @@ $errorRows = @(
       @('`inspection_tasks`', 'CREATE / READ / UPDATE', '保守登録時の点検管理連携先。保守契約由来の定期点検系タスク'),
       @('`inspection_task_status_definitions` / `inspection_task_status_transitions`', 'READ', '保守契約由来点検タスク作成時の初期ステータス・遷移制約確認'),
       @('`vendors`', 'READ', '見積依頼先、見積業者、契約業者の存在確認とスナップショット生成'),
-      @('`users`', 'READ', '登録者、送信者、見直し登録者の表示名取得')
+      @('`users`', 'READ', '登録者、送信者、見直し登録者の表示名取得、共有システム管理者アカウント判定'),
+      @('`facilities`', 'READ', 'Bearer トークン上の作業対象施設の存在確認、未削除確認'),
+      @('`user_facility_assignments`', 'READ', '通常アカウントにおける作業対象施設への有効担当施設割当確認'),
+      @('`facility_feature_settings`', 'READ', '通常アカウントにおける施設提供機能 `maintenance_contract` の有効化確認'),
+      @('`user_facility_feature_settings`', 'READ', '通常アカウントにおけるユーザー施設別 `maintenance_contract` の有効化確認')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -273,9 +284,18 @@ $errorRows = @(
       '更新系APIは現在ステータスを再取得して遷移可否を検証し、条件を満たさない場合は 409 を返す'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `maintenance_contract` とする。資産一覧の保守契約登録導線、保守契約管理タブ、保守契約見積登録画面の全操作で同じ実効権限を判定する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `maintenance_contract` とする。資産一覧の保守契約登録導線、保守契約管理タブ、保守契約見積登録画面の全操作で同じ実効権限を判定する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `maintenance_contract` 判定をバイパスする。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('保守契約API全般', '`maintenance_contract`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '保守契約の作成、一覧、見積、契約登録、完了後操作を許可する')
+      @('保守契約API全般', '`maintenance_contract`', '`users`, `facilities`, `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '通常アカウントは担当施設割当と実効 `maintenance_contract` を確認する。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可例外' },
+    @{ Type = 'Bullets'; Items = @(
+      '各APIは Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
+      '通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `maintenance_contract` を都度再判定する',
+      '共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする',
+      '対象資産の作業対象施設所属、保守契約グループの対象資産所属、`rfqs.management_type=''MAINTENANCE''`、保守契約ステータス遷移順序、送信済み依頼先有無、発注登録用見積、契約ドキュメント、契約対象資産明細、契約内容見直し/契約更新条件、点検管理連携時の競合確認といった業務制約は共有システム管理者でもバイパスしない',
+      '通常アカウントで作業対象施設に対して必要な実効 `maintenance_contract` がない場合は403を返す',
+      '作業対象施設が存在しない、または削除済みの場合は404を返す'
     ) },
     @{ Type = 'Heading2'; Text = '施設スコープ' },
     @{ Type = 'Bullets'; Items = @(
@@ -391,6 +411,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`maintenance_contracts` を `maintenance_contract_assets`、`asset_ledgers`、`qr_codes` と結合し、作業対象施設の契約のみ取得する',
           '既定では `見積依頼` / `見積依頼済` / `見積登録済` と、`完了` かつ `contract_end_on >= 業務日` の契約を返す',
           '`includeExpired=true` の場合のみ `完了` かつ `contract_end_on < 業務日` の期限切れ契約を返す',
@@ -411,6 +432,7 @@ $errorRows = @(
           @('400', '検索条件、ページ指定、列挙値が不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '作業対象施設に対する実効 `maintenance_contract` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -431,6 +453,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象資産が1件以上指定されていることを検証する',
           '全対象資産が作業対象施設に属し、削除済みでないことを検証する',
           '同一リクエスト内の `assetLedgerIds` 重複を拒否する',
@@ -493,6 +516,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積依頼` であることを確認する',
           '`rfqs.management_type=''MAINTENANCE''`、`workflow_type=''RFQ''`、`status=''見積依頼''`、`requested_on=業務日`、`created_by_user_id=ログインユーザー`、`last_status_changed_at=現在日時` のRFQを作成または取得し、`maintenance_contracts.rfq_id` に設定する',
           '受付部署名、受付担当者名、受付連絡先は `maintenance_contracts.reception_department_name`、`reception_person_name`、`reception_contact` に保存する',
@@ -533,6 +557,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積依頼` であることを確認する',
           '対象 `rfq_vendors` が契約の `rfq_id` に属し、`request_status` が `DRAFT` または未送信相当であることを確認する',
           '送付文書メタデータが指定された場合は `application_documents.owner_type=''RFQ_VENDOR''`、`rfq_id=契約のRFQ ID`、`rfq_vendor_id=対象依頼先ID` として保存する',
@@ -564,6 +589,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積依頼` であることを確認する',
           '`rfq_vendors.request_status=''SENT''` の依頼先が1件以上存在することを確認する',
           '`maintenance_contracts.status=''見積依頼済''`、`maintenance_contracts.last_status_changed_at=現在日時`、`rfqs.status=''見積依頼済''`、`rfqs.last_status_changed_at=現在日時` を同一トランザクションで更新する'
@@ -598,6 +624,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積依頼` であることを確認する',
           'RFQ作成済みの場合は `rfqs.status=''申請を見送る''`、`rfqs.last_status_changed_at=現在日時` へ更新する',
           '未送信の `rfq_vendors.request_status=''DRAFT''` は `CANCELED` へ更新する',
@@ -630,6 +657,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が作業対象施設に属することを確認する',
           '`maintenance_contracts.status` から画面ステップを算出する',
           '対象資産は `excluded_flag` を含めて返し、明細登録画面では除外済み行を履歴として表示できるようにする',
@@ -678,6 +706,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積登録済` であることを確認する',
           '指定資産が作業対象施設に属することを確認する',
           '同一契約内に同一 `assetLedgerId` が重複しないことを検証する',
@@ -723,6 +752,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積依頼済` または `見積登録済` であることを確認する',
           '`quotation_no` を採番し、`quotation_on` は入力値または業務日で `quotations` を作成する。`rfq_id` は保守契約RFQに紐づける',
           '見積原本は `application_documents.owner_type=''QUOTATION''`、`quotation_id=作成した見積ID` として保存する',
@@ -754,6 +784,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積依頼済` または `見積登録済` であることを確認する',
           '未削除の `quotation_phase=''発注登録用見積''` が1件以上あることを確認する',
           '`maintenance_contracts.status=''見積登録済''`、`maintenance_contracts.last_status_changed_at=現在日時`、`rfqs.status=''見積DB登録済''`、`rfqs.last_status_changed_at=現在日時` を同一トランザクションで更新する'
@@ -784,6 +815,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `完了` ではないことを確認する',
           '対象見積が契約の保守契約RFQに属することを確認する',
           '`quotations.status=''ORDER_SELECTED''` の採用済み見積は削除不可とする',
@@ -825,6 +857,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積登録済` であることを確認する',
           '契約終了日が契約開始日以降であることを検証する',
           '採用見積が未削除かつ `quotation_phase=''発注登録用見積''` であることを確認する',
@@ -865,6 +898,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積登録済` であることを確認する',
           '各文書を `application_documents.owner_type=''RFQ''`、`rfq_id=契約のRFQ ID`、`document_category=''CONTRACT''` として保存する',
           'ファイル実体アップロードは別ストレージ連携済みの `storageKey` を受け取る前提とする'
@@ -895,6 +929,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `完了` ではないことを確認する',
           '対象ドキュメントが契約の保守契約RFQに属する `owner_type=''RFQ''` の文書であることを確認する',
           '`application_documents.deleted_at` を更新する'
@@ -923,6 +958,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `見積登録済` であることを確認する',
           '採用見積が存在することを確認する',
           '契約開始日・契約終了日が入力済みであることを確認する',
@@ -969,6 +1005,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象契約が `完了` かつ `contract_end_on >= 業務日` であることを確認する',
           '除外対象または追加対象のいずれか1件以上が指定されていることを確認する',
           '除外対象が対象契約に属し、まだ `excluded_flag=false` であることを確認する',
@@ -1019,6 +1056,7 @@ $errorRows = @(
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '更新元契約が `完了` であることを確認する',
           '更新元契約を再オープンせず、`maintenance_contract_no` を採番して新しい `maintenance_contracts` を `contract_group_name=入力値`、`maintenance_type=入力値`、`maintenance_type_note=入力値`、`status=''見積依頼''`、`remote_maintenance_available=false`、`on_call_support=false`、`last_status_changed_at=現在日時` で作成する',
           '新契約の `renewal_source_maintenance_contract_id` に更新元契約IDを保持する',
@@ -1048,7 +1086,7 @@ $errorRows = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '権限対応表' },
     @{ Type = 'Table'; Headers = @('対象操作', '対象API', '必要権限', '業務条件'); Rows = @(
-      @('一覧表示・詳細閲覧', 'GET系API', '`maintenance_contract`', '作業対象施設に有効なユーザー割当があり、施設提供設定とユーザー施設別設定の双方で保守契約管理が有効'),
+      @('一覧表示・詳細閲覧', 'GET系API', '`maintenance_contract`', '通常アカウントは作業対象施設に有効なユーザー割当があり、施設提供設定とユーザー施設別設定の双方で保守契約管理が有効。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする'),
       @('契約グループ作成', 'POST /quotation-data-box/maintenance-contracts', '`maintenance_contract`', '対象資産が作業対象施設に属し、対象資産が1件以上指定されている'),
       @('見積依頼・見積登録・契約登録', '/maintenance-quote-registration 配下の更新系API', '`maintenance_contract`', '保守契約ステータスが各工程の期待状態と一致する'),
       @('申請見送り', 'POST /quotation-data-box/maintenance-contracts/{maintenanceContractId}/cancel', '`maintenance_contract`', '対象契約が `見積依頼` であり、後続工程に進行していない'),
@@ -1109,3 +1147,50 @@ $errorRows = @(
     ) }
   )
 }
+
+function Normalize-MaintenanceContractEndpointStatusRows {
+  param(
+    [object[]]$Rows
+  )
+
+  $normalizedRows = [System.Collections.Generic.List[object]]::new()
+  $has401 = @($Rows | Where-Object { $_[0] -eq '401' }).Count -gt 0
+  $has403 = @($Rows | Where-Object { $_[0] -eq '403' }).Count -gt 0
+  $has404 = @($Rows | Where-Object { $_[0] -eq '404' }).Count -gt 0
+
+  foreach ($row in $Rows) {
+    if ($row[0] -eq '403') {
+      $row[1] = $auth403StatusRow[1]
+    }
+
+    if (($row[0] -eq '404') -and ([string]$row[1] -notmatch '作業対象施設')) {
+      $row[1] = "作業対象施設が存在しない/削除済み、または、$($row[1])"
+    }
+
+    [void]$normalizedRows.Add($row)
+  }
+
+  if (-not $has401) {
+    [void]$normalizedRows.Add($auth401StatusRow)
+  }
+
+  if (-not $has403) {
+    [void]$normalizedRows.Add($auth403StatusRow)
+  }
+
+  if (-not $has404) {
+    [void]$normalizedRows.Add($workFacility404StatusRow)
+  }
+
+  return @($normalizedRows.ToArray() | Sort-Object `
+    @{ Expression = { [int]$_[0] }; Ascending = $true }, `
+    @{ Expression = { if ([string]$_[1] -match '作業対象施設') { 0 } else { 1 } }; Ascending = $true })
+}
+
+foreach ($section in @($spec.Sections | Where-Object { $_.Type -eq 'EndpointBlocks' })) {
+  foreach ($endpoint in @($section.Items)) {
+    $endpoint.StatusRows = Normalize-MaintenanceContractEndpointStatusRows -Rows $endpoint.StatusRows
+  }
+}
+
+$spec

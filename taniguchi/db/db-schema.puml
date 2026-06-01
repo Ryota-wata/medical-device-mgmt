@@ -1892,6 +1892,7 @@ package "申請・ワークフロー・見積・契約・点検・貸出" {
     発注形態 / order_type : varchar
     決済No. / settlement_no : varchar
     支払条件 / payment_terms : varchar
+    支払方法 / payment_method : varchar
     支払期日 / payment_due_on : date
     リース会社名 / lease_company_name : varchar
     リース開始日 / lease_start_on : date

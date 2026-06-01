@@ -48,6 +48,10 @@
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('facilities', '施設候補の取得、施設存在確認', 'facility_id, facility_name'),
+      @('users', '共有システム管理者アカウント判定、監査記録の実行ユーザー解決', 'user_id, account_type'),
+      @('user_facility_assignments', '通常アカウントの対象施設割当判定', 'user_id, facility_id, is_active, valid_from, valid_to'),
+      @('facility_feature_settings', '通常アカウントの対象施設における `hospital_dept_master_list` / `hospital_dept_master_edit` 提供有無判定', 'facility_id, feature_code, is_enabled'),
+      @('user_facility_feature_settings', '通常アカウントのユーザー×対象施設単位の `hospital_dept_master_list` / `hospital_dept_master_edit` 利用可否判定', 'user_facility_assignment_id, feature_code, is_enabled'),
       @('ship_departments', '共通マスタ部門/部署候補の取得、名称解決', 'ship_department_id, division_name, department_name'),
       @('ship_room_categories', '共通マスタ諸室区分候補の取得、名称解決', 'ship_room_category_id, room_category1, room_category2'),
       @('facility_locations', '現行ロケーションの正本', 'facility_location_id, facility_id, division_id, department_id, room_id, building, floor, department_name, section_name, room_name, ship_department_id, ship_room_category_id, deleted_at'),
@@ -62,25 +66,26 @@
       'ファイルアップロード: multipart/form-data',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
-      '一覧取得では `deleted_at IS NULL` の未削除データのみ対象とする'
+      '一覧取得では `deleted_at IS NULL` の未削除データのみ対象とする',
+      '共有システム管理者アカウントは、対象施設が未削除である限り通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、`hospital_dept_master_list` / `hospital_dept_master_edit` を有効として扱う。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('個別部署マスタ / 一覧', '`hospital_dept_master_list`', '施設候補取得、SHIP候補取得、一覧取得、エクスポート、テンプレート取得'),
       @('個別部署マスタ / 新規作成・編集', '`hospital_dept_master_edit`', 'インポートプレビュー、インポート実行、新規作成、更新、削除')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('施設候補取得 / SHIP候補取得 / 一覧取得 / エクスポート / テンプレート取得', '`hospital_dept_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照系処理'),
-      @('インポートプレビュー / インポート実行 / 新規作成 / 更新 / 削除', '`hospital_dept_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '変更系処理')
+      @('施設候補取得 / SHIP候補取得 / 一覧取得 / エクスポート / テンプレート取得', '`hospital_dept_master_list`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '一覧参照系処理'),
+      @('インポートプレビュー / インポート実行 / 新規作成 / 更新 / 削除', '`hospital_dept_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '変更系処理')
     ) },
     @{ Type = 'Heading2'; Text = '対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '対象施設候補取得 API は、`user_facility_assignments` 上の有効担当施設のうち、対象施設に対して実効 `hospital_dept_master_list` を持つ施設のみ返却する',
-      '`facilityId` を受ける参照系 API は、指定施設に対する実効 `hospital_dept_master_list` を都度再判定する',
-      '`facilityId` を受ける変更系 API は、指定施設に対する実効 `hospital_dept_master_edit` を都度再判定する',
+      '対象施設候補取得 API は、通常アカウントでは `user_facility_assignments` 上の有効担当施設のうち対象施設に対して実効 `hospital_dept_master_list` を持つ施設のみ返却し、共有システム管理者アカウントでは未削除の全施設を候補として返却する',
+      '`facilityId` を受ける参照系 API は、通常アカウントでは指定施設に対する実効 `hospital_dept_master_list` を都度再判定し、共有システム管理者アカウントでは指定施設が未削除であれば通常判定をバイパスする',
+      '`facilityId` を受ける変更系 API は、通常アカウントでは指定施設に対する実効 `hospital_dept_master_edit` を都度再判定し、共有システム管理者アカウントでは指定施設が未削除であれば通常判定をバイパスする',
       '一覧取得・エクスポートで `facilityId` 未指定かつ対象施設を1件に確定できない場合は 400 を返却する',
       '対象施設が `facilities.deleted_at IS NOT NULL` の場合は 404 を返却する'
     ) },
@@ -129,13 +134,15 @@
           @('keyword', 'query', 'string', '-', '施設名の部分一致検索条件')
         )
         PermissionLines = @(
-          '認可条件: `user_facility_assignments` 上の有効担当施設が1件以上あること',
-          '認可条件: 各候補施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、未削除の全施設を候補として扱い、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、`user_facility_assignments` 上の有効担当施設が1件以上あること',
+          '認可条件: 通常アカウントの場合、各候補施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
-          '`user_facility_assignments` の有効割当施設のみを対象にする',
+          '共有システム管理者アカウントの場合は、`facilities.deleted_at IS NULL` の未削除施設を対象にする',
+          '通常アカウントの場合は、`user_facility_assignments` の有効割当施設のみを対象にする',
           '`facilities.deleted_at IS NULL` の未削除施設のみ返却する',
-          '各施設について実効 `hospital_dept_master_list` を再判定し、有効な施設のみ返却する',
+          '通常アカウントでは各施設について実効 `hospital_dept_master_list` を再判定し、有効な施設のみ返却する',
           'キーワード指定時は施設名の部分一致で絞り込む'
         )
         ResponseTitle = 'レスポンス（200：FacilityOptionResponse）'
@@ -157,7 +164,7 @@
         StatusRows = @(
           @('200', '取得成功', 'FacilityOptionResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
+          @('403', '通常アカウントで実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -174,7 +181,9 @@
           @('keyword', 'query', 'string', '-', '部門名/部署名の部分一致検索条件')
         )
         PermissionLines = @(
-          '認可条件: 有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、未削除施設が存在することを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、`user_facility_assignments` 上の有効担当施設が1件以上あること',
+          '認可条件: 通常アカウントの場合、有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
           '`ship_departments` の未削除レコードを返却する',
@@ -200,7 +209,7 @@
         StatusRows = @(
           @('200', '取得成功', 'ShipDepartmentOptionResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
+          @('403', '通常アカウントで実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -217,7 +226,9 @@
           @('keyword', 'query', 'string', '-', '諸室区分①/②の部分一致検索条件')
         )
         PermissionLines = @(
-          '認可条件: 有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、未削除施設が存在することを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、`user_facility_assignments` 上の有効担当施設が1件以上あること',
+          '認可条件: 通常アカウントの場合、有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
           '`ship_room_categories` の未削除レコードを返却する',
@@ -243,7 +254,7 @@
         StatusRows = @(
           @('200', '取得成功', 'ShipRoomCategoryOptionResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
+          @('403', '通常アカウントで実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -261,11 +272,13 @@
           @('shipDepartmentName', 'query', 'string', '-', '共通マスタ-部署の部分一致条件')
         )
         PermissionLines = @(
-          '認可条件: 指定 `facilityId` または自動確定された対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: 対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、指定 `facilityId` または自動確定された対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` または自動確定された対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
-          '`facilityId` 未指定時は、実効 `hospital_dept_master_list` を持つ対象施設が1件に確定できる場合のみ自動適用する',
+          '`facilityId` 未指定時は、通常アカウントでは実効 `hospital_dept_master_list` を持つ対象施設、共有システム管理者アカウントでは未削除施設が1件に確定できる場合のみ自動適用する',
+          '対象施設が存在し、未削除であることを確認する',
           '対象施設の `facility_locations` を取得する',
           '`facility_location_remodels` を左外部結合し、1行DTOとして返却する',
           '部門・部署フィルタは SHIP標準名称ベースで絞り込む'
@@ -326,8 +339,8 @@
           @('200', '取得成功', 'HospitalFacilityLocationListResponse'),
           @('400', '施設未選択など不正な検索条件', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_list` なし', 'ErrorResponse'),
-          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_list` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -345,11 +358,13 @@
           @('shipDepartmentName', 'query', 'string', '-', '共通マスタ-部署の部分一致条件')
         )
         PermissionLines = @(
-          '認可条件: 指定 `facilityId` または自動確定された対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: 対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、指定 `facilityId` または自動確定された対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` または自動確定された対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
-          '`facilityId` 未指定時は、実効 `hospital_dept_master_list` を持つ対象施設が1件に確定できる場合のみ自動適用する',
+          '`facilityId` 未指定時は、通常アカウントでは実効 `hospital_dept_master_list` を持つ対象施設、共有システム管理者アカウントでは未削除施設が1件に確定できる場合のみ自動適用する',
+          '対象施設が存在し、未削除であることを確認する',
           '一覧取得と同一条件で対象行を抽出する',
           'テンプレートと同一列順で Excel を生成する'
         )
@@ -362,8 +377,8 @@
           @('200', '出力成功', 'Excel File'),
           @('400', '施設未選択など不正な検索条件', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_list` なし', 'ErrorResponse'),
-          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_list` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -374,7 +389,9 @@
         Path = '/hospital-facility-master/facility-locations/template'
         Auth = '要（Bearer）'
         PermissionLines = @(
-          '認可条件: 有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、未削除施設が存在することを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、`user_facility_assignments` 上の有効担当施設が1件以上あること',
+          '認可条件: 通常アカウントの場合、有効な担当施設のうち少なくとも1件で `hospital_dept_master_list` が有効であること'
         )
         ProcessingLines = @(
           'エクスポートと同一列定義のヘッダーのみを返却する'
@@ -387,7 +404,7 @@
         StatusRows = @(
           @('200', '取得成功', 'Excel File'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
+          @('403', '通常アカウントで実効 `hospital_dept_master_list` を持つ担当施設がない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -404,10 +421,12 @@
           @('file', 'binary', '✓', '.xlsx / .xls ファイル')
         )
         PermissionLines = @(
-          '認可条件: 指定 `facilityId` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 指定 `facilityId` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、指定 `facilityId` が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象施設が存在し、未削除であることを確認する',
           'テンプレート列定義に基づきヘッダーと各行を検証する',
           '選択施設とファイル内施設情報が不整合な場合はエラーとする',
           'プレビュー成功時は後続の本取込で使う `previewToken` を返却する'
@@ -434,8 +453,8 @@
           @('200', 'プレビュー成功', 'HospitalFacilityImportPreviewResponse'),
           @('400', 'ファイル形式不正または内容不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -453,10 +472,12 @@
           @('mode', 'string', '✓', '`ADD` または `REPLACE`')
         )
         PermissionLines = @(
-          '認可条件: 指定 `facilityId` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 指定 `facilityId` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、指定 `facilityId` が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象施設が存在し、未削除であることを確認する',
           '`ADD` は既存データへ追記する',
           '`REPLACE` は選択施設分の `facility_locations` と関連 `facility_location_remodels` を置き換える',
           '反映後、インポート結果件数を返却する'
@@ -472,8 +493,8 @@
           @('200', '取込成功', 'HospitalFacilityImportResultResponse'),
           @('400', 'プレビュー未実施またはモード不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('404', 'プレビュー情報が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -508,10 +529,12 @@
           @('targetRoomCount', 'int32', '-', '新_室数')
         )
         PermissionLines = @(
-          '認可条件: 指定 `facilityId` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 指定 `facilityId` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、指定 `facilityId` が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、指定 `facilityId` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象施設が存在し、未削除であることを確認する',
           '`facility_locations` に現行ロケーションを新規作成する',
           'リモデル先項目が1つ以上入力されている場合は `facility_location_remodels` を同時作成する',
           'リモデル先未入力の場合は子レコードを作成しない'
@@ -525,8 +548,8 @@
           @('201', '登録成功', 'HospitalFacilityLocationResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
-          @('404', '施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
+          @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -564,11 +587,13 @@
           @('targetRoomCount', 'int32', '-', '新_室数')
         )
         PermissionLines = @(
-          '認可条件: 対象 `facility_locations.facility_id` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 対象 `facility_locations.facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、対象 `facility_locations.facility_id` の施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、対象 `facility_locations.facility_id` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、対象 `facility_locations.facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象 `facility_locations` が未削除で存在することを確認する',
+          '対象 `facility_locations.facility_id` の施設が未削除であることを確認する',
           '現行ロケーションを更新する',
           '新側項目が入力されていれば `facility_location_remodels` を作成または更新し、すべて空なら削除または論理削除する'
         )
@@ -581,8 +606,8 @@
           @('200', '更新成功', 'HospitalFacilityLocationResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象ロケーションが存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
+          @('404', '対象ロケーションまたは対象施設が存在しない/削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -598,10 +623,13 @@
           @('facilityLocationId', 'path', 'int64', '✓', '削除対象ID')
         )
         PermissionLines = @(
-          '認可条件: 対象 `facility_locations.facility_id` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 対象 `facility_locations.facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、対象 `facility_locations.facility_id` の施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `hospital_dept_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、対象 `facility_locations.facility_id` について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、対象 `facility_locations.facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `hospital_dept_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '対象 `facility_locations` が未削除で存在することを確認する',
+          '対象 `facility_locations.facility_id` の施設が未削除であることを確認する',
           '対象 `facility_locations` を論理削除する',
           '関連する `facility_location_remodels` も同時に論理削除する'
         )
@@ -612,8 +640,8 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象ロケーションが存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` なし', 'ErrorResponse'),
+          @('404', '対象ロケーションまたは対象施設が存在しない/削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -622,8 +650,8 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('対象施設候補取得 / SHIP候補取得 / 一覧取得 / エクスポート / テンプレート取得', '`hospital_dept_master_list`', '対象施設に対して実効 `hospital_dept_master_list` を持つこと、または少なくとも1件の担当施設で同 feature を持つこと', '一覧参照と画面利用開始に必要'),
-      @('インポートプレビュー / インポート実行 / 新規作成 / 更新 / 削除', '`hospital_dept_master_edit`', '対象施設に対して実効 `hospital_dept_master_edit` を持つこと', '変更系処理に必要')
+      @('対象施設候補取得 / SHIP候補取得 / 一覧取得 / エクスポート / テンプレート取得', '`hospital_dept_master_list`', '通常アカウントは対象施設または有効担当施設に対して実効 `hospital_dept_master_list` を持つこと。共有システム管理者は対象施設が未削除であれば許可', '一覧参照と画面利用開始に必要'),
+      @('インポートプレビュー / インポート実行 / 新規作成 / 更新 / 削除', '`hospital_dept_master_edit`', '通常アカウントは対象施設に対して実効 `hospital_dept_master_edit` を持つこと。共有システム管理者は対象施設が未削除であれば許可', '変更系処理に必要')
     ) },
     @{ Type = 'Heading2'; Text = 'リモデル子レコード運用ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -649,10 +677,10 @@
       @('FACILITY_SELECTION_REQUIRED', '400', '施設未選択で一覧/出力/取込を要求した'),
       @('IMPORT_FILE_INVALID', '400', '取込ファイル形式不正または内容不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_HOSPITAL_DEPT_MASTER_LIST_DENIED', '403', '対象施設に対する実効 `hospital_dept_master_list` がない、または実効 `hospital_dept_master_list` を持つ担当施設がない'),
-      @('AUTH_403_HOSPITAL_DEPT_MASTER_EDIT_DENIED', '403', '対象施設に対する実効 `hospital_dept_master_edit` がない'),
+      @('AUTH_403_HOSPITAL_DEPT_MASTER_LIST_DENIED', '403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_list` がない、または実効 `hospital_dept_master_list` を持つ担当施設がない。共有システム管理者では対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('AUTH_403_HOSPITAL_DEPT_MASTER_EDIT_DENIED', '403', '通常アカウントで対象施設に対する実効 `hospital_dept_master_edit` がない。共有システム管理者では対象施設が未削除であれば通常権限判定をバイパスする'),
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
-      @('FACILITY_LOCATION_NOT_FOUND', '404', '対象施設ロケーションが存在しない'),
+      @('FACILITY_LOCATION_NOT_FOUND', '404', '対象施設ロケーションが存在しない、または削除済み'),
       @('IMPORT_PREVIEW_NOT_FOUND', '404', 'プレビュー情報が存在しない'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },

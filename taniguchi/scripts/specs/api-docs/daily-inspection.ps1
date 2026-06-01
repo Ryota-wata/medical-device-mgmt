@@ -1,6 +1,12 @@
-﻿@{
+﻿$dailyInspectionPermissionLines = @(
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
+)
+
+@{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_日常点検.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_日常点検.docx'
   ScreenLabel = '日常点検'
   CoverDateText = '2026年5月18日'
   RevisionDateText = '2026/5/18'
@@ -83,16 +89,17 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本 API 群で使用する `feature_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本 API 群で使用する `feature_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('日常点検・オフライン準備', '`daily_inspection`', '準備状況取得、PWAパッケージ取得、結果同期、オンラインQR再検証、日常点検結果登録、結果/報告書データ取得')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('日常点検 API 全般', '`daily_inspection`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '作業対象施設内の日常点検準備・実施・結果参照を許可する')
+      @('日常点検 API 全般', '`daily_inspection`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '作業対象施設内の日常点検準備・実施・結果参照を許可する')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各 API は Bearer トークン上の作業対象施設に対する実効 `daily_inspection` を都度再判定する',
+      '共有システム管理者アカウントでは、Bearer トークン上の作業対象施設が未削除であることを確認し、実効 `daily_inspection` の施設別・ユーザー別 ON/OFF 判定は行わない',
+      '通常アカウントでは、各 API が Bearer トークン上の作業対象施設に対する実効 `daily_inspection` を都度再判定する',
       '資産を指定する API は、対象 `asset_ledgers.facility_id` が作業対象施設 ID と一致することを確認する',
       '日常点検対象資産は原則 `asset_ledgers.status=''ACTIVE''` とする。`REPAIR` / `RETIRED` / `LOST` など ACTIVE 以外の資産は、オンラインQR再検証では対象資産情報と警告を返すが、結果登録は拒否する',
       '点検結果を指定する API は、`inspection_results -> inspection_tasks -> asset_ledgers` をたどって作業対象施設内の結果であることを確認する',
@@ -155,10 +162,7 @@
         ParametersRows = @(
           @('clientDeviceId', 'query', 'string', '-', '端末を識別する任意 ID。未指定時はユーザー単位の最終同期情報を返す')
         )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
-        )
+        PermissionLines = $dailyInspectionPermissionLines
         ProcessingLines = @(
           '作業対象施設の `facilities.deleted_at IS NULL` を確認する',
           '`asset_ledgers.facility_id` が作業対象施設 ID と一致し、`status=''ACTIVE''` かつ有効な `qr_codes` が紐づく資産件数を取得する',
@@ -181,7 +185,7 @@
         StatusRows = @(
           @('200', '取得成功', 'InspectionPrepContextResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `daily_inspection` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -196,10 +200,7 @@
         ParametersRows = @(
           @('clientDeviceId', 'query', 'string', '-', '端末を識別する任意 ID')
         )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
-        )
+        PermissionLines = $dailyInspectionPermissionLines
         ProcessingLines = @(
           '作業対象施設の `facilities.deleted_at IS NULL` を確認する',
           '`asset_ledgers.facility_id` が作業対象施設 ID と一致し、`status=''ACTIVE''` かつ有効な `qr_codes` が1件以上紐づく資産を、日常点検設定行の有無にかかわらず取得する',
@@ -288,7 +289,7 @@
         StatusRows = @(
           @('200', '取得成功', 'DailyInspectionMasterDownloadResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `daily_inspection` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -325,10 +326,7 @@
             )
           }
         )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
-        )
+        PermissionLines = $dailyInspectionPermissionLines
         ProcessingLines = @(
           '各結果について `inspectionTaskId` が `inspection_type=''日常点検''`、`status IS NULL` の日常点検設定行として存在し、紐づく `asset_ledgers.facility_id` が作業対象施設 ID と一致し、`asset_ledgers.status=''ACTIVE''` であることを検証する',
           'オフライン同期では、対象日常点検設定行が同期時点で `is_active=false` でも、`masterDownloadedAt` 時点でPWAパッケージに含まれ、かつ `deleted_at IS NULL` または `inspectedAt <= deleted_at` の場合は実施済み結果として登録を許可する。`masterDownloadedAt` が解除後、または `inspectedAt` が解除後の場合は `DAILY_INSPECTION_TASK_REQUIRED` とする',
@@ -384,7 +382,7 @@
           @('200', '同期処理完了。結果ごとの成否はレスポンスで確認する', 'DailyInspectionResultSyncResponse'),
           @('400', 'リクエスト形式不正、`results` 空', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `daily_inspection` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -401,10 +399,7 @@
           @('dailyTiming', 'query', 'string', '-', '`BEFORE` / `DURING` / `AFTER`。指定時は対象タイミングのメニューを優先返却する'),
           @('packageVersion', 'query', 'string', '-', '端末が利用中のPWAパッケージバージョン。サーバー側で期限切れや全量再取得推奨を判断するための補助情報')
         )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
-        )
+        PermissionLines = $dailyInspectionPermissionLines
         ProcessingLines = @(
           '通常フローでは、端末内PWAパッケージの `assets[*].qrIdentifiers` を検索して対象資産を決定する。本 API はオンライン再検証用であり、点検開始の必須条件にしない',
           'QR コードを `qr_codes.qr_identifier` として解決し、`qr_codes.facility_id` が作業対象施設 ID と一致し、`qr_codes.deleted_at IS NULL`、`qr_codes.asset_ledger_id IS NOT NULL` であることを確認する',
@@ -430,7 +425,7 @@
           @('200', '取得成功。メニュー未登録時も 200 で警告コードを返す', 'DailyInspectionAssetByQrResponse'),
           @('400', 'QR コード形式不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `daily_inspection` なし、または対象施設不一致', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし、または対象施設不一致', 'ErrorResponse'),
           @('404', 'QR コードに一致する資産が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -476,10 +471,7 @@
             )
           }
         )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
-        )
+        PermissionLines = $dailyInspectionPermissionLines
         ProcessingLines = @(
           '`inspectionTaskId`、`assetLedgerId`、`inspectionMenuId`、`dailyTiming` の整合を検証する。`inspectionTaskId` は `inspection_type=''日常点検''`、`is_active=true`、`status IS NULL` の日常点検設定行でなければならない',
           '対象資産が作業対象施設内に存在し、`asset_ledgers.status=''ACTIVE''` であることを検証する',
@@ -527,7 +519,7 @@
           @('201', '登録成功', 'DailyInspectionResultCreateResponse'),
           @('400', '入力不正、必須不足', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `daily_inspection` なし、または対象施設不一致', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象資産、点検タスク、点検メニュー、点検項目が存在しない', 'ErrorResponse'),
           @('409', '資産別日常点検設定が未登録、対象タイミングのメニュー不一致、または対象資産が日常点検対象外', 'ErrorResponse'),
           @('422', '点検結果明細の入力方式・評価方式がメニュー定義と一致しない', 'ErrorResponse'),
@@ -545,10 +537,7 @@
         ParametersRows = @(
           @('inspectionResultId', 'path', 'int64', '✓', '点検結果 ID')
         )
-        PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `daily_inspection` が有効であること'
-        )
+        PermissionLines = $dailyInspectionPermissionLines
         ProcessingLines = @(
           '`inspection_results`、`inspection_tasks`、`asset_ledgers` を結合し、対象結果が作業対象施設内の資産に紐づくことを確認する',
           '対象 `inspection_tasks` が `inspection_type=''日常点検''` の日常点検設定行であることを確認する。定期点検結果の場合は本 API の対象外として 403 を返す',
@@ -608,7 +597,7 @@
         StatusRows = @(
           @('200', '取得成功', 'InspectionResultReportResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `daily_inspection` なし、対象施設不一致、または定期点検結果を指定した', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし、対象施設不一致、または定期点検結果を指定した', 'ErrorResponse'),
           @('404', '点検結果が存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -618,7 +607,7 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('日常点検準備・実施・結果参照 API 全般', '`daily_inspection`', 'Bearer トークン上の作業対象施設に対して実効 `daily_inspection` を持つこと', '日常点検担当者が実施する準備、点検、同期、結果参照')
+      @('日常点検準備・実施・結果参照 API 全般', '`daily_inspection`', '通常アカウントは作業対象施設に対する実効 `daily_inspection` を持つこと。共有システム管理者アカウントは作業対象施設が未削除であること', '日常点検担当者が実施する準備、点検、同期、結果参照')
     ) },
     @{ Type = 'Heading2'; Text = '点検管理タブとの責務境界' },
     @{ Type = 'Bullets'; Items = @(
@@ -655,7 +644,7 @@
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明', '発生条件'); Rows = @(
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効', 'Bearer トークン未付与、期限切れ、署名不正'),
-      @('AUTH_403_DAILY_INSPECTION_DENIED', '403', '作業対象施設に対する実効 `daily_inspection` がない、または対象施設不一致', '施設割当なし、施設/ユーザー機能設定 OFF、対象資産が作業対象施設外'),
+      @('AUTH_403_DAILY_INSPECTION_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` がない、または対象施設不一致', '通常アカウントの施設割当なし、施設/ユーザー機能設定 OFF、対象資産が作業対象施設外'),
       @('DAILY_INSPECTION_400_INVALID_INPUT', '400', '入力形式、必須項目、日付形式が不正', '必須不足、列挙値外、日付/日時形式不正、`results` 空'),
       @('DAILY_INSPECTION_404_ASSET_NOT_FOUND', '404', 'QR コードに一致する資産が存在しない', '`qr_codes.qr_identifier` に一致する有効QRがない'),
       @('DAILY_INSPECTION_404_TASK_NOT_FOUND', '404', '点検タスクが存在しない', '指定 `inspectionTaskId` が存在しない、または作業対象施設外'),

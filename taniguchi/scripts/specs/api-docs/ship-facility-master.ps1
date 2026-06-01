@@ -49,7 +49,11 @@
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '用途', '主な利用カラム'); Rows = @(
       @('establishments', '設立母体候補表示、新規設立母体登録', 'establishment_id, establishment_name'),
-      @('facilities', '一覧表示、施設登録、施設更新、施設削除', 'facility_id, establishment_id, facility_code, facility_name, prefecture, bed_count, system_contract_status, deleted_at')
+      @('facilities', '一覧表示、施設登録、施設更新、施設削除、作業対象施設の存在確認と論理削除判定', 'facility_id, establishment_id, facility_code, facility_name, prefecture, bed_count, system_contract_status, deleted_at'),
+      @('users', '共有システム管理者アカウント判定、監査記録の実行ユーザー解決', 'user_id, account_type'),
+      @('user_facility_assignments', '通常アカウントの作業対象施設割当判定', 'user_id, facility_id, is_active, valid_from, valid_to'),
+      @('facility_feature_settings', '通常アカウントの作業対象施設における `facility_master_list` / `facility_master_edit` 提供有無判定', 'facility_id, feature_code, is_enabled'),
+      @('user_facility_feature_settings', '通常アカウントのユーザー×作業対象施設単位の `facility_master_list` / `facility_master_edit` 利用可否判定', 'user_facility_assignment_id, feature_code, is_enabled')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -61,25 +65,28 @@
       '日時形式: ISO 8601（例: `2026-04-17T00:00:00Z`）',
       '論理削除済みデータ（`deleted_at` が設定済みのレコード）は一覧・候補・エクスポート対象外とする',
       '施設論理削除時も関連する担当施設割当・認可・他施設公開設定は保持し、施設復活時は既存設定を再利用する',
+      '共有システム管理者アカウントは、作業対象施設が未削除である限り通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする',
       '`facility_code` は論理削除済み施設を含む `facilities` 全件で一意とし、再利用しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。実効 `feature_code` の判定は認証／認可 API 設計書の共通認可モデルに従い、各業務 API でも都度再判定する。削除済み施設は `/auth/me`、`/auth/context`、業務 API の対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、`facility_master_list` / `facility_master_edit` を有効として扱う。削除済み施設は `/auth/me`、`/auth/context`、業務 API の対象外とする。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('施設マスタ / 一覧', '`facility_master_list`', '一覧表示、設立母体候補取得、エクスポート'),
       @('施設マスタ / 新規作成・編集', '`facility_master_edit`', '新規作成、更新、削除')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('一覧表示 / 設立母体候補取得 / エクスポート', '`facility_master_list`', '認証／認可API設計書の共通認可モデル', '一覧参照系の処理'),
-      @('新規作成 / 更新 / 削除', '`facility_master_edit`', '認証／認可API設計書の共通認可モデル', '施設マスタ管理処理')
+      @('一覧表示 / 設立母体候補取得 / エクスポート', '`facility_master_list`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '一覧参照系の処理'),
+      @('新規作成 / 更新 / 削除', '`facility_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '施設マスタ管理処理')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '各 API は Bearer トークン上の作業対象施設を認可コンテキストとして扱い、作業対象施設が存在しない、または `facilities.deleted_at IS NOT NULL` の場合は 404 とする',
+      '通常アカウントでは、作業対象施設に対する実効 `feature_code` を都度再判定する。共有システム管理者アカウントでは、作業対象施設が未削除であれば通常判定をバイパスする',
       '一覧・エクスポートの返却対象は施設マスタ全件とし、個票データ閲覧で用いる他施設公開設定は適用しない',
-      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
+      '新規作成・更新・削除の対象施設は作業対象施設と一致している必要はない。作業対象施設は認可基準、`facilityId` は施設マスタ上の更新対象として扱う',
+      '通常アカウントで作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -125,9 +132,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 作業対象施設に対する実効 `facility_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `facility_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_master_list` が有効であること'
         )
         ProcessingLines = @(
+          '作業対象施設が存在し、未削除であることを確認する',
           '`facilities.deleted_at IS NULL` のみを対象にする',
           '`establishments` を結合して設立母体名を取得する',
           '都道府県・設立母体・施設コード・施設名は AND 条件で絞り込む',
@@ -159,7 +169,8 @@
           @('200', '取得成功', 'ShipFacilityListResponse'),
           @('400', '不正な検索条件', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `facility_master_list` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `facility_master_list` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -176,9 +187,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 作業対象施設に対する実効 `facility_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `facility_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_master_list` が有効であること'
         )
         ProcessingLines = @(
+          '作業対象施設が存在し、未削除であることを確認する',
           '`establishments.deleted_at IS NULL` のみを対象にする',
           'keyword 指定時は設立母体名を部分一致で絞り込む'
         )
@@ -201,7 +215,8 @@
         StatusRows = @(
           @('200', '取得成功', 'EstablishmentCandidateResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `facility_master_list` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `facility_master_list` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -221,9 +236,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 作業対象施設に対する実効 `facility_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `facility_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_master_list` が有効であること'
         )
         ProcessingLines = @(
+          '作業対象施設が存在し、未削除であることを確認する',
           '一覧取得と同じ絞り込み条件を適用する',
           '出力対象は `deleted_at IS NULL` の未削除施設のみとする'
         )
@@ -245,7 +263,8 @@
         StatusRows = @(
           @('200', '出力成功', 'Excel File'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `facility_master_list` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `facility_master_list` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -267,9 +286,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 作業対象施設に対する実効 `facility_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `facility_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '作業対象施設が存在し、未削除であることを確認する',
           '`establishmentId` と `newEstablishmentName` はどちらか一方を必須とし、両方指定・両方未指定は入力エラーとする',
           '既存の設立母体が選択された場合は、`establishments.deleted_at IS NULL` の未削除設立母体だけを有効とし、存在しないまたは削除済みなら 404 `ESTABLISHMENT_NOT_FOUND` とする',
           '既存の設立母体が選択された場合は、その設立母体IDを `facilities.establishment_id` に設定して施設を登録する',
@@ -294,8 +316,8 @@
           @('201', '登録成功', 'FacilityUpsertResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `facility_master_edit` なし', 'ErrorResponse'),
-          @('404', '指定した設立母体が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `facility_master_edit` なし', 'ErrorResponse'),
+          @('404', '作業対象施設または指定した設立母体が存在しない/削除済み', 'ErrorResponse'),
           @('409', '施設コード重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -323,9 +345,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 作業対象施設に対する実効 `facility_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `facility_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '作業対象施設が存在し、未削除であることを確認する',
           '対象施設が存在し、未削除であることを確認する',
           '`establishmentId` と `newEstablishmentName` はどちらか一方を必須とし、両方指定・両方未指定は入力エラーとする',
           '設立母体が既存候補へ変更された場合は、`establishments.deleted_at IS NULL` の未削除設立母体だけを有効とし、存在しないまたは削除済みなら 404 `ESTABLISHMENT_NOT_FOUND` とする',
@@ -351,8 +376,8 @@
           @('200', '更新成功', 'FacilityUpsertResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `facility_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象施設または指定した設立母体が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `facility_master_edit` なし', 'ErrorResponse'),
+          @('404', '作業対象施設、対象施設、または指定した設立母体が存在しない/削除済み', 'ErrorResponse'),
           @('409', '施設コード重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -370,9 +395,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 作業対象施設に対する実効 `facility_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `facility_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `facility_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          '作業対象施設が存在し、未削除であることを確認する',
           '対象施設が存在し、未削除であることを確認する',
           '`facilities.deleted_at` に削除日時を設定する',
           '関連する担当施設割当・認可・他施設公開設定は本APIで更新・削除しない',
@@ -387,8 +415,8 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `facility_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `facility_master_edit` なし', 'ErrorResponse'),
+          @('404', '作業対象施設または対象施設が存在しない/削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -397,10 +425,10 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('一覧表示', '`facility_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_list` を持つこと', '施設一覧と表示件数を参照する'),
-      @('設立母体候補取得', '`facility_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_list` を持つこと', '既存設立母体候補を取得する'),
-      @('エクスポート', '`facility_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_list` を持つこと', '絞り込み結果を Excel で取得する'),
-      @('新規作成 / 更新 / 削除', '`facility_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `facility_master_edit` を持つこと', '施設マスタを管理する')
+      @('一覧表示', '`facility_master_list`', '通常アカウントは作業対象施設に対して実効 `facility_master_list` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '施設一覧と表示件数を参照する'),
+      @('設立母体候補取得', '`facility_master_list`', '通常アカウントは作業対象施設に対して実効 `facility_master_list` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '既存設立母体候補を取得する'),
+      @('エクスポート', '`facility_master_list`', '通常アカウントは作業対象施設に対して実効 `facility_master_list` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '絞り込み結果を Excel で取得する'),
+      @('新規作成 / 更新 / 削除', '`facility_master_edit`', '通常アカウントは作業対象施設に対して実効 `facility_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '施設マスタを管理する')
     ) },
     @{ Type = 'Heading2'; Text = '設立母体登録ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -434,9 +462,9 @@
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '入力不正、条件付き必須不足、形式不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_FACILITY_MASTER_LIST_DENIED', '403', '作業対象施設に対する実効 `facility_master_list` がない'),
-      @('AUTH_403_FACILITY_MASTER_EDIT_DENIED', '403', '作業対象施設に対する実効 `facility_master_edit` がない'),
-      @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
+      @('AUTH_403_FACILITY_MASTER_LIST_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `facility_master_list` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('AUTH_403_FACILITY_MASTER_EDIT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `facility_master_edit` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('FACILITY_NOT_FOUND', '404', '作業対象施設または対象施設が存在しない、または削除済み'),
       @('ESTABLISHMENT_NOT_FOUND', '404', '指定した設立母体が存在しない、または削除済み'),
       @('FACILITY_CODE_DUPLICATE', '409', '論理削除済み施設を含めて施設コードが重複している'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')

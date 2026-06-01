@@ -1,7 +1,10 @@
 ﻿$repairManagementPermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `repair_management` が有効であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `repair_management` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `repair_management` が有効であること'
 )
+
+$workFacilityProcessingLine = 'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。'
 
 $errorRows = @(
   @('200', '処理成功', '各API定義のレスポンス'),
@@ -10,7 +13,7 @@ $errorRows = @(
   @('400', '入力値不正、状態遷移不正、登録済/未登録資産の条件不整合', 'ErrorResponse'),
   @('401', '未認証', 'ErrorResponse'),
   @('403', '作業対象施設に対する実効 feature_code なし', 'ErrorResponse'),
-  @('404', '対象申請、対象資産、対象ドキュメントが存在しない', 'ErrorResponse'),
+  @('404', '作業対象施設、対象申請、対象資産、対象ドキュメントが存在しない', 'ErrorResponse'),
   @('409', '現在ステータス不整合、競合更新、対象条件不整合', 'ErrorResponse'),
   @('500', 'サーバー内部エラー', 'ErrorResponse')
 )
@@ -199,7 +202,11 @@ $repairOrderRows = @(
       @('`individuals`', 'CREATE / READ / UPDATE', '登録済み資産かつ院外発注修理の検収金額、仮勘定科目、固定資産番号、検収日を保持する中間正本。`order_item_id` / `rfq_id` が必須のため院内修理では作成しない。未登録資産では作成しない'),
       @('`disposal_application_details`', 'CREATE', '登録済み資産または未登録資産の修理不能から廃棄申請を作成する場合の関連修理申請ID'),
       @('`vendors`', 'READ', '業者マスタID指定時の見積依頼先・見積業者存在確認'),
-      @('`users`', 'READ', 'ログインユーザーの表示名、所属、連絡先、処理者情報')
+      @('`users`', 'READ', 'ログインユーザーの表示名、所属、連絡先、処理者情報、共有システム管理者アカウント判定'),
+      @('`facilities`', 'READ', 'Bearer トークン上の作業対象施設の存在確認、未削除確認'),
+      @('`user_facility_assignments`', 'READ', '通常アカウントにおける作業対象施設への有効担当施設割当確認'),
+      @('`facility_feature_settings`', 'READ', '通常アカウントにおける施設提供機能 `repair_management` の有効化確認'),
+      @('`user_facility_feature_settings`', 'READ', '通常アカウントにおけるユーザー施設別 `repair_management` の有効化確認')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -214,9 +221,18 @@ $repairOrderRows = @(
       '各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `repair_management` である。メニューからの修理依頼起票に使用する `repair_request_create` は No.6 修理申請API設計書で扱い、本書では修理管理タブ一覧と修理タスク操作の実効権限を判定する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `repair_management` である。メニューからの修理依頼起票に使用する `repair_request_create` は No.6 修理申請API設計書で扱い、本書では修理管理タブ一覧と修理タスク操作の実効権限を判定する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `repair_management` 判定をバイパスする。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('修理管理一覧、修理タスク詳細、工程進行、廃棄申請接続', '`repair_management`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '修理管理担当者が修理タスクを進行する')
+      @('修理管理一覧、修理タスク詳細、工程進行、廃棄申請接続', '`repair_management`', '`users`, `facilities`, `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '通常アカウントは担当施設割当と実効 `repair_management` を確認する。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可例外' },
+    @{ Type = 'Bullets'; Items = @(
+      '各APIは Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
+      '通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `repair_management` を都度再判定する',
+      '共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする',
+      '`applications.application_type=''REPAIR''`、対象修理申請・資産・RFQ・見積・発注・ドキュメントの未削除/作業対象施設所属、保存ステータス遷移順序、院内/院外修理区分、送信済み見積依頼先有無、発注前削除可否、修理不能からの廃棄申請接続条件といった業務制約は共有システム管理者でもバイパスしない',
+      '通常アカウントで作業対象施設に対して必要な実効 `repair_management` がない場合は403を返す',
+      '作業対象施設が存在しない、または削除済みの場合は404を返す'
     ) },
     @{ Type = 'Heading2'; Text = 'ステータス・工程共通ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -297,6 +313,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`repair_requests` VIEW を一覧表示の起点として取得し、VIEWに含まれない `repair_category`、`is_registered_asset`、`asset_ledger_id`、操作可否判定に必要な現在工程は `repair_request_details`、代表 `application_assets`、必要に応じて `application_task_steps` を補助結合して返す',
           '`applications.application_type=''REPAIR''`、作業対象施設、`deleted_at IS NULL` の行に限定する',
           '申請受付一覧は `status=''新規申請''` の行を未処理件数として集計する',
@@ -325,6 +342,7 @@ $repairOrderRows = @(
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '作業対象施設に対する実効 `repair_management` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -341,6 +359,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`applications`、`repair_request_details`、代表 `application_assets`、`application_task_steps` を取得する',
           '登録済み資産は `application_assets.asset_ledger_id`、未登録資産は `repair_request_details.manual_item_name` 等の手入力列を優先して表示値を組み立てる',
           '`rfqs`、`rfq_vendors`、`quotations`、`quotation_items`、`orders`、`order_items`、`individuals`、`application_documents` を必要に応じて結合する',
@@ -459,6 +478,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `application_type=''REPAIR''` かつ `status=''新規申請''` の修理申請に限定する',
           '`decision=IN_HOUSE` の場合、`repair_request_details.repair_category=''IN_HOUSE''`、`applications.status=''納期確定''` を保存し、外部見積・発注相当工程を `SKIPPED_IN_HOUSE_REPAIR` として完了させる',
           '`decision=OUTSOURCED` の場合、`repair_category=''OUTSOURCED''`、`applications.status=''見積依頼済''` を保存し、STEP1内で見積依頼先登録へ進める',
@@ -502,6 +522,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `application_type=''REPAIR''` かつ `status=''新規申請''` または `status=''見積登録済''` の修理申請に限定する',
           '`completionReason` は未指定または `REJECTED` のみ許可し、通常却下として扱う',
           '`completionReason=UNREPAIRABLE` は受け付けない。修理不能として廃棄申請へ接続する場合は廃棄申請接続APIを使用する',
@@ -561,6 +582,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `repair_category=''OUTSOURCED''` かつ `status=''見積依頼済''` の修理申請に限定する',
           '`rfqs` が未作成の場合は、見積依頼Noを採番し、`rfq_group_name` は修理依頼Noを含む名称、`facility_id` は作業対象施設、`management_type=''REPAIR''`、`workflow_type=''RFQ''`、`quotation_type=''REPAIR''`、`status=''見積依頼''`、`requested_on`、`created_by_user_id` を保存して作成する',
           '依頼送信完了時に `rfqs.status=''見積依頼済''`、`due_on`、`last_status_changed_at` を更新する。RFQ作成時は初期状態 `見積依頼` でINSERTし、同一トランザクション内で状態遷移定義に従って `見積依頼済` へ進める',
@@ -601,6 +623,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `repair_category=''OUTSOURCED''` かつ `applications.status=''見積依頼済''` の修理申請に限定する',
           '対象修理申請に紐づく `rfqs.management_type=''REPAIR''`、`rfqs.workflow_type=''RFQ''` の未削除RFQを取得する。存在しない場合は409を返す',
           '`rfq_vendors.request_status=''SENT''` の依頼先が1件以上存在することを確認する。送信済み依頼先がない場合は409を返す',
@@ -663,6 +686,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `status=''見積登録済''` の修理申請に限定する',
           '対象修理申請に紐づく `rfqs.management_type=''REPAIR''` を取得する。存在しない場合は409を返す',
           '`vendorId` 指定時は `vendors` に存在し、作業対象施設で利用可能な業者であることを検証する',
@@ -703,6 +727,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象修理申請は `applications.application_type=''REPAIR''`、`applications.deleted_at IS NULL`、作業対象施設内、`status=''見積登録済''` に限定する',
           '対象見積は、対象修理申請に紐づく `rfqs.management_type=''REPAIR''` 配下の `quotations` で、`deleted_at IS NULL` かつ `status=''REGISTERED''` のものに限定する',
           '`orders.quotation_id=quotationId` が存在する、または修理申請が `発注済` / `納期確定` / `検収登録` / `完了` / `却下` の場合は409を返す',
@@ -745,6 +770,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `status=''見積登録済''` の修理申請に限定する',
           '指定 `quotationId` が対象修理申請の `rfqs` に紐づくことを検証する',
           '採用見積の有効明細に `purchase_price_unit` または `purchase_price_total` が未設定の行がある場合は、`order_items.unit_price` / `amount` の必須値を作れないため400を返す',
@@ -793,6 +819,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `status=''発注済''` または院内修理で `status=''納期確定''` の修理申請に限定する',
           '`repair_request_details.pickup_on`、`delivery_due_on`、`alternative_returned_flag` を更新する',
           '院外修理で納期確定する場合は `applications.status=''納期確定''` に更新する',
@@ -840,6 +867,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `status=''納期確定''` の修理申請に限定する',
           '`repair_request_details.delivered_on` を更新する',
           '検収書類は `application_documents.owner_type=''APPLICATION''`、`step_code=''INSPECTION''`、`document_category=''REPORT''` / `DELIVERY` / `ACCEPTANCE`、`document_type=''修理報告書''` / `納品書` / `検収書` 等で保存する',
@@ -889,6 +917,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `status=''検収登録''` または院内修理で完了可能な `納期確定` の修理申請に限定する',
           '`applications.status=''完了''` に更新する',
           '検収時に作成した `individuals` が存在する場合は `fixed_asset_no` を保存し、登録済み資産の場合のみ `registration_status=''REGISTERED''` に更新する',
@@ -944,6 +973,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象修理申請が作業対象施設内に存在することを検証する',
           '`ownerType` と `ownerId` が対象修理申請、対象申請明細、対象RFQ、対象見積、または対象登録済み資産に紐づくことを検証する',
           '`application_documents` には `owner_type` に応じた実FK（`application_id` / `application_asset_id` / `rfq_id` / `rfq_vendor_id` / `quotation_id` / `asset_ledger_id`）を設定し、生成列 `owner_key` は直接書き込まない',
@@ -978,6 +1008,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象ドキュメントが対象修理申請に紐づくことを検証する',
           '`application_documents.deleted_at` を設定する論理削除とする',
           '確定済み見積、発注、検収に必要な証跡を削除しようとする場合は409を返す',
@@ -1009,6 +1040,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `applications.application_type=''REPAIR''`、`applications.deleted_at IS NULL`、作業対象施設内、`status=''見積登録済''` の修理申請に限定する',
           '`orders` が作成済み、または `status` が `発注済` / `納期確定` / `検収登録` / `完了` / `却下` の場合は409を返す',
           '`applications.deleted_at` を設定して修理管理タブ一覧から除外する。`asset_ledgers`、`application_assets.asset_ledger_id`、`individuals` は更新しない',
@@ -1043,6 +1075,7 @@ $repairOrderRows = @(
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象は `application_type=''REPAIR''`、`status=''見積登録済''`、`repair_request_details.repair_category=''OUTSOURCED''` の修理申請に限定する',
           '登録済み資産の場合は代表 `application_assets.asset_ledger_id` が存在し、作業対象施設の資産であることを検証する',
           '未登録資産の場合は `repair_request_details.is_registered_asset=false`、代表 `application_assets.asset_ledger_id IS NULL`、`repair_request_details.manual_item_name` など廃棄対象物品の表示に必要な手入力情報が存在することを検証する',
@@ -1078,8 +1111,8 @@ $repairOrderRows = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('修理管理一覧・詳細・工程操作・削除', '`repair_management`', '作業対象施設に対して実効 `repair_management` を持つこと', '修理管理タブと修理タスクの進行・発注前削除'),
-      @('廃棄申請接続', '`repair_management`', '作業対象施設に対して実効 `repair_management` を持つこと', '登録済み資産または未登録資産の修理不能から廃棄申請を作成する')
+      @('修理管理一覧・詳細・工程操作・削除', '`repair_management`', '通常アカウントは作業対象施設に対して実効 `repair_management` を持つこと。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする', '修理管理タブと修理タスクの進行・発注前削除'),
+      @('廃棄申請接続', '`repair_management`', '通常アカウントは作業対象施設に対して実効 `repair_management` を持つこと。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする', '登録済み資産または未登録資産の修理不能から廃棄申請を作成する')
     ) },
     @{ Type = 'Heading2'; Text = '登録済み資産・未登録資産ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -1116,7 +1149,8 @@ $repairOrderRows = @(
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '必須不足、列挙値不正、日付形式不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_REPAIR_MANAGEMENT_DENIED', '403', '作業対象施設に対する実効 `repair_management` がない'),
+      @('AUTH_403_REPAIR_MANAGEMENT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `repair_management` がない。共有システム管理者アカウントでは作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('FACILITY_NOT_FOUND', '404', '作業対象施設が存在しない、または削除済み'),
       @('REPAIR_REQUEST_NOT_FOUND', '404', '対象の修理申請が存在しない'),
       @('REPAIR_ASSET_NOT_FOUND', '404', '対象修理申請に紐づく登録済み資産が存在しない'),
       @('REPAIR_STATUS_CONFLICT', '409', '現在ステータスが対象操作を許可しない'),

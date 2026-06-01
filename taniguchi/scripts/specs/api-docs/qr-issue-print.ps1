@@ -1,4 +1,10 @@
-﻿@{
+﻿$qrIssuePermissionLines = @(
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、対象施設（`facilityId` または対象ジョブの `facility_id`）について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
+)
+
+@{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_QR発行・ラベル印刷.docx'
   ScreenLabel = 'QR発行・ラベル印刷'
@@ -57,8 +63,8 @@
       @('qr_codes', '既存QR確認、新規発行確定、再発行情報更新、印刷状態更新', 'qr_code_id, facility_id, qr_identifier, code_prefix, code_branch, code_serial, issue_type, label_template_key, free_entry_text, issued_by_user_id, issued_at, print_status, last_print_job_id, printed_at'),
       @('qr_print_jobs', '印刷ジョブ開始受付、冪等制御、ジョブ状態保持、集計結果更新', 'qr_print_job_id, facility_id, template_key, printer_name, client_request_id, requested_by_user_id, requested_at, started_at, finished_at, status, success_count, failure_count, error_stage, error_summary'),
       @('qr_print_job_items', '印刷開始時の対象明細作成、印刷結果保持', 'qr_print_job_item_id, qr_print_job_id, qr_code_id, print_order, status, printed_at, error_message'),
-      @('facilities', '施設スコープ確認', 'facility_id, facility_name'),
-      @('users', '発行者・印刷実行者の監査', 'user_id, name')
+      @('facilities', '施設スコープ確認、共有システム管理者アカウントの未削除施設判定', 'facility_id, facility_name, deleted_at'),
+      @('users', '発行者・印刷実行者の監査、共有システム管理者アカウント判定', 'user_id, name, account_type')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -78,16 +84,16 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールの取得結果として扱うため、本APIの権限制御対象外とする。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、対象施設（`facilityId` または対象ジョブの `facility_id`）が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールの取得結果として扱うため、本APIの権限制御対象外とする。' },
     @{ Type = 'Paragraph'; Text = '`qr_issue` はQR発行・ラベル印刷APIの実行可否を制御する権限であり、QRコード読み取り後の資産詳細閲覧権限ではない。資産詳細表示可否は、遷移先の資産一覧・資産詳細 API がログインユーザーの対象施設・対象資産に対する閲覧権限で判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('QRコード発行', '`qr_issue`', 'プレビュー生成、印刷ジョブ開始受付、印刷ジョブ取得、印刷結果反映')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('プレビュー生成', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
-      @('印刷ジョブ開始受付', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '印刷開始受付と `qr_codes` / `qr_print_job_items` の確定を行う'),
-      @('印刷ジョブ取得', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '印刷プレビュー画面の表示情報と現在の結果を取得する'),
-      @('印刷結果反映', '`qr_issue`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'ローカル印刷モジュールの実行結果を `qr_codes` / 印刷結果へ反映する')
+      @('プレビュー生成', '`qr_issue`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは対象施設で `qr_issue` が実効有効であること。共有システム管理者は対象施設が未削除であること。新規発行/再発行の採番条件を検証し、印刷対象一覧を返却する'),
+      @('印刷ジョブ開始受付', '`qr_issue`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは対象施設で `qr_issue` が実効有効であること。共有システム管理者は対象施設が未削除であること。印刷開始受付と `qr_codes` / `qr_print_job_items` の確定を行う'),
+      @('印刷ジョブ取得', '`qr_issue`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは対象ジョブ施設で `qr_issue` が実効有効であること。共有システム管理者は対象ジョブ施設が未削除であること。印刷プレビュー画面の表示情報と現在の結果を取得する'),
+      @('印刷結果反映', '`qr_issue`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは対象ジョブ施設で `qr_issue` が実効有効であること。共有システム管理者は対象ジョブ施設が未削除であること。ローカル印刷モジュールの実行結果を `qr_codes` / 印刷結果へ反映する')
     ) },
     @{ Type = 'Heading2'; Text = '永続化とトランザクション境界' },
     @{ Type = 'Bullets'; Items = @(
@@ -101,8 +107,9 @@
     @{ Type = 'Heading2'; Text = '施設スコープ仕様' },
     @{ Type = 'Bullets'; Items = @(
       '各 API は `facilityId` または対象ジョブの `facility_id` を基準に、認証済みユーザーが当該施設を作業対象施設として扱えるかを検証する',
-      '各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `qr_issue` を都度再判定する',
-      '対象施設に対する `user_facility_assignments` の有効割当、`facility_feature_settings(feature_code=''qr_issue'')`、`user_facility_feature_settings(feature_code=''qr_issue'')` のいずれかを満たさない場合は 403 を返却する',
+      '各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `qr_issue` または共有システム管理者例外を都度再判定する',
+      '通常アカウントでは、対象施設に対する `user_facility_assignments` の有効割当、`facility_feature_settings(feature_code=''qr_issue'')`、`user_facility_feature_settings(feature_code=''qr_issue'')` のいずれかを満たさない場合は 403 を返却する',
+      '共有システム管理者アカウントでは、対象施設または対象ジョブ施設の `facilities.deleted_at IS NULL` を確認できれば通常判定をバイパスし、削除済み施設の場合は 403 を返却する',
       '`qr_identifier` の一意性判定および採番は施設単位で行う'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
@@ -156,10 +163,7 @@
             )
           }
         )
-        PermissionLines = @(
-          '認可条件: `user_facility_assignments` に対象施設への有効割当があること',
-          '認可条件: `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
-        )
+        PermissionLines = $qrIssuePermissionLines
         ProcessingLines = @(
           '入力値の必須・桁数・形式を検証する',
           '新規発行時は `(facility_id, code_prefix, code_branch)` 単位の既存最大 `code_serial` を参照し、`startSerial` 未指定時は候補値を補完する',
@@ -209,7 +213,7 @@
           @('200', '生成成功', 'QrIssuePreviewResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `qr_issue` なし、または共有システム管理者で対象施設が削除済み', 'ErrorResponse'),
           @('404', '施設または再発行起点QRが存在しない', 'ErrorResponse'),
           @('409', '再発行対象に欠番がある', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -243,10 +247,7 @@
             )
           }
         )
-        PermissionLines = @(
-          '認可条件: `user_facility_assignments` に対象施設への有効割当があること',
-          '認可条件: `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
-        )
+        PermissionLines = $qrIssuePermissionLines
         ProcessingLines = @(
           '入力値、`clientRequestId` の形式、`printOrder` 重複、件数整合を検証し、比較用に開始受付ペイロードを正規化する',
           '正規化ルールは、`items` を `printOrder` 昇順で並べ、未指定と `null` は同値として扱う対象項目を統一し、比較対象を `facilityId` / `issueMode` / `templateKey` / `printerName` / `freeEntryText` / `items[*].printOrder` / `items[*].qrIdentifier` / `items[*].existingQrCodeId` とする',
@@ -325,7 +326,7 @@
           @('200', '同一 `clientRequestId` の再送を既存ジョブで受理', 'QrPrintJobCreateResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで対象施設に対する実効 `qr_issue` なし、または共有システム管理者で対象施設が削除済み', 'ErrorResponse'),
           @('409', 'ジョブ対象一覧の整合不正、採番競合、または同一 `clientRequestId` の内容競合', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -341,10 +342,7 @@
         ParametersRows = @(
           @('qrPrintJobId', 'path', 'int64', '✓', '印刷ジョブID')
         )
-        PermissionLines = @(
-          '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
-        )
+        PermissionLines = $qrIssuePermissionLines
         ProcessingLines = @(
           '`qr_print_jobs` と `qr_print_job_items` を取得する',
           '印刷対象の `qrIdentifier`、表示順、現在ステータス、エラーメッセージを返却する',
@@ -392,7 +390,7 @@
         StatusRows = @(
           @('200', '取得成功', 'QrPrintJobResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象ジョブ施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで対象ジョブ施設に対する実効 `qr_issue` なし、または共有システム管理者で対象ジョブ施設が削除済み', 'ErrorResponse'),
           @('404', '対象ジョブが存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -436,10 +434,7 @@
             )
           }
         )
-        PermissionLines = @(
-          '認可条件: 対象ジョブの `facility_id` について `user_facility_assignments` に有効割当があること',
-          '認可条件: 対象ジョブの `facility_id` について `facility_feature_settings` と `user_facility_feature_settings` の両方で `qr_issue` が有効であること'
-        )
+        PermissionLines = $qrIssuePermissionLines
         ProcessingLines = @(
           '対象ジョブと明細を取得し、ジョブ内明細件数と `resultItems` 件数の一致を検証する',
           '各 `resultItems` を `qrPrintJobItemId` で突合し、対象外明細や重複明細が含まれる場合はエラーとする',
@@ -499,7 +494,7 @@
           @('200', '結果反映完了', 'QrPrintResultResponse'),
           @('400', '入力不正または結果件数不一致', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '対象ジョブ施設に対する実効 `qr_issue` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで対象ジョブ施設に対する実効 `qr_issue` なし、または共有システム管理者で対象ジョブ施設が削除済み', 'ErrorResponse'),
           @('404', '対象ジョブが存在しない', 'ErrorResponse'),
           @('409', '結果反映競合、再発行対象不整合、または終端後の矛盾更新', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -529,7 +524,7 @@
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('AUTH_401', '401', '未認証'),
-      @('AUTH_403_QR_ISSUE_DENIED', '403', '対象施設に対する実効 `qr_issue` がない'),
+      @('AUTH_403_QR_ISSUE_DENIED', '403', '通常アカウントで対象施設または対象ジョブ施設に対する実効 `qr_issue` がない、または共有システム管理者で対象施設または対象ジョブ施設が削除済み'),
       @('QR_400_INVALID_INPUT', '400', '入力形式または必須項目が不正'),
       @('QR_400_RESULT_ITEM_COUNT_MISMATCH', '400', '結果反映対象件数がジョブ明細件数と一致しない'),
       @('QR_404_FACILITY_NOT_FOUND', '404', '対象施設が存在しない'),

@@ -14,6 +14,25 @@
   @('突き合わせ完了', 'POST', '/asset-matching/complete', '対象ジョブを突き合わせ完了へ更新する', '要')
 )
 
+$assetLedgerImportContextPermissionLines = @(
+  '認可条件: 選択施設が未確定の場合は施設別権限判定を行わず、施設選択が必要であることを返す',
+  '認可条件: 選択施設が確定している場合、共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 選択施設が確定している通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 選択施設が確定している通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
+)
+
+$assetLedgerImportPermissionLines = @(
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設または対象ジョブの施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
+)
+
+$surveyLedgerMatchingPermissionLines = @(
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設または対象ジョブの施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+)
+
 $endpointSpecs = @(
   @{
     Title = '取込画面コンテキスト取得（/asset-import/context）'
@@ -27,10 +46,7 @@ $endpointSpecs = @(
       @('facilityId', 'query', 'int64', '条件付き', '選択施設ID。トークンから施設を導出できる場合は省略可能'),
       @('ignoreFailedJobId', 'query', 'int64', '-', 'FAILED 画面からアップロード画面へ戻る際に、今回の自動再開判定から除外するジョブID')
     )
-    PermissionLines = @(
-      '認可条件: 選択施設が確定している場合は、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: 選択施設が確定している場合は、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
-    )
+    PermissionLines = $assetLedgerImportContextPermissionLines
     ProcessingLines = @(
       '選択施設が確定している場合は、`facilityId` 省略時に Bearer トークン上の作業対象施設IDを採用し、指定時はそれと一致することを検証する',
       '選択施設が確定している場合は、対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
@@ -90,7 +106,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetImportContextResponse'),
       @('400', 'facilityId 不正など入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -108,10 +124,7 @@ $endpointSpecs = @(
       @('importType', 'formData', 'string', '✓', '取込種別。`FIXED_ASSET` / `OTHER_LEDGER`'),
       @('file', 'formData', 'binary', '✓', 'アップロードファイル（`.xlsx` / `.xls` / `.csv`、10MB 以下）')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
-    )
+    PermissionLines = $assetLedgerImportPermissionLines
     ProcessingLines = @(
       '`facilityId` 省略時に Bearer トークン上の作業対象施設IDを採用し、指定時はそれと一致することを検証する',
       '対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
@@ -188,7 +201,7 @@ $endpointSpecs = @(
       @('202', '受付成功（処理中）', 'AssetImportJobAcceptedResponse'),
       @('400', '形式不正、サイズ超過、必須不足', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
       @('409', '同一施設に未完了ジョブが存在する', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -205,10 +218,7 @@ $endpointSpecs = @(
     ParametersRows = @(
       @('assetImportJobId', 'path', 'int64', '✓', '資産インポートジョブID')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
-    )
+    PermissionLines = $assetLedgerImportPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する'
     )
@@ -231,7 +241,7 @@ $endpointSpecs = @(
     StatusRows = @(
       @('200', '取得成功', 'AssetImportJobStatusResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -247,10 +257,7 @@ $endpointSpecs = @(
     ParametersRows = @(
       @('assetImportJobId', 'path', 'int64', '✓', '再取込元の FAILED ジョブID')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
-    )
+    PermissionLines = $assetLedgerImportPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `FAILED` であることを検証する',
@@ -294,7 +301,7 @@ $endpointSpecs = @(
     StatusRows = @(
       @('202', '受付成功（処理中）', 'AssetImportJobRetryAcceptedResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'FAILED 以外の状態、または再取込不可状態', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -311,10 +318,7 @@ $endpointSpecs = @(
     ParametersRows = @(
       @('assetImportJobId', 'path', 'int64', '✓', '削除対象ジョブID')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_ledger_import` が有効であること'
-    )
+    PermissionLines = $assetLedgerImportPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '削除対象は `READY_FOR_MATCHING` / `FAILED` のジョブに限定し、`PROCESSING` / `MATCHING_COMPLETED` は 409 とする',
@@ -339,7 +343,7 @@ $endpointSpecs = @(
     StatusRows = @(
       @('204', '削除成功', '-'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `asset_ledger_import` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', '削除不可状態である', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -357,10 +361,7 @@ $endpointSpecs = @(
       @('assetImportJobId', 'query', 'int64', '-', '対象ジョブID。指定時は当該ジョブを取得する'),
       @('facilityId', 'query', 'int64', '条件付き', '前回ジョブを施設単位で解決する場合の施設ID')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象ジョブ解決後、その `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '再開対象ジョブが施設単位で 1 件である前提で、`assetImportJobId` 未指定時は施設から `PROCESSING` / `READY_FOR_MATCHING` / `FAILED` の前回ジョブを解決する',
@@ -398,7 +399,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetMatchingContextResponse'),
       @('400', 'ジョブ指定不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -421,10 +422,7 @@ $endpointSpecs = @(
       @('selectedAssetItemId', 'query', 'int64', '-', '選択済み品目IDの条件'),
       @('includeConfirmed', 'query', 'boolean', '-', 'true の場合は確定済み行も返却する。省略時は false')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを前提とし、それ以外の状態では 409 を返却する',
@@ -487,7 +485,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetMatchingRowListResponse'),
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上、一覧取得不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -510,10 +508,7 @@ $endpointSpecs = @(
       @('assetItemId', 'query', 'int64', '-', '親品目ID'),
       @('manufacturerId', 'query', 'int64', '-', '親メーカーID')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       'Bearer トークン上の作業対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '候補は指定した階層に応じたマスタテーブルから取得する',
@@ -540,7 +535,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'AssetMatchingMasterOptionResponse'),
       @('400', 'field 不正など入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -573,10 +568,7 @@ $endpointSpecs = @(
       @('selectedShipAssetMasterId', 'int64', '-', '選択SHIP資産マスタID。資産マスタ候補を採用した場合に指定する。自由記述時またはAI推薦対象外行をマスタ未選択で確定する場合は null'),
       @('isConfirmed', 'boolean', '-', 'true の場合は当該行を確定済みに更新する')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象行が属するジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象行が属するジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
@@ -630,7 +622,7 @@ $endpointSpecs = @(
       @('200', '更新成功', 'AssetMatchingRowResponse'),
       @('400', '入力不正、親子不整合', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象行が存在しない', 'ErrorResponse'),
       @('409', '対象行が確定済み、またはジョブ状態上更新不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -648,10 +640,7 @@ $endpointSpecs = @(
       @('assetImportJobId', 'int64', '✓', '対象ジョブID'),
       @('assetImportRowIds', 'int64[]', '✓', '確定対象の行ID一覧')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを検証し、それ以外は 409 を返却する',
@@ -685,7 +674,7 @@ $endpointSpecs = @(
       @('200', '確定成功', 'AssetMatchingBulkConfirmResponse'),
       @('400', '入力不正、確定不可行を含む', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブまたは対象行が存在しない', 'ErrorResponse'),
       @('409', '対象行の一部または全部が確定済み、またはジョブ状態上更新不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -709,10 +698,7 @@ $endpointSpecs = @(
       @('selectedAssetItemId', 'query', 'int64', '-', '品目条件'),
       @('includeConfirmed', 'query', 'boolean', '-', '確定済み行を含めるか。Excel取込に利用する場合は false を前提とし、true は参照出力用途とする')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であることを前提とし、それ以外の状態では 409 を返却する',
@@ -751,7 +737,7 @@ $endpointSpecs = @(
       @('200', '出力成功', 'binary'),
       @('400', '検索条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上、出力不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -769,10 +755,7 @@ $endpointSpecs = @(
       @('assetImportJobId', 'formData', 'int64', '✓', '対象ジョブID。Excel 内の `取込管理情報.assetImportJobId` と一致すること'),
       @('file', 'formData', 'binary', '✓', '`/asset-matching/export` で出力した Excel ファイル（`.xlsx`）')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       'アップロードファイルの拡張子、MIME、サイズを検証し、`.xlsx` 以外または上限超過は 400 を返却する',
       '`取込管理情報`、`突き合わせ結果`、`SHIP資産マスタ` シートが存在し、テンプレートバージョンがサポート対象であることを検証する。存在しない場合や列構成が異なる場合は `EXCEL_TEMPLATE_INVALID` を返却する',
@@ -836,7 +819,7 @@ $endpointSpecs = @(
       @('200', '取込反映成功', 'AssetMatchingExcelImportResponse'),
       @('400', 'Excel形式不正、テンプレート不一致、行単位検証エラー', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブ、対象行、または指定された SHIP 資産マスタが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上取込不可、または確定済み行を含む', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -853,10 +836,7 @@ $endpointSpecs = @(
     RequestRows = @(
       @('assetImportJobId', 'int64', '✓', '対象ジョブID')
     )
-    PermissionLines = @(
-      '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-      '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
-    )
+    PermissionLines = $surveyLedgerMatchingPermissionLines
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `READY_FOR_MATCHING` であり、未確定件数（`remainingRows`）が 0 件であることを検証する',
@@ -887,7 +867,7 @@ $endpointSpecs = @(
       @('200', '完了成功', 'AssetMatchingCompleteResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'ジョブ状態上完了不可', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -916,8 +896,8 @@ $endpointSpecs = @(
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('asset_import_jobs', '取込ジョブの作成、状態管理、件数表示、再取込元ファイル参照、失敗理由保持', 'asset_import_job_id, facility_id, import_type, file_name, file_path, status, error_message'),
       @('asset_import_rows', '取込行の正本、内部AI分類、AI推薦、確定値、確定監査情報', 'parsed_*, ai_line_classification, ai_recommendation_required, suggested_ship_asset_master_id, suggested_*_name/_id, suggested_score, suggested_similarity_source, suggested_source_asset_ledger_id, selected_ship_asset_master_id, selected_*_name/_id, is_confirmed, confirmed_by_user_id, confirmed_at'),
-      @('facilities', '選択施設の解決', 'facility_id, facility_name'),
-      @('users', '取込実行/確定ユーザーの記録', 'user_id'),
+      @('facilities', '選択施設の解決、対象ジョブ施設の整合確認、共有システム管理者アカウントの未削除施設判定', 'facility_id, facility_name, deleted_at'),
+      @('users', '取込実行/確定ユーザーの記録、共有システム管理者アカウント判定', 'user_id, account_type'),
       @('asset_categories / asset_large_classes / asset_medium_classes / asset_items', 'Category/分類/品目候補', '各マスタID, 名称'),
       @('ship_asset_masters', 'AI推薦候補、ユーザー選択候補', 'ship_asset_master_id, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, jmdn_registered_item_id'),
       @('jmdn_registered_items / jmdn_classifications', 'JMDN由来候補の類似度計算', 'product_name, manufacturer_name, general_name'),
@@ -944,14 +924,14 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。対象施設に対する `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設または対象ジョブの施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('資産台帳取込登録', '`asset_ledger_import`', '取込画面コンテキスト取得、ジョブ状態取得、ファイルアップロード、ジョブ再取込、ジョブ削除'),
       @('現調台帳突合せ', '`survey_ledger_matching`', '突き合わせ画面コンテキスト取得、一覧取得、候補取得、行更新、一括確定、Excel出力、Excel取込、突き合わせ完了')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要な実効 feature_code', '判定に使う主な情報', '説明'); Rows = @(
-      @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象施設への有効割当と実効機能の両方が必要'),
-      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / Excel取込 / 突き合わせ完了', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '対象ジョブまたは Bearer トークン上の作業対象施設に対して再判定する')
+      @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは対象施設への有効割当と実効機能の両方が必要。共有システム管理者は対象施設が未削除であること'),
+      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / Excel取込 / 突き合わせ完了', '`survey_ledger_matching`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは対象ジョブまたは作業対象施設に対して実効機能を再判定する。共有システム管理者は対象施設が未削除であること')
     ) },
     @{ Type = 'Heading2'; Text = '永続化と非同期処理境界' },
     @{ Type = 'Bullets'; Items = @(
@@ -963,7 +943,9 @@ $endpointSpecs = @(
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` または共有システム管理者例外を都度再判定する',
+      '通常アカウントでは、作業対象施設に対する `user_facility_assignments` の有効割当、対象 `feature_code` の `facility_feature_settings`、`user_facility_feature_settings` のいずれかを満たさない場合は 403 を返却する',
+      '共有システム管理者アカウントでは、作業対象施設または対象ジョブの施設の `facilities.deleted_at IS NULL` を確認できれば通常判定をバイパスし、削除済み施設の場合は 403 を返却する',
       '`/asset-import` 系 API は、対象施設または対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
       '`/asset-matching` 系 API は、対象ジョブまたは対象行が属する `facility_id` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
       '資産台帳取込・マスタ突き合わせは自施設業務として扱い、協業グループや他施設公開設定は適用しない'
@@ -994,15 +976,15 @@ $endpointSpecs = @(
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', 'Bearer トークン上の作業対象施設に対して実効 `asset_ledger_import` を持つこと', '資産台帳取込を実行する'),
-      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / Excel取込 / 突き合わせ完了', '`survey_ledger_matching`', 'Bearer トークン上の作業対象施設に対して実効 `survey_ledger_matching` を持つこと', '資産台帳突き合わせを実行する')
+      @('取込画面コンテキスト取得 / ジョブ状態取得 / ファイルアップロード / ジョブ再取込 / ジョブ削除', '`asset_ledger_import`', '通常アカウントは作業対象施設に対して実効 `asset_ledger_import` を持つこと。共有システム管理者は対象施設が未削除であること', '資産台帳取込を実行する'),
+      @('突き合わせ画面コンテキスト取得 / 一覧取得 / 候補取得 / 行更新 / 一括確定 / Excel出力 / Excel取込 / 突き合わせ完了', '`survey_ledger_matching`', '通常アカウントは作業対象施設に対して実効 `survey_ledger_matching` を持つこと。共有システム管理者は対象施設が未削除であること', '資産台帳突き合わせを実行する')
     ) },
     @{ Type = 'Heading2'; Text = '施設単位運用ルール' },
     @{ Type = 'Bullets'; Items = @(
       '未完了ジョブ（`PROCESSING` / `READY_FOR_MATCHING`）は施設ごとに 1 件までとする',
       '同一施設内では `created_by_user_id` に関係なく別ユーザーが続き作業を引き継げる前提とする',
       '対象施設または対象ジョブの `facility_id` は Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設でなければならない',
-      '各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `feature_code` を都度再判定する',
+      '各 API は `/auth/context` の返却値だけを信用せず、対象施設に対する実効 `feature_code` または共有システム管理者例外を都度再判定する',
       '資産台帳取込・マスタ突き合わせは自施設業務として扱い、協業グループや他施設公開設定は適用しない'
     ) },
     @{ Type = 'Heading2'; Text = '突き合わせ保存ルール' },
@@ -1052,8 +1034,8 @@ $endpointSpecs = @(
       @('EXCEL_ROW_VALIDATION_ERROR', '400', 'Excel取込行の `selectedShipAssetMasterId`、対象行ID、または行状態が不正'),
       @('FACILITY_SELECTION_REQUIRED', '400', '施設未選択で実行した'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_ASSET_LEDGER_IMPORT_DENIED', '403', '作業対象施設に対する実効 `asset_ledger_import` がない、または対象施設不一致'),
-      @('AUTH_403_SURVEY_LEDGER_MATCHING_DENIED', '403', '作業対象施設に対する実効 `survey_ledger_matching` がない、または対象施設不一致'),
+      @('AUTH_403_ASSET_LEDGER_IMPORT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` がない、共有システム管理者で作業対象施設が削除済み、または対象施設不一致'),
+      @('AUTH_403_SURVEY_LEDGER_MATCHING_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` がない、共有システム管理者で作業対象施設が削除済み、または対象施設不一致'),
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('ASSET_IMPORT_JOB_NOT_FOUND', '404', '対象ジョブが存在しない'),
       @('ASSET_IMPORT_ROW_NOT_FOUND', '404', '対象行が存在しない'),

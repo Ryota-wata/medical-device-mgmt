@@ -1,6 +1,7 @@
 ﻿$surveyLedgerMatchingPermissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設または対象セッションの施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が有効であること'
 )
 
 $commonFilterParameterRows = @(
@@ -164,7 +165,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'DataMatchingContextResponse'),
       @('400', 'facilityId 不正など入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -225,7 +226,7 @@ $endpointSpecs = @(
       @('201', '新規セッション作成成功', 'DataMatchingSessionStartResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象施設、または基底に使える現有品調査セッションが存在しない', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
@@ -323,7 +324,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'DataMatchingMergedItemListResponse'),
       @('400', 'tab / フィルタ条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
       @('409', 'セッションが `CONFIRMED` など取得不可状態である、または一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -391,7 +392,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'FixedAssetLedgerItemListResponse'),
       @('400', 'フィルタ条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
       @('409', '固定資産台帳以外のリストを指定した、または一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -458,7 +459,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'MELedgerItemListResponse'),
       @('400', 'フィルタ条件不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
       @('409', 'ME管理台帳以外のリストを指定した、または一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -524,7 +525,7 @@ $endpointSpecs = @(
       @('200', '登録成功', 'DataMatchingRegisterMatchResponse'),
       @('400', '入力不正、選択件数不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッション、対象統合リスト、対象行が存在しない', 'ErrorResponse'),
       @('409', 'セッション競合、現在処理対象リスト以外の指定、再集約不可 item の指定、代表行を含む階層矛盾、既に判定済み、台帳行の二重消費、または `台帳1 : 現有品調査n` 制約違反', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -575,7 +576,7 @@ $endpointSpecs = @(
       @('200', '登録成功', 'DataMatchingMarkUnregisteredResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッション、対象統合リスト、対象行が存在しない', 'ErrorResponse'),
       @('409', 'セッション競合、現在処理対象リスト以外の指定、または既に判定済み', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -628,7 +629,7 @@ $endpointSpecs = @(
       @('200', '登録成功', 'DataMatchingMarkUnconfirmedResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッション、対象統合リスト、対象台帳行が存在しない', 'ErrorResponse'),
       @('409', 'セッション競合、現在処理対象リスト以外の指定、または既に判定済み', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -685,7 +686,7 @@ $endpointSpecs = @(
       @('200', '差し戻し成功', 'DataMatchingRevertDecisionResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッション、対象統合対象リスト、または有効判定結果が存在しない', 'ErrorResponse'),
       @('409', 'セッション競合、後続リスト依存が残る状態、または差し戻し不可状態', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -763,7 +764,7 @@ $endpointSpecs = @(
       @('200', '更新成功', 'DataMatchingCompleteResponse'),
       @('400', '入力不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションまたは対象統合リストが存在しない', 'ErrorResponse'),
       @('409', 'セッション競合、現在処理対象リスト以外の完了要求、未判定行残存、原本直前スナップショット不足、QR紐付け競合、または途中確定条件未達', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -899,7 +900,7 @@ $endpointSpecs = @(
       @('200', '取得成功', 'DataMatchingResultResponse'),
       @('400', 'cursor / pageSize 不正', 'ErrorResponse'),
       @('401', '未認証', 'ErrorResponse'),
-      @('403', '作業対象施設に対する実効 `survey_ledger_matching` なし、または対象施設不一致', 'ErrorResponse'),
+      @('403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象セッションが存在しない', 'ErrorResponse'),
       @('409', '一覧 snapshot の `lockVersion` が失効した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -909,7 +910,7 @@ $endpointSpecs = @(
 
 @{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\参考_作業用\API設計書_データ突合.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_データ突合.docx'
   ScreenLabel = 'データ突合'
   CoverDateText = '2026年4月27日'
   RevisionDateText = '2026/4/27'
@@ -972,7 +973,8 @@ $endpointSpecs = @(
       @('application_documents / asset_survey_photos / asset_photos', '現有品調査写真の参照と原本確定時の資産写真引継ぎ', 'application_document_id, owner_type, asset_survey_record_id, asset_ledger_id, document_category, file_name, file_path, content_hash, taken_at, taken_by_user_id, is_primary, deleted_at'),
       @('qr_codes', '原本確定時の QR 紐付け更新と QR 遷移有効化', 'qr_code_id, facility_id, qr_identifier, asset_ledger_id, updated_at, deleted_at'),
       @('asset_import_survey_mappings', '参考画面での個別対応補助管理。主導線の正本ではない', 'asset_import_survey_mapping_id, mapping_type, matching_status, confirm_status, decision_note'),
-      @('facilities / facility_locations', '施設整合検証、部門 / 部署 / 室表示', 'facility_id, facility_name, department_name, section_name, room_name'),
+      @('facilities / facility_locations', '施設整合検証、共有システム管理者アカウントの未削除施設判定、部門 / 部署 / 室表示', 'facility_id, facility_name, deleted_at, department_name, section_name, room_name'),
+      @('users', '判定登録者 / 確定者の監査、共有システム管理者アカウント判定', 'user_id, account_type'),
       @('asset_categories / asset_large_classes / asset_medium_classes / asset_items / manufacturers / models', 'フィルタ候補、正規分類 / 表示スナップショット整合', '各マスタID, 表示名, is_active')
     ) },
 
@@ -996,15 +998,17 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、データ突合の各 API は `survey_ledger_matching` を用いる。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '認可判定は `feature_code` を正本とし、データ突合の各 API は `survey_ledger_matching` を用いる。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `survey_ledger_matching` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設または対象セッションの施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('画面コンテキスト取得 / セッション開始 / 一覧取得 / 判定登録 / 完了 / 原本確定 / 結果一覧取得', '`survey_ledger_matching`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'データ突合業務を実行する')
+      @('画面コンテキスト取得 / セッション開始 / 一覧取得 / 判定登録 / 完了 / 原本確定 / 結果一覧取得', '`survey_ledger_matching`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings` / 共有システム管理者: `users.account_type`, `facilities.deleted_at`', '通常アカウントは作業対象施設で `survey_ledger_matching` が実効有効であること。共有システム管理者は対象施設が未削除であること。データ突合業務を実行する')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各 API は Bearer トークン上の作業対象施設に対する実効 `survey_ledger_matching` を都度再判定する',
+      '各 API は Bearer トークン上の作業対象施設に対する実効 `survey_ledger_matching` または共有システム管理者例外を都度再判定する',
+      '通常アカウントでは、作業対象施設に対する `user_facility_assignments` の有効割当、`survey_ledger_matching` の `facility_feature_settings`、`user_facility_feature_settings` のいずれかを満たさない場合は 403 を返却する',
+      '共有システム管理者アカウントでは、作業対象施設または対象セッションの施設の `facilities.deleted_at IS NULL` を確認できれば通常判定をバイパスし、削除済み施設の場合は 403 を返却する',
       '`facilityId` を受け付ける API は、指定施設が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
-      '`sessionId` / `sessionListId` を受け付ける API は、対象セッション / リストの `facility_id` が Bearer トークン上の作業対象施設IDと一致することを前提とする',
+      '`sessionId` / `sessionListId` を受け付ける API は、対象セッション / リストの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、かつ `facilities.deleted_at IS NULL` の未削除施設であることを前提とする',
       'データ突合は自施設業務として扱い、協業グループや他施設公開設定は適用しない'
     ) },
     @{ Type = 'Heading2'; Text = '突合ステータスコード' },
@@ -1154,7 +1158,7 @@ $endpointSpecs = @(
     @{ Type = 'Heading1'; Text = '第7章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('データ突合の全 API', '`survey_ledger_matching`', 'Bearer トークン上の作業対象施設に対して実効 `survey_ledger_matching` を持つこと', 'データ突合セッション開始、一覧取得、判定登録、原本確定を行う')
+      @('データ突合の全 API', '`survey_ledger_matching`', '通常アカウントは作業対象施設に対して実効 `survey_ledger_matching` を持つこと。共有システム管理者は対象施設が未削除であること', 'データ突合セッション開始、一覧取得、判定登録、原本確定を行う')
     ) },
     @{ Type = 'Heading2'; Text = 'セッション運用ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -1202,7 +1206,7 @@ $endpointSpecs = @(
       @('FACILITY_SELECTION_REQUIRED', '400', '対象施設を確定できない状態で実行した'),
       @('IDEMPOTENCY_KEY_REQUIRED', '400', '更新系 API に `Idempotency-Key` が指定されていない'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_SURVEY_LEDGER_MATCHING_DENIED', '403', '作業対象施設に対する実効 `survey_ledger_matching` がない、または対象施設不一致'),
+      @('AUTH_403_SURVEY_LEDGER_MATCHING_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `survey_ledger_matching` がない、共有システム管理者で作業対象施設が削除済み、または対象施設不一致'),
       @('FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('DATA_MATCHING_SESSION_NOT_FOUND', '404', '対象データ突合セッションが存在しない'),
       @('DATA_MATCHING_SESSION_LIST_NOT_FOUND', '404', '対象統合対象リストが存在しない'),

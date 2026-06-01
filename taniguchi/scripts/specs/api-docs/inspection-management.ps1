@@ -1,11 +1,17 @@
 ﻿$permissionLines = @(
-  '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること'
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする',
+  '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+  '認可条件: 通常アカウントの場合、作業対象施設の `facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が有効であること'
 )
 
-@{
+$workFacilityProcessingLine = 'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する。'
+$auth401StatusRow = @('401', '未認証', 'ErrorResponse')
+$auth403StatusRow = @('403', '通常アカウントで作業対象施設に対する実効 `inspection_management` なし', 'ErrorResponse')
+$workFacility404StatusRow = @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse')
+
+$spec = @{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
-  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\作成済み\API設計書_点検管理.docx'
+  OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_点検管理.docx'
   ScreenLabel = '点検管理'
   CoverDateText = '2026年5月18日'
   RevisionDateText = '2026/5/18'
@@ -76,7 +82,12 @@
       @('`lending_devices`', 'READ', '貸出状況フィルターおよび一覧表示'),
       @('`maintenance_contracts`', 'READ', 'メーカー保守タスクの契約情報参照'),
       @('`maintenance_contract_assets`', 'READ', '保守契約管理タブから作成された点検条件の由来参照'),
-      @('`vendors`', 'READ', '点検委託業者・メーカー保守業者の表示')
+      @('`vendors`', 'READ', '点検委託業者・メーカー保守業者の表示'),
+      @('`users`', 'READ', '点検開始者、結果登録者、共有システム管理者アカウント判定'),
+      @('`facilities`', 'READ', 'Bearer トークン上の作業対象施設の存在確認、未削除確認'),
+      @('`user_facility_assignments`', 'READ', '通常アカウントにおける作業対象施設への有効担当施設割当確認'),
+      @('`facility_feature_settings`', 'READ', '通常アカウントにおける施設提供機能 `inspection_management` の有効化確認'),
+      @('`user_facility_feature_settings`', 'READ', '通常アカウントにおけるユーザー施設別 `inspection_management` の有効化確認')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -91,10 +102,19 @@
       '各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `inspection_management` とする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で `inspection_management` が `is_enabled=true` の場合に実行を許可する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `inspection_management` とする。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする。' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('点検管理API全般', '`inspection_management`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '点検管理、定期点検実施、メーカー保守結果登録を許可する'),
-      @('日常点検PWA本体', '`daily_inspection`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'No.4 日常点検APIで扱う。点検管理では日常点検設定行の管理のみ `inspection_management` で扱う')
+      @('点検管理API全般', '`inspection_management`', '`users`, `facilities`, `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '通常アカウントは担当施設割当と実効 `inspection_management` を確認する。共有システム管理者アカウントは作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('日常点検PWA本体', '`daily_inspection`', '`users`, `facilities`, `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'No.4 日常点検APIで扱う。点検管理では日常点検設定行の管理のみ `inspection_management` で扱う。共有システム管理者アカウントの例外方針はNo.4側の業務APIで再判定する')
+    ) },
+    @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可例外' },
+    @{ Type = 'Bullets'; Items = @(
+      '各APIは Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
+      '通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `inspection_management` を都度再判定する',
+      '共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする',
+      '対象資産・点検メニュー・点検タスク・点検結果・メーカー保守タスクが作業対象施設に属すること、点検種別、メニュー分類一致、有効行、削除/解除済み除外、定期点検ステータス遷移順序、QR照合、日常点検行の操作制限、メーカー保守結果登録条件といった業務制約は共有システム管理者でもバイパスしない',
+      '通常アカウントで作業対象施設に対して必要な実効 `inspection_management` がない場合は403を返す',
+      '作業対象施設が存在しない、または削除済みの場合は404を返す'
     ) },
     @{ Type = 'Heading2'; Text = '点検種別・ステータス共通ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -152,6 +172,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`inspection_tasks` を `asset_ledgers`、`inspection_menus`、`qr_codes`、`lending_devices` と結合し、作業対象施設の `asset_ledgers.facility_id` に限定する',
           '`inspection_tasks.is_active=true` かつ `deleted_at IS NULL` の行を対象とする',
           '定期点検系は `periodic_menu_id`、`status`、`next_inspection_on`、`last_inspection_on` を返す',
@@ -227,6 +248,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`inspection_tasks.inspection_type<>''日常点検''`、`is_active=true`、`deleted_at IS NULL`、`next_inspection_on IS NOT NULL` の行を対象とする',
           '作業対象施設外の資産は出力しない',
           '指定期間がある場合は `next_inspection_on` で絞り込む。期間指定がない場合は点検管理一覧と同じ `inspectionDateFilter` を適用する',
@@ -264,6 +286,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`inspection_menus` と `inspection_menu_items` を取得する',
           '`assetLedgerId` 指定時は対象資産が作業対象施設内に存在することを確認し、`large_class_name` / `medium_class_name` / `item_name` が資産と一致するメニューに限定する',
           '`menuType=DAILY` の場合は `daily_timing` を返す。`menuType=PERIODIC` の場合は `cycle_months` を返す',
@@ -350,6 +373,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '`menuType=DAILY` の場合は `dailyTiming` 必須、`cycleMonths` は null とする',
           '`menuType=PERIODIC` の場合は `cycleMonths` 必須、`dailyTiming` は null とする',
           '同一 `menuType`、`dailyTiming`、大分類、中分類、品目、メニュー名の有効メニューが既に存在する場合は 409 とする',
@@ -394,6 +418,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象 `inspection_menus` が存在し `is_active=true` であることを確認する',
           'メニュー種別 `menu_type` は更新不可とし、日常点検メニューでは `dailyTiming`、定期点検メニューでは `cycleMonths` だけを対象種別に応じて更新する',
           '対象メニューを参照する有効な `inspection_tasks`、または `inspection_results.result_details_json.inspectionMenuId` が存在する場合は 409 とする',
@@ -428,6 +453,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象 `inspection_menus` が存在することを確認する',
           '対象メニューを参照する有効な `inspection_tasks` が存在する場合は 409 とする',
           '`inspection_menus.is_active=false` に更新する。`inspection_menu_items` は履歴参照と結果スナップショット整合のため保持する',
@@ -468,6 +494,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象資産が作業対象施設内に存在し、`asset_ledgers.status=''ACTIVE''` であることを確認する',
           '指定メニューはすべて `inspection_menus.is_active=true` であり、対象資産の大分類・中分類・品目と一致することを確認する',
           '定期点検系の場合は `periodicMenuId` 必須、`inspection_menus.menu_type=''PERIODIC''` であることを確認する',
@@ -527,6 +554,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象 `inspection_tasks` が作業対象施設内の資産に紐づき、`is_active=true`、`deleted_at IS NULL` であることを確認する',
           '日常点検行の場合は、使用前/使用中/使用後メニューの変更または一部解除を許可する。ただし3タイミングすべてが null になる場合は設定解除APIを利用させ 400 とする',
           '日常点検行では、未指定フィールドは既存値を維持し、明示的な null フィールドのみ該当タイミングを解除する',
@@ -573,6 +601,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象 `inspection_tasks` が作業対象施設内の資産に紐づくことを確認する',
           '定期点検系で `status=''点検実施中''` の場合は解除不可とする',
           '`inspection_tasks.is_active=false`、`deleted_at=現在日時` に更新する',
@@ -611,6 +640,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象タスクが定期点検系であり、`inspection_type<>''日常点検''`、`is_active=true`、`deleted_at IS NULL` であることを確認する',
           '`qr_codes.qr_identifier` が対象タスクの `asset_ledger_id` に紐づくことを確認する',
           '`inspection_task_status_transitions` で `START_INSPECTION` が許可される場合のみ `status=''点検実施中''` へ更新する',
@@ -653,6 +683,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象タスクが `inspection_type=''メーカー保守''`、`is_active=true` であることを確認する',
           '`inspection_task_status_transitions` で `SET_DATE` が許可されることを確認する',
           '`next_inspection_on` を更新し、調整後日付に応じた予定系ステータスへ更新する',
@@ -693,6 +724,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象タスクが定期点検系であり、`inspection_type<>''日常点検''`、`is_active=true` であることを確認する',
           '`inspection_task_status_transitions` で `SKIP` または `RECALCULATE_SCHEDULE` が許可されることを確認する',
           '`inspection_menus.cycle_months` を基準に `next_inspection_on` を再計算する。周期がないスポット点検は `next_inspection_on=NULL` とし終端扱いにする',
@@ -736,6 +768,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象タスクが定期点検系であり、`status=''点検実施中''` であることを確認する',
           '点検項目結果が対象 `periodic_menu_id` 配下の `inspection_menu_items` と一致することを確認する',
           '`inspection_results` に点検結果を登録し、`result_details_json` に項目結果とメニュースナップショットを保存する',
@@ -779,6 +812,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象 `inspection_tasks` が `inspection_type=''メーカー保守''`、`is_active=true`、`deleted_at IS NULL` であり、作業対象施設内の資産に紐づくことを確認する',
           '`asset_ledgers`、`qr_codes`、`maintenance_contracts`、`vendors` を参照して画面表示情報を返す',
           '既存の `inspection_results` がある完了済みタスクは本API対象外として 409 とする'
@@ -849,6 +883,7 @@
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
+          $workFacilityProcessingLine,
           '対象タスクが `inspection_type=''メーカー保守''`、`is_active=true` であり、作業対象施設内の資産に紐づくことを確認する',
           '費用行から `parts_cost`、`labor_cost`、`total_cost` を算出する。`OTHER` は `labor_cost` 側に含め、内訳詳細は `result_details_json.costRows` に保持する',
           '`inspection_results` にメーカー保守結果を登録する。`overall_result` は `PASS` とし、異常や再修理が必要な場合は修理管理タブ側で別途修理申請を起票する',
@@ -908,6 +943,7 @@
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明', '発生条件'); Rows = @(
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効', 'Bearer トークン未付与、期限切れ、署名不正'),
       @('INSPECTION_MGMT_FORBIDDEN', '403', '点検管理権限なし', '作業対象施設に対する実効 `inspection_management` がない'),
+      @('FACILITY_NOT_FOUND', '404', '作業対象施設が存在しない、または削除済み', 'Bearer トークン上の作業対象施設を参照できない'),
       @('INSPECTION_MGMT_INVALID_INPUT', '400', '入力形式または必須項目が不正', '必須不足、列挙値外、日付形式不正、点検項目なし'),
       @('INSPECTION_MGMT_ASSET_NOT_FOUND', '404', '資産が存在しない', '指定 `assetLedgerId` が存在しない、または作業対象施設外'),
       @('INSPECTION_MGMT_MENU_NOT_FOUND', '404', '点検メニューが存在しない', '指定 `menuId` / `periodicMenuId` / `dailyMenuId` が存在しない、または無効'),
@@ -939,3 +975,50 @@
     ) }
   )
 }
+
+function Normalize-InspectionManagementEndpointStatusRows {
+  param(
+    [object[]]$Rows
+  )
+
+  $normalizedRows = [System.Collections.Generic.List[object]]::new()
+  $has401 = @($Rows | Where-Object { $_[0] -eq '401' }).Count -gt 0
+  $has403 = @($Rows | Where-Object { $_[0] -eq '403' }).Count -gt 0
+  $has404 = @($Rows | Where-Object { $_[0] -eq '404' }).Count -gt 0
+
+  foreach ($row in $Rows) {
+    if ($row[0] -eq '403') {
+      $row[1] = $auth403StatusRow[1]
+    }
+
+    if (($row[0] -eq '404') -and ([string]$row[1] -notmatch '作業対象施設が存在しない|削除済み')) {
+      $row[1] = "作業対象施設が存在しない/削除済み、または、$($row[1])"
+    }
+
+    [void]$normalizedRows.Add($row)
+  }
+
+  if (-not $has401) {
+    [void]$normalizedRows.Add($auth401StatusRow)
+  }
+
+  if (-not $has403) {
+    [void]$normalizedRows.Add($auth403StatusRow)
+  }
+
+  if (-not $has404) {
+    [void]$normalizedRows.Add($workFacility404StatusRow)
+  }
+
+  return @($normalizedRows.ToArray() | Sort-Object `
+    @{ Expression = { [int]$_[0] }; Ascending = $true }, `
+    @{ Expression = { if ([string]$_[1] -match '作業対象施設') { 0 } else { 1 } }; Ascending = $true })
+}
+
+foreach ($section in @($spec.Sections | Where-Object { $_.Type -eq 'EndpointBlocks' })) {
+  foreach ($endpoint in @($section.Items)) {
+    $endpoint.StatusRows = Normalize-InspectionManagementEndpointStatusRows -Rows $endpoint.StatusRows
+  }
+}
+
+$spec

@@ -46,7 +46,11 @@
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('vendors', '一覧取得・新規作成・更新・削除の正本', 'vendor_id, facility_id, invoice_registration_no, vendor_name, address, position_name, role_name, contact_person, phone, email, is_primary_contact, deleted_at'),
-      @('facilities', '担当施設名の解決、施設存在確認、担当施設候補APIの参照元', 'facility_id, facility_name'),
+      @('facilities', '担当施設名の解決、担当施設候補APIの参照元、作業対象施設および担当施設の未削除判定', 'facility_id, facility_name, deleted_at'),
+      @('users', '共有システム管理者アカウント判定、監査記録の実行ユーザー解決', 'user_id, account_type'),
+      @('user_facility_assignments', '通常アカウントの作業対象施設割当判定', 'user_id, facility_id, is_active, valid_from, valid_to'),
+      @('facility_feature_settings', '通常アカウントの作業対象施設における `vendor_master_list` / `vendor_master_edit` 提供有無判定', 'facility_id, feature_code, is_enabled'),
+      @('user_facility_feature_settings', '通常アカウントのユーザー×作業対象施設単位の `vendor_master_list` / `vendor_master_edit` 利用可否判定', 'user_facility_assignment_id, feature_code, is_enabled'),
       @('rfq_vendors / quotations / orders / borrowing_application_details / disposal_application_details / repair_request_details / maintenance_contracts / inspection_tasks / edit_list_items', '論理削除後も参照される業者履歴の参照先', 'vendor_id, vendor_name など')
     ) },
 
@@ -62,21 +66,24 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、`vendor_master_list` / `vendor_master_edit` を有効として扱う。画面表示用の `/auth/context` は UX 用キャッシュであり、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', 'feature_code', '対象処理'); Rows = @(
       @('業者マスタ / 一覧', '`vendor_master_list`', '業者一覧取得'),
       @('業者マスタ / 新規作成・編集', '`vendor_master_edit`', '業者新規作成、更新、削除')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定テーブル', '説明'); Rows = @(
-      @('業者一覧取得', '`vendor_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '一覧参照と絞り込み'),
-      @('業者新規作成 / 更新 / 削除', '`vendor_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '業者マスタ管理処理')
+      @('業者一覧取得', '`vendor_master_list`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '一覧参照と絞り込み'),
+      @('業者新規作成 / 更新 / 削除', '`vendor_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '業者マスタ管理処理')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
+      '各 API は Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
+      '通常アカウントでは、作業対象施設に対する有効担当施設割当と実効 `feature_code` を都度再判定する',
+      '共有システム管理者アカウントでは、作業対象施設が未削除であれば通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による認可判定をバイパスする',
       '業者一覧の返却対象は未削除施設に紐づく未削除業者全件とし、個票データ閲覧で用いる他施設公開設定は適用しない',
       'リクエストボディの `facilityId` は業者データの所属先を表す業務項目であり、認可判定の正本には使わない',
-      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する'
+      '通常アカウントで作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する',
+      '作業対象施設が存在しない、または削除済みの場合は 404 を返却する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
     @{ Type = 'Bullets'; Items = @(
@@ -119,10 +126,12 @@
           @('keyword', 'query', 'string', '-', 'インボイス登録番号、住所、役職、役割、氏名、連絡先、メールの横断検索')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_list` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_list` が有効であること'
         )
         ProcessingLines = @(
+          'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
           '`vendors.deleted_at IS NULL` かつ `facilities.deleted_at IS NULL` のみを対象にする',
           '`facilities` を参照して担当施設名を解決する',
           '担当施設名・業者名・キーワードは AND 条件で絞り込む',
@@ -158,7 +167,8 @@
           @('200', '取得成功', 'VendorListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `vendor_master_list` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `vendor_master_list` なし', 'ErrorResponse'),
+          @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -183,11 +193,13 @@
           @('isPrimaryContact', 'boolean', '-', '主担当フラグ。未指定時は `false`')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
         )
         ProcessingLines = @(
-          '`facilities.deleted_at IS NULL` の未削除施設IDであることを検証する',
+          'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
+          'リクエストボディの `facilityId` は `facilities.deleted_at IS NULL` の未削除施設IDであることを検証する',
           '`vendors` に新規レコードを追加し、`created_at` と `updated_at` を現在時刻で設定する',
           '`deleted_at` は `NULL`、`is_primary_contact` は未指定時 `false` とする'
         )
@@ -220,8 +232,8 @@
           @('201', '登録成功', 'VendorResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
-          @('404', '担当施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
+          @('404', '作業対象施設または担当施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -251,12 +263,14 @@
           @('isPrimaryContact', 'boolean', '-', '主担当フラグ')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
           '対象の `vendors` が `deleted_at IS NULL` で存在することを確認する',
-          '`facilities.deleted_at IS NULL` の未削除施設IDであることを検証する',
+          'リクエストボディの `facilityId` は `facilities.deleted_at IS NULL` の未削除施設IDであることを検証する',
           '指定IDの `vendors` を更新し、`updated_at` を現在時刻に更新する'
         )
         ResponseTitle = 'レスポンス（200：VendorResponse）'
@@ -288,8 +302,8 @@
           @('200', '更新成功', 'VendorResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象業者または担当施設が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
+          @('404', '作業対象施設、対象業者、または担当施設が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -305,10 +319,12 @@
           @('vendorId', 'path', 'int64', '✓', '削除対象の業者ID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `vendor_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `vendor_master_edit` が有効であること'
         )
         ProcessingLines = @(
+          'Bearer トークン上の作業対象施設が存在し、未削除であることを確認する',
           '対象の `vendors` が `deleted_at IS NULL` で存在することを確認する',
           '物理削除は行わず、`deleted_at` と `updated_at` を現在時刻に更新する',
           '既存申請・見積・修理・保守などの履歴参照は保持し、以後の候補一覧からは除外する'
@@ -320,8 +336,8 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
-          @('404', '対象業者が存在しない', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `vendor_master_edit` なし', 'ErrorResponse'),
+          @('404', '作業対象施設または対象業者が存在しない、または削除済み', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -330,8 +346,8 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要 feature_code', '判定基準', '説明'); Rows = @(
-      @('業者一覧取得', '`vendor_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `vendor_master_list` を持つこと', '業者一覧と件数を参照する'),
-      @('業者新規作成 / 更新 / 削除', '`vendor_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `vendor_master_edit` を持つこと', '業者マスタの変更系処理')
+      @('業者一覧取得', '`vendor_master_list`', '通常アカウントは作業対象施設に対して実効 `vendor_master_list` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '業者一覧と件数を参照する'),
+      @('業者新規作成 / 更新 / 削除', '`vendor_master_edit`', '通常アカウントは作業対象施設に対して実効 `vendor_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '業者マスタの変更系処理')
     ) },
     @{ Type = 'Heading2'; Text = 'データ整合ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -342,7 +358,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '実装前提' },
     @{ Type = 'Bullets'; Items = @(
-      '画面の表示制御は `/auth/context` の `vendor_master_list` / `vendor_master_edit` を参照して行い、一覧表示、新規作成ボタン、編集ボタン、削除ボタンを同じ `feature_code` で出し分ける',
+      '画面の表示制御は `/auth/context` の `vendor_master_list` / `vendor_master_edit` を参照して行い、一覧表示、新規作成ボタン、編集ボタン、削除ボタンを同じ `feature_code` で出し分ける。共有システム管理者アカウントでは作業対象施設が未削除であれば両 `feature_code` を有効扱いにする',
       '担当施設候補は既存の施設マスタ取得APIから取得し、本 API 群では候補一覧を返さない',
       '業者データはマスタ管理の対象として全施設分を扱うが、他施設閲覧機能ではなくマスタ管理機能として認可する'
     ) },
@@ -351,10 +367,10 @@
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '入力不正、必須不足、形式不正'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_VENDOR_MASTER_LIST_DENIED', '403', '作業対象施設に対する実効 `vendor_master_list` がない'),
-      @('AUTH_403_VENDOR_MASTER_EDIT_DENIED', '403', '作業対象施設に対する実効 `vendor_master_edit` がない'),
+      @('AUTH_403_VENDOR_MASTER_LIST_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `vendor_master_list` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('AUTH_403_VENDOR_MASTER_EDIT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `vendor_master_edit` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
       @('VENDOR_NOT_FOUND', '404', '対象の業者が存在しない'),
-      @('FACILITY_NOT_FOUND', '404', '指定した担当施設が存在しない、または削除済み'),
+      @('FACILITY_NOT_FOUND', '404', '作業対象施設または指定した担当施設が存在しない、または削除済み'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 

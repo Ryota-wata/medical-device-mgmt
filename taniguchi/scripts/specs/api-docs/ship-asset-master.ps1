@@ -70,9 +70,14 @@
       @('ship_asset_master_custom_values', 'READ / CREATE / UPDATE', '資産マスタ行ごとの任意カラム値'),
       @('jmdn_classifications', 'READ / CREATE', '類別コード、類別名称、JMDN中分類名、一般的名称、JMDNコードの解決と未登録時の新規作成'),
       @('jmdn_registered_items', 'READ / CREATE', 'JMDN登録品目検索、販売名、製造販売業者等、添付文書ファイル名、添付文書URLの解決と未登録時の新規作成'),
+      @('facilities', 'READ', '作業対象施設の存在確認、論理削除判定、共有システム管理者アカウントの未削除施設判定に使用する'),
+      @('users', 'READ', '共有システム管理者アカウント判定、監査記録の実行ユーザー解決に使用する'),
+      @('user_facility_assignments', 'READ', '通常アカウントの作業対象施設割当を判定する'),
+      @('facility_feature_settings', 'READ', '通常アカウントの作業対象施設における `asset_master_list` / `asset_master_edit` 提供有無を判定する'),
+      @('user_facility_feature_settings', 'READ', '通常アカウントのユーザー施設別 `asset_master_list` / `asset_master_edit` 有効有無を判定する'),
       @('column_catalogs', 'READ', '`asset_master_ship_column` の列カタログと関連 feature の確認'),
-      @('facility_column_settings', 'READ', '施設単位の SHIP表示列有効/無効判定'),
-      @('user_facility_column_settings', 'READ', 'ユーザー×施設単位の SHIP表示列有効/無効判定')
+      @('facility_column_settings', 'READ', '通常アカウントの施設単位 SHIP表示列有効/無効判定'),
+      @('user_facility_column_settings', 'READ', '通常アカウントのユーザー×施設単位 SHIP表示列有効/無効判定')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
@@ -84,31 +89,33 @@
       '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
       '一覧系 API にページングは設けず、絞り込み後の全件と表示件数を返却する',
       '`GET /ship-asset-master/assets` は `ship_asset_masters.is_active=true` の有効データのみ返却する',
-      '`ship_asset_master_id` を資産マスタIDとして利用し、作成時はサーバー側で採番する'
+      '`ship_asset_master_id` を資産マスタIDとして利用し、作成時はサーバー側で採番する',
+      '共有システム管理者アカウントは、作業対象施設が未削除である限り通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定・施設/ユーザー別カラム設定による認可判定をバイパスする'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` / `column_code` は以下の通りとする。Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。SHIP表示列の返却可否は `asset_master_ship_column` を `facility_column_settings` と `user_facility_column_settings` で判定し、画面表示用の `/auth/context` は UX 用キャッシュとして扱い、各業務 API でも同条件を再判定する。' },
+    @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` / `column_code` は以下の通りとする。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。SHIP表示列の返却可否は `asset_master_ship_column` を `facility_column_settings` と `user_facility_column_settings` で判定する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定、施設/ユーザー別カラム設定による通常判定を行わず、`asset_master_list` / `asset_master_edit` / `asset_master_ship_column` を有効として扱う。画面表示用の `/auth/context` は UX 用キャッシュとして扱い、各業務 API でも同条件を再判定する。' },
     @{ Type = 'Table'; Headers = @('管理単位名', '種別', 'コード', '対象処理'); Rows = @(
       @('資産マスタ / 一覧', 'feature_code', '`asset_master_list`', '一覧取得、エクスポート、資産マスタ選択ポップアップ候補取得'),
       @('資産マスタ / 新規作成・編集', 'feature_code', '`asset_master_edit`', 'テンプレート取得、インポートプレビュー、インポート、JMDN検索、JMDN作成、新規作成、更新、削除、任意カラム設定'),
       @('資産マスタ / SHIP表示列', 'column_code', '`asset_master_ship_column`', '一覧・エクスポート・資産マスタ選択ポップアップで SHIP表示列を返却するかの判定')
     ) },
     @{ Type = 'Table'; Headers = @('処理', '必要コード', '判定テーブル', '説明'); Rows = @(
-      @('一覧取得 / エクスポート', '`asset_master_list`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', 'SHIP資産マスタ一覧参照とポップアップ候補取得'),
-      @('SHIP表示列返却', '`asset_master_ship_column`', '`column_catalogs`, `facility_column_settings`, `user_facility_column_settings`', '`asset_master_list` が実効有効な場合に、資産マスタ文脈の SHIP表示列を返却するかを判定'),
-      @('テンプレート取得 / インポートプレビュー / インポート', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '資産マスタ一括更新処理'),
-      @('JMDN登録品目検索 / JMDN作成', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '資産マスタ編集モーダル内の JMDN 選択/作成処理'),
-      @('新規作成 / 更新 / 削除', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '資産マスタ変更系処理'),
-      @('任意カラム一覧取得 / 新規作成 / 更新 / 削除', '`asset_master_edit`', '`user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`', '任意カラム設定モーダルの処理')
+      @('一覧取得 / エクスポート', '`asset_master_list`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', 'SHIP資産マスタ一覧参照とポップアップ候補取得'),
+      @('SHIP表示列返却', '`asset_master_ship_column`', '通常アカウント: `column_catalogs`, `facility_column_settings`, `user_facility_column_settings`。共有システム管理者: `users`, `facilities`', '`asset_master_list` が実効有効な場合に、資産マスタ文脈の SHIP表示列を返却するかを判定'),
+      @('テンプレート取得 / インポートプレビュー / インポート', '`asset_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '資産マスタ一括更新処理'),
+      @('JMDN登録品目検索 / JMDN作成', '`asset_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '資産マスタ編集モーダル内の JMDN 選択/作成処理'),
+      @('新規作成 / 更新 / 削除', '`asset_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '資産マスタ変更系処理'),
+      @('任意カラム一覧取得 / 新規作成 / 更新 / 削除', '`asset_master_edit`', '通常アカウント: `user_facility_assignments`, `facility_feature_settings`, `user_facility_feature_settings`。共有システム管理者: `users`, `facilities`', '任意カラム設定モーダルの処理')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
-      '各 API は Bearer トークン上の作業対象施設に対する実効 `feature_code` を都度再判定する',
-      '`asset_master_ship_column` は `column_catalogs.related_feature_code = asset_master_list` の列権限として扱い、`asset_master_list` が実効有効な場合のみ列返却判定を行う',
+      '各 API は Bearer トークン上の作業対象施設を認可コンテキストとして扱い、作業対象施設が存在しない、または `facilities.deleted_at IS NOT NULL` の場合は 404 とする',
+      '通常アカウントでは、作業対象施設に対する実効 `feature_code` を都度再判定する。共有システム管理者アカウントでは、作業対象施設が未削除であれば通常判定をバイパスする',
+      '`asset_master_ship_column` は `column_catalogs.related_feature_code = asset_master_list` の列権限として扱い、`asset_master_list` が実効有効な場合のみ列返却判定を行う。共有システム管理者アカウントでは、作業対象施設が未削除であれば列権限も有効として扱う',
       'SHIP資産マスタは共通マスタのため、一覧・候補取得の返却対象を施設単位で絞り込まない',
-      '作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する',
+      '通常アカウントで作業対象施設に対して必要な実効 `feature_code` がない場合は 403 を返却する',
       '`asset_master_ship_column` が実効無効な場合でも `asset_master_list` が有効であれば API 実行は許可し、SHIP表示列の値と任意カラム定義/値のみレスポンスおよび Excel から除外する'
     ) },
     @{ Type = 'Heading2'; Text = '検索・絞り込み仕様' },
@@ -174,9 +181,11 @@
           @('manufacturerId', 'query', 'int64', '-', 'メーカー ID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること',
-          '列返却条件: `facility_column_settings` と `user_facility_column_settings` の両方で `asset_master_ship_column` が有効な場合のみ SHIP表示列を返却する'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること',
+          '列返却条件: 共有システム管理者アカウントの場合は、作業対象施設が未削除であれば `asset_master_ship_column` を有効として扱い、SHIP表示列と任意カラム定義/値を返却・出力する',
+          '列返却条件: 通常アカウントの場合は、`facility_column_settings` と `user_facility_column_settings` の両方で `asset_master_ship_column` が有効な場合のみ SHIP表示列を返却・出力する'
         )
         ProcessingLines = @(
           '`ship_asset_masters.is_active = true` の有効データのみを対象にする',
@@ -253,7 +262,7 @@
           @('200', '取得成功', 'ShipAssetMasterListResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_list` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_list` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -273,9 +282,11 @@
           @('manufacturerId', 'query', 'int64', '-', 'メーカー ID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること',
-          '列返却条件: `facility_column_settings` と `user_facility_column_settings` の両方で `asset_master_ship_column` が有効な場合のみ SHIP表示列を出力する'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_list` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_list` が有効であること',
+          '列返却条件: 共有システム管理者アカウントの場合は、作業対象施設が未削除であれば `asset_master_ship_column` を有効として扱い、SHIP表示列と任意カラム定義/値を返却・出力する',
+          '列返却条件: 通常アカウントの場合は、`facility_column_settings` と `user_facility_column_settings` の両方で `asset_master_ship_column` が有効な場合のみ SHIP表示列を返却・出力する'
         )
         ProcessingLines = @(
           '一覧取得 API と同一の絞り込み条件、並び順、表示解決ルールを適用する',
@@ -301,7 +312,7 @@
         StatusRows = @(
           @('200', '出力成功', 'Excel File'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_list` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_list` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -312,8 +323,9 @@
         Path = '/ship-asset-master/assets/template'
         Auth = '要（Bearer）'
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           'visible sheet には `shipAssetMasterId`、Category、大分類、中分類、品目、メーカー、型式、類別コード、類別名称、JMDN中分類名、一般的名称、JMDNコード、販売名、製造販売業者等、添付文書ファイル名、添付文書URL、および有効任意カラム列を出力する',
@@ -338,7 +350,7 @@
         StatusRows = @(
           @('200', '取得成功', 'Excel File'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -354,8 +366,9 @@
           @('file', 'file', '✓', '取込対象の Excel ファイル（`.xlsx` / `.xls`）')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           'visible sheet の固定列と任意カラム列を解析する',
@@ -412,7 +425,7 @@
           @('200', '検証完了', 'ShipAssetMasterImportPreviewResponse'),
           @('400', 'ファイル形式不正、シート解析不能', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -429,8 +442,9 @@
           @('importMode', 'string', '✓', '`APPEND` または `REPLACE`')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象 `previewId` が存在し、有効期限内であることを確認する',
@@ -458,7 +472,7 @@
           @('200', '取込成功', 'ShipAssetMasterImportResultResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('404', '対象プレビューが存在しない', 'ErrorResponse'),
           @('409', 'プレビュー期限切れ、プレビューエラー残存、またはプレビュー内容が最新定義と不整合', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -481,8 +495,9 @@
           @('marketingAuthorizationHolderName', 'query', 'string', '-', '製造販売業者等')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '`jmdn_registered_items` と親の `jmdn_classifications` を結合して検索候補を構成する',
@@ -518,7 +533,7 @@
           @('200', '取得成功', 'JmdnRegisteredItemSearchResponse'),
           @('400', '検索条件不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -542,8 +557,9 @@
           @('attachmentDocumentUrl', 'string', '-', 'JMDN登録品目に紐づく添付文書 URL')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '`attachmentDocumentFileName` と `attachmentDocumentUrl` は両方指定または両方未指定とし、片方のみは 400 `VALIDATION_ERROR` とする',
@@ -584,7 +600,7 @@
           @('200', '処理成功', 'JmdnRegisteredItemUpsertResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('409', '既存 JMDNコード と分類項目が不一致', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -618,8 +634,9 @@
           }
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           'Category / 大分類 / 中分類 / 品目 / `jmdnRegisteredItemId` は必須、メーカー / 型式は任意とする',
@@ -673,7 +690,7 @@
           @('201', '登録成功', 'ShipAssetMasterDetailResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('404', '指定した JMDN登録品目が存在しない', 'ErrorResponse'),
           @('409', '組み合わせ重複、または任意カラム不正', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -713,8 +730,9 @@
           }
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象 `ship_asset_masters` が存在し、有効であることを確認する',
@@ -768,7 +786,7 @@
           @('200', '更新成功', 'ShipAssetMasterDetailResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('404', '対象 SHIP 資産マスタまたは指定した JMDN登録品目が存在しない', 'ErrorResponse'),
           @('409', '組み合わせ重複、または任意カラム不正', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -786,8 +804,9 @@
           @('shipAssetMasterId', 'path', 'int64', '✓', '削除対象の資産マスタID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象 `ship_asset_masters` が存在することを確認する',
@@ -802,7 +821,7 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('404', '対象 SHIP 資産マスタが存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -819,8 +838,9 @@
           @('includeInactive', 'query', 'boolean', '-', '削除済み列を含めるか。省略時は `true`')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '`includeInactive=true` の場合は有効/削除済みの両方を返却する',
@@ -851,7 +871,7 @@
         StatusRows = @(
           @('200', '取得成功', 'ShipAssetCustomColumnListResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -868,8 +888,9 @@
           @('sortOrder', 'int32', '-', '表示順')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '`columnName` は `is_active = true` の有効列同士で重複不可とする',
@@ -901,7 +922,7 @@
           @('201', '登録成功', 'ShipAssetCustomColumnResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('409', '有効任意カラム名が重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -924,8 +945,9 @@
           @('sortOrder', 'int32', '-', '更新後の表示順')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象任意カラムが存在し、有効であることを確認する',
@@ -957,7 +979,7 @@
           @('200', '更新成功', 'ShipAssetCustomColumnResponse'),
           @('400', '入力不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('404', '対象任意カラムが存在しない', 'ErrorResponse'),
           @('409', '有効任意カラム名が重複', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
@@ -975,8 +997,9 @@
           @('customColumnId', 'path', 'int64', '✓', '削除対象の任意カラム ID')
         )
         PermissionLines = @(
-          '認可条件: Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-          '認可条件: Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
+          '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `asset_master_edit` 判定をバイパスする',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
+          '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `facility_feature_settings` と `user_facility_feature_settings` の両方で `asset_master_edit` が有効であること'
         )
         ProcessingLines = @(
           '対象任意カラムが存在することを確認する',
@@ -991,7 +1014,7 @@
         StatusRows = @(
           @('204', '削除成功', '-'),
           @('401', '未認証', 'ErrorResponse'),
-          @('403', '作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
+          @('403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` なし', 'ErrorResponse'),
           @('404', '対象任意カラムが存在しない', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
@@ -1001,12 +1024,12 @@
     @{ Type = 'Heading1'; Text = '第6章 権限・業務ルール' },
     @{ Type = 'Heading2'; Text = '必要権限' },
     @{ Type = 'Table'; Headers = @('処理', '必要コード', '判定基準', '説明'); Rows = @(
-      @('一覧表示 / ポップアップ候補取得 / エクスポート', '`asset_master_list`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_list` を持つこと', '一覧参照系処理'),
-      @('SHIP表示列返却 / エクスポート列 / ポップアップ候補表示', '`asset_master_ship_column`', '`asset_master_list` が実効有効で、同一作業対象施設に対して `facility_column_settings` と `user_facility_column_settings` の両方が有効であること', '資産マスタ文脈の SHIP表示列制御'),
-      @('テンプレート取得 / インポートプレビュー / インポート', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '一括更新処理'),
-      @('JMDN登録品目検索 / JMDN作成', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '資産マスタ編集モーダル内の JMDN 選択/作成処理'),
-      @('新規作成 / 更新 / 削除', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '資産マスタ管理処理'),
-      @('任意カラム一覧 / 新規作成 / 更新 / 削除', '`asset_master_edit`', 'Bearer トークン上の作業対象施設に対して実効 `asset_master_edit` を持つこと', '任意カラム設定処理')
+      @('一覧表示 / ポップアップ候補取得 / エクスポート', '`asset_master_list`', '通常アカウントは作業対象施設に対して実効 `asset_master_list` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '一覧参照系処理'),
+      @('SHIP表示列返却 / エクスポート列 / ポップアップ候補表示', '`asset_master_ship_column`', '通常アカウントは `asset_master_list` が実効有効で、同一作業対象施設に対して `facility_column_settings` と `user_facility_column_settings` の両方が有効であること。共有システム管理者は作業対象施設が未削除であれば許可', '資産マスタ文脈の SHIP表示列制御'),
+      @('テンプレート取得 / インポートプレビュー / インポート', '`asset_master_edit`', '通常アカウントは作業対象施設に対して実効 `asset_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '一括更新処理'),
+      @('JMDN登録品目検索 / JMDN作成', '`asset_master_edit`', '通常アカウントは作業対象施設に対して実効 `asset_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '資産マスタ編集モーダル内の JMDN 選択/作成処理'),
+      @('新規作成 / 更新 / 削除', '`asset_master_edit`', '通常アカウントは作業対象施設に対して実効 `asset_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '資産マスタ管理処理'),
+      @('任意カラム一覧 / 新規作成 / 更新 / 削除', '`asset_master_edit`', '通常アカウントは作業対象施設に対して実効 `asset_master_edit` を持つこと。共有システム管理者は作業対象施設が未削除であれば許可', '任意カラム設定処理')
     ) },
     @{ Type = 'Heading2'; Text = 'SHIP表示列返却ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -1056,8 +1079,9 @@
     @{ Type = 'Table'; Headers = @('エラーコード', 'HTTP', '説明'); Rows = @(
       @('VALIDATION_ERROR', '400', '必須不足、桁数超過、形式不正、条件付き必須違反'),
       @('UNAUTHORIZED', '401', '認証トークン未付与または無効'),
-      @('AUTH_403_ASSET_MASTER_LIST_DENIED', '403', '作業対象施設に対する実効 `asset_master_list` がない'),
-      @('AUTH_403_ASSET_MASTER_EDIT_DENIED', '403', '作業対象施設に対する実効 `asset_master_edit` がない'),
+      @('AUTH_403_ASSET_MASTER_LIST_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `asset_master_list` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('AUTH_403_ASSET_MASTER_EDIT_DENIED', '403', '通常アカウントで作業対象施設に対する実効 `asset_master_edit` がない。共有システム管理者では作業対象施設が未削除であれば通常権限判定をバイパスする'),
+      @('FACILITY_NOT_FOUND', '404', '作業対象施設が存在しない、または削除済み'),
       @('SHIP_ASSET_MASTER_NOT_FOUND', '404', '対象 SHIP 資産マスタが存在しない'),
       @('JMDN_REGISTERED_ITEM_NOT_FOUND', '404', '指定した JMDN登録品目が存在しない'),
       @('CUSTOM_COLUMN_NOT_FOUND', '404', '対象任意カラムが存在しない'),
