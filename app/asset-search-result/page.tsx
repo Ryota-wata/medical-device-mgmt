@@ -15,6 +15,8 @@ import { AdditionApplicationModal } from '@/components/ui/AdditionApplicationMod
 import { InspectionRegistrationModal } from '@/app/quotation-data-box/components/InspectionRegistrationModal';
 import { MaintenanceContractRegistrationModal } from '@/app/quotation-data-box/components/MaintenanceContractRegistrationModal';
 import { LendingRegistrationModal } from '@/app/quotation-data-box/components/LendingRegistrationModal';
+import { BulkManagingDeptModal } from '@/components/ui/BulkManagingDeptModal';
+import { useToast } from '@/components/ui/Toast';
 import { useMaintenanceContractStore } from '@/lib/stores';
 import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useAssetFilter } from '@/lib/hooks/useAssetFilter';
@@ -85,6 +87,11 @@ export default function AssetSearchResultPage() {
   // REQ-172: 修正モード (管理者による原本の修正・追記モード)
   // 入力方法は編集リストと同様、編集セルへの遷移は registration-edit を案内
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // 管理部署 一括設定モーダル (2026-06-01 新規要求 / PU-005)
+  const [isBulkDeptModalOpen, setIsBulkDeptModalOpen] = useState(false);
+  const updateAssetsManagementDept = useAssetStore((s) => s.updateAssetsManagementDept);
+  const { showToast } = useToast();
 
   // 原本資産データ（useAssetStore から取得）
   const storeAssets = assets;
@@ -337,6 +344,18 @@ export default function AssetSearchResultPage() {
           }}
         >
           貸出登録
+        </button>
+
+        {/* 管理部署 一括設定 (2026-06-01 新規要求 / PU-005) — 既存セカンダリパターン踏襲 */}
+        <button
+          style={getSecondaryBtn(isAnySelected)}
+          onClick={() => {
+            if (selectedItems.size === 0) { alert('管理部署を一括設定する資産を選択してください'); return; }
+            setIsBulkDeptModalOpen(true);
+          }}
+          title={isAnySelected ? `選択中の${selectedItems.size}件の管理部署を一括変更` : '資産を選択してください'}
+        >
+          管理部署 一括設定{isAnySelected ? ` (${selectedItems.size}件)` : ''}
         </button>
 
         <div style={{ width: 1, height: 22, background: '#E1E1E1' }} />
@@ -851,6 +870,18 @@ export default function AssetSearchResultPage() {
           setSelectedItems(new Set());
         }}
         preSelectedAssets={filteredAssets.filter(asset => selectedItems.has(asset.no))}
+      />
+
+      {/* 管理部署 一括設定モーダル (2026-06-01 新規要求 / PU-005) */}
+      <BulkManagingDeptModal
+        isOpen={isBulkDeptModalOpen}
+        onClose={() => setIsBulkDeptModalOpen(false)}
+        selectedCount={selectedItems.size}
+        onConfirm={(newDept) => {
+          const count = updateAssetsManagementDept(Array.from(selectedItems), newDept);
+          showToast(`${count}件の管理部署を「${newDept}」に変更しました`, 'success');
+          setSelectedItems(new Set());
+        }}
       />
     </div>
   );

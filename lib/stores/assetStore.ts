@@ -17,6 +17,10 @@ interface AssetStore {
   setSelectedAsset: (asset: Asset | null) => void;
   getAssets: () => Asset[];
 
+  // 管理部署 一括更新 (PU-005)
+  // 指定された asset.no の集合に対し、managementDept を一括で newDept に上書き
+  updateAssetsManagementDept: (assetNos: number[], newDept: string) => number;
+
   // リモデル申請
   loadRemodelApplications: () => Promise<void>;
   addRemodelApplication: (application: RemodelApplication) => void;
@@ -58,6 +62,22 @@ export const useAssetStore = create<AssetStore>((set, get) => ({
   },
 
   getAssets: () => get().assets,
+
+  // 管理部署 一括更新 (PU-005): 該当 no の Asset.managementDept を newDept に上書き、更新件数を返す
+  updateAssetsManagementDept: (assetNos: number[], newDept: string) => {
+    const targetSet = new Set(assetNos);
+    let count = 0;
+    set((state) => ({
+      assets: state.assets.map((a) => {
+        if (targetSet.has(a.no)) {
+          count++;
+          return { ...a, managementDept: newDept };
+        }
+        return a;
+      }),
+    }));
+    return count;
+  },
 
   loadRemodelApplications: async () => {
     set({ isLoading: true });
