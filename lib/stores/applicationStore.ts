@@ -566,6 +566,109 @@ const testApplications: Application[] = [
     freeInput: '廃棄業者: 株式会社メディカル廃棄\n見積依頼日: 2026-02-02',
     quotationInfo: []
   },
+  // 申請ステータスモーダル デモ用: 経営企画部 (ログインユーザー部署) 移動2 / 廃棄2 = 計4件
+  {
+    id: 101,
+    applicationNo: 'MOVE-2026-101',
+    applicationDate: '2026-03-01',
+    applicationType: '移動申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '経営企画部',
+      section: '医療機器管理課'
+    },
+    roomName: '機器管理室',
+    asset: { name: '生体情報モニタ', model: 'BSM-6000' },
+    vendor: '日本光電',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '新設エリアへの再配置',
+    executionYear: '2026',
+    status: '承認待ち',
+    approvalProgress: { current: 1, total: 2 },
+    freeInput: '',
+    quotationInfo: [],
+    transferDestination: {
+      department: '経営企画部',
+      section: '医療機器管理課',
+      roomName: '別館2F 新棟会議室',
+    },
+  },
+  {
+    id: 102,
+    applicationNo: 'MOVE-2026-102',
+    applicationDate: '2026-02-15',
+    applicationType: '移動申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '経営企画部',
+      section: '医療機器管理課'
+    },
+    roomName: '保管庫',
+    asset: { name: '輸液ポンプ', model: 'TE-371' },
+    vendor: 'テルモ',
+    quantity: '3',
+    unit: '台',
+    applicationReason: '配置最適化',
+    executionYear: '2026',
+    status: '承認済み',
+    approvalProgress: { current: 2, total: 2 },
+    freeInput: '',
+    quotationInfo: [],
+    transferDestination: {
+      department: '経営企画部',
+      section: '医療機器管理課',
+      roomName: '本館4F ME保管室',
+    },
+  },
+  {
+    id: 103,
+    applicationNo: 'DISP-2026-103',
+    applicationDate: '2026-02-28',
+    applicationType: '廃棄申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '経営企画部',
+      section: '医療機器管理課'
+    },
+    roomName: '機器管理室',
+    asset: { name: '旧式血圧計', model: 'UA-1020' },
+    vendor: 'A&D',
+    quantity: '2',
+    unit: '台',
+    applicationReason: '老朽化に伴う廃棄',
+    executionYear: '2026',
+    status: '承認待ち',
+    approvalProgress: { current: 1, total: 2 },
+    freeInput: '',
+    quotationInfo: []
+  },
+  {
+    id: 104,
+    applicationNo: 'DISP-2026-104',
+    applicationDate: '2026-02-10',
+    applicationType: '廃棄申請',
+    facility: {
+      building: '本館',
+      floor: '3F',
+      department: '経営企画部',
+      section: '医療機器管理課'
+    },
+    roomName: '保管庫',
+    asset: { name: '旧式心電計', model: 'ECG-1000' },
+    vendor: '日本光電',
+    quantity: '1',
+    unit: '台',
+    applicationReason: '更新による廃棄',
+    executionYear: '2026',
+    status: '見積依頼中',
+    approvalProgress: { current: 1, total: 1 },
+    freeInput: '廃棄業者: 株式会社メディカル廃棄',
+    quotationInfo: []
+  },
 ];
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
