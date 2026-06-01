@@ -2436,7 +2436,7 @@ function RemodelApplicationContent() {
 
         {currentView === 'card' && (
           <>
-            {/* REQ-149: 編集カード ヘッダー2 — 見積グループ作成 + 申請種別8ボタン */}
+            {/* REQ-149 (リモデル) / REQ-162 (通常): 編集カード ヘッダー2 — 見積グループ作成 + 申請種別 */}
             <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setIsRfqGroupModalOpen(true)}
@@ -2456,29 +2456,40 @@ function RemodelApplicationContent() {
                 見積グループ作成 {selectedItems.size > 0 && `(${selectedItems.size}件)`}
               </button>
               <div style={{ width: '1px', height: '24px', background: '#E1E1E1' }} aria-hidden />
-              <span style={{ fontSize: '13px', color: '#4A4A4A', fontWeight: 600 }}>申請種別:</span>
-              {(['新規','増設','更新','移動','廃棄','廃棄予定','廃棄済','保留'] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => {
-                    // REQ-150: 申請種別に対して品目情報/設置情報/システム接続を登録するモーダルを開く想定
-                    // 現状 PurchaseApplicationModal は新規申請固定のため、種別拡張+モーダル接続は別途実装。
-                    alert(`申請種別「${type}」の購入申請モーダルを開きます (詳細実装は REQ-150 QA で仕様確定後)`);
-                  }}
-                  style={{
-                    padding: '6px 12px',
-                    background: 'white',
-                    color: '#146E2E',
-                    border: '1px solid #146E2E',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                  }}
-                >
-                  {type}
-                </button>
-              ))}
+              {editList?.mode === 'remodel' ? (
+                <>
+                  {/* REQ-149: リモデルモード — 申請種別8ボタン (新規/増設/更新/移動/廃棄/廃棄予定/廃棄済/保留) */}
+                  <span style={{ fontSize: '13px', color: '#4A4A4A', fontWeight: 600 }}>申請種別:</span>
+                  {(['新規','増設','更新','移動','廃棄','廃棄予定','廃棄済','保留'] as const).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        // REQ-150: 申請種別に対して品目情報/設置情報/システム接続を登録するモーダルを開く想定
+                        // 現状 PurchaseApplicationModal は新規申請固定のため、種別拡張+モーダル接続は別途実装。
+                        alert(`申請種別「${type}」の購入申請モーダルを開きます (詳細実装は REQ-150 QA で仕様確定後)`);
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        background: 'white',
+                        color: '#146E2E',
+                        border: '1px solid #146E2E',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {/* REQ-162: 通常モード — 申請種別はタスク管理から反映表示 (ボタン無し、各カードのバッジで表示) */}
+                  <span style={{ fontSize: '13px', color: '#4A4A4A', fontWeight: 600 }}>申請種別:</span>
+                  <span style={{ fontSize: '12px', color: '#8A8A8A' }}>タスク管理で確定した申請情報を各カードに反映します</span>
+                </>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
