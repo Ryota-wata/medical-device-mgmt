@@ -3,10 +3,10 @@
 // 資産一覧画面「管理部署 一括設定」モーダル (新規要求 2026-06-01)
 // 関連権限単位: PU-005「資産一覧 / 管理部署編集」
 
-import React, { useState, useMemo } from 'react';
-import { Modal } from './Modal';
+import React, { useState, useMemo, useEffect } from 'react';
 import { SearchableSelect } from './SearchableSelect';
 import { useMasterStore } from '@/lib/stores';
+import { useBodyScrollLock } from '@/lib/hooks/useBodyScrollLock';
 
 export interface BulkManagingDeptModalProps {
   isOpen: boolean;
@@ -25,6 +25,22 @@ export function BulkManagingDeptModal({
   const { departments } = useMasterStore();
   const [newDept, setNewDept] = useState<string>('');
   const [showAlert, setShowAlert] = useState(false);
+
+  useBodyScrollLock(isOpen);
+
+  // ESC で閉じる
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showAlert) setShowAlert(false);
+        else handleClose();
+      }
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, showAlert]);
 
   // 部署マスタから「部署」候補を抽出 (重複排除)
   const departmentOptions = useMemo(
@@ -50,52 +66,80 @@ export function BulkManagingDeptModal({
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
     <>
-      <Modal isOpen={isOpen && !showAlert} onClose={handleClose} title="管理部署 一括設定" size="sm">
-        <div className="flex flex-col gap-4">
-          <div className="text-sm text-content-primary">
-            選択中: <span className="font-semibold tabular-nums">{selectedCount}件</span>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="bulk-dept-select" className="text-sm font-semibold text-content-primary">
-              新しい管理部署 <span className="text-content-alert">*</span>
-            </label>
-            <SearchableSelect
-              value={newDept}
-              onChange={setNewDept}
-              options={['', ...departmentOptions]}
-              placeholder="部署マスタから選択"
-              isMobile={false}
-            />
-          </div>
-          <p className="text-xs text-content-sub text-pretty">
-            ※ 選択した全件の管理部署が、指定の部署に上書きされます。
-          </p>
+      {!showAlert && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleClose();
+          }}
+        >
+          {/* overflow-visible でドロップダウンがモーダル下まで突き抜けて表示可能に */}
+          <div
+            className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col"
+            style={{ overflow: 'visible' }}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-stroke-input">
+              <h2 className="text-xl font-semibold text-content-primary">管理部署 一括設定</h2>
+              <button
+                onClick={handleClose}
+                aria-label="閉じる"
+                className="bg-transparent border-0 text-content-sub hover:text-content-primary p-1 cursor-pointer"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              <div className="text-sm text-content-primary">
+                選択中: <span className="font-semibold tabular-nums">{selectedCount}件</span>
+              </div>
+              <div className="flex flex-col gap-2 relative">
+                <label htmlFor="bulk-dept-select" className="text-sm font-semibold text-content-primary">
+                  新しい管理部署 <span className="text-content-alert">*</span>
+                </label>
+                <SearchableSelect
+                  value={newDept}
+                  onChange={setNewDept}
+                  options={['', ...departmentOptions]}
+                  placeholder="部署マスタから選択"
+                  isMobile={false}
+                  dropdownMinWidth="100%"
+                />
+              </div>
+              <p className="text-xs text-content-sub text-pretty">
+                ※ 選択した全件の管理部署が、指定の部署に上書きされます。
+              </p>
 
-          <div className="flex justify-end gap-3 pt-2 border-t border-stroke-input">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="h-10 min-w-[100px] px-4 rounded-md bg-surface-card border border-stroke-input text-content-primary text-sm font-medium cursor-pointer hover:bg-stroke-card transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              type="button"
-              onClick={handleApplyClick}
-              disabled={!newDept || selectedCount === 0}
-              className={`h-10 min-w-[140px] px-4 rounded-md text-white text-sm font-semibold transition-colors ${
-                !newDept || selectedCount === 0
-                  ? 'bg-content-sub cursor-not-allowed'
-                  : 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer'
-              }`}
-            >
-              {selectedCount}件に適用
-            </button>
+              <div className="flex justify-end gap-3 pt-2 border-t border-stroke-input">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="h-10 min-w-[100px] px-4 rounded-md bg-surface-card border border-stroke-input text-content-primary text-sm font-medium cursor-pointer hover:bg-stroke-card transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyClick}
+                  disabled={!newDept || selectedCount === 0}
+                  className={`h-10 min-w-[140px] px-4 rounded-md text-white text-sm font-semibold transition-colors ${
+                    !newDept || selectedCount === 0
+                      ? 'bg-content-sub cursor-not-allowed'
+                      : 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer'
+                  }`}
+                >
+                  {selectedCount}件に適用
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </Modal>
+      )}
 
       {/* 確認 AlertDialog (CLAUDE.md §4 破壊的アクションには AlertDialog) */}
       {isOpen && showAlert && (

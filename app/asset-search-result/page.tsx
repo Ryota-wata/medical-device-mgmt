@@ -84,10 +84,6 @@ export default function AssetSearchResultPage() {
   // 貸出登録モーダル関連の状態
   const [isLendingModalOpen, setIsLendingModalOpen] = useState(false);
 
-  // REQ-172: 修正モード (管理者による原本の修正・追記モード)
-  // 入力方法は編集リストと同様、編集セルへの遷移は registration-edit を案内
-  const [isEditMode, setIsEditMode] = useState(false);
-
   // 管理部署 一括設定モーダル (2026-06-01 新規要求 / PU-005)
   const [isBulkDeptModalOpen, setIsBulkDeptModalOpen] = useState(false);
   const updateAssetsManagementDept = useAssetStore((s) => s.updateAssetsManagementDept);
@@ -357,44 +353,7 @@ export default function AssetSearchResultPage() {
         >
           管理部署 一括設定{isAnySelected ? ` (${selectedItems.size}件)` : ''}
         </button>
-
-        <div style={{ width: 1, height: 22, background: '#E1E1E1' }} />
-
-        {/* REQ-172: 修正モード トグル (管理者による原本の修正・追記モード) */}
-        <button
-          onClick={() => setIsEditMode((v) => !v)}
-          title="管理者による原本の修正・追記モード"
-          style={{
-            padding: '6px 14px',
-            background: isEditMode ? '#146E2E' : 'white',
-            color: isEditMode ? 'white' : '#146E2E',
-            border: '1px solid #146E2E',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: 600,
-          }}
-        >
-          修正モード {isEditMode ? 'ON' : 'OFF'}
-        </button>
       </div>
-
-      {/* REQ-172: 修正モード ON 時のガイダンスバナー */}
-      {isEditMode && (
-        <div style={{
-          background: '#EBF5EE',
-          borderBottom: '1px solid #146E2E',
-          padding: '10px 16px',
-          fontSize: '13px',
-          color: '#146E2E',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          <strong>修正モード ON</strong>
-          <span>— 管理者による原本の修正・追記モードです。入力方法は編集リストと同様 (該当行を編集リスト画面で修正してください)。</span>
-        </div>
-      )}
 
       {/* フィルターエリア（1行レイアウト: 各フィルター + キーワード検索を横並び。テーブルエリア最大化） */}
       <div style={{ background: '#fff', padding: '6px 16px', borderBottom: '1px solid #E1E1E1' }}>
