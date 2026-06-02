@@ -7,8 +7,9 @@ import { useApplicationStore, useMasterStore } from '@/lib/stores';
 import { Asset, Application } from '@/lib/types';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { useResponsive } from '@/lib/hooks/useResponsive';
-import { DisposalApplicationModal } from '@/components/ui/DisposalApplicationModal';
-import { TransferApplicationModal } from '@/components/ui/TransferApplicationModal';
+// DisposalApplicationModal/TransferApplicationModal は申請モーダルのため、
+// 棚卸し画面では使わず「予定として記録」の確認ダイアログのみに変更 (2026-06-02 不具合修正)
+// 棚卸し完了時に handleComplete で一括で申請が作成される
 import { exportInventoryToExcel } from '@/lib/utils/excel-inventory';
 
 // 棚卸し確認ステータス
@@ -144,10 +145,10 @@ export default function InventoryPage() {
   // 一括確定確認モーダル
   const [bulkConfirmModal, setBulkConfirmModal] = useState(false);
 
-  // 廃棄申請モーダル（一括用）
+  // 廃棄予定として記録 (一括) 確認ダイアログ ※申請モーダルではなく状態記録のみ
   const [bulkDisposalModal, setBulkDisposalModal] = useState(false);
 
-  // 移動申請モーダル（一括用）
+  // 移動予定として記録 (一括) 確認ダイアログ ※申請モーダルではなく状態記録のみ
   const [bulkTransferModal, setBulkTransferModal] = useState(false);
 
   // 要対応（保留）コメント入力モーダル
@@ -1052,75 +1053,134 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* 廃棄申請モーダル（単体用） */}
-      <DisposalApplicationModal
-        isOpen={disposalModal.isOpen && disposalModal.itemIndex !== null}
-        assets={disposalModal.itemIndex !== null && inventoryItems[disposalModal.itemIndex] ? [inventoryItems[disposalModal.itemIndex].asset] : []}
-        onClose={() => setDisposalModal({ isOpen: false, itemIndex: null })}
-        onSuccess={() => {
-          if (disposalModal.itemIndex === null) return;
-          const newItems = [...inventoryItems];
-          newItems[disposalModal.itemIndex] = {
-            ...newItems[disposalModal.itemIndex],
-            status: 'disposal_planned',
-            confirmedAt: new Date().toISOString()
-          };
-          setInventoryItems(newItems);
-          setDisposalModal({ isOpen: false, itemIndex: null });
-        }}
-        returnDestination="棚卸し画面"
-        returnHref="/inventory"
-      />
+      {/* 廃棄予定として記録 (単体) 確認ダイアログ ※申請モーダルではなく状態記録のみ */}
+      {disposalModal.isOpen && disposalModal.itemIndex !== null && inventoryItems[disposalModal.itemIndex] && (
+        <div
+          onClick={() => setDisposalModal({ isOpen: false, itemIndex: null })}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '8px', width: '90%', maxWidth: '480px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>廃棄予定として記録</h3>
+            <p style={{ fontSize: '14px', color: '#4A4A4A', marginBottom: '4px' }}>
+              <strong>{inventoryItems[disposalModal.itemIndex].asset.name}</strong> を「廃棄予定」として記録します。
+            </p>
+            <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '20px' }}>
+              ※ 棚卸し完了時に廃棄申請が一括で作成されます (この時点では申請されません)。
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDisposalModal({ isOpen: false, itemIndex: null })}
+                style={{ padding: '8px 20px', background: 'white', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  if (disposalModal.itemIndex === null) return;
+                  const newItems = [...inventoryItems];
+                  newItems[disposalModal.itemIndex] = {
+                    ...newItems[disposalModal.itemIndex],
+                    status: 'disposal_planned',
+                    confirmedAt: new Date().toISOString(),
+                  };
+                  setInventoryItems(newItems);
+                  setDisposalModal({ isOpen: false, itemIndex: null });
+                }}
+                style={{ padding: '8px 20px', background: '#6B21A8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              >
+                廃棄予定として記録する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* 廃棄申請モーダル（一括用） */}
-      <DisposalApplicationModal
-        isOpen={bulkDisposalModal}
-        assets={selectedAssets}
-        onClose={() => setBulkDisposalModal(false)}
-        onSuccess={() => {
-          const newItems = [...inventoryItems];
-          selectedItems.forEach(qrCode => {
-            const index = newItems.findIndex(item => item.asset.qrCode === qrCode);
-            if (index !== -1 && newItems[index].status === 'unchecked') {
-              newItems[index] = {
-                ...newItems[index],
-                status: 'disposal_planned',
-                confirmedAt: new Date().toISOString()
-              };
-            }
-          });
-          setInventoryItems(newItems);
-          setSelectedItems(new Set());
-          setBulkDisposalModal(false);
-        }}
-        returnDestination="棚卸し画面"
-        returnHref="/inventory"
-      />
+      {/* 廃棄予定として記録 (一括) 確認ダイアログ ※申請モーダルではなく状態記録のみ */}
+      {bulkDisposalModal && (
+        <div
+          onClick={() => setBulkDisposalModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '8px', width: '90%', maxWidth: '480px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>廃棄予定として記録</h3>
+            <p style={{ fontSize: '14px', color: '#4A4A4A', marginBottom: '8px' }}>
+              選択中の <strong className="tabular-nums">{selectedItems.size}件</strong> を「廃棄予定」として記録します。
+            </p>
+            <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '20px' }}>
+              ※ 棚卸し完了時に廃棄申請が一括で作成されます (この時点では申請されません)。
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setBulkDisposalModal(false)}
+                style={{ padding: '8px 20px', background: 'white', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  const newItems = [...inventoryItems];
+                  selectedItems.forEach((qrCode) => {
+                    const index = newItems.findIndex((item) => item.asset.qrCode === qrCode);
+                    if (index !== -1 && newItems[index].status === 'unchecked') {
+                      newItems[index] = { ...newItems[index], status: 'disposal_planned', confirmedAt: new Date().toISOString() };
+                    }
+                  });
+                  setInventoryItems(newItems);
+                  setSelectedItems(new Set());
+                  setBulkDisposalModal(false);
+                }}
+                style={{ padding: '8px 20px', background: '#6B21A8', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              >
+                廃棄予定として記録する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* 移動申請モーダル（一括用） */}
-      <TransferApplicationModal
-        isOpen={bulkTransferModal}
-        assets={selectedAssets}
-        onClose={() => setBulkTransferModal(false)}
-        returnDestination="棚卸し画面"
-        returnHref="/inventory"
-        onSuccess={() => {
-          const newItems = [...inventoryItems];
-          selectedItems.forEach(qrCode => {
-            const index = newItems.findIndex(item => item.asset.qrCode === qrCode);
-            if (index !== -1 && newItems[index].status === 'unchecked') {
-              newItems[index] = {
-                ...newItems[index],
-                status: 'move_planned',
-                confirmedAt: new Date().toISOString()
-              };
-            }
-          });
-          setInventoryItems(newItems);
-          setSelectedItems(new Set());
-          setBulkTransferModal(false);
-        }}
-      />
+      {/* 移動予定として記録 (一括) 確認ダイアログ ※申請モーダルではなく状態記録のみ。移動先は後で個別カードから編集 */}
+      {bulkTransferModal && (
+        <div
+          onClick={() => setBulkTransferModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '8px', width: '90%', maxWidth: '480px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>移動予定として記録</h3>
+            <p style={{ fontSize: '14px', color: '#4A4A4A', marginBottom: '8px' }}>
+              選択中の <strong className="tabular-nums">{selectedItems.size}件</strong> を「移動予定」として記録します。
+            </p>
+            <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '20px' }}>
+              ※ 移動先は後で個別カードから編集してください。<br />
+              ※ 棚卸し完了時に移動申請が一括で作成されます (この時点では申請されません)。
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setBulkTransferModal(false)}
+                style={{ padding: '8px 20px', background: 'white', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  const newItems = [...inventoryItems];
+                  selectedItems.forEach((qrCode) => {
+                    const index = newItems.findIndex((item) => item.asset.qrCode === qrCode);
+                    if (index !== -1 && newItems[index].status === 'unchecked') {
+                      newItems[index] = { ...newItems[index], status: 'move_planned', confirmedAt: new Date().toISOString() };
+                    }
+                  });
+                  setInventoryItems(newItems);
+                  setSelectedItems(new Set());
+                  setBulkTransferModal(false);
+                }}
+                style={{ padding: '8px 20px', background: '#B45309', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              >
+                移動予定として記録する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 完了確認モーダル */}
       {completeModal && (
