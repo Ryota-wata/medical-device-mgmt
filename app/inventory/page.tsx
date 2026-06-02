@@ -593,7 +593,6 @@ export default function InventoryPage() {
         {/* 内訳バッジ ＝ ステータスフィルター (2026-06-02 統合: クリックでフィルター切替、件数も兼ねる) */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs tabular-nums">
           {([
-            { value: 'all', label: 'すべて', count: progress.total, bg: 'bg-white', text: 'text-content-sub', border: 'border-stroke-card', suffix: undefined as string | undefined },
             { value: 'unchecked', label: '未確認', count: progress.unchecked, bg: 'bg-white', text: 'text-content-sub', border: 'border-stroke-card', suffix: undefined as string | undefined },
             { value: 'stock_ok', label: '確認済(在庫一致)', count: progress.stockOk, bg: 'bg-[#EBF5EE]', text: 'text-[#146E2E]', border: 'border-[#A7D8B2]', suffix: undefined as string | undefined },
             { value: 'move_planned', label: '移動予定', count: progress.movePlanned, bg: 'bg-[#FFF4E5]', text: 'text-[#B45309]', border: 'border-[#FCD9A1]', suffix: '→ 申請対象' as string | undefined },
