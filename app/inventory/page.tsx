@@ -628,13 +628,14 @@ export default function InventoryPage() {
       <div className="bg-white px-5 py-4 border-b border-stroke-card">
         {/* ステータスフィルター */}
         <div className="flex flex-wrap gap-2 mb-3">
+          {/* 件数は進捗バー下の内訳バッジに集約。フィルターはラベルのみ表示し二重表記を解消 (2026-06-02 修正) */}
           {[
-            { value: 'unchecked', label: `未確認 (${progress.unchecked})` },
-            { value: 'stock_ok', label: `確認済(在庫一致) (${progress.stockOk})` },
-            { value: 'move_planned', label: `移動予定 (${progress.movePlanned})` },
-            { value: 'disposal_planned', label: `廃棄予定 (${progress.disposalPlanned})` },
-            { value: 'action_required', label: `要対応(保留) (${progress.actionRequired})` },
-            { value: 'all', label: `すべて (${progress.total})` }
+            { value: 'unchecked', label: '未確認' },
+            { value: 'stock_ok', label: '確認済(在庫一致)' },
+            { value: 'move_planned', label: '移動予定' },
+            { value: 'disposal_planned', label: '廃棄予定' },
+            { value: 'action_required', label: '要対応(保留)' },
+            { value: 'all', label: 'すべて' }
           ].map(option => (
             <label key={option.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
               <input
