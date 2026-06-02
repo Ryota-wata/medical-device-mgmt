@@ -590,32 +590,29 @@ export default function InventoryPage() {
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
-        {/* 内訳バッジ */}
+        {/* 内訳バッジ ＝ ステータスフィルター (2026-06-02 統合: クリックでフィルター切替、件数も兼ねる) */}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs tabular-nums">
-          <span className="inline-flex items-center px-2 py-1 rounded border bg-[#EBF5EE] text-[#146E2E] border-[#A7D8B2]">
-            確認済(在庫一致) <span className="ml-1 font-bold">{progress.stockOk}</span> 件
-          </span>
-          <span className="inline-flex items-center px-2 py-1 rounded border bg-[#FFF4E5] text-[#B45309] border-[#FCD9A1]">
-            移動予定 <span className="ml-1 font-bold">{progress.movePlanned}</span> 件
-            <span className="ml-1 text-[10px] opacity-80">→ 申請対象</span>
-          </span>
-          <span className="inline-flex items-center px-2 py-1 rounded border bg-[#F3E8FF] text-[#6B21A8] border-[#D8B4FE]">
-            廃棄予定 <span className="ml-1 font-bold">{progress.disposalPlanned}</span> 件
-            <span className="ml-1 text-[10px] opacity-80">→ 申請対象</span>
-          </span>
-          <span
-            className={`inline-flex items-center px-2 py-1 rounded border ${
-              progress.actionRequired > 0
-                ? 'bg-[#FDF1E5] text-[#DA0000] border-[#FDA3A3]'
-                : 'bg-white text-content-sub border-stroke-card'
-            }`}
-          >
-            要対応(保留) <span className="ml-1 font-bold">{progress.actionRequired}</span> 件
-            {progress.actionRequired > 0 && <span className="ml-1 text-[10px]">⚠ 解消が必要</span>}
-          </span>
-          <span className="inline-flex items-center px-2 py-1 rounded border bg-white text-content-sub border-stroke-card">
-            未確認 <span className="ml-1 font-bold">{progress.unchecked}</span> 件
-          </span>
+          {([
+            { value: 'all', label: 'すべて', count: progress.total, bg: 'bg-white', text: 'text-content-sub', border: 'border-stroke-card', suffix: undefined as string | undefined },
+            { value: 'unchecked', label: '未確認', count: progress.unchecked, bg: 'bg-white', text: 'text-content-sub', border: 'border-stroke-card', suffix: undefined as string | undefined },
+            { value: 'stock_ok', label: '確認済(在庫一致)', count: progress.stockOk, bg: 'bg-[#EBF5EE]', text: 'text-[#146E2E]', border: 'border-[#A7D8B2]', suffix: undefined as string | undefined },
+            { value: 'move_planned', label: '移動予定', count: progress.movePlanned, bg: 'bg-[#FFF4E5]', text: 'text-[#B45309]', border: 'border-[#FCD9A1]', suffix: '→ 申請対象' as string | undefined },
+            { value: 'disposal_planned', label: '廃棄予定', count: progress.disposalPlanned, bg: 'bg-[#F3E8FF]', text: 'text-[#6B21A8]', border: 'border-[#D8B4FE]', suffix: '→ 申請対象' as string | undefined },
+            { value: 'action_required', label: '要対応(保留)', count: progress.actionRequired, bg: progress.actionRequired > 0 ? 'bg-[#FDF1E5]' : 'bg-white', text: progress.actionRequired > 0 ? 'text-[#DA0000]' : 'text-content-sub', border: progress.actionRequired > 0 ? 'border-[#FDA3A3]' : 'border-stroke-card', suffix: (progress.actionRequired > 0 ? '⚠ 解消が必要' : undefined) as string | undefined },
+          ]).map((opt) => {
+            const active = filterStatus === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setFilterStatus(opt.value as typeof filterStatus)}
+                aria-pressed={active}
+                className={`inline-flex items-center px-2 py-1 rounded border cursor-pointer transition-all ${opt.bg} ${opt.text} ${opt.border} ${active ? 'ring-2 ring-cta-primary ring-offset-1 font-bold' : 'hover:opacity-80'}`}
+              >
+                {opt.label} <span className="ml-1 font-bold">{opt.count}</span> 件
+                {opt.suffix && <span className="ml-1 text-[10px] opacity-80">{opt.suffix}</span>}
+              </button>
+            );
+          })}
         </div>
         {!progress.canComplete && progress.total > 0 && (
           <p className="mt-2 text-xs text-[#B45309]">
@@ -625,31 +622,7 @@ export default function InventoryPage() {
       </div>
 
       {/* フィルターバー */}
-      <div className="bg-white px-5 py-4 border-b border-stroke-card">
-        {/* ステータスフィルター */}
-        <div className="flex flex-wrap gap-2 mb-3">
-          {/* 件数は進捗バー下の内訳バッジに集約。フィルターはラベルのみ表示し二重表記を解消 (2026-06-02 修正) */}
-          {[
-            { value: 'unchecked', label: '未確認' },
-            { value: 'stock_ok', label: '確認済(在庫一致)' },
-            { value: 'move_planned', label: '移動予定' },
-            { value: 'disposal_planned', label: '廃棄予定' },
-            { value: 'action_required', label: '要対応(保留)' },
-            { value: 'all', label: 'すべて' }
-          ].map(option => (
-            <label key={option.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
-              <input
-                type="radio"
-                name="filterStatus"
-                checked={filterStatus === option.value}
-                onChange={() => setFilterStatus(option.value as typeof filterStatus)}
-                className="w-4 h-4 accent-cta-primary cursor-pointer"
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-
+      <div className="bg-white px-5 py-3 border-b border-stroke-card">
         {/* 6つのフィルター */}
         <div className="flex flex-wrap gap-2.5 items-end">
           <div style={{ minWidth: '120px' }}>
