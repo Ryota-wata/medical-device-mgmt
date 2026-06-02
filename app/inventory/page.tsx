@@ -12,7 +12,7 @@ import { TransferApplicationModal } from '@/components/ui/TransferApplicationMod
 import { exportInventoryToExcel } from '@/lib/utils/excel-inventory';
 
 // 棚卸し確認ステータス
-type InventoryStatus = 'unchecked' | 'stock_ok' | 'location_changed' | 'disposed' | 'action_required';
+type InventoryStatus = 'unchecked' | 'stock_ok' | 'move_planned' | 'disposal_planned' | 'action_required';
 
 interface InventoryItem {
   asset: Asset;
@@ -109,7 +109,7 @@ export default function InventoryPage() {
   const { isMobile } = useResponsive();
 
   // フィルター状態（6つのフィルター）
-  const [filterStatus, setFilterStatus] = useState<'all' | 'unchecked' | 'checked' | 'action_required'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'unchecked' | 'stock_ok' | 'move_planned' | 'disposal_planned' | 'action_required'>('unchecked');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterDivision, setFilterDivision] = useState('');
   const [filterSection, setFilterSection] = useState('');
@@ -195,16 +195,11 @@ export default function InventoryPage() {
 
 
   // フィルタリングされた棚卸しアイテム
-  // 「すべて」と「未確認」では未確認のみ表示（確定したカードは非表示）
-  // 「確認済」「要対応」では該当するカードを表示
+  // 5択 + 'all' のいずれか。'all' は全件、それ以外は完全一致
   const filteredItems = useMemo(() => {
     return inventoryItems.filter(item => {
       // ステータスフィルター
-      // 「すべて」は未確認のものだけを表示（確定したものは消える）
-      if (filterStatus === 'all' && item.status !== 'unchecked') return false;
-      if (filterStatus === 'unchecked' && item.status !== 'unchecked') return false;
-      if (filterStatus === 'checked' && (item.status === 'unchecked' || item.status === 'action_required')) return false;
-      if (filterStatus === 'action_required' && !['location_changed', 'disposed', 'action_required'].includes(item.status)) return false;
+      if (filterStatus !== 'all' && item.status !== filterStatus) return false;
 
       // フィルター（6つ）
       if (filterDepartment && item.asset.department !== filterDepartment) return false;
@@ -223,11 +218,33 @@ export default function InventoryPage() {
   }, [inventoryItems, filterStatus, filterDepartment, filterDivision, filterSection, filterCategory, filterLargeClass, filterMediumClass, departments]);
 
   // 進捗計算
+  // 判定済 = stock_ok + move_planned + disposal_planned（後続アクションが明確）
+  // 要対応(保留) = action_required（判定不能のため進捗からは除外）
+  // 未確認 = unchecked（まだ作業していない）
   const progress = useMemo(() => {
     const total = inventoryItems.length;
-    const checked = inventoryItems.filter(item => item.status !== 'unchecked').length;
-    const actionRequired = inventoryItems.filter(item => ['location_changed', 'disposed', 'action_required'].includes(item.status)).length;
-    return { total, checked, actionRequired, percentage: total > 0 ? Math.round((checked / total) * 100) : 0 };
+    const stockOk = inventoryItems.filter(i => i.status === 'stock_ok').length;
+    const movePlanned = inventoryItems.filter(i => i.status === 'move_planned').length;
+    const disposalPlanned = inventoryItems.filter(i => i.status === 'disposal_planned').length;
+    const actionRequired = inventoryItems.filter(i => i.status === 'action_required').length;
+    const unchecked = inventoryItems.filter(i => i.status === 'unchecked').length;
+    const judged = stockOk + movePlanned + disposalPlanned;
+    const percentage = total > 0 ? Math.round((judged / total) * 100) : 0;
+    // 完了条件: 未確認 0 件 かつ 要対応 0 件
+    const canComplete = unchecked === 0 && actionRequired === 0 && total > 0;
+    return {
+      total,
+      judged,
+      stockOk,
+      movePlanned,
+      disposalPlanned,
+      actionRequired,
+      unchecked,
+      percentage,
+      canComplete,
+      // 旧APIとの互換（カード境界色のための checked 判定で使用）
+      checked: judged + actionRequired,
+    };
   }, [inventoryItems]);
 
   // フィルターオプション（マスターデータから取得）
@@ -280,7 +297,7 @@ export default function InventoryPage() {
 
   // ステータス変更
   const handleStatusChange = (index: number, status: InventoryStatus) => {
-    if (status === 'location_changed') {
+    if (status === 'move_planned') {
       // 場所変更モーダルを開く
       const item = inventoryItems[index];
       setTempLocation({
@@ -291,7 +308,7 @@ export default function InventoryPage() {
         roomName: item.asset.roomName || ''
       });
       setLocationChangeModal({ isOpen: true, itemIndex: index });
-    } else if (status === 'disposed') {
+    } else if (status === 'disposal_planned') {
       // 廃棄モーダルを開く
       setDisposalModal({ isOpen: true, itemIndex: index });
     } else if (status === 'stock_ok') {
@@ -321,7 +338,7 @@ export default function InventoryPage() {
     const newItems = [...inventoryItems];
     newItems[locationChangeModal.itemIndex] = {
       ...newItems[locationChangeModal.itemIndex],
-      status: 'location_changed',
+      status: 'move_planned',
       newBuilding: tempLocation.building,
       newFloor: tempLocation.floor,
       newDepartment: tempLocation.department,
@@ -418,11 +435,11 @@ export default function InventoryPage() {
   // 棚卸し完了処理
   const handleComplete = () => {
     // 移動申請と廃棄申請を自動作成
-    const locationChangedItems = inventoryItems.filter(item => item.status === 'location_changed');
-    const disposedItems = inventoryItems.filter(item => item.status === 'disposed');
+    const movePlannedItems = inventoryItems.filter(item => item.status === 'move_planned');
+    const disposalPlannedItems = inventoryItems.filter(item => item.status === 'disposal_planned');
 
     // 移動申請作成
-    locationChangedItems.forEach(item => {
+    movePlannedItems.forEach(item => {
       const applicationData: Omit<Application, 'id'> = {
         applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         applicationDate: new Date().toISOString().split('T')[0],
@@ -453,7 +470,7 @@ export default function InventoryPage() {
     });
 
     // 廃棄申請作成
-    disposedItems.forEach(item => {
+    disposalPlannedItems.forEach(item => {
       const applicationData: Omit<Application, 'id'> = {
         applicationNo: `APP-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
         applicationDate: new Date().toISOString().split('T')[0],
@@ -487,7 +504,7 @@ export default function InventoryPage() {
     localStorage.removeItem(INVENTORY_STORAGE_KEY);
 
     setCompleteModal(false);
-    alert(`棚卸しを完了しました。\n移動申請: ${locationChangedItems.length}件\n廃棄申請: ${disposedItems.length}件\n\nメイン画面に移動します。`);
+    alert(`棚卸しを完了しました。\n移動申請: ${movePlannedItems.length}件\n廃棄申請: ${disposalPlannedItems.length}件\n\nメイン画面に移動します。`);
     router.push('/main');
   };
 
@@ -495,10 +512,10 @@ export default function InventoryPage() {
   const getStatusBadge = (status: InventoryStatus) => {
     const styles: Record<InventoryStatus, { bg: string; color: string; text: string }> = {
       unchecked: { bg: '#E1E1E1', color: '#8A8A8A', text: '未確認' },
-      stock_ok: { bg: '#EBF5EE', color: '#146E2E', text: '確認済' },
-      location_changed: { bg: '#FDF1E5', color: '#4A4A4A', text: '移動' },
-      disposed: { bg: '#FDF1E5', color: '#DA0000', text: '廃棄' },
-      action_required: { bg: '#FDF1E5', color: '#DA0000', text: '要対応' }
+      stock_ok: { bg: '#EBF5EE', color: '#146E2E', text: '確認済(在庫一致)' },
+      move_planned: { bg: '#FFF4E5', color: '#B45309', text: '移動予定' },
+      disposal_planned: { bg: '#F3E8FF', color: '#6B21A8', text: '廃棄予定' },
+      action_required: { bg: '#FDF1E5', color: '#DA0000', text: '要対応(保留)' }
     };
     const style = styles[status];
     return (
@@ -544,15 +561,16 @@ export default function InventoryPage() {
       <div className="bg-white px-5 py-4 border-b border-stroke-card">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <div className="text-base font-bold text-content-primary tabular-nums">
-            棚卸し進捗: {progress.checked} / {progress.total} 件 ({progress.percentage}%)
+            棚卸し進捗: {progress.judged} / {progress.total} 件 ({progress.percentage}%)
+            <span className="ml-2 text-xs font-normal text-content-sub">
+              ※ 判定済（在庫一致＋移動予定＋廃棄予定）の割合
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-[#4A4A4A] tabular-nums">
-              要対応: {progress.actionRequired}件
-            </span>
             <button
               onClick={() => setCompleteModal(true)}
-              disabled={progress.percentage < 100}
+              disabled={!progress.canComplete}
+              title={!progress.canComplete ? '未確認・要対応(保留) を 0 件にしてください' : ''}
               className="px-5 py-2 text-sm font-bold rounded-md text-white bg-cta-primary hover:bg-cta-primary-dark disabled:bg-content-disabled disabled:cursor-not-allowed transition-colors"
             >
               棚卸し完了
@@ -571,6 +589,38 @@ export default function InventoryPage() {
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
+        {/* 内訳バッジ */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs tabular-nums">
+          <span className="inline-flex items-center px-2 py-1 rounded border bg-[#EBF5EE] text-[#146E2E] border-[#A7D8B2]">
+            確認済(在庫一致) <span className="ml-1 font-bold">{progress.stockOk}</span> 件
+          </span>
+          <span className="inline-flex items-center px-2 py-1 rounded border bg-[#FFF4E5] text-[#B45309] border-[#FCD9A1]">
+            移動予定 <span className="ml-1 font-bold">{progress.movePlanned}</span> 件
+            <span className="ml-1 text-[10px] opacity-80">→ 申請対象</span>
+          </span>
+          <span className="inline-flex items-center px-2 py-1 rounded border bg-[#F3E8FF] text-[#6B21A8] border-[#D8B4FE]">
+            廃棄予定 <span className="ml-1 font-bold">{progress.disposalPlanned}</span> 件
+            <span className="ml-1 text-[10px] opacity-80">→ 申請対象</span>
+          </span>
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded border ${
+              progress.actionRequired > 0
+                ? 'bg-[#FDF1E5] text-[#DA0000] border-[#FDA3A3]'
+                : 'bg-white text-content-sub border-stroke-card'
+            }`}
+          >
+            要対応(保留) <span className="ml-1 font-bold">{progress.actionRequired}</span> 件
+            {progress.actionRequired > 0 && <span className="ml-1 text-[10px]">⚠ 解消が必要</span>}
+          </span>
+          <span className="inline-flex items-center px-2 py-1 rounded border bg-white text-content-sub border-stroke-card">
+            未確認 <span className="ml-1 font-bold">{progress.unchecked}</span> 件
+          </span>
+        </div>
+        {!progress.canComplete && progress.total > 0 && (
+          <p className="mt-2 text-xs text-[#B45309]">
+            棚卸し完了には「未確認」と「要対応(保留)」を 0 件にする必要があります
+          </p>
+        )}
       </div>
 
       {/* フィルターバー */}
@@ -578,9 +628,12 @@ export default function InventoryPage() {
         {/* ステータスフィルター */}
         <div className="flex flex-wrap gap-2 mb-3">
           {[
-            { value: 'all', label: '未確認' },
-            { value: 'checked', label: '確認済' },
-            { value: 'action_required', label: '要対応' }
+            { value: 'unchecked', label: `未確認 (${progress.unchecked})` },
+            { value: 'stock_ok', label: `確認済(在庫一致) (${progress.stockOk})` },
+            { value: 'move_planned', label: `移動予定 (${progress.movePlanned})` },
+            { value: 'disposal_planned', label: `廃棄予定 (${progress.disposalPlanned})` },
+            { value: 'action_required', label: `要対応(保留) (${progress.actionRequired})` },
+            { value: 'all', label: `すべて (${progress.total})` }
           ].map(option => (
             <label key={option.value} className="flex items-center gap-1.5 text-sm cursor-pointer">
               <input
@@ -661,7 +714,7 @@ export default function InventoryPage() {
       </div>
 
       {/* 一括操作バー（未確認フィルター時のみ表示） */}
-      {filterStatus === 'all' && filteredItems.length > 0 && (
+      {filterStatus === 'unchecked' && filteredItems.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 bg-[#EBF5EE] px-5 py-3 border-b border-[#EBF5EE]">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -689,7 +742,7 @@ export default function InventoryPage() {
             }}
             className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#DA0000] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
           >
-            廃棄（除却）申請へ
+            廃棄予定として記録
           </button>
           <button
             disabled={selectedItems.size === 0}
@@ -697,9 +750,9 @@ export default function InventoryPage() {
               if (selectedItems.size === 0) return;
               setBulkTransferModal(true);
             }}
-            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#4A4A4A] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
+            className="px-4 py-2 text-[13px] font-bold text-white rounded whitespace-nowrap bg-[#B45309] hover:opacity-90 disabled:bg-content-disabled disabled:cursor-not-allowed disabled:hover:opacity-100 transition-opacity"
           >
-            移動申請へ
+            移動予定として記録
           </button>
           <button
             disabled={selectedItems.size === 0}
@@ -729,7 +782,8 @@ export default function InventoryPage() {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   border: item.status === 'unchecked' ? '1px solid #E1E1E1' :
                          item.status === 'stock_ok' ? '2px solid #008C1D' :
-                         item.status === 'location_changed' ? '2px solid #4A4A4A' :
+                         item.status === 'move_planned' ? '2px solid #B45309' :
+                         item.status === 'disposal_planned' ? '2px solid #6B21A8' :
                          '2px solid #DA0000'
                 }}
               >
@@ -1008,7 +1062,7 @@ export default function InventoryPage() {
           const newItems = [...inventoryItems];
           newItems[disposalModal.itemIndex] = {
             ...newItems[disposalModal.itemIndex],
-            status: 'disposed',
+            status: 'disposal_planned',
             confirmedAt: new Date().toISOString()
           };
           setInventoryItems(newItems);
@@ -1030,7 +1084,7 @@ export default function InventoryPage() {
             if (index !== -1 && newItems[index].status === 'unchecked') {
               newItems[index] = {
                 ...newItems[index],
-                status: 'disposed',
+                status: 'disposal_planned',
                 confirmedAt: new Date().toISOString()
               };
             }
@@ -1057,7 +1111,7 @@ export default function InventoryPage() {
             if (index !== -1 && newItems[index].status === 'unchecked') {
               newItems[index] = {
                 ...newItems[index],
-                status: 'location_changed',
+                status: 'move_planned',
                 confirmedAt: new Date().toISOString()
               };
             }
@@ -1108,21 +1162,37 @@ export default function InventoryPage() {
             </div>
             <div style={{ padding: '24px' }}>
               <p style={{ marginBottom: '16px', color: '#4A4A4A', fontWeight: 'bold' }}>
-                棚卸しを完了してよろしいですか？
+                棚卸しを完了し、移動申請・廃棄申請を一括作成します
               </p>
-              <div style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
-                <div style={{ marginBottom: '8px', fontSize: '14px' }}>
-                  <strong>確認済み:</strong> {progress.checked}件 / {progress.total}件
+              <div style={{ background: '#FAFAFA', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                <div style={{ marginBottom: '8px', fontSize: '13px', color: '#4A4A4A', fontWeight: 'bold' }}>
+                  ▼ 棚卸し結果（{progress.total}件）
                 </div>
-                <div style={{ marginBottom: '8px', fontSize: '14px' }}>
-                  <strong>移動申請（自動作成）:</strong> {inventoryItems.filter(i => i.status === 'location_changed').length}件
+                <div style={{ marginBottom: '4px', fontSize: '13px' }}>
+                  ・確認済(在庫一致): <strong className="tabular-nums">{progress.stockOk}</strong> 件
                 </div>
-                <div style={{ fontSize: '14px' }}>
-                  <strong>廃棄申請（自動作成）:</strong> {inventoryItems.filter(i => i.status === 'disposed').length}件
+                <div style={{ marginBottom: '4px', fontSize: '13px' }}>
+                  ・移動予定: <strong className="tabular-nums">{progress.movePlanned}</strong> 件
+                </div>
+                <div style={{ marginBottom: '4px', fontSize: '13px' }}>
+                  ・廃棄予定: <strong className="tabular-nums">{progress.disposalPlanned}</strong> 件
                 </div>
               </div>
-              <p style={{ color: '#8A8A8A', fontSize: '13px' }}>
-                ※ 場所変更・廃棄とした資産については、自動的に申請が作成されます。
+              <div style={{ background: '#EBF5EE', border: '1px solid #008C1D', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                <div style={{ marginBottom: '6px', fontSize: '14px', color: '#146E2E', fontWeight: 'bold' }}>
+                  ▼ 完了時に自動作成される申請
+                </div>
+                <div style={{ marginBottom: '4px', fontSize: '14px', color: '#146E2E' }}>
+                  ・移動申請: <strong className="tabular-nums">{progress.movePlanned}</strong> 件
+                </div>
+                <div style={{ fontSize: '14px', color: '#146E2E' }}>
+                  ・廃棄申請: <strong className="tabular-nums">{progress.disposalPlanned}</strong> 件
+                </div>
+              </div>
+              <p style={{ color: '#8A8A8A', fontSize: '12px', lineHeight: 1.5 }}>
+                ※ 「完了する」を押すと、移動予定・廃棄予定の資産から申請を一括作成します。<br />
+                作成された申請は申請ステータス画面から確認できます。<br />
+                未確認・要対応(保留) は 0 件である必要があります。
               </p>
               <button
                 onClick={() => exportInventoryToExcel(inventoryItems)}

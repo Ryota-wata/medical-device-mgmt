@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 
 // Excel出力用の型定義（page.tsxへの依存を避ける）
-type InventoryStatus = 'unchecked' | 'stock_ok' | 'location_changed' | 'disposed' | 'action_required';
+type InventoryStatus = 'unchecked' | 'stock_ok' | 'move_planned' | 'disposal_planned' | 'action_required';
 
 export interface InventoryExportItem {
   asset: {
@@ -36,10 +36,10 @@ const HEADERS = [
 
 const STATUS_LABELS: Record<InventoryStatus, string> = {
   unchecked: '未確認',
-  stock_ok: '確認済',
-  location_changed: '移動',
-  disposed: '廃棄',
-  action_required: '要対応',
+  stock_ok: '確認済(在庫一致)',
+  move_planned: '移動予定',
+  disposal_planned: '廃棄予定',
+  action_required: '要対応(保留)',
 };
 
 function formatDate(isoString?: string): string {
