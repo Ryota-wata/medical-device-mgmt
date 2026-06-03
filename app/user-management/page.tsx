@@ -7,6 +7,9 @@ import { useResponsive } from '@/lib/hooks/useResponsive';
 import { useUserStore } from '@/lib/stores/userStore';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
+import { useFacilityFeatureStore } from '@/lib/stores/facilityFeatureStore';
+import { useUserFeatureStore } from '@/lib/stores/userFeatureStore';
+import { PERMISSION_UNITS, PERMISSION_CATEGORY_ORDER, PermissionUnit } from '@/lib/data/permission-units';
 import { User, UserRole, USER_ROLE_LABELS, isShipRole, isHospitalRole, ROLE_CATEGORIES, ROLE_CATEGORY_LABELS, RoleCategory } from '@/lib/types/user';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -44,6 +47,14 @@ export default function UserManagementPage() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // 2段階権限モデル: 2段目 (ユーザー×施設×PU の ON/OFF) — 2026-06-03 追加
+  const { getSetting: getFacilityFeature } = useFacilityFeatureStore();
+  const { setSetting: setUserFeature, getSetting: getUserFeature } = useUserFeatureStore();
+  // モーダル内の保留変更: facility -> { puId: enabled }
+  const [permPending, setPermPending] = useState<Record<string, Record<string, boolean>>>({});
+  const [permActiveFacility, setPermActiveFacility] = useState<string>('');
+  const [permSearch, setPermSearch] = useState('');
 
   // フォーム状態
   const [formData, setFormData] = useState({
@@ -244,6 +255,8 @@ export default function UserManagementPage() {
       updatedAt: new Date().toISOString()
     };
     addUser(newUser);
+    // 権限設定の保留変更を保存 (2段目 userFeatureStore)
+    flushPermPending(newUser.id);
     setShowNewModal(false);
   };
 
@@ -265,6 +278,8 @@ export default function UserManagementPage() {
       role: formData.role,
       accessibleFacilities: formData.accessibleFacilities,
     });
+    // 権限設定の保留変更を保存 (2段目 userFeatureStore)
+    flushPermPending(selectedUser.id);
     setShowEditModal(false);
     setSelectedUser(null);
   };
@@ -303,6 +318,227 @@ export default function UserManagementPage() {
       return user.hospital || '-';
     }
     return '-';
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // 権限設定セクション (2段目: ユーザー×施設×PU の ON/OFF)
+  // 2026-06-03 追加: 1段目 (施設) で許可された PU のみ表示し、ユーザー単位で ON/OFF
+  // ─────────────────────────────────────────────────────────
+
+  /** 編集中ユーザーが対象とする施設リスト */
+  const permTargetFacilities = useMemo((): string[] => {
+    const acc = formData.accessibleFacilities || [];
+    if (acc.length === 0) {
+      // 所属施設のみ
+      return formData.hospital ? [formData.hospital] : [];
+    }
+    if (acc.includes('全施設')) {
+      // 全施設展開
+      return facilities.map((f) => f.facilityName);
+    }
+    return acc;
+  }, [formData.accessibleFacilities, formData.hospital, facilities]);
+
+  /** モーダル オープン時に施設タブを初期化 (最初の施設) */
+  useEffect(() => {
+    if ((showEditModal || showNewModal) && permTargetFacilities.length > 0) {
+      if (!permActiveFacility || !permTargetFacilities.includes(permActiveFacility)) {
+        setPermActiveFacility(permTargetFacilities[0]);
+      }
+    } else if (!showEditModal && !showNewModal) {
+      // モーダル閉じた時に保留変更をクリア
+      setPermPending({});
+      setPermSearch('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showEditModal, showNewModal, permTargetFacilities]);
+
+  /** PU の現在の有効状態を取得 (保留 > ユーザー個別 > 施設既定) */
+  const getPermDisplayValue = (facility: string, unit: PermissionUnit): { enabled: boolean; source: 'pending' | 'user' | 'facility-default'; facilityEnabled: boolean } => {
+    const facilityEnabled = getFacilityFeature(facility, unit.id);
+    const userId = isEdit_user_id_ref(); // 編集中ユーザーID (新規は undefined)
+    if (permPending[facility]?.[unit.id] !== undefined) {
+      return { enabled: permPending[facility][unit.id], source: 'pending', facilityEnabled };
+    }
+    if (userId) {
+      const userVal = getUserFeature(userId, facility, unit.id);
+      if (userVal !== undefined) {
+        return { enabled: facilityEnabled && userVal, source: 'user', facilityEnabled };
+      }
+    }
+    return { enabled: facilityEnabled, source: 'facility-default', facilityEnabled };
+  };
+
+  /** 編集中ユーザーID 取得 (新規時は undefined) */
+  function isEdit_user_id_ref(): string | undefined {
+    return showEditModal ? selectedUser?.id : undefined;
+  }
+
+  /** PU トグル */
+  const handlePermToggle = (facility: string, unit: PermissionUnit) => {
+    const { enabled, facilityEnabled } = getPermDisplayValue(facility, unit);
+    if (!facilityEnabled) return; // 1段目 OFF はトグル不可
+    const newVal = !enabled;
+    setPermPending((prev) => ({
+      ...prev,
+      [facility]: { ...(prev[facility] || {}), [unit.id]: newVal },
+    }));
+  };
+
+  /** カテゴリ一括 ON/OFF */
+  const handlePermCategoryBulk = (facility: string, units: PermissionUnit[], enabled: boolean) => {
+    setPermPending((prev) => {
+      const next = { ...prev };
+      next[facility] = { ...(next[facility] || {}) };
+      for (const u of units) {
+        if (getFacilityFeature(facility, u.id)) {
+          next[facility][u.id] = enabled;
+        }
+      }
+      return next;
+    });
+  };
+
+  /** 保留変更を userFeatureStore に保存 (保存ボタン押下時) */
+  const flushPermPending = (userId: string) => {
+    for (const [facility, puMap] of Object.entries(permPending)) {
+      for (const [puId, enabled] of Object.entries(puMap)) {
+        setUserFeature(userId, facility, puId, enabled);
+      }
+    }
+  };
+
+  /** PU カテゴリ別 グルーピング + 検索フィルター */
+  const permGroupedUnits = useMemo((): Record<string, PermissionUnit[]> => {
+    const groups: Record<string, PermissionUnit[]> = {};
+    const keyword = permSearch.trim().toLowerCase();
+    for (const cat of PERMISSION_CATEGORY_ORDER) {
+      const units = PERMISSION_UNITS.filter((u) => u.category === cat);
+      const filtered = keyword
+        ? units.filter((u) => u.id.toLowerCase().includes(keyword) || u.displayName.toLowerCase().includes(keyword) || (u.switchContent || '').toLowerCase().includes(keyword))
+        : units;
+      if (filtered.length > 0) groups[cat] = filtered;
+    }
+    return groups;
+  }, [permSearch]);
+
+  /** 権限設定セクション レンダー */
+  const renderPermissionSection = (_isEdit: boolean) => {
+    if (permTargetFacilities.length === 0) {
+      return (
+        <div style={{ padding: '16px', background: '#FAFAFA', borderTop: '1px solid #E1E1E1' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', margin: 0, marginBottom: '6px' }}>権限設定</h3>
+          <p style={{ fontSize: '12px', color: '#8A8A8A', margin: 0 }}>
+            アクセス可能施設が未設定のため、権限設定はできません。施設を選択してください。
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div style={{ padding: '16px', background: '#FAFAFA', borderTop: '1px solid #E1E1E1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', margin: 0 }}>
+            権限設定 <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 400 }}>({permTargetFacilities.length} 施設)</span>
+          </h3>
+          <input
+            type="text"
+            placeholder="権限を検索 (PU-001/ラベル/説明)"
+            value={permSearch}
+            onChange={(e) => setPermSearch(e.target.value)}
+            style={{ padding: '6px 10px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', width: '240px' }}
+          />
+        </div>
+
+        {/* 施設タブ (複数施設のみ) */}
+        {permTargetFacilities.length > 1 && (
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            {permTargetFacilities.map((f) => {
+              const active = f === permActiveFacility;
+              const pendingCount = Object.keys(permPending[f] || {}).length;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setPermActiveFacility(f)}
+                  style={{
+                    padding: '6px 12px',
+                    background: active ? '#008C1D' : 'white',
+                    color: active ? 'white' : '#4A4A4A',
+                    border: '1px solid ' + (active ? '#008C1D' : '#E1E1E1'),
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: active ? 600 : 400,
+                  }}
+                >
+                  {f}{pendingCount > 0 && <span style={{ marginLeft: '4px', color: active ? 'white' : '#DA0000', fontWeight: 700 }}>●</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* PU カテゴリ別 */}
+        <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #E1E1E1', borderRadius: '4px', background: 'white' }}>
+          {Object.entries(permGroupedUnits).map(([cat, units]) => (
+            <div key={cat} style={{ borderBottom: '1px solid #E1E1E1' }}>
+              <div style={{ padding: '8px 12px', background: '#F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 }}>
+                <strong style={{ fontSize: '12px', color: '#4A4A4A' }}>{cat}</strong>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => handlePermCategoryBulk(permActiveFacility, units, true)}
+                    style={{ padding: '2px 8px', background: 'white', color: '#146E2E', border: '1px solid #146E2E', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}
+                  >全 ON</button>
+                  <button
+                    onClick={() => handlePermCategoryBulk(permActiveFacility, units, false)}
+                    style={{ padding: '2px 8px', background: 'white', color: '#8A8A8A', border: '1px solid #8A8A8A', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}
+                  >全 OFF</button>
+                </div>
+              </div>
+              {units.map((unit) => {
+                const { enabled, source, facilityEnabled } = getPermDisplayValue(permActiveFacility, unit);
+                return (
+                  <label
+                    key={unit.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px',
+                      padding: '6px 12px',
+                      borderTop: '1px solid #FAFAFA',
+                      cursor: facilityEnabled ? 'pointer' : 'not-allowed',
+                      opacity: facilityEnabled ? 1 : 0.5,
+                      background: source === 'pending' ? '#FFF8E1' : 'white',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={enabled}
+                      disabled={!facilityEnabled}
+                      onChange={() => handlePermToggle(permActiveFacility, unit)}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', color: '#4A4A4A' }}>
+                        <strong>{unit.id}</strong> {unit.displayName}
+                      </div>
+                      {unit.switchContent && (
+                        <div style={{ fontSize: '10px', color: '#8A8A8A' }}>{unit.switchContent}</div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#8A8A8A', whiteSpace: 'nowrap' }}>
+                      {!facilityEnabled && <span style={{ color: '#DA0000' }}>(施設で未提供)</span>}
+                      {facilityEnabled && source === 'facility-default' && <span>(施設既定値)</span>}
+                      {facilityEnabled && source === 'user' && <span style={{ color: '#146E2E' }}>(個別設定)</span>}
+                      {source === 'pending' && <span style={{ color: '#B45309' }}>(未保存)</span>}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const renderModal = (isEdit: boolean) => {
@@ -737,6 +973,9 @@ export default function UserManagementPage() {
                 </div>
               )}
             </div>
+
+            {/* 権限設定セクション (2026-06-03 新規追加 — 2段階権限モデル 2段目) */}
+            {renderPermissionSection(isEdit)}
           </div>
 
           <div
