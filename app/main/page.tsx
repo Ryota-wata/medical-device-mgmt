@@ -318,17 +318,9 @@ export default function MainPage() {
                 申請ステータス
               </button>
             )}
-
-            {/* 見積代行依頼 (2026-06-03 新規): SHIP代理見積ユーザー想定。ロール撤廃方針のため全員にボタン表示 */}
-            <button
-              onClick={() => router.push('/ship-proxy-quotation-list')}
-              title="病院からの見積書代行依頼を一覧表示 (SHIP代理見積ユーザー向け)"
-              className={`bg-surface-card border border-cta-primary rounded-lg font-normal text-cta-primary-dark cursor-pointer transition-all hover:bg-cta-primary hover:text-white hover:shadow-md ${
-                isMobile ? 'px-4 py-4 text-sm' : 'px-6 py-3.5 text-base'
-              }`}
-            >
-              見積代行依頼
-            </button>
+            {/* (削除 2026-06-03) 見積代行依頼ボタン: SHIP代理見積担当者は専用ユーザー (estimate_staff) で
+                ログイン直後に /ship-proxy-quotation-list に直接遷移する設計に変更したため、
+                メイン画面からのボタンは不要 */}
           </div>
         </div>
 
