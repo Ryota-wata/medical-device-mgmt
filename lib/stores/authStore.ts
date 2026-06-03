@@ -60,15 +60,6 @@ export const TEST_USERS: TestUser[] = [
     accessibleFacilities: ['全施設'],
     category: 'system',
   },
-  // SHIP代理見積担当者 (2026-06-03 新規): ログイン後 直接 /ship-proxy-quotation-list に遷移、他機能なし
-  {
-    email: 'proxy-estimate@ship.com',
-    role: 'estimate_staff',
-    roleLabel: 'SHIP代理見積担当者',
-    name: '見積 花子',
-    accessibleFacilities: ['全施設'],
-    category: 'system',
-  },
 ];
 
 interface AuthStore {

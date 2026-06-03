@@ -73,15 +73,7 @@ export default function LoginPage() {
         localStorage.removeItem('rememberMe');
       }
 
-      // 2026-06-03: SHIP代理見積担当者 (estimate_staff) は施設選択をスキップし、
-      // 直接 見積代行依頼一覧画面へ遷移 (他機能は使わない専用ユーザー)
-      const { TEST_USERS } = await import('@/lib/stores/authStore');
-      const testUser = TEST_USERS.find((u) => u.email === email);
-      if (testUser?.role === 'estimate_staff') {
-        router.push('/ship-proxy-quotation-list');
-      } else {
-        router.push('/facility-select');
-      }
+      router.push('/facility-select');
     } catch (_err) {
       setEmailError('アドレスが間違っています');
       setPasswordError('パスワードが間違ってます');

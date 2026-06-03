@@ -318,9 +318,7 @@ export default function MainPage() {
                 申請ステータス
               </button>
             )}
-            {/* (削除 2026-06-03) 見積代行依頼ボタン: SHIP代理見積担当者は専用ユーザー (estimate_staff) で
-                ログイン直後に /ship-proxy-quotation-list に直接遷移する設計に変更したため、
-                メイン画面からのボタンは不要 */}
+            {/* (削除 2026-06-03) SHIP代理見積担当者向け「見積代行依頼」ボタン: Ph2 移行のため Ph1 のモック実装は撤去 */}
           </div>
         </div>
 
