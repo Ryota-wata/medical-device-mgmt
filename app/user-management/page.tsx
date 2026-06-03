@@ -9,41 +9,30 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { useMasterStore } from '@/lib/stores/masterStore';
 import { useFacilityFeatureStore } from '@/lib/stores/facilityFeatureStore';
 import { useUserFeatureStore } from '@/lib/stores/userFeatureStore';
+import { useFacilityGroupStore } from '@/lib/stores/facilityGroupStore';
 import { PERMISSION_UNITS, PERMISSION_CATEGORY_ORDER, PermissionUnit } from '@/lib/data/permission-units';
-import { User, UserRole, USER_ROLE_LABELS, isShipRole, isHospitalRole, ROLE_CATEGORIES, ROLE_CATEGORY_LABELS, RoleCategory } from '@/lib/types/user';
+import { User } from '@/lib/types/user';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { EmptyState } from '@/components/ui/EmptyState';
 
-// ロールバッジカラー
-const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
-  system_admin: { bg: '#DA0000', text: 'white' },
-  org_default_1: { bg: '#4A4A4A', text: 'white' },
-  org_default_2: { bg: '#4A4A4A', text: 'white' },
-  org_default_3: { bg: '#4A4A4A', text: 'white' },
-  org_default_4: { bg: '#4A4A4A', text: 'white' },
-  hospital_sys_admin: { bg: '#008C1D', text: 'white' },
-  hospital_office: { bg: '#008C1D', text: 'white' },
-  hospital_dept_head: { bg: '#4A4A4A', text: 'white' },
-  hospital_me: { bg: '#4A4A4A', text: 'white' },
-  hospital_doctor_nurse: { bg: '#4A4A4A', text: 'white' },
-  rimo_hospital: { bg: '#4A4A4A', text: 'white' },
-  estimate_staff: { bg: '#4A4A4A', text: 'white' },
-  consignment_staff: { bg: '#4A4A4A', text: 'white' },
-  lending_warehouse: { bg: '#DA0000', text: 'white' },
-  inspection_mobile: { bg: '#DA0000', text: 'white' },
-  transport_mobile: { bg: '#8A8A8A', text: 'white' },
-  vendor_receiving_mobile: { bg: '#8A8A8A', text: 'white' },
-};
+// ロール概念は撤廃 (2026-06-03)
+// 仕様:
+//   1段目 = SHIPシステム全体管理者 が 病院(施設) に対し使える機能を設定 (facilityFeatureStore)
+//   2段目 = 病院内システム管理者 が 院内ユーザー に対し使える機能を設定 (userFeatureStore)
+//   他施設の閲覧 = /facility-group-management で作成した施設グループに連動 (facilityGroupStore)
+// User.role は型互換のため "system_admin" 固定で発行 (UI では参照しない)
+const LEGACY_ROLE_FOR_NEW_USER = 'system_admin' as const;
 
 export default function UserManagementPage() {
   const { isMobile, isTablet } = useResponsive();
   const { users, setUsers, addUser, updateUser, deleteUser } = useUserStore();
   const { user: currentUser } = useAuthStore();
   const { facilities } = useMasterStore();
+  const { getGroupsForFacility } = useFacilityGroupStore();
 
   const [filterUsername, setFilterUsername] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterRole, setFilterRole] = useState('');
+  const [filterFacility, setFilterFacility] = useState('');
   const [showNewModal, setShowNewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -53,24 +42,20 @@ export default function UserManagementPage() {
   const { setSetting: setUserFeature, getSetting: getUserFeature } = useUserFeatureStore();
   // モーダル内の保留変更: facility -> { puId: enabled }
   const [permPending, setPermPending] = useState<Record<string, Record<string, boolean>>>({});
-  const [permActiveFacility, setPermActiveFacility] = useState<string>('');
   const [permSearch, setPermSearch] = useState('');
 
-  // フォーム状態
+  // フォーム状態 (role/accessibleFacilities/contactPerson は撤廃、所属病院 hospital を主軸)
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     hospital: '',
     department: '',
     position: '',
-    contactPerson: '',
     phone: '',
-    role: 'hospital_office' as UserRole,
-    accessibleFacilities: [] as string[],
   });
 
-  // ログインユーザーがSHIP側かどうか
-  const isShipUser = currentUser ? isShipRole(currentUser.role) : false;
+  // 現ログインユーザー が SHIP 全体管理者か (= 所属病院なし)
+  const isShipUser = !currentUser?.hospital;
   const currentUserHospital = currentUser?.hospital;
 
   // 施設マスタから施設名リスト
@@ -83,10 +68,8 @@ export default function UserManagementPage() {
     return Array.from(new Set(users.map(u => u.department).filter(Boolean))) as string[];
   }, [users]);
 
-  // 施設検索用の一時state
-  const [facilitySearchQuery, setFacilitySearchQuery] = useState('');
-
   // サンプルデータを初期化
+  // role フィールドは型互換のため "system_admin" 固定 (UI では参照しない / ロール撤廃)
   useEffect(() => {
     if (users.length === 0) {
       const sampleUsers: User[] = [
@@ -95,7 +78,7 @@ export default function UserManagementPage() {
           username: '管理者太郎',
           email: 'admin@ship.com',
           hospital: undefined,
-          role: 'system_admin',
+          role: LEGACY_ROLE_FOR_NEW_USER,
           department: '情報システム部',
           position: '部長',
           contactPerson: '管理者太郎',
@@ -105,39 +88,11 @@ export default function UserManagementPage() {
           updatedAt: '2024-01-01T00:00:00Z'
         },
         {
-          id: 'U002',
-          username: '山田花子',
-          email: 'org1@ship.com',
-          hospital: undefined,
-          role: 'org_default_1',
-          department: 'コンサル部',
-          position: '主任',
-          contactPerson: '山田花子',
-          phone: '03-0000-0002',
-          accessibleFacilities: ['東京中央病院', '横浜総合病院', '千葉医療センター'],
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'U003',
-          username: '鈴木一郎',
-          email: 'org2@ship.com',
-          hospital: undefined,
-          role: 'org_default_2',
-          department: '営業部',
-          position: '担当',
-          contactPerson: '鈴木一郎',
-          phone: '03-0000-0003',
-          accessibleFacilities: ['東京中央病院', '横浜総合病院'],
-          createdAt: '2024-01-15T00:00:00Z',
-          updatedAt: '2024-01-15T00:00:00Z'
-        },
-        {
           id: 'U004',
           username: '佐藤美智子',
           email: 'hospital-admin@hospital.com',
           hospital: '東京中央病院',
-          role: 'hospital_sys_admin',
+          role: LEGACY_ROLE_FOR_NEW_USER,
           department: '医事課',
           position: '課長',
           contactPerson: '佐藤美智子',
@@ -151,7 +106,7 @@ export default function UserManagementPage() {
           username: '高橋健二',
           email: 'hospital-office@hospital.com',
           hospital: '東京中央病院',
-          role: 'hospital_office',
+          role: LEGACY_ROLE_FOR_NEW_USER,
           department: '医事課',
           position: '主任',
           contactPerson: '高橋健二',
@@ -165,7 +120,7 @@ export default function UserManagementPage() {
           username: '田中花子',
           email: 'hospital-me@hospital.com',
           hospital: '東京中央病院',
-          role: 'hospital_me',
+          role: LEGACY_ROLE_FOR_NEW_USER,
           department: 'ME室',
           position: '臨床工学技士',
           contactPerson: '田中花子',
@@ -192,10 +147,10 @@ export default function UserManagementPage() {
     return result.filter((user) => {
       const matchUsername = !filterUsername || user.username.toLowerCase().includes(filterUsername.toLowerCase());
       const matchDepartment = !filterDepartment || (user.department?.includes(filterDepartment) ?? false);
-      const matchRole = !filterRole || user.role === filterRole;
-      return matchUsername && matchDepartment && matchRole;
+      const matchFacility = !filterFacility || user.hospital === filterFacility;
+      return matchUsername && matchDepartment && matchFacility;
     });
-  }, [users, isShipUser, currentUserHospital, filterUsername, filterDepartment, filterRole]);
+  }, [users, isShipUser, currentUserHospital, filterUsername, filterDepartment, filterFacility]);
 
   const handleEdit = (user: User) => {
     setSelectedUser(user);
@@ -205,10 +160,7 @@ export default function UserManagementPage() {
       hospital: user.hospital || '',
       department: user.department || '',
       position: user.position || '',
-      contactPerson: user.contactPerson || '',
       phone: user.phone || '',
-      role: user.role,
-      accessibleFacilities: user.accessibleFacilities || [],
     });
     setShowEditModal(true);
   };
@@ -226,10 +178,7 @@ export default function UserManagementPage() {
       hospital: isShipUser ? '' : (currentUserHospital || ''),
       department: '',
       position: '',
-      contactPerson: '',
       phone: '',
-      role: 'hospital_office',
-      accessibleFacilities: [],
     });
     setShowNewModal(true);
   };
@@ -239,18 +188,21 @@ export default function UserManagementPage() {
       alert('ユーザー名とメールアドレスは必須です');
       return;
     }
+    if (!formData.hospital) {
+      alert('所属病院は必須です');
+      return;
+    }
 
     const newUser: User = {
       id: `U${String(users.length + 1).padStart(3, '0')}`,
       username: formData.username,
       email: formData.email,
-      hospital: isShipRole(formData.role) ? undefined : formData.hospital,
+      hospital: formData.hospital,
       department: formData.department,
       position: formData.position,
-      contactPerson: formData.contactPerson,
       phone: formData.phone,
-      role: formData.role,
-      accessibleFacilities: formData.accessibleFacilities,
+      role: LEGACY_ROLE_FOR_NEW_USER, // 後方互換のためダミー値 (UI 不参照)
+      accessibleFacilities: [], // 施設グループから派生するため空配列
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -258,6 +210,7 @@ export default function UserManagementPage() {
     // 権限設定の保留変更を保存 (2段目 userFeatureStore)
     flushPermPending(newUser.id);
     setShowNewModal(false);
+    clearPermState();
   };
 
   const handleEditSubmit = () => {
@@ -266,97 +219,79 @@ export default function UserManagementPage() {
       alert('ユーザー名とメールアドレスは必須です');
       return;
     }
+    if (!formData.hospital) {
+      alert('所属病院は必須です');
+      return;
+    }
 
     updateUser(selectedUser.id, {
       username: formData.username,
       email: formData.email,
-      hospital: isShipRole(formData.role) ? undefined : formData.hospital,
+      hospital: formData.hospital,
       department: formData.department,
       position: formData.position,
-      contactPerson: formData.contactPerson,
       phone: formData.phone,
-      role: formData.role,
-      accessibleFacilities: formData.accessibleFacilities,
+      // role / accessibleFacilities / contactPerson は既存値を保持 (UI 不参照、後方互換)
     });
     // 権限設定の保留変更を保存 (2段目 userFeatureStore)
     flushPermPending(selectedUser.id);
     setShowEditModal(false);
     setSelectedUser(null);
+    clearPermState();
   };
 
-  const addFacility = (facilityName: string) => {
-    if (!facilityName) return;
-    setFormData(prev => {
-      const current = prev.accessibleFacilities || [];
-      if (current.includes(facilityName)) return prev;
-      return { ...prev, accessibleFacilities: [...current, facilityName] };
-    });
-    setFacilitySearchQuery('');
+  // 閲覧可能施設 = 所属病院 + 施設グループに含まれる他施設 (派生計算)
+  const getViewableFacilitiesForUser = (user: User): { ownFacility: string | null; groupedFacilities: Array<{ facility: string; groupName: string; sharing: { asset: boolean; estimate: boolean; history: boolean } }> } => {
+    if (!user.hospital) {
+      // SHIP 全体管理者 (所属病院なし) は全施設アクセス
+      return { ownFacility: null, groupedFacilities: [] };
+    }
+    const ownFacility = user.hospital;
+    const groups = getGroupsForFacility(ownFacility);
+    const groupedFacilities: Array<{ facility: string; groupName: string; sharing: { asset: boolean; estimate: boolean; history: boolean } }> = [];
+    for (const g of groups) {
+      for (const f of g.facilityIds) {
+        if (f === ownFacility) continue;
+        if (groupedFacilities.some((x) => x.facility === f)) continue;
+        groupedFacilities.push({ facility: f, groupName: g.name, sharing: g.sharing });
+      }
+    }
+    return { ownFacility, groupedFacilities };
   };
 
-  const removeFacility = (facilityName: string) => {
-    setFormData(prev => ({
-      ...prev,
-      accessibleFacilities: (prev.accessibleFacilities || []).filter(f => f !== facilityName)
-    }));
+  // ユーザー一覧の「所属施設」表示用テキスト
+  const getHospitalText = (user: User): string => {
+    if (!user.hospital) return 'SHIP (全体管理)';
+    return user.hospital;
   };
 
-  // アクセス可能施設の表示用テキスト
-  const getAccessibleFacilitiesText = (user: User): string => {
-    if (isShipRole(user.role)) {
-      const f = user.accessibleFacilities || [];
-      return f.length > 0 ? f.join(', ') : '未設定';
-    }
-    if (user.role === 'hospital_sys_admin' || user.role === 'hospital_office') {
-      const ownFacility = user.hospital ? [user.hospital] : [];
-      const otherFacilities = user.accessibleFacilities || [];
-      const all = [...ownFacility, ...otherFacilities.filter(f => f !== user.hospital)];
-      return all.length > 0 ? all.join(', ') : '-';
-    }
-    // 病院側その他のロールは所属施設のみ
-    if (isHospitalRole(user.role)) {
-      return user.hospital || '-';
-    }
-    return '-';
+  // ユーザー一覧の「閲覧可能施設数」表示用テキスト (所属施設 + 共有グループ数)
+  const getViewableFacilitiesCountText = (user: User): string => {
+    if (!user.hospital) return '全施設';
+    const { groupedFacilities } = getViewableFacilitiesForUser(user);
+    if (groupedFacilities.length === 0) return '所属のみ';
+    return `所属 + ${groupedFacilities.length} 施設 (グループ)`;
   };
 
   // ─────────────────────────────────────────────────────────
   // 権限設定セクション (2段目: ユーザー×施設×PU の ON/OFF)
-  // 2026-06-03 追加: 1段目 (施設) で許可された PU のみ表示し、ユーザー単位で ON/OFF
+  // 2026-06-03 v2: 対象は所属病院1施設に固定 (施設タブ廃止)
+  // 1段目で許可された PU のみ表示し、ユーザー単位で ON/OFF
   // ─────────────────────────────────────────────────────────
 
-  /** 編集中ユーザーが対象とする施設リスト */
-  const permTargetFacilities = useMemo((): string[] => {
-    const acc = formData.accessibleFacilities || [];
-    if (acc.length === 0) {
-      // 所属施設のみ
-      return formData.hospital ? [formData.hospital] : [];
-    }
-    if (acc.includes('全施設')) {
-      // 全施設展開
-      return facilities.map((f) => f.facilityName);
-    }
-    return acc;
-  }, [formData.accessibleFacilities, formData.hospital, facilities]);
+  /** 対象施設 = 所属病院 (1施設のみ) */
+  const permTargetFacility = formData.hospital;
 
-  /** モーダル オープン時に施設タブを初期化 (最初の施設) */
-  useEffect(() => {
-    if ((showEditModal || showNewModal) && permTargetFacilities.length > 0) {
-      if (!permActiveFacility || !permTargetFacilities.includes(permActiveFacility)) {
-        setPermActiveFacility(permTargetFacilities[0]);
-      }
-    } else if (!showEditModal && !showNewModal) {
-      // モーダル閉じた時に保留変更をクリア
-      setPermPending({});
-      setPermSearch('');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showEditModal, showNewModal, permTargetFacilities]);
+  /** モーダル閉じる際の権限関連state クリア (アクション側で呼ぶ) */
+  const clearPermState = () => {
+    setPermPending({});
+    setPermSearch('');
+  };
 
   /** PU の現在の有効状態を取得 (保留 > ユーザー個別 > 施設既定) */
   const getPermDisplayValue = (facility: string, unit: PermissionUnit): { enabled: boolean; source: 'pending' | 'user' | 'facility-default'; facilityEnabled: boolean } => {
     const facilityEnabled = getFacilityFeature(facility, unit.id);
-    const userId = isEdit_user_id_ref(); // 編集中ユーザーID (新規は undefined)
+    const userId = showEditModal ? selectedUser?.id : undefined;
     if (permPending[facility]?.[unit.id] !== undefined) {
       return { enabled: permPending[facility][unit.id], source: 'pending', facilityEnabled };
     }
@@ -368,11 +303,6 @@ export default function UserManagementPage() {
     }
     return { enabled: facilityEnabled, source: 'facility-default', facilityEnabled };
   };
-
-  /** 編集中ユーザーID 取得 (新規時は undefined) */
-  function isEdit_user_id_ref(): string | undefined {
-    return showEditModal ? selectedUser?.id : undefined;
-  }
 
   /** PU トグル */
   const handlePermToggle = (facility: string, unit: PermissionUnit) => {
@@ -423,79 +353,55 @@ export default function UserManagementPage() {
   }, [permSearch]);
 
   /** 権限設定セクション レンダー */
-  const renderPermissionSection = (_isEdit: boolean) => {
-    if (permTargetFacilities.length === 0) {
+  const renderPermissionSection = () => {
+    if (!permTargetFacility) {
       return (
         <div style={{ padding: '16px', background: '#FAFAFA', borderTop: '1px solid #E1E1E1' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', margin: 0, marginBottom: '6px' }}>権限設定</h3>
           <p style={{ fontSize: '12px', color: '#8A8A8A', margin: 0 }}>
-            アクセス可能施設が未設定のため、権限設定はできません。施設を選択してください。
+            所属病院が未設定のため、権限設定はできません。所属病院を選択してください。
           </p>
         </div>
       );
     }
     return (
       <div style={{ padding: '16px', background: '#FAFAFA', borderTop: '1px solid #E1E1E1' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', margin: 0 }}>
-            権限設定 <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 400 }}>({permTargetFacilities.length} 施設)</span>
+        <div style={{ marginBottom: '10px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', margin: 0, marginBottom: '4px' }}>
+            権限設定 <span style={{ fontSize: '11px', color: '#8A8A8A', fontWeight: 400 }}>({permTargetFacility})</span>
           </h3>
+          <p style={{ fontSize: '11px', color: '#8A8A8A', margin: 0, marginBottom: '8px' }}>
+            病院内システム管理者が、このユーザーに対し使える機能をON/OFFします。<br />
+            (病院に対する機能の許可は SHIPシステム全体管理者が「権限管理」画面で設定します)
+          </p>
           <input
             type="text"
             placeholder="権限を検索 (PU-001/ラベル/説明)"
             value={permSearch}
             onChange={(e) => setPermSearch(e.target.value)}
-            style={{ padding: '6px 10px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '12px', width: '240px' }}
+            style={{ padding: '8px 12px', border: '1px solid #E1E1E1', borderRadius: '4px', fontSize: '13px', width: '100%', maxWidth: '360px', boxSizing: 'border-box' }}
           />
         </div>
 
-        {/* 施設タブ (複数施設のみ) */}
-        {permTargetFacilities.length > 1 && (
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            {permTargetFacilities.map((f) => {
-              const active = f === permActiveFacility;
-              const pendingCount = Object.keys(permPending[f] || {}).length;
-              return (
-                <button
-                  key={f}
-                  onClick={() => setPermActiveFacility(f)}
-                  style={{
-                    padding: '6px 12px',
-                    background: active ? '#008C1D' : 'white',
-                    color: active ? 'white' : '#4A4A4A',
-                    border: '1px solid ' + (active ? '#008C1D' : '#E1E1E1'),
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: active ? 600 : 400,
-                  }}
-                >
-                  {f}{pendingCount > 0 && <span style={{ marginLeft: '4px', color: active ? 'white' : '#DA0000', fontWeight: 700 }}>●</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         {/* PU カテゴリ別 */}
-        <div style={{ maxHeight: '320px', overflowY: 'auto', border: '1px solid #E1E1E1', borderRadius: '4px', background: 'white' }}>
+        <div style={{ maxHeight: '560px', overflowY: 'auto', border: '1px solid #E1E1E1', borderRadius: '4px', background: 'white' }}>
           {Object.entries(permGroupedUnits).map(([cat, units]) => (
             <div key={cat} style={{ borderBottom: '1px solid #E1E1E1' }}>
               <div style={{ padding: '8px 12px', background: '#F1F1F1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0 }}>
                 <strong style={{ fontSize: '12px', color: '#4A4A4A' }}>{cat}</strong>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <button
-                    onClick={() => handlePermCategoryBulk(permActiveFacility, units, true)}
+                    onClick={() => handlePermCategoryBulk(permTargetFacility, units, true)}
                     style={{ padding: '2px 8px', background: 'white', color: '#146E2E', border: '1px solid #146E2E', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}
                   >全 ON</button>
                   <button
-                    onClick={() => handlePermCategoryBulk(permActiveFacility, units, false)}
+                    onClick={() => handlePermCategoryBulk(permTargetFacility, units, false)}
                     style={{ padding: '2px 8px', background: 'white', color: '#8A8A8A', border: '1px solid #8A8A8A', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}
                   >全 OFF</button>
                 </div>
               </div>
               {units.map((unit) => {
-                const { enabled, source, facilityEnabled } = getPermDisplayValue(permActiveFacility, unit);
+                const { enabled, source, facilityEnabled } = getPermDisplayValue(permTargetFacility, unit);
                 return (
                   <label
                     key={unit.id}
@@ -514,7 +420,7 @@ export default function UserManagementPage() {
                       type="checkbox"
                       checked={enabled}
                       disabled={!facilityEnabled}
-                      onChange={() => handlePermToggle(permActiveFacility, unit)}
+                      onChange={() => handlePermToggle(permTargetFacility, unit)}
                       style={{ marginTop: '2px' }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -541,13 +447,54 @@ export default function UserManagementPage() {
     );
   };
 
+  /** 閲覧可能施設 (施設グループ派生) セクション レンダー */
+  const renderViewableFacilitiesSection = () => {
+    if (!formData.hospital) return null;
+    const groups = getGroupsForFacility(formData.hospital);
+    return (
+      <div style={{ padding: '16px', background: '#FAFAFA', borderTop: '1px solid #E1E1E1' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#4A4A4A', margin: 0, marginBottom: '4px' }}>
+          閲覧可能施設
+        </h3>
+        <p style={{ fontSize: '11px', color: '#8A8A8A', margin: 0, marginBottom: '10px' }}>
+          施設グループに連動して自動決定されます。グループ編集は「施設グループ管理」画面で行います。
+        </p>
+        <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', padding: '10px' }}>
+          <div style={{ fontSize: '12px', color: '#4A4A4A', marginBottom: '8px' }}>
+            <strong>自施設:</strong> {formData.hospital}
+          </div>
+          {groups.length === 0 ? (
+            <div style={{ fontSize: '11px', color: '#8A8A8A' }}>
+              所属する施設グループはありません (他施設の閲覧不可)
+            </div>
+          ) : (
+            <div>
+              <div style={{ fontSize: '11px', color: '#8A8A8A', marginBottom: '4px' }}>所属グループ:</div>
+              {groups.map((g) => (
+                <div key={g.id} style={{ marginBottom: '6px', paddingLeft: '8px', borderLeft: '2px solid #E1E1E1' }}>
+                  <div style={{ fontSize: '12px', color: '#4A4A4A', fontWeight: 600 }}>{g.name}</div>
+                  <div style={{ fontSize: '11px', color: '#8A8A8A', marginTop: '2px' }}>
+                    施設: {g.facilityIds.filter((f) => f !== formData.hospital).join(', ') || '(他施設なし)'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#8A8A8A', marginTop: '2px', display: 'flex', gap: '8px' }}>
+                    <span>共有: </span>
+                    {g.sharing.asset && <span style={{ background: '#EBF5EE', color: '#146E2E', padding: '1px 6px', borderRadius: '8px' }}>資産</span>}
+                    {g.sharing.estimate && <span style={{ background: '#FDF1E5', color: '#B45309', padding: '1px 6px', borderRadius: '8px' }}>見積</span>}
+                    {g.sharing.history && <span style={{ background: '#E7F0FE', color: '#1851A6', padding: '1px 6px', borderRadius: '8px' }}>履歴</span>}
+                    {!g.sharing.asset && !g.sharing.estimate && !g.sharing.history && <span style={{ color: '#8A8A8A' }}>なし</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderModal = (isEdit: boolean) => {
     const isOpen = isEdit ? showEditModal : showNewModal;
     if (!isOpen) return null;
-
-    const isShipRoleSelected = isShipRole(formData.role);
-    const isOfficeRole = formData.role === 'hospital_sys_admin' || formData.role === 'hospital_office';
-    const isClinicalRole = isHospitalRole(formData.role) && !isOfficeRole;
 
     return (
       <div
@@ -563,15 +510,15 @@ export default function UserManagementPage() {
           justifyContent: 'center',
           zIndex: 1000,
         }}
-        onClick={() => isEdit ? setShowEditModal(false) : setShowNewModal(false)}
+        onClick={() => { if (isEdit) { setShowEditModal(false); setSelectedUser(null); } else { setShowNewModal(false); } clearPermState(); }}
       >
         <div
           style={{
             background: 'white',
             borderRadius: '8px',
-            width: '90%',
-            maxWidth: '600px',
-            maxHeight: '90vh',
+            width: '95%',
+            maxWidth: '1100px',
+            maxHeight: '95vh',
             overflow: 'auto',
             boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
           }}
@@ -591,391 +538,144 @@ export default function UserManagementPage() {
             </h2>
           </div>
 
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* ユーザー名 */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                ユーザー名 <span style={{ color: '#DA0000' }}>*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* メールアドレス */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                メールアドレス <span style={{ color: '#DA0000' }}>*</span>
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                  maxWidth: '280px',
-                }}
-              />
-            </div>
-
-            {/* ロール */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                ロール
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => {
-                  const newRole = e.target.value as UserRole;
-                  setFormData({
-                    ...formData,
-                    role: newRole,
-                    accessibleFacilities: [],
-                    hospital: isShipRole(newRole) ? '' : formData.hospital,
-                  });
-                }}
-                style={{
-                  width: '100%',
-                  maxWidth: '220px',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                }}
-              >
-                {(Object.keys(ROLE_CATEGORIES) as RoleCategory[]).map((cat) => (
-                  <optgroup key={cat} label={ROLE_CATEGORY_LABELS[cat]}>
-                    {ROLE_CATEGORIES[cat].map((role) => (
-                      <option key={role} value={role}>{USER_ROLE_LABELS[role]}</option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-
-            {/* 所属施設（病院側ロールのみ） */}
-            {!isShipRoleSelected && (
+          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* 基本情報 グリッド (PC は 2 カラム、モバイルは 1 カラム) */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))',
+              columnGap: '24px',
+              rowGap: '16px',
+            }}>
+              {/* ユーザー名 */}
               <div>
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                  所属施設 <span style={{ color: '#DA0000' }}>*</span>
+                  ユーザー名 <span style={{ color: '#DA0000' }}>*</span>
                 </label>
-                <SearchableSelect
-                  value={formData.hospital}
-                  onChange={(value) => {
-                    setFormData({
-                      ...formData,
-                      hospital: value,
-                      accessibleFacilities: formData.accessibleFacilities.filter(f => f !== value),
-                    });
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #E1E1E1',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
                   }}
-                  options={facilityOptions}
-                  placeholder="施設名を検索..."
-                  isMobile={isMobile}
                 />
               </div>
-            )}
 
-            {/* 所属部署 */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                所属部署
-              </label>
-              <input
-                type="text"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                placeholder="例: 医事課"
-                style={{
-                  width: '100%',
-                  maxWidth: '200px',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+              {/* メールアドレス */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
+                  メールアドレス <span style={{ color: '#DA0000' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #E1E1E1',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
 
-            {/* 役職 */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                役職
-              </label>
-              <input
-                type="text"
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                placeholder="例: 課長"
-                style={{
-                  width: '100%',
-                  maxWidth: '160px',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* 担当者 */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                担当者
-              </label>
-              <input
-                type="text"
-                value={formData.contactPerson}
-                onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                style={{
-                  width: '100%',
-                  maxWidth: '200px',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* 連絡先 */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
-                連絡先
-              </label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="例: 03-1234-5678"
-                style={{
-                  width: '100%',
-                  maxWidth: '180px',
-                  padding: '10px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {/* 施設アクセス設定セクション */}
-            <div style={{
-              marginTop: '8px',
-              padding: '16px',
-              background: '#FAFAFA',
-              borderRadius: '8px',
-              border: '1px solid #E1E1E1',
-            }}>
-              <h3 style={{
-                margin: '0 0 12px 0',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#4A4A4A',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
-                <span style={{
-                  display: 'inline-block',
-                  width: '20px',
-                  height: '20px',
-                  background: ROLE_COLORS[formData.role].bg,
-                  color: 'white',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  textAlign: 'center',
-                  lineHeight: '20px',
-                }}>
-                  {formData.role.charAt(0).toUpperCase()}
-                </span>
-                施設アクセス設定（{USER_ROLE_LABELS[formData.role]}）
-              </h3>
-
-              {/* SHIP側ロール: 担当施設 */}
-              {isShipRoleSelected && (
-                <div>
-                  <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '12px' }}>
-                    担当施設を検索して追加してください（複数選択可）
-                  </p>
+              {/* 所属病院 (必須) — 2 カラム占有 */}
+              <div style={{ gridColumn: isMobile ? 'auto' : '1 / -1' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
+                  所属病院 <span style={{ color: '#DA0000' }}>*</span>
+                </label>
+                <div style={{ maxWidth: '480px' }}>
                   <SearchableSelect
-                    value={facilitySearchQuery}
-                    onChange={setFacilitySearchQuery}
-                    onSelect={(value) => addFacility(value)}
-                    options={facilityOptions.filter(f => !formData.accessibleFacilities.includes(f))}
-                    placeholder="施設名を検索して追加..."
+                    value={formData.hospital}
+                    onChange={(value) => setFormData({ ...formData, hospital: value })}
+                    options={facilityOptions}
+                    placeholder="所属病院を検索..."
                     isMobile={isMobile}
                   />
-                  {formData.accessibleFacilities.length > 0 && (
-                    <div style={{
-                      marginTop: '12px',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                    }}>
-                      {formData.accessibleFacilities.map((facility, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 10px',
-                            background: '#EBF5EE',
-                            border: '1px solid #E1E1E1',
-                            borderRadius: '16px',
-                            fontSize: '13px',
-                            color: '#4A4A4A',
-                          }}
-                        >
-                          <span>{facility}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeFacility(facility)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: '0',
-                              fontSize: '14px',
-                              color: '#DA0000',
-                              lineHeight: 1,
-                            }}
-                            aria-label={`${facility}を削除`}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p style={{ fontSize: '12px', color: '#008C1D', marginTop: '12px', fontWeight: 600 }}>
-                    選択中: {formData.accessibleFacilities.length} 施設
-                  </p>
                 </div>
-              )}
+                <p style={{ fontSize: '11px', color: '#8A8A8A', marginTop: '4px', marginBottom: 0 }}>
+                  所属病院に対する権限は SHIPシステム全体管理者が「権限管理」画面で設定します。
+                </p>
+              </div>
 
-              {/* 事務管理者/事務担当者: 閲覧可能な他施設 */}
-              {isOfficeRole && (
-                <div>
-                  <div style={{
-                    padding: '10px 12px',
-                    background: '#EBF5EE',
+              {/* 所属部署 */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
+                  所属部署
+                </label>
+                <input
+                  type="text"
+                  value={formData.department}
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  placeholder="例: 医事課"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
-                    marginBottom: '12px',
-                    fontSize: '12px',
-                    color: '#146E2E',
-                  }}>
-                    <strong>自施設（{formData.hospital || '未設定'}）</strong>の資産は自動的にアクセス可能です
-                  </div>
-                  {formData.hospital ? (
-                    <>
-                      <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '12px' }}>
-                        他施設の閲覧権限を検索して追加（任意）:
-                      </p>
-                      <SearchableSelect
-                        value={facilitySearchQuery}
-                        onChange={setFacilitySearchQuery}
-                        onSelect={(value) => addFacility(value)}
-                        options={facilityOptions.filter(f => f !== formData.hospital && !formData.accessibleFacilities.includes(f))}
-                        placeholder="施設名を検索して追加..."
-                        isMobile={isMobile}
-                      />
-                      {formData.accessibleFacilities.length > 0 && (
-                        <div style={{
-                          marginTop: '12px',
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '8px',
-                        }}>
-                          {formData.accessibleFacilities.map((facility, index) => (
-                            <div
-                              key={index}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 10px',
-                                background: '#FDF1E5',
-                                border: '1px solid #4A4A4A',
-                                borderRadius: '16px',
-                                fontSize: '13px',
-                                color: '#4A4A4A',
-                              }}
-                            >
-                              <span>{facility}</span>
-                              <span style={{ fontSize: '10px', color: '#4A4A4A' }}>閲覧のみ</span>
-                              <button
-                                type="button"
-                                onClick={() => removeFacility(facility)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  padding: '0',
-                                  fontSize: '14px',
-                                  color: '#DA0000',
-                                  lineHeight: 1,
-                                }}
-                                aria-label={`${facility}を削除`}
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <p style={{ fontSize: '11px', color: '#8A8A8A', marginTop: '8px' }}>
-                        ※ 他施設は閲覧のみ（編集不可）
-                      </p>
-                    </>
-                  ) : (
-                    <p style={{ fontSize: '12px', color: '#DA0000' }}>
-                      ※ 先に所属施設を選択してください
-                    </p>
-                  )}
-                </div>
-              )}
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
 
-              {/* 臨床スタッフ: 自施設のみ */}
-              {isClinicalRole && (
-                <div>
-                  <div style={{
-                    padding: '10px 12px',
-                    background: '#FDF1E5',
+              {/* 役職 */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
+                  役職
+                </label>
+                <input
+                  type="text"
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  placeholder="例: 課長"
+                  style={{
+                    width: '100%',
+                    maxWidth: '200px',
+                    padding: '10px',
+                    border: '1px solid #E1E1E1',
                     borderRadius: '4px',
-                    fontSize: '12px',
-                    color: '#4A4A4A',
-                  }}>
-                    <strong>所属施設（{formData.hospital || '未設定'}）</strong>の資産のみアクセス可能です
-                  </div>
-                  <p style={{ fontSize: '11px', color: '#8A8A8A', marginTop: '8px' }}>
-                    ※ 臨床スタッフは自施設のみのアクセスに制限されています
-                  </p>
-                </div>
-              )}
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {/* 連絡先 */}
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#4A4A4A', fontSize: '13px' }}>
+                  連絡先
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="例: 03-1234-5678"
+                  style={{
+                    width: '100%',
+                    maxWidth: '200px',
+                    padding: '10px',
+                    border: '1px solid #E1E1E1',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
             </div>
 
-            {/* 権限設定セクション (2026-06-03 新規追加 — 2段階権限モデル 2段目) */}
-            {renderPermissionSection(isEdit)}
+            {/* 閲覧可能施設 (施設グループ派生・読取専用) */}
+            {renderViewableFacilitiesSection()}
+
+            {/* 権限設定セクション (2段階権限モデル 2段目: ユーザー×PU ON/OFF) */}
+            {renderPermissionSection()}
           </div>
 
           <div
@@ -991,7 +691,7 @@ export default function UserManagementPage() {
             }}
           >
             <button
-              onClick={() => isEdit ? setShowEditModal(false) : setShowNewModal(false)}
+              onClick={() => { if (isEdit) { setShowEditModal(false); setSelectedUser(null); } else { setShowNewModal(false); } clearPermState(); }}
               style={{
                 padding: '10px 20px',
                 background: '#8A8A8A',
@@ -1096,28 +796,15 @@ export default function UserManagementPage() {
         </div>
         <div>
           <label style={{ display: 'block', fontSize: isMobile ? '12px' : '13px', fontWeight: 600, marginBottom: '6px', color: '#4A4A4A' }}>
-            ロール
+            所属病院
           </label>
-          <select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            style={{
-              width: '100%',
-              padding: isMobile ? '8px' : '10px',
-              border: '1px solid #E1E1E1',
-              borderRadius: '6px',
-              fontSize: isMobile ? '13px' : '14px',
-            }}
-          >
-            <option value="">すべて</option>
-            {(Object.keys(ROLE_CATEGORIES) as RoleCategory[]).map((cat) => (
-              <optgroup key={cat} label={ROLE_CATEGORY_LABELS[cat]}>
-                {ROLE_CATEGORIES[cat].map((role) => (
-                  <option key={role} value={role}>{USER_ROLE_LABELS[role]}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <SearchableSelect
+            value={filterFacility}
+            onChange={setFilterFacility}
+            options={['', ...facilityOptions]}
+            placeholder="所属病院で検索..."
+            isMobile={isMobile}
+          />
         </div>
       </div>
 
@@ -1127,7 +814,6 @@ export default function UserManagementPage() {
           // カード表示 (モバイル)
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {filteredUsers.map((user) => {
-              const roleColor = ROLE_COLORS[user.role];
               return (
                 <div key={user.id} style={{
                   background: 'white',
@@ -1136,19 +822,20 @@ export default function UserManagementPage() {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}>
                   <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #FAFAFA' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
                       <div style={{ fontSize: '16px', fontWeight: 600, color: '#4A4A4A' }}>
-                        {user.contactPerson || user.username}
+                        {user.username}
                       </div>
                       <span style={{
                         padding: '4px 10px',
                         borderRadius: '12px',
                         fontSize: '11px',
                         fontWeight: 600,
-                        background: roleColor.bg,
-                        color: roleColor.text,
+                        background: user.hospital ? '#EBF5EE' : '#FDF1E5',
+                        color: user.hospital ? '#146E2E' : '#B45309',
+                        whiteSpace: 'nowrap',
                       }}>
-                        {USER_ROLE_LABELS[user.role]}
+                        {getHospitalText(user)}
                       </span>
                     </div>
                     <div style={{ fontSize: '13px', color: '#8A8A8A' }}>
@@ -1159,7 +846,7 @@ export default function UserManagementPage() {
                     <div><span style={{ color: '#8A8A8A' }}>所属部署:</span> {user.department || '-'}</div>
                     <div><span style={{ color: '#8A8A8A' }}>役職:</span> {user.position || '-'}</div>
                     <div><span style={{ color: '#8A8A8A' }}>連絡先:</span> {user.phone || '-'}</div>
-                    <div><span style={{ color: '#8A8A8A' }}>アクセス可能:</span> {getAccessibleFacilitiesText(user)}</div>
+                    <div><span style={{ color: '#8A8A8A' }}>閲覧可能施設:</span> {getViewableFacilitiesCountText(user)}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                     <button
@@ -1206,17 +893,16 @@ export default function UserManagementPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
                 <thead>
                   <tr>
-                    {(['所属部署', '役職', '担当者', '連絡先', 'メールアドレス'] as const).map((label) => (
+                    {(['所属部署', '役職', 'ユーザー名', '連絡先', 'メールアドレス'] as const).map((label) => (
                       <th key={label} style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>{label}</th>
                     ))}
-                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>ロール</th>
-                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>アクセス可能施設</th>
+                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>所属病院</th>
+                    <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'left', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap' }}>閲覧可能施設</th>
                     <th style={{ padding: isTablet ? '10px 12px' : '12px 14px', textAlign: 'center', fontSize: isTablet ? '13px' : '14px', fontWeight: 600, color: '#4A4A4A', background: '#F1F1F1', border: '1px solid #E1E1E1', whiteSpace: 'nowrap', width: '92px' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user, index) => {
-                    const roleColor = ROLE_COLORS[user.role];
                     const cellBaseStyle: React.CSSProperties = {
                       padding: isTablet ? '10px 12px' : '12px 14px',
                       fontSize: isTablet ? '13px' : '14px',
@@ -1224,11 +910,12 @@ export default function UserManagementPage() {
                       border: '1px solid #E1E1E1',
                       verticalAlign: 'middle',
                     };
+                    const viewableText = getViewableFacilitiesCountText(user);
                     return (
                       <tr key={user.id} style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA' }}>
                         <td style={{ ...cellBaseStyle, fontWeight: 500 }}>{user.department || '-'}</td>
                         <td style={cellBaseStyle}>{user.position || '-'}</td>
-                        <td style={cellBaseStyle}>{user.contactPerson || user.username}</td>
+                        <td style={cellBaseStyle}>{user.username}</td>
                         <td style={{ ...cellBaseStyle, fontVariantNumeric: 'tabular-nums' }}>{user.phone || '-'}</td>
                         <td style={cellBaseStyle}>{user.email}</td>
                         <td style={{ ...cellBaseStyle, textAlign: 'center' }}>
@@ -1238,10 +925,10 @@ export default function UserManagementPage() {
                             borderRadius: '12px',
                             fontSize: '12px',
                             fontWeight: 600,
-                            background: roleColor.bg,
-                            color: roleColor.text,
+                            background: user.hospital ? '#EBF5EE' : '#FDF1E5',
+                            color: user.hospital ? '#146E2E' : '#B45309',
                           }}>
-                            {USER_ROLE_LABELS[user.role]}
+                            {getHospitalText(user)}
                           </span>
                         </td>
                         <td style={{ ...cellBaseStyle, fontSize: isTablet ? '12px' : '13px', color: '#8A8A8A', maxWidth: '200px' }}>
@@ -1249,8 +936,8 @@ export default function UserManagementPage() {
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                          }} title={getAccessibleFacilitiesText(user)}>
-                            {getAccessibleFacilitiesText(user)}
+                          }} title={viewableText}>
+                            {viewableText}
                           </div>
                         </td>
                         <td style={{ ...cellBaseStyle, textAlign: 'center', whiteSpace: 'nowrap' }}>
@@ -1299,7 +986,7 @@ export default function UserManagementPage() {
               onAction={() => {
                 setFilterUsername('');
                 setFilterDepartment('');
-                setFilterRole('');
+                setFilterFacility('');
               }}
             />
           </div>
