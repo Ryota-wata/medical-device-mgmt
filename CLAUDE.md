@@ -206,6 +206,47 @@ Next.js App Router + Zustand で構築する業務システムの画面モック
 - 成果物間の整合性（画面↔DB↔API↔テスト）を維持すること
 - 検収基準書（`docs/検収基準書.xlsx`）の48項目が判定根拠
 
+### 画面設計書 専用ルール (オフショア翻訳対応、2026-06-03 追加)
+
+開発はオフショアチームのため翻訳ステップが必要。画面設計書の生成・更新時は以下を必ず遵守:
+
+#### R1. Excel + MD ペア生成 (翻訳容易性のため)
+- 1画面につき **Excel と MD の両方** を生成する
+- MD は翻訳が楽 (テキスト diff/置換が容易)、Excel は提出物として保持
+- 配置: `docs/deliverables/screen-design/{業務分類}/画面名_YYYYMMDD.xlsx` と同名の `.md`
+
+#### R2. ファイル名に `_YYYYMMDD` 必須
+- 作成日・更新日が一目で分かるよう、ファイル名末尾に `_YYYYMMDD` を付ける
+- 例: `個別部署マスタ一覧画面_20260603.xlsx` / `個別部署マスタ一覧画面_20260603.md`
+- 同じ画面の異なる日付は別ファイルとして扱う (旧版は次ルール R3 で archive)
+
+#### R3. 旧バージョンの archive 隔離
+- 新版生成時、同名(日付違い)の旧 Excel/MD は **`_archive_YYYYMMDD/` サブフォルダへ自動移動**
+- archive フォルダ名は移動操作日 (=新版作成日と同日でOK)
+- 最新版が一目で分かり、誤って旧版を翻訳するリスクをゼロに
+- 例:
+  ```
+  02_マスタ管理/個別部署マスタ一覧画面_20260603.xlsx        ← 最新
+  02_マスタ管理/個別部署マスタ一覧画面_20260603.md          ← 最新
+  02_マスタ管理/_archive_20260603/
+    └ 個別部署マスタ一覧画面_20260520.xlsx / md            ← 旧版隔離
+  ```
+
+#### R4. Excel ↔ MD ペア保証 (lint)
+- 1画面 = 1 Excel + 1 MD が必須、**同日付**
+- スクリプトで片方だけ存在する場合は lint エラー
+- 翻訳漏れ防止 (Excel しか無い → 翻訳されない 事故を防ぐ)
+
+#### R5. 画面別 CHANGELOG.md
+- 画面ごとに `画面名_CHANGELOG.md` を持つ
+- 各更新で `[YYYY-MM-DD] REQ-XXX: 〇〇追加` 形式で 1行追記
+- オフショアは CHANGELOG を見て**差分箇所だけ再翻訳**可能 (コスト削減)
+- 配置: 業務分類フォルダ内、画面名と同階層
+
+#### R6. 関連ツール
+- 生成スクリプト `docs/deliverables/screen-design/generate_all_v2.py` が R1〜R5 を自動実行
+- ペアチェック lint: `python3 .claude/skills/screen-design-doc-generator/lint_no_implementation_details.py` の拡張で対応
+
 ---
 
 ## 8. Figmaデザイン反映（`.claude/skills/figma-reflection/`）
