@@ -5,6 +5,8 @@ import { Inbox, FileText, Hourglass } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRfqGroupStore } from '@/lib/stores/rfqGroupStore';
 import { useEditListStore } from '@/lib/stores/editListStore';
+import { useShipProxyQuotationStore } from '@/lib/stores/shipProxyQuotationStore';
+import { useAuthStore } from '@/lib/stores/authStore';
 import { Header } from '@/components/layouts/Header';
 
 // ──────────────────────────────────────────────
@@ -106,6 +108,12 @@ function RfqProcessContent() {
 
   // ── アクティブ業者インデックス（プレビュー連動） ──
   const [activeVendorIndex, setActiveVendorIndex] = useState(0);
+
+  // ── SHIP代理見積依頼 (2026-06-03 新規要求) ──
+  const addShipProxyRequest = useShipProxyQuotationStore((s) => s.addRequest);
+  const authUser = useAuthStore((s) => s.user);
+  const [shipProxyConfirm, setShipProxyConfirm] = useState(false);
+  const [shipProxyToast, setShipProxyToast] = useState<string | null>(null);
 
   // ── 見積登録フォーム ──
   const [quotationPhase, setQuotationPhase] = useState<'定価見積' | '概算見積' | '発注登録用見積'>('定価見積');
@@ -239,49 +247,42 @@ function RfqProcessContent() {
     }, 1500);
   };
 
-  // ── 「SHIPへ依頼」一括送信 ──
-  const handleSendRfqAll = () => {
+  // (削除 2026-06-03) handleSendRfqAll: 旧「SHIPへ一括依頼」ハンドラ。
+  // 正しい SHIP 依頼は「見積書をアップロード→OCR〜見積DB登録までを SHIP 代行依頼」(個別) に変更。
+  // セクション2「見積登録」の handleSendToShipProxy 参照。
+
+  // ── 「SHIPへ依頼」(見積登録代行) ──
+  // 見積書ファイルをアップロード後、SHIP代理見積ユーザーにOCR〜見積DB登録まで代行依頼する
+  const handleSendToShipProxy = () => {
     if (!rfqGroup) return;
-
-    const unsent = vendors.filter(v => !v.isSent);
-    if (unsent.length === 0) {
-      alert('送信対象の業者がありません');
+    if (!pdfFile) {
+      alert('見積書ファイルを選択してください');
       return;
     }
+    setShipProxyConfirm(true);
+  };
 
-    // バリデーション
-    const invalid = unsent.filter(v => !v.vendorName || !v.email);
-    if (invalid.length > 0) {
-      alert('未送信の業者すべてに業者名とメールアドレスを入力してください');
-      return;
-    }
-
-    // 各未送信業者を送信
-    unsent.forEach(vendor => {
-      const index = vendors.indexOf(vendor);
-      if (index === 0 || vendor.rfqGroupId) {
-        const targetId = vendor.rfqGroupId || rfqGroup.id;
-        updateRfqGroup(targetId, {
-          vendorName: vendor.vendorName,
-          personInCharge: vendor.personInCharge,
-          email: vendor.email,
-          tel: vendor.tel,
-          rfqDeadline: vendor.submitDeadline,
-          status: '見積依頼済',
-        });
-      } else {
-        cloneRfqGroupForVendor(rfqGroup.id, {
-          vendorName: vendor.vendorName,
-          personInCharge: vendor.personInCharge,
-          email: vendor.email,
-          tel: vendor.tel,
-          deadline: vendor.submitDeadline,
-        });
-      }
+  const handleConfirmShipProxy = () => {
+    if (!rfqGroup || !pdfFile) return;
+    const created = addShipProxyRequest({
+      hospitalId: authUser?.hospital || 'hosp-unknown',
+      hospitalName: authUser?.hospital || '未設定',
+      rfqGroupId: rfqGroup.id,
+      rfqGroupName: rfqGroup.groupName,
+      attachedFileName: pdfFile.name,
+      applicantId: authUser?.id || 'user-unknown',
+      applicantName: authUser?.username || '未設定',
+      quotationPhase,
+      saveFormat,
+      vendorName: rfqGroup.vendorName,
+      registrationDeadline,
     });
-
-    alert(`${unsent.length}件の見積依頼をSHIPへ送信しました`);
-    router.push('/quotation-data-box/purchase-management');
+    setShipProxyConfirm(false);
+    setShipProxyToast(`SHIPへ依頼しました (${created.requestNo})。完了後に見積DBに登録されます。`);
+    // 3秒後トースト消去
+    setTimeout(() => setShipProxyToast(null), 3000);
+    // フォームをリセット
+    setPdfFile(null);
   };
 
   // ── 「タスク管理に戻る」 ──
@@ -606,30 +607,7 @@ function RfqProcessContent() {
               </div>
             ))}
 
-            {/* 一括送信エリア */}
-            <div style={{
-              padding: '12px',
-              borderTop: '1px solid #E1E1E1',
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}>
-              <button
-                onClick={handleSendRfqAll}
-                disabled={unsentCount === 0}
-                style={{
-                  padding: '8px 24px',
-                  background: unsentCount === 0 ? '#8A8A8A' : '#DA0000',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: unsentCount === 0 ? 'not-allowed' : 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                }}
-              >
-                {unsentCount > 0 ? `SHIPへ一括依頼（${unsentCount}件）` : '全件送信済'}
-              </button>
-            </div>
+            {/* (削除 2026-06-03) 旧「SHIPへ一括依頼」エリア — SHIP代行は見積登録セクションに移動 */}
           </div>
 
           {/* ========== セクション2: 見積登録 ========== */}
@@ -742,16 +720,18 @@ function RfqProcessContent() {
               </table>
             </div>
 
-            {/* アクションエリア */}
+            {/* アクションエリア (2026-06-03 SHIPへ依頼ボタン追加) */}
             <div style={{
               padding: '12px 16px',
               borderTop: '1px solid #E1E1E1',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
             }}>
               <button
-                onClick={() => alert('Excel取込機能（モック）')}
+                onClick={() => alert('Excel取込機能(モック)')}
                 style={{
                   padding: '8px 20px',
                   background: '#087CB6',
@@ -772,6 +752,24 @@ function RfqProcessContent() {
                   onChange={(e) => setRegistrationDeadline(e.target.value)}
                   style={{ ...inputStyleCompact, width: '160px' }}
                 />
+                {/* SHIPへ依頼 (2026-06-03 新規) - 見積書をアップロードしてOCR/見積DB登録までSHIPに代行依頼 */}
+                <button
+                  onClick={handleSendToShipProxy}
+                  disabled={!pdfFile}
+                  title={!pdfFile ? '見積書ファイルを選択してください' : '見積書をSHIPに送り、OCR〜見積DB登録を代行依頼'}
+                  style={{
+                    padding: '8px 20px',
+                    background: !pdfFile ? '#8A8A8A' : '#008C1D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: !pdfFile ? 'not-allowed' : 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  SHIPへ依頼
+                </button>
               </div>
             </div>
           </div>
@@ -1100,6 +1098,52 @@ function RfqProcessContent() {
               見積書のAI読み取りを実行しています
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SHIPへ依頼 確認ダイアログ (2026-06-03 新規) */}
+      {shipProxyConfirm && pdfFile && (
+        <div
+          onClick={() => setShipProxyConfirm(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'white', borderRadius: '8px', width: '90%', maxWidth: '480px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#4A4A4A', marginBottom: '8px' }}>SHIPへ依頼</h3>
+            <p style={{ fontSize: '14px', color: '#4A4A4A', marginBottom: '8px' }}>
+              添付した見積書を SHIP に依頼します。
+            </p>
+            <div style={{ background: '#FAFAFA', padding: '10px 12px', borderRadius: '4px', marginBottom: '16px', fontSize: '12px', color: '#4A4A4A' }}>
+              <div>ファイル名: <strong>{pdfFile.name}</strong></div>
+              <div>見積G: {rfqGroup?.groupName}</div>
+              <div>業者: {rfqGroup?.vendorName || '(未設定)'}</div>
+              <div>見積フェーズ: {quotationPhase}</div>
+            </div>
+            <p style={{ fontSize: '12px', color: '#8A8A8A', marginBottom: '20px' }}>
+              ※ SHIP代理見積ユーザーが OCR・資産マスタ紐付け・見積DB登録を代行します。<br />
+              ※ 完了後、自動で当該施設の見積DBに登録されます。
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShipProxyConfirm(false)}
+                style={{ padding: '8px 20px', background: 'white', color: '#4A4A4A', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmShipProxy}
+                style={{ padding: '8px 20px', background: '#008C1D', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+              >
+                依頼を確定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SHIPへ依頼 トースト (2026-06-03 新規) */}
+      {shipProxyToast && (
+        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: '#008C1D', color: 'white', padding: '12px 20px', borderRadius: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: 1200, fontSize: '14px', fontWeight: 600 }}>
+          ✓ {shipProxyToast}
         </div>
       )}
     </div>
