@@ -6,10 +6,11 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ClipboardList, FileText } from 'lucide-react';
+import { ClipboardList, FileText, LogOut } from 'lucide-react';
 import { Header } from '@/components/layouts/Header';
 import { useShipProxyQuotationStore } from '@/lib/stores/shipProxyQuotationStore';
 import { ShipProxyQuotationStatus } from '@/lib/types/shipProxyQuotation';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 const STATUS_STYLES: Record<ShipProxyQuotationStatus, { bg: string; color: string; border: string }> = {
   '依頼中':      { bg: '#FFF4E5', color: '#B45309', border: '#FCD9A1' },
@@ -21,6 +22,12 @@ const STATUS_STYLES: Record<ShipProxyQuotationStatus, { bg: string; color: strin
 export default function ShipProxyQuotationListPage() {
   const router = useRouter();
   const { requests, updateStatus } = useShipProxyQuotationStore();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const [filterStatus, setFilterStatus] = useState<ShipProxyQuotationStatus | 'all'>('依頼中');
   const [filterHospital, setFilterHospital] = useState<string>('');
@@ -44,25 +51,47 @@ export default function ShipProxyQuotationListPage() {
     '差戻': requests.filter((r) => r.status === '差戻').length,
   }), [requests]);
 
+  // 代行ユーザー専用: 動線制限のため OCR画面遷移なし、一覧画面内で完結する作業フロー
   const handleStartWork = (id: string) => {
-    updateStatus(id, 'SHIP作業中', { shipUserName: 'SHIP代理 (自分)' });
-    router.push(`/quotation-data-box/ocr-confirm?spqId=${id}`);
+    if (!confirm('この依頼の代行作業を開始します。よろしいですか?')) return;
+    updateStatus(id, 'SHIP作業中', {
+      shipUserName: user?.username ?? 'SHIP代理 (自分)',
+    });
   };
 
-  const handleResumeWork = (id: string) => {
-    router.push(`/quotation-data-box/ocr-confirm?spqId=${id}`);
+  const handleCompleteWork = (id: string, requestNo: string) => {
+    if (!confirm(`${requestNo} の代行作業を完了として記録します。\n見積DB登録が完了したことを意味します。よろしいですか?`)) return;
+    updateStatus(id, '完了', {
+      completedAt: new Date().toISOString(),
+      quotationDbId: `qdb-${Date.now()}`,
+    });
+  };
+
+  const handleRejectWork = (id: string, requestNo: string) => {
+    const reason = prompt(`${requestNo} を差戻します。\n差戻理由を入力してください:`);
+    if (!reason) return;
+    updateStatus(id, '差戻', { rejectReason: reason });
   };
 
   return (
     <div className="flex flex-col min-h-dvh bg-surface-screen">
+      {/* 代行ユーザー専用: メイン画面・タスク管理画面への遷移は禁止。ヘッダーはタイトル+ユーザー名+ログアウトのみ */}
       <Header
         title="見積代行依頼一覧"
         hideMenu={true}
-        showBackButton={true}
-        backHref="/main"
-        backLabel="メイン画面に戻る"
-        backButtonVariant="secondary"
-      />
+        showBackButton={false}
+      >
+        <span className="text-xs text-content-sub hidden md:inline">
+          {user?.username ?? ''}
+        </span>
+        <button
+          onClick={handleLogout}
+          className="inline-flex items-center gap-1.5 h-9 px-3 bg-surface-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-sm font-medium hover:bg-surface-select transition-colors"
+        >
+          <LogOut size={14} aria-hidden />
+          ログアウト
+        </button>
+      </Header>
 
       <main className="flex-1 px-6 py-4 overflow-y-auto">
         {/* 説明バナー */}
@@ -178,12 +207,22 @@ export default function ShipProxyQuotationListPage() {
                           </button>
                         )}
                         {r.status === 'SHIP作業中' && (
-                          <button
-                            onClick={() => handleResumeWork(r.id)}
-                            className="px-3 py-1 rounded bg-[#087CB6] text-white text-xs font-semibold cursor-pointer hover:opacity-90"
-                          >
-                            OCR画面へ
-                          </button>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => handleCompleteWork(r.id, r.requestNo)}
+                              className="px-2 py-1 rounded bg-cta-primary text-white text-xs font-semibold cursor-pointer hover:bg-cta-primary-dark"
+                              title="OCR/見積DB登録の完了を記録"
+                            >
+                              完了
+                            </button>
+                            <button
+                              onClick={() => handleRejectWork(r.id, r.requestNo)}
+                              className="px-2 py-1 rounded bg-[#DA0000] text-white text-xs font-semibold cursor-pointer hover:opacity-90"
+                              title="ファイル不備等で病院に差戻"
+                            >
+                              差戻
+                            </button>
+                          </div>
                         )}
                         {r.status === '完了' && (
                           <span className="text-xs text-content-sub">{r.completedAt?.split('T')[0]} 完了</span>
