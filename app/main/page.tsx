@@ -31,6 +31,9 @@ export default function MainPage() {
   // 編集リスト関連のstate
   const [editListMode, setEditListMode] = useState<'select' | 'create'>('select');
   const [newEditListName, setNewEditListName] = useState('');
+  // 動線分離: 'normal' (通常編集) / 'remodel' (リモデル編集)
+  // メイン画面のボタンクリックで切替、モーダル全体がこのタイプに固定される
+  const [editListType, setEditListType] = useState<'normal' | 'remodel'>('remodel');
 
   // 削除確認ダイアログ用のstate
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -66,7 +69,8 @@ export default function MainPage() {
     showToast('QR読取機能（開発中）', 'info');
   };
 
-  const handleEditListManagement = () => {
+  const handleEditListManagement = (type: 'normal' | 'remodel' = 'remodel') => {
+    setEditListType(type);
     setIsEditListModalOpen(true);
     setEditListMode('select');
     setIsMobileMenuOpen(false);
@@ -93,9 +97,11 @@ export default function MainPage() {
       name: newEditListName.trim(),
       facilities: [selectedFacility],
       baseAssets,
+      mode: editListType,
     });
 
-    showToast(`編集リスト「${newEditListName.trim()}」を作成しました`, 'success');
+    const typeLabel = editListType === 'normal' ? '通常' : 'リモデル';
+    showToast(`編集リスト（${typeLabel}）「${newEditListName.trim()}」を作成しました`, 'success');
     closeEditListModal();
   };
 
@@ -211,7 +217,8 @@ export default function MainPage() {
   const headerNavItems: AppHeaderNavItem[] = useMemo(() => {
     return [
       { key: 'qr', label: 'QR読取', icon: 'qr', onClick: handleQRRead, visible: isShipUser },
-      { key: 'editList', label: '編集・分析', icon: 'list', onClick: handleEditListManagement, visible: isMainButtonVisible('edit_list') },
+      { key: 'editListNormal', label: '編集リスト（通常）', icon: 'list', onClick: () => handleEditListManagement('normal'), visible: isMainButtonVisible('edit_list') },
+      { key: 'editListRemodel', label: '編集リスト（リモデル）', icon: 'list', onClick: () => handleEditListManagement('remodel'), visible: isMainButtonVisible('edit_list') },
       { key: 'taskMgmt', label: 'タスク管理', icon: 'clipboard', onClick: handleQuotationManagement, visible: canAccess('normal_purchase') },
       { key: 'quotation', label: '見積管理', icon: 'clipboard', onClick: () => router.push('/quotation-management'), visible: isMainButtonVisible('quotation_management') },
       { key: 'qrIssue', label: 'QRコード発行', icon: 'qr', onClick: handleQRIssueFromModal, visible: isHospitalUser && canAccess('qr_issue') },
@@ -532,7 +539,9 @@ export default function MainPage() {
           >
             {/* モーダルヘッダー */}
             <div className="px-5 py-4 border-b border-stroke-card flex justify-between items-center">
-              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">編集リスト</h2>
+              <h2 className="m-0 text-lg font-semibold text-content-primary text-balance">
+                編集リスト（{editListType === 'normal' ? '通常' : 'リモデル'}）
+              </h2>
               <button
                 onClick={closeEditListModal}
                 className="size-8 flex items-center justify-center rounded-full text-content-sub hover:bg-surface-disabled hover:text-content-primary transition-colors cursor-pointer border-0 bg-transparent"
@@ -572,54 +581,58 @@ export default function MainPage() {
             <div className="p-6 overflow-visible">
               {editListMode === 'select' ? (
                 <div>
-                  {editLists.length === 0 ? (
-                    <p className="text-center text-content-sub p-5 text-pretty">
-                      作成済みの編集リストがありません
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      {editLists.map((list) => (
-                        <div key={list.id} className="flex items-stretch gap-2">
-                          <button
-                            onClick={() => handleSelectEditList(list.id)}
-                            className="flex-1 p-4 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-left transition-all hover:border-cta-primary hover:bg-[#EBF5EE]"
-                          >
-                            <div className="font-semibold text-sm text-content-primary mb-1">
-                              {list.name}
-                            </div>
-                            <div className="text-xs text-content-sub">
-                              施設: {list.facilities.join(', ')}
-                            </div>
-                            <div className="text-xs text-content-sub mt-1 tabular-nums">
-                              作成日: {new Date(list.createdAt).toLocaleDateString('ja-JP')}
-                            </div>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteEditList({ id: list.id, name: list.name });
-                            }}
-                            className="px-3 py-2 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-[#DA0000] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#DA0000]"
-                            title="削除"
-                          >
-                            削除
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    // mode 未設定の既存リストは 'remodel' とみなす後方互換
+                    const filteredLists = editLists.filter(l => (l.mode ?? 'remodel') === editListType);
+                    return filteredLists.length === 0 ? (
+                      <p className="text-center text-content-sub p-5 text-pretty">
+                        作成済みの編集リスト（{editListType === 'normal' ? '通常' : 'リモデル'}）がありません
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {filteredLists.map((list) => (
+                          <div key={list.id} className="flex items-stretch gap-2">
+                            <button
+                              onClick={() => handleSelectEditList(list.id)}
+                              className="flex-1 p-4 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-left transition-all hover:border-cta-primary hover:bg-[#EBF5EE]"
+                            >
+                              <div className="font-semibold text-sm text-content-primary mb-1">
+                                {list.name}
+                              </div>
+                              <div className="text-xs text-content-sub">
+                                施設: {list.facilities.join(', ')}
+                              </div>
+                              <div className="text-xs text-content-sub mt-1 tabular-nums">
+                                作成日: {new Date(list.createdAt).toLocaleDateString('ja-JP')}
+                              </div>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEditList({ id: list.id, name: list.name });
+                              }}
+                              className="px-3 py-2 bg-surface-card border border-stroke-input rounded-lg cursor-pointer text-[#DA0000] text-xs font-medium flex items-center justify-center transition-all hover:bg-red-50 hover:border-[#DA0000]"
+                              title="削除"
+                            >
+                              削除
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div>
                   <div className="mb-5">
                     <label className="block mb-2 text-sm font-medium text-content-primary">
-                      編集リスト名称
+                      編集リスト名称（{editListType === 'normal' ? '通常' : 'リモデル'}）
                     </label>
                     <input
                       type="text"
                       value={newEditListName}
                       onChange={(e) => setNewEditListName(e.target.value)}
-                      placeholder="例: 2025年度リモデル計画"
+                      placeholder={editListType === 'normal' ? '例: 2025年度 廃棄・移動リスト' : '例: 2025年度リモデル計画'}
                       className="w-full p-3 border border-stroke-input rounded-lg text-sm focus:outline-none focus:border-cta-primary focus:ring-1 focus:ring-[#008C1D]"
                     />
                   </div>
