@@ -12,6 +12,7 @@ $errorRows = @(
   @('403', '作業対象施設に対する実効 `transfer_disposal` なし', 'ErrorResponse'),
   @('404', '対象申請、対象RFQ、対象見積、対象ドキュメントが存在しない', 'ErrorResponse'),
   @('409', '現在ステータス不整合、競合更新、対象条件不整合', 'ErrorResponse'),
+  @('502', 'Amazon S3 へのファイル保存またはロールバック削除に失敗した', 'ErrorResponse'),
   @('500', 'サーバー内部エラー', 'ErrorResponse')
 )
 
@@ -140,22 +141,24 @@ $documentRows = @(
   @('fileName', 'string', '✓', 'ファイル名'),
   @('contentType', 'string', '-', 'MIMEタイプ'),
   @('fileSize', 'int64', '-', 'ファイルサイズ'),
+  @('downloadUrl', 'string', '-', '表示・ダウンロード用の認可済みURL。S3オブジェクトキー、S3バケット名、S3の直接URLは返さない'),
   @('documentDate', 'date', '-', '文書日付'),
   @('accountType', 'string', '-', '勘定科目区分'),
   @('uploadedAt', 'datetime', '✓', 'アップロード日時'),
   @('uploadedByName', 'string', '-', 'アップロード者名')
 )
 
-$documentCreateInputRows = @(
-  @('ownerType', 'string', '✓', '`APPLICATION` / `APPLICATION_ASSET` / `RFQ` / `RFQ_VENDOR` / `QUOTATION` / `ASSET_LEDGER`'),
-  @('ownerId', 'int64', '-', '所有者ID。省略時は呼び出し中の廃棄タスク `rfq_id` に紐づける'),
+$documentInputRows = @(
+  @('ownerType', 'string', '-', '`APPLICATION` / `APPLICATION_ASSET` / `RFQ` / `RFQ_VENDOR` / `QUOTATION` / `ASSET_LEDGER`。汎用ドキュメント登録では必須。見積登録・発注登録・完了登録に内包するドキュメントではAPIが所有者を確定するため省略可'),
+  @('ownerId', 'int64', '-', '所有者ID。汎用ドキュメント登録で明示所有者へ紐づける場合に指定する。省略時は呼び出し中の廃棄タスク `rfq_id` に紐づける'),
   @('stepCode', 'string', '-', '`QUOTE_REQUEST` / `QUOTE_REGISTER` / `ORDER` / `SCHEDULE` / `COMPLETE` などの工程コード'),
   @('documentCategory', 'string', '✓', '`QUOTATION` / `ORDER` / `REPORT` / `DISPOSAL_CERTIFICATE` / `MANIFEST` / `CONTRACT` / `INVOICE` / `OTHER`'),
   @('documentType', 'string', '✓', '文書種別名'),
+  @('filePartName', 'string', '✓', 'multipart/form-data のファイルパート名'),
   @('fileName', 'string', '✓', 'ファイル名'),
   @('contentType', 'string', '-', 'MIMEタイプ'),
   @('fileSize', 'int64', '-', 'ファイルサイズ'),
-  @('storageKey', 'string', '✓', 'ファイル実体のストレージキー'),
+  @('contentHash', 'string', '-', 'ファイル本文のハッシュ値。未指定時はAPI側で算出する'),
   @('title', 'string', '-', '表示タイトル'),
   @('documentDate', 'date', '-', '文書日付'),
   @('accountType', 'string', '-', '勘定科目区分'),
@@ -232,7 +235,7 @@ $actionResponseRows = @(
       @('`rfq_vendors`', 'CREATE/READ/UPDATE', '廃棄見積依頼先、回答期限、送信状態'),
       @('`quotations` / `quotation_items`', 'CREATE/READ/UPDATE', '廃棄見積ヘッダー、明細、採用候補'),
       @('`orders` / `order_items`', 'CREATE/READ/UPDATE', '廃棄発注ヘッダー、明細'),
-      @('`application_documents`', 'CREATE/READ/UPDATE', '見積書、発注書、完了報告書、廃棄証明書等のファイルメタデータ'),
+      @('`application_documents`', 'CREATE/READ/UPDATE', '見積書、発注書、完了報告書、廃棄証明書等のファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみ保持する'),
       @('`asset_ledgers`', 'READ/UPDATE', '移動承認時の設置場所原本反映、廃棄完了時の廃棄済み状態反映'),
       @('`asset_ledger_histories`', 'CREATE', '資産台帳更新の監査履歴'),
       @('`facility_locations`', 'READ', '移動元/移動先の設置場所表示と存在確認')
@@ -253,6 +256,14 @@ $actionResponseRows = @(
       @('X-Acting-Facility-Id', '✓', '作業対象施設ID。Bearer トークン上の担当施設と一致すること'),
       @('Idempotency-Key', 'POSTのみ✓', 'POST API の冪等性キー。同一キー・同一payloadの再送は初回結果を返す'),
       @('If-Match', '-', '更新競合を検出する場合のバージョン値。画面が保持する `updatedAt` または ETag を指定する')
+    ) },
+    @{ Type = 'Heading2'; Text = 'ファイル保存ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '見積原本、発注書、完了報告書、廃棄証明書、マニフェスト、契約書、請求書等のファイル実体は、対象APIが multipart/form-data の `files` パートとして受け取り、API内でAmazon S3へPutObjectする',
+      '`application_documents.file_path` にはS3オブジェクトキーのみ保存し、S3バケット名、S3の直接URL、認可なしで利用できるURLはDBへ保存しない',
+      'レスポンスではS3オブジェクトキー、S3バケット名、S3の直接URLを返さず、画面表示やダウンロードが必要な場合は認可済み `downloadUrl` を返す',
+      'DBメタデータ保存または業務トランザクションに失敗した場合、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`TRANSFER_DISPOSAL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
+      'ドキュメント削除APIは `application_documents.deleted_at` を設定する論理削除とし、S3オブジェクトは `deleted_at` 起点のS3ライフサイクルまたは後続クリーンアップで削除する'
     ) },
     @{ Type = 'Heading2'; Text = 'ステータス正規化' },
     @{ Type = 'Paragraph'; Text = '一覧表示ラベルとDB保存ステータスは分離する。画面表示だけに存在するラベルは以下の保存値へ正規化する。' },
@@ -298,9 +309,9 @@ $actionResponseRows = @(
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $disposalQuotationItemRows },
     @{ Type = 'Heading2'; Text = 'DisposalOrder' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $disposalOrderRows },
-    @{ Type = 'Heading2'; Text = 'DocumentSummary / DocumentCreateInput' },
+    @{ Type = 'Heading2'; Text = 'DocumentSummary / DocumentInput' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentRows },
-    @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentCreateInputRows },
+    @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows },
 
     @{ Type = 'Heading1'; Text = '第5章 API一覧' },
     @{ Type = 'Table'; Headers = @('No', 'API名', 'メソッド', 'パス', '用途', '権限'); Rows = @(
@@ -612,18 +623,19 @@ $actionResponseRows = @(
         ParametersRows = @(
           @('disposalTaskId', 'path', 'int64', '✓', '`rfqs.rfq_id`')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('rfqVendorId', 'int64', '-', '依頼先ID。依頼先未登録の持込見積では NULL 可'),
-          @('vendorId', 'int64', '-', '業者マスタID'),
-          @('vendorName', 'string', '✓', '見積業者名'),
-          @('quotationNo', 'string', '✓', '見積番号'),
-          @('quotationOn', 'date', '✓', '見積日'),
-          @('totalAmountExclTax', 'decimal', '-', '税抜合計金額'),
-          @('orderDeadlineOn', 'date', '-', '発注期限'),
-          @('items', 'DisposalQuotationItemInput[]', '✓', '見積明細。1件以上'),
-          @('documents', 'DocumentCreateInput[]', '-', '見積原本等')
+          @('payload.rfqVendorId', 'int64', '-', '依頼先ID。依頼先未登録の持込見積では NULL 可'),
+          @('payload.vendorId', 'int64', '-', '業者マスタID'),
+          @('payload.vendorName', 'string', '✓', '見積業者名'),
+          @('payload.quotationNo', 'string', '✓', '見積番号'),
+          @('payload.quotationOn', 'date', '✓', '見積日'),
+          @('payload.totalAmountExclTax', 'decimal', '-', '税抜合計金額'),
+          @('payload.orderDeadlineOn', 'date', '-', '発注期限'),
+          @('payload.items', 'DisposalQuotationItemInput[]', '✓', '見積明細。1件以上'),
+          @('payload.documents', 'DocumentInput[]', '-', '見積原本等のファイルメタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.documents[].filePartName` で参照される見積原本ファイル本体')
         )
         RequestSubtables = @(
           @{ Title = 'items要素'; Headers = @('フィールド', '型', '必須', '説明'); Rows = @(
@@ -633,13 +645,16 @@ $actionResponseRows = @(
             @('amount', 'decimal', '-', '金額'),
             @('accountTitle', 'string', '-', '勘定科目')
           ) },
-          @{ Title = 'documents要素'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentCreateInputRows }
+          @{ Title = 'documents要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
         )
         PermissionLines = $transferDisposalPermissionLines
         ProcessingLines = @(
           '対象廃棄タスクが `見積依頼済` または `発注用見積登録済` の見積追加可能状態であることを確認する',
-          '`quotations` を `rfq_id`、業者、金額、見積番号で作成し、`quotation_items` を明細件数分作成する',
-          '見積原本がある場合は `application_documents.owner_type=''QUOTATION''`、`quotation_id` に紐づけて保存する',
+          '`payload.documents` を指定した場合は、各 `filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は見積原本として許可された形式に限定する',
+          '`quotations` を `rfq_id`、業者、金額、見積番号で作成し、`quotationId` を確定したうえで `quotation_items` を明細件数分作成する',
+          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `disposal-tasks/{facilityId}/{disposalTaskId}/quotations/{quotationId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '見積原本は `application_documents` に `owner_type=''QUOTATION''`、`quotation_id`、`document_category=''QUOTATION''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後にDBメタデータ保存または見積登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`TRANSFER_DISPOSAL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '対象 `applications.status` を `発注用見積登録済` に更新し、`application_status_histories` を登録する',
           '`disposal_application_details.order_deadline_on` に発注期限を保存する'
         )
@@ -653,6 +668,7 @@ $actionResponseRows = @(
           @('403', '作業対象施設に対する実効 `transfer_disposal` なし', 'ErrorResponse'),
           @('404', '対象廃棄タスクが存在しない', 'ErrorResponse'),
           @('409', '現在ステータスが見積登録可能状態ではない', 'ErrorResponse'),
+          @('502', 'Amazon S3 への見積原本保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -697,22 +713,29 @@ $actionResponseRows = @(
         ParametersRows = @(
           @('disposalTaskId', 'path', 'int64', '✓', '`rfqs.rfq_id`')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('quotationId', 'int64', '✓', '採用見積ID'),
-          @('orderNo', 'string', '✓', '発注番号'),
-          @('settlementNo', 'string', '-', '院内決済No.。`orders.settlement_no` に保存する'),
-          @('orderOn', 'date', '✓', '発注日'),
-          @('paymentTerms', 'string', '-', '支払条件'),
-          @('orderDocument', 'DocumentCreateInput', '-', '発注書メタデータ')
+          @('payload.quotationId', 'int64', '✓', '採用見積ID'),
+          @('payload.orderNo', 'string', '✓', '発注番号'),
+          @('payload.settlementNo', 'string', '-', '院内決済No.。`orders.settlement_no` に保存する'),
+          @('payload.orderOn', 'date', '✓', '発注日'),
+          @('payload.paymentTerms', 'string', '-', '支払条件'),
+          @('payload.orderDocument', 'DocumentInput', '-', '発注書メタデータ。`filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.orderDocument.filePartName` で参照される発注書ファイル本体')
+        )
+        RequestSubtables = @(
+          @{ Title = 'orderDocument要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
         )
         PermissionLines = $transferDisposalPermissionLines
         ProcessingLines = @(
           '対象見積が対象廃棄タスクに紐づき、削除されていないことを確認する',
+          '`payload.orderDocument` を指定した場合は、`filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は発注書として許可された形式に限定する',
           '`orders` を作成し、採用見積の `quotation_items` から `order_items` を作成する',
           '`orders.order_type=''購入''`、`orders.settlement_no`、`orders.status=''ORDERED''`、`payment_terms`（未入力時 `未指定`）、`order_on`、見積合計金額を保存する。廃棄業務であることは `rfqs.management_type=''DISPOSAL''` で判定する',
-          '発注書がある場合は `application_documents.owner_type=''RFQ''`、`rfq_id=disposalTaskId`、`step_code=''ORDER''`、`document_category=''ORDER''`、`document_type=''発注書''` として保存する',
+          '発注書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `disposal-tasks/{facilityId}/{disposalTaskId}/orders/{orderId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '発注書がある場合は `application_documents.owner_type=''RFQ''`、`rfq_id=disposalTaskId`、`step_code=''ORDER''`、`document_category=''ORDER''`、`document_type=''発注書''`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後にDBメタデータ保存または発注登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`TRANSFER_DISPOSAL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '対象 `applications.status` を `発注済` に更新し、`application_status_histories` を登録する',
           '`disposal_application_details.ordered_on`、`order_no`、業者スナップショットを保存する'
         )
@@ -726,6 +749,7 @@ $actionResponseRows = @(
           @('403', '作業対象施設に対する実効 `transfer_disposal` なし', 'ErrorResponse'),
           @('404', '対象廃棄タスクまたは見積が存在しない', 'ErrorResponse'),
           @('409', '現在ステータス不整合、見積が対象廃棄タスクに紐づかない', 'ErrorResponse'),
+          @('502', 'Amazon S3 への発注書保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -768,7 +792,7 @@ $actionResponseRows = @(
       },
       @{
         Title = '廃棄ドキュメント登録（/disposal-task/tasks/{disposalTaskId}/documents）'
-        Overview = '廃棄契約タスクに関連するドキュメントメタデータを登録する。'
+        Overview = '廃棄契約タスクに関連するドキュメントのファイル本体とメタデータを登録する。'
         Method = 'POST'
         Path = '/disposal-task/tasks/{disposalTaskId}/documents'
         Auth = '要（Bearer）'
@@ -777,16 +801,26 @@ $actionResponseRows = @(
         ParametersRows = @(
           @('disposalTaskId', 'path', 'int64', '✓', '`rfqs.rfq_id`')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
-        RequestRows = $documentCreateInputRows
+        RequestRows = @(
+          @('payload.document', 'DocumentInput', '✓', '登録するドキュメントメタデータ。`filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '✓', '`payload.document.filePartName` で参照されるファイル本体')
+        )
+        RequestSubtables = @(
+          @{ Title = 'document要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
+        )
         PermissionLines = $transferDisposalPermissionLines
         ProcessingLines = @(
           '対象廃棄タスクが存在し、完了後削除済みでないことを確認する',
+          '`payload.document.filePartName` が multipart のファイルパートに存在することを確認し、`documentCategory` / `documentType` に応じた拡張子・MIME Typeを受け付ける',
+          '汎用ドキュメント登録では `payload.document.ownerType` を必須とし、対象廃棄タスクまたはタスク配下の申請/依頼先/見積/発注/資産台帳に属する所有者だけを受け付ける',
+          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `disposal-tasks/{facilityId}/{disposalTaskId}/documents/{documentCategory}/{uploadUuid}.{ext}` 形式で発行する',
           '`ownerType` に応じて `application_documents` の `application_id`、`application_asset_id`、`rfq_id`、`rfq_vendor_id`、`quotation_id`、`asset_ledger_id` のいずれかを設定し、生成列 `owner_key` へ直接書き込まない',
           '完了工程で追加する完了報告書、廃棄証明書、マニフェスト、契約書、請求書は `document_category` で識別する',
           '発注書を後続追加する場合は `owner_type=''RFQ''`、`rfq_id=disposalTaskId`、`step_code=''ORDER''`、`document_category=''ORDER''`、`document_type=''発注書''` として保存する',
-          'ファイル実体は別途アップロード済みのストレージキーを受け取り、本APIではメタデータのみ保存する'
+          '`application_documents.file_path` にはS3オブジェクトキーのみ保存し、S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後にDBメタデータ保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`TRANSFER_DISPOSAL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す'
         )
         ResponseTitle = 'レスポンス（201：DocumentSummary）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -798,6 +832,7 @@ $actionResponseRows = @(
           @('403', '作業対象施設に対する実効 `transfer_disposal` なし', 'ErrorResponse'),
           @('404', '対象廃棄タスクまたは所有者が存在しない', 'ErrorResponse'),
           @('409', '所有者が対象廃棄タスクに紐づかない', 'ErrorResponse'),
+          @('502', 'Amazon S3 へのドキュメント保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -817,7 +852,7 @@ $actionResponseRows = @(
         ProcessingLines = @(
           '対象ドキュメントが対象廃棄タスク、またはタスク配下の申請/依頼先/見積/発注に紐づくことを確認する',
           '完了済みタスクの完了証跡、発注済み以降の発注書、採用見積の見積書は削除不可とする',
-          '`application_documents.deleted_at` を設定する。ファイル実体の削除はストレージライフサイクルに委ねる'
+          '`application_documents.deleted_at` を設定する。S3オブジェクトは `deleted_at` 起点のS3ライフサイクルまたは後続クリーンアップで削除する'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
         ResponseLines = @('レスポンスボディなし。')
@@ -841,22 +876,26 @@ $actionResponseRows = @(
         ParametersRows = @(
           @('disposalTaskId', 'path', 'int64', '✓', '`rfqs.rfq_id`')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('acceptedOn', 'date', '✓', '検収日/完了確認日'),
-          @('inspectedByName', 'string', '-', '検収担当者名'),
-          @('completionNote', 'string', '-', '完了補足'),
-          @('documents', 'DocumentCreateInput[]', '-', '完了報告書、廃棄証明書、マニフェスト、契約書、請求書等')
+          @('payload.acceptedOn', 'date', '✓', '検収日/完了確認日'),
+          @('payload.inspectedByName', 'string', '-', '検収担当者名'),
+          @('payload.completionNote', 'string', '-', '完了補足'),
+          @('payload.documents', 'DocumentInput[]', '-', '完了報告書、廃棄証明書、マニフェスト、契約書、請求書等。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.documents[].filePartName` で参照される完了証跡ファイル本体')
         )
         RequestSubtables = @(
-          @{ Title = 'documents要素'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentCreateInputRows }
+          @{ Title = 'documents要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
         )
         PermissionLines = $transferDisposalPermissionLines
         ProcessingLines = @(
           '対象廃棄タスクが `納期確定` または `検収済` の完了登録可能状態であることを確認する',
+          '`payload.documents` を指定した場合は、各 `filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は完了証跡として許可された形式に限定する',
           '`disposal_application_details.accepted_on`、`inspected_by_name` を更新する',
-          '完了証跡ドキュメントを `application_documents.owner_type=''RFQ''`、`rfq_id=disposalTaskId`、`step_code=''COMPLETE''` を基本として保存する',
+          '完了証跡ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `disposal-tasks/{facilityId}/{disposalTaskId}/complete-documents/{uploadUuid}.{ext}` 形式で発行する',
+          '完了証跡ドキュメントを `application_documents.owner_type=''RFQ''`、`rfq_id=disposalTaskId`、`step_code=''COMPLETE''`、`document_category`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後にDBメタデータ保存または完了登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`TRANSFER_DISPOSAL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '対象 `applications.status` を `完了` に更新し、登録済み資産の廃棄対象は `asset_ledgers.status` を廃棄済み相当へ更新し、`asset_ledger_histories` を登録する',
           '未登録資産は `asset_ledgers` を作成せず、申請および廃棄証跡のみで完了管理する'
         )
@@ -870,6 +909,7 @@ $actionResponseRows = @(
           @('403', '作業対象施設に対する実効 `transfer_disposal` なし', 'ErrorResponse'),
           @('404', '対象廃棄タスクが存在しない', 'ErrorResponse'),
           @('409', '現在ステータスが完了登録可能状態ではない', 'ErrorResponse'),
+          @('502', 'Amazon S3 への完了証跡保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -889,6 +929,13 @@ $actionResponseRows = @(
       '廃棄タスクの対象申請は `rfq_applications.application_id` と `application_asset_id` で追跡し、見積・発注・完了証跡は `rfq_id` 配下へ集約する',
       '複数申請を1タスクに束ねる場合、ステータス遷移は紐づく全申請に同一保存値として適用する',
       '`disposal_application_details.quotation_due_on` は一覧表示用の最早回答期限、`order_deadline_on` は発注期限、`disposal_scheduled_on` は作業日/廃棄予定日の正本とする'
+    ) },
+    @{ Type = 'Heading2'; Text = '廃棄ドキュメントのS3保存方針' },
+    @{ Type = 'Bullets'; Items = @(
+      '廃棄見積原本、発注書、完了報告書、廃棄証明書、マニフェスト、契約書、請求書等は、APIが multipart/form-data で受け取ったファイル本体をAmazon S3へPutObjectし、`application_documents.file_path` にはS3オブジェクトキーのみ保存する',
+      '`application_documents` の `owner_type` / `rfq_id` / `quotation_id` / `application_id` / `application_asset_id` / `rfq_vendor_id` / `asset_ledger_id` は所有者の正本キーとして保持し、S3オブジェクトキーへ業務上の所有者情報を過度に重複させない',
+      '画面表示やダウンロードでは `downloadUrl` を都度生成して返し、S3オブジェクトキー、S3バケット名、S3の直接URLはリクエスト/レスポンスで直接扱わない',
+      '論理削除時は `application_documents.deleted_at` を設定し、S3オブジェクトは `deleted_at` 起点のS3ライフサイクルまたは後続クリーンアップ対象にする'
     ) },
     @{ Type = 'Heading2'; Text = '対象外・境界' },
     @{ Type = 'Table'; Headers = @('論点', '本書の扱い', '参照先'); Rows = @(
@@ -914,13 +961,15 @@ $actionResponseRows = @(
       @('STATUS_TRANSITION_NOT_ALLOWED', '409', '現在ステータスから要求された操作へ遷移できない'),
       @('RFQ_ALREADY_CREATED', '409', '廃棄申請が既にRFQグループへ接続済み'),
       @('ORDER_ALREADY_CREATED', '409', '発注済み以降のため見積削除または見送りができない'),
-      @('CONFLICT_UPDATED', '409', '画面取得後に対象データが更新された')
+      @('CONFLICT_UPDATED', '409', '画面取得後に対象データが更新された'),
+      @('TRANSFER_DISPOSAL_FILE_502_S3_WRITE_FAILED', '502', '廃棄関連ドキュメントのAmazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した')
     ) },
 
     @{ Type = 'Heading1'; Text = '第9章 運用・監査方針' },
     @{ Type = 'Bullets'; Items = @(
       '移動承認、廃棄RFQグループ作成、見積依頼、見積登録、発注登録、作業日登録、完了登録、見送りは監査対象とし、APIログに作業対象施設、実行ユーザー、申請ID、RFQ ID、更新前後ステータス、`Idempotency-Key` を記録する',
       '添付ファイル本文、見積書本文、証明書本文はアプリケーションログへ出力しない',
+      'S3オブジェクトキー、S3バケット名、認可済み `downloadUrl` は必要最小限の運用ログに限定し、利用者向けエラーメッセージや通常APIログへ直接出力しない',
       'POST API は冪等性キーを必須とし、同一キー・同一ユーザー・同一施設・同一APIパス・同一payloadの再送は初回結果を返す',
       '旧廃棄管理URLの正規化は画面ルーティング層で行い、業務APIログには正規化後の `/quotation-data-box/transfer-management` からのAPI呼び出しとして記録する',
       '移動承認および廃棄完了の資産台帳更新は、申請ステータス更新と同一トランザクションで処理し、片側だけが成功した状態を禁止する'

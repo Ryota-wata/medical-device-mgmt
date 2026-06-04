@@ -724,7 +724,7 @@ $endpointSpecs = @(
       '原本確定時は、`qr_resolution_status=''CONFLICT''` の有効行（`item_status=''ACTIVE''`）が存在しないことを検証する。存在する場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に `conflictType=''UNRESOLVED''` を返す',
       '原本確定時は、`qr_resolution_status=''RESOLVED''` かつ `qr_identifier IS NOT NULL` の有効行（`item_status=''ACTIVE''`）について同一セッション内で重複がないことを検証し、`(facility_id, qr_identifier)` で `qr_codes` を排他取得する。未発行、論理削除済み、別資産へ紐付済み、または施設不整合がある場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に競合行ごとの詳細を返す',
       '原本確定時は `parent_asset_data_matching_item_id` を考慮した親優先順で `asset_ledgers` を作成し、`parent_asset_ledger_id` へ変換する。作成する `asset_ledgers.ship_asset_master_id` には `asset_data_matching_items.ship_asset_master_id` を引き継ぎ、現有品調査または固定資産台帳取込に紐づく資産マスタIDがない場合は NULL とする。同時に対応する `asset_data_matching_items.created_asset_ledger_id` へ採番済み `asset_ledger_id` を保存し、結果確認画面や資産カルテ遷移の追跡キーとして保持する',
-      '原本確定時は、各有効統合リスト行の `SURVEY_RECORD` 元レコードに紐づく非削除の調査写真（`application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL`）を取得し、作成した `asset_ledgers.asset_ledger_id` に対する資産写真メタデータとして `application_documents.owner_type=''ASSET_LEDGER''` 行を作成する。元ファイルの `file_path` / `content_hash` / ファイル属性 / 撮影日時 / 撮影者を再利用し、物理ファイルは複製しない',
+      '原本確定時は、各有効統合リスト行の `SURVEY_RECORD` 元レコードに紐づく非削除の調査写真（`application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL`）を取得し、作成した `asset_ledgers.asset_ledger_id` に対する資産写真メタデータとして `application_documents.owner_type=''ASSET_LEDGER''` 行を作成する。元ファイルの `file_path`（Amazon S3オブジェクトキー）/ `content_hash` / ファイル属性 / 撮影日時 / 撮影者を再利用し、Amazon S3上のファイル実体は `CopyObject` / `PutObject` で複製しない。バケット名やHTTPS URLはDBへ保存せず、レスポンスにも返さない',
       '写真引継ぎでは、元調査写真の `asset_survey_record_id` を引継ぎ先 `application_documents.asset_survey_record_id` に保持して provenance とし、`asset_ledger_id` には今回作成した原本資産IDを設定する。写真が1件以上ある原本資産では、元調査写真の代表写真を優先し、`asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` の順で `is_primary=true` を1件だけ設定する。台帳のみの `UNCONFIRMED_IMPORT` 行では写真引継ぎは行わない',
       '`qr_identifier` が設定された行は、対応する `qr_codes.asset_ledger_id` に今回作成した `asset_ledgers.asset_ledger_id` を設定し、更新は原本生成、`created_asset_ledger_id` 保存と同一トランザクションで完了させる',
       '生成値の具体的なマッピングは第6章の `asset_data_matching_items -> asset_ledgers` ルール、写真引継ぎルール、QR 紐付け更新ルールに従う',
@@ -970,7 +970,7 @@ $endpointSpecs = @(
       @('asset_survey_sessions / asset_survey_records', '基底現有品調査の選定と統合リスト初期生成', 'asset_survey_session_id, asset_survey_record_id, qr_identifier, ship_asset_master_id, department_name, section_name, room_name, asset_item_id'),
       @('asset_import_jobs / asset_import_rows', '統合候補リスト選定、台帳側一覧取得、表示スナップショット反映', 'asset_import_job_id, status, import_type, asset_import_row_id, selected_ship_asset_master_id, suggested_ship_asset_master_id, parsed_ledger_no, parsed_management_device_no, parsed_department_name, parsed_section_name, parsed_asset_name, parsed_manufacturer_name, parsed_model_name, parsed_quantity, parsed_unit'),
       @('asset_ledgers', '原本リスト確定時の作成先、確定後参照', 'asset_ledger_id, facility_id, facility_location_id, ship_asset_master_id, asset_no, equipment_no, category_id, large_class_name, medium_class_name, asset_item_name, asset_name, detail_type, parent_asset_ledger_id, quantity, unit'),
-      @('application_documents / asset_survey_photos / asset_photos', '現有品調査写真の参照と原本確定時の資産写真引継ぎ', 'application_document_id, owner_type, asset_survey_record_id, asset_ledger_id, document_category, file_name, file_path, content_hash, taken_at, taken_by_user_id, is_primary, deleted_at'),
+      @('application_documents / asset_survey_photos / asset_photos', '現有品調査写真の参照と原本確定時の資産写真引継ぎ。`file_path` はAmazon S3オブジェクトキーであり、バケット名やHTTPS URLは保持しない', 'application_document_id, owner_type, asset_survey_record_id, asset_ledger_id, document_category, file_name, file_path, content_hash, taken_at, taken_by_user_id, is_primary, deleted_at'),
       @('qr_codes', '原本確定時の QR 紐付け更新と QR 遷移有効化', 'qr_code_id, facility_id, qr_identifier, asset_ledger_id, updated_at, deleted_at'),
       @('asset_import_survey_mappings', '参考画面での個別対応補助管理。主導線の正本ではない', 'asset_import_survey_mapping_id, mapping_type, matching_status, confirm_status, decision_note'),
       @('facilities / facility_locations', '施設整合検証、共有システム管理者アカウントの未削除施設判定、部門 / 部署 / 室表示', 'facility_id, facility_name, deleted_at, department_name, section_name, room_name'),
@@ -1139,8 +1139,8 @@ $endpointSpecs = @(
       '写真引継ぎ対象は、`merged_into_item_id IS NULL AND item_status=''ACTIVE''` の統合リスト行に紐づく `asset_data_matching_item_sources.source_type=''SURVEY_RECORD''` の元調査レコードとする',
       '対象調査レコードに紐づく `application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL` の写真を取得し、`application_document_id` 昇順ではなく、`asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` を安定順として処理する',
       '引継ぎ先は `application_documents.owner_type=''ASSET_LEDGER''` / `document_category=''PHOTO''` の新規行とし、`asset_ledger_id` には今回作成した `asset_ledgers.asset_ledger_id`、`asset_survey_record_id` には元調査レコードIDを設定して provenance を保持する',
-      'ファイル実体は複製せず、元調査写真の `file_name` / `file_path` / `mime_type` / `file_size_bytes` / `content_hash` / `storage_format` / `taken_at` / `taken_by_user_id` / `sort_order` を再利用する。`uploaded_by_user_id` / `uploaded_at` は原本確定実行者とサーバ時刻を設定する',
-      '同一原本資産へ複数調査レコードが統合される場合は、全ての非削除調査写真を引き継ぐ。ただし同一 `content_hash` と `file_path` の組み合わせが重複する場合は1件に正規化する',
+      'ファイル実体はAmazon S3上で複製せず、元調査写真の `file_name` / `file_path`（S3オブジェクトキー）/ `mime_type` / `file_size_bytes` / `content_hash` / `storage_format` / `taken_at` / `taken_by_user_id` / `sort_order` を再利用する。データ突合APIではS3 `CopyObject` / `PutObject` / `DeleteObject` を実行せず、メタデータ行のみを同一DBトランザクションで作成する。`uploaded_by_user_id` / `uploaded_at` は原本確定実行者とサーバ時刻を設定する',
+      '同一原本資産へ複数調査レコードが統合される場合は、全ての非削除調査写真を引き継ぐ。ただし同一 `content_hash` と `file_path`（同一S3オブジェクトキー）の組み合わせが重複する場合は1件に正規化する',
       '代表写真は、元調査写真で `is_primary=true` のものを優先する。候補が複数または存在しない場合は `asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` の先頭1件を `is_primary=true` とし、同一 `asset_ledger_id` の他写真は `is_primary=false` とする',
       '現有品調査レコードを含まない台帳のみ行（`creation_type=''UNCONFIRMED_IMPORT''` / `source_type=''IMPORT_ROW''` のみ）は写真引継ぎを行わず、写真なしでも原本確定を阻害しない',
       '写真引継ぎ、`asset_ledgers` 作成、`asset_data_matching_items.created_asset_ledger_id` 保存、QR 紐付け更新は同一トランザクションで完了させ、いずれかが失敗した場合は原本確定全体をロールバックする'
@@ -1239,7 +1239,8 @@ $endpointSpecs = @(
       '画面表示時は `/data-matching/context` で進行中セッション有無を確認し、既存セッションがあれば必ずそれを再開する',
       '共通フィルタ候補と一致検索条件の UI 変更時は、`merged-items` / `fixed-asset-ledger-items` / `me-ledger-items` のクエリ仕様と `cursor` 継続取得仕様を同時に見直す',
       '原本確定前のレビューは `/data-matching/sessions/{sessionId}/result` を正本とし、クライアント側で独自に統合結果を再計算しない',
-      '原本確定後の `asset_ledgers` 件数が `mergedItemCount` と一致し、`sourcePhotoCount > 0` の確定行は対応する `application_documents.owner_type=''ASSET_LEDGER''` の資産写真と代表写真が作成され、`qrResolutionStatus=''RESOLVED''` の確定行は対応する `qr_codes.asset_ledger_id` が設定されていることを監査対象とする'
+      '原本確定後の `asset_ledgers` 件数が `mergedItemCount` と一致し、`sourcePhotoCount > 0` の確定行は対応する `application_documents.owner_type=''ASSET_LEDGER''` の資産写真と代表写真が作成され、`qrResolutionStatus=''RESOLVED''` の確定行は対応する `qr_codes.asset_ledger_id` が設定されていることを監査対象とする',
+      '写真引継ぎで作成した資産写真メタデータは元調査写真と同じAmazon S3オブジェクトキーを参照する。片方の `application_documents.deleted_at` 更新だけでS3実体を即時削除せず、同一キーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理で扱う'
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(

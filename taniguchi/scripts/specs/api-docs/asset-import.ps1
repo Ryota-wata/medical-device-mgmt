@@ -130,7 +130,10 @@ $endpointSpecs = @(
       '対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '拡張子とファイルサイズを検証し、不正時は 400 を返却する',
       '未完了ジョブが同一施設に存在する場合は新規作成不可とする',
-      '`asset_import_jobs` を `PROCESSING` で作成し、ファイルを行単位に分解して `asset_import_rows` を作成する',
+      'アップロード元ファイルの S3 オブジェクトキーを `asset-import/{facility_id}/{YYYY}/{MM}/{upload_uuid}.{拡張子}` 形式で生成し、Amazon S3 へ PutObject する。DB にはバケット名や HTTPS URL は保存しない',
+      'Amazon S3 への PutObject に失敗した場合は 502 を返し、`asset_import_jobs` は作成しない',
+      '`asset_import_jobs` を `PROCESSING` で作成し、`file_path` には S3 オブジェクトキーを保存する。受付DB作成に失敗した場合は保存済み S3 オブジェクトを破棄する',
+      'ファイルを行単位に分解して `asset_import_rows` を作成する',
       '固定資産管理台帳の各行から商品名列、メーカー名列、規格列を取得し、商品名列を `parsed_asset_name`、メーカー名列を `parsed_manufacturer_name`、規格列を `parsed_model_name` へ保存する',
       'AI 分類モデルへの入力は PoC2 最終報告書の方針に従い、`product_name:{parsed_asset_name}, spec:{parsed_model_name}` とする。`parsed_manufacturer_name` は表示・検索・確定値には利用するが、分類モデル入力には含めない',
       'PoC2 保存済み LUKE Model A で全行を `ABC` / `D` / `OTHER` に分類し、`ai_line_classification`、`ai_classification_confidence`、`ai_recommendation_required`、`ai_model_version` を保存する。本システムでは Model B は利用しない。固定資産台帳取込では値引き文字列判定を行わず、分類結果は内部制御値として資産台帳取込画面・突き合わせ画面には表示しない',
@@ -154,10 +157,10 @@ $endpointSpecs = @(
           @('`asset_import_jobs`', '`facility_id`', 'リクエスト `facilityId` を保存する。省略時は Bearer トークン上の作業対象施設IDを保存する', '対象施設は Bearer トークン上の作業対象施設と一致している前提'),
           @('`asset_import_jobs`', '`import_type`', 'リクエスト `importType` を保存する', '`FIXED_ASSET` / `OTHER_LEDGER`'),
           @('`asset_import_jobs`', '`file_name`', 'リクエスト `file` の元ファイル名を保存する', '画面表示と再取込参照に利用する'),
-          @('`asset_import_jobs`', '`file_path`', 'サーバー側で保存した元ファイルのストレージキー / URL を保存する', 'DB には参照先のみ保持する'),
+          @('`asset_import_jobs`', '`file_path`', 'Amazon S3 に保存した元ファイルの S3 オブジェクトキー `asset-import/{facility_id}/{YYYY}/{MM}/{upload_uuid}.{拡張子}` を保存する', 'DB にはバケット名や HTTPS URL は保存しない'),
           @('`asset_import_jobs`', '`status` / `error_message` / `started_at` / `finished_at`', '`PROCESSING` / `NULL` / 受付時点の日時 / `NULL` で作成する', '受付直後は初期取込処理中'),
           @('`asset_import_jobs`', '`created_by_user_id` / `created_at` / `updated_at`', '実行ユーザーIDと受付時点の日時を設定する', '監査・状態遷移管理用'),
-          @('`オブジェクトストレージ（DB外）`', '元ファイル本体', 'リクエスト `file` のバイナリを保存する', 'DB には `asset_import_jobs.file_path` だけを保持する')
+          @('`Amazon S3（DB外）`', '元ファイル本体', 'リクエスト `file` のバイナリを PutObject する', 'DB には `asset_import_jobs.file_path` として S3 オブジェクトキーだけを保持する')
         )
       },
       @{
@@ -204,6 +207,7 @@ $endpointSpecs = @(
       @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象施設が存在しない、または削除済み', 'ErrorResponse'),
       @('409', '同一施設に未完了ジョブが存在する', 'ErrorResponse'),
+      @('502', 'Amazon S3 への元ファイル保存、または受付失敗時の保存済み S3 オブジェクト破棄に失敗した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -261,8 +265,9 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '対象ジョブが `FAILED` であることを検証する',
-      '`asset_import_jobs.file_path` に保持した元ファイルを再利用し、新しい `asset_import_jobs` を `PROCESSING` で作成する',
+      '`asset_import_jobs.file_path` に保持した S3 オブジェクトキーから元ファイルを取得できることを確認し、新しい `asset_import_jobs` を `PROCESSING` で作成する',
       '元の FAILED ジョブとその失敗情報は監査用に保持する',
+      '受付時の Amazon S3 GetObject 確認に失敗した場合は 502 を返し、新規ジョブは作成しない。非同期初期取込中に元ファイルを取得できなくなった場合は、新規ジョブ側だけ `status=FAILED`、`error_message`、`finished_at` を更新する',
       '再取込時も `POST /asset-import/jobs` と同じ AI 分類・AI 推薦ルールを適用する。分類入力を `product_name:{parsed_asset_name}, spec:{parsed_model_name}` として PoC2 保存済み LUKE Model A で `ABC` / `D` / `OTHER` を判定する。メーカー名は分類入力に含めない。本システムでは Model B は利用しない。固定資産台帳取込では値引き文字列判定を行わず、AI推薦は `ABC` 行のみ JMDN由来候補と全施設の原本資産台帳由来候補を同じ候補集合として比較する',
       '再取込の初期取込処理が失敗した場合は、展開中の `asset_import_rows` をロールバックしたうえで、新規ジョブ側だけ `status=FAILED`、`error_message`、`finished_at` を更新する',
       '新規ジョブ作成後の処理内容は通常の `/asset-import/jobs` と同じとする'
@@ -277,7 +282,7 @@ $endpointSpecs = @(
           @('`asset_import_jobs`（新規ジョブ）', '`facility_id` / `import_type` / `file_name` / `file_path`', '再取込元 FAILED ジョブの値を引き継いで保存する', 'リクエスト `assetImportJobId` は再取込元ジョブ特定にのみ使う'),
           @('`asset_import_jobs`（新規ジョブ）', '`status` / `error_message` / `started_at` / `finished_at`', '`PROCESSING` / `NULL` / 再取込受付時点の日時 / `NULL` で作成する', '再取込元の失敗情報は引き継がない'),
           @('`asset_import_jobs`（新規ジョブ）', '`created_by_user_id` / `created_at` / `updated_at`', '実行ユーザーIDと再取込受付時点の日時を設定する', '監査・状態遷移管理用'),
-          @('`オブジェクトストレージ（DB外）`', '再取込元ファイル本体', '再取込元 FAILED ジョブの `file_path` が指す既存ファイルを再利用する', '再アップロードは行わない')
+          @('`Amazon S3（DB外）`', '再取込元ファイル本体', '再取込元 FAILED ジョブの `file_path` が指す S3 オブジェクトを GetObject して再利用する', '再アップロードは行わない')
         )
       },
       @{
@@ -304,12 +309,13 @@ $endpointSpecs = @(
       @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', 'FAILED 以外の状態、または再取込不可状態', 'ErrorResponse'),
+      @('502', 'Amazon S3 から再取込元ファイルを取得できない', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
   @{
     Title = '取込ジョブ削除（/asset-import/jobs/{assetImportJobId}）'
-    Overview = 'READY_FOR_MATCHING または FAILED の取込ジョブを削除する。関連する `asset_import_rows` と `asset_import_jobs.file_path` で管理する保存元ファイルもあわせて削除対象とする。'
+    Overview = 'READY_FOR_MATCHING または FAILED の取込ジョブを削除する。関連する `asset_import_rows` と `asset_import_jobs.file_path` で管理する Amazon S3 上の保存元ファイルもあわせて削除対象とする。'
     Method = 'DELETE'
     Path = '/asset-import/jobs/{assetImportJobId}'
     Auth = '要（Bearer）'
@@ -322,7 +328,8 @@ $endpointSpecs = @(
     ProcessingLines = @(
       '対象ジョブの `facility_id` が Bearer トークン上の作業対象施設IDと一致し、`facilities.deleted_at IS NULL` の未削除施設であることを検証する',
       '削除対象は `READY_FOR_MATCHING` / `FAILED` のジョブに限定し、`PROCESSING` / `MATCHING_COMPLETED` は 409 とする',
-      'ジョブ本体、取込行、保持している元ファイルを一括削除する',
+      '`asset_import_jobs.file_path` が指す S3 オブジェクトを DeleteObject し、削除成功後にジョブ本体と取込行を一括削除する',
+      'Amazon S3 の DeleteObject に失敗した場合は 502 を返し、`asset_import_jobs` / `asset_import_rows` は削除しない',
       '突き合わせ途中のデータも削除されるため、確認ダイアログの後に実行する'
     )
     ExtraTables = @(
@@ -332,7 +339,7 @@ $endpointSpecs = @(
         Rows = @(
           @('`asset_import_rows`', '対象 `assetImportJobId` に紐づく全行', '物理削除する', '子テーブルを先に削除する'),
           @('`asset_import_jobs`', '対象 `assetImportJobId` の行', '物理削除する', '`READY_FOR_MATCHING` / `FAILED` の場合のみ実行する'),
-          @('`オブジェクトストレージ（DB外）`', '`asset_import_jobs.file_path` が指す元ファイル', '物理削除する', 'ジョブ削除と同一要求内で後始末する')
+          @('`Amazon S3（DB外）`', '`asset_import_jobs.file_path` が指す元ファイル', 'S3 オブジェクトキーを指定して DeleteObject する', 'S3 削除成功後に DB 行を物理削除する')
         )
       }
     )
@@ -346,6 +353,7 @@ $endpointSpecs = @(
       @('403', '通常アカウントで作業対象施設に対する実効 `asset_ledger_import` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
       @('404', '対象ジョブが存在しない', 'ErrorResponse'),
       @('409', '削除不可状態である', 'ErrorResponse'),
+      @('502', 'Amazon S3 の元ファイル削除に失敗した', 'ErrorResponse'),
       @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
   },
@@ -936,7 +944,7 @@ $endpointSpecs = @(
     @{ Type = 'Heading2'; Text = '永続化と非同期処理境界' },
     @{ Type = 'Bullets'; Items = @(
       '`POST /asset-import/jobs` と `POST /asset-import/jobs/{assetImportJobId}/retry` は、受付時に `asset_import_jobs` を作成したうえで、初期取込処理が `asset_import_rows` 展開、PoC2 保存済み LUKE Model A によるAI分類、ABC行のみのAI推薦初期化を進める非同期ジョブ受付APIとして扱う',
-      'アップロード元ファイルのバイナリ本体はオブジェクトストレージへ保存し、DB には `asset_import_jobs.file_name` と `file_path` をメタデータとして保持する',
+      'アップロード元ファイルのバイナリ本体は Amazon S3 へ保存し、DB には `asset_import_jobs.file_name` と S3 オブジェクトキーである `file_path` をメタデータとして保持する。S3 バケット名や HTTPS URL は DB に保存しない',
       '`asset_import_rows` は元ファイルのデータ行を 1 行 = 1 レコードで保持する。初期取込時に `parsed_*`、`ai_line_classification`、`ai_classification_confidence`、`ai_recommendation_required`、`ai_model_version` を保存する。`ABC` 行のみ `suggested_*`、`suggested_ship_asset_master_id`、`suggested_score`、`suggested_similarity_source`、`suggested_source_asset_ledger_id` を保存し、`D` / `OTHER` 行は推薦関連項目を null とする。`selected_*` は未選択、`is_confirmed=false`、`confirmed_by_user_id` / `confirmed_at=NULL` で開始する',
       '`PUT /asset-matching/rows/{assetImportRowId}`、`POST /asset-matching/import`、`POST /asset-matching/rows/confirm-bulk` は `asset_import_rows` のみを更新し、`POST /asset-matching/complete` は `asset_import_jobs` のみを更新する。`DELETE /asset-import/jobs/{assetImportJobId}` は `asset_import_jobs` / `asset_import_rows` と元ファイルを一括削除する',
       '同期更新API（行更新、Excel取込、一括確定、完了、削除）は 1 回の呼び出しを 1 DB トランザクションで完結させる。非同期受付API（取込作成、再取込）は受付トランザクションと初期取込トランザクションを分離し、失敗時は展開途中の `asset_import_rows` を残さない'
@@ -1011,10 +1019,10 @@ $endpointSpecs = @(
       '突き合わせ完了時は `asset_import_jobs.status` を `MATCHING_COMPLETED` へ更新し、`finished_at` を記録する',
       '突き合わせ完了は未確定件数が 0 件の場合のみ許可し、1件でも未確定行が残る場合は画面上で完了ボタンを非活性とし、API でも 409 を返す',
       '`MATCHING_COMPLETED` 後のジョブは read-only とし、行更新・一括確定・再完了は受け付けない',
-      '再取込に備え、アップロード元ファイルの保持先は `asset_import_jobs.file_path` に記録し、ジョブ削除までサーバー側に保持する',
+      '再取込に備え、アップロード元ファイルの S3 オブジェクトキーは `asset_import_jobs.file_path` に記録し、ジョブ削除まで Amazon S3 上に保持する',
       '`status=''FAILED''` の場合は `asset_import_jobs.error_message` に利用者向け失敗理由を保存し、API の `failureReason` として返す',
       '再取込時は元の `FAILED` ジョブを保持したまま、新しい `asset_import_jobs` を `PROCESSING` で作成する',
-      'ジョブ削除時は `READY_FOR_MATCHING` / `FAILED` のみ許可し、関連する `asset_import_rows` と `asset_import_jobs.file_path` で管理する保存ファイルを一括削除する'
+      'ジョブ削除時は `READY_FOR_MATCHING` / `FAILED` のみ許可し、`asset_import_jobs.file_path` で管理する Amazon S3 上の保存ファイルを削除してから、関連する `asset_import_rows` と `asset_import_jobs` を一括削除する'
     ) },
     @{ Type = 'Heading2'; Text = 'クライアント連携ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -1042,6 +1050,9 @@ $endpointSpecs = @(
       @('SHIP_ASSET_MASTER_NOT_FOUND', '404', '指定された SHIP 資産マスタが存在しない、または無効'),
       @('UNFINISHED_JOB_ALREADY_EXISTS', '409', '同一施設に未完了ジョブが存在する'),
       @('JOB_STATUS_INVALID', '409', 'ジョブ状態上、要求処理を実行できない'),
+      @('S3_OBJECT_WRITE_FAILED', '502', 'アップロード元ファイルの Amazon S3 保存、または受付失敗時の保存済み S3 オブジェクト破棄に失敗した'),
+      @('S3_OBJECT_READ_FAILED', '502', '再取込元ファイルを Amazon S3 から取得できない'),
+      @('S3_OBJECT_DELETE_FAILED', '502', 'ジョブ削除時に Amazon S3 上の元ファイル削除に失敗した'),
       @('AI_MODEL_NOT_AVAILABLE', '500', 'AI分類モデルまたは tokenizer を読み込めない'),
       @('AI_INFERENCE_FAILED', '500', 'AI分類またはAI推薦処理に失敗した'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
