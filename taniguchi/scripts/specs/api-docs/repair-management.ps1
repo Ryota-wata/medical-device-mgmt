@@ -712,7 +712,7 @@ $repairOrderRows = @(
           '`payload.documents` を指定した場合は、各 `filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は見積原本として許可された形式に限定する',
           '`quotations` は見積番号を採番し、`rfq_id`、業者情報、`quotation_on`、`quotation_phase`（未指定時 `修理見積`）、`total_amount_excl_tax`、`status=''REGISTERED''` を保存して作成する',
           '`quotation_items` は入力行ごとに作成し、`item_type` は未指定のため `E_その他役務`、`original_item_name` / `item_name`、`original_maker_name` / `maker_name`、`original_model_name` / `model_name`、`original_quantity`、`ai_quantity`、`purchase_price_unit`、`purchase_price_total`、`account_title`、`is_specification_line=false` へ保存する',
-          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `repair-tasks/{facilityId}/{repairTaskId}/quotations/{quotationId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` や `quotationId` などの業務IDを含めない',
           '見積原本は `application_documents.owner_type=''QUOTATION''`、`quotation_id=quotationId`、`document_category=''QUOTATION''`、`document_type=''見積書''` として保存し、`file_path` には発行したS3オブジェクトキーのみ保存する',
           'Amazon S3保存後にDBメタデータ保存または見積登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '採用見積の選択は発注登録APIで行うため、本API登録時点では `applications.status` を変更しない'
@@ -810,7 +810,7 @@ $repairOrderRows = @(
           '`order_items` は採用見積の `quotation_items` から作成し、`registration_type` は `quotation_items.item_type=''D_付属品''` の場合 `付属品`、それ以外は `本体` とする。品目/メーカー/型式、数量、単価、金額は `quotation_items.item_name` / `maker_name` / `model_name` / `original_quantity` / `purchase_price_unit` / `purchase_price_total` から転記する',
           '`quotations.status=''ORDER_SELECTED''` に更新する',
           '`applications.status=''発注済''`、`repair_request_details.ordered_on`、`order_deadline_on`、`current_vendor_id`、`current_vendor_name`、`current_vendor_person`、`current_vendor_contact` を更新する',
-          '発注書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `repair-tasks/{facilityId}/{repairTaskId}/orders/{orderId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '発注書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` や `orderId` などの業務IDを含めない',
           '発注書は `application_documents.owner_type=''APPLICATION''`、`application_id=repairTaskId`、`step_code=''ORDER''`、`document_category=''CONTRACT''`、`document_type=''発注書''` として保存し、`file_path` には発行したS3オブジェクトキーのみ保存する',
           'Amazon S3保存後にDBメタデータ保存または発注登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '状態変更、発注作成、履歴、工程更新は同一トランザクションで行う'
@@ -914,7 +914,7 @@ $repairOrderRows = @(
           '対象は `status=''納期確定''` の修理申請に限定する',
           '`payload.documents` を指定した場合は、各 `filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は修理報告書、納品書、検収書として許可された形式に限定する',
           '`repair_request_details.delivered_on` を更新する',
-          '検収書類ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `repair-tasks/{facilityId}/{repairTaskId}/inspection/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '検収書類ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` などの業務IDを含めない',
           '検収書類は `application_documents.owner_type=''APPLICATION''`、`application_id=repairTaskId`、`step_code=''INSPECTION''`、`document_category=''REPORT''` / `DELIVERY` / `ACCEPTANCE`、`document_type=''修理報告書''` / `納品書` / `検収書` 等で保存し、`file_path` には発行したS3オブジェクトキーのみ保存する',
           '院外発注修理の場合は、`orders.delivery_on`、`orders.inspection_on`、`orders.total_amount` と対象 `order_items.delivery_on`、`order_items.amount` を検収入力値で更新する',
           '登録済み資産かつ院外発注修理の場合のみ `individuals` を対象修理明細単位で作成または更新し、必須の `order_item_id`、`rfq_id`、`asset_ledger_id`、品目/メーカー/型式/シリアルのスナップショット、`acquisition_amount=inspectionAmount`、`provisional_account_title`、`inspected_on=inspectionOn`、`registration_status=''PROVISIONAL''` を保持する',
@@ -1024,7 +1024,7 @@ $repairOrderRows = @(
           '`payload.document.filePartName` が multipart のファイルパートに存在することを確認し、`documentCategory` / `documentType` に応じた拡張子・MIME Typeを受け付ける',
           '`application_documents` には `owner_type` に応じた実FK（`application_id` / `application_asset_id` / `rfq_id` / `rfq_vendor_id` / `quotation_id` / `asset_ledger_id`）を設定し、生成列 `owner_key` は直接書き込まない',
           '発注書を後続追加する場合は `owner_type=''APPLICATION''`、`application_id=repairTaskId`、`step_code=''ORDER''`、`document_category=''CONTRACT''`、`document_type=''発注書''` として保存する',
-          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `repair-tasks/{facilityId}/{repairTaskId}/documents/{documentCategory}/{uploadUuid}.{ext}` 形式で発行する',
+          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` などの業務IDを含めない',
           '`application_documents` にファイルメタデータ、工程コード、必要に応じた勘定科目情報を作成する。`file_path` には発行したS3オブジェクトキーのみ保存し、`contentType` は `mime_type`、`fileSize` は `file_size_bytes`、認証ユーザーIDは `uploaded_by_user_id`、現在日時は `uploaded_at` に保存する',
           'Amazon S3保存後にDBメタデータ保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す'
         )

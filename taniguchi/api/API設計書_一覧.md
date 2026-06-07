@@ -48,8 +48,8 @@ Phase件数: `Phase1 31件` / `Phase2 1件`
 | --- | --- | --- | --- | --- | --- | --- |
 | 8 | 1 | QR発行・ラベル印刷 | `Fix/API設計書_QR発行・ラベル印刷.docx` | 5. `/qr-issue`、6. `/qr-print` | `Fix` | QR発行から印刷までを `qr_issue` 1単位で扱う方針で確定。テンプレート一覧はフロントエンド資材、プリンタ候補はテプラ連携/ローカル印刷モジュールで扱い、マスタAPIは設けない。要件・DB設計・最新認証認可レビュー反映済み。 |
 | 9 | 1 | 現有品調査 | `Fix/API設計書_現有品調査.docx` | 7. `/offline-prep`、11. `/registration-edit` | `Fix` | API対象は `/offline-prep` と `/registration-edit`。`/survey-location` / `/asset-survey` / `/history` はPWAのフロント実装として扱い、正本要件・DB設計・最新認証認可レビュー反映済み。 |
-| 10 | 1 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |
-| 11 | 1 | データ突合 | `Fix/API設計書_データ突合.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `Fix` | `lock_version` による更新競合検知と一覧 snapshot 固定、`created_asset_ledger_id` / `assetLedgerId` による原本確定後の追跡、`CONFIRM_ORIGINAL` 時の QR 紐付けと現有品調査写真引継ぎの同一トランザクション化、分類マスタの `is_active` 整合修正まで反映済み |
+| 10 | 1 | 資産台帳取込・マスタ突き合わせ | `Fix/API設計書_資産台帳取込.docx` | 12. `/asset-import`、13. `/asset-matching` | `Fix` | 固定資産台帳取込40カラム、型変換・非同期エラー規則、台帳原本値DTO、マスタ側候補/選択値、DB保持先を反映済み。 |
+| 11 | 1 | データ突合 | `Fix/API設計書_データ突合.docx` | 14. `/data-matching`、33. `/data-matching/ledger`、34. `/data-matching/me-ledger` | `Fix` | 固定資産台帳取込40カラムの原本直前スナップショット、`asset_ledgers` 反映、(原)3項目と非(原)3項目の分離、`raw_data_json` 非再解析、`lock_version` による更新競合、QR紐付け、現有品調査写真引継ぎを反映済み。 |
 
 ## 資産一覧・資産詳細
 | No | Phase | 機能 | 対応する設計書 | 対象画面 | ステータス | 備考 |
@@ -62,7 +62,7 @@ Phase件数: `Phase1 31件` / `Phase2 1件`
 | --- | --- | --- | --- | --- | --- | --- |
 | 14 | 1 | SHIP資産マスタ | `Fix/API設計書_SHIP資産マスタ.docx` | 17. `/ship-asset-master` | `Fix` | 資産マスタ選択画面は別設計書として分離。SHIP資産マスタ画面の一覧固定カラム全体、`ship_asset_master_details`、JMDN必須項目、SHIP_Master必須項目、資産マスタIDの `ship_asset_master_id` 統一を反映済み |
 | 14a | 1 | 資産マスタ選択 | `Fix/API設計書_資産マスタ選択.docx` | 30. `/asset-master` | `Fix` | 参照専用API設計書を新規作成。候補一覧取得 `GET /asset-master/assets`、フィルター候補取得 `GET /asset-master/filter-options` を定義し、選択結果保存は呼び出し元画面の保存APIで扱う。作成・更新・削除、JMDN、固定属性、Excel入出力はNo.14を正本とする。`?mode=simple` / `ASSET_SELECTED` / `SET_MATCH_TARGET` は画面間連携仕様でありAPI分岐条件にはしない。正本要件・DB設計・APIレビュー反映済み |
-| 15 | 1 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 施設基本情報（都道府県、設立母体、施設コード、施設名、病床数）の管理に限定する。施設提供機能・提供カラム設定はNo.16 権限管理、施設グループと他施設向け公開設定はNo.17 施設グループ管理で扱う |
+| 15 | 1 | SHIP施設マスタ | `Fix/API設計書_SHIP施設マスタ.docx` | 18. `/ship-facility-master` | `Fix` | 一覧固定カラム全体（基本情報、認定情報、諸室情報、病床情報）を `facilities` / `facility_details` / `establishments` で扱う。医療機関コードはAPI上 `medicalInstitutionCode`、保存先は `facilities.facility_code` とする。施設提供機能・提供カラム設定はNo.16 権限管理、施設グループと他施設向け公開設定はNo.17 施設グループ管理で扱う |
 | 16 | 1 | 権限管理 | `Fix/API設計書_権限管理.docx` | 64. `/permission-management` | `Fix` | メイン画面のマスタ管理モーダルから遷移する独立画面。施設単位の提供機能・提供カラム設定、設定コピー、`lending_checkout` と `lending_in_use_used` の組み合わせ検証、未返却の使用中/使用済データが残る状態での OFF 拒否を扱う |
 | 17 | 1 | 施設グループ管理 | `Fix/API設計書_施設グループ管理.docx` | 66. `/facility-group-management` | `Fix` | メイン画面のマスタ管理モーダルから遷移する独立画面。`facility_collaboration_groups` / `facility_collaboration_group_facilities` による施設グルーピング、共有データ種別、`facility_external_view_settings` / `facility_external_column_settings` による他施設向け公開設定を扱う |
 | 18 | 1 | 個別部署マスタ | `Fix/API設計書_個別部署マスタ.docx` | 19. `/hospital-facility-master` | `Fix` | 正本要件・DB設計・最新認証認可レビュー反映済み |

@@ -277,7 +277,7 @@ $surveyDataEditPermissionLines = @(
           '写真本文は Amazon S3 へ PutObject し、写真メタデータは `application_documents` に `owner_type=''ASSET_SURVEY_RECORD''` / `document_category=''PHOTO''` として保存する。`taken_by_user_id` と `uploaded_by_user_id` には認証ユーザーIDを設定する',
           '写真が1件以上あるレコードでは、`photos[].isPrimary=true` は最大1件だけ許可する。すべて未指定または `false` の場合は先頭写真を `is_primary=true` として保存する',
           '現有品調査写真の `file_name` は、受信した `photos[].fileName` をそのまま使わず、`survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` 形式のシステム生成名を採番して保存する',
-          '写真保存時の `file_path` は S3 オブジェクトキーとして `asset-survey/{facility_id}/{YYYY}/{MM}/{local_photo_uuid}.{拡張子}` 形式で生成し、バケット名や HTTPS URL は保存しない',
+          '写真保存時の `file_path` は S3 オブジェクトキーとして `application-documents/facility-{facilityId}/{yyyy}/{mm}/{localPhotoUuid}.{拡張子}` 形式で生成し、バケット名や HTTPS URL は保存しない。`localPhotoUuid` はオフライン撮影時点で採番済みの写真UUIDを利用し、S3キーに業務DB採番IDを含めない',
           'Amazon S3 への PutObject に失敗した場合は 502 を返し、DB トランザクションをロールバックしたうえで保存済み S3 オブジェクトを破棄する',
           '写真保存時の `uploaded_at` にはサーバー受信時刻を設定する',
           'アップロード完了後、セッションステータスを `COMPLETED` へ更新する'
@@ -318,7 +318,7 @@ $surveyDataEditPermissionLines = @(
               @('`application_documents`', '`owner_type` / `asset_survey_record_id` / `document_category`', '`ASSET_SURVEY_RECORD` / 対応する新規 `asset_survey_record_id` / `PHOTO` を保存する', '調査写真の正本'),
               @('`application_documents`', 'リクエスト `photos[].localPhotoUuid` / `photos[].fileName`', '`localPhotoUuid` は DB へ保存せず、`fileName` もそのままは保存しない。両者はサーバー生成 `file_name` / `file_path` の材料としてのみ使う', 'クライアント一時識別子'),
               @('`application_documents` / Amazon S3', 'リクエスト `photos[].fileBodyBase64`', 'DB カラムへは保存しない。復号した写真本文を Amazon S3 へ PutObject し、その結果から `file_size_bytes` / `content_hash` を導出する', '写真実体そのものは DB ではなく Amazon S3 で管理する'),
-              @('`application_documents`', '`file_name` / `file_path`', 'システム生成ファイル名 `survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` と S3 オブジェクトキー `asset-survey/{facility_id}/{YYYY}/{MM}/{local_photo_uuid}.{拡張子}` を保存する', '`file_path` は S3 キーであり、バケット名や HTTPS URL は保存しない'),
+              @('`application_documents`', '`file_name` / `file_path`', 'システム生成ファイル名 `survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` と S3 オブジェクトキー `application-documents/facility-{facilityId}/{yyyy}/{mm}/{localPhotoUuid}.{拡張子}` を保存する', '`file_path` は S3 キーであり、バケット名や HTTPS URL は保存しない。S3キーに業務DB採番IDを含めない'),
               @('`application_documents`', '`mime_type` / `file_size_bytes` / `content_hash` / `storage_format`', 'リクエスト `photos[].contentType`、復号後バイト数、サーバー計算ハッシュ、`NULL` を保存する', '`storage_format` は現有品調査写真では未使用。S3 利用有無は `file_path` の S3 オブジェクトキーで表す'),
               @('`application_documents`', '`taken_at` / `taken_by_user_id` / `uploaded_by_user_id` / `uploaded_at`', 'リクエスト `photos[].takenAt`、認証ユーザーID、認証ユーザーID、サーバー受信時刻を保存する', '`takenAt` 未指定時は `uploaded_at` を正本時刻として扱える状態にする'),
               @('`application_documents`', '`is_primary` / `sort_order`', 'レコード配下で `photos[].isPrimary=true` の写真を 1 件だけ `true` とし、未指定時は先頭写真を `true` にする。`sort_order` は `photos[]` の並び順を保存する', '同一 `asset_survey_record_id` で代表写真は必ず 1 件だけ'),

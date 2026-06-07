@@ -295,7 +295,7 @@
           '`replacementActions.action=''DISPOSAL''` の対象は、関連する `DISPOSAL` 申請、`application_assets(asset_role=''DISPOSAL'')`、`disposal_application_details.related_purchase_application_id` を同一トランザクションで作成する',
           '`replacementActions.action=''TRANSFER''` の対象は、関連する `TRANSFER` 申請、`application_assets(asset_role=''TRANSFER'')`、`transfer_application_details.related_purchase_application_id` を同一トランザクションで作成する',
           '`payload.attachments[].filePartName` が multipart のファイルパートに存在することを確認し、ファイルサイズ、MIME Type、拡張子を検証する',
-          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `applications/{targetFacilityId}/{applicationId}/attachments/{uploadUuid}.{ext}` 形式で発行する',
+          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{targetFacilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`applicationId` などの業務IDを含めない',
           '添付は `application_documents` に `owner_type=''APPLICATION''`、`application_id`、`document_category=''ATTACHMENT''`、`document_type=''APPLICATION_ATTACHMENT''`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'S3保存後にDB登録または申請作成トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`APPLICATION_ATTACHMENT_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '作成した各 `applications` に対し、`application_status_histories` の初期履歴を作成する'
@@ -441,7 +441,7 @@
           '`application_assets` に対象資産を `asset_role=''DISPOSAL''` として保存する',
           '`disposal_application_details` に廃棄理由を保存する。廃棄業者、受付、期限、発注、検収に関する項目は後続の廃棄管理 API で更新するため起票時は未設定とする',
           '`payload.attachments[].filePartName` が multipart のファイルパートに存在することを確認し、ファイルサイズ、MIME Type、拡張子を検証する',
-          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `applications/{targetFacilityId}/{applicationId}/attachments/{uploadUuid}.{ext}` 形式で発行する',
+          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{targetFacilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`applicationId` などの業務IDを含めない',
           '添付は `application_documents` に `owner_type=''APPLICATION''`、`application_id`、`document_category=''ATTACHMENT''`、`document_type=''APPLICATION_ATTACHMENT''`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'S3保存後にDB登録または申請作成トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`APPLICATION_ATTACHMENT_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`application_status_histories` に初期履歴を作成する'

@@ -287,7 +287,7 @@ $repairRequestCreatedRows = @(
           '`repair_request_details.repair_category` は起票時には設定しない。院内修理/院外修理の振り分けは No.27 修理管理API設計書のSTEP1で登録する',
           '`application_assets` に `asset_role=''REPAIR''`、行番号1、`quantity=1`、`unit=''台''`、登録済み資産または未登録資産の表示用スナップショットを保存する',
           '`payload.photoDocuments` / `payload.attachmentDocuments` の各 `filePartName` が multipart のファイルパートに存在することを検証し、不一致なら 400 (`REPAIR_REQUEST_INPUT_INVALID`) を返す',
-          'ファイル本体を Amazon S3 へ PutObject する。S3オブジェクトキーは `repair-requests/{facility_id}/{application_id}/{application_asset_idまたはattachments}/{upload_uuid}.{拡張子}` 形式でAPI側が生成する',
+          'ファイル本体を Amazon S3 へ PutObject する。S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{拡張子}` 形式でAPI側が生成する。keyは保存場所識別子であり、`application_id` や `application_asset_id` などの業務IDを含めない',
           '写真は対象機器に紐づくため `application_documents.owner_type=''APPLICATION_ASSET''`、`document_category=''PHOTO''`、`document_type=''機器写真''` として保存する',
           '補足添付は申請ヘッダーに紐づくため `application_documents.owner_type=''APPLICATION''`、`document_category=''REQUEST_ATTACHMENT''` として保存する',
           '`application_documents.file_path` にはS3オブジェクトキーのみを保存し、バケット名やHTTPS URLはDBへ保存しない。`contentType` は `mime_type`、サーバー算出ファイルサイズは `file_size_bytes`、コンテンツハッシュは `content_hash` に保存し、生成列 `owner_key` は直接書き込まない',

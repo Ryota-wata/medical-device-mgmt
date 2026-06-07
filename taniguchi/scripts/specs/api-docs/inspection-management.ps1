@@ -920,7 +920,7 @@ $spec = @{
           '費用行から `parts_cost`、`labor_cost`、`total_cost` を算出する。`OTHER` は `labor_cost` 側に含め、内訳詳細は `result_details_json.costRows` に保持する',
           '`payload.documents[].filePartName` が `files` パートに存在することを確認し、許可MIMEタイプ、拡張子、ファイルサイズ、`contentHash` 指定時のハッシュ一致を検証する',
           '`inspection_results` にメーカー保守結果を登録する。`overall_result` は `PASS` とし、異常や再修理が必要な場合は修理管理タブ側で別途修理申請を起票する',
-          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `inspection-results/{facilityId}/{inspectionResultId}/maker-maintenance/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`inspectionResultId` などの業務IDを含めない',
           '添付ファイルは `application_documents.owner_type=''INSPECTION_RESULT''`、`inspection_result_id=作成した点検結果ID`、`document_category`、`document_type`、`document_date`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'Amazon S3保存後に文書メタデータ保存、点検結果登録、またはタスク論理解除へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`INSPECTION_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '登録成功後、対象 `inspection_tasks` を `is_active=false`、`deleted_at=現在日時` として一覧から除外する',

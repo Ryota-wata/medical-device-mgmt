@@ -578,7 +578,7 @@ $spec = @{
           '対象契約が `見積依頼` であることを確認する',
           '対象 `rfq_vendors` が契約の `rfq_id` に属し、`request_status` が `DRAFT` または未送信相当であることを確認する',
           '`payload.requestDocument` を指定した場合は、`filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
-          '送付文書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `maintenance-contracts/{facilityId}/{maintenanceContractId}/quote-requests/vendors/{rfqVendorId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '送付文書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` や `rfqVendorId` などの業務IDを含めない',
           '送付文書メタデータは `application_documents.owner_type=''RFQ_VENDOR''`、`rfq_id=契約のRFQ ID`、`rfq_vendor_id=対象依頼先ID`、`document_category=''REQUEST_ATTACHMENT''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'Amazon S3保存後に文書メタデータ保存または依頼先状態更新へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`rfq_vendors.request_status=''SENT''`、`requested_at=現在日時`、`requested_by_user_id=ログインユーザー` を更新する'
@@ -782,7 +782,7 @@ $spec = @{
           '対象契約が `見積依頼済` または `見積登録済` であることを確認する',
           '`payload.document.filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
           '`quotation_no` を採番し、`quotation_on` は入力値または業務日で `quotations` を作成する。`rfq_id` は保守契約RFQに紐づける。`payload.storageFormat` は見積原本メタデータの `application_documents.storage_format` に保存する',
-          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `maintenance-contracts/{facilityId}/{maintenanceContractId}/quotations/{quotationId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` や `quotationId` などの業務IDを含めない',
           '見積原本は `application_documents.owner_type=''QUOTATION''`、`quotation_id=作成した見積ID`、`document_category=''QUOTATION''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format=payload.storageFormat`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'Amazon S3保存後に見積作成または文書メタデータ保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '参考見積は登録できるが、契約登録時の採用見積にはできない'
@@ -936,7 +936,7 @@ $spec = @{
           $workFacilityProcessingLine,
           '対象契約が `見積登録済` であることを確認する',
           '`payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
-          '各ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `maintenance-contracts/{facilityId}/{maintenanceContractId}/contracts/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '各ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` などの業務IDを含めない',
           '各文書を `application_documents.owner_type=''RFQ''`、`rfq_id=契約のRFQ ID`、`document_category=''CONTRACT''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'Amazon S3保存後に文書メタデータ保存または業務トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す'
         )
@@ -1058,7 +1058,7 @@ $spec = @{
           '追加対象は `maintenance_contract_assets` に `excluded_flag=false` で新規作成する',
           '追加/除外の履歴を `maintenance_contract_review_assets` に作成する',
           '`payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
-          '契約変更文書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `maintenance-contracts/{facilityId}/{maintenanceContractId}/reviews/{maintenanceContractReviewId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          '契約変更文書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` や `maintenanceContractReviewId` などの業務IDを含めない',
           '契約変更文書は `application_documents.owner_type=''MAINTENANCE_CONTRACT_REVIEW''`、`maintenance_contract_review_id=作成した見直しID`、`document_category=''CONTRACT_REVIEW''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'Amazon S3保存後に見直し履歴、資産追加/除外、金額更新、文書メタデータ保存のいずれかへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`maintenance_contracts.contract_amount_excl_tax` を見直し後金額へ更新し、ステータスは `完了` のまま維持する'

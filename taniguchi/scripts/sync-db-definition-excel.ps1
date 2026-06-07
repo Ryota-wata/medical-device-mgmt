@@ -299,6 +299,9 @@ function Derive-LogicalTableName {
     [AllowNull()][object]$Existing
   )
 
+  if (-not [string]::IsNullOrWhiteSpace($Entity.DisplayName) -and $Entity.DisplayName -ne $Entity.Physical) {
+    return $Entity.DisplayName
+  }
   if ($Existing -and -not [string]::IsNullOrWhiteSpace($Existing.TableLogical) -and $Existing.TableLogical -ne '要確認') {
     return $Existing.TableLogical
   }
@@ -456,6 +459,28 @@ function Get-DefaultValueForColumn {
   return '-'
 }
 
+function Test-RequiredNotNullColumn {
+  param(
+    [string]$TablePhysical,
+    [object]$Column
+  )
+
+  if ($TablePhysical -eq 'facility_details') { return $true }
+  if ($TablePhysical -eq 'facilities') {
+    return @(
+      'facility_id',
+      'establishment_id',
+      'facility_code',
+      'facility_name',
+      'prefecture',
+      'bed_count',
+      'created_at',
+      'updated_at'
+    ) -contains $Column.Physical
+  }
+  return $false
+}
+
 function Get-DefaultRemarksForColumn {
   param(
     [object]$Column,
@@ -479,6 +504,7 @@ function Get-DefaultRemarksForColumn {
 
 function Merge-ColumnMetadata {
   param(
+    [string]$TablePhysical,
     [object]$Column,
     [AllowNull()][object]$ExistingColumn
   )
@@ -491,6 +517,7 @@ function Merge-ColumnMetadata {
 
   $notNull = if ($ExistingColumn) { $ExistingColumn.NotNull } else { $null }
   if ($Column.IsPrimaryKey) { $notNull = '○' }
+  if (Test-RequiredNotNullColumn -TablePhysical $TablePhysical -Column $Column) { $notNull = '○' }
   $notNull = Get-NonBlankValue $notNull '-'
 
   $foreignKey = if ($ExistingColumn -and -not [string]::IsNullOrWhiteSpace($ExistingColumn.ForeignKey)) {
@@ -973,7 +1000,7 @@ try {
     $columns = New-Object System.Collections.Generic.List[object]
     foreach ($column in $entity.Columns) {
       $existingColumn = if ($existing -and $existing.Columns.ContainsKey($column.Physical)) { $existing.Columns[$column.Physical] } else { $null }
-      $columns.Add((Merge-ColumnMetadata -Column $column -ExistingColumn $existingColumn)) | Out-Null
+      $columns.Add((Merge-ColumnMetadata -TablePhysical $entity.Physical -Column $column -ExistingColumn $existingColumn)) | Out-Null
     }
 
     $table = [pscustomobject]@{

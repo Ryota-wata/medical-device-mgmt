@@ -606,7 +606,7 @@ $inventoryCompleteSessionPermissionLines = @(
         PermissionLines = $inventoryItemPermissionLines
         ProcessingLines = @(
           '対象 `inventory_items` と親 `inventory_sessions` を取得し、作業対象施設との一致と親セッションが `IN_PROGRESS` であることを確認する',
-          '添付ファイル本体をAmazon S3へPutObjectし、S3オブジェクトキーは `inventory-items/{facility_id}/{inventory_session_id}/{inventory_item_id}/{upload_uuid}.{拡張子}` 形式で生成する',
+          '添付ファイル本体をAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{拡張子}` 形式で生成する。keyは保存場所識別子であり、`inventory_session_id` や `inventory_item_id` などの業務IDを含めない',
           '`application_documents.file_path` にはS3オブジェクトキーのみを保存し、バケット名やHTTPS URLはDBへ保存しない',
           '`application_documents.owner_type=''INVENTORY_ITEM''`、`inventory_item_id=対象明細ID`、`document_category=''REQUEST_ATTACHMENT''`、ファイル名、MIMEタイプ、サイズ、content hash をメタデータとして作成する',
           'DBメタデータ作成に失敗した場合は、保存済みS3オブジェクトをAmazon S3 DeleteObjectで破棄する。破棄失敗時は 502 (`INVENTORY_502_S3_WRITE_FAILED`) を返し、失敗内容を運用ログへ記録する',

@@ -1246,7 +1246,7 @@ $assetDetailRows = @(
         ProcessingLines = @(
           '対象資産が作業対象施設に属し、作業対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを確認する',
           '`payload.photos[].filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する',
-          '各写真ファイルをAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `asset-ledgers/{facilityId}/{assetId}/photos/{uploadUuid}.{ext}` 形式で発行する',
+          '各写真ファイルをAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`assetId` などの業務IDを含めない',
           '`application_documents` へ `owner_type=ASSET_LEDGER`、`asset_ledger_id`、`document_category=PHOTO`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'S3保存後にDB登録へ失敗した場合は保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`ASSET_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`isPrimary=true` の写真が含まれる場合は既存代表写真を解除し、新規写真を代表へ切り替える',
@@ -1371,7 +1371,7 @@ $assetDetailRows = @(
         ProcessingLines = @(
           '対象資産が作業対象施設に属し、作業対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを確認する',
           'multipart の `file` パートが存在することを確認し、`payload.contentType` と拡張子が許可された業務文書形式であることを検証する',
-          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `asset-ledgers/{facilityId}/{assetId}/documents/{uploadUuid}.{ext}` 形式で発行する',
+          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`assetId` などの業務IDを含めない',
           '`application_documents` へ `owner_type=ASSET_LEDGER`、`asset_ledger_id`、PHOTO 以外の `document_category`、`document_type`、`title`、`document_date`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない',
           'S3保存後にDB登録へ失敗した場合は保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`ASSET_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`asset_documents` VIEW 互換で参照できる状態へ反映し、`downloadUrl` はS3オブジェクトキーから発行した認可済みダウンロードURLを返す。S3オブジェクトキー自体は返却しない'

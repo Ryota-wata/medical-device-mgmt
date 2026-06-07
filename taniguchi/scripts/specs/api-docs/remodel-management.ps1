@@ -543,7 +543,7 @@ $endpointBlocks = @(
       '`payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、`.pdf`、`.xlsx`、`.xls` の拡張子とMIME Typeを受け付ける。',
       'OCR実行サービスやExcel取込APIは対象外とし、画面で確認・編集された結果を後続APIで保存する。',
       'ドラフト作成時は `quotations.status=''DRAFT''` の見積ヘッダーを作成し、`draftId` には `quotations.quotation_id` を返す。',
-      '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `quotations/{facilityId}/{rfqGroupId}/{quotationId}/documents/{uploadUuid}.{ext}` 形式で発行する。',
+      '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `quotationId` などの業務IDを含めない。',
       '見積原本は `application_documents` に `owner_type=''QUOTATION''`、`quotation_id`、`document_category=''QUOTATION''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format=payload.storageFormat`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない。',
       '`storageFormat` は保存先ではなく電子取引/スキャナ保存/未指定などの保存形式を表す列として扱い、S3保存有無の表現には使用しない。',
       'Amazon S3保存後にDBメタデータ保存またはドラフト作成トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REMODEL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。',
@@ -863,10 +863,10 @@ $endpointBlocks = @(
     -ProcessingLines @(
       '対象発注明細が指定RFQの発注に属することを検証する。',
       '`payload.photoDocuments[].filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する。',
-      '新規写真ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `rfqs/{facilityId}/{rfqGroupId}/acceptance-photos/{orderItemId}/{uploadUuid}.{ext}` 形式で発行する。',
+      '新規写真ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `orderItemId` などの業務IDを含めない。',
       '検収登録中の写真は資産登録前の工程ドキュメントとして `application_documents` に `owner_type=''RFQ''`、`rfq_id`、`step_code=''ACCEPTANCE''`、`document_category=''PHOTO''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない。',
-      '`payload.photoDocumentIds` は同一RFQの未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')` のみ受け付ける。',
-      '保存対象の発注明細IDと写真ドキュメントIDの対応は、`application_documents.file_path` の `rfqs/{facilityId}/{rfqGroupId}/acceptance-photos/{orderItemId}/` 接頭辞と同一RFQの未削除RFQ写真条件でAPIが再解決し、レスポンスやコンテキストの `photoDocumentIds` として返す。DBへS3オブジェクトキー以外の発注明細IDをファイルメタデータ用に重複保持しない。',
+      '`payload.photoDocumentIds` は同一RFQの未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')` であり、`application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', order_item_id=対象発注明細ID, deleted_at IS NULL)` に有効リンクがあるIDのみ受け付ける。',
+      '保存対象の発注明細IDと写真ドキュメントIDの対応は `application_document_order_item_links` に `relation_type=''ACCEPTANCE_PHOTO''` として保存し、レスポンスやコンテキストの `photoDocumentIds` は同リンクから解決する。S3オブジェクトキーの接頭辞から `orderItemId` を再解決しない。',
       'Amazon S3保存後にDBメタデータ保存または明細保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REMODEL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。',
       '明細単位の保存ではRFQステータスを変更しない。'
     ) `
@@ -928,7 +928,7 @@ $endpointBlocks = @(
     -ProcessingLines @(
       '対象RFQは `検収済` のみ許可する。',
       '`individuals.registration_status=''INSPECTED''` の個体を原本登録対象として返す。',
-      '`IndividualSummary.photoDocumentIds` は同一RFQの未削除RFQ写真のうち `file_path` が `rfqs/{facilityId}/{rfqGroupId}/acceptance-photos/{orderItemId}/` で始まるドキュメントIDを設定する。',
+      '`IndividualSummary.photoDocumentIds` は同一RFQの未削除RFQ写真のうち `application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', order_item_id=対象発注明細ID, deleted_at IS NULL)` に紐づくドキュメントIDを設定する。',
       '会計区分と勘定科目は固定候補をコード表として返す。'
     ) `
     -ResponseRows @(
@@ -956,7 +956,7 @@ $endpointBlocks = @(
       '対象RFQは `検収済` のみ許可する。',
       '`individuals` を原本資産へ反映し、`asset_ledgers` を作成または更新する。',
       '対象個体、発注明細、見積明細、編集リスト明細の紐づけを保持する。',
-      'リクエストの `individuals[].photoDocumentIds` で指定された `application_documents.owner_type=''RFQ''`、`document_category=''PHOTO''` の写真だけを、当該個体から作成/更新した原本資産へ反映する。各IDは同一RFQかつ当該個体の `orderItemId` に対応するS3オブジェクトキー接頭辞を持つことを検証する。',
+      'リクエストの `individuals[].photoDocumentIds` で指定された `application_documents.owner_type=''RFQ''`、`document_category=''PHOTO''` の写真だけを、当該個体から作成/更新した原本資産へ反映する。各IDは同一RFQかつ当該個体の `orderItemId` に対応する `application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'')` を持つことを検証する。',
       '検収写真はS3オブジェクト自体を再アップロードせず、作成/更新した原本資産の `application_documents.owner_type=''ASSET_LEDGER''`、`asset_ledger_id`、`document_category=''PHOTO''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` としてメタデータを複製する。',
       '登録成功時はRFQステータスを `完了` へ進める。',
       'リモデル管理では、RFQ単位の原本登録完了後も編集リスト全体の原本反映確定はリモデルクローズで行う。'
@@ -1103,6 +1103,7 @@ $endpointBlocks = @(
       @('`facility_locations`', 'READ / UPDATE', '個別部署マスタの現状情報への反映先'),
       @('`asset_ledger_histories`', 'CREATE', 'リモデルクローズ時の原本反映監査履歴'),
       @('`application_documents`', 'READ / CREATE / UPDATE', '見積書、発注書、検収書、写真などのファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する'),
+      @('`application_document_order_item_links`', 'READ / CREATE / UPDATE', '検収写真ドキュメントと発注明細の対応。`relation_type=''ACCEPTANCE_PHOTO''` で、S3オブジェクトキーのprefixに依存せず `photoDocumentIds` を検証する'),
       @('`vendors`', 'READ', '見積業者のマスタ参照')
     ) },
 
