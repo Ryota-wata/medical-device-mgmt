@@ -114,12 +114,14 @@ function Section({
   children,
   enabled,
   completed,
+  elementId,
 }: {
   step: number;
   title: string;
   children: React.ReactNode;
   enabled: boolean;
   completed: boolean;
+  elementId?: string;
 }) {
   // Figma 構造: プレーンテキストヘッダー (色帯なし)、active/inactive は文字色で表現
   // 元モック文言 (STEP①./STEP②./STEP③./STEP④.) を保持
@@ -127,7 +129,7 @@ function Section({
   void step;
   const titleColor = enabled || completed ? 'text-content-primary' : 'text-content-sub';
   return (
-    <div className={`bg-surface-card border border-stroke-card rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
+    <div data-element-id={elementId} className={`bg-surface-card border border-stroke-card rounded-2xl mb-4 ${enabled ? 'opacity-100' : 'opacity-70'}`}>
       <div className="flex items-center gap-3 px-4 py-3 border-b border-stroke-card">
         <span className={`text-sm font-bold flex-1 ${titleColor}`}>
           {title}
@@ -145,7 +147,7 @@ function Section({
 /** プログレスバー */
 function ProgressBar({ activeStep }: { activeStep: number }) {
   return (
-    <div className="flex items-center justify-center px-4 py-3 bg-stroke-card border-b border-stroke-input">
+    <div data-element-id="mqr-progress-bar" className="flex items-center justify-center px-4 py-3 bg-stroke-card border-b border-stroke-input">
       {MAINTENANCE_STEPS.map((item, index) => {
         const isCompleted = item.step < activeStep;
         const isActive = item.step === activeStep;
@@ -256,9 +258,15 @@ function MaintenanceQuoteRegistrationContent() {
   const contractId = searchParams.get('id') || '1';
   const user = useAuthStore((s) => s.user);
 
+  // 初期表示ステップ (?step=1〜3 でディープリンク。未指定は STEP①)
+  const initialStep = (() => {
+    const s = parseInt(searchParams.get('step') || '', 10);
+    return s >= 1 && s <= 3 ? s : 1;
+  })();
+
   const [formData, setFormData] = useState<MaintenanceContract | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [currentStep, setCurrentStep] = useState<number>(initialStep);
 
   const [rfqVendors, setRfqVendors] = useState<RfqVendor[]>([
     { id: 1, vendorName: 'フィリップス・ジャパン', personInCharge: '田中 太郎', email: 'tanaka@philips.example.com', tel: '03-1234-5678', isSent: false },
@@ -413,18 +421,17 @@ function MaintenanceQuoteRegistrationContent() {
       alert('先に「明細の登録」を実行してください（対象資産を1件以上登録）。');
       return;
     }
-    // REQ-100: メーカー点検の明細を点検タスク管理へ連携（点検タスク=メーカー保守を生成）
+    // REQ-100: メーカー保守の明細を点検タスク管理へ連携（点検タスク=メーカー保守を生成）
     const fallbackDate = () => {
       const d = new Date();
       d.setDate(d.getDate() + 90);
       return d.toISOString().split('T')[0];
     };
-    const makerItems = lineItems.filter(a => a.inspectionType === 'メーカー点検');
+    const makerItems = lineItems.filter(a => a.inspectionType === 'メーカー保守');
     const vendorName = registeredQuotations[0]?.vendorName || '';
     makerItems.forEach(a => {
-      const next = (a.warrantyEnd && a.warrantyEnd.replace(/\//g, '-'))
-        || formData.contractPeriodEnd
-        || fallbackDate();
+      // API設計準拠: 保証期間は点検予定日算出に使用しない (契約期間終了 or 日程未定)
+      const next = formData.contractPeriodEnd || fallbackDate();
       addInspectionTask(
         {
           assetId: a.qrLabel,
@@ -451,7 +458,7 @@ function MaintenanceQuoteRegistrationContent() {
     setTimeout(() => {
       alert(
         makerItems.length > 0
-          ? `保守契約の登録が完了しました。\nメーカー点検 ${makerItems.length} 件を点検タスク管理へ連携しました。`
+          ? `保守契約の登録が完了しました。\nメーカー保守 ${makerItems.length} 件を点検タスク管理へ連携しました。`
           : '保守契約の登録が完了しました。'
       );
       router.push('/quotation-data-box/maintenance-contracts');
@@ -587,7 +594,7 @@ function MaintenanceQuoteRegistrationContent() {
       <ProgressBar activeStep={activeStep} />
 
       {/* 基本情報バー */}
-      <div className="flex gap-6 flex-wrap px-4 py-2 bg-surface-select border-b border-cta-primary text-xs text-cta-primary-dark">
+      <div data-element-id="mqr-info-bar" className="flex gap-6 flex-wrap px-4 py-2 bg-surface-select border-b border-cta-primary text-xs text-cta-primary-dark">
         <span><strong>保守No:</strong> {formData.maintenanceNo}</span>
         <span><strong>品目:</strong> {formData.itemName}</span>
         <span><strong>メーカー:</strong> {formData.maker}</span>
@@ -603,7 +610,7 @@ function MaintenanceQuoteRegistrationContent() {
           style={{ width: `${leftPanelWidth}%` }}
         >
           {/* ===== STEP① ===== */}
-          <Section step={1} title="STEP①. 見積依頼" enabled={isStepEnabled(1)} completed={1 < activeStep}>
+          <Section step={1} title="STEP①. 見積依頼" enabled={isStepEnabled(1)} completed={1 < activeStep} elementId="mqr-step1-section">
             <div className="px-3.5 py-2.5 bg-surface-select rounded-md mb-4 text-sm text-cta-primary-dark leading-relaxed">
               業者を登録し見積依頼書を作成してください。プレビューで内容を確認後、依頼を送信できます。
             </div>
@@ -613,7 +620,7 @@ function MaintenanceQuoteRegistrationContent() {
               <div className="mb-2 flex items-center gap-2">
                 <TagLabel>受付部署</TagLabel>
               </div>
-              <table className="w-full border-collapse">
+              <table data-element-id="mqr-reception-table" className="w-full border-collapse">
                 <tbody>
                   <tr>
                     <ThLabelCell>部署名</ThLabelCell>
@@ -635,7 +642,7 @@ function MaintenanceQuoteRegistrationContent() {
             <div className="mb-4">
               <p className="text-sm font-bold text-cta-primary-dark mb-2">依頼先</p>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+                <table data-element-id="mqr-rfq-vendor-table" className="w-full border-collapse">
                   <thead>
                     <tr>
                       <VendorTh className="w-[30px] text-center">#</VendorTh>
@@ -652,6 +659,7 @@ function MaintenanceQuoteRegistrationContent() {
                         <VendorTd className="text-center font-bold text-content-sub">{idx + 1}</VendorTd>
                         <VendorTd>
                           <input
+                            data-element-id={idx === 0 ? 'mqr-rfq-vendor-name-first' : undefined}
                             type="text"
                             value={vendor.vendorName}
                             onChange={(e) => updateVendor(vendor.id, { vendorName: e.target.value })}
@@ -662,6 +670,7 @@ function MaintenanceQuoteRegistrationContent() {
                         </VendorTd>
                         <VendorTd>
                           <input
+                            data-element-id={idx === 0 ? 'mqr-rfq-vendor-person-first' : undefined}
                             type="text"
                             value={vendor.personInCharge}
                             onChange={(e) => updateVendor(vendor.id, { personInCharge: e.target.value })}
@@ -672,6 +681,7 @@ function MaintenanceQuoteRegistrationContent() {
                         </VendorTd>
                         <VendorTd>
                           <input
+                            data-element-id={idx === 0 ? 'mqr-rfq-vendor-email-first' : undefined}
                             type="email"
                             value={vendor.email}
                             onChange={(e) => updateVendor(vendor.id, { email: e.target.value })}
@@ -682,6 +692,7 @@ function MaintenanceQuoteRegistrationContent() {
                         </VendorTd>
                         <VendorTd>
                           <input
+                            data-element-id={idx === 0 ? 'mqr-rfq-vendor-tel-first' : undefined}
                             type="text"
                             value={vendor.tel}
                             onChange={(e) => updateVendor(vendor.id, { tel: e.target.value })}
@@ -698,12 +709,14 @@ function MaintenanceQuoteRegistrationContent() {
                           ) : vendor.vendorName.trim() ? (
                             <div className="flex gap-1 justify-center">
                               <button
+                                data-element-id={idx === 0 ? 'mqr-rfq-preview-btn-first' : undefined}
                                 onClick={() => setPreviewTab(1)}
                                 className="px-2.5 py-1 bg-stroke-card text-content-primary border border-stroke-input rounded-md cursor-pointer text-xs hover:bg-stroke-input transition-colors"
                               >
                                 プレビュー
                               </button>
                               <button
+                                data-element-id={idx === 0 ? 'mqr-rfq-send-btn-first' : undefined}
                                 onClick={() => handleSendRfq(vendor.id)}
                                 disabled={!isStepEnabled(1)}
                                 className="px-2.5 py-1 bg-cta-primary text-white border-0 rounded-md cursor-pointer text-xs font-bold hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -728,6 +741,7 @@ function MaintenanceQuoteRegistrationContent() {
                 <TagLabel>ご依頼事項</TagLabel>
               </div>
               <textarea
+                data-element-id="mqr-rfq-note"
                 placeholder="例：廃棄品の引取りをお願いします / 見積書を作成してください"
                 value={formData.rfqNote}
                 onChange={(e) => updateFormData({ rfqNote: e.target.value })}
@@ -738,6 +752,7 @@ function MaintenanceQuoteRegistrationContent() {
 
             <div className="flex justify-between mt-4">
               <button
+                data-element-id="mqr-reject-btn"
                 onClick={handleRejectApplication}
                 disabled={!isStepEnabled(1) || isSubmitting}
                 className="h-10 px-6 rounded-lg bg-surface-card text-content-alert border-2 border-content-alert text-sm font-bold cursor-pointer hover:bg-surface-screen transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -745,6 +760,7 @@ function MaintenanceQuoteRegistrationContent() {
                 申請を見送る
               </button>
               <button
+                data-element-id="mqr-step1-complete-btn"
                 onClick={handleStep1Complete}
                 disabled={!isStepEnabled(1) || isSubmitting}
                 className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -755,7 +771,7 @@ function MaintenanceQuoteRegistrationContent() {
           </Section>
 
           {/* ===== STEP② ===== */}
-          <Section step={2} title="STEP②. 見積登録" enabled={isStepEnabled(2)} completed={2 < activeStep}>
+          <Section step={2} title="STEP②. 見積登録" enabled={isStepEnabled(2)} completed={2 < activeStep} elementId="mqr-step2-section">
             <div className="px-3.5 py-2.5 bg-surface-select rounded-md mb-4 text-sm text-cta-primary-dark leading-relaxed">
               見積書をファイル選択して登録し、業者名と見積金額を入力してください。
             </div>
@@ -769,7 +785,7 @@ function MaintenanceQuoteRegistrationContent() {
                     <ThLabelCell>添付ファイル</ThLabelCell>
                     <TdCell>
                       <div className="flex items-center gap-2.5">
-                        <label className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm whitespace-nowrap hover:bg-stroke-input transition-colors ${isStepEnabled(2) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                        <label data-element-id="mqr-quote-file-label" className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm whitespace-nowrap hover:bg-stroke-input transition-colors ${isStepEnabled(2) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                           ファイルの選択
                           <input
                             type="file"
@@ -801,7 +817,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <tr>
                     <ThLabelCell>見積フェーズ</ThLabelCell>
                     <TdCell>
-                      <div className="flex flex-col gap-1.5">
+                      <div data-element-id="mqr-quote-phase-group" className="flex flex-col gap-1.5">
                         <label className="flex items-center gap-1.5 cursor-pointer text-sm">
                           <input
                             type="radio"
@@ -830,7 +846,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <tr>
                     <ThLabelCell>保存形式</ThLabelCell>
                     <TdCell>
-                      <div className="flex flex-col gap-1.5">
+                      <div data-element-id="mqr-save-format-group" className="flex flex-col gap-1.5">
                         {(['電子取引', 'スキャナ保存', '未指定'] as const).map(fmt => (
                           <label key={fmt} className="flex items-center gap-1.5 cursor-pointer text-sm">
                             <input
@@ -852,12 +868,13 @@ function MaintenanceQuoteRegistrationContent() {
             </div>
 
             {/* 見積登録業者セクション */}
-            <div className="mb-5 border-2 border-cta-primary rounded-lg p-4">
+            <div data-element-id="mqr-quote-vendor-section" className="mb-5 border-2 border-cta-primary rounded-lg p-4">
               <p className="text-sm font-bold text-cta-primary mb-3">見積登録業者</p>
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <label className="text-sm font-bold min-w-[120px]">業者名</label>
                   <select
+                    data-element-id="mqr-quote-vendor-select"
                     value={selectedQuotationVendorId}
                     onChange={(e) => setSelectedQuotationVendorId(e.target.value ? parseInt(e.target.value, 10) : '')}
                     disabled={!isStepEnabled(2)}
@@ -880,6 +897,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-bold">¥</span>
                     <input
+                      data-element-id="mqr-quote-amount"
                       type="text"
                       placeholder="0"
                       value={quotationAmount}
@@ -895,6 +913,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-bold">¥</span>
                     <input
+                      data-element-id="mqr-annual-amount"
                       type="text"
                       placeholder="0"
                       value={annualAmount}
@@ -907,6 +926,7 @@ function MaintenanceQuoteRegistrationContent() {
                 <div className="flex items-center gap-3">
                   <label className="text-sm font-bold min-w-[120px]">会計区分</label>
                   <select
+                    data-element-id="mqr-account-division"
                     value={quotationAccountDivision}
                     onChange={(e) => setQuotationAccountDivision(e.target.value)}
                     disabled={!isStepEnabled(2)}
@@ -920,6 +940,7 @@ function MaintenanceQuoteRegistrationContent() {
                 </div>
                 <div className="flex justify-end">
                   <button
+                    data-element-id="mqr-quote-register-btn"
                     onClick={handleRegisterQuotation}
                     disabled={!isStepEnabled(2) || !selectedQuotationFile}
                     className={`h-9 px-5 rounded-md text-white text-sm font-bold transition-colors ${selectedQuotationFile ? 'bg-cta-primary hover:bg-cta-primary-dark cursor-pointer' : 'bg-content-sub cursor-not-allowed'}`}
@@ -1014,6 +1035,7 @@ function MaintenanceQuoteRegistrationContent() {
 
             <div className="flex justify-end mt-4">
               <button
+                data-element-id="mqr-step2-complete-btn"
                 onClick={handleStep2Complete}
                 disabled={!isStepEnabled(2) || isSubmitting}
                 className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -1024,13 +1046,14 @@ function MaintenanceQuoteRegistrationContent() {
           </Section>
 
           {/* ===== STEP③ ===== */}
-          <Section step={3} title="STEP③. 契約登録" enabled={isStepEnabled(3)} completed={3 < activeStep}>
+          <Section step={3} title="STEP③. 契約登録" enabled={isStepEnabled(3)} completed={3 < activeStep} elementId="mqr-step3-section">
             <table className="w-full border-collapse text-sm">
               <tbody>
                 <tr>
                   <ThLabelCell>決済No,</ThLabelCell>
                   <TdCell>
                     <input
+                      data-element-id="mqr-settlement-no"
                       type="text"
                       value={formData.settlementNo}
                       onChange={(e) => updateFormData({ settlementNo: e.target.value })}
@@ -1052,6 +1075,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <ThLabelCell>種別備考</ThLabelCell>
                   <TdCell>
                     <select
+                      data-element-id="mqr-type-note"
                       value={formData.contractTypeMemo}
                       onChange={(e) => updateFormData({ contractTypeMemo: e.target.value })}
                       disabled={!isStepEnabled(3)}
@@ -1067,7 +1091,7 @@ function MaintenanceQuoteRegistrationContent() {
                 <tr>
                   <ThLabelCell>契約期間</ThLabelCell>
                   <TdCell>
-                    <div className="flex items-center gap-2">
+                    <div data-element-id="mqr-contract-period" className="flex items-center gap-2">
                       <input
                         type="date"
                         value={formData.contractPeriodStart}
@@ -1088,7 +1112,7 @@ function MaintenanceQuoteRegistrationContent() {
                 </tr>
                 {/* 260524 統合: 旧STEP④ 各種ドキュメント登録 */}
                 <tr>
-                  <td colSpan={2} className="px-3 py-2 bg-surface-select text-cta-primary-dark font-bold border border-stroke-input text-sm">
+                  <td data-element-id="mqr-doc-section-header" colSpan={2} className="px-3 py-2 bg-surface-select text-cta-primary-dark font-bold border border-stroke-input text-sm">
                     各種ドキュメントの登録
                   </td>
                 </tr>
@@ -1096,7 +1120,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <ThLabelCell>添付ファイル</ThLabelCell>
                   <TdCell>
                     <div className="flex items-center gap-3">
-                      <label className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm hover:bg-stroke-input transition-colors ${isStepEnabled(3) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                      <label data-element-id="mqr-doc-file-label" className={`px-4 py-1.5 bg-stroke-card border border-stroke-input rounded-md text-sm hover:bg-stroke-input transition-colors ${isStepEnabled(3) ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                         ファイルの選択
                         <input
                           type="file"
@@ -1126,7 +1150,7 @@ function MaintenanceQuoteRegistrationContent() {
                 <tr>
                   <ThLabelCell>ドキュメント種別</ThLabelCell>
                   <TdCell>
-                    <div className="flex items-center gap-4">
+                    <div data-element-id="mqr-doc-type-group" className="flex items-center gap-4">
                       <label className="flex items-center gap-1 cursor-pointer text-sm">
                         <input
                           type="radio"
@@ -1159,11 +1183,11 @@ function MaintenanceQuoteRegistrationContent() {
             {(() => {
               const uninput = lineItems.filter(a => !a.inspectionType).length;
               return !lineItemsRegistered ? (
-                <div className="mt-4 px-3 py-2.5 rounded-lg border border-content-alert bg-surface-screen text-sm font-bold text-content-alert">
+                <div data-element-id="mqr-line-item-status" className="mt-4 px-3 py-2.5 rounded-lg border border-content-alert bg-surface-screen text-sm font-bold text-content-alert">
                   明細が未登録です。契約登録の前に「明細の登録」を実行してください。
                 </div>
               ) : (
-                <div className="mt-4 px-3 py-2.5 rounded-lg border border-stroke-input bg-surface-screen text-sm text-content-primary">
+                <div data-element-id="mqr-line-item-status" className="mt-4 px-3 py-2.5 rounded-lg border border-stroke-input bg-surface-screen text-sm text-content-primary">
                   明細登録済 <strong className="tabular-nums">{lineItems.length}</strong> 件
                   {uninput > 0
                     ? <span className="ml-3 text-content-sub">点検情報 未入力 {uninput}件</span>
@@ -1174,6 +1198,7 @@ function MaintenanceQuoteRegistrationContent() {
 
             <div className="flex justify-between mt-3">
               <button
+                data-element-id="mqr-line-item-register-btn"
                 onClick={openLineItemModal}
                 disabled={!isStepEnabled(3) || isSubmitting}
                 className={
@@ -1185,6 +1210,7 @@ function MaintenanceQuoteRegistrationContent() {
                 {lineItemsRegistered ? `明細を編集（${lineItems.length}件）` : '明細の登録'}
               </button>
               <button
+                data-element-id="mqr-final-complete-btn"
                 onClick={handleFinalComplete}
                 disabled={!isStepEnabled(3) || isSubmitting || !lineItemsRegistered || lineItems.length === 0}
                 title={!lineItemsRegistered ? '先に明細の登録が必要です' : undefined}
@@ -1198,6 +1224,7 @@ function MaintenanceQuoteRegistrationContent() {
 
         {/* ドラッグハンドル */}
         <div
+          data-element-id="mqr-drag-handle"
           onMouseDown={handleDragStart}
           className="w-2 cursor-col-resize bg-stroke-card flex items-center justify-center shrink-0"
         >
@@ -1205,9 +1232,9 @@ function MaintenanceQuoteRegistrationContent() {
         </div>
 
         {/* 右側: プレビューエリア (Figma 構造: top に 4 横タブ + Printer アイコン) */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-stroke-card">
+        <div data-element-id="mqr-preview-panel" className="flex-1 flex flex-col overflow-hidden bg-stroke-card">
           {/* 4 横タブ */}
-          <div className="flex items-stretch bg-surface-card border-b border-stroke-input">
+          <div data-element-id="mqr-preview-tabs" className="flex items-stretch bg-surface-card border-b border-stroke-input">
             {MAINTENANCE_STEPS.map((item) => {
               const isActive = previewTab === item.step;
               return (
@@ -1229,6 +1256,7 @@ function MaintenanceQuoteRegistrationContent() {
               );
             })}
             <button
+              data-element-id="mqr-print-btn"
               className="inline-flex items-center justify-center w-10 h-10 bg-surface-card border-0 border-b-[3px] border-b-transparent text-content-sub cursor-pointer hover:text-content-primary transition-colors shrink-0"
               aria-label="印刷"
               title="印刷"
@@ -1252,7 +1280,7 @@ function MaintenanceQuoteRegistrationContent() {
           <div className="flex-1 p-4 overflow-auto">
             {/* STEP①: 見積依頼書プレビュー */}
             {previewTab === 1 && (
-              <div className="bg-surface-card border border-stroke-input rounded-2xl p-6">
+              <div data-element-id="mqr-preview-rfq" className="bg-surface-card border border-stroke-input rounded-2xl p-6">
                 <h4 className="text-base font-bold mb-4 text-content-primary text-center">見積依頼書</h4>
                 <div className="p-4 bg-surface-screen rounded-md mb-4 text-sm">
                   <p className="mb-2"><strong>保守No:</strong> {formData.maintenanceNo}</p>
@@ -1504,11 +1532,11 @@ function MaintenanceQuoteRegistrationContent() {
       {/* 明細登録モーダル (REQ-096/100/101) */}
       {isLineItemModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-surface-card rounded-2xl w-[96%] max-w-[1400px] max-h-[88vh] flex flex-col shadow-2xl">
+          <div data-element-id="mqr-line-item-modal" className="bg-surface-card rounded-2xl w-[96%] max-w-[1400px] max-h-[88vh] flex flex-col shadow-2xl">
             {/* ヘッダー */}
             <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-stroke-input">
               <h3 className="m-0 text-sm font-bold text-content-primary">明細登録 — 点検情報・契約単価</h3>
-              <button onClick={() => setIsLineItemModalOpen(false)} aria-label="閉じる" className="bg-transparent border-0 text-xl cursor-pointer text-content-sub px-2">×</button>
+              <button data-element-id="mqr-line-item-modal-close-x" onClick={() => setIsLineItemModalOpen(false)} aria-label="閉じる" className="bg-transparent border-0 text-xl cursor-pointer text-content-sub px-2">×</button>
             </div>
 
             {/* テーブル */}
@@ -1517,6 +1545,7 @@ function MaintenanceQuoteRegistrationContent() {
               <div className="mb-4">
                 <label className="block text-xs font-bold text-content-primary mb-1.5">資産を追加（QR・品目・メーカー・型式で検索）</label>
                 <input
+                  data-element-id="mqr-line-item-search"
                   type="text"
                   value={assetSearchQuery}
                   onChange={(e) => setAssetSearchQuery(e.target.value)}
@@ -1526,7 +1555,7 @@ function MaintenanceQuoteRegistrationContent() {
                 {assetSearchQuery.trim() && (
                   <div className="mt-2 border border-stroke-input rounded-lg overflow-hidden max-w-[920px]">
                     {assetCandidates.length > 0 ? (
-                      <table className="w-full border-collapse text-xs">
+                      <table data-element-id="mqr-line-item-candidate-table" className="w-full border-collapse text-xs">
                         <thead>
                           <tr className="bg-stroke-card text-content-primary">
                             <th className="px-2 py-1.5 text-left border-b border-stroke-input">QRラベル</th>
@@ -1546,7 +1575,7 @@ function MaintenanceQuoteRegistrationContent() {
                               <td className="px-2 py-1.5 border-b border-stroke-input">{m.model || '-'}</td>
                               <td className="px-2 py-1.5 border-b border-stroke-input">{m.shipDepartment || m.department || '-'}</td>
                               <td className="px-2 py-1.5 border-b border-stroke-input text-center">
-                                <button onClick={() => addAssetFromCandidate(m)} className="px-2.5 py-1 rounded bg-cta-primary text-white border-0 text-[11px] font-bold cursor-pointer hover:bg-cta-primary-dark">追加</button>
+                                <button {...(i === 0 ? { 'data-element-id': 'mqr-line-item-candidate-add-btn' } : {})} onClick={() => addAssetFromCandidate(m)} className="px-2.5 py-1 rounded bg-cta-primary text-white border-0 text-[11px] font-bold cursor-pointer hover:bg-cta-primary-dark">追加</button>
                               </td>
                             </tr>
                           ))}
@@ -1565,7 +1594,7 @@ function MaintenanceQuoteRegistrationContent() {
                   <p>明細がありません。上の検索から対象資産を追加してください。</p>
                 </div>
               ) : (
-              <table className="border-collapse text-xs min-w-[1500px]">
+              <table data-element-id="mqr-line-item-table" className="border-collapse text-xs min-w-[1500px]">
                 <thead>
                   <tr className="bg-stroke-card text-content-primary">
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap">管理部署</th>
@@ -1577,7 +1606,6 @@ function MaintenanceQuoteRegistrationContent() {
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">点検グループ名</th>
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">点検種別</th>
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">点検周期</th>
-                    <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">保証期間</th>
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">部品免責</th>
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">免責金額</th>
                     <th className="px-2 py-2 border border-stroke-input font-semibold whitespace-nowrap bg-surface-select">オンコール</th>
@@ -1591,6 +1619,9 @@ function MaintenanceQuoteRegistrationContent() {
                   {modalAssets.map((a, idx) => {
                     const cell = 'px-2 py-1.5 border border-stroke-input align-middle';
                     const ci = 'w-full px-2 py-1 rounded border border-stroke-input text-xs bg-surface-card focus:outline-none focus:border-cta-primary';
+                    // 先頭行のみ番号付けアンカー (M7〜M16) を付与
+                    const first = idx === 0;
+                    const eid = (id: string) => (first ? { 'data-element-id': id } : {});
                     return (
                       <tr key={a.id} className={idx % 2 === 0 ? 'bg-surface-card' : 'bg-surface-screen'}>
                         {/* 部署情報・商品情報 (検索選択で確定・表示のみ) */}
@@ -1601,48 +1632,39 @@ function MaintenanceQuoteRegistrationContent() {
                         <td className={cell}>{a.maker || '-'}</td>
                         <td className={cell}>{a.model || '-'}</td>
                         {/* 点検情報 (常時編集可) */}
-                        <td className={cell}><input type="text" value={a.inspectionGroupName} onChange={(e) => updateLineItem(a.id, { inspectionGroupName: e.target.value })} placeholder={formData.contractGroupName || '-'} className={`${ci} w-[130px]`} /></td>
+                        <td className={cell}><input {...eid('mqr-line-item-inspection-group')} type="text" value={a.inspectionGroupName} onChange={(e) => updateLineItem(a.id, { inspectionGroupName: e.target.value })} placeholder={formData.contractGroupName || '-'} className={`${ci} w-[130px]`} /></td>
                         <td className={cell}>
-                          <select value={a.inspectionType} onChange={(e) => updateLineItem(a.id, { inspectionType: e.target.value })} className={`${ci} w-[110px]`}>
+                          <select {...eid('mqr-line-item-inspection-type')} value={a.inspectionType} onChange={(e) => updateLineItem(a.id, { inspectionType: e.target.value })} className={`${ci} w-[110px]`}>
                             <option value="">-</option>
-                            <option value="院内点検">院内点検</option>
-                            <option value="メーカー点検">メーカー点検</option>
-                            <option value="スポット点検">スポット点検</option>
+                            <option value="メーカー保守">メーカー保守</option>
                           </select>
                         </td>
                         <td className={cell}>
                           <div className="flex items-center gap-1">
-                            <input type="number" min="0" max="120" value={a.inspectionCycle} onChange={(e) => updateLineItem(a.id, { inspectionCycle: e.target.value })} placeholder="-" className={`${ci} w-[50px] text-right tabular-nums`} />
+                            <input {...eid('mqr-line-item-inspection-cycle')} type="number" min="0" max="120" value={a.inspectionCycle} onChange={(e) => updateLineItem(a.id, { inspectionCycle: e.target.value })} placeholder="-" className={`${ci} w-[50px] text-right tabular-nums`} />
                             <span className="text-[10px] text-content-sub">ヶ月</span>
                           </div>
                         </td>
-                        <td className={cell}>
-                          <div className="flex items-center gap-1">
-                            <input type="date" value={a.warrantyStart ? a.warrantyStart.replace(/\//g, '-') : ''} onChange={(e) => updateLineItem(a.id, { warrantyStart: e.target.value })} className={`${ci} w-[125px]`} />
-                            <span className="text-[10px]">〜</span>
-                            <input type="date" value={a.warrantyEnd ? a.warrantyEnd.replace(/\//g, '-') : ''} onChange={(e) => updateLineItem(a.id, { warrantyEnd: e.target.value })} className={`${ci} w-[125px]`} />
-                          </div>
+                        <td className={`${cell} text-center`}>
+                          <input {...eid('mqr-line-item-parts-exemption')} type="checkbox" checked={a.partsExemption} onChange={(e) => updateLineItem(a.id, { partsExemption: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="部品免責" />
+                        </td>
+                        <td className={cell}><input {...eid('mqr-line-item-exemption-amount')} type="text" value={a.exemptionAmount} onChange={(e) => updateLineItem(a.id, { exemptionAmount: e.target.value })} placeholder="-" className={`${ci} w-[80px]`} /></td>
+                        <td className={`${cell} text-center`}>
+                          <input {...eid('mqr-line-item-oncall')} type="checkbox" checked={a.onCall} onChange={(e) => updateLineItem(a.id, { onCall: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="オンコール" />
                         </td>
                         <td className={`${cell} text-center`}>
-                          <input type="checkbox" checked={a.partsExemption} onChange={(e) => updateLineItem(a.id, { partsExemption: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="部品免責" />
-                        </td>
-                        <td className={cell}><input type="text" value={a.exemptionAmount} onChange={(e) => updateLineItem(a.id, { exemptionAmount: e.target.value })} placeholder="-" className={`${ci} w-[80px]`} /></td>
-                        <td className={`${cell} text-center`}>
-                          <input type="checkbox" checked={a.onCall} onChange={(e) => updateLineItem(a.id, { onCall: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="オンコール" />
-                        </td>
-                        <td className={`${cell} text-center`}>
-                          <input type="checkbox" checked={a.remote} onChange={(e) => updateLineItem(a.id, { remote: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="リモート" />
+                          <input {...eid('mqr-line-item-remote')} type="checkbox" checked={a.remote} onChange={(e) => updateLineItem(a.id, { remote: e.target.checked })} className="w-4 h-4 cursor-pointer accent-cta-primary" aria-label="リモート" />
                         </td>
                         {/* 概算保守金額 (REQ-101: 任意・会計非連動) */}
                         <td className={cell}>
                           <div className="flex items-center gap-1 justify-end">
                             <span className="text-[10px] text-content-sub">¥</span>
-                            <input type="number" min="0" value={a.estimatedMaintenanceCost} onChange={(e) => updateLineItem(a.id, { estimatedMaintenanceCost: e.target.value })} placeholder="-" className={`${ci} w-[110px] text-right tabular-nums`} />
+                            <input {...eid('mqr-line-item-unit-price')} type="number" min="0" value={a.estimatedMaintenanceCost} onChange={(e) => updateLineItem(a.id, { estimatedMaintenanceCost: e.target.value })} placeholder="-" className={`${ci} w-[110px] text-right tabular-nums`} />
                           </div>
                         </td>
-                        <td className={cell}><input type="text" value={a.comment} onChange={(e) => updateLineItem(a.id, { comment: e.target.value })} placeholder="-" className={`${ci} w-[120px]`} /></td>
+                        <td className={cell}><input {...eid('mqr-line-item-comment')} type="text" value={a.comment} onChange={(e) => updateLineItem(a.id, { comment: e.target.value })} placeholder="-" className={`${ci} w-[120px]`} /></td>
                         <td className={`${cell} text-center`}>
-                          <button onClick={() => removeLineItem(a.id)} className="px-2 py-1 rounded bg-content-alert text-white border-0 text-[11px] cursor-pointer hover:opacity-90" aria-label="行を削除">削除</button>
+                          <button {...eid('mqr-line-item-row-delete-btn')} onClick={() => removeLineItem(a.id)} className="px-2 py-1 rounded bg-content-alert text-white border-0 text-[11px] cursor-pointer hover:opacity-90" aria-label="行を削除">削除</button>
                         </td>
                       </tr>
                     );
@@ -1654,7 +1676,7 @@ function MaintenanceQuoteRegistrationContent() {
 
             {/* フッター */}
             <div className="flex items-center justify-between px-5 py-3 border-t border-stroke-input">
-              <span className="text-sm text-content-primary">
+              <span data-element-id="mqr-line-item-footer-summary" className="text-sm text-content-primary">
                 明細 <strong className="tabular-nums">{modalAssets.length}</strong> 件
                 {(() => {
                   const total = modalAssets.reduce((s, a) => s + (parseInt(a.estimatedMaintenanceCost, 10) || 0), 0);
@@ -1662,8 +1684,8 @@ function MaintenanceQuoteRegistrationContent() {
                 })()}
               </span>
               <div className="flex gap-2">
-                <button onClick={() => setIsLineItemModalOpen(false)} className="h-10 px-5 rounded-lg bg-surface-card text-content-primary border border-stroke-input text-sm font-bold cursor-pointer hover:bg-stroke-card transition-colors">キャンセル</button>
-                <button onClick={handleSaveLineItems} className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors">明細を保存</button>
+                <button data-element-id="mqr-line-item-cancel-btn" onClick={() => setIsLineItemModalOpen(false)} className="h-10 px-5 rounded-lg bg-surface-card text-content-primary border border-stroke-input text-sm font-bold cursor-pointer hover:bg-stroke-card transition-colors">キャンセル</button>
+                <button data-element-id="mqr-line-item-save-btn" onClick={handleSaveLineItems} className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-sm font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors">明細を保存</button>
               </div>
             </div>
           </div>

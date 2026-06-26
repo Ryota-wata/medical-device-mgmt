@@ -211,8 +211,7 @@ interface MaintenanceContractStore {
     contractGroupName: string;
     contractType: ContractType;
     otherContractName: string;
-    // REQ-088⑥: 保証期間終了 or 契約期間終了 のどちらか + その日付
-    endDateType: '保証期間終了' | '契約期間終了';
+    // 契約終了日 (API設計準拠: 契約期間終了日に一本化)
     endDate: string;
     comment: string;
     selectedAssets: SelectedAsset[];
@@ -236,13 +235,13 @@ export const useMaintenanceContractStore = create<MaintenanceContractStore>((set
       contractTypeNote: data.contractType === 'その他' ? data.otherContractName : '',
       contractDate: '',
       contractStartDate: '',
-      contractEndDate: data.endDateType === '契約期間終了' ? data.endDate : '',
+      contractEndDate: data.endDate,
       contractAmount: 0,
       annualAmount: 0,
       contractorName: '',
       contractorPerson: '',
       contractorPhone: '',
-      warrantyEndDate: data.endDateType === '保証期間終了' ? data.endDate : '',
+      warrantyEndDate: '',
       comment: data.comment,
       currentStep: 1,
     };

@@ -18,8 +18,7 @@ export interface MaintenanceContractFormData {
   contractGroupName: string;
   contractType: ContractType;
   otherContractName: string;
-  // REQ-088⑥: 保証期間終了日 or 契約期間終了日 のどちらかを登録
-  endDateType: '保証期間終了' | '契約期間終了';
+  // 契約終了日 (API設計準拠: 契約期間終了日に一本化。契約検討開始の算出に使用)
   endDate: string;
   comment: string;
   selectedAssets: Asset[];
@@ -77,7 +76,6 @@ export function MaintenanceContractRegistrationModal({
   const [contractGroupName, setContractGroupName] = useState('');
   const [contractType, setContractType] = useState<ContractType>('保守契約');
   const [otherContractName, setOtherContractName] = useState('');
-  const [endDateType, setEndDateType] = useState<'保証期間終了' | '契約期間終了'>('保証期間終了');
   const [endDate, setEndDate] = useState('');
   const [comment, setComment] = useState('');
   const buildings = useMemo(() => [...new Set(assets.map((a) => a.building))], [assets]);
@@ -147,7 +145,6 @@ export function MaintenanceContractRegistrationModal({
       contractGroupName,
       contractType,
       otherContractName: contractType === 'その他' ? otherContractName : '',
-      endDateType,
       endDate,
       comment,
       selectedAssets,
@@ -164,7 +161,6 @@ export function MaintenanceContractRegistrationModal({
     setContractGroupName('');
     setContractType('保守契約');
     setOtherContractName('');
-    setEndDateType('保証期間終了');
     setEndDate('');
     setComment('');
     onClose();
@@ -508,34 +504,19 @@ export function MaintenanceContractRegistrationModal({
                 </div>
               )}
 
-              {/* REQ-088⑥: 保証期間終了日 or 契約期間終了日（どちらか） */}
+              {/* 契約終了日 (API設計準拠: 契約期間終了日に一本化) */}
               <div>
                 <div style={styles.formRow}>
-                  <label style={styles.formLabel}>終了日</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      {(['保証期間終了', '契約期間終了'] as const).map((t) => (
-                        <label key={t} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                          <input
-                            type="radio"
-                            name="endDateType"
-                            checked={endDateType === t}
-                            onChange={() => setEndDateType(t)}
-                          />
-                          {t}日
-                        </label>
-                      ))}
-                    </div>
-                    <input
-                      type="date"
-                      style={{ ...styles.input, width: '180px' }}
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
+                  <label style={styles.formLabel}>契約終了日</label>
+                  <input
+                    type="date"
+                    style={{ ...styles.input, width: '180px' }}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
                 </div>
                 <p style={{ fontSize: '12px', color: '#8A8A8A', marginTop: '4px', marginLeft: '136px' }}>
-                  ※保証期間終了日 または 契約期間終了日 のどちらかを登録（契約検討開始の算出に使用）
+                  ※契約終了日を登録（契約検討開始の算出に使用）
                 </p>
               </div>
 

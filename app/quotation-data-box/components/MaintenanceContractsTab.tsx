@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMaintenanceContractStore } from '@/lib/stores';
 import { ContractReviewModal } from './ContractReviewModal';
@@ -67,38 +67,14 @@ interface StatusDisplay {
   sortValue: number;
 }
 
-// ソート状態
-type SortDirection = 'asc' | 'desc' | null;
-
 interface MaintenanceContractsTabProps {
   isMobile?: boolean;
 }
 
-// ステータス算出ロジック
+// ステータス算出ロジック (API設計準拠: 契約終了日基準。6ヶ月以内を「契約更新 Nヶ月前」)
 const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  if (contract.warrantyEndDate) {
-    const warrantyEnd = new Date(contract.warrantyEndDate);
-    warrantyEnd.setHours(0, 0, 0, 0);
-    const diffMs = warrantyEnd.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return { label: '保証期限切れ', color: '#DA0000', fontWeight: 'bold', sortValue: diffDays };
-    }
-
-    const diffMonths = Math.ceil(diffDays / 30);
-    if (diffMonths <= 6) {
-      return {
-        label: `保証期間終了 ${diffMonths}ヶ月前`,
-        color: diffMonths <= 2 ? '#DA0000' : '#4A4A4A',
-        fontWeight: diffMonths <= 2 ? 'bold' : 'normal',
-        sortValue: diffDays,
-      };
-    }
-  }
 
   if (contract.contractEndDate) {
     const contractEnd = new Date(contract.contractEndDate);
@@ -118,34 +94,6 @@ const calcStatus = (contract: MaintenanceContract): StatusDisplay => {
   }
 
   return { label: '-', color: '#8A8A8A', sortValue: 9999 };
-};
-
-// 期限表示
-const calcDeadlineDisplay = (contract: MaintenanceContract): { label: string; color: string } => {
-  const status = calcStatus(contract);
-  if (status.label === '-') return { label: '-', color: '#8A8A8A' };
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  let nearestDays = 9999;
-
-  if (contract.warrantyEndDate) {
-    const d = new Date(contract.warrantyEndDate);
-    d.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    if (Math.abs(diff) < Math.abs(nearestDays)) nearestDays = diff;
-  }
-  if (contract.contractEndDate) {
-    const d = new Date(contract.contractEndDate);
-    d.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff < nearestDays) nearestDays = diff;
-  }
-
-  if (nearestDays < 0) {
-    return { label: `${Math.abs(nearestDays)}日超過`, color: '#DA0000' };
-  }
-  return { label: `${nearestDays}日前`, color: nearestDays <= 30 ? '#DA0000' : '#4A4A4A' };
 };
 
 // モック契約データ
@@ -355,11 +303,6 @@ const ContractGroupDetailModal = ({
       <td style={mTd}>{asset.inspectionGroupName || '-'}</td>
       <td style={mTd}>{asset.inspectionType || '-'}</td>
       <td style={mTd}>{asset.inspectionCycle ? `${asset.inspectionCycle}ヶ月` : '-'}</td>
-      <td style={mTd}>
-        {asset.warrantyStart || asset.warrantyEnd
-          ? `${asset.warrantyStart || ''}〜${asset.warrantyEnd || ''}`
-          : '-'}
-      </td>
       <td style={{ ...mTd, textAlign: 'center' }}>{asset.partsExemption ? '有' : '-'}</td>
       <td style={mTd}>{asset.exemptionAmount || '-'}</td>
       <td style={{ ...mTd, textAlign: 'center' }}>{boolDisplay(asset.onCall)}</td>
@@ -378,7 +321,7 @@ const ContractGroupDetailModal = ({
       justifyContent: 'center',
       background: 'rgba(0,0,0,0.5)',
     }}>
-      <div style={{
+      <div data-element-id="mc-detail-modal" style={{
         background: 'white',
         borderRadius: '8px',
         width: '95%',
@@ -397,11 +340,12 @@ const ContractGroupDetailModal = ({
           justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>
+            <h3 data-element-id="mc-detail-modal-title" style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>
               契約グループ詳細: {contract.contractGroupName || '未設定'}
             </h3>
           </div>
           <button
+            data-element-id="mc-detail-modal-close-x"
             onClick={onClose}
             style={{
               background: 'transparent',
@@ -419,13 +363,13 @@ const ContractGroupDetailModal = ({
 
         {/* テーブルコンテンツ */}
         <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table data-element-id="mc-detail-asset-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               {/* グループヘッダー行 */}
               <tr>
                 <th colSpan={2} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>部署情報</th>
                 <th colSpan={4} style={{ ...mThGroup, background: '#E1E1E1', color: '#4A4A4A' }}>商品情報</th>
-                <th colSpan={9} style={{ ...mThGroup, background: '#FAFAFA', color: '#4A4A4A' }}>点検情報</th>
+                <th colSpan={8} style={{ ...mThGroup, background: '#FAFAFA', color: '#4A4A4A' }}>点検情報</th>
               </tr>
               {/* サブカラムヘッダー行 */}
               <tr>
@@ -441,7 +385,6 @@ const ContractGroupDetailModal = ({
                 <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>点検グループ名</th>
                 <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>点検種別</th>
                 <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>点検周期</th>
-                <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>保証期間</th>
                 <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>部品免責</th>
                 <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>免責金額</th>
                 <th style={{ ...mThSub, background: '#FDF1E5', color: '#4A4A4A' }}>オンコール</th>
@@ -481,6 +424,7 @@ const ContractGroupDetailModal = ({
             {isCompleted && (
               <>
                 <button
+                  data-element-id="mc-review-btn"
                   onClick={() => setShowReviewModal(true)}
                   style={{
                     padding: '10px 20px',
@@ -496,6 +440,7 @@ const ContractGroupDetailModal = ({
                   契約内容見直し
                 </button>
                 <button
+                  data-element-id="mc-renewal-btn"
                   onClick={() => {
                     if (!confirm(`現在の契約「${contract.contractGroupName}」の部署情報・商品情報を複製して、新規の契約レコードを作成します。\n\n新レコードは見積依頼ステップから開始します。よろしいですか？`)) return;
                     onContractRenewal(contract, localAssets);
@@ -519,6 +464,7 @@ const ContractGroupDetailModal = ({
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
+              data-element-id="mc-detail-modal-close-btn"
               onClick={onClose}
               style={{
                 padding: '10px 20px',
@@ -602,11 +548,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
     setContracts(storeContracts as MaintenanceContract[]);
   }, [storeContracts]);
 
-  // フリーコメント編集用
-  const [showCommentModal, setShowCommentModal] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<MaintenanceContract | null>(null);
-  const [editComment, setEditComment] = useState('');
-
   // 契約グループ詳細モーダル
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailContract, setDetailContract] = useState<MaintenanceContract | null>(null);
@@ -616,21 +557,8 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
     setGroupAssets(storeContractAssets as Record<string, ContractGroupAsset[]>);
   }, [storeContractAssets]);
 
-  // ソート状態
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-
-  // ソート適用 (全契約を表示)
-  const sortedContracts = useMemo(() => {
-    if (!sortDirection) return contracts;
-    const sorted = [...contracts];
-    const multiplier = sortDirection === 'asc' ? 1 : -1;
-    sorted.sort((a, b) => {
-      const statusA = calcStatus(a);
-      const statusB = calcStatus(b);
-      return (statusA.sortValue - statusB.sortValue) * multiplier;
-    });
-    return sorted;
-  }, [contracts, sortDirection]);
+  // 一覧は API① 既定並び (申請No.昇順) をそのまま表示
+  const sortedContracts = contracts;
 
   // 契約更新 (複製): 部署情報 + 商品情報のみ複製し、新契約タスクを生成
   const handleContractRenewal = (sourceContract: MaintenanceContract, sourceAssets: ContractGroupAsset[]) => {
@@ -680,42 +608,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
     alert(`新規契約タスク「${newContract.contractGroupName}」(${newApplicationNo}) を作成しました。\n見積依頼ステップから開始してください。`);
   };
 
-  // ソートトグル
-  const handleSortToggle = () => {
-    setSortDirection(prev => {
-      if (prev === null) return 'asc';
-      if (prev === 'asc') return 'desc';
-      return null;
-    });
-  };
-
-  const getSortArrow = () => {
-    const upColor = sortDirection === 'asc' ? '#DA0000' : '#aaa';
-    const downColor = sortDirection === 'desc' ? '#DA0000' : '#aaa';
-    return (
-      <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: '4px', lineHeight: 1, fontSize: '9px', verticalAlign: 'middle' }}>
-        <span style={{ color: upColor }}>&#9650;</span>
-        <span style={{ color: downColor, marginTop: '-2px' }}>&#9660;</span>
-      </span>
-    );
-  };
-
-  // フリーコメント
-  const openCommentModal = (contract: MaintenanceContract) => {
-    setSelectedContract(contract);
-    setEditComment(contract.comment);
-    setShowCommentModal(true);
-  };
-
-  const handleSaveComment = () => {
-    if (!selectedContract) return;
-    setContracts(prev => prev.map(c =>
-      c.id === selectedContract.id ? { ...c, comment: editComment } : c
-    ));
-    setShowCommentModal(false);
-    setSelectedContract(null);
-  };
-
   // 契約グループ詳細モーダル
   const handleRowDoubleClick = (contract: MaintenanceContract) => {
     setDetailContract(contract);
@@ -755,7 +647,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* 情報バー */}
-      <div style={{
+      <div data-element-id="mc-info-bar" style={{
         padding: '12px 16px',
         background: '#FAFAFA',
         borderBottom: '1px solid #E1E1E1',
@@ -763,20 +655,21 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span style={{ fontSize: '13px', color: '#4A4A4A' }}>
+        <span data-element-id="mc-count-label" style={{ fontSize: '13px', color: '#4A4A4A' }}>
           <strong>{sortedContracts.length}件</strong>表示
         </span>
       </div>
 
       {/* テーブル */}
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table data-element-id="mc-contract-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
             {/* グループヘッダー (Figma: 統一されたグレー背景、色帯なし) */}
-            <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
+            <tr data-element-id="mc-group-header-row" style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
               <th colSpan={8} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約情報</th>
               <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}>業者情報</th>
               <th
+                data-element-id="mc-status-header"
                 rowSpan={2}
                 style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}
               >
@@ -785,7 +678,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               <th colSpan={2} style={{ ...thGroupStyle, textAlign: 'center', background: '#F1F1F1', color: '#4A4A4A', borderColor: '#E1E1E1' }}>操作</th>
             </tr>
             {/* サブカラムヘッダー */}
-            <tr style={{ background: '#4A4A4A', color: 'white' }}>
+            <tr data-element-id="mc-column-header-row" style={{ background: '#4A4A4A', color: 'white' }}>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>申請No.</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約グループ名</th>
               <th style={{ ...thSubStyle, background: '#FAFAFA', color: '#4A4A4A', borderColor: '#E1E1E1' }}>契約種別</th>
@@ -806,12 +699,13 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
               return (
                 <tr
                   key={contract.id}
+                  data-element-id={index === 0 ? 'mc-table-row-first' : undefined}
                   style={{ background: index % 2 === 0 ? 'white' : '#FAFAFA', verticalAlign: 'top', cursor: 'pointer' }}
                   onDoubleClick={() => handleRowDoubleClick(contract)}
                 >
                   <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{contract.applicationNo}</td>
                   <td style={tdStyle}>{contract.contractGroupName}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>{getContractTypeBadge(contract.contractType)}</td>
+                  <td data-element-id={index === 0 ? 'mc-contract-type-badge-first' : undefined} style={{ ...tdStyle, textAlign: 'center' }}>{getContractTypeBadge(contract.contractType)}</td>
                   <td style={{ ...tdStyle, fontSize: '11px', color: '#555' }}>{contract.contractTypeNote || '-'}</td>
                   <td style={tdStyle} className="tabular-nums border border-stroke-input">{contract.contractDate}</td>
                   <td style={{ ...tdStyle, fontSize: '11px' }} className="tabular-nums border border-stroke-input">
@@ -835,7 +729,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                       );
                     })()}
                   </td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                  <td data-element-id={index === 0 ? 'mc-register-cell-first' : undefined} style={{ ...tdStyle, textAlign: 'center' }}>
                     {(() => {
                       // 260524 統合: STEP④(完了登録)廃止。契約登録が最終ステップ
                       const stepConfig: Record<number, { label: string; color: string }> = {
@@ -866,7 +760,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                       );
                     })()}
                   </td>
-                  <td style={{ ...tdStyle, fontSize: '11px', color: contract.comment ? '#4A4A4A' : '#bbb' }}>
+                  <td data-element-id={index === 0 ? 'mc-free-comment-first' : undefined} style={{ ...tdStyle, fontSize: '11px', color: contract.comment ? '#4A4A4A' : '#bbb' }}>
                     {contract.comment || '-'}
                   </td>
                 </tr>
@@ -882,51 +776,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
           />
         )}
       </div>
-
-      {/* フリーコメントモーダル */}
-      {showCommentModal && selectedContract && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
-          <div style={{ background: 'white', borderRadius: 8, width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #E1E1E1' }}>
-              <h3 style={{ margin: 0, fontSize: '15px', color: '#4A4A4A' }}>フリーコメント編集</h3>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#8A8A8A' }}>
-                {selectedContract.applicationNo} - {selectedContract.contractGroupName}
-              </p>
-            </div>
-            <div style={{ padding: '20px' }}>
-              <textarea
-                value={editComment}
-                onChange={(e) => setEditComment(e.target.value)}
-                placeholder="コメントを入力..."
-                style={{
-                  width: '100%',
-                  minHeight: '100px',
-                  padding: '10px',
-                  fontSize: '13px',
-                  border: '1px solid #E1E1E1',
-                  borderRadius: '4px',
-                  resize: 'vertical',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <div style={{ padding: '12px 20px', borderTop: '1px solid #E1E1E1', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button
-                onClick={() => { setShowCommentModal(false); setSelectedContract(null); }}
-                style={{ padding: '8px 16px', background: 'white', border: '1px solid #E1E1E1', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleSaveComment}
-                style={{ padding: '8px 16px', background: '#087CB6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}
-              >
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 契約グループ詳細モーダル */}
       {detailContract && (
