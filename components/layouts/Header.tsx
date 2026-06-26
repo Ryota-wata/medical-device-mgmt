@@ -149,6 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header
+      data-element-id="page-header"
       className="flex justify-between items-center"
       style={{
         background: '#EDEDED',
@@ -163,6 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 左: ロゴ + タイトル + 件数 + バッジ */}
       <div className="flex items-center" style={{ gap: 12, flexWrap: 'wrap' }}>
         <div
+          data-element-id="header-ship-logo"
           aria-label="SHIP"
           style={{
             display: 'flex',
@@ -181,11 +183,11 @@ export const Header: React.FC<HeaderProps> = ({
           SHIP
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <h1 style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: '#4A4A4A', margin: 0, lineHeight: 1.2 }}>
+          <h1 data-element-id="header-title" style={{ fontSize: isMobile ? 14 : 16, fontWeight: 700, color: '#4A4A4A', margin: 0, lineHeight: 1.2 }}>
             {title}
           </h1>
           {resultCount !== undefined && (
-            <span style={{ fontSize: isMobile ? 12 : 13, color: '#8A8A8A' }} className="tabular-nums">
+            <span data-element-id="header-result-count" style={{ fontSize: isMobile ? 12 : 13, color: '#8A8A8A' }} className="tabular-nums">
               {resultCount.toLocaleString()}件{showOriginalLabel && '（原本）'}
             </span>
           )}
@@ -201,9 +203,9 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         )}
         {targetFacilities && targetFacilities.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div data-element-id="header-target-facilities-container" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 11, color: '#8A8A8A' }}>対象施設:</span>
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            <div data-element-id="header-target-facilities" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
               {targetFacilities.map((f, idx) => (
                 <span key={idx} style={{ padding: '2px 8px', background: '#EBF5EE', border: '1px solid #008C1D', borderRadius: 999, fontSize: 11, color: '#146E2E' }}>
                   {f}
@@ -211,7 +213,7 @@ export const Header: React.FC<HeaderProps> = ({
               ))}
             </div>
             {createdAt && (
-              <span style={{ fontSize: 11, color: '#8A8A8A' }}>作成日: {new Date(createdAt).toLocaleDateString('ja-JP')}</span>
+              <span data-element-id="header-created-at" style={{ fontSize: 11, color: '#8A8A8A' }}>作成日: {new Date(createdAt).toLocaleDateString('ja-JP')}</span>
             )}
           </div>
         )}
@@ -281,22 +283,22 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* アイコンボタン群 */}
         {onColumnSettings && (
-          <button onClick={onColumnSettings} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="表示カラム設定" title="表示カラム設定">
+          <button data-element-id="header-column-settings-btn" onClick={onColumnSettings} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="表示カラム設定" title="表示カラム設定">
             <Icon.Settings />
           </button>
         )}
         {onViewToggle && (
-          <button onClick={onViewToggle} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="表示切替" title="表示切替（リスト/カード）">
+          <button data-element-id="header-view-toggle-btn" onClick={onViewToggle} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="表示切替" title="表示切替（リスト/カード）">
             <Icon.Layout />
           </button>
         )}
         {onExport && (
-          <button onClick={onExport} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="Excel/PDF出力" title="Excel/PDF出力">
+          <button data-element-id="header-export-btn" onClick={onExport} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="Excel/PDF出力" title="Excel/PDF出力">
             <Icon.Download />
           </button>
         )}
         {onPrint && (
-          <button onClick={onPrint} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="印刷" title="印刷">
+          <button data-element-id="header-print-btn" onClick={onPrint} style={ICON_BTN} onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')} onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')} aria-label="印刷" title="印刷">
             <Icon.Printer />
           </button>
         )}
@@ -317,6 +319,7 @@ export const Header: React.FC<HeaderProps> = ({
         {showBackButton && (
           backButtonVariant === 'secondary' ? (
             <button
+              data-element-id="header-back-btn"
               onClick={handleBack}
               style={{ ...ICON_BTN, width: 'auto', padding: '0 12px', gap: 4, fontSize: 13 }}
               onMouseEnter={(e) => (e.currentTarget.style.background = '#F1F1F1')}
@@ -326,6 +329,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           ) : (
             <button
+              data-element-id="header-back-btn"
               onClick={handleBack}
               style={{
                 display: 'inline-flex',

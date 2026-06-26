@@ -1220,7 +1220,7 @@ function RemodelApplicationContent() {
       )}
 
       {/* アクションボタンバー（コンパクト） */}
-      <div style={{
+      <div data-element-id="action-button-bar" style={{
         background: '#fff',
         padding: '6px 12px',
         borderBottom: '1px solid #E1E1E1',
@@ -1232,6 +1232,7 @@ function RemodelApplicationContent() {
       }}>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
         <button
+          data-element-id="api-integration-btn"
           onClick={() => alert('API連携機能（開発中）')}
           style={{
             padding: '8px 16px',
@@ -1250,6 +1251,7 @@ function RemodelApplicationContent() {
           API連携
         </button>
         <button
+          data-element-id="data-link-btn"
           onClick={() => {
             if (selectedItems.size === 0) {
               alert('紐づけるレコードを選択してください');
@@ -1275,6 +1277,7 @@ function RemodelApplicationContent() {
           Data Link
         </button>
         <button
+          data-element-id="quotation-db-link-btn"
           onClick={() => {
             setDataLinkMode('quotation');
             setIsDataLinkModalOpen(true);
@@ -1298,6 +1301,7 @@ function RemodelApplicationContent() {
 
         {/* 見積依頼グループ作成ボタン */}
         <button
+          data-element-id="rfq-group-create-btn"
           onClick={() => {
             if (selectedItems.size === 0) {
               alert('見積依頼グループに含める資産を選択してください');
@@ -1323,6 +1327,7 @@ function RemodelApplicationContent() {
 
         {/* フリーカラム追加ボタン (REQ-141④) */}
         <button
+          data-element-id="free-column-add-btn"
           onClick={() => {
             setFreeColumnLabelDraft('');
             setIsAddFreeColumnOpen(true);
@@ -1354,6 +1359,7 @@ function RemodelApplicationContent() {
           const disabled = dtCount === 0;
           return (
             <button
+              data-element-id="disposal-transfer-btn"
               onClick={handleApplicationExecute}
               disabled={disabled}
               style={{
@@ -1374,8 +1380,9 @@ function RemodelApplicationContent() {
         })()}
 
         {/* 新規要望ボタン (REQ-139⑤) — 編集リスト内に無い資産を新たに購入要望として追加。クリックでインライン編集行を追加し、複数まとめて登録できる */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #E1E1E1' }}>
+        <div data-element-id="bulk-new-request-container" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #E1E1E1' }}>
           <button
+            data-element-id="bulk-new-request-btn"
             onClick={handleStartInlineNew}
             title="編集リストに無い資産の購入要望を追加します。クリックで編集行が1行追加され、複数行まとめてインライン編集→一括登録できます。"
             style={{
@@ -1440,7 +1447,7 @@ function RemodelApplicationContent() {
         {/* 右側: 選択件数 + タスク管理リンク + 合計表示 */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {selectedItems.size > 0 && (
-            <div style={{
+            <div data-element-id="selected-count-badge" style={{
               padding: '6px 12px',
               background: '#4A4A4A',
               color: 'white',
@@ -1454,6 +1461,7 @@ function RemodelApplicationContent() {
             </div>
           )}
           <button
+            data-element-id="task-management-link"
             onClick={() => router.push('/quotation-data-box/remodel-management')}
             style={{
               padding: '4px 10px',
@@ -1473,7 +1481,7 @@ function RemodelApplicationContent() {
             タスク管理 &rarr;
           </button>
           {/* 数量・金額合計を1つのコンパクトな枠に統合 */}
-          <div style={{
+          <div data-element-id="total-summary-container" style={{
             padding: '4px 10px',
             background: '#FAFAFA',
             borderRadius: '4px',
@@ -1484,9 +1492,9 @@ function RemodelApplicationContent() {
             fontSize: '12px',
             whiteSpace: 'nowrap',
           }}>
-            <span><span style={{ color: '#8A8A8A' }}>件数</span> <strong style={{ color: '#4A4A4A', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
+            <span data-element-id="total-count-label"><span style={{ color: '#8A8A8A' }}>件数</span> <strong style={{ color: '#4A4A4A', fontVariantNumeric: 'tabular-nums' }}>{displayedAssets.length}</strong></span>
             <span style={{ color: '#E1E1E1' }}>|</span>
-            <span><span style={{ color: '#8A8A8A' }}>金額</span> <strong style={{ color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
+            <span data-element-id="total-amount-label"><span style={{ color: '#8A8A8A' }}>金額</span> <strong style={{ color: '#008C1D', fontVariantNumeric: 'tabular-nums' }}>¥{displayedAssets.reduce((sum, asset) => {
               const amount = asset.rfqAmount;
               if (typeof amount === 'number') return sum + amount;
               if (typeof amount === 'string' && amount) {
@@ -1500,10 +1508,11 @@ function RemodelApplicationContent() {
       </div>
 
       {/* フィルターヘッダー（コンパクト・全体検索を同列配置） */}
-      <div style={{ background: '#FAFAFA', padding: '6px 12px', borderBottom: '1px solid #E1E1E1' }}>
+      <div data-element-id="filter-area" style={{ background: '#FAFAFA', padding: '6px 12px', borderBottom: '1px solid #E1E1E1' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* 全体検索 (REQ-140④) */}
           <input
+            data-element-id="global-search-input"
             type="text"
             value={globalSearchQuery}
             onChange={(e) => setGlobalSearchQuery(e.target.value)}
@@ -1521,7 +1530,7 @@ function RemodelApplicationContent() {
               boxSizing: 'border-box',
             }}
           />
-          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
+          <div data-element-id="filter-department" style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
               value={filters.department}
               onChange={(value) => setFilters({...filters, department: value})}
@@ -1531,7 +1540,7 @@ function RemodelApplicationContent() {
             />
           </div>
 
-          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
+          <div data-element-id="filter-section" style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
               value={filters.section}
               onChange={(value) => setFilters({...filters, section: value})}
@@ -1541,7 +1550,7 @@ function RemodelApplicationContent() {
             />
           </div>
 
-          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
+          <div data-element-id="filter-category" style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
               value={filters.category}
               onChange={(value) => setFilters({...filters, category: value})}
@@ -1551,7 +1560,7 @@ function RemodelApplicationContent() {
             />
           </div>
 
-          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
+          <div data-element-id="filter-large-class" style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
               value={filters.largeClass}
               onChange={(value) => setFilters({...filters, largeClass: value})}
@@ -1561,7 +1570,7 @@ function RemodelApplicationContent() {
             />
           </div>
 
-          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
+          <div data-element-id="filter-medium-class" style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
               value={filters.mediumClass}
               onChange={(value) => setFilters({...filters, mediumClass: value})}
@@ -1571,7 +1580,7 @@ function RemodelApplicationContent() {
             />
           </div>
 
-          <div style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
+          <div data-element-id="filter-asset-management-dept" style={{ flex: '1 1 120px', minWidth: '100px', maxWidth: '160px' }}>
             <SearchableSelect
               value={filters.section}
               onChange={(value) => setFilters({...filters, section: value})}
@@ -1589,7 +1598,7 @@ function RemodelApplicationContent() {
 
         {/* 一括適用バナー */}
         {selectedItems.size > 1 && editingCell !== null && selectedItems.has(editingCell.rowNo) && (
-          <div style={{
+          <div data-element-id="bulk-apply-banner" style={{
             padding: '8px 16px',
             background: '#EBF5EE',
             border: '1px solid #087CB6',
@@ -1624,10 +1633,10 @@ function RemodelApplicationContent() {
             DataLinkモーダル表示中は背後の巨大テーブル（781行×60列超）を非表示にして
             モーダル内操作（行クリック・紐付け）の再レンダーを軽量化する */}
         {currentView === 'list' && (
-          <table style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px', display: isDataLinkModalOpen ? 'none' : undefined }}>
+          <table data-element-id="asset-table" style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '13px', display: isDataLinkModalOpen ? 'none' : undefined }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 102 }}>
               {/* グループヘッダー行 */}
-              <tr>
+              <tr data-element-id="group-header-row">
                 <th
                   rowSpan={2}
                   style={{
@@ -1645,6 +1654,7 @@ function RemodelApplicationContent() {
                   }}
                 >
                   <input
+                    data-element-id="select-all-checkbox"
                     type="checkbox"
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     style={{ accentColor: '#fff' }}
@@ -1710,9 +1720,9 @@ function RemodelApplicationContent() {
                 </th>
               </tr>
               {/* カラムヘッダー行 */}
-              <tr>
+              <tr data-element-id="column-header-row">
                 {/* checkbox列はrowSpan=2で上行に含まれるため省略 */}
-                {orderedColumns.filter((col) => visibleColumns[col.key]).map((col) => {
+                {orderedColumns.filter((col) => visibleColumns[col.key]).map((col, colIndex) => {
                   const isSorted = sortConfig?.key === col.key;
                   const hasFilter = columnFilters[col.key]?.length > 0;
                   const uniqueValues = getColumnUniqueValues(col.key);
@@ -1754,12 +1764,14 @@ function RemodelApplicationContent() {
                             {col.label}
                           </span>
                           <span
+                            data-element-id={colIndex === 0 ? 'column-sort-btn-first' : undefined}
                             onClick={() => handleSort(col.key)}
                             style={{ cursor: 'pointer', fontSize: '10px', color: isSorted ? '#008C1D' : '#aaa' }}
                           >
                             {isSorted ? (sortConfig.direction === 'asc' ? '\u25B2' : '\u25BC') : '\u21C5'}
                           </span>
                           <span
+                            data-element-id={colIndex === 0 ? 'column-filter-btn-first' : undefined}
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenFilterColumn(openFilterColumn === col.key ? null : col.key);
@@ -1845,6 +1857,7 @@ function RemodelApplicationContent() {
                         )}
                       </div>
                       <div
+                        data-element-id={colIndex === 0 ? 'column-resize-handle-first' : undefined}
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           handleResizeStart(e, col.key);
@@ -1909,7 +1922,7 @@ function RemodelApplicationContent() {
               </tr>
             </thead>
             <tbody>
-              {displayedAssets.map((asset) => {
+              {displayedAssets.map((asset, rowIndex) => {
                 // 行ステータスの左ボーダー色
                 const getRowBorderColor = () => {
                   if (errorRows.has(asset.no)) return '#DA0000';
@@ -1920,9 +1933,10 @@ function RemodelApplicationContent() {
                 return (
                 <tr
                   key={asset.no}
+                  data-element-id={rowIndex === 0 ? 'table-row-first' : undefined}
                   style={{ borderLeft: `4px solid ${getRowBorderColor()}` }}
                 >
-                  <td style={{
+                  <td data-element-id={rowIndex === 0 ? 'row-status-border-first' : undefined} style={{
                     padding: '12px 8px',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -1935,6 +1949,7 @@ function RemodelApplicationContent() {
                     border: '1px solid #E1E1E1',
                   }}>
                     <input
+                      data-element-id={rowIndex === 0 ? 'row-select-checkbox-first' : undefined}
                       type="checkbox"
                       checked={selectedItems.has(asset.no)}
                       onChange={() => handleSelectItem(asset.no)}
@@ -2120,8 +2135,9 @@ function RemodelApplicationContent() {
                       border: '1px solid #E1E1E1',
                     }}
                   >
-                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                    <div data-element-id={rowIndex === 0 ? 'row-action-group-first' : undefined} style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                       <button
+                        data-element-id={rowIndex === 0 ? 'row-move-up-btn-first' : undefined}
                         onClick={() => {
                           // 編集リストモード: store経由で editList の baseAssets / items を更新
                           if (isEditListMode && listId) {
@@ -2157,6 +2173,7 @@ function RemodelApplicationContent() {
                         ↑
                       </button>
                       <button
+                        data-element-id={rowIndex === 0 ? 'row-move-down-btn-first' : undefined}
                         onClick={() => {
                           if (isEditListMode && listId) {
                             if (asset.no >= 90000) {
@@ -2191,6 +2208,7 @@ function RemodelApplicationContent() {
                         ↓
                       </button>
                       <button
+                        data-element-id={rowIndex === 0 ? 'row-delete-btn-first' : undefined}
                         onClick={() => setDeleteRowConfirm({ no: asset.no, assetName: asset.name || `No.${asset.no}` })}
                         title="このレコードを削除"
                         aria-label={`資産 No.${asset.no} を削除`}
@@ -2437,8 +2455,9 @@ function RemodelApplicationContent() {
         {currentView === 'card' && (
           <>
             {/* REQ-149 (リモデル) / REQ-162 (通常): 編集カード ヘッダー2 — 見積グループ作成 + 申請種別 */}
-            <div style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div data-element-id="card-view-header2" style={{ background: 'white', border: '1px solid #E1E1E1', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <button
+                data-element-id="card-view-rfq-group-btn"
                 onClick={() => setIsRfqGroupModalOpen(true)}
                 disabled={selectedItems.size === 0}
                 title={selectedItems.size === 0 ? 'カードを選択してから見積グループを作成してください' : `選択した${selectedItems.size}件で見積グループを作成`}
@@ -2460,9 +2479,10 @@ function RemodelApplicationContent() {
                 <>
                   {/* REQ-149: リモデルモード — 申請種別8ボタン (新規/増設/更新/移動/廃棄/廃棄予定/廃棄済/保留) */}
                   <span style={{ fontSize: '13px', color: '#4A4A4A', fontWeight: 600 }}>申請種別:</span>
-                  {(['新規','増設','更新','移動','廃棄','廃棄予定','廃棄済','保留'] as const).map((type) => (
+                  {(['新規','増設','更新','移動','廃棄','廃棄予定','廃棄済','保留'] as const).map((type, idx) => (
                     <button
                       key={type}
+                      data-element-id={idx === 0 ? 'application-type-btn-first' : undefined}
                       onClick={() => {
                         // REQ-150: 申請種別に対して品目情報/設置情報/システム接続を登録するモーダルを開く想定
                         // 現状 PurchaseApplicationModal は新規申請固定のため、種別拡張+モーダル接続は別途実装。
@@ -2492,14 +2512,16 @@ function RemodelApplicationContent() {
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-              {displayedAssets.map((asset) => {
+            <div data-element-id="asset-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+              {displayedAssets.map((asset, cardIndex) => {
                 // REQ-149③: カードに申請種別を反映 — 該当資産に紐づく購入申請があれば申請種別を表示
                 // REQ-149③: 既存の購入申請データを名前+型式で照合 (line 357 と同方式)
                 const linkedApp = purchaseApplications.find((app) => app.assets?.some((a) => a.name === asset.name && a.model === asset.model));
+                const cardElementId = cardIndex === 0 ? 'asset-card-first' : undefined;
                 return (
                   <div
                     key={asset.no}
+                    data-element-id={cardElementId}
                     style={{
                       background: 'white',
                       border: '1px solid #E1E1E1',
@@ -2519,6 +2541,7 @@ function RemodelApplicationContent() {
                     <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }} onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <input
+                          data-element-id={cardIndex === 0 ? 'asset-card-checkbox-first' : undefined}
                           type="checkbox"
                           checked={selectedItems.has(asset.no)}
                           onChange={() => handleSelectItem(asset.no)}
@@ -2549,7 +2572,7 @@ function RemodelApplicationContent() {
 
         {/* 申請実行フィードバック */}
         {applicationFeedback && (
-          <div style={{
+          <div data-element-id="application-feedback" style={{
             padding: '10px 16px',
             background: '#EBF5EE',
             border: '1px solid #EBF5EE',
