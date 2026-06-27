@@ -37,7 +37,6 @@ interface MaintenanceContract {
   contractorPhone: string;
   contractAmount: number;
   status: string;
-  warrantyEndDate: string;
   deadlineDays: number | null;
   comment: string;
   category: string;

@@ -27,7 +27,6 @@ interface MaintenanceContract {
   contractorName: string;
   contractorPerson: string;
   contractorPhone: string;
-  warrantyEndDate: string;
   comment: string;
   currentStep: MaintenanceStep;
   reviewStartDate?: string;
@@ -46,8 +45,6 @@ interface ContractGroupAsset {
   inspectionGroupName: string;
   inspectionType: string;
   inspectionCycle: string;
-  warrantyStart: string;
-  warrantyEnd: string;
   partsExemption: boolean;
   exemptionAmount: string;
   onCall: boolean;
@@ -112,7 +109,6 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractorName: 'シーメンスヘルスケア',
     contractorPerson: '田中太郎',
     contractorPhone: '03-1234-5678',
-    warrantyEndDate: '2026-05-15',
     comment: '',
     currentStep: 1,
   },
@@ -130,7 +126,6 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractorName: 'GEヘルスケアジャパン',
     contractorPerson: '佐藤花子',
     contractorPhone: '03-9876-5432',
-    warrantyEndDate: '2026-04-30',
     comment: '次回点検: 2026年4月',
     currentStep: 2,
   },
@@ -148,7 +143,6 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractorName: 'オリンパスメディカルサービス',
     contractorPerson: '鈴木一郎',
     contractorPhone: '03-5555-1234',
-    warrantyEndDate: '2025-12-31',
     comment: '',
     currentStep: 3,
   },
@@ -166,7 +160,6 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractorName: '日機装',
     contractorPerson: '高橋次郎',
     contractorPhone: '03-3333-4444',
-    warrantyEndDate: '2026-03-31',
     comment: '契約更新要検討',
     currentStep: 4,
   },
@@ -184,7 +177,6 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractorName: 'フィリップスジャパン',
     contractorPerson: '中村三郎',
     contractorPhone: '03-2222-3333',
-    warrantyEndDate: '2027-01-31',
     comment: '',
     currentStep: 'completed',
   },
@@ -202,7 +194,6 @@ const MOCK_CONTRACTS: MaintenanceContract[] = [
     contractorName: '三菱電機ビルソリューションズ',
     contractorPerson: '加藤四郎',
     contractorPhone: '03-6666-7777',
-    warrantyEndDate: '2028-03-31',
     comment: '',
     currentStep: 1,
   },
@@ -502,7 +493,6 @@ const ContractGroupDetailModal = ({
           contractorPhone: contract.contractorPhone,
           contractAmount: contract.contractAmount,
           status: '',
-          warrantyEndDate: contract.warrantyEndDate,
           deadlineDays: null,
           comment: contract.comment,
           category: '',
@@ -520,8 +510,8 @@ const ContractGroupDetailModal = ({
             model: a.model,
             maintenanceType: a.inspectionType || '',
             acceptanceDate: '',
-            contractStartDate: a.warrantyStart,
-            contractEndDate: a.warrantyEnd,
+            contractStartDate: '',
+            contractEndDate: '',
             inspectionCountPerYear: a.inspectionCycle ? Math.round(12 / Number(a.inspectionCycle)) : 0,
             partsExemption: a.partsExemption ? '有' : '無',
             onCall: a.onCall,
@@ -579,7 +569,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       contractEndDate: '',
       contractAmount: 0,
       annualAmount: 0,
-      warrantyEndDate: '',
       comment: `${sourceContract.applicationNo} を複製して更新作成`,
       currentStep: 1, // 見積依頼から開始
       reviewStartDate: undefined,
@@ -592,8 +581,6 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
       inspectionGroupName: '',
       inspectionType: '',
       inspectionCycle: '',
-      warrantyStart: '',
-      warrantyEnd: '',
       partsExemption: false,
       exemptionAmount: '',
       onCall: false,

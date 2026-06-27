@@ -489,7 +489,7 @@ function MaintenanceQuoteRegistrationContent() {
       itemName: m.item || m.name || '',
       maker: m.maker || '',
       model: m.model || '',
-      inspectionGroupName: '', inspectionType: '', inspectionCycle: '', warrantyStart: '', warrantyEnd: '',
+      inspectionGroupName: '', inspectionType: '', inspectionCycle: '',
       partsExemption: false, exemptionAmount: '', onCall: false, remote: false,
       legalInspection: false, legalInspectionBasis: '', comment: '', estimatedMaintenanceCost: '',
     };
@@ -789,7 +789,7 @@ function MaintenanceQuoteRegistrationContent() {
                           ファイルの選択
                           <input
                             type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
+                            accept="application/pdf,.pdf"
                             disabled={!isStepEnabled(2)}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
