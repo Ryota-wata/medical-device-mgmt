@@ -38,7 +38,9 @@ export function SubTabNavigation({ activeTab }: SubTabNavigationProps) {
   }, [role]);
 
   return (
-    <div style={{
+    <div
+      data-element-id="sub-tab-navigation"
+      style={{
       background: '#FFFFFF',
       borderBottom: '1px solid #E1E1E1',
       display: 'flex',

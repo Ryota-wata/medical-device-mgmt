@@ -12,7 +12,7 @@ import { SubTabNavigation } from '../components/SubTabNavigation';
 
 function RemodelManagementContent() {
   const router = useRouter();
-  const { rfqGroups, updateRfqGroup } = useRfqGroupStore();
+  const { rfqGroups, updateRfqGroup, deleteRfqGroup } = useRfqGroupStore();
   const { editLists } = useEditListStore();
 
   const [selectedEditListId, setSelectedEditListId] = useState<string>('');
@@ -100,6 +100,7 @@ function RemodelManagementContent() {
             <div className="bg-content-alert px-4 py-1.5 rounded-md flex items-center gap-2">
               <span className="text-xs text-white font-bold">編集リスト:</span>
               <select
+                data-element-id="rm-editlist-select"
                 value={selectedEditListId}
                 onChange={(e) => setSelectedEditListId(e.target.value)}
                 className="px-2 py-1 text-xs border-0 rounded-sm bg-surface-card min-w-[180px] focus:outline-none"
@@ -113,6 +114,7 @@ function RemodelManagementContent() {
               </select>
             </div>
             <button
+              data-element-id="rm-editlist-link-btn"
               onClick={() => {
                 if (selectedEditListId) {
                   router.push(`/remodel-application?listId=${selectedEditListId}`);
@@ -126,6 +128,7 @@ function RemodelManagementContent() {
               <ArrowRight className="w-3.5 h-3.5" aria-hidden />
             </button>
             <button
+              data-element-id="rm-dashboard-btn"
               onClick={() => {
                 if (selectedEditListId) {
                   router.push(`/quotation-data-box/remodel-dashboard?editListId=${selectedEditListId}`);
@@ -146,7 +149,7 @@ function RemodelManagementContent() {
           <SubTabNavigation activeTab="remodelManagement" />
 
           {/* REQ-146: リモデル管理内サブタブ — 購入 / 廃棄・移動 */}
-          <div className="bg-surface-card border-b border-stroke-input flex">
+          <div data-element-id="rm-subtab-group" className="bg-surface-card border-b border-stroke-input flex">
             {(
               [
                 { key: 'purchase', label: '購入' },
@@ -177,7 +180,7 @@ function RemodelManagementContent() {
           <div className="bg-surface-card px-4 py-3 border-b border-stroke-input flex gap-4 items-center flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-xs text-content-primary">見積区分</label>
-              <select className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary">
+              <select data-element-id="rm-filter-quotation-type" className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary">
                 <option value="">すべて</option>
                 <option value="purchase">購入</option>
                 <option value="lease">リース</option>
@@ -193,16 +196,19 @@ function RemodelManagementContent() {
             </div>
             <div className="flex items-center gap-2">
               <label className="text-xs text-content-primary">見積フェーズ</label>
-              <select className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary">
+              {/* API設計(リモデル管理 24-02 タスク一覧 quotationPhase): LIST_PRICE/ESTIMATE/ORDER_REGISTRATION/FINAL_ASSET_REGISTRATION の4フェーズ */}
+              <select data-element-id="rm-filter-quotation-phase" className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary">
                 <option value="">すべて</option>
                 <option value="listPrice">定価</option>
                 <option value="estimate">概算</option>
+                <option value="orderRegistration">発注登録用</option>
                 <option value="final">最終原本登録用</option>
               </select>
             </div>
             <div className="flex items-center gap-2">
               <label className="text-xs text-content-primary">ステータス</label>
               <select
+                data-element-id="rm-filter-status"
                 value={rfqStatusFilter}
                 onChange={(e) => setRfqStatusFilter(e.target.value as RfqGroupStatus | '')}
                 className="px-2 py-1 text-xs border border-stroke-input rounded-sm bg-surface-card focus:outline-none focus:border-cta-primary"
@@ -246,6 +252,11 @@ function RemodelManagementContent() {
               onRegisterInspection={handleStartInspectionRegistration}
               onRegisterAssetProvisional={handleStartAssetProvisionalRegistration}
               onRegisterAsset={handleStartAssetRegistration}
+              onDelete={(id) => {
+                if (confirm('この見積（発注）グループを削除しますか？')) {
+                  deleteRfqGroup(id);
+                }
+              }}
               onUpdateDeadline={(id, field, value) => updateRfqGroup(id, { [field]: value })}
               onApprove={handleApprove}
               onReject={handleReject}
@@ -258,20 +269,22 @@ function RemodelManagementContent() {
 
       {/* 資産仮登録モード選択ダイアログ (Figma 342:56859 準拠) */}
       {showModeSelection && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+        <div data-element-id="rm-mode-modal" className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
           <div className="bg-surface-card rounded-xl p-6 max-w-[520px] w-[90%] shadow-2xl relative">
             <button
+              data-element-id="rm-mode-modal-close-x"
               onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
               aria-label="閉じる"
               className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-md text-content-primary hover:bg-stroke-card bg-transparent border-0"
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-base font-semibold text-content-primary mb-2 text-balance">資産仮登録の入力方法を選択</h2>
-            <p className="text-xs text-content-sub mb-5">登録作業の状況に応じて入力方法を選んでください。</p>
+            <h2 data-element-id="rm-mode-modal-title" className="text-base font-semibold text-content-primary mb-2 text-balance">資産仮登録の入力方法を選択</h2>
+            <p data-element-id="rm-mode-modal-desc" className="text-xs text-content-sub mb-5">登録作業の状況に応じて入力方法を選んでください。</p>
 
             <div className="flex flex-col gap-3">
               <button
+                data-element-id="rm-mode-mobile-btn"
                 onClick={() => handleModeSelected('mobile')}
                 className="flex items-center gap-4 p-4 border border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary-dark"
               >
@@ -289,6 +302,7 @@ function RemodelManagementContent() {
               </button>
 
               <button
+                data-element-id="rm-mode-pc-btn"
                 onClick={() => handleModeSelected('pc')}
                 className="flex items-center gap-4 p-4 border border-stroke-input rounded-lg bg-surface-card cursor-pointer text-left transition-colors hover:border-cta-primary-dark"
               >
@@ -308,6 +322,7 @@ function RemodelManagementContent() {
 
             <div className="mt-4 flex justify-center">
               <button
+                data-element-id="rm-mode-close-btn"
                 onClick={() => { setShowModeSelection(false); setPendingRfqGroupId(null); }}
                 className="bg-transparent border-0 text-sm text-cta-primary-dark underline cursor-pointer px-3 py-1"
               >

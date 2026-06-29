@@ -184,7 +184,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 見積依頼 → 見積依頼（送信） → 見積依頼済へ
       case '見積依頼':
         buttons.push(
-          <button key="rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#087CB6' }}>
+          <button key="rfq" data-element-id="rfq-action-send-rfq" onClick={() => onSendRfq?.(group.id)} style={{ ...btnBase, background: '#087CB6' }}>
             見積依頼
           </button>
         );
@@ -192,7 +192,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // 見積依頼済 → 見積登録
       case '見積依頼済':
         buttons.push(
-          <button key="quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#087CB6' }}>
+          <button key="quote" data-element-id="rfq-action-register-quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#087CB6' }}>
             見積登録
           </button>
         );
@@ -201,7 +201,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '見積DB登録済':
         if (onDelete) {
           buttons.push(
-            <button key="delete" onClick={() => onDelete(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
+            <button key="delete" data-element-id="rfq-action-delete" onClick={() => onDelete(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
               削除
             </button>
           );
@@ -213,7 +213,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
         break;
       case '発注用見積依頼済':
         buttons.push(
-          <button key="order-rfq-reg" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
+          <button key="order-rfq-reg" data-element-id="rfq-action-register-order-quote" onClick={() => onRegisterQuotation(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             発注見積登録
           </button>
         );
@@ -221,7 +221,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ③発注登録
       case '発注見積登録済':
         buttons.push(
-          <button key="order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
+          <button key="order" data-element-id="rfq-action-register-order" onClick={() => onRegisterOrder(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             発注登録
           </button>
         );
@@ -229,7 +229,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ④納品日登録
       case '発注済':
         buttons.push(
-          <button key="delivery" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
+          <button key="delivery" data-element-id="rfq-action-register-delivery" onClick={() => onRegisterInspection(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
             納品日登録
           </button>
         );
@@ -237,7 +237,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ⑤検収登録
       case '納期確定':
         buttons.push(
-          <button key="inspection" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
+          <button key="inspection" data-element-id="rfq-action-register-inspection" onClick={() => onRegisterAssetProvisional(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             検収登録
           </button>
         );
@@ -245,7 +245,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       // ⑥資産登録
       case '検収済':
         buttons.push(
-          <button key="asset" onClick={() => onRegisterAsset(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
+          <button key="asset" data-element-id="rfq-action-register-asset" onClick={() => onRegisterAsset(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
             資産登録
           </button>
         );
@@ -259,14 +259,14 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '廃棄承認待ち':
         if (onApprove) {
           buttons.push(
-            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
+            <button key="approve" data-element-id="rfq-action-approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
               承認
             </button>
           );
         }
         if (onReject) {
           buttons.push(
-            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
+            <button key="reject" data-element-id="rfq-action-reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
               却下
             </button>
           );
@@ -275,7 +275,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '廃棄承認済み':
         if (onCompleteDisposal) {
           buttons.push(
-            <button key="complete-disposal" onClick={() => onCompleteDisposal(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
+            <button key="complete-disposal" data-element-id="rfq-action-complete-disposal" onClick={() => onCompleteDisposal(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
               廃棄完了
             </button>
           );
@@ -288,14 +288,14 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '移動承認待ち':
         if (onApprove) {
           buttons.push(
-            <button key="approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
+            <button key="approve" data-element-id="rfq-action-approve" onClick={() => onApprove(group.id)} style={{ ...btnBase, background: '#008C1D' }}>
               承認
             </button>
           );
         }
         if (onReject) {
           buttons.push(
-            <button key="reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
+            <button key="reject" data-element-id="rfq-action-reject" onClick={() => onReject(group.id)} style={{ ...btnBase, background: '#DA0000' }}>
               却下
             </button>
           );
@@ -304,7 +304,7 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
       case '移動承認済み':
         if (onCompleteTransfer) {
           buttons.push(
-            <button key="complete-transfer" onClick={() => onCompleteTransfer(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
+            <button key="complete-transfer" data-element-id="rfq-action-complete-transfer" onClick={() => onCompleteTransfer(group.id)} style={{ ...btnBase, background: '#4A4A4A' }}>
               移動完了
             </button>
           );
@@ -322,15 +322,15 @@ export const RfqGroupsTab: React.FC<RfqGroupsTabProps> = ({
 
   return (
     <div style={{ flex: 1, overflow: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+      <table data-element-id="rfq-groups-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
         <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
           {/* グループヘッダー行 (Figma 304:37602: 薄灰 + 黒文字) */}
           <tr style={{ background: '#F1F1F1', color: '#4A4A4A' }}>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）依頼No,</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'left' }}>見積（発注）グループ名称</th>
             <th colSpan={3} style={{ ...thGroupStyle, textAlign: 'center' }}>業者情報</th>
-            <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>ステータス</th>
-            <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>期限</th>
+            <th data-element-id="rfq-status-col-header" rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>ステータス</th>
+            <th data-element-id="rfq-deadline-col-header" rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>期限</th>
             <th rowSpan={2} style={{ ...thGroupStyle, textAlign: 'center' }}>操作</th>
           </tr>
           {/* サブカラムヘッダー行 */}
