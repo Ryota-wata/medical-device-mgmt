@@ -706,7 +706,7 @@ export const MaintenanceContractsTab: React.FC<MaintenanceContractsTabProps> = (
                   <td style={tdStyle}>{contract.contractorName || '-'}</td>
                   <td style={tdStyle}>{contract.contractorPerson || '-'}</td>
                   <td style={{ ...tdStyle, fontSize: '12px' }} className="tabular-nums border border-stroke-input">{contract.contractorPhone || '-'}</td>
-                  <td style={tdStyle}>
+                  <td data-element-id={index === 0 ? 'mc-status-cell-first' : undefined} style={tdStyle}>
                     {(() => {
                       const status = calcStatus(contract);
                       return (

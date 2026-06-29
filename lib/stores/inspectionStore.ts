@@ -154,6 +154,9 @@ const initialTasks: InspectionTask[] = [
 
 // ステータス計算ヘルパー
 function calculateStatus(nextInspectionDate: string): InspectionTaskStatus {
+  // メーカー保守等で点検予定日が未定 (NULL/空) の場合は日程未定として「点検日調整」を返す
+  // (API設計準拠: メーカー保守は next_inspection_on=NULL・初期 status='点検日調整' を許可)
+  if (!nextInspectionDate) return '点検日調整';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const nextDate = new Date(nextInspectionDate);

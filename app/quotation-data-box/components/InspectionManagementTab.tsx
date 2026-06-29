@@ -400,7 +400,7 @@ export function InspectionManagementTab({ isMobile = false }: InspectionManageme
                     <td style={{ ...td, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getPeriodicMenuDisplay(task)}</td>
                     <td style={td}>{getPeriodicCycle(task)}</td>
                     <td style={td} className="tabular-nums border border-stroke-input">{task.lastInspectionDate || '-'}</td>
-                    <td style={td} className="tabular-nums border border-stroke-input">{task.nextInspectionDate}</td>
+                    <td style={td} className="tabular-nums border border-stroke-input">{task.nextInspectionDate || '日程未定'}</td>
                     <td style={{ ...td, textAlign: 'center' }}>
                       <span style={{
                         display: 'inline-block',

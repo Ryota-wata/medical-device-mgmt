@@ -384,6 +384,14 @@ function MaintenanceQuoteRegistrationContent() {
 
   const filledVendors = rfqVendors.filter(v => v.vendorName.trim() !== '');
 
+  // 契約期間 終了日≥開始日 検証 (画面側クライアント検証。両日付入力済みのときのみ判定)
+  const contractPeriodError =
+    formData.contractPeriodStart &&
+    formData.contractPeriodEnd &&
+    formData.contractPeriodEnd < formData.contractPeriodStart
+      ? '契約終了日は契約開始日以降にしてください。'
+      : '';
+
   // === Handlers ===
   const handleStep1Complete = () => {
     const sentVendors = rfqVendors.filter(v => v.isSent);
@@ -421,17 +429,21 @@ function MaintenanceQuoteRegistrationContent() {
       alert('先に「明細の登録」を実行してください（対象資産を1件以上登録）。');
       return;
     }
+    // 契約終了日≥開始日 検証 (画面側クライアント検証)
+    if (
+      formData.contractPeriodStart &&
+      formData.contractPeriodEnd &&
+      formData.contractPeriodEnd < formData.contractPeriodStart
+    ) {
+      alert('契約終了日は契約開始日以降にしてください。');
+      return;
+    }
     // REQ-100: メーカー保守の明細を点検タスク管理へ連携（点検タスク=メーカー保守を生成）
-    const fallbackDate = () => {
-      const d = new Date();
-      d.setDate(d.getDate() + 90);
-      return d.toISOString().split('T')[0];
-    };
+    // API設計「点検管理連携ルール」準拠: メーカー保守は点検予定日を未定 (next_inspection_on=NULL/空) で起票し、
+    // 初期 status='点検日調整' とする。点検予定日の確定は点検管理 (API No.30) の責務 (本画面は連携トリガのみ)。
     const makerItems = lineItems.filter(a => a.inspectionType === 'メーカー保守');
     const vendorName = registeredQuotations[0]?.vendorName || '';
     makerItems.forEach(a => {
-      // API設計準拠: 保証期間は点検予定日算出に使用しない (契約期間終了 or 日程未定)
-      const next = formData.contractPeriodEnd || fallbackDate();
       addInspectionTask(
         {
           assetId: a.qrLabel,
@@ -440,7 +452,7 @@ function MaintenanceQuoteRegistrationContent() {
           hasDailyInspection: false,
           dailyMenus: {},
           vendorName,
-          nextInspectionDate: next,
+          nextInspectionDate: '',
         },
         {
           assetName: a.itemName,
@@ -1105,9 +1117,15 @@ function MaintenanceQuoteRegistrationContent() {
                         value={formData.contractPeriodEnd}
                         onChange={(e) => updateFormData({ contractPeriodEnd: e.target.value })}
                         disabled={!isStepEnabled(3)}
+                        aria-invalid={!!contractPeriodError}
                         className={`${inputCls} w-[160px] tabular-nums`}
                       />
                     </div>
+                    {contractPeriodError && (
+                      <p data-element-id="mqr-contract-period-error" role="alert" className="mt-1.5 text-sm text-content-alert">
+                        {contractPeriodError}
+                      </p>
+                    )}
                   </TdCell>
                 </tr>
                 {/* 260524 統合: 旧STEP④ 各種ドキュメント登録 */}
@@ -1212,8 +1230,8 @@ function MaintenanceQuoteRegistrationContent() {
               <button
                 data-element-id="mqr-final-complete-btn"
                 onClick={handleFinalComplete}
-                disabled={!isStepEnabled(3) || isSubmitting || !lineItemsRegistered || lineItems.length === 0}
-                title={!lineItemsRegistered ? '先に明細の登録が必要です' : undefined}
+                disabled={!isStepEnabled(3) || isSubmitting || !lineItemsRegistered || lineItems.length === 0 || !!contractPeriodError}
+                title={!lineItemsRegistered ? '先に明細の登録が必要です' : (contractPeriodError || undefined)}
                 className="h-10 px-6 rounded-lg bg-cta-primary text-white border-0 text-base font-bold cursor-pointer hover:bg-cta-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 保守登録
