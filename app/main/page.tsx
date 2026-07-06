@@ -471,6 +471,16 @@ export default function MainPage() {
                   </button>
                 )}
 
+                {/* SHIPユーザー管理（コンサルユーザー管理 / system_admin のみ） */}
+                {isAdmin && (
+                  <button
+                    onClick={() => { closeMasterModal(); router.push('/ship-user-management'); }}
+                    className="px-4 py-3 bg-surface-card border border-cta-primary rounded-lg text-sm font-medium text-content-primary cursor-pointer flex items-center justify-center transition-all hover:bg-cta-primary hover:text-white"
+                  >
+                    SHIPユーザー管理
+                  </button>
+                )}
+
                 {/* 個別施設マスタ → サブメニュー展開 */}
                 {canAccess('hospital_dept_master_edit') && (
                   <button

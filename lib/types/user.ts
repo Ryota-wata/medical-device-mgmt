@@ -21,6 +21,12 @@ export interface User {
   phone?: string;
   /** コンサル: 担当施設 / 事務担当者: 閲覧可能な他施設 */
   accessibleFacilities?: string[];
+  /** SHIPユーザー: 既定施設（accessibleFacilities のうち1つ。users.facility_id 相当） */
+  defaultFacility?: string;
+  /** アカウント有効フラグ（users.is_active 相当） */
+  isActive?: boolean;
+  /** 最終ログイン日時（未設定＝未利用。初回設定案内の送信可否判定に使用） */
+  lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

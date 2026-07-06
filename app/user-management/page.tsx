@@ -12,6 +12,7 @@ import { useUserFeatureStore } from '@/lib/stores/userFeatureStore';
 import { useFacilityGroupStore } from '@/lib/stores/facilityGroupStore';
 import { PERMISSION_UNITS, PERMISSION_CATEGORY_ORDER, PermissionUnit } from '@/lib/data/permission-units';
 import { User } from '@/lib/types/user';
+import { SAMPLE_USERS } from '@/lib/data/sample-users';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -68,69 +69,10 @@ export default function UserManagementPage() {
     return Array.from(new Set(users.map(u => u.department).filter(Boolean))) as string[];
   }, [users]);
 
-  // サンプルデータを初期化
-  // role フィールドは型互換のため "system_admin" 固定 (UI では参照しない / ロール撤廃)
+  // サンプルデータを初期化 (user-management / ship-user-management 共通の初期データ)
   useEffect(() => {
     if (users.length === 0) {
-      const sampleUsers: User[] = [
-        {
-          id: 'U001',
-          username: '管理者太郎',
-          email: 'admin@ship.com',
-          hospital: undefined,
-          role: LEGACY_ROLE_FOR_NEW_USER,
-          department: '情報システム部',
-          position: '部長',
-          contactPerson: '管理者太郎',
-          phone: '03-0000-0001',
-          accessibleFacilities: ['全施設'],
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 'U004',
-          username: '佐藤美智子',
-          email: 'hospital-admin@hospital.com',
-          hospital: '東京中央病院',
-          role: LEGACY_ROLE_FOR_NEW_USER,
-          department: '医事課',
-          position: '課長',
-          contactPerson: '佐藤美智子',
-          phone: '03-1234-5678',
-          accessibleFacilities: [],
-          createdAt: '2024-02-01T00:00:00Z',
-          updatedAt: '2024-02-01T00:00:00Z'
-        },
-        {
-          id: 'U005',
-          username: '高橋健二',
-          email: 'hospital-office@hospital.com',
-          hospital: '東京中央病院',
-          role: LEGACY_ROLE_FOR_NEW_USER,
-          department: '医事課',
-          position: '主任',
-          contactPerson: '高橋健二',
-          phone: '03-1234-5679',
-          accessibleFacilities: [],
-          createdAt: '2024-02-15T00:00:00Z',
-          updatedAt: '2024-02-15T00:00:00Z'
-        },
-        {
-          id: 'U006',
-          username: '田中花子',
-          email: 'hospital-me@hospital.com',
-          hospital: '東京中央病院',
-          role: LEGACY_ROLE_FOR_NEW_USER,
-          department: 'ME室',
-          position: '臨床工学技士',
-          contactPerson: '田中花子',
-          phone: '03-1234-5680',
-          accessibleFacilities: [],
-          createdAt: '2024-03-01T00:00:00Z',
-          updatedAt: '2024-03-01T00:00:00Z'
-        }
-      ];
-      setUsers(sampleUsers);
+      setUsers(SAMPLE_USERS);
     }
   }, [users.length, setUsers]);
 
