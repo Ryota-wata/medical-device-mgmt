@@ -8,6 +8,19 @@ $workFacilityProcessingLine = 'Bearer トークン上の作業対象施設が存
 $auth401StatusRow = @('401', '未認証', 'ErrorResponse')
 $auth403StatusRow = @('403', '通常アカウントで作業対象施設に対する実効 `inspection_management` なし', 'ErrorResponse')
 $workFacility404StatusRow = @('404', '作業対象施設が存在しない、または削除済み', 'ErrorResponse')
+$inspectionFile502StatusRow = @('502', 'Amazon S3への添付保存または保存後ロールバック削除に失敗した', 'ErrorResponse')
+
+$inspectionDocumentInputRows = @(
+  @('documentCategory', 'string', '-', '`REPORT` / `OTHER`。未指定時は `REPORT`'),
+  @('documentType', 'string', '✓', '点検報告書 / その他'),
+  @('filePartName', 'string', '✓', 'multipart/form-data 内のファイルパート名。ファイル本体とメタデータを対応付ける'),
+  @('fileName', 'string', '✓', '画面表示・監査用のファイル名。S3オブジェクトキーとは一致させない'),
+  @('mimeType', 'string', '-', '`application_documents.mime_type` に保存するMIMEタイプ。未指定時はAPIでファイル本体から判定する'),
+  @('fileSizeBytes', 'int64', '-', '`application_documents.file_size_bytes` に保存するファイルサイズ。未指定時はAPIで算出する'),
+  @('contentHash', 'string', '-', '指定時はAPIで算出したハッシュと照合する。未指定時はAPIで算出値を保存する'),
+  @('documentDate', 'date', '-', '点検報告書等の文書日付。未指定時は点検実施日を使用する'),
+  @('storageFormat', 'string', '-', '`電子取引` / `スキャナ保存` / `未指定`。保存先ではなく保存形式区分を表す。未指定時は `未指定`')
+)
 
 $spec = @{
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
@@ -26,7 +39,7 @@ $spec = @{
       '資産一覧画面の選択資産から起動する点検管理登録 I/F',
       '日常点検設定行の変更・一部解除・設定解除 I/F',
       '定期点検の実施開始、点検結果登録、日程調整、スキップ、予定表CSV出力 I/F',
-      'メーカー保守結果登録と添付ファイルメタデータ保存 I/F',
+      'メーカー保守結果登録、添付ファイルのAPI内S3保存、メタデータ保存 I/F',
       'No.4 日常点検APIとの責務境界'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
@@ -53,7 +66,7 @@ $spec = @{
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
       @('点検管理初期表示/フィルター変更', '`GET /quotation-data-box/inspection-requests/tasks`', '定期点検タスクと日常点検設定行を同じ一覧レスポンスで返す'),
-      @('点検予定表の出力', '`GET /quotation-data-box/inspection-requests/schedule-export`', '点検管理一覧と同じ正本フィルターを適用できる。定期点検系タスクのみCSV出力対象とし、日常点検行は除外する'),
+      @('点検予定表の出力', '`GET /quotation-data-box/inspection-requests/schedule-export`', '点検管理一覧と同じ正本フィルターを適用できる。定期点検系タスクのみCSV出力対象とし、日常点検行は除外する。CSVはレスポンスとして直接返し、永続ファイルとしてS3へ保存しない'),
       @('点検メニュー登録モーダル表示/候補取得', '`GET /quotation-data-box/inspection-requests/menus`', 'メニュー一覧または資産分類に一致する候補を取得する'),
       @('点検メニュー登録', '`POST /quotation-data-box/inspection-requests/menus`', 'メニュー本体と点検項目を同時に登録する'),
       @('点検メニュー更新', '`PUT /quotation-data-box/inspection-requests/menus/{menuId}`', '未使用メニューの内容を更新する。使用中メニューは履歴整合のため更新制限する'),
@@ -66,7 +79,7 @@ $spec = @{
       @('スキップ', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip`', '次回予定日を再計算し、再計算後の予定系ステータスへ更新する'),
       @('定期点検完了', '`POST /quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result`', '点検結果を登録し、前回点検日・次回予定日・ステータスを更新する'),
       @('メーカー保守結果登録画面表示', '`GET /maker-maintenance-result/tasks/{maintenanceTaskId}`', '対象タスク、資産、添付候補、費用入力初期値を取得する'),
-      @('メーカー保守結果登録', '`POST /maker-maintenance-result/tasks/{maintenanceTaskId}/result`', 'メーカー保守結果、費用、添付ファイルメタデータを保存し、対象タスクを論理解除する')
+      @('メーカー保守結果登録', '`POST /maker-maintenance-result/tasks/{maintenanceTaskId}/result`', 'メーカー保守結果、費用、添付ファイル本体を受け取り、API内でAmazon S3へ保存してメタデータを登録し、対象タスクを論理解除する')
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル名', '利用種別', '用途'); Rows = @(
@@ -78,7 +91,7 @@ $spec = @{
       @('`inspection_task_status_definitions`', 'READ', '定期点検系ステータスの許容値、初期状態、終端状態確認'),
       @('`inspection_task_status_transitions`', 'READ', '点検開始、完了、スキップ、日程調整の遷移可否確認'),
       @('`inspection_results`', 'READ / CREATE', '定期点検結果、メーカー保守結果、費用内訳、結果明細JSONの保存'),
-      @('`application_documents`', 'CREATE / READ', 'メーカー保守点検報告書や添付資料のファイルメタデータ保存'),
+      @('`application_documents`', 'CREATE / READ', 'メーカー保守点検報告書や添付資料のファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する'),
       @('`lending_devices`', 'READ', '貸出状況フィルターおよび一覧表示'),
       @('`maintenance_contracts`', 'READ', 'メーカー保守タスクの契約情報参照'),
       @('`maintenance_contract_assets`', 'READ', '保守契約管理タブから作成された点検条件の由来参照'),
@@ -94,12 +107,22 @@ $spec = @{
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON。CSV出力APIのみ `text/csv; charset=UTF-8` を返す',
+      'データ形式: JSON（メーカー保守結果登録の添付を含むPOST APIは multipart/form-data を使用し、`payload` に業務データとファイルメタデータ、`files` にファイル本体を指定する）。CSV出力APIのみ `text/csv; charset=UTF-8` を返す',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-18T00:00:00+09:00`）',
       '日付形式: `YYYY-MM-DD`',
       '認証済みAPIは Bearer トークンを `Authorization` ヘッダーに付与する',
       '各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する'
+    ) },
+    @{ Type = 'Heading2'; Text = 'ファイル保存ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      'メーカー保守結果登録で扱う点検報告書・添付資料のファイル実体は、APIが multipart/form-data の `files` パートとして受け取り、API内でAmazon S3へPutObjectする',
+      '`application_documents.file_path` にはS3オブジェクトキーのみ保存し、S3バケット名、S3の直接URL、認可なしで利用できるURLはDBへ保存しない',
+      'レスポンスではS3オブジェクトキー、S3バケット名、S3の直接URLを返さず、画面表示やダウンロードが必要な場合は認可済み `downloadUrl` を返す',
+      'Amazon S3保存後にDBメタデータ保存または業務トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`INSPECTION_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
+      '`storageFormat` は保存先ではなく、電子取引/スキャナ保存/未指定などの保存形式区分を表す列として扱い、S3保存有無の表現には使用しない',
+      '点検予定表CSV出力は画面操作に対する直接レスポンスであり、永続ファイルとしてS3へ保存しない。将来、帳票履歴として保存する要件が追加された場合は、別途ファイル保存APIまたは帳票履歴設計で扱う',
+      '添付ファイルの論理削除が必要になった場合は `application_documents.deleted_at` を正本とし、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `inspection_management` とする。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `inspection_management` 判定をバイパスする。' },
@@ -149,7 +172,7 @@ $spec = @{
       @('12', '点検スキップ', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/skip', '定期点検タスクの次回予定日を再計算する', '`inspection_management`'),
       @('13', '定期点検結果登録', 'POST', '/quotation-data-box/inspection-requests/tasks/{inspectionTaskId}/result', '定期点検結果を登録しタスク状態を更新する', '`inspection_management`'),
       @('14', 'メーカー保守結果登録詳細取得', 'GET', '/maker-maintenance-result/tasks/{maintenanceTaskId}', 'メーカー保守結果登録画面の詳細を取得する', '`inspection_management`'),
-      @('15', 'メーカー保守結果登録', 'POST', '/maker-maintenance-result/tasks/{maintenanceTaskId}/result', 'メーカー保守結果、費用、添付を登録する', '`inspection_management`')
+      @('15', 'メーカー保守結果登録', 'POST', '/maker-maintenance-result/tasks/{maintenanceTaskId}/result', 'メーカー保守結果、費用、添付ファイル本体を登録し、ファイル実体をS3へ保存する', '`inspection_management`')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 点検管理機能設計' },
@@ -801,7 +824,7 @@ $spec = @{
       },
       @{
         Title = 'メーカー保守結果登録詳細取得（/maker-maintenance-result/tasks/{maintenanceTaskId}）'
-        Overview = 'メーカー保守 点検結果登録画面の初期表示に必要な対象タスク、資産、契約、添付情報を取得する。'
+        Overview = 'メーカー保守 点検結果登録画面の初期表示に必要な対象タスク、資産、契約、添付登録制御情報を取得する。'
         Method = 'GET'
         Path = '/maker-maintenance-result/tasks/{maintenanceTaskId}'
         Auth = '要（Bearer）'
@@ -815,6 +838,7 @@ $spec = @{
           $workFacilityProcessingLine,
           '対象 `inspection_tasks` が `inspection_type=''メーカー保守''`、`is_active=true`、`deleted_at IS NULL` であり、作業対象施設内の資産に紐づくことを確認する',
           '`asset_ledgers`、`qr_codes`、`maintenance_contracts`、`vendors` を参照して画面表示情報を返す',
+          '添付登録で許可するドキュメント種別、MIMEタイプ、ファイルサイズ上限を返す。S3オブジェクトキー、S3バケット名、S3直接URLは返さない',
           '既存の `inspection_results` がある完了済みタスクは本API対象外として 409 とする'
         )
         ResponseTitle = 'レスポンス（200：MakerMaintenanceTaskDetailResponse）'
@@ -825,7 +849,21 @@ $spec = @{
           @('inspectionGroupName', 'string', '-', '保守・点検グループ名'),
           @('vendorName', 'string', '-', '点検業者名'),
           @('nextInspectionOn', 'date', '-', '予定日'),
-          @('defaultCostRows', 'CostRow[]', '✓', '費用行初期値。通常は空配列')
+          @('defaultCostRows', 'CostRow[]', '✓', '費用行初期値。通常は空配列'),
+          @('documentUploadPolicy', 'DocumentUploadPolicy', '✓', '登録APIへ添付できるドキュメント種別、MIMEタイプ、ファイルサイズ上限。S3保存先情報は含めない')
+        )
+        ResponseSubtables = @(
+          @{
+            Title = 'documentUploadPolicy要素（DocumentUploadPolicy）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = @(
+              @('documentTypes', 'string[]', '✓', '点検報告書 / その他'),
+              @('documentCategories', 'string[]', '✓', '`REPORT` / `OTHER`'),
+              @('allowedMimeTypes', 'string[]', '✓', 'PDFおよび画像など、点検報告書添付として許可するMIMEタイプ'),
+              @('maxFileSizeBytes', 'int64', '✓', '1ファイルあたりの上限サイズ'),
+              @('multipleFilesAllowed', 'boolean', '✓', '複数添付可否')
+            )
+          }
         )
         StatusRows = @(
           @('200', '取得成功', 'MakerMaintenanceTaskDetailResponse'),
@@ -838,7 +876,7 @@ $spec = @{
       },
       @{
         Title = 'メーカー保守結果登録（/maker-maintenance-result/tasks/{maintenanceTaskId}/result）'
-        Overview = 'メーカー保守点検タスクに対して、点検結果、費用内訳、添付ファイルメタデータを登録し、対象タスクを論理解除する。'
+        Overview = 'メーカー保守点検タスクに対して、点検結果、費用内訳、添付ファイル本体を受け取り、API内でAmazon S3へ保存したうえで添付メタデータを登録し、対象タスクを論理解除する。'
         Method = 'POST'
         Path = '/maker-maintenance-result/tasks/{maintenanceTaskId}/result'
         Auth = '要（Bearer）'
@@ -847,20 +885,21 @@ $spec = @{
         ParametersRows = @(
           @('maintenanceTaskId', 'path', 'int64', '✓', 'メーカー保守タスクID')
         )
-        RequestTitle = 'リクエスト（MakerMaintenanceResultRequest）'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('inspectedOn', 'date', '✓', '点検実施日'),
-          @('vendorName', 'string', '✓', '点検業者名スナップショット'),
-          @('vendorStaffName', 'string', '-', '担当者名'),
-          @('vendorContact', 'string', '-', '連絡先'),
-          @('costRows', 'CostRowInput[]', '✓', '費用行。0円登録時は空配列可'),
-          @('documents', 'InspectionDocumentInput[]', '-', 'アップロード済みファイルのメタデータ'),
-          @('remarks', 'string', '-', '備考')
+          @('payload.inspectedOn', 'date', '✓', '点検実施日'),
+          @('payload.vendorName', 'string', '✓', '点検業者名スナップショット'),
+          @('payload.vendorStaffName', 'string', '-', '担当者名'),
+          @('payload.vendorContact', 'string', '-', '連絡先'),
+          @('payload.costRows', 'CostRowInput[]', '✓', '費用行。0円登録時は空配列可'),
+          @('payload.documents', 'InspectionDocumentInput[]', '-', '添付ファイルメタデータ。各要素の `filePartName` が `files` のファイル本体と対応する'),
+          @('files', 'binary[]', '-', '点検報告書・添付資料のファイル本体。`payload.documents[].filePartName` で参照する'),
+          @('payload.remarks', 'string', '-', '備考')
         )
         RequestSubtables = @(
           @{
-            Title = 'costRows要素（CostRowInput）'
+            Title = 'payload.costRows要素（CostRowInput）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = @(
               @('costType', 'string', '✓', '`PARTS` / `LABOR` / `OTHER`'),
@@ -869,16 +908,9 @@ $spec = @{
             )
           },
           @{
-            Title = 'documents要素（InspectionDocumentInput）'
+            Title = 'payload.documents要素（InspectionDocumentInput）'
             Headers = @('フィールド', '型', '必須', '説明')
-            Rows = @(
-              @('documentCategory', 'string', '✓', '`REPORT` / `OTHER`'),
-              @('documentType', 'string', '✓', '点検報告書 / その他'),
-              @('fileName', 'string', '✓', 'ファイル名'),
-              @('filePath', 'string', '✓', '保存先パス'),
-              @('mimeType', 'string', '-', 'MIMEタイプ'),
-              @('fileSizeBytes', 'int64', '-', 'ファイルサイズ')
-            )
+            Rows = $inspectionDocumentInputRows
           }
         )
         PermissionLines = $permissionLines
@@ -886,10 +918,13 @@ $spec = @{
           $workFacilityProcessingLine,
           '対象タスクが `inspection_type=''メーカー保守''`、`is_active=true` であり、作業対象施設内の資産に紐づくことを確認する',
           '費用行から `parts_cost`、`labor_cost`、`total_cost` を算出する。`OTHER` は `labor_cost` 側に含め、内訳詳細は `result_details_json.costRows` に保持する',
+          '`payload.documents[].filePartName` が `files` パートに存在することを確認し、許可MIMEタイプ、拡張子、ファイルサイズ、`contentHash` 指定時のハッシュ一致を検証する',
           '`inspection_results` にメーカー保守結果を登録する。`overall_result` は `PASS` とし、異常や再修理が必要な場合は修理管理タブ側で別途修理申請を起票する',
-          '添付ファイルは `application_documents.owner_type=''INSPECTION_RESULT''`、`inspection_result_id`、`document_category`、`document_type`、`file_path` 等を登録する',
+          '添付ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`inspectionResultId` などの業務IDを含めない',
+          '添付ファイルは `application_documents.owner_type=''INSPECTION_RESULT''`、`inspection_result_id=作成した点検結果ID`、`document_category`、`document_type`、`document_date`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後に文書メタデータ保存、点検結果登録、またはタスク論理解除へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`INSPECTION_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '登録成功後、対象 `inspection_tasks` を `is_active=false`、`deleted_at=現在日時` として一覧から除外する',
-          '1トランザクションで `inspection_results`、`application_documents`、`inspection_tasks` を更新する'
+          'DBトランザクションでは `inspection_results`、`application_documents`、`inspection_tasks` を整合更新し、S3保存処理はトランザクション外リソースとして上記の補償削除ルールを適用する'
         )
         ResponseTitle = 'レスポンス（201：MakerMaintenanceResultResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -903,11 +938,12 @@ $spec = @{
         )
         StatusRows = @(
           @('201', '登録成功', 'MakerMaintenanceResultResponse'),
-          @('400', '入力不正、費用金額不正、添付メタデータ不正', 'ErrorResponse'),
+          @('400', '入力不正、費用金額不正、添付メタデータまたは添付ファイル不正', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '作業対象施設に対する実効 `inspection_management` なし', 'ErrorResponse'),
           @('404', '対象タスクが存在しない', 'ErrorResponse'),
           @('409', 'メーカー保守以外、完了済み、または既に解除済み', 'ErrorResponse'),
+          $inspectionFile502StatusRow,
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -955,6 +991,7 @@ $spec = @{
       @('INSPECTION_MGMT_DAILY_ACTION_NOT_ALLOWED', '409', '日常点検行では実行不可の操作', '日常点検行に対して点検開始、日程調整、スキップ、定期点検結果登録を実行した'),
       @('INSPECTION_MGMT_QR_MISMATCH', '409', 'QRコードが対象資産と一致しない', '定期点検開始時に読み取ったQRが対象タスクの資産に紐づかない'),
       @('INSPECTION_MGMT_RESULT_DETAIL_INVALID', '422', '点検結果明細がメニュー定義と一致しない', '点検項目ID、入力方式、評価方式、必須入力が不正'),
+      @('INSPECTION_FILE_502_S3_WRITE_FAILED', '502', 'ファイル保存または保存後ロールバックに失敗', 'Amazon S3 PutObject 失敗、またはDB保存失敗後のS3 DeleteObject 失敗'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー', '想定外例外')
     ) },
 
@@ -964,14 +1001,16 @@ $spec = @{
       '点検メニューは `inspection_menus` と `inspection_menu_items` を正本とする',
       '日常点検メニューは No.4 日常点検APIのPWAパッケージへ配信されるため、使用中メニューの破壊的更新は禁止する',
       '点検タスクと日常点検設定行は `inspection_tasks` を正本とし、解除時は物理削除せず `is_active=false` と `deleted_at` を設定する',
-      'メーカー保守結果登録後の対象タスクも、履歴参照のため物理削除せず論理解除する'
+      'メーカー保守結果登録後の対象タスクも、履歴参照のため物理削除せず論理解除する',
+      'メーカー保守点検報告書や添付資料のメタデータは `application_documents.owner_type=''INSPECTION_RESULT''` として保持し、`file_path` にはAmazon S3のS3オブジェクトキーのみを保持する。S3バケット名やHTTPS URLは保持しない',
+      '添付メタデータを論理削除する場合は `application_documents.deleted_at` を設定し、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う'
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(
       '点検グループ名を手動登録タスクで恒久保持する場合は、`inspection_tasks` へのカラム追加またはタスク拡張テーブルを検討する',
       '点検メニュー項目を使用中メニューでも非表示化したい場合は、`inspection_menu_items` に `is_active` または版管理カラムを追加する',
       'メーカー保守費用の詳細検索や集計が必要になった場合は、`inspection_results.result_details_json.costRows` から正規化テーブルへの分離を検討する',
-      'CSV出力の列追加は画面表示列と検収基準の帳票要件を合わせて見直す'
+      'CSV出力の列追加は画面表示列と検収基準の帳票要件を合わせて見直す。点検予定表CSVを履歴保存する要件が追加された場合は、レスポンス直返却とは別のS3保存・帳票履歴設計を追加する'
     ) }
   )
 }

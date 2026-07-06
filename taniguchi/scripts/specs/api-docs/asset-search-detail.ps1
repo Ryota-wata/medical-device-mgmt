@@ -1,8 +1,7 @@
 ﻿$columnDefinitionRows = @(
-  @('columnKey', 'string', '✓', 'カラム識別子。固定列は `facilityName` など、任意カラムは `ship_asset_custom:{column_key}` を用いる')
+  @('columnKey', 'string', '✓', 'カラム識別子。`facilityName` などの固定列キーを用いる')
   @('columnLabel', 'string', '✓', '画面表示名')
-  @('groupCode', 'string', '✓', '表示グループ。`basic` / `commonMaster` / `location` / `identity` / `classification` / `specification` / `acquisition` / `other` / `shipAssetCustom`')
-  @('isCustom', 'boolean', '✓', 'SHIP資産マスタ任意カラムかどうか')
+  @('groupCode', 'string', '✓', '表示グループ。`basic` / `commonMaster` / `location` / `identity` / `classification` / `specification` / `acquisition` / `other`')
   @('isVisible', 'boolean', '✓', '現在ユーザー設定で表示対象かどうか')
   @('isLocked', 'boolean', '✓', '権限により現在ターゲット施設では表示不可かどうか')
 )
@@ -39,12 +38,6 @@ $assetManagementDepartmentForbiddenDescription = '通常アカウントで作業
 $assetEditForbiddenDescription = '通常アカウントで作業対象施設に対する実効 `original_list_view` + `original_list_edit` なし、または作業対象施設以外の資産に対する変更操作指定'
 $assetEditPriceForbiddenDescription = '通常アカウントで作業対象施設に対する実効 `original_list_view` + `original_list_edit` なし、価格更新時の `original_price_column` なし、または作業対象施設以外の資産に対する変更操作指定'
 
-$customValueRows = @(
-  @('columnKey', 'string', '✓', '任意カラム識別子。`ship_asset_custom:{column_key}`')
-  @('columnLabel', 'string', '✓', '表示名')
-  @('valueText', 'string', '-', '任意カラム値。未設定時は `null`')
-)
-
 $accessibleFacilityRows = @(
   @('facilityId', 'int64', '✓', '対象施設ID')
   @('facilityName', 'string', '✓', '施設名')
@@ -80,7 +73,7 @@ $bookmarkSummaryRows = @(
 )
 
 $bookmarkWriteRows = @(
-  @('columnKey', 'string', '✓', '固定列キーまたは `ship_asset_custom:{column_key}`'),
+  @('columnKey', 'string', '✓', '固定列キー'),
   @('isVisible', 'boolean', '✓', '表示フラグ')
 )
 
@@ -99,7 +92,7 @@ $assetHistoryRows = @(
 $photoSummaryRows = @(
   @('photoId', 'int64', '✓', '写真ID。`application_documents.application_document_id` を返す')
   @('fileName', 'string', '✓', '表示用ファイル名')
-  @('fileUrl', 'string', '✓', '画像表示用URL')
+  @('fileUrl', 'string', '✓', '画像表示用の認可済みURL。S3オブジェクトキーは返却しない')
   @('takenAt', 'datetime', '-', '撮影日時')
   @('isPrimary', 'boolean', '✓', '代表写真かどうか')
   @('sourceOwnerType', 'string', '✓', '`ASSET_LEDGER` / `ASSET_SURVEY_RECORD`')
@@ -111,7 +104,7 @@ $documentSummaryRows = @(
   @('title', 'string', '-', '表示タイトル')
   @('fileName', 'string', '✓', '表示用ファイル名')
   @('documentDate', 'date', '-', '文書日付')
-  @('downloadUrl', 'string', '✓', 'ダウンロード/プレビュー用URL')
+  @('downloadUrl', 'string', '✓', 'ダウンロード/プレビュー用の認可済みURL。S3オブジェクトキーは返却しない')
   @('uploadedAt', 'datetime', '✓', '登録日時')
 )
 
@@ -176,8 +169,7 @@ $assetListItemRows = @(
   @('recommendedServiceLife', 'string', '-', '使用年数（メーカー推奨）')
   @('endOfServiceOn', 'date', '-', 'End of service')
   @('endOfSupportOn', 'date', '-', 'End of support')
-  @('primaryPhotoUrl', 'string', '-', 'カード表示用の代表写真URL')
-  @('customValues', 'AssetCustomValue[]', '✓', '任意カラム値一覧')
+  @('primaryPhotoUrl', 'string', '-', 'カード表示用の代表写真の認可済みURL。S3オブジェクトキーは返却しない')
   @('updatedAt', 'datetime', '✓', '更新日時')
 )
 
@@ -237,7 +229,6 @@ $assetDetailRows = @(
   @('endOfServiceOn', 'date', '-', 'End of service')
   @('endOfSupportOn', 'date', '-', 'End of support')
   @('lastInventoryDate', 'date', '-', '最終棚卸日')
-  @('customValues', 'AssetCustomValue[]', '✓', '任意カラム値一覧')
   @('updatedAt', 'datetime', '✓', '競合検知用更新日時')
 )
 
@@ -259,7 +250,7 @@ $assetDetailRows = @(
       '資産一覧・カルテ閲覧、価格カラム表示、申請起票導線、点検管理登録、保守契約登録、貸出登録導線、原本編集の権限境界'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
-    @{ Type = 'Paragraph'; Text = '資産一覧は `asset_ledgers` を正本として、施設・ロケーション・分類・識別情報・調達情報・ライフサイクル情報を一覧表示し、表示カラム設定に応じて SHIP資産マスタ任意カラムも可変表示する画面である。作業対象施設かつ編集権限がある場合は、一覧上から管理部署をインライン編集できる。' },
+    @{ Type = 'Paragraph'; Text = '資産一覧は `asset_ledgers` を正本として、施設・ロケーション・分類・識別情報・調達情報・ライフサイクル情報を一覧表示し、ユーザー単位の表示カラム設定で固定列の表示/非表示を制御する画面である。作業対象施設かつ編集権限がある場合は、一覧上から管理部署をインライン編集できる。' },
     @{ Type = 'Paragraph'; Text = '資産詳細は、一覧から選択した資産の詳細情報、QR情報、写真、ドキュメントを表示する画面であり、作業対象施設の資産に対してのみ原本編集、写真追加/削除、ドキュメント追加/削除を許可する。協業グループ経由で他施設資産を参照できる場合は閲覧専用とし、編集系操作および申請系導線は許可しない。' },
     @{ Type = 'Paragraph'; Text = '資産一覧から起動する新規購入/更新/増設/移動/廃棄などの申請処理は、本 API 群ではなく各業務機能の API 設計書で扱う。本書では一覧側から必要となる表示可否と選択対象データの返却までを対象とする。' },
     @{ Type = 'Paragraph'; Text = '資産一覧画面の「貸出登録」ボタンおよび貸出機器登録モーダルで利用する API は、本書では定義しない。貸出管理対象機器の登録、登録可否、貸出グループ候補、返却アラート発生日数の保存仕様は「貸出管理 API 設計書」を参照する。' },
@@ -268,7 +259,6 @@ $assetDetailRows = @(
       @('資産原本', '`asset_ledgers` に保持する現物資産台帳。資産一覧と資産詳細の主対象'),
       @('表示カラム設定', '`user_column_settings` に保持するユーザー単位の表示/非表示設定。画面IDは `asset_search` を用いる'),
       @('named bookmark', '`user_column_setting_presets` / `user_column_setting_preset_items` に保持する表示/非表示プリセット。現在設定とは別管理とする'),
-      @('SHIP資産マスタ任意カラム', '`ship_asset_master_custom_columns` / `ship_asset_master_custom_values` で管理する可変項目'),
       @('作業対象施設閲覧', 'Bearer トークン上の作業対象施設を対象に `original_list_view` を使って資産を参照するモード'),
       @('他施設閲覧', '通常アカウントが作業対象施設とは異なる施設の資産を、`original_list_view`、協業グループ、公開元施設の `facility_external_view_settings(sharing_data_type=''asset'')` に基づいて閲覧専用で参照するモード。通常アカウントの施設切替候補には含めない。共有システム管理者は未削除施設であれば通常判定をバイパスする'),
       @('原本編集', '資産詳細から `asset_ledgers` 正本と、資産に紐づく写真・ドキュメントを更新する処理。`original_list_edit` を前提とする'),
@@ -306,9 +296,7 @@ $assetDetailRows = @(
       @('asset_ledgers', 'READ / UPDATE', '資産一覧・詳細の正本、原本編集、競合検知'),
       @('facilities', 'READ', '施設名表示、対象施設解決、論理削除判定、共有システム管理者アカウントの未削除施設判定'),
       @('facility_locations', 'READ', 'ロケーション表示、一覧管理部署編集候補取得、更新時の整合性確認'),
-      @('ship_asset_masters', 'READ', 'SHIP資産マスタ参照、任意カラムの親解決'),
-      @('ship_asset_master_custom_columns', 'READ', '有効任意カラム定義の取得'),
-      @('ship_asset_master_custom_values', 'READ', '資産に紐づく任意カラム値の取得'),
+      @('ship_asset_masters', 'READ', 'SHIP資産マスタ参照、分類正規値の解決'),
       @('user_column_settings', 'READ / CREATE / UPDATE / DELETE', '現在の表示カラム設定の取得と保存'),
       @('user_column_setting_presets / user_column_setting_preset_items', 'READ / CREATE / UPDATE / DELETE', 'named bookmark の一覧、保存、削除、適用'),
       @('users', 'READ', '共有システム管理者アカウント判定、写真・ドキュメント更新者の監査'),
@@ -320,16 +308,16 @@ $assetDetailRows = @(
       @('applications / application_assets / application_status_histories', 'READ', '資産関連申請と状態履歴の表示'),
       @('inspection_tasks / inspection_results', 'READ', '資産関連点検結果の履歴表示'),
       @('lending_devices / lending_transactions', 'READ', '資産関連の貸出/返却履歴表示'),
-      @('asset_photos', 'READ', '資産写真一覧表示'),
-      @('asset_documents', 'READ', '資産ドキュメント一覧表示'),
-      @('application_documents', 'CREATE / UPDATE / DELETE', '資産写真・資産ドキュメントの正本更新')
+      @('asset_photos', 'READ', '資産写真一覧表示。`application_documents.file_path` に保持したAmazon S3オブジェクトキーから認可済み表示URLを発行する'),
+      @('asset_documents', 'READ', '資産ドキュメント一覧表示。`application_documents.file_path` に保持したAmazon S3オブジェクトキーから認可済みダウンロードURLを発行する'),
+      @('application_documents', 'CREATE / UPDATE / DELETE', '資産写真・資産ドキュメントの正本更新。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON（エクスポート応答を除く）',
+      'データ形式: JSON（エクスポート応答、および写真/ドキュメント追加の multipart/form-data を除く）',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-04-20T00:00:00Z`）',
       '一覧系 API は `cursor` / `pageSize` による cursor pagination を採用し、既定 `pageSize=100`、上限 `500` とする',
@@ -367,7 +355,7 @@ $assetDetailRows = @(
     @{ Type = 'Bullets'; Items = @(
       '現在の表示カラム設定は `user_column_settings` に `screen_id=asset_search` で保持する',
       'named bookmark は `user_column_setting_presets` / `user_column_setting_preset_items` に `screen_id=asset_search` で保持し、現在設定とは別に管理する',
-      '固定列の `column_key` は画面契約として固定し、SHIP資産マスタ任意カラムは `ship_asset_custom:{column_key}` 形式で保存する',
+      '表示対象にできる `column_key` は画面契約として定義した固定列キーに限定する',
       '既定 bookmark は active 行（`deleted_at IS NULL`）に対して `user_id + screen_id` 単位で 0..1 件とし、現在設定が未保存の場合のみ初期表示へ適用する',
       'current settings が存在する場合はそれを最優先とし、bookmark の保存・削除・既定切替では current settings を自動変更しない',
       '未保存ユーザーの初期表示/非表示は API 側既定値を採用する',
@@ -380,7 +368,7 @@ $assetDetailRows = @(
       '管理部署、設置部署、Category、大分類、中分類、品目、キーワードは AND 条件で絞り込む',
       '管理部署の検索候補・検索条件・一覧/詳細表示は `asset_ledgers.management_department_name` を用いる',
       '一覧の管理部署編集候補は対象施設の active `facility_locations` から `department_id IS NOT NULL` の行を `department_id` 単位で重複排除した部署集合を用い、表示は `displayLabel` を使う。保存時は `asset_ledgers.management_department_id` と `asset_ledgers.management_department_name` を同時更新する',
-      'キーワード検索は `qr_identifier`、`asset_no`、`management_no`、`equipment_no`、`asset_name`、`manufacturer_name`、`model_name`、`serial_no`、`room_name`、`installation_location`、表示対象の任意カラム値を対象に部分一致で行う',
+      'キーワード検索は `qr_identifier`、`asset_no`、`management_no`、`equipment_no`、`asset_name`、`manufacturer_name`、`model_name`、`serial_no`、`room_name`、`installation_location` を対象に部分一致で行う',
       '一覧の既定並び順は `asset_ledger_id ASC` とし、`cursor` は最終返却行の `asset_ledger_id` を符号化して返却する',
       'エクスポートは一覧取得 API と同じ権限・絞り込み・公開カラムルールを適用し、`cursor` には依存せず検索条件一致全件を出力する'
     ) },
@@ -400,9 +388,9 @@ $assetDetailRows = @(
       '資産詳細更新は `identity` / `location` / `classification` / `specification` / `lifecycle` の責務別ペイロードで受け付ける',
       '分類更新は `classificationMode=LINKED` / `MANUAL` を明示し、`LINKED` 時は `ship_asset_master_id` を基準に分類正規値を再解決する',
       '施設名および QR識別子は別機能の正本責務とし、本 API の更新対象に含めない',
-      '写真・ドキュメントの更新は `application_documents` を正本とし、`asset_photos` / `asset_documents` VIEW への DML は行わない',
+      '写真・ドキュメントの更新は `application_documents` を正本とし、`asset_photos` / `asset_documents` VIEW への DML は行わない。ファイル実体はAPI内でAmazon S3へPutObjectし、`application_documents.file_path` にはS3オブジェクトキーのみを保存する',
       '写真追加時に `isPrimary=true` を指定した場合は、同一資産の既存 `ASSET_LEDGER` 写真の代表フラグを解除してから新写真を代表へ切り替える',
-      '写真・ドキュメント削除は物理削除ではなく `application_documents.deleted_at` を更新する論理削除とする'
+      '写真・ドキュメント削除は物理削除ではなく `application_documents.deleted_at` を更新する論理削除とする。S3実体の削除は、同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理で扱う'
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Heading3'; Text = '基本エラーレスポンス（ErrorResponse）' },
@@ -424,7 +412,7 @@ $assetDetailRows = @(
       @('8', '一覧管理部署一括更新', 'PUT', '/asset-search-result/assets/management-departments', '一覧上で編集した管理部署を一括保存する', '`original_list_view` + `management_department_edit`'),
       @('9', '一覧結果エクスポート', 'GET', '/asset-search-result/assets/export', '検索結果を Excel または PDF で出力する', '`original_list_view`'),
       @('10', 'QRコード直接遷移解決', 'GET', '/asset-detail/assets/by-qr', '施設IDとQR識別子から資産詳細対象を解決する', '`original_list_view`'),
-      @('11', '資産詳細取得', 'GET', '/asset-detail/assets/{assetId}', '資産詳細、写真、QR 情報、任意カラム値を取得する', '`original_list_view`'),
+      @('11', '資産詳細取得', 'GET', '/asset-detail/assets/{assetId}', '資産詳細、写真、QR 情報を取得する', '`original_list_view`'),
       @('12', '資産履歴取得', 'GET', '/asset-detail/assets/{assetId}/history', '関連申請、点検結果、貸出/返却履歴を共通形式で取得する', '`original_list_view`'),
       @('13', '資産原本更新', 'PUT', '/asset-detail/assets/{assetId}', '作業対象施設資産の原本情報を更新する', '`original_list_view` + `original_list_edit`'),
       @('14', '資産写真追加', 'POST', '/asset-detail/assets/{assetId}/photos', '資産写真を追加する', '`original_list_view` + `original_list_edit`'),
@@ -455,7 +443,7 @@ $assetDetailRows = @(
           '参照対象施設の `asset_ledgers` を基準に、管理部署、設置部署、Category、大分類、中分類、品目の候補を取得する',
           '`accessMode=OWN` かつ `management_department_edit` が有効な場合は、対象施設の active `facility_locations` から `department_id IS NOT NULL` の行を `department_id` 単位で重複排除した管理部署編集候補を解決し、`displayLabel` を付与して `displayLabel ASC, department_id ASC` で返す。権限がない場合または `EXTERNAL_READONLY` の場合は空配列を返す',
           '既存資産で `management_department_id` が未解決の行は `managementDepartmentId=null` のまま返し、編集モードでは未選択状態として再選択させる',
-          '`ship_asset_master_custom_columns.is_active=true` の任意カラム定義を `sort_order ASC` で取得する',
+          '表示カラム定義は画面契約で定義した固定列一覧を返却する',
           '`user_column_settings(screen_id=asset_search)` を読み込み、現在の表示/非表示設定へマージする。設定がない列は API 既定値を採用する',
           '`user_column_setting_presets(screen_id=asset_search)` を読み込み、named bookmark 一覧と既定 bookmark を解決する',
           '現在設定が未保存で既定 bookmark が存在する場合は、その表示/非表示設定を current settings として返却する',
@@ -567,7 +555,7 @@ $assetDetailRows = @(
         PermissionLines = $assetOwnViewPermissionLines
         ProcessingLines = @(
           '保存単位は `screen_id=asset_search` とする',
-          '未知の固定列キー、無効化された任意カラム、`ship_asset_custom:` プレフィックス不正のキーは 400 とする',
+          '未知の固定列キーは 400 とする',
           '受信した配列を画面の完全な表示/非表示状態として扱い、対象ユーザー・画面の既存 `user_column_settings` を置換更新する',
           '表示/非表示設定そのものは保存できても、実際の一覧返却時には権限要件により `isLocked=true` となりデータが返らない列があり得る'
         )
@@ -640,7 +628,7 @@ $assetDetailRows = @(
         ProcessingLines = @(
           '保存単位は `screen_id=asset_search` とする',
           '対象ユーザー・画面内で同名の active bookmark（`deleted_at IS NULL`）が存在する場合は 409 (`BOOKMARK_NAME_DUPLICATED`) を返却する',
-          '未知の固定列キー、無効化された任意カラム、`ship_asset_custom:` プレフィックス不正のキーは 400 とする',
+          '未知の固定列キーは 400 とする',
           '`isDefault=true` の場合は同一ユーザー・同一画面の active 既存既定 bookmark を解除してから保存する',
           'bookmark 保存は current settings を自動変更しない'
         )
@@ -764,12 +752,13 @@ $assetDetailRows = @(
         )
         ProcessingLines = @(
           '参照対象施設を解決する。`targetFacilityId` が作業対象施設と異なる場合、通常アカウントでは他施設閲覧条件を判定し、成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する。共有システム管理者では作業対象施設および参照対象施設が未削除であることだけを確認し、`targetFacility.accessMode=EXTERNAL_READONLY` として扱う',
-          '`asset_ledgers` を基準に `facilities`、`qr_codes`、`ship_asset_masters`、`ship_asset_master_custom_values`、代表写真用 `asset_photos` を結合する',
+          '`asset_ledgers` を基準に `facilities`、`qr_codes`、`ship_asset_masters`、代表写真用 `asset_photos` を結合する',
+          '代表写真の `primaryPhotoUrl` は `application_documents.file_path` に保持したS3オブジェクトキーから認可済み表示URLを発行し、S3オブジェクトキー自体は返却しない',
           '`managementDepartmentName` は `asset_ledgers.management_department_name` をそのまま候補・検索・返却に使用し、`accessMode=OWN` かつ一覧編集可能な文脈では `managementDepartmentId` も併せて返す。legacy 未解決行は `managementDepartmentId=null` として返却する',
-          '検索条件は AND 条件で適用し、キーワードは識別情報・名称・設置場所・任意カラム値を対象に部分一致で評価する',
+          '検索条件は AND 条件で適用し、キーワードは識別情報・名称・設置場所を対象に部分一致で評価する',
           '`cursor` 指定時は `asset_ledger_id ASC` の続き位置から取得し、`pageSize` 件を上限に返却する',
           '取得価格を含む価格系項目は、通常アカウントでは閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の公開カラム設定を満たさない場合レスポンスから完全に除外する。共有システム管理者では参照対象施設が未削除であれば返却する',
-          '任意カラム定義は有効列のみを返し、各資産行には `customValues` を `columnKey` 単位で格納する'
+          '一覧行へ返却する列は固定列定義と表示カラム設定に従って制御する'
         )
         ResponseTitle = 'レスポンス（200：AssetSearchResultResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -801,11 +790,6 @@ $assetDetailRows = @(
             Title = 'items要素（AssetSearchResultItem）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = $assetListItemRows
-          },
-          @{
-            Title = 'customValues要素（AssetCustomValue）'
-            Headers = @('フィールド', '型', '必須', '説明')
-            Rows = $customValueRows
           }
         )
         StatusRows = @(
@@ -955,7 +939,7 @@ $assetDetailRows = @(
       },
       @{
         Title = '資産詳細取得（/asset-detail/assets/{assetId}）'
-        Overview = '指定した資産の詳細情報、写真一覧、QR情報、任意カラム値を取得する。他施設閲覧時は閲覧専用で返却する。'
+        Overview = '指定した資産の詳細情報、写真一覧、QR情報を取得する。他施設閲覧時は閲覧専用で返却する。'
         Method = 'GET'
         Path = '/asset-detail/assets/{assetId}'
         Auth = '要（Bearer）'
@@ -972,8 +956,8 @@ $assetDetailRows = @(
           'Bearer トークン上の作業対象施設を解決する。通常アカウントでは、`targetFacilityId` が作業対象施設と同一の場合は `OWN`、異なる場合は `EXTERNAL_READONLY` 候補として他施設閲覧条件を判定し、成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する。共有システム管理者では作業対象施設および参照対象施設が未削除であることだけを確認し、参照対象施設が作業対象施設と異なる場合は `targetFacility.accessMode=EXTERNAL_READONLY` として扱う',
           '対象 `assetId` の `asset_ledgers` を取得し、参照対象施設との整合を確認する',
           '`qr_codes` から現在有効な QR 情報を取得する',
-          '`asset_photos` から表示対象写真一覧を取得し、代表写真フラグ順・登録順で返却する',
-          '`ship_asset_master_custom_columns` / `ship_asset_master_custom_values` から任意カラムを取得する',
+          '`asset_photos` から表示対象写真一覧を取得し、`application_documents.file_path` に保持したS3オブジェクトキーから認可済み表示URLを発行して、代表写真フラグ順・登録順で返却する。S3オブジェクトキー自体は返却しない',
+          '`ship_asset_masters` を参照し、分類更新で利用する正規値との整合を確認できる状態で返却する',
           '価格項目は、共有システム管理者では参照対象施設が未削除である場合、通常アカウントでは閲覧者側で `original_price_column` が有効であり、`EXTERNAL_READONLY` では加えて公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` が有効な場合だけ返却する',
           '履歴タブ表示可否は、共有システム管理者では参照対象施設が未削除である場合に `true` とし、通常アカウントでは閲覧者側の `original_list_view` の有効有無から算出し、`EXTERNAL_READONLY` では他施設閲覧条件も前提とする'
         )
@@ -1002,11 +986,6 @@ $assetDetailRows = @(
             Title = 'asset要素（AssetDetailModel）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = $assetDetailRows
-          },
-          @{
-            Title = 'customValues要素（AssetCustomValue）'
-            Headers = @('フィールド', '型', '必須', '説明')
-            Rows = $customValueRows
           },
           @{
             Title = 'photos要素（AssetPhotoSummary）'
@@ -1205,7 +1184,7 @@ $assetDetailRows = @(
           '`identity.managementDepartmentId` を省略して `identity.managementDepartmentName` を指定した場合は、active 部署名との完全一致で一意解決できる場合だけ互換更新を許可し、解決不可または複数候補時は 400 (`MANAGEMENT_DEPARTMENT_INVALID` / `MANAGEMENT_DEPARTMENT_AMBIGUOUS`) を返却する',
           '`classification.classificationMode=LINKED` の場合は `shipAssetMasterId` を必須とし、参照先 SHIP資産マスタから Category〜型式の正規値を再解決する。リクエスト側の分類値が指定されていて不一致な場合は 409 (`ASSET_MASTER_MISMATCH`) を返却する',
           '`classification.classificationMode=MANUAL` の場合は `ship_asset_master_id` を `NULL` へ更新し、`categoryId` を必須として分類値を直接保存する',
-          '任意カラム値は SHIP資産マスタ正本のため更新対象に含めない',
+          'SHIP資産マスタは分類正規値の参照元であり、本 API では `ship_asset_masters` 側の値を更新しない',
           '施設名と QR識別子は別正本の責務とし、本 API の更新対象に含めない'
         )
         ResponseTitle = 'レスポンス（200：AssetDetailUpdateResponse）'
@@ -1221,11 +1200,6 @@ $assetDetailRows = @(
             Title = 'asset要素（AssetDetailModel）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = $assetDetailRows
-          },
-          @{
-            Title = 'customValues要素（AssetCustomValue）'
-            Headers = @('フィールド', '型', '必須', '説明')
-            Rows = $customValueRows
           }
         )
         StatusRows = @(
@@ -1249,19 +1223,20 @@ $assetDetailRows = @(
         ParametersRows = @(
           @('assetId', 'path', 'int64', '✓', '資産台帳ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('photos', 'AssetPhotoCreateModel[]', '✓', '追加写真一覧')
+          @('payload.photos', 'AssetPhotoCreateModel[]', '✓', '追加写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '✓', '`payload.photos[].filePartName` で参照される写真ファイル本体')
         )
         RequestSubtables = @(
           @{
             Title = 'photos要素（AssetPhotoCreateModel）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = @(
+              @('filePartName', 'string', '✓', 'multipart 内の写真ファイルパート名'),
               @('fileName', 'string', '✓', '表示用ファイル名'),
               @('contentType', 'string', '✓', 'MIME Type'),
-              @('fileBodyBase64', 'string', '✓', '写真本文の base64'),
               @('takenAt', 'datetime', '-', '撮影日時'),
               @('isPrimary', 'boolean', '-', '代表写真指定')
             )
@@ -1270,9 +1245,12 @@ $assetDetailRows = @(
         PermissionLines = $assetEditPermissionLines
         ProcessingLines = @(
           '対象資産が作業対象施設に属し、作業対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを確認する',
-          '`application_documents` へ `owner_type=ASSET_LEDGER`、`document_category=PHOTO` として保存する',
+          '`payload.photos[].filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する',
+          '各写真ファイルをAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`assetId` などの業務IDを含めない',
+          '`application_documents` へ `owner_type=ASSET_LEDGER`、`asset_ledger_id`、`document_category=PHOTO`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'S3保存後にDB登録へ失敗した場合は保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`ASSET_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`isPrimary=true` の写真が含まれる場合は既存代表写真を解除し、新規写真を代表へ切り替える',
-          '返却値は `asset_photos` VIEW 互換の写真一覧要素とする'
+          '返却値は `asset_photos` VIEW 互換の写真一覧要素とし、`fileUrl` はS3オブジェクトキーから発行した認可済み表示URLを返す。S3オブジェクトキー自体は返却しない'
         )
         ResponseTitle = 'レスポンス（201：AssetPhotoCreateResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -1292,6 +1270,7 @@ $assetDetailRows = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', $assetEditForbiddenDescription, 'ErrorResponse'),
           @('404', '作業対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致', 'ErrorResponse'),
+          @('502', 'Amazon S3 への資産写真保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -1311,6 +1290,7 @@ $assetDetailRows = @(
         ProcessingLines = @(
           '対象写真が `application_documents(owner_type=ASSET_LEDGER, document_category=PHOTO)` に存在し、対象資産へ紐づくことを確認する',
           '`application_documents.deleted_at` を更新して論理削除する',
+          'API処理内ではS3オブジェクトを即時DeleteObjectしない。同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理でS3実体を削除する',
           '削除対象が代表写真だった場合は、残存する `ASSET_LEDGER` 写真から代表を再選定する'
         )
         ResponseTitle = 'レスポンス（204）'
@@ -1342,7 +1322,7 @@ $assetDetailRows = @(
           'Bearer トークン上の作業対象施設を解決する。通常アカウントでは `targetFacilityId` が作業対象施設と異なる場合は資産詳細取得 API と同じ他施設閲覧条件を判定し、成立しない場合は 403 (`ASSET_VIEW_FORBIDDEN`) を返却する。共有システム管理者では作業対象施設および参照対象施設が未削除であることだけを確認し、参照対象施設が作業対象施設と異なる場合は閲覧専用として扱う',
           '対象資産の参照可否を資産詳細取得 API と同条件で判定する',
           '`asset_documents` VIEW から `owner_type=ASSET_LEDGER` のドキュメント一覧を取得する',
-          'ファイル実体URLはアプリケーションの認可済みダウンロードURLとして返却する'
+          '`application_documents.file_path` に保持したS3オブジェクトキーから認可済みダウンロードURLを発行し、S3オブジェクトキー自体は返却しない'
         )
         ResponseTitle = 'レスポンス（200：AssetDocumentListResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -1377,21 +1357,24 @@ $assetDetailRows = @(
         ParametersRows = @(
           @('assetId', 'path', 'int64', '✓', '資産台帳ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('documentType', 'string', '✓', 'ドキュメント種別'),
-          @('title', 'string', '-', '表示タイトル'),
-          @('documentDate', 'date', '-', '文書日付'),
-          @('fileName', 'string', '✓', '表示用ファイル名'),
-          @('contentType', 'string', '✓', 'MIME Type'),
-          @('fileBodyBase64', 'string', '✓', 'ファイル本文の base64')
+          @('payload.documentType', 'string', '✓', 'ドキュメント種別'),
+          @('payload.title', 'string', '-', '表示タイトル'),
+          @('payload.documentDate', 'date', '-', '文書日付'),
+          @('payload.fileName', 'string', '✓', '表示用ファイル名'),
+          @('payload.contentType', 'string', '✓', 'MIME Type'),
+          @('file', 'binary', '✓', '登録ファイル本体')
         )
         PermissionLines = $assetEditPermissionLines
         ProcessingLines = @(
           '対象資産が作業対象施設に属し、作業対象施設が `facilities.deleted_at IS NULL` の未削除施設であることを確認する',
-          '`application_documents` へ `owner_type=ASSET_LEDGER`、`document_category` は PHOTO 以外の業務文書として保存する',
-          '`asset_documents` VIEW 互換で参照できる状態へ反映する'
+          'multipart の `file` パートが存在することを確認し、`payload.contentType` と拡張子が許可された業務文書形式であることを検証する',
+          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`assetId` などの業務IDを含めない',
+          '`application_documents` へ `owner_type=ASSET_LEDGER`、`asset_ledger_id`、PHOTO 以外の `document_category`、`document_type`、`title`、`document_date`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'S3保存後にDB登録へ失敗した場合は保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`ASSET_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
+          '`asset_documents` VIEW 互換で参照できる状態へ反映し、`downloadUrl` はS3オブジェクトキーから発行した認可済みダウンロードURLを返す。S3オブジェクトキー自体は返却しない'
         )
         ResponseTitle = 'レスポンス（201：AssetDocumentCreateResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -1411,6 +1394,7 @@ $assetDetailRows = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', $assetEditForbiddenDescription, 'ErrorResponse'),
           @('404', '作業対象施設が存在しない、削除済み、または資産が存在しない/対象施設不一致', 'ErrorResponse'),
+          @('502', 'Amazon S3 への資産ドキュメント保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -1429,7 +1413,8 @@ $assetDetailRows = @(
         PermissionLines = $assetEditPermissionLines
         ProcessingLines = @(
           '対象ドキュメントが `application_documents(owner_type=ASSET_LEDGER, document_category<>PHOTO)` に存在し、対象資産へ紐づくことを確認する',
-          '`application_documents.deleted_at` を更新して論理削除する'
+          '`application_documents.deleted_at` を更新して論理削除する',
+          'API処理内ではS3オブジェクトを即時DeleteObjectしない。同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理でS3実体を削除する'
         )
         ResponseTitle = 'レスポンス（204）'
         ResponseLines = @(
@@ -1458,10 +1443,9 @@ $assetDetailRows = @(
       @('一覧の管理部署編集', '`original_list_view` + `management_department_edit`', '通常アカウントは両 feature の実効有効を判定する。共有システム管理者は参照対象施設が作業対象施設と同一かつ未削除の場合に許可する。作業対象施設原本の管理部署列更新だけを制御する'),
       @('原本編集 / 写真 / ドキュメント更新', '`original_list_view` + `original_list_edit`', '通常アカウントは両 feature の実効有効を判定する。共有システム管理者は参照対象施設が作業対象施設と同一かつ未削除の場合に許可する。詳細画面起点の変更系は作業対象施設原本に限定する')
     ) },
-    @{ Type = 'Heading2'; Text = '列と任意カラムの扱い' },
+    @{ Type = 'Heading2'; Text = '列定義と表示カラム設定の扱い' },
     @{ Type = 'Bullets'; Items = @(
       '固定列のラベル変更やグループ変更は API 契約変更として扱う',
-      '任意カラムは `ship_asset_master_custom_columns.is_active=true` の列だけを返却し、無効列の既存値は保持しても新規一覧候補へは出さない',
       '価格列は、通常アカウントでは保存済み表示/非表示設定に含まれていても、閲覧者側の `original_price_column` と、`EXTERNAL_READONLY` では公開元施設の `facility_external_column_settings(column_code=''original_price_column'')` を満たさない場合は `isLocked=true` とし、値も返却しない。共有システム管理者では参照対象施設が未削除であれば値を返却する',
       'named bookmark は current settings とは別に `user_column_setting_presets` / `user_column_setting_preset_items` で管理する',
       '既定 bookmark は active 行に対して `user_id + screen_id` 単位で 0..1 件とし、current settings 未保存時の初期表示へ適用する',
@@ -1473,6 +1457,9 @@ $assetDetailRows = @(
       'QRラベル遷移URLは `facilityId` と `qr_identifier` を含め、詳細画面では画面側で resolve-by-qr API へ橋渡しして `assetId` を解決する',
       'QRラベル遷移URL上の `facilityId` が作業対象施設と異なる場合、通常アカウントは他施設閲覧条件を満たす場合のみ `EXTERNAL_READONLY` として資産詳細へ遷移できる。共有システム管理者は作業対象施設およびQRの施設が未削除であれば、協業グループ・公開元施設設定を判定せず `EXTERNAL_READONLY` として資産詳細へ遷移できる。この場合も編集系フラグはすべて `false` とする',
       '資産写真・資産ドキュメントの正本更新先は `application_documents` とし、互換VIEWへ直接書き込まない',
+      '資産写真・資産ドキュメントのファイル本体はAPI内でAmazon S3へPutObjectし、`application_documents.file_path` にはS3オブジェクトキーのみを保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+      '写真の `fileUrl`、代表写真の `primaryPhotoUrl`、ドキュメントの `downloadUrl` はS3オブジェクトキーから発行した認可済みURLとして返却し、S3オブジェクトキー自体はレスポンスへ含めない',
+      '写真・ドキュメント削除は `application_documents.deleted_at` の論理削除とし、S3実体の削除は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理で扱う',
       '写真代表判定は `ASSET_LEDGER` 写真を優先し、調査写真の投影ロジックは `asset_photos` VIEW の定義に従う',
       'ドキュメント一覧取得は `owner_type=ASSET_LEDGER` を対象とし、申請・RFQ・見積の添付は本 API の対象外'
     ) },
@@ -1488,12 +1475,13 @@ $assetDetailRows = @(
       @('ASSET_MASTER_MISMATCH', '資産原本更新', '`classificationMode=LINKED` の要求内容が参照先 SHIP資産マスタと整合しない'),
       @('MANAGEMENT_DEPARTMENT_INVALID', '一覧管理部署一括更新 / 資産原本更新', '指定した管理部署IDまたは管理部署名が、対象施設の active 個別部署マスタ候補に存在しない'),
       @('MANAGEMENT_DEPARTMENT_AMBIGUOUS', '資産原本更新', '指定した管理部署名が、対象施設の active 個別部署マスタ候補に複数一致する'),
-      @('COLUMN_SETTING_INVALID', '表示カラム設定保存', '未知の列キーや無効な任意カラムが指定された'),
+      @('COLUMN_SETTING_INVALID', '表示カラム設定保存', '未知の固定列キーが指定された'),
       @('BOOKMARK_NAME_DUPLICATED', 'named bookmark 保存', '同一ユーザー・同一画面に同名 bookmark が存在する'),
       @('BOOKMARK_NOT_FOUND', 'named bookmark 削除 / 適用', '指定した bookmark が存在しない、または対象ユーザーに属さない'),
       @('PRICE_COLUMN_FORBIDDEN', '一覧/詳細/更新', '通常アカウントで価格項目の参照または更新権限がない。共有システム管理者では対象施設が未削除である限り価格カラムを利用可能とする'),
       @('PHOTO_NOT_FOUND', '資産写真削除', '対象写真が存在しない、または対象資産へ紐づかない'),
-      @('DOCUMENT_NOT_FOUND', '資産ドキュメント削除', '対象ドキュメントが存在しない、または対象資産へ紐づかない')
+      @('DOCUMENT_NOT_FOUND', '資産ドキュメント削除', '対象ドキュメントが存在しない、または対象資産へ紐づかない'),
+      @('ASSET_FILE_502_S3_WRITE_FAILED', '資産写真追加 / 資産ドキュメント追加', '資産写真・資産ドキュメントのAmazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した')
     ) },
 
     @{ Type = 'Heading1'; Text = '第8章 運用・前提事項' },

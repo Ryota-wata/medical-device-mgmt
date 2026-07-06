@@ -882,6 +882,10 @@ function New-ApiWordDocumentFromSpec {
       '__REVISION_DATE__' = $Spec.RevisionDateText
     }
 
+    if ($Spec.ContainsKey('CoverVersionText') -and -not [string]::IsNullOrWhiteSpace($Spec.CoverVersionText)) {
+      $replacementMap['版数：1.0'] = "版数：$($Spec.CoverVersionText)"
+    }
+
     if ($Spec.ContainsKey('Placeholders')) {
       foreach ($key in $Spec.Placeholders.Keys) {
         $replacementMap[$key] = $Spec.Placeholders[$key]

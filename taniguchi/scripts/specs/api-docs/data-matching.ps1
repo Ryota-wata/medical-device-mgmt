@@ -504,7 +504,7 @@ $endpointSpecs = @(
       '代表行以外の選択行は物理削除せず、`merged_into_item_id=代表行ID`、`merged_by_session_list_id=sessionListId` を設定して論理統合状態へ更新する',
       '代表行に対する `asset_data_matching_item_list_results` を `result_status=''ACTIVE''` で1件作成し、`decision_note` に要求 `decisionNote` を保存する',
       '更新した判定履歴と論理統合状態を入力として、共通 snapshot 再構築サービスが影響 item を `asset_data_matching_session_lists.source_order ASC` の `result_status=''ACTIVE''` 判定履歴順に再計算する',
-      '同サービスは current list の台帳行を原本直前 snapshot へ反映する際、分類 ID / 名称は `selected_* -> suggested_* -> 既存 snapshot`、`asset_name` は `parsed_asset_name -> 既存 asset_name -> asset_item_name`、`unit` は `parsed_unit -> 既存 unit` の優先順で更新する。`detail_type` と `parent_asset_data_matching_item_id` は `representativeItemId` の既存値を保持する',
+      '同サービスは current list の台帳行を原本直前 snapshot へ反映する際、正式取込対象40カラムの型付き `parsed_*` を現在代表の `IMPORT_ROW` から参照し、`raw_data_json` は再解釈しない。マスタ側の分類 ID / 名称は `selected_* -> suggested_* -> 既存 snapshot` の順で更新し、Excelの分類・非(原)3項目はマスタ側確定値の補完に使わない。`asset_name` は台帳由来行では `parsed_original_asset_name`、現有品調査のみ行では既存 snapshot を採用する。`unit` は `parsed_unit -> 既存 unit` の優先順で更新する。明細区分と親統合リスト行は、台帳行が現在代表にある場合は `parsed_detail_type` / `parsed_parent_detail_name` から解決し、台帳行がない場合は既存 snapshot を保持する',
       '同サービスは `matching_status` を要求 `matchingStatus` に更新し、`asset_data_matching_item_sources` / `source_summary` を再計算する。`source_type=''IMPORT_ROW''` は `ledgerItemId`、`source_type=''SURVEY_RECORD''` は代表行と論理統合対象行に紐づく調査レコードの和集合とし、`active_import_row_key` / `active_survey_record_key` を同一トランザクションで再設定する。一意制約違反時は 409 (`MATCH_RULE_VIOLATION`) を返却する',
       '同サービスは再集約後の `SURVEY_RECORD` 集合に含まれる `asset_survey_records.qr_identifier` の非NULL distinct 値から、`qr_identifier` / `qr_resolution_status` を再計算する。0 件なら `NONE`、1 件ならその値を採用して `RESOLVED`、2 件以上なら `qr_identifier=NULL` / `CONFLICT` とする',
       '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する'
@@ -609,8 +609,8 @@ $endpointSpecs = @(
       '`Idempotency-Key` の再送時は、同一 payload であれば初回応答を再返却し、異なる payload なら 409 (`IDEMPOTENCY_KEY_REUSED`) を返却する',
       '`asset_data_matching_sessions` / `asset_data_matching_session_lists` / 対象 `asset_import_rows` を 1 トランザクション内で排他取得する',
       '`ledgerItemIds` はすべて当該リスト配下の未処理 `asset_import_rows` であり、同一 `sessionListId` の有効 `asset_data_matching_item_list_results` で未消費であることを検証する',
-      '選択した台帳行ごとに `asset_data_matching_items` を新規作成し、`parsed_asset_name`、分類ID/名称、`parsed_manufacturer_name` / `parsed_model_name` を含むメーカー・型式情報、`asset_no`、`equipment_no`、`quantity`、`unit`、`department_name`、`section_name`、`room_name` を原本直前スナップショットとして複写する',
-      '新規統合リスト行の `creation_type` を `UNCONFIRMED_IMPORT`、`item_status` を `ACTIVE`、`matching_status` を `UNCONFIRMED`、`detail_type` を `MAIN`、`qr_identifier` を NULL、`qr_resolution_status` を `NONE`、`parent_asset_data_matching_item_id` / `merged_into_item_id` / `merged_by_session_list_id` を NULL とし、元レコードは `asset_data_matching_item_sources` に `source_type=''IMPORT_ROW''` で紐づける。`active_import_row_key` は後続の共通 snapshot 再構築サービスが設定し、一意制約違反時は 409 (`MATCH_RULE_VIOLATION`) を返却する',
+      '選択した台帳行ごとに `asset_data_matching_items` を新規作成し、正式取込対象40カラムに対応する型付き `parsed_*` を、原本直前スナップショットの共通項目と台帳取込スナップショットへ複写する。マスタ側の分類・品目・メーカー・型式は `selected_*` / `suggested_*` がある場合のみ設定し、Excelの分類・非(原)3項目を補完値にはしない',
+      '新規統合リスト行の `creation_type` を `UNCONFIRMED_IMPORT`、`item_status` を `ACTIVE`、`matching_status` を `UNCONFIRMED`、`qr_identifier` を NULL、`qr_resolution_status` を `NONE`、`merged_into_item_id` / `merged_by_session_list_id` を NULL とし、元レコードは `asset_data_matching_item_sources` に `source_type=''IMPORT_ROW''` で紐づける。`detail_type` は `parsed_detail_type` を正規化して設定し、`parent_asset_data_matching_item_id` は `parsed_parent_detail_name` から同一取込リスト内の親行を解決して設定する。親候補なし、複数候補、循環参照は原本確定阻害とし、台帳のみ行を一律に `MAIN` / 親なしへ変更しない。`active_import_row_key` は後続の共通 snapshot 再構築サービスが設定し、一意制約違反時は 409 (`MATCH_RULE_VIOLATION`) を返却する',
       '同時に `asset_data_matching_item_list_results` を `matching_status=''UNCONFIRMED''`、`result_status=''ACTIVE''` で作成し、`asset_import_row_id` に消費した台帳行IDと `decision_note` を保存する',
       '作成した item と判定履歴を入力として、共通 snapshot 再構築サービスが対象 item を `asset_data_matching_session_lists.source_order ASC` の `result_status=''ACTIVE''` 判定履歴順に正規化し、`matching_status` / `source_summary` / `active_import_row_key` を確定する',
       '更新成功時は `asset_data_matching_sessions.lock_version` を +1 し、`updated_at` も更新した上で、新しい `lockVersion` と `sessionUpdatedAt` を返却する'
@@ -724,7 +724,7 @@ $endpointSpecs = @(
       '原本確定時は、`qr_resolution_status=''CONFLICT''` の有効行（`item_status=''ACTIVE''`）が存在しないことを検証する。存在する場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に `conflictType=''UNRESOLVED''` を返す',
       '原本確定時は、`qr_resolution_status=''RESOLVED''` かつ `qr_identifier IS NOT NULL` の有効行（`item_status=''ACTIVE''`）について同一セッション内で重複がないことを検証し、`(facility_id, qr_identifier)` で `qr_codes` を排他取得する。未発行、論理削除済み、別資産へ紐付済み、または施設不整合がある場合は 409 (`ORIGINAL_QR_BINDING_CONFLICT`) を返却し、`ErrorResponse.conflictItems[]` に競合行ごとの詳細を返す',
       '原本確定時は `parent_asset_data_matching_item_id` を考慮した親優先順で `asset_ledgers` を作成し、`parent_asset_ledger_id` へ変換する。作成する `asset_ledgers.ship_asset_master_id` には `asset_data_matching_items.ship_asset_master_id` を引き継ぎ、現有品調査または固定資産台帳取込に紐づく資産マスタIDがない場合は NULL とする。同時に対応する `asset_data_matching_items.created_asset_ledger_id` へ採番済み `asset_ledger_id` を保存し、結果確認画面や資産カルテ遷移の追跡キーとして保持する',
-      '原本確定時は、各有効統合リスト行の `SURVEY_RECORD` 元レコードに紐づく非削除の調査写真（`application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL`）を取得し、作成した `asset_ledgers.asset_ledger_id` に対する資産写真メタデータとして `application_documents.owner_type=''ASSET_LEDGER''` 行を作成する。元ファイルの `file_path` / `content_hash` / ファイル属性 / 撮影日時 / 撮影者を再利用し、物理ファイルは複製しない',
+      '原本確定時は、各有効統合リスト行の `SURVEY_RECORD` 元レコードに紐づく非削除の調査写真（`application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL`）を取得し、作成した `asset_ledgers.asset_ledger_id` に対する資産写真メタデータとして `application_documents.owner_type=''ASSET_LEDGER''` 行を作成する。元ファイルの `file_path`（Amazon S3オブジェクトキー）/ `content_hash` / ファイル属性 / 撮影日時 / 撮影者を再利用し、Amazon S3上のファイル実体は `CopyObject` / `PutObject` で複製しない。バケット名やHTTPS URLはDBへ保存せず、レスポンスにも返さない',
       '写真引継ぎでは、元調査写真の `asset_survey_record_id` を引継ぎ先 `application_documents.asset_survey_record_id` に保持して provenance とし、`asset_ledger_id` には今回作成した原本資産IDを設定する。写真が1件以上ある原本資産では、元調査写真の代表写真を優先し、`asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` の順で `is_primary=true` を1件だけ設定する。台帳のみの `UNCONFIRMED_IMPORT` 行では写真引継ぎは行わない',
       '`qr_identifier` が設定された行は、対応する `qr_codes.asset_ledger_id` に今回作成した `asset_ledgers.asset_ledger_id` を設定し、更新は原本生成、`created_asset_ledger_id` 保存と同一トランザクションで完了させる',
       '生成値の具体的なマッピングは第6章の `asset_data_matching_items -> asset_ledgers` ルール、写真引継ぎルール、QR 紐付け更新ルールに従う',
@@ -912,8 +912,9 @@ $endpointSpecs = @(
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_データ突合.docx'
   ScreenLabel = 'データ突合'
-  CoverDateText = '2026年4月27日'
-  RevisionDateText = '2026/4/27'
+  CoverDateText = '2026年6月6日'
+  RevisionDateText = '2026/6/6'
+  RevisionSummaryText = '固定資産台帳取込40カラムの原本直前スナップショット・原本資産反映ルールを更新'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -964,13 +965,13 @@ $endpointSpecs = @(
     @{ Type = 'Table'; Headers = @('テーブル', '利用内容', '主な項目'); Rows = @(
       @('asset_data_matching_sessions', 'セッション開始 / 再開 / 原本確定', 'asset_data_matching_session_id, facility_id, session_status, lock_version, created_by_user_id, confirmed_by_user_id, confirmed_at'),
       @('asset_data_matching_session_lists', '統合対象リスト確定、完了状態管理', 'asset_data_matching_session_list_id, asset_import_job_id, source_label, source_order, merge_status, completed_at'),
-      @('asset_data_matching_items', '統合リスト一覧取得、原本直前スナップショット更新、論理統合保持、原本確定時の元データ', 'asset_data_matching_item_id, creation_type, item_status, matching_status, qr_identifier, qr_resolution_status, created_asset_ledger_id, ship_asset_master_id, facility_location_id, asset_no, equipment_no, asset_name, department_name, section_name, room_name, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, detail_type, parent_asset_data_matching_item_id, merged_into_item_id, merged_by_session_list_id, quantity, unit, purchased_on, source_summary'),
+      @('asset_data_matching_items', '統合リスト一覧取得、原本直前スナップショット更新、論理統合保持、原本確定時の元データ', 'asset_data_matching_item_id, creation_type, item_status, matching_status, qr_identifier, qr_resolution_status, created_asset_ledger_id, ship_asset_master_id, facility_location_id, asset_no, management_no, hospital_unique_no_1/2, asset_name, department_name, section_name, room_name, category_id, large_class_id, medium_class_id, asset_item_id, manufacturer_id, model_id, ledger_*, original_*, detail_type, parent_detail_name, parent_asset_data_matching_item_id, quantity, unit, contract_settlement_no, delivery_date, inspection_date, delivery_vendor_name, lease_company_name, account_category, account_title, price/tax fields, ledger_remarks, source_summary'),
       @('asset_data_matching_item_sources', '現在代表元レコード紐付けと再集約、および有効代表元の一意制御', 'asset_data_matching_item_source_id, asset_data_matching_item_id, source_type, asset_survey_record_id, asset_import_row_id, source_label, source_relation_type, active_import_row_key, active_survey_record_key'),
       @('asset_data_matching_item_list_results', '統合対象リストごとの判定結果、進捗、台帳行消費判定の正本', 'asset_data_matching_item_list_result_id, asset_data_matching_session_list_id, asset_data_matching_item_id, asset_import_row_id, matching_status, result_status, decision_note, decided_by_user_id, decided_at, reverted_by_user_id, reverted_at'),
       @('asset_survey_sessions / asset_survey_records', '基底現有品調査の選定と統合リスト初期生成', 'asset_survey_session_id, asset_survey_record_id, qr_identifier, ship_asset_master_id, department_name, section_name, room_name, asset_item_id'),
-      @('asset_import_jobs / asset_import_rows', '統合候補リスト選定、台帳側一覧取得、表示スナップショット反映', 'asset_import_job_id, status, import_type, asset_import_row_id, selected_ship_asset_master_id, suggested_ship_asset_master_id, parsed_ledger_no, parsed_management_device_no, parsed_department_name, parsed_section_name, parsed_asset_name, parsed_manufacturer_name, parsed_model_name, parsed_quantity, parsed_unit'),
-      @('asset_ledgers', '原本リスト確定時の作成先、確定後参照', 'asset_ledger_id, facility_id, facility_location_id, ship_asset_master_id, asset_no, equipment_no, category_id, large_class_name, medium_class_name, asset_item_name, asset_name, detail_type, parent_asset_ledger_id, quantity, unit'),
-      @('application_documents / asset_survey_photos / asset_photos', '現有品調査写真の参照と原本確定時の資産写真引継ぎ', 'application_document_id, owner_type, asset_survey_record_id, asset_ledger_id, document_category, file_name, file_path, content_hash, taken_at, taken_by_user_id, is_primary, deleted_at'),
+      @('asset_import_jobs / asset_import_rows', '統合候補リスト選定、台帳側一覧取得、表示スナップショット反映', 'asset_import_job_id, status, import_type, asset_import_row_id, selected_ship_asset_master_id, suggested_ship_asset_master_id, parsed_ledger_no, parsed_management_device_no, parsed_hospital_unique_no_1/2, parsed_department_name, parsed_section_name, parsed_asset_name, parsed_manufacturer_name, parsed_model_name, parsed_original_asset_name, parsed_original_manufacturer_name, parsed_original_model_name, parsed_quantity, parsed_unit, parsed_detail_type, parsed_parent_detail_name, parsed_contract_settlement_no, parsed_delivery_date, parsed_inspection_date, parsed_* price/tax/account fields'),
+      @('asset_ledgers', '原本リスト確定時の作成先、確定後参照', 'asset_ledger_id, facility_id, facility_location_id, ship_asset_master_id, asset_no, management_no, equipment_no, hospital_unique_no_1/2, category_id, large_class_name, medium_class_name, asset_item_name, manufacturer_name, model_name, asset_name, ledger_*, detail_type, parent_asset_ledger_id, ledger_parent_detail_name, quantity, unit, contract_settlement_no, delivery_date, inspection_date, delivery_vendor_name, lease_company_name, account_category, account_title, price/tax fields, ledger_remarks'),
+      @('application_documents / asset_survey_photos / asset_photos', '現有品調査写真の参照と原本確定時の資産写真引継ぎ。`file_path` はAmazon S3オブジェクトキーであり、バケット名やHTTPS URLは保持しない', 'application_document_id, owner_type, asset_survey_record_id, asset_ledger_id, document_category, file_name, file_path, content_hash, taken_at, taken_by_user_id, is_primary, deleted_at'),
       @('qr_codes', '原本確定時の QR 紐付け更新と QR 遷移有効化', 'qr_code_id, facility_id, qr_identifier, asset_ledger_id, updated_at, deleted_at'),
       @('asset_import_survey_mappings', '参考画面での個別対応補助管理。主導線の正本ではない', 'asset_import_survey_mapping_id, mapping_type, matching_status, confirm_status, decision_note'),
       @('facilities / facility_locations', '施設整合検証、共有システム管理者アカウントの未削除施設判定、部門 / 部署 / 室表示', 'facility_id, facility_name, deleted_at, department_name, section_name, room_name'),
@@ -1078,19 +1079,25 @@ $endpointSpecs = @(
     @{ Type = 'Heading1'; Text = '第6章 原本生成マッピングルール' },
     @{ Type = 'Heading2'; Text = '台帳行 -> 原本直前スナップショット優先順位' },
     @{ Type = 'Table'; Headers = @('asset_data_matching_items', '更新元', '優先順位 / ルール'); Rows = @(
-      @('category_id / category_name', '`asset_import_rows`', '`selected_category_*` → `suggested_category_*` → 既存代表行値。未確認追加行でいずれもない場合、名称のみ `parsed_category_name` を補完値として利用し、ID は NULL を許容する'),
+      @('category_id / category_name', '`asset_import_rows`', '`selected_category_*` → `suggested_category_*` → 既存代表行値。未確認追加行でいずれもない場合は未解決のまま保持し、Excelの `parsed_category_name` は `ledger_category_name` にのみ保持する'),
       @('ship_asset_master_id', '`asset_import_rows` または `asset_survey_records`', '現在代表台帳行がある場合は `selected_ship_asset_master_id` → `suggested_ship_asset_master_id` → 既存代表行値。代表台帳行がない現有品調査のみの行では `asset_survey_records.ship_asset_master_id` を採用する。いずれも未設定の場合は NULL'),
       @('large_class_id / large_class_name', '`asset_import_rows`', '`selected_large_class_*` → `suggested_large_class_*` → 既存代表行値。未確認追加行で補完元がなければ NULL を許容する'),
       @('medium_class_id / medium_class_name', '`asset_import_rows`', '`selected_medium_class_*` → `suggested_medium_class_*` → 既存代表行値。未確認追加行で補完元がなければ NULL を許容する'),
       @('asset_item_id / asset_item_name', '`asset_import_rows`', '`selected_asset_item_*` → `suggested_asset_item_*` → 既存代表行値。未確認追加行で補完元がなければ NULL を許容する'),
-      @('manufacturer_id / manufacturer_name', '`asset_import_rows`', '`selected_manufacturer_*` → `suggested_manufacturer_*` → 既存代表行値。未確認追加行でいずれもない場合、名称のみ `parsed_manufacturer_name` を補完値として利用する'),
-      @('model_id / model_name', '`asset_import_rows`', '`selected_model_*` → `suggested_model_*` → 既存代表行値。未確認追加行でいずれもない場合、名称のみ `parsed_model_name` を補完値として利用する'),
-      @('asset_name', '`asset_import_rows` と既存 snapshot', '`parsed_asset_name` → 既存 `asset_name` → `asset_item_name`。未確認追加行では `parsed_asset_name` → `selected_asset_item_name` → `suggested_asset_item_name` の順で補完する'),
+      @('manufacturer_id / manufacturer_name', '`asset_import_rows`', '`selected_manufacturer_*` → `suggested_manufacturer_*` → 既存代表行値。未確認追加行でいずれもない場合は未解決のまま保持し、Excelの `parsed_manufacturer_name` は `ledger_manufacturer_name` にのみ保持する'),
+      @('model_id / model_name', '`asset_import_rows`', '`selected_model_*` → `suggested_model_*` → 既存代表行値。未確認追加行でいずれもない場合は未解決のまま保持し、Excelの `parsed_model_name` は `ledger_model_name` にのみ保持する'),
+      @('asset_name', '`asset_import_rows` と既存 snapshot', '固定資産台帳由来行では必須入力された `parsed_original_asset_name` を設定し、`parsed_asset_name` やマスタ側 `asset_item_name` へのフォールバックは行わない。現有品調査のみ行では既存 snapshot を利用する'),
       @('unit', '`asset_import_rows` と既存 snapshot', '`parsed_unit` → 既存 `unit`。未確認追加行で値がなければ NULL を許容する'),
       @('quantity', '`asset_import_rows` と既存 snapshot', '`parsed_quantity` がある場合はそれを採用し、ない場合は既存代表行値を保持する。未確認追加行で未入力なら 1 を既定値とする'),
       @('creation_type / item_status', 'system managed', '初期生成行は `SURVEY_BASE / ACTIVE`、未確認追加行は `UNCONFIRMED_IMPORT / ACTIVE`。差し戻しで根拠を失った未確認追加行は `INVALIDATED` とする'),
       @('matching_status', 'mutation payload', '`matches` は要求 `matchingStatus`、`mark-unregistered` は `UNREGISTERED`、`mark-unconfirmed` は `UNCONFIRMED` を保存し、`revert-decision` は残存する有効判定履歴から再計算して最新確定判定代表値とする'),
-      @('detail_type / parent_asset_data_matching_item_id', 'representative item', '`matches` は要求 `representativeItemId` の既存値を保持し、矛盾する階層構造の選択は 409 (`MERGE_HIERARCHY_CONFLICT`) とする。`mark-unconfirmed` は `detail_type=''MAIN''` / `parent=NULL`'),
+      @('detail_type / parent_asset_data_matching_item_id', '`asset_import_rows` と representative item', '現在代表台帳行がある場合は `parsed_detail_type` を正規化し、`parsed_parent_detail_name` から同一取込リスト内の親行を解決する。現在代表台帳行がない場合は `representativeItemId` の既存値を保持する。矛盾する階層構造の選択は 409 (`MERGE_HIERARCHY_CONFLICT`) とする'),
+      @('ledger_building_name / ledger_floor_name / ledger_department_name / ledger_section_name / ledger_room_name', '`asset_import_rows`', '`parsed_building_name` / `parsed_floor_name` / `parsed_department_name` / `parsed_section_name` / `parsed_room_name` を台帳取込スナップショットとして保持する。現有品調査と統合する行の現在位置は現有品調査値を優先し、台帳のみ行またはロケーション未解決時の表示補完に用いる'),
+      @('ledger_category_name / ledger_large_class_name / ledger_medium_class_name', '`asset_import_rows`', '`parsed_category_name` / `parsed_large_class_name` / `parsed_medium_class_name` を台帳分類スナップショットとして保持する。マスタ側 `category_name` / `large_class_name` / `medium_class_name` の補完には使わない'),
+      @('ledger_asset_name / ledger_manufacturer_name / ledger_model_name', '`asset_import_rows`', '非(原)の `parsed_asset_name` / `parsed_manufacturer_name` / `parsed_model_name` を台帳取込値として保持する。マスタ側の品目・メーカー・型式や `asset_name` の補完には使わない'),
+      @('original_asset_name / original_manufacturer_name / original_model_name', '`asset_import_rows`', '`parsed_original_asset_name` / `parsed_original_manufacturer_name` / `parsed_original_model_name` を固定資産台帳の原文値として保持する。非(原)列やマスタ側確定値へのフォールバックは行わない'),
+      @('asset_no / management_no / hospital_unique_no_1 / hospital_unique_no_2', '`asset_import_rows`', '`parsed_ledger_no` を `asset_no`、`parsed_management_device_no` を `management_no`、病院固有番号予備を専用項目へ反映する。`equipment_no` は備品番号・既存機器番号として維持し、ME管理機器番号で上書きしない'),
+      @('parent_detail_name / delivery and contract fields / price and tax fields / ledger_remarks', '`asset_import_rows`', '明細親機、契約決済No.、納入・検収日、納入業者、リース会社・期間、会計区分、勘定科目、耐用年数(原)、定価・購入価格、税区分、台帳備考を型付き `parsed_*` から保持する。`raw_data_json` は再解釈しない'),
       @('qr_identifier / qr_resolution_status', '`asset_survey_records`', '現在代表元 `SURVEY_RECORD` 集合の `qr_identifier` 非NULL distinct 値を集約し、0 件なら `NONE`、1 件ならその値を採用して `RESOLVED`、2 件以上なら `qr_identifier=NULL` / `CONFLICT` とする')
     ) },
     @{ Type = 'Heading2'; Text = '共通 snapshot 再構築ルール' },
@@ -1116,12 +1123,23 @@ $endpointSpecs = @(
       @('asset_item_name', '`asset_data_matching_items.asset_item_name`', '必須。未解決なら原本確定不可'),
       @('manufacturer_id / model_id', '`asset_data_matching_items.manufacturer_id` / `model_id`', '解決済みの場合に設定。未解決時は NULL 可'),
       @('manufacturer_name / model_name', '`asset_data_matching_items.manufacturer_name` / `model_name`', '表示スナップショットをそのまま複写する'),
-      @('asset_name', '`asset_data_matching_items.asset_name`', '必須。通常は台帳 `parsed_asset_name` 優先、未確認・現有品のみ行は `asset_item_name` 補完値を許容する'),
-      @('asset_no / equipment_no / serial_no', '`asset_data_matching_items.asset_no` / `equipment_no` / `serial_no`', '保持しているスナップショットをそのまま複写する'),
-      @('detail_type', '`asset_data_matching_items.detail_type`', '保持値を複写する。台帳のみの未確認追加行は `MAIN` を既定とする'),
+      @('asset_name', '`asset_data_matching_items.asset_name`', '必須。固定資産台帳由来行では `parsed_original_asset_name` 由来の値を設定し、非(原)列やマスタ側 `asset_item_name` へフォールバックしない。現有品調査のみ行では既存 snapshot を利用する'),
+      @('asset_no / management_no / hospital_unique_no_1 / hospital_unique_no_2', '`asset_data_matching_items.asset_no` / `management_no` / `hospital_unique_no_1` / `hospital_unique_no_2`', '保持しているスナップショットをそのまま複写する。固定資産番号は `asset_no`、ME管理機器番号は `management_no` とし、`equipment_no` は備品番号・既存機器番号として別に保持する'),
+      @('equipment_no / serial_no', '`asset_data_matching_items.equipment_no` / `serial_no`', '保持しているスナップショットをそのまま複写する'),
+      @('detail_type', '`asset_data_matching_items.detail_type`', '保持値を複写する。固定資産台帳由来行は `parsed_detail_type` を正規化した値を使い、台帳のみ行を一律 `MAIN` にはしない'),
       @('parent_asset_ledger_id', '`asset_data_matching_items.parent_asset_data_matching_item_id`', '親統合リスト行から先に `asset_ledgers` を作成し、その採番結果へ変換して設定する'),
       @('quantity', '`asset_data_matching_items.quantity`', '必須。未解決なら原本確定不可'),
       @('unit', '`asset_data_matching_items.unit`', '保持値を複写する。未解決時は NULL 可'),
+      @('ledger_building_name / ledger_floor_name / ledger_department_name / ledger_section_name / ledger_room_name', '`asset_data_matching_items` の台帳取込ロケーション', '固定資産台帳から取り込んだ棟・階・部門・部署・室名を台帳取込スナップショットとして複写する。現在位置の正本とは分離する'),
+      @('ledger_category_name / ledger_large_class_name / ledger_medium_class_name', '`asset_data_matching_items` の台帳分類', '固定資産台帳の分類原文を複写する。マスタ確定値である `category_id` / `large_class_name` / `medium_class_name` とは分離する'),
+      @('ledger_asset_name / ledger_manufacturer_name / ledger_model_name', '`asset_data_matching_items` の非(原)3項目', '固定資産台帳の非(原) 品目名・メーカー名・型式を台帳取込値として複写し、マスタ側表示値や `asset_name` へ混在させない'),
+      @('ledger_original_asset_name / ledger_original_manufacturer_name / ledger_original_model_name', '`asset_data_matching_items.original_asset_name` / `original_manufacturer_name` / `original_model_name`', '固定資産台帳の (原)3項目を原文値として複写する。`ledger_original_asset_name` は `asset_name` と同じ原本表示名の根拠にもなる'),
+      @('ledger_parent_detail_name', '`asset_data_matching_items.parent_detail_name`', '固定資産台帳の明細親機原文を複写する。親子関係のFKは `parent_asset_ledger_id` で別に解決する'),
+      @('contract_settlement_no / delivery_date / inspection_date', '`asset_data_matching_items.contract_settlement_no` / `delivery_date` / `inspection_date`', '契約決済No.、納入日、検収日を複写する'),
+      @('delivery_vendor_name / lease_company_name / lease_start_on / lease_end_on', '`asset_data_matching_items` の納入・リース項目', '納入業者、リース会社、リース期間を複写する'),
+      @('account_category / account_title / legal_service_life', '`asset_data_matching_items.account_category` / `account_title` / `original_legal_service_life`', '会計区分、勘定科目、耐用年数(原)を複写する。耐用年数(原)は `asset_ledgers.legal_service_life` に反映する'),
+      @('list_price_unit_excl_tax / list_price_total_excl_tax / purchase_price_unit_excl_tax / purchase_price_total_excl_tax / tax_category / purchase_price_total_incl_tax', '`asset_data_matching_items` の価格・税項目', '固定資産台帳の定価・購入価格・税区分を専用項目へ複写する。`acquisition_cost` へ暗黙変換して上書きしない'),
+      @('ledger_remarks', '`asset_data_matching_items.ledger_remarks`', '固定資産台帳の台帳備考を複写する'),
       @('status', '固定値', '`ACTIVE` を設定する'),
       @('is_leased / is_rented_out', '固定値', 'いずれも `false` を設定する'),
       @('その他 nullable 項目', '固定値または未設定', '本 API の確定時点で値を持たない列は NULL またはテーブル既定値で作成し、後続の台帳保守機能で更新する')
@@ -1139,8 +1157,8 @@ $endpointSpecs = @(
       '写真引継ぎ対象は、`merged_into_item_id IS NULL AND item_status=''ACTIVE''` の統合リスト行に紐づく `asset_data_matching_item_sources.source_type=''SURVEY_RECORD''` の元調査レコードとする',
       '対象調査レコードに紐づく `application_documents.owner_type=''ASSET_SURVEY_RECORD'' AND document_category=''PHOTO'' AND deleted_at IS NULL` の写真を取得し、`application_document_id` 昇順ではなく、`asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` を安定順として処理する',
       '引継ぎ先は `application_documents.owner_type=''ASSET_LEDGER''` / `document_category=''PHOTO''` の新規行とし、`asset_ledger_id` には今回作成した `asset_ledgers.asset_ledger_id`、`asset_survey_record_id` には元調査レコードIDを設定して provenance を保持する',
-      'ファイル実体は複製せず、元調査写真の `file_name` / `file_path` / `mime_type` / `file_size_bytes` / `content_hash` / `storage_format` / `taken_at` / `taken_by_user_id` / `sort_order` を再利用する。`uploaded_by_user_id` / `uploaded_at` は原本確定実行者とサーバ時刻を設定する',
-      '同一原本資産へ複数調査レコードが統合される場合は、全ての非削除調査写真を引き継ぐ。ただし同一 `content_hash` と `file_path` の組み合わせが重複する場合は1件に正規化する',
+      'ファイル実体はAmazon S3上で複製せず、元調査写真の `file_name` / `file_path`（S3オブジェクトキー）/ `mime_type` / `file_size_bytes` / `content_hash` / `storage_format` / `taken_at` / `taken_by_user_id` / `sort_order` を再利用する。データ突合APIではS3 `CopyObject` / `PutObject` / `DeleteObject` を実行せず、メタデータ行のみを同一DBトランザクションで作成する。`uploaded_by_user_id` / `uploaded_at` は原本確定実行者とサーバ時刻を設定する',
+      '同一原本資産へ複数調査レコードが統合される場合は、全ての非削除調査写真を引き継ぐ。ただし同一 `content_hash` と `file_path`（同一S3オブジェクトキー）の組み合わせが重複する場合は1件に正規化する',
       '代表写真は、元調査写真で `is_primary=true` のものを優先する。候補が複数または存在しない場合は `asset_survey_record_id ASC, sort_order ASC, application_document_id ASC` の先頭1件を `is_primary=true` とし、同一 `asset_ledger_id` の他写真は `is_primary=false` とする',
       '現有品調査レコードを含まない台帳のみ行（`creation_type=''UNCONFIRMED_IMPORT''` / `source_type=''IMPORT_ROW''` のみ）は写真引継ぎを行わず、写真なしでも原本確定を阻害しない',
       '写真引継ぎ、`asset_ledgers` 作成、`asset_data_matching_items.created_asset_ledger_id` 保存、QR 紐付け更新は同一トランザクションで完了させ、いずれかが失敗した場合は原本確定全体をロールバックする'
@@ -1239,7 +1257,8 @@ $endpointSpecs = @(
       '画面表示時は `/data-matching/context` で進行中セッション有無を確認し、既存セッションがあれば必ずそれを再開する',
       '共通フィルタ候補と一致検索条件の UI 変更時は、`merged-items` / `fixed-asset-ledger-items` / `me-ledger-items` のクエリ仕様と `cursor` 継続取得仕様を同時に見直す',
       '原本確定前のレビューは `/data-matching/sessions/{sessionId}/result` を正本とし、クライアント側で独自に統合結果を再計算しない',
-      '原本確定後の `asset_ledgers` 件数が `mergedItemCount` と一致し、`sourcePhotoCount > 0` の確定行は対応する `application_documents.owner_type=''ASSET_LEDGER''` の資産写真と代表写真が作成され、`qrResolutionStatus=''RESOLVED''` の確定行は対応する `qr_codes.asset_ledger_id` が設定されていることを監査対象とする'
+      '原本確定後の `asset_ledgers` 件数が `mergedItemCount` と一致し、`sourcePhotoCount > 0` の確定行は対応する `application_documents.owner_type=''ASSET_LEDGER''` の資産写真と代表写真が作成され、`qrResolutionStatus=''RESOLVED''` の確定行は対応する `qr_codes.asset_ledger_id` が設定されていることを監査対象とする',
+      '写真引継ぎで作成した資産写真メタデータは元調査写真と同じAmazon S3オブジェクトキーを参照する。片方の `application_documents.deleted_at` 更新だけでS3実体を即時削除せず、同一キーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理で扱う'
     ) },
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(

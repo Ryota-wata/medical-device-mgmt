@@ -55,13 +55,14 @@ $commonErrorRows = @(
   @('EDIT_LIST_LOCK_ACTIVE', '409', '編集リスト作業ロックが残っている', 'リモデルクローズ時に有効な `edit_list_work_locks` が存在する'),
   @('RFQ_GROUP_NOT_FOUND', '404', 'RFQグループを参照できない', 'ID不存在、施設不一致、削除済み、または `management_type=''REMODEL''` ではない'),
   @('RFQ_STATUS_CONFLICT', '409', 'RFQステータスが操作条件を満たさない', 'ステータス遷移順序不一致、または終端済みワークフローを更新した'),
-  @('RFQ_VENDOR_NOT_FOUND', '404', '見積依頼先を参照できない', 'ID不存在、RFQ不一致、削除済み'),
+  @('RFQ_VENDOR_NOT_FOUND', '404', '見積業者行を参照できない', 'ID不存在、RFQ不一致、削除済み'),
   @('QUOTATION_DRAFT_NOT_FOUND', '404', '見積登録ドラフトを参照できない', 'ID不存在、RFQ不一致、削除済み、または管理区分不一致'),
   @('QUOTATION_CONFIRM_CONFLICT', '409', '見積確定条件を満たさない', '見積フェーズ不正、必須情報不足、明細区分未確定、または未登録個体品目が残っている'),
   @('ORDER_QUOTATION_REQUIRED', '409', '発注登録用見積が確定済みでない', '発注登録時に `発注見積登録済` のRFQまたは採用見積が存在しない'),
   @('ORDER_NOT_FOUND', '404', '発注を参照できない', 'ID不存在、RFQ不一致、または対象発注データなし'),
   @('INDIVIDUAL_REGISTRATION_INCOMPLETE', '409', '検収登録済み個体が不足している', '資産登録時に対象発注明細分の `individuals` が未作成'),
   @('REMODEL_CLOSE_BLOCKED', '409', 'リモデルクローズ条件を満たさない', '方針未決、新設置場所未入力、未終端ワークフロー、原本登録未完了、または作業ロック残存'),
+  @('REMODEL_FILE_502_S3_WRITE_FAILED', '502', 'Amazon S3 へのファイル保存またはロールバック削除に失敗した', '見積原本または検収写真のAmazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した'),
   @('VALIDATION_ERROR', '400', '入力値不正', '必須不足、列挙値不正、文字数超過、日付前後関係不正'),
   @('CONFLICT', '409', '競合更新', '`expectedUpdatedAt` または `Idempotency-Key` の競合'),
   @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー', '想定外例外')
@@ -89,14 +90,14 @@ $taskSummaryRows = @(
 $vendorRows = @(
   @('rfqVendorId', 'int64', '✓', '`rfq_vendors.rfq_vendor_id`'),
   @('vendorId', 'int64', '-', '業者マスタID。手入力業者は null'),
-  @('vendorName', 'string', '✓', '依頼先業者名'),
+  @('vendorName', 'string', '✓', '見積業者名'),
   @('contactPerson', 'string', '-', '担当者名'),
   @('email', 'string', '-', 'メールアドレス'),
   @('phone', 'string', '-', '電話番号'),
   @('dueOn', 'date', '-', '見積提出期限'),
   @('requestNote', 'string', '-', '依頼メモ'),
-  @('requestStatus', 'string', '✓', '`DRAFT` / `SENT` / `REPLIED` / `CANCELED`'),
-  @('requestedAt', 'datetime', '-', '依頼送信日時')
+  @('requestStatus', 'string', '✓', '`DRAFT` / `SENT` / `REPLIED` / `CANCELED`。Phase1では `SENT` を送信完了正本として更新せず、取得済み見積の登録確定時に必要に応じて `REPLIED` を利用する'),
+  @('requestedAt', 'datetime', '-', 'Phase2のOutlook連携または送信管理を持つ他業務で利用する依頼連携日時')
 )
 
 $editListItemRows = @(
@@ -175,8 +176,22 @@ $individualRows = @(
   @('departmentName', 'string', '-', '部門'),
   @('sectionName', 'string', '-', '部署'),
   @('roomName', 'string', '-', '室名'),
+  @('photoDocumentIds', 'int64[]', '-', '検収登録中に保存した写真ドキュメントID。原本資産登録時に該当資産写真へ複製する対象'),
   @('fixedAssetNo', 'string', '-', '固定資産番号'),
   @('registrationStatus', 'string', '✓', '`INSPECTED` / `REGISTERED`')
+)
+
+$documentInputRows = @(
+  @('documentType', 'string', '✓', '`application_documents.document_type`。例: 見積原本 / 検収写真'),
+  @('filePartName', 'string', '✓', 'multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける'),
+  @('fileName', 'string', '-', '画面表示用ファイル名。未指定時はアップロードファイル名'),
+  @('contentType', 'string', '-', 'MIME Type。未指定時はアップロードファイルまたはサーバー判定値を使用する'),
+  @('fileSizeBytes', 'int64', '-', '画面側検証用ファイルサイズ。保存時はサーバーがファイル実体から算出した値を正本にする'),
+  @('contentHash', 'string', '-', 'クライアント計算ハッシュ。サーバー側でも再計算する'),
+  @('title', 'string', '-', '表示タイトル'),
+  @('documentDate', 'date', '-', '文書日付'),
+  @('takenAt', 'datetime', '-', '写真撮影日時。見積原本では使用しない'),
+  @('isPrimary', 'boolean', '-', '検収写真を代表写真として扱う場合 true')
 )
 
 function New-EndpointBlock {
@@ -187,6 +202,7 @@ function New-EndpointBlock {
     [Parameter(Mandatory = $true)][string]$Path,
     [Parameter(Mandatory = $true)][string]$Auth,
     [object[]]$ParametersRows = @(),
+    [string]$RequestTitle = 'リクエストボディ',
     [object[]]$RequestRows = @(),
     [object[]]$RequestSubtables = @(),
     [string[]]$PermissionLines = @(),
@@ -225,7 +241,7 @@ function New-EndpointBlock {
   }
 
   if ($RequestRows.Count -gt 0) {
-    $block.RequestTitle = 'リクエストボディ'
+    $block.RequestTitle = $RequestTitle
     $block.RequestHeaders = @('フィールド', '型', '必須', '説明')
     $block.RequestRows = $RequestRows
   }
@@ -402,7 +418,7 @@ $endpointBlocks = @(
       @('context', 'RfqContext', '✓', '管理区分、戻り先、次画面候補'),
       @('rfq', 'RemodelTaskSummary', '✓', 'RFQ/ワークフロー概要'),
       @('editListItems', 'EditListItemSummary[]', '✓', '紐づく編集リスト明細'),
-      @('vendors', 'RfqVendorSummary[]', '✓', '見積依頼先'),
+      @('vendors', 'RfqVendorSummary[]', '✓', '見積業者行'),
       @('quotations', 'QuotationSummary[]', '✓', '登録済み見積'),
       @('order', 'OrderSummary', '-', '発注済みの場合の発注ヘッダー'),
       @('individuals', 'IndividualSummary[]', '✓', '検収登録済み個体')
@@ -446,8 +462,8 @@ $endpointBlocks = @(
     )
 
   New-EndpointBlock `
-    -Title '見積依頼先保存' `
-    -Overview 'RFQプロセスで入力した見積依頼先業者行を登録または更新する。' `
+    -Title '見積登録先業者保存' `
+    -Overview 'RFQプロセス画面で取得済み見積書の登録先となる業者行を登録または更新する。業者への見積依頼送信は行わない。' `
     -Method 'POST' `
     -Path '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests' `
     -Auth 'Bearer' `
@@ -455,19 +471,20 @@ $endpointBlocks = @(
       @('rfqGroupId', 'path', 'int64', '✓', '対象RFQグループID')
     ) `
     -RequestRows @(
-      @('vendors', 'RfqVendorInput[]', '✓', '保存する見積依頼先行'),
+      @('vendors', 'RfqVendorInput[]', '✓', '保存する見積登録先業者行'),
       @('expectedUpdatedAt', 'datetime', '-', '競合検知用')
     ) `
     -PermissionLines $purchasePermissionLines `
     -ProcessingLines @(
-      '対象RFQは `workflow_type=''RFQ''` のみ許可する。',
-      '業者名、担当者、メール、電話番号、見積提出期限、依頼メモを `rfq_vendors` に保存する。',
-      '既存行は `request_status=''DRAFT''` の場合だけ更新可能とする。',
-      '新規業者は `rfq_vendors` へ追加し、業者マスタ未選択の手入力も許可する。'
+      '対象RFQは `workflow_type=''RFQ''` のみ許可する。Phase1では業者への見積依頼送信をシステム上で管理しないため、`見積依頼済` はPhase2のOutlook連携または送信管理を持つ他業務用の状態として扱う。',
+      '業者名、担当者、メール、電話番号、提出期限、補足メモを `rfq_vendors` に保存する。',
+      '新規業者は `rfq_vendors.request_status=''DRAFT''` として追加し、業者マスタ未選択の手入力も許可する。',
+      '`DRAFT` 行のみ業者情報、提出期限、補足メモを更新可能とする。`SENT` / `REPLIED` 行の業者情報更新は拒否する。',
+      '本APIは `rfq_vendors.request_status=''SENT''`、`requested_at`、`requested_by_user_id` を更新しない。'
     ) `
     -ResponseRows @(
       @('rfqGroupId', 'int64', '✓', '対象RFQグループID'),
-      @('vendors', 'RfqVendorSummary[]', '✓', '保存後の依頼先行'),
+      @('vendors', 'RfqVendorSummary[]', '✓', '保存後の業者行'),
       @('updatedAt', 'datetime', '✓', '更新日時')
     ) `
     -ResponseSubtables @(
@@ -475,74 +492,25 @@ $endpointBlocks = @(
     )
 
   New-EndpointBlock `
-    -Title '見積依頼個別送信' `
-    -Overview 'RFQプロセスの業者行単位送信を実行し、依頼先を送信済みにする。' `
-    -Method 'POST' `
-    -Path '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}/send' `
-    -Auth 'Bearer' `
-    -ParametersRows @(
-      @('rfqGroupId', 'path', 'int64', '✓', '対象RFQグループID'),
-      @('rfqVendorId', 'path', 'int64', '✓', '対象見積依頼先ID')
-    ) `
-    -RequestRows @(
-      @('expectedUpdatedAt', 'datetime', '-', '競合検知用')
-    ) `
-    -PermissionLines $purchasePermissionLines `
-    -ProcessingLines @(
-      '`rfq_vendors.request_status=''DRAFT''` の行だけ送信できる。',
-      '業者名とメールアドレスは必須とする。',
-      '送信成功時は対象行を `SENT` に更新し、RFQステータスを `見積依頼済` へ進める。',
-      'メール送信実体の詳細は運用基盤で扱い、本APIは送信済み状態と送信日時を永続化する。'
-    ) `
-    -ResponseRows @(
-      @('rfqGroupId', 'int64', '✓', '対象RFQグループID'),
-      @('rfqVendorId', 'int64', '✓', '対象見積依頼先ID'),
-      @('requestStatus', 'string', '✓', '`SENT`'),
-      @('rfqStatus', 'string', '✓', '`見積依頼済`'),
-      @('requestedAt', 'datetime', '✓', '送信日時')
-    )
-
-  New-EndpointBlock `
-    -Title '見積依頼先削除' `
-    -Overview 'RFQプロセスで未送信の見積依頼先業者行を削除する。' `
+    -Title '見積登録先業者削除' `
+    -Overview 'RFQプロセスで未確定の見積登録先業者行を削除する。業者への見積依頼送信は行わない。' `
     -Method 'DELETE' `
     -Path '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}' `
     -Auth 'Bearer' `
     -ParametersRows @(
       @('rfqGroupId', 'path', 'int64', '✓', '対象RFQグループID'),
-      @('rfqVendorId', 'path', 'int64', '✓', '対象見積依頼先ID')
+      @('rfqVendorId', 'path', 'int64', '✓', '対象見積登録先業者ID')
     ) `
     -PermissionLines $purchasePermissionLines `
     -ProcessingLines @(
       '`request_status=''DRAFT''` の行だけ削除できる。',
-      '送信済み業者行は削除不可とする。',
+      '`SENT` / `REPLIED` 行は送信履歴または取得済み見積の記録として保持し、削除不可とする。',
+      '本APIは `rfq_vendors.request_status=''SENT''`、`requested_at`、`requested_by_user_id` を更新しない。',
       '画面内追加行が未保存の場合はサーバー更新を行わず、クライアント側で破棄する。'
     ) `
     -ResponseRows @(
       @('deleted', 'boolean', '✓', '削除した場合 true'),
       @('rfqVendorId', 'int64', '✓', '削除対象ID')
-    )
-
-  New-EndpointBlock `
-    -Title '見積依頼一括送信' `
-    -Overview 'RFQプロセスの一括送信操作として、未送信の見積依頼先をまとめて送信済みにする。' `
-    -Method 'POST' `
-    -Path '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/send-bulk' `
-    -Auth 'Bearer' `
-    -ParametersRows @(
-      @('rfqGroupId', 'path', 'int64', '✓', '対象RFQグループID')
-    ) `
-    -PermissionLines $purchasePermissionLines `
-    -ProcessingLines @(
-      'リモデルRFQでも `SHIPへ一括依頼` は業者への見積依頼一括送信として扱う。',
-      '未送信の `rfq_vendors` すべてについて業者名とメールアドレスを検証する。',
-      '送信対象を `SENT` に更新し、RFQステータスを `見積依頼済` へ進める。',
-      'SHIP代理作業依頼は作成しない。'
-    ) `
-    -ResponseRows @(
-      @('rfqGroupId', 'int64', '✓', '対象RFQグループID'),
-      @('sentVendorIds', 'int64[]', '✓', '送信済みにした依頼先ID'),
-      @('rfqStatus', 'string', '✓', '`見積依頼済`')
     )
 
   New-EndpointBlock `
@@ -554,22 +522,31 @@ $endpointBlocks = @(
     -ParametersRows @(
       @('rfqGroupId', 'path', 'int64', '✓', '対象RFQグループID')
     ) `
+    -RequestTitle 'リクエストボディ（multipart/form-data）' `
     -RequestRows @(
-      @('quotationPhase', 'string', '✓', '`LIST_PRICE` / `ESTIMATE` / `ORDER_REGISTRATION`'),
-      @('storageFormat', 'string', '-', '`電子取引` / `スキャナ保存` / `未指定`'),
-      @('registrationDueOn', 'date', '-', '登録期限'),
-      @('vendorId', 'int64', '-', '見積業者ID'),
-      @('manualBasicInfo', 'QuotationBasicInfo', '-', '手入力した見積基本情報'),
-      @('documents', 'DocumentInput[]', '-', '添付見積書メタデータ'),
-      @('returnTo', 'string', '-', '既定 `/quotation-data-box/remodel-management`')
+      @('payload.quotationPhase', 'string', '✓', '`LIST_PRICE` / `ESTIMATE` / `ORDER_REGISTRATION`'),
+      @('payload.storageFormat', 'string', '-', '`電子取引` / `スキャナ保存` / `未指定`。ファイル保存先ではなく保存形式を表す'),
+      @('payload.registrationDueOn', 'date', '-', '登録期限'),
+      @('payload.vendorId', 'int64', '-', '見積業者ID'),
+      @('payload.manualBasicInfo', 'QuotationBasicInfo', '-', '手入力した見積基本情報'),
+      @('payload.documents', 'DocumentInput[]', '-', '添付見積書メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+      @('payload.returnTo', 'string', '-', '既定 `/quotation-data-box/remodel-management`'),
+      @('files', 'binary[]', '-', '`payload.documents[].filePartName` で参照される見積原本ファイル本体')
+    ) `
+    -RequestSubtables @(
+      @{ Title = 'documents要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
     ) `
     -PermissionLines $purchasePermissionLines `
     -ProcessingLines @(
       'RFQプロセスで作成できる見積フェーズは定価見積、概算見積、発注登録用見積とする。',
       '最終原本登録用は一覧絞り込みと既存見積参照候補として扱い、ドラフト作成対象外とする。',
-      '添付ファイルメタデータは `.pdf`、`.xlsx`、`.xls` を受け付ける。',
+      '`payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、`.pdf`、`.xlsx`、`.xls` の拡張子とMIME Typeを受け付ける。',
       'OCR実行サービスやExcel取込APIは対象外とし、画面で確認・編集された結果を後続APIで保存する。',
       'ドラフト作成時は `quotations.status=''DRAFT''` の見積ヘッダーを作成し、`draftId` には `quotations.quotation_id` を返す。',
+      '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `quotationId` などの業務IDを含めない。',
+      '見積原本は `application_documents` に `owner_type=''QUOTATION''`、`quotation_id`、`document_category=''QUOTATION''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format=payload.storageFormat`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない。',
+      '`storageFormat` は保存先ではなく電子取引/スキャナ保存/未指定などの保存形式を表す列として扱い、S3保存有無の表現には使用しない。',
+      'Amazon S3保存後にDBメタデータ保存またはドラフト作成トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REMODEL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。',
       'ドラフト明細は `quotation_items` に保持し、画面上で除外した行は `quotation_items.deleted_at` を設定して確定対象から外す。',
       '`managementType=''REMODEL''`、`returnTo`、対象RFQ/業者/明細の初期値をドラフトへ保持する。'
     ) `
@@ -578,6 +555,16 @@ $endpointBlocks = @(
       @('nextRoute', 'string', '✓', '次画面URL'),
       @('managementType', 'string', '✓', '`REMODEL`'),
       @('returnTo', 'string', '✓', '戻り先')
+    ) `
+    -StatusRows @(
+      @('201', '作成成功', 'QuotationDraftCreateResponse'),
+      @('400', '入力値不正', 'ErrorResponse'),
+      @('401', '未認証', 'ErrorResponse'),
+      @('403', '権限なし', 'ErrorResponse'),
+      @('404', '対象RFQなし', 'ErrorResponse'),
+      @('409', '状態不整合または競合更新', 'ErrorResponse'),
+      @('502', 'Amazon S3 への見積原本保存またはロールバック削除に失敗した', 'ErrorResponse'),
+      @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
   New-EndpointBlock `
@@ -729,6 +716,8 @@ $endpointBlocks = @(
       '有効見積ヘッダー確定後、`rfqs.quotation_type` / `rfqs.quotation_phase` と一覧用スナップショットを同期する。',
       '見積フェーズが `ORDER_REGISTRATION` の場合はRFQステータスを `発注見積登録済` へ進め、`nextRoute` に発注登録画面を返す。',
       'それ以外の見積フェーズはRFQステータスを `見積DB登録済` へ進め、リモデル管理一覧へ戻す。',
+      'Phase1では業者依頼送信をシステム上で管理しないため、`rfqs.status=''見積依頼''` から `見積DB登録済` または `発注見積登録済` へ直接遷移できる。',
+      '確定対象見積が `rfq_vendor_id` を保持する場合は、対象 `rfq_vendors.request_status` を取得済み見積として `REPLIED` に更新できる。ただし `SENT`、`requested_at`、`requested_by_user_id` は更新しない。',
       '見積明細には行番号、原文品目/メーカー/型式/数量、AI判定数量、枝番、確定品目/メーカー/型式、価格、`seqId`、`parentSeqId`、仕様行情報を保持する。'
     ) `
     -ResponseRows @(
@@ -849,31 +838,53 @@ $endpointBlocks = @(
     -ParametersRows @(
       @('orderItemId', 'path', 'int64', '✓', '対象発注明細ID')
     ) `
+    -RequestTitle 'リクエストボディ（multipart/form-data）' `
     -RequestRows @(
-      @('rfqGroupId', 'int64', '✓', '対象RFQグループID'),
-      @('serialNo', 'string', '-', 'シリアル番号'),
-      @('qrCodeValue', 'string', '-', 'QRコード'),
-      @('photoDocumentIds', 'int64[]', '-', '写真ファイルID'),
-      @('labelAttached', 'boolean', '-', 'ラベル貼付有無'),
-      @('buildingName', 'string', '-', '棟'),
-      @('floorName', 'string', '-', '階'),
-      @('departmentName', 'string', '-', '部門'),
-      @('sectionName', 'string', '-', '部署'),
-      @('roomName', 'string', '-', '室名'),
-      @('dimensionText', 'string', '-', '寸法'),
-      @('remarks', 'string', '-', '備考'),
-      @('shipAssetMasterId', 'int64', '-', 'SHIP分類')
+      @('payload.rfqGroupId', 'int64', '✓', '対象RFQグループID'),
+      @('payload.serialNo', 'string', '-', 'シリアル番号'),
+      @('payload.qrCodeValue', 'string', '-', 'QRコード'),
+      @('payload.photoDocumentIds', 'int64[]', '-', '既存写真ファイルID。以前保存済みのRFQ工程写真を継続利用する場合に指定する'),
+      @('payload.photoDocuments', 'DocumentInput[]', '-', '新規写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+      @('files', 'binary[]', '-', '`payload.photoDocuments[].filePartName` で参照される写真ファイル本体'),
+      @('payload.labelAttached', 'boolean', '-', 'ラベル貼付有無'),
+      @('payload.buildingName', 'string', '-', '棟'),
+      @('payload.floorName', 'string', '-', '階'),
+      @('payload.departmentName', 'string', '-', '部門'),
+      @('payload.sectionName', 'string', '-', '部署'),
+      @('payload.roomName', 'string', '-', '室名'),
+      @('payload.dimensionText', 'string', '-', '寸法'),
+      @('payload.remarks', 'string', '-', '備考'),
+      @('payload.shipAssetMasterId', 'int64', '-', 'SHIP分類')
+    ) `
+    -RequestSubtables @(
+      @{ Title = 'photoDocuments要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
     ) `
     -PermissionLines $acceptancePermissionLines `
     -ProcessingLines @(
       '対象発注明細が指定RFQの発注に属することを検証する。',
-      '写真ファイルは `application_documents.owner_type=''ASSET_LEDGER''` 予定の一時メタデータとして保持する。',
+      '`payload.photoDocuments[].filePartName` が multipart の写真ファイルパートに存在することを確認し、拡張子・MIME Type は画像として許可された形式に限定する。',
+      '新規写真ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`rfqGroupId` や `orderItemId` などの業務IDを含めない。',
+      '検収登録中の写真は資産登録前の工程ドキュメントとして `application_documents` に `owner_type=''RFQ''`、`rfq_id`、`step_code=''ACCEPTANCE''`、`document_category=''PHOTO''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` を保存する。S3バケット名やHTTPS URLはDBへ保存しない。',
+      '`payload.photoDocumentIds` は同一RFQの未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')` であり、`application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', order_item_id=対象発注明細ID, deleted_at IS NULL)` に有効リンクがあるIDのみ受け付ける。',
+      '保存対象の発注明細IDと写真ドキュメントIDの対応は `application_document_order_item_links` に `relation_type=''ACCEPTANCE_PHOTO''` として保存し、レスポンスやコンテキストの `photoDocumentIds` は同リンクから解決する。S3オブジェクトキーの接頭辞から `orderItemId` を再解決しない。',
+      'Amazon S3保存後にDBメタデータ保存または明細保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REMODEL_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す。',
       '明細単位の保存ではRFQステータスを変更しない。'
     ) `
     -ResponseRows @(
       @('orderItemId', 'int64', '✓', '対象発注明細ID'),
+      @('photoDocumentIds', 'int64[]', '-', '保存後に当該発注明細へ紐付く検収写真ドキュメントID'),
       @('saved', 'boolean', '✓', '保存結果'),
       @('updatedAt', 'datetime', '✓', '更新日時')
+    ) `
+    -StatusRows @(
+      @('200', '保存成功', 'AssetProvisionalItemSaveResponse'),
+      @('400', '入力値不正', 'ErrorResponse'),
+      @('401', '未認証', 'ErrorResponse'),
+      @('403', '権限なし', 'ErrorResponse'),
+      @('404', '対象発注明細またはRFQなし', 'ErrorResponse'),
+      @('409', '状態不整合または競合更新', 'ErrorResponse'),
+      @('502', 'Amazon S3 への検収写真保存またはロールバック削除に失敗した', 'ErrorResponse'),
+      @('500', 'サーバー内部エラー', 'ErrorResponse')
     )
 
   New-EndpointBlock `
@@ -892,6 +903,7 @@ $endpointBlocks = @(
       '対象RFQは `納期確定` のみ許可する。',
       '未登録明細が残る場合は拒否する。',
       '発注明細ID、RFQ ID、QRコード、シリアル番号、品目/メーカー/型式、取得金額、取得日、設置場所、分類、仮勘定情報を持つ `individuals` を作成/更新する。',
+      'レスポンスの `IndividualSummary.photoDocumentIds` には、当該発注明細に対応する同一RFQの未削除 `application_documents(owner_type=''RFQ'', document_category=''PHOTO'')` のIDのみを返し、原本資産登録時に別発注明細の写真を誤って複製しない。',
       '登録成功時はRFQステータスを `検収済` へ進める。'
     ) `
     -ResponseRows @(
@@ -916,6 +928,7 @@ $endpointBlocks = @(
     -ProcessingLines @(
       '対象RFQは `検収済` のみ許可する。',
       '`individuals.registration_status=''INSPECTED''` の個体を原本登録対象として返す。',
+      '`IndividualSummary.photoDocumentIds` は同一RFQの未削除RFQ写真のうち `application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'', order_item_id=対象発注明細ID, deleted_at IS NULL)` に紐づくドキュメントIDを設定する。',
       '会計区分と勘定科目は固定候補をコード表として返す。'
     ) `
     -ResponseRows @(
@@ -943,6 +956,8 @@ $endpointBlocks = @(
       '対象RFQは `検収済` のみ許可する。',
       '`individuals` を原本資産へ反映し、`asset_ledgers` を作成または更新する。',
       '対象個体、発注明細、見積明細、編集リスト明細の紐づけを保持する。',
+      'リクエストの `individuals[].photoDocumentIds` で指定された `application_documents.owner_type=''RFQ''`、`document_category=''PHOTO''` の写真だけを、当該個体から作成/更新した原本資産へ反映する。各IDは同一RFQかつ当該個体の `orderItemId` に対応する `application_document_order_item_links(relation_type=''ACCEPTANCE_PHOTO'')` を持つことを検証する。',
+      '検収写真はS3オブジェクト自体を再アップロードせず、作成/更新した原本資産の `application_documents.owner_type=''ASSET_LEDGER''`、`asset_ledger_id`、`document_category=''PHOTO''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`taken_at`、`is_primary`、`uploaded_by_user_id`、`uploaded_at` としてメタデータを複製する。',
       '登録成功時はRFQステータスを `完了` へ進める。',
       'リモデル管理では、RFQ単位の原本登録完了後も編集リスト全体の原本反映確定はリモデルクローズで行う。'
     ) `
@@ -1009,7 +1024,7 @@ $endpointBlocks = @(
     @{ Type = 'Table'; Headers = @('画面名', 'URL', '本書で扱う内容'); Rows = @(
       @('リモデル管理', '/quotation-data-box/remodel-management', 'リモデルRFQ/廃棄/移動ワークフロー一覧、フィルター、ステータス別操作'),
       @('リモデルダッシュボード', '/quotation-data-box/remodel-dashboard', '編集リスト単位の進捗、クローズ可否、クローズ不可理由'),
-      @('RFQプロセス', '/quotation-data-box/rfq-process', '見積依頼先保存、個別送信、一括送信、見積登録ドラフト作成'),
+      @('RFQプロセス', '/quotation-data-box/rfq-process', '見積登録先業者保存、未確定業者行削除、取得済み見積書アップロード、見積登録ドラフト作成'),
       @('見積登録共通画面群', '/quotation-data-box/ocr-confirm ほか', '見積ドラフト、明細区分、資産マスタ照合、個体登録/金額按分、登録確認'),
       @('発注登録', '/quotation-data-box/order-registration', '発注ヘッダー、発注明細、支払条件、支払方法'),
       @('納品検収日登録', '/quotation-data-box/inspection-registration', '納品検収予定日、明細別納品日、検収書種別'),
@@ -1021,7 +1036,8 @@ $endpointBlocks = @(
       '編集リスト本体操作、Data Link、見積DB Link、フリーカラム、行順変更、行削除、編集リスト画面で行選択して実行するRFQ作成は「編集リスト」API設計書を正本とする',
       '購入管理タブの申請受付一覧から行う購入申請取り込み、および通常購入RFQの一覧・後続進行は「購入管理」API設計書を正本とする',
       '本書では `rfqs.management_type=''REMODEL''` のRFQ/廃棄/移動ワークフローを対象とし、通常購入RFQとは混在させない',
-      'SHIP代理作業依頼APIは対象外とし、本書の `SHIPへ一括依頼` は業者への見積依頼一括送信として扱う',
+      'Phase1では個別依頼送信API、`send-bulk`、RFQプロセスの業者向け `SHIPへ一括依頼` は定義しない。業者への見積依頼はシステム外で実施し、Phase2でOutlook連携を扱う場合もメール送信完了は管理しない',
+      'SHIP代理作業依頼は、見積書アップロード後のOCR〜見積DB登録代理依頼としてPhase2で再整理する。業者への見積依頼送信や `rfq_vendors.request_status=''SENT''` 更新とは別責務とする',
       'OCR実行サービス、Excel取込API、AI推論サービス自体は対象外とし、画面で確認・採用された結果の保存を扱う',
       '廃棄/移動は画面の承認、却下、完了操作に対応する単純な状態遷移として扱う'
     ) },
@@ -1044,7 +1060,7 @@ $endpointBlocks = @(
       @('期限・実績日の編集', '`PATCH /quotation-data-box/remodel-management/rfq-groups/{rfqGroupId}/deadlines`', 'ステータス別の日付項目を更新'),
       @('リモデルダッシュボード表示', '`GET /quotation-data-box/remodel-dashboard`', '編集リスト単位の進捗、クローズ可否、不可理由を取得'),
       @('廃棄/移動の承認・却下・完了', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action`', '画面にある単純な承認、却下、完了操作だけを扱う'),
-      @('RFQプロセスの業者保存・送信', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests` ほか', '依頼先行の保存、個別送信、未送信削除、一括送信を扱う'),
+      @('RFQプロセスの見積登録先業者保存', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests` ほか', '見積業者行の保存と未確定削除を扱う。個別送信・一括送信はPhase1対象外'),
       @('見積登録共通画面', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts` ほか', 'ドラフト作成から見積確定までを扱う'),
       @('発注登録', '`POST /quotation-data-box/order-registration/orders`', '発注ヘッダー、発注明細、支払条件、支払方法を保存'),
       @('納品検収・検収登録・原本登録', '`POST /quotation-data-box/inspection-registration/records` ほか', '納期確定、検収済、完了まで進行'),
@@ -1075,7 +1091,7 @@ $endpointBlocks = @(
       @('`rfq_applications`', 'READ', 'RFQ/廃棄/移動に採用された編集リスト明細・申請明細のリンク'),
       @('`applications`', 'READ', '廃棄/移動ワークフローに紐づく申請情報'),
       @('`application_status_histories`', 'CREATE', '廃棄/移動ワークフローの承認、却下、完了操作履歴。No.24では申請状態ではなくRFQ進行状態の操作履歴として使用'),
-      @('`rfq_vendors`', 'READ / CREATE / UPDATE / DELETE', '見積依頼先業者、依頼送信状態、提出期限、依頼メモ'),
+      @('`rfq_vendors`', 'READ / CREATE / UPDATE / DELETE', '見積業者行、取得済み見積の業者、提出期限、補足メモ。Phase1では送信完了の正本として `SENT` を更新しない'),
       @('`quotations`', 'READ / CREATE / UPDATE', '見積ヘッダー、見積フェーズ、確定状態、添付参照'),
       @('`quotation_items`', 'READ / CREATE / UPDATE', '見積明細、明細区分、分類、AI採用結果、按分結果'),
       @('`quotation_item_application_links`', 'READ / CREATE / UPDATE', '見積明細と編集リスト明細の対応'),
@@ -1086,15 +1102,16 @@ $endpointBlocks = @(
       @('`facility_location_remodels`', 'READ / UPDATE', '個別部署マスタのリモデル先ロケーション情報、クローズ時の反映元。反映後は `deleted_at` を設定'),
       @('`facility_locations`', 'READ / UPDATE', '個別部署マスタの現状情報への反映先'),
       @('`asset_ledger_histories`', 'CREATE', 'リモデルクローズ時の原本反映監査履歴'),
-      @('`application_documents`', 'READ / CREATE / UPDATE', '見積書、発注書、検収書、写真などのファイルメタデータ'),
-      @('`vendors`', 'READ', '依頼先業者・見積業者のマスタ参照')
+      @('`application_documents`', 'READ / CREATE / UPDATE', '見積書、発注書、検収書、写真などのファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する'),
+      @('`application_document_order_item_links`', 'READ / CREATE / UPDATE', '検収写真ドキュメントと発注明細の対応。`relation_type=''ACCEPTANCE_PHOTO''` で、S3オブジェクトキーのprefixに依存せず `photoDocumentIds` を検証する'),
+      @('`vendors`', 'READ', '見積業者のマスタ参照')
     ) },
 
     @{ Type = 'Heading1'; Text = '第3章 共通仕様' },
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON。ファイル実体アップロードは別ストレージ連携を前提とし、本APIでは `application_documents` のメタデータを扱う',
+      'データ形式: JSON（見積登録ドラフト作成・検収登録明細保存のファイル実体を含む multipart/form-data を除く）。ファイル実体はAPI内でAmazon S3へPutObjectし、DBには `application_documents` のメタデータを保存する',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-30T10:00:00+09:00`）',
       '日付形式: `YYYY-MM-DD`',
@@ -1106,7 +1123,7 @@ $endpointBlocks = @(
     @{ Type = 'Heading2'; Text = '認証・認可' },
     @{ Type = 'Paragraph'; Text = '本API群は、ロール固定ではなく対象施設に対する実効 `feature_code` で認可する。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、リモデル見積、リモデル発注、リモデル検収・原本反映、廃棄・移動操作の対象 `feature_code` を有効として扱う。' },
     @{ Type = 'Table'; Headers = @('機能コード', '対象操作', '説明'); Rows = @(
-      @('`remodel_purchase`', 'リモデル管理一覧、見積依頼先保存、個別送信、一括送信、見積登録ドラフト、見積確定', 'リモデル見積工程'),
+      @('`remodel_purchase`', 'リモデル管理一覧、見積登録先業者保存、未確定業者行削除、見積登録ドラフト、見積確定', 'リモデル見積工程'),
       @('`remodel_order`', '発注登録', 'リモデル発注工程'),
       @('`remodel_acceptance`', '納品検収日登録、検収登録、原本登録、リモデルクローズ', 'リモデル検収・原本反映工程'),
       @('`transfer_disposal`', '廃棄/移動の承認、却下、廃棄完了、移動完了', '廃棄・移動操作')
@@ -1127,11 +1144,14 @@ $endpointBlocks = @(
       @('details', 'string[]', '-', '入力項目単位のエラーや補足情報'),
       @('traceId', 'string', '-', '調査用トレースID')
     ) },
+    @{ Type = 'Heading2'; Text = '共通DTO' },
+    @{ Type = 'Paragraph'; Text = '`DocumentInput` は multipart/form-data のファイルパートに対応するメタデータであり、`filePartName` で対象ファイルを指定する。APIはファイル実体をAmazon S3へPutObjectし、生成したS3オブジェクトキーを `application_documents.file_path` に保存する。S3オブジェクトキー、S3バケット名、HTTPS URLはリクエスト/レスポンスで直接扱わない。`storageFormat` はS3保存先ではなく、電子取引/スキャナ保存/未指定などの保存形式を表す列として扱う。' },
+    @{ Type = 'Heading3'; Text = 'DocumentInput' },
+    @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows },
     @{ Type = 'Heading2'; Text = 'ステータス遷移の前提' },
     @{ Type = 'Table'; Headers = @('ワークフロー', '工程', '開始ステータス', '成功後ステータス', '主API'); Rows = @(
-      @('RFQ', '見積依頼送信', '`見積依頼`', '`見積依頼済`', '`POST /quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}/send`'),
-      @('RFQ', '参考系見積確定', '`見積依頼済` など', '`見積DB登録済`', '`POST /quotation-data-box/quotation-drafts/{draftId}/confirm`'),
-      @('RFQ', '発注登録用見積確定', '`発注用見積依頼済` など', '`発注見積登録済`', '`POST /quotation-data-box/quotation-drafts/{draftId}/confirm`'),
+      @('RFQ', '参考系見積確定', '`見積依頼` / `見積DB登録済` など', '`見積DB登録済`', '`POST /quotation-data-box/quotation-drafts/{draftId}/confirm`'),
+      @('RFQ', '発注登録用見積確定', '`見積依頼` / `発注用見積依頼済` など', '`発注見積登録済`', '`POST /quotation-data-box/quotation-drafts/{draftId}/confirm`'),
       @('RFQ', '発注登録', '`発注見積登録済`', '`発注済`', '`POST /quotation-data-box/order-registration/orders`'),
       @('RFQ', '納品検収日登録', '`発注済`', '`納期確定`', '`POST /quotation-data-box/inspection-registration/records`'),
       @('RFQ', '検収登録完了', '`納期確定`', '`検収済`', '`POST /quotation-data-box/asset-provisional-registration/complete`'),
@@ -1152,25 +1172,23 @@ $endpointBlocks = @(
       @('24-04', 'リモデルダッシュボード取得', 'GET', '/quotation-data-box/remodel-dashboard', '進捗・クローズ可否', '入口権限いずれか'),
       @('24-05', 'RFQグループ詳細取得', 'GET', '/quotation-data-box/rfq-groups/{rfqGroupId}', '共通後続画面文脈取得', '入口権限いずれか'),
       @('24-06', '廃棄・移動ワークフロー操作', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/workflow-action', '承認/却下/完了', 'transfer_disposal'),
-      @('24-07', '見積依頼先保存', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests', '依頼先追加・更新', 'remodel_purchase'),
-      @('24-08', '見積依頼個別送信', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}/send', '業者行単位送信', 'remodel_purchase'),
-      @('24-09', '見積依頼先削除', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}', '未送信依頼先削除', 'remodel_purchase'),
-      @('24-10', '見積依頼一括送信', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/send-bulk', '未送信依頼先一括送信', 'remodel_purchase'),
-      @('24-11', '見積登録ドラフト作成', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts', '見積登録開始', 'remodel_purchase'),
-      @('24-12', '見積登録ドラフト取得', 'GET', '/quotation-data-box/quotation-drafts/{draftId}', '共通見積登録画面取得', 'remodel_purchase'),
-      @('24-13', 'OCR確認結果保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/ocr-confirmation', '見積基本情報・明細保存', 'remodel_purchase'),
-      @('24-14', '明細区分登録保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/line-categories', 'カテゴリ・明細区分保存', 'remodel_purchase'),
-      @('24-15', '資産マスタ照合結果保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/asset-master-matches', 'AI採用/手動選択保存', 'remodel_purchase'),
-      @('24-16', '個体登録・金額按分保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/price-allocations', '按分・個体候補保存', 'remodel_purchase'),
-      @('24-17', '見積登録確定', 'POST', '/quotation-data-box/quotation-drafts/{draftId}/confirm', '見積確定', 'remodel_purchase'),
-      @('24-18', '発注登録', 'POST', '/quotation-data-box/order-registration/orders', '発注作成', 'remodel_order'),
-      @('24-19', '納品検収予定日登録', 'POST', '/quotation-data-box/inspection-registration/records', '納期確定', 'remodel_acceptance'),
-      @('24-20', '検収登録コンテキスト取得', 'GET', '/quotation-data-box/asset-provisional-registration/context', '検収登録画面取得', 'remodel_acceptance'),
-      @('24-21', '検収登録明細保存', 'PATCH', '/quotation-data-box/asset-provisional-registration/items/{orderItemId}', '明細単位保存', 'remodel_acceptance'),
-      @('24-22', '検収登録完了', 'POST', '/quotation-data-box/asset-provisional-registration/complete', '検収済へ更新', 'remodel_acceptance'),
-      @('24-23', '原本登録コンテキスト取得', 'GET', '/quotation-data-box/asset-registration/context', '原本登録画面取得', 'remodel_acceptance'),
-      @('24-24', '原本資産登録', 'POST', '/quotation-data-box/asset-registration/register-bulk', 'RFQ完了', 'remodel_acceptance'),
-      @('24-25', 'リモデルクローズ', 'POST', '/quotation-data-box/remodel-management/edit-lists/{editListId}/close', '編集リスト単位のリモデル完了確定', 'remodel_acceptance')
+      @('24-07', '見積登録先業者保存', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests', '見積業者行の追加・更新。業者依頼送信は行わない', 'remodel_purchase'),
+      @('24-08', '見積登録先業者削除', 'DELETE', '/quotation-data-box/rfq-groups/{rfqGroupId}/vendor-requests/{rfqVendorId}', '未確定業者行削除', 'remodel_purchase'),
+      @('24-09', '見積登録ドラフト作成', 'POST', '/quotation-data-box/rfq-groups/{rfqGroupId}/quotation-drafts', '見積登録開始', 'remodel_purchase'),
+      @('24-10', '見積登録ドラフト取得', 'GET', '/quotation-data-box/quotation-drafts/{draftId}', '共通見積登録画面取得', 'remodel_purchase'),
+      @('24-11', 'OCR確認結果保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/ocr-confirmation', '見積基本情報・明細保存', 'remodel_purchase'),
+      @('24-12', '明細区分登録保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/line-categories', 'カテゴリ・明細区分保存', 'remodel_purchase'),
+      @('24-13', '資産マスタ照合結果保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/asset-master-matches', 'AI採用/手動選択保存', 'remodel_purchase'),
+      @('24-14', '個体登録・金額按分保存', 'PATCH', '/quotation-data-box/quotation-drafts/{draftId}/price-allocations', '按分・個体候補保存', 'remodel_purchase'),
+      @('24-15', '見積登録確定', 'POST', '/quotation-data-box/quotation-drafts/{draftId}/confirm', '見積確定', 'remodel_purchase'),
+      @('24-16', '発注登録', 'POST', '/quotation-data-box/order-registration/orders', '発注作成', 'remodel_order'),
+      @('24-17', '納品検収予定日登録', 'POST', '/quotation-data-box/inspection-registration/records', '納期確定', 'remodel_acceptance'),
+      @('24-18', '検収登録コンテキスト取得', 'GET', '/quotation-data-box/asset-provisional-registration/context', '検収登録画面取得', 'remodel_acceptance'),
+      @('24-19', '検収登録明細保存', 'PATCH', '/quotation-data-box/asset-provisional-registration/items/{orderItemId}', '明細単位保存', 'remodel_acceptance'),
+      @('24-20', '検収登録完了', 'POST', '/quotation-data-box/asset-provisional-registration/complete', '検収済へ更新', 'remodel_acceptance'),
+      @('24-21', '原本登録コンテキスト取得', 'GET', '/quotation-data-box/asset-registration/context', '原本登録画面取得', 'remodel_acceptance'),
+      @('24-22', '原本資産登録', 'POST', '/quotation-data-box/asset-registration/register-bulk', 'RFQ完了', 'remodel_acceptance'),
+      @('24-23', 'リモデルクローズ', 'POST', '/quotation-data-box/remodel-management/edit-lists/{editListId}/close', '編集リスト単位のリモデル完了確定', 'remodel_acceptance')
     ) },
 
     @{ Type = 'Heading1'; Text = '第5章 機能設計' },
@@ -1210,6 +1228,15 @@ $endpointBlocks = @(
       '支払方法は `orders.payment_method` に専用列として保持し、`payment_terms` へ統合しない',
       '支払方法の選択肢は `でんさい`、`銀行振込`、`クレジット`、`現金` とする',
       '検収書種別の保存値は `本体のみ` または `付属品含む` とする'
+    ) },
+    @{ Type = 'Heading2'; Text = 'ファイル保存ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '見積原本と検収写真のファイル実体はAPI内でAmazon S3へPutObjectし、`application_documents.file_path` にはS3オブジェクトキーのみを保存する',
+      'S3バケット名、HTTPS URL、S3オブジェクトキーはリクエスト/レスポンスで直接扱わない。表示・ダウンロードが必要な場合は、認可済みURLをAPI側で発行して返す',
+      '`storageFormat` / `application_documents.storage_format` / `orders.storage_format` は保存先ではなく電子取引/スキャナ保存/未指定などの保存形式を表す列として扱い、S3保存有無の表現には使用しない',
+      'S3保存に成功し、DBメタデータ保存または業務トランザクションに失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄してからエラー応答する',
+      '検収写真を原本資産へ反映する場合は、S3オブジェクト自体を再アップロードせず、同一S3オブジェクトキーを含む `application_documents` メタデータを `owner_type=''ASSET_LEDGER''` 側へ複製する',
+      'DB確定後に文書や写真を削除する後続APIを追加する場合は、`application_documents.deleted_at` の論理削除を正本とし、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するストレージ削除処理で扱う'
     ) },
 
     @{ Type = 'Heading1'; Text = '第7章 エラーコード一覧' },

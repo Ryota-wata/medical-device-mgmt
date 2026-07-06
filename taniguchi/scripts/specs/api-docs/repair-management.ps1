@@ -15,6 +15,7 @@ $errorRows = @(
   @('403', '作業対象施設に対する実効 feature_code なし', 'ErrorResponse'),
   @('404', '作業対象施設、対象申請、対象資産、対象ドキュメントが存在しない', 'ErrorResponse'),
   @('409', '現在ステータス不整合、競合更新、対象条件不整合', 'ErrorResponse'),
+  @('502', 'Amazon S3 へのファイル保存またはロールバック削除に失敗した', 'ErrorResponse'),
   @('500', 'サーバー内部エラー', 'ErrorResponse')
 )
 
@@ -47,17 +48,22 @@ $documentRows = @(
   @('fileName', 'string', '✓', 'ファイル名'),
   @('contentType', 'string', '-', 'MIMEタイプ'),
   @('fileSize', 'int64', '-', 'ファイルサイズ'),
+  @('downloadUrl', 'string', '-', '表示・ダウンロード用の認可済みURL。S3オブジェクトキー、S3バケット名、S3の直接URLは返さない'),
   @('uploadedAt', 'datetime', '✓', 'アップロード日時'),
   @('uploadedByName', 'string', '-', 'アップロード者名')
 )
 
-$documentCreateInputRows = @(
-  @('documentCategory', 'string', '-', '`REQUEST_ATTACHMENT` / `QUOTATION` / `CONTRACT` / `DELIVERY` / `ACCEPTANCE` / `REPORT` / `PHOTO` / `OTHER` など。未指定時は呼び出しAPIの工程と `documentType` から決定する'),
+$documentInputRows = @(
+  @('ownerType', 'string', '条件付き', '`APPLICATION` / `APPLICATION_ASSET` / `RFQ` / `RFQ_VENDOR` / `QUOTATION` / `ASSET_LEDGER`。汎用ドキュメント登録では必須。見積登録・発注登録・検収登録に内包するドキュメントではAPIが所有者を確定するため省略可'),
+  @('ownerId', 'int64', '条件付き', '所有者ID。汎用ドキュメント登録では `ownerType` に応じて `application_id` / `application_asset_id` / `rfq_id` / `rfq_vendor_id` / `quotation_id` / `asset_ledger_id` のいずれかへ設定するIDを必須とする。内包APIでは省略可'),
+  @('stepCode', 'string', '-', '`REQUEST` / `QUOTE` / `ORDER` / `INSPECTION` / `COMPLETE` などの工程コード'),
+  @('documentCategory', 'string', '条件付き', '`REQUEST_ATTACHMENT` / `QUOTATION` / `CONTRACT` / `DELIVERY` / `ACCEPTANCE` / `REPORT` / `PHOTO` / `OTHER` など。汎用ドキュメント登録では必須。内包APIでは未指定時に呼び出しAPIの工程と `documentType` から決定する'),
   @('documentType', 'string', '✓', '`application_documents.document_type`。例: 修理依頼書 / 見積書 / 発注書 / 納品書 / 検収書 / 修理報告書'),
+  @('filePartName', 'string', '✓', 'multipart/form-data のファイルパート名'),
   @('fileName', 'string', '✓', 'ファイル名'),
   @('contentType', 'string', '-', 'MIMEタイプ'),
   @('fileSize', 'int64', '-', 'ファイルサイズ'),
-  @('storageKey', 'string', '✓', 'ファイル実体のストレージキー'),
+  @('contentHash', 'string', '-', 'ファイル本文のハッシュ値。未指定時はAPI側で算出する'),
   @('title', 'string', '-', '表示タイトル'),
   @('documentDate', 'date', '-', '文書日付'),
   @('accountType', 'string', '-', '`application_documents.account_type` に保存する勘定科目区分'),
@@ -192,7 +198,7 @@ $repairOrderRows = @(
       @('`repair_requests` VIEW', 'READ', '修理管理タブ一覧、絞り込み、期限列、タスク遷移用の投影'),
       @('`asset_ledgers`', 'READ', '登録済み資産の施設スコープ確認。未登録資産の廃棄申請接続では作成・更新しない'),
       @('`inspection_results`', 'READ', '修理申請に紐づく点検結果の参照・詳細表示補助'),
-      @('`application_documents`', 'READ / CREATE / UPDATE / DELETE', '修理依頼写真、見積書、発注書、修理報告書、納品書等のファイルメタデータ。削除は `deleted_at` 更新による論理削除'),
+      @('`application_documents`', 'READ / CREATE / UPDATE / DELETE', '修理依頼写真、見積書、発注書、修理報告書、納品書等のファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみ保持する。削除は `deleted_at` 更新による論理削除'),
       @('`rfqs`', 'READ / CREATE / UPDATE', '院外修理の見積依頼グループ。`management_type=''REPAIR''`'),
       @('`rfq_vendors`', 'READ / CREATE / UPDATE', '見積依頼先、依頼送信状態、回答期限'),
       @('`rfq_applications`', 'CREATE / READ', 'RFQと修理申請/申請明細の紐づけ'),
@@ -213,12 +219,20 @@ $repairOrderRows = @(
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON。ファイル実体アップロードは別ストレージ連携を前提とし、本APIでは `application_documents` のメタデータを扱う',
+      'データ形式: JSON。見積書、発注書、修理報告書、納品書等のファイル本体を受け取るPOST APIは multipart/form-data を使用し、`payload` に業務データとファイルメタデータ、`files` にファイル本体を指定する',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-19T10:00:00+09:00`）',
       '日付形式: `YYYY-MM-DD`',
       '認証済みAPIは Bearer トークンを `Authorization` ヘッダーに付与する',
       '各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する'
+    ) },
+    @{ Type = 'Heading2'; Text = 'ファイル保存ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '見積書原本、発注書、修理報告書、納品書、検収書、修理依頼書等のファイル実体は、対象APIが multipart/form-data の `files` パートとして受け取り、API内でAmazon S3へPutObjectする',
+      '`application_documents.file_path` にはS3オブジェクトキーのみ保存し、S3バケット名、S3の直接URL、認可なしで利用できるURLはDBへ保存しない',
+      'レスポンスではS3オブジェクトキー、S3バケット名、S3の直接URLを返さず、画面表示やダウンロードが必要な場合は認可済み `downloadUrl` を返す',
+      'DBメタデータ保存または業務トランザクションに失敗した場合、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
+      'ドキュメント削除APIは `application_documents.deleted_at` を設定する論理削除とし、S3オブジェクトは `deleted_at` 起点のS3ライフサイクルまたは後続クリーンアップで削除する'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `repair_management` である。メニューからの修理依頼起票に使用する `repair_request_create` は No.6 修理申請API設計書で扱い、本書では修理管理タブ一覧と修理タスク操作の実効権限を判定する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `repair_management` 判定をバイパスする。' },
@@ -259,9 +273,9 @@ $repairOrderRows = @(
       @('details', 'string[]', '-', '入力エラーや競合理由の補足')
     ) },
     @{ Type = 'Heading2'; Text = '共通DTO' },
-    @{ Type = 'Paragraph'; Text = '複数APIで共通利用する入出力DTOを以下に定義する。各業務API内で所有者や工程が一意に決まる添付は、リクエスト本文で `ownerType` を受け取らず、処理仕様に従って `application_documents` の実FKへ保存する。`DocumentCreateInput` を保存するAPIは、認証ユーザーIDを `uploaded_by_user_id`、現在日時を `uploaded_at` に設定する。' },
-    @{ Type = 'Heading3'; Text = 'DocumentCreateInput' },
-    @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentCreateInputRows },
+    @{ Type = 'Paragraph'; Text = '複数APIで共通利用する入出力DTOを以下に定義する。各業務API内で所有者や工程が一意に決まる添付は、リクエスト本文で `ownerType` / `ownerId` を省略でき、処理仕様に従って `application_documents` の実FKへ保存する。`DocumentInput` を保存するAPIは、ファイル本体をAmazon S3へPutObjectし、発行したS3オブジェクトキーを `application_documents.file_path`、認証ユーザーIDを `uploaded_by_user_id`、現在日時を `uploaded_at` に設定する。' },
+    @{ Type = 'Heading3'; Text = 'DocumentInput' },
+    @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows },
     @{ Type = 'Heading3'; Text = 'RepairTaskStep' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $repairTaskStepRows },
     @{ Type = 'Heading3'; Text = 'RepairVendorRequest' },
@@ -657,21 +671,21 @@ $repairOrderRows = @(
         ParametersRows = @(
           @('repairTaskId', 'path', 'int64', '✓', '修理申請ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('vendorId', 'int64', '-', '見積業者ID'),
-          @('vendorName', 'string', '✓', '見積業者名'),
-          @('quotationOn', 'date', '✓', '見積日'),
-          @('quotationPhase', 'string', '-', '見積フェーズ。未指定時は修理見積'),
-          @('totalAmountExclTax', 'decimal', '-', '税抜合計金額'),
-          @('storageFormat', 'string', '-', '保存形式'),
-          @('items', 'RepairQuotationItemInput[]', '✓', '見積明細'),
-          @('documents', 'DocumentCreateInput[]', '-', '見積書原本メタデータ')
+          @('payload.vendorId', 'int64', '-', '見積業者ID'),
+          @('payload.vendorName', 'string', '✓', '見積業者名'),
+          @('payload.quotationOn', 'date', '✓', '見積日'),
+          @('payload.quotationPhase', 'string', '-', '見積フェーズ。未指定時は修理見積'),
+          @('payload.totalAmountExclTax', 'decimal', '-', '税抜合計金額'),
+          @('payload.items', 'RepairQuotationItemInput[]', '✓', '見積明細'),
+          @('payload.documents', 'DocumentInput[]', '-', '見積書原本メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.documents[].filePartName` で参照される見積書原本ファイル本体')
         )
         RequestSubtables = @(
           @{
-            Title = 'items要素（RepairQuotationItemInput）'
+            Title = 'payload.items要素（RepairQuotationItemInput）'
             Headers = @('フィールド', '型', '必須', '説明')
             Rows = @(
               @('itemName', 'string', '✓', '品名'),
@@ -682,6 +696,11 @@ $repairOrderRows = @(
               @('amount', 'decimal', '-', '金額'),
               @('accountTitle', 'string', '-', '仮勘定科目')
             )
+          },
+          @{
+            Title = 'payload.documents要素（DocumentInput）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = $documentInputRows
           }
         )
         PermissionLines = $repairManagementPermissionLines
@@ -689,10 +708,13 @@ $repairOrderRows = @(
           $workFacilityProcessingLine,
           '対象は `status=''見積登録済''` の修理申請に限定する',
           '対象修理申請に紐づく `rfqs.management_type=''REPAIR''` を取得する。存在しない場合は409を返す',
-          '`vendorId` 指定時は `vendors` に存在し、作業対象施設で利用可能な業者であることを検証する',
+          '`payload.vendorId` 指定時は `vendors` に存在し、作業対象施設で利用可能な業者であることを検証する',
+          '`payload.documents` を指定した場合は、各 `filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は見積原本として許可された形式に限定する',
           '`quotations` は見積番号を採番し、`rfq_id`、業者情報、`quotation_on`、`quotation_phase`（未指定時 `修理見積`）、`total_amount_excl_tax`、`status=''REGISTERED''` を保存して作成する',
           '`quotation_items` は入力行ごとに作成し、`item_type` は未指定のため `E_その他役務`、`original_item_name` / `item_name`、`original_maker_name` / `maker_name`、`original_model_name` / `model_name`、`original_quantity`、`ai_quantity`、`purchase_price_unit`、`purchase_price_total`、`account_title`、`is_specification_line=false` へ保存する',
-          '見積原本は `application_documents.owner_type=''QUOTATION''`、`document_category=''QUOTATION''`、`document_type=''見積書''` としてメタデータを保存する',
+          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` や `quotationId` などの業務IDを含めない',
+          '見積原本は `application_documents.owner_type=''QUOTATION''`、`quotation_id=quotationId`、`document_category=''QUOTATION''`、`document_type=''見積書''` として保存し、`file_path` には発行したS3オブジェクトキーのみ保存する',
+          'Amazon S3保存後にDBメタデータ保存または見積登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '採用見積の選択は発注登録APIで行うため、本API登録時点では `applications.status` を変更しない'
         )
         ResponseTitle = 'レスポンス（201：RepairQuotationResponse）'
@@ -710,6 +732,7 @@ $repairOrderRows = @(
           @('403', '作業対象施設に対する実効 `repair_management` なし', 'ErrorResponse'),
           @('404', '対象修理申請が存在しない', 'ErrorResponse'),
           @('409', 'RFQ未作成または現在ステータス不整合', 'ErrorResponse'),
+          @('502', 'Amazon S3 への見積書原本保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -733,7 +756,7 @@ $repairOrderRows = @(
           '`orders.quotation_id=quotationId` が存在する、または修理申請が `発注済` / `納期確定` / `検収登録` / `完了` / `却下` の場合は409を返す',
           '`quotations.deleted_at`、対象見積配下の `quotation_items.deleted_at`、対象見積所有の `application_documents.deleted_at` を同一トランザクションで設定する',
           '`applications.status` は変更しない。削除後に有効見積が0件になってもSTEP2に留まり、見積を再登録可能とする',
-          'ファイル実体削除はストレージ側のライフサイクルまたは別処理に委譲する'
+          'S3オブジェクトは `deleted_at` 起点のS3ライフサイクルまたは後続クリーンアップで削除する'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
         ResponseLines = @(
@@ -759,26 +782,37 @@ $repairOrderRows = @(
         ParametersRows = @(
           @('repairTaskId', 'path', 'int64', '✓', '修理申請ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('quotationId', 'int64', '✓', '採用する見積ID'),
-          @('orderOn', 'date', '✓', '発注日'),
-          @('orderDeadlineOn', 'date', '-', '発注期限'),
-          @('paymentTerms', 'string', '-', '支払条件。未入力時は `未指定` を保存する'),
-          @('documents', 'DocumentCreateInput[]', '-', '発注書メタデータ')
+          @('payload.quotationId', 'int64', '✓', '採用する見積ID'),
+          @('payload.orderOn', 'date', '✓', '発注日'),
+          @('payload.orderDeadlineOn', 'date', '-', '発注期限'),
+          @('payload.paymentTerms', 'string', '-', '支払条件。未入力時は `未指定` を保存する'),
+          @('payload.orderDocument', 'DocumentInput', '-', '発注書メタデータ。`filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.orderDocument.filePartName` で参照される発注書ファイル本体')
+        )
+        RequestSubtables = @(
+          @{
+            Title = 'payload.orderDocument要素（DocumentInput）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = $documentInputRows
+          }
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象は `status=''見積登録済''` の修理申請に限定する',
-          '指定 `quotationId` が対象修理申請の `rfqs` に紐づくことを検証する',
+          '指定 `payload.quotationId` が対象修理申請の `rfqs` に紐づくことを検証する',
           '採用見積の有効明細に `purchase_price_unit` または `purchase_price_total` が未設定の行がある場合は、`order_items.unit_price` / `amount` の必須値を作れないため400を返す',
+          '`payload.orderDocument` を指定した場合は、`filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は発注書として許可された形式に限定する',
           '`orders` は発注番号を採番し、`rfq_id`、`quotation_id`、採用見積の業者情報、`order_type=''購入''`、`payment_terms`（未入力時 `未指定`）、`order_on`、`status=''ORDERED''`、見積合計金額を保存して作成する',
           '`order_items` は採用見積の `quotation_items` から作成し、`registration_type` は `quotation_items.item_type=''D_付属品''` の場合 `付属品`、それ以外は `本体` とする。品目/メーカー/型式、数量、単価、金額は `quotation_items.item_name` / `maker_name` / `model_name` / `original_quantity` / `purchase_price_unit` / `purchase_price_total` から転記する',
           '`quotations.status=''ORDER_SELECTED''` に更新する',
           '`applications.status=''発注済''`、`repair_request_details.ordered_on`、`order_deadline_on`、`current_vendor_id`、`current_vendor_name`、`current_vendor_person`、`current_vendor_contact` を更新する',
-          '発注書メタデータは `application_documents.owner_type=''APPLICATION''`、`step_code=''ORDER''`、`document_category=''CONTRACT''`、`document_type=''発注書''` として保存する',
+          '発注書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` や `orderId` などの業務IDを含めない',
+          '発注書は `application_documents.owner_type=''APPLICATION''`、`application_id=repairTaskId`、`step_code=''ORDER''`、`document_category=''CONTRACT''`、`document_type=''発注書''` として保存し、`file_path` には発行したS3オブジェクトキーのみ保存する',
+          'Amazon S3保存後にDBメタデータ保存または発注登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '状態変更、発注作成、履歴、工程更新は同一トランザクションで行う'
         )
         ResponseTitle = 'レスポンス（200：RepairOrderResponse）'
@@ -796,6 +830,7 @@ $repairOrderRows = @(
           @('403', '作業対象施設に対する実効 `repair_management` なし', 'ErrorResponse'),
           @('404', '対象修理申請または見積が存在しない', 'ErrorResponse'),
           @('409', '現在ステータス不整合、見積が対象修理申請に紐づかない', 'ErrorResponse'),
+          @('502', 'Amazon S3 への発注書保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -856,25 +891,36 @@ $repairOrderRows = @(
         ParametersRows = @(
           @('repairTaskId', 'path', 'int64', '✓', '修理申請ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('deliveredOn', 'date', '✓', '納品日'),
-          @('inspectionOn', 'date', '✓', '検収日'),
-          @('inspectionAmount', 'decimal', '-', '検収金額'),
-          @('provisionalAccountTitle', 'string', '-', '仮勘定科目'),
-          @('documents', 'DocumentCreateInput[]', '-', '修理報告書、納品書等のメタデータ')
+          @('payload.deliveredOn', 'date', '✓', '納品日'),
+          @('payload.inspectionOn', 'date', '✓', '検収日'),
+          @('payload.inspectionAmount', 'decimal', '-', '検収金額'),
+          @('payload.provisionalAccountTitle', 'string', '-', '仮勘定科目'),
+          @('payload.documents', 'DocumentInput[]', '-', '修理報告書、納品書等のメタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.documents[].filePartName` で参照される修理報告書、納品書等のファイル本体')
+        )
+        RequestSubtables = @(
+          @{
+            Title = 'payload.documents要素（DocumentInput）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = $documentInputRows
+          }
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象は `status=''納期確定''` の修理申請に限定する',
+          '`payload.documents` を指定した場合は、各 `filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type は修理報告書、納品書、検収書として許可された形式に限定する',
           '`repair_request_details.delivered_on` を更新する',
-          '検収書類は `application_documents.owner_type=''APPLICATION''`、`step_code=''INSPECTION''`、`document_category=''REPORT''` / `DELIVERY` / `ACCEPTANCE`、`document_type=''修理報告書''` / `納品書` / `検収書` 等で保存する',
+          '検収書類ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` などの業務IDを含めない',
+          '検収書類は `application_documents.owner_type=''APPLICATION''`、`application_id=repairTaskId`、`step_code=''INSPECTION''`、`document_category=''REPORT''` / `DELIVERY` / `ACCEPTANCE`、`document_type=''修理報告書''` / `納品書` / `検収書` 等で保存し、`file_path` には発行したS3オブジェクトキーのみ保存する',
           '院外発注修理の場合は、`orders.delivery_on`、`orders.inspection_on`、`orders.total_amount` と対象 `order_items.delivery_on`、`order_items.amount` を検収入力値で更新する',
           '登録済み資産かつ院外発注修理の場合のみ `individuals` を対象修理明細単位で作成または更新し、必須の `order_item_id`、`rfq_id`、`asset_ledger_id`、品目/メーカー/型式/シリアルのスナップショット、`acquisition_amount=inspectionAmount`、`provisional_account_title`、`inspected_on=inspectionOn`、`registration_status=''PROVISIONAL''` を保持する',
           '院内修理は `rfqs` / `orders` / `order_items` が存在しないため、`order_item_id` / `rfq_id` が必須の `individuals` は作成しない。検収書類、検収金額、仮勘定科目は `application_documents` と申請履歴の表示情報として扱う',
           '未登録資産の場合は院外発注修理であっても `individuals` を作成せず、検収金額は `orders`、仮勘定科目や添付は `application_documents`、対象物品情報は `repair_request_details.manual_item_name` / `manual_maker_name` / `manual_model_name` / `manual_serial_no` / `manual_department_name` / `manual_room_name` と `application_assets` のスナップショットに保持する。資産台帳 `asset_ledgers` の作成・更新は行わない',
+          'Amazon S3保存後にDBメタデータ保存または検収登録トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`applications.status=''検収登録''` に更新し、履歴と工程を同一トランザクションで更新する'
         )
         ResponseTitle = 'レスポンス（200：RepairTaskActionResponse）'
@@ -893,6 +939,7 @@ $repairOrderRows = @(
           @('403', '作業対象施設に対する実効 `repair_management` なし', 'ErrorResponse'),
           @('404', '対象修理申請が存在しない', 'ErrorResponse'),
           @('409', '現在ステータスが `納期確定` ではない', 'ErrorResponse'),
+          @('502', 'Amazon S3 への検収書類保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -947,7 +994,7 @@ $repairOrderRows = @(
       },
       @{
         Title = 'ドキュメント登録（/repair-task/tasks/{repairTaskId}/documents）'
-        Overview = '修理タスクに修理依頼書、見積書、発注書、修理報告書、納品書等のドキュメントメタデータを追加する。'
+        Overview = '修理タスクに修理依頼書、見積書、発注書、修理報告書、納品書等のファイル本体とドキュメントメタデータを追加する。'
         Method = 'POST'
         Path = '/repair-task/tasks/{repairTaskId}/documents'
         Auth = '要（Bearer）'
@@ -956,30 +1003,30 @@ $repairOrderRows = @(
         ParametersRows = @(
           @('repairTaskId', 'path', 'int64', '✓', '修理申請ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('documentCategory', 'string', '✓', '`REQUEST_ATTACHMENT` / `QUOTATION` / `CONTRACT` / `DELIVERY` / `ACCEPTANCE` / `REPORT` / `PHOTO` / `OTHER` など'),
-          @('documentType', 'string', '✓', '`application_documents.document_type`。例: 修理依頼書 / 見積書 / 発注書 / 納品書 / 検収書 / 修理報告書'),
-          @('ownerType', 'string', '✓', '`APPLICATION` / `APPLICATION_ASSET` / `RFQ` / `RFQ_VENDOR` / `QUOTATION` / `ASSET_LEDGER`'),
-          @('ownerId', 'int64', '✓', '`ownerType` に応じて `application_id`、`application_asset_id`、`rfq_id`、`rfq_vendor_id`、`quotation_id`、`asset_ledger_id` のいずれかへ設定するID'),
-          @('stepCode', 'string', '-', '`REQUEST` / `QUOTE` / `ORDER` / `INSPECTION` / `COMPLETE` などの工程コード'),
-          @('accountType', 'string', '-', '`application_documents.account_type` に保存する勘定科目区分'),
-          @('accountOtherText', 'string', '-', '`application_documents.account_other_text` に保存する勘定科目補足'),
-          @('fileName', 'string', '✓', 'ファイル名'),
-          @('contentType', 'string', '-', 'MIMEタイプ'),
-          @('fileSize', 'int64', '-', 'ファイルサイズ'),
-          @('storageKey', 'string', '✓', 'ファイル実体のストレージキー')
+          @('payload.document', 'DocumentInput', '✓', '登録するドキュメントメタデータ。汎用ドキュメント登録では `ownerType` / `ownerId` を必須とし、`filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '✓', '`payload.document.filePartName` で参照されるファイル本体')
+        )
+        RequestSubtables = @(
+          @{
+            Title = 'payload.document要素（DocumentInput）'
+            Headers = @('フィールド', '型', '必須', '説明')
+            Rows = $documentInputRows
+          }
         )
         PermissionLines = $repairManagementPermissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象修理申請が作業対象施設内に存在することを検証する',
-          '`ownerType` と `ownerId` が対象修理申請、対象申請明細、対象RFQ、対象見積、または対象登録済み資産に紐づくことを検証する',
+          '`payload.document.ownerType` と `payload.document.ownerId` が対象修理申請、対象申請明細、対象RFQ、対象見積、または対象登録済み資産に紐づくことを検証する',
+          '`payload.document.filePartName` が multipart のファイルパートに存在することを確認し、`documentCategory` / `documentType` に応じた拡張子・MIME Typeを受け付ける',
           '`application_documents` には `owner_type` に応じた実FK（`application_id` / `application_asset_id` / `rfq_id` / `rfq_vendor_id` / `quotation_id` / `asset_ledger_id`）を設定し、生成列 `owner_key` は直接書き込まない',
           '発注書を後続追加する場合は `owner_type=''APPLICATION''`、`application_id=repairTaskId`、`step_code=''ORDER''`、`document_category=''CONTRACT''`、`document_type=''発注書''` として保存する',
-          '`application_documents` にファイルメタデータ、工程コード、必要に応じた勘定科目情報を作成する。`storageKey` は `file_path`、`contentType` は `mime_type`、`fileSize` は `file_size_bytes`、認証ユーザーIDは `uploaded_by_user_id`、現在日時は `uploaded_at` に保存する',
-          'ファイル実体のアップロード/削除は別ストレージ連携を前提とし、本APIではメタデータ正本を扱う'
+          'ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`repairTaskId` などの業務IDを含めない',
+          '`application_documents` にファイルメタデータ、工程コード、必要に応じた勘定科目情報を作成する。`file_path` には発行したS3オブジェクトキーのみ保存し、`contentType` は `mime_type`、`fileSize` は `file_size_bytes`、認証ユーザーIDは `uploaded_by_user_id`、現在日時は `uploaded_at` に保存する',
+          'Amazon S3保存後にDBメタデータ保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`REPAIR_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す'
         )
         ResponseTitle = 'レスポンス（201：DocumentSummary）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -991,6 +1038,7 @@ $repairOrderRows = @(
           @('403', '作業対象施設に対する実効 `repair_management` なし', 'ErrorResponse'),
           @('404', '対象修理申請または所有者が存在しない', 'ErrorResponse'),
           @('409', '所有者が対象修理申請に紐づかない', 'ErrorResponse'),
+          @('502', 'Amazon S3 へのドキュメント保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -1012,7 +1060,7 @@ $repairOrderRows = @(
           '対象ドキュメントが対象修理申請に紐づくことを検証する',
           '`application_documents.deleted_at` を設定する論理削除とする',
           '確定済み見積、発注、検収に必要な証跡を削除しようとする場合は409を返す',
-          'ファイル実体削除はストレージ側のライフサイクルまたは別処理に委譲する'
+          'S3オブジェクトは `deleted_at` 起点のS3ライフサイクルまたは後続クリーンアップで削除する'
         )
         ResponseTitle = 'レスポンス（204：No Content）'
         ResponseLines = @(
@@ -1161,6 +1209,7 @@ $repairOrderRows = @(
       @('REPAIR_VENDOR_REQUEST_NOT_SENT', '409', '見積依頼完了に必要な送信済み依頼先が存在しない'),
       @('REPAIR_QUOTATION_NOT_LINKED', '409', '指定見積が対象修理申請に紐づかない'),
       @('REPAIR_DOCUMENT_LOCKED', '409', '確定済み工程の証跡ドキュメントで削除不可'),
+      @('REPAIR_FILE_502_S3_WRITE_FAILED', '502', '修理関連ドキュメントのAmazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
 
@@ -1170,7 +1219,7 @@ $repairOrderRows = @(
       '修理申請の状態変更は `application_status_histories` に履歴を残す',
       '工程進行、スキップ、通常却下、修理不能は `application_task_steps` の状態と `completion_reason` で追跡する',
       '申請者情報は起票時点のログインユーザー情報を `applications` にスナップショット保存する',
-      'ファイル実体の保管、ウイルスチェック、署名URL発行はストレージ基盤側で扱い、本APIは `application_documents` のメタデータを正本とする'
+      'ファイル実体はAPI内でAmazon S3へPutObjectし、ウイルスチェック、認可済み `downloadUrl` 発行、S3ライフサイクル/後続クリーンアップと連携する。`application_documents.file_path` はS3オブジェクトキーの正本とし、S3バケット名やS3直接URLは通常APIログ・レスポンスに出力しない'
     ) }
   )
 }

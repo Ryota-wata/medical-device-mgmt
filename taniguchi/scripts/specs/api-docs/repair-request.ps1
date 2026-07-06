@@ -12,16 +12,17 @@ $errorRows = @(
   @('403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` なし、または共有システム管理者で作業対象施設が削除済み', 'ErrorResponse'),
   @('404', '対象資産または点検結果が存在しない', 'ErrorResponse'),
   @('409', '採番競合または競合更新', 'ErrorResponse'),
+  @('502', 'Amazon S3 への機器写真・添付保存、またはロールバック削除に失敗した', 'ErrorResponse'),
   @('500', 'サーバー内部エラー', 'ErrorResponse')
 )
 
 $documentCreateInputRows = @(
   @('documentCategory', 'string', '-', '`PHOTO` / `REQUEST_ATTACHMENT` / `OTHER`。機器写真は `PHOTO` として保存する'),
   @('documentType', 'string', '✓', '`application_documents.document_type`。例: 機器写真 / 修理依頼添付'),
-  @('fileName', 'string', '✓', 'ファイル名'),
-  @('contentType', 'string', '-', 'MIMEタイプ'),
-  @('fileSize', 'int64', '-', 'ファイルサイズ'),
-  @('storageKey', 'string', '✓', 'ファイル実体のストレージキー'),
+  @('filePartName', 'string', '✓', 'multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける'),
+  @('fileName', 'string', '-', '画面表示用ファイル名。未指定時はアップロードファイル名'),
+  @('contentType', 'string', '-', 'MIMEタイプ。未指定時はアップロードファイルまたはサーバー判定値を使用する'),
+  @('fileSize', 'int64', '-', '画面側検証用ファイルサイズ。保存時はサーバーがファイル実体から算出した値を正本にする'),
   @('title', 'string', '-', '表示タイトル'),
   @('documentDate', 'date', '-', '文書日付'),
   @('isPrimary', 'boolean', '-', '代表写真として扱う場合 true')
@@ -120,7 +121,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON。ファイル実体アップロードは別ストレージ連携を前提とし、本APIでは `application_documents` のメタデータを扱う',
+      'データ形式: 参照系APIは JSON。修理依頼起票APIは multipart/form-data とし、業務payload JSONと機器写真・補足添付のファイル本体を同一APIで受け付ける',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-19T10:00:00+09:00`）',
       '日付形式: `YYYY-MM-DD`',
@@ -155,7 +156,7 @@ $repairRequestCreatedRows = @(
       @('details', 'string[]', '-', '入力エラーや競合理由の補足')
     ) },
     @{ Type = 'Heading2'; Text = '共通DTO' },
-    @{ Type = 'Paragraph'; Text = '複数APIで共通利用する入出力DTOを以下に定義する。`DocumentCreateInput` を保存するAPIは、`storageKey` を `application_documents.file_path`、`contentType` を `mime_type`、`fileSize` を `file_size_bytes`、認証ユーザーIDを `uploaded_by_user_id`、現在日時を `uploaded_at` に設定する。' },
+    @{ Type = 'Paragraph'; Text = '複数APIで共通利用する入出力DTOを以下に定義する。`DocumentCreateInput` は multipart/form-data のファイルパートに対応するメタデータであり、`filePartName` で対象ファイルを指定する。APIはファイル実体を Amazon S3 へ PutObject し、生成したS3オブジェクトキーを `application_documents.file_path` に保存する。`contentType` は `mime_type`、サーバー算出ファイルサイズは `file_size_bytes`、コンテンツハッシュは `content_hash`、認証ユーザーIDは `uploaded_by_user_id`、現在日時は `uploaded_at` に設定する。S3オブジェクトキー、バケット名、HTTPS URLはリクエスト/レスポンスで直接扱わない。' },
     @{ Type = 'Heading3'; Text = 'DocumentCreateInput' },
     @{ Type = 'Table'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentCreateInputRows },
     @{ Type = 'Heading3'; Text = 'RepairAssetSnapshot' },
@@ -256,24 +257,25 @@ $repairRequestCreatedRows = @(
         Method = 'POST'
         Path = '/repair-request/requests'
         Auth = '要（Bearer）'
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('isRegisteredAsset', 'boolean', '✓', '登録済み資産の場合 true'),
-          @('assetLedgerId', 'int64', '-', '登録済み資産の場合必須'),
-          @('qrCodeValue', 'string', '-', '登録済み資産のQRラベル'),
-          @('manualItemName', 'string', '-', '未登録資産の場合必須'),
-          @('manualMakerName', 'string', '-', '未登録資産のメーカー名'),
-          @('manualModelName', 'string', '-', '未登録資産の型式'),
-          @('manualSerialNo', 'string', '-', '未登録資産のシリアルNo.'),
-          @('manualDepartmentName', 'string', '-', '未登録資産の設置部署'),
-          @('manualRoomName', 'string', '-', '未登録資産の室名'),
-          @('symptomText', 'string', '✓', '症状詳細'),
-          @('alternativeDeviceStatus', 'string', '-', '`NEEDED` / `NOT_NEEDED` / `REQUESTED`'),
-          @('freeComment', 'string', '-', 'フリーコメント'),
-          @('inspectionResultId', 'int64', '-', '点検結果から遷移した場合の連携元点検結果ID'),
-          @('photoDocuments', 'DocumentCreateInput[]', '-', '修理依頼時の機器写真メタデータ'),
-          @('attachmentDocuments', 'DocumentCreateInput[]', '-', '修理依頼時の補足添付メタデータ')
+          @('payload.isRegisteredAsset', 'boolean', '✓', '登録済み資産の場合 true'),
+          @('payload.assetLedgerId', 'int64', '-', '登録済み資産の場合必須'),
+          @('payload.qrCodeValue', 'string', '-', '登録済み資産のQRラベル'),
+          @('payload.manualItemName', 'string', '-', '未登録資産の場合必須'),
+          @('payload.manualMakerName', 'string', '-', '未登録資産のメーカー名'),
+          @('payload.manualModelName', 'string', '-', '未登録資産の型式'),
+          @('payload.manualSerialNo', 'string', '-', '未登録資産のシリアルNo.'),
+          @('payload.manualDepartmentName', 'string', '-', '未登録資産の設置部署'),
+          @('payload.manualRoomName', 'string', '-', '未登録資産の室名'),
+          @('payload.symptomText', 'string', '✓', '症状詳細'),
+          @('payload.alternativeDeviceStatus', 'string', '-', '`NEEDED` / `NOT_NEEDED` / `REQUESTED`'),
+          @('payload.freeComment', 'string', '-', 'フリーコメント'),
+          @('payload.inspectionResultId', 'int64', '-', '点検結果から遷移した場合の連携元点検結果ID'),
+          @('payload.photoDocuments', 'DocumentCreateInput[]', '-', '修理依頼時の機器写真メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('payload.attachmentDocuments', 'DocumentCreateInput[]', '-', '修理依頼時の補足添付メタデータ。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '-', '`payload.photoDocuments[].filePartName` / `payload.attachmentDocuments[].filePartName` で参照されるファイル本体')
         )
         PermissionLines = $repairRequestPermissionLines
         ProcessingLines = @(
@@ -284,12 +286,15 @@ $repairRequestCreatedRows = @(
           '`repair_request_details` に `application_type=''REPAIR''`、`is_registered_asset`、症状、代替機要否、点検結果ID、手入力 `manual_item_name`、`manual_maker_name`、`manual_model_name`、`manual_serial_no`、`manual_department_name`、`manual_room_name` を保存する',
           '`repair_request_details.repair_category` は起票時には設定しない。院内修理/院外修理の振り分けは No.27 修理管理API設計書のSTEP1で登録する',
           '`application_assets` に `asset_role=''REPAIR''`、行番号1、`quantity=1`、`unit=''台''`、登録済み資産または未登録資産の表示用スナップショットを保存する',
-          '写真は `application_documents` に `owner_type=''APPLICATION''` または `APPLICATION_ASSET`、`document_category=''PHOTO''`、`document_type=''機器写真''` として保存する',
-          '補足添付は `application_documents` に `owner_type=''APPLICATION''`、`document_category=''REQUEST_ATTACHMENT''` として保存する',
-          '`storageKey` は `application_documents.file_path`、`contentType` は `mime_type`、`fileSize` は `file_size_bytes` に保存し、生成列 `owner_key` は直接書き込まない',
+          '`payload.photoDocuments` / `payload.attachmentDocuments` の各 `filePartName` が multipart のファイルパートに存在することを検証し、不一致なら 400 (`REPAIR_REQUEST_INPUT_INVALID`) を返す',
+          'ファイル本体を Amazon S3 へ PutObject する。S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{拡張子}` 形式でAPI側が生成する。keyは保存場所識別子であり、`application_id` や `application_asset_id` などの業務IDを含めない',
+          '写真は対象機器に紐づくため `application_documents.owner_type=''APPLICATION_ASSET''`、`document_category=''PHOTO''`、`document_type=''機器写真''` として保存する',
+          '補足添付は申請ヘッダーに紐づくため `application_documents.owner_type=''APPLICATION''`、`document_category=''REQUEST_ATTACHMENT''` として保存する',
+          '`application_documents.file_path` にはS3オブジェクトキーのみを保存し、バケット名やHTTPS URLはDBへ保存しない。`contentType` は `mime_type`、サーバー算出ファイルサイズは `file_size_bytes`、コンテンツハッシュは `content_hash` に保存し、生成列 `owner_key` は直接書き込まない',
+          'DB作成またはcommitに失敗した場合は、保存済みS3オブジェクトを Amazon S3 DeleteObject で破棄する。破棄失敗時は 502 (`REPAIR_REQUEST_502_S3_WRITE_FAILED`) を返し、失敗内容を運用ログへ記録する',
           '`application_status_histories` に初期ステータス履歴を作成する',
           '`application_no` はDB採番または採番サービスで一意確定し、一意性競合時は409を返す',
-          '上記の `applications`、`repair_request_details`、`application_assets`、`application_documents`、`application_status_histories` 作成は同一トランザクションで行う'
+          '上記の `applications`、`repair_request_details`、`application_assets`、`application_documents`、`application_status_histories` 作成は同一DBトランザクションで行う。レスポンスにはS3オブジェクトキーを含めない'
         )
         ResponseTitle = 'レスポンス（201：RepairRequestCreatedResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -301,6 +306,7 @@ $repairRequestCreatedRows = @(
           @('403', '通常アカウントで作業対象施設に対する実効 `repair_request_create` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '指定した登録済み資産または点検結果が存在しない', 'ErrorResponse'),
           @('409', '採番競合または競合更新', 'ErrorResponse'),
+          @('502', 'Amazon S3 への機器写真・添付保存またはロールバック削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -337,6 +343,7 @@ $repairRequestCreatedRows = @(
       @('REPAIR_INSPECTION_RESULT_NOT_FOUND', '404', '指定した点検結果が存在しない'),
       @('REPAIR_REQUEST_INPUT_INVALID', '400', '登録済/未登録資産条件、症状、添付メタデータが不正'),
       @('REPAIR_REQUEST_NUMBER_CONFLICT', '409', '修理依頼No.採番が競合した'),
+      @('REPAIR_REQUEST_502_S3_WRITE_FAILED', '502', '機器写真・添付の Amazon S3 PutObject、またはDB失敗時の保存済みS3オブジェクト破棄に失敗した'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
     ) },
     @{ Type = 'Table'; Headers = @('HTTPステータス', '概要', 'レスポンス'); Rows = $errorRows },
@@ -344,7 +351,7 @@ $repairRequestCreatedRows = @(
     @{ Type = 'Heading1'; Text = '第8章 運用・保守方針' },
     @{ Type = 'Bullets'; Items = @(
       '修理申請の状態変更は `application_status_histories` に履歴を残す',
-      '機器写真・添付メタデータは `application_documents` で管理し、ファイル実体は別ストレージ、DB上の保管キーは `application_documents.file_path` を正本とする',
+      '機器写真・添付メタデータは `application_documents` で管理し、ファイル実体は Amazon S3 に保存する。DB上の `application_documents.file_path` はS3オブジェクトキーを正本とし、バケット名やHTTPS URLは保存しない',
       '未登録資産は修理申請内の履歴として保持し、修理申請経由の廃棄申請へ接続する場合を除いて他申請種別の入口には展開しない。資産台帳への自動登録や原本資産CRUDは行わない',
       '申請者情報はログインユーザー情報から自動取得するため、ユーザー所属情報の更新漏れが申請表示へ影響する点を運用上の注意事項とする',
       '修理管理側で院内/院外振り分けを行うまでは `repair_category` 未設定として扱い、一覧やタスクの表示では未受付状態として扱う'

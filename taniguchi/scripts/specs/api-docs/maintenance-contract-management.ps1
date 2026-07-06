@@ -96,7 +96,7 @@ $documentRows = @(
   @('fileName', 'string', '✓', 'ファイル名'),
   @('contentType', 'string', '-', '`application_documents.mime_type` に保存するMIMEタイプ'),
   @('fileSize', 'int64', '-', '`application_documents.file_size_bytes` に保存するファイルサイズ'),
-  @('storageKey', 'string', '✓', '`application_documents.file_path` に保存するファイル実体のストレージキー'),
+  @('downloadUrl', 'string', '-', 'S3オブジェクトキーからAPI側で発行する認可済みダウンロードURL。S3オブジェクトキー、S3バケット名、S3直接URLは返却しない'),
   @('uploadedAt', 'datetime', '✓', '登録日時'),
   @('uploadedByName', 'string', '-', '登録者名')
 )
@@ -106,7 +106,7 @@ $quotationRows = @(
   @('quotationNo', 'string', '✓', '見積番号'),
   @('quotationPhase', 'string', '✓', '`発注登録用見積` / `参考見積`'),
   @('quotationOn', 'date', '✓', '見積日。入力省略時は業務日'),
-  @('storageFormat', 'string', '✓', '`電子取引` / `スキャナ保存` / `未指定`'),
+  @('storageFormat', 'string', '✓', '見積原本の `application_documents.storage_format`。`電子取引` / `スキャナ保存` / `未指定`'),
   @('vendorId', 'int64', '-', '業者マスタID'),
   @('vendorName', 'string', '✓', '見積業者名'),
   @('totalAmountExclTax', 'decimal', '-', '見積金額(税抜)'),
@@ -165,13 +165,16 @@ $documentInputRows = @(
   @('fileName', 'string', '✓', 'ファイル名'),
   @('contentType', 'string', '-', '`application_documents.mime_type` に保存するMIMEタイプ'),
   @('fileSize', 'int64', '-', '`application_documents.file_size_bytes` に保存するファイルサイズ'),
-  @('storageKey', 'string', '✓', '`application_documents.file_path` に保存するファイル実体のストレージキー'),
+  @('filePartName', 'string', '✓', 'multipart/form-data 内のファイルパート名。ファイル実体とメタデータを対応付ける'),
+  @('contentHash', 'string', '-', '改ざん検知・重複確認用ハッシュ。指定時はアップロード実体と照合し `application_documents.content_hash` に保存する'),
   @('title', 'string', '-', '文書タイトル'),
   @('documentDate', 'date', '-', '文書日付'),
-  @('storageFormat', 'string', '-', '`電子取引` / `スキャナ保存` / `未指定`'),
+  @('storageFormat', 'string', '-', '`電子取引` / `スキャナ保存` / `未指定`。保存先ではなく電帳法等の保存形式区分を表す'),
   @('accountType', 'string', '-', '会計区分'),
   @('accountOtherText', 'string', '-', '会計区分その他')
 )
+
+$quotationDocumentInputRows = @($documentInputRows | Where-Object { $_[0] -ne 'storageFormat' })
 
 $errorRows = @(
   @('AUTH_401_UNAUTHORIZED', '401', '認証情報が存在しない、または無効', 'Bearer トークン未指定、期限切れ、署名不正'),
@@ -188,6 +191,7 @@ $errorRows = @(
   @('MAINTENANCE_CONTRACT_ASSET_DETAIL_REQUIRED', '409', '明細登録済み対象資産が存在しない', '保守登録時に有効な対象資産が0件'),
   @('MAINTENANCE_CONTRACT_REVIEW_TARGET_REQUIRED', '400', '契約内容見直し対象が未指定', '除外対象と追加対象がどちらも0件'),
   @('MAINTENANCE_CONTRACT_EXPIRED', '409', '契約期間終了済みのため操作できない', '契約内容見直しを期限切れ契約に実行'),
+  @('MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED', '502', 'ファイル保存または保存後ロールバックに失敗', 'Amazon S3 PutObject 失敗、またはDB保存失敗後のS3 DeleteObject 失敗'),
   @('VALIDATION_ERROR', '400', '入力値不正', '必須不足、列挙値不正、文字数超過、日付前後関係不正'),
   @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー', '想定外例外')
 )
@@ -260,7 +264,7 @@ $spec = @{
       @('`rfqs`', 'CREATE / READ / UPDATE', '保守契約RFQヘッダー。`management_type=''MAINTENANCE''`'),
       @('`rfq_vendors`', 'CREATE / READ / UPDATE', '見積依頼先、依頼送信状態、担当者、連絡先'),
       @('`quotations`', 'CREATE / READ / UPDATE / DELETE', '発注登録用見積、参考見積、採用見積、削除状態'),
-      @('`application_documents`', 'CREATE / READ / UPDATE / DELETE', '見積依頼書、見積書、契約書、免責部品一覧、契約変更覚書のファイルメタデータ'),
+      @('`application_documents`', 'CREATE / READ / UPDATE / DELETE', '見積依頼書、見積書、契約書、免責部品一覧、契約変更覚書のファイルメタデータ。ファイル実体はAmazon S3に保存し、`file_path` にはS3オブジェクトキーのみを保持する'),
       @('`inspection_tasks`', 'CREATE / READ / UPDATE', '保守登録時の点検管理連携先。保守契約由来の定期点検系タスク'),
       @('`inspection_task_status_definitions` / `inspection_task_status_transitions`', 'READ', '保守契約由来点検タスク作成時の初期ステータス・遷移制約確認'),
       @('`vendors`', 'READ', '見積依頼先、見積業者、契約業者の存在確認とスナップショット生成'),
@@ -275,13 +279,22 @@ $spec = @{
     @{ Type = 'Heading2'; Text = 'API 共通仕様' },
     @{ Type = 'Bullets'; Items = @(
       '通信方式: HTTPS',
-      'データ形式: JSON。ファイル実体アップロードは別ストレージ連携を前提とし、本APIでは `application_documents` のメタデータを扱う',
+      'データ形式: JSON（ファイル実体を受け取るPOST APIは multipart/form-data を使用し、`payload` に業務データとファイルメタデータ、`files` にファイル本体を指定する）',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-27T10:00:00+09:00`）',
       '日付形式: `YYYY-MM-DD`',
       '認証済みAPIは Bearer トークンを `Authorization` ヘッダーに付与する',
       '各APIは Bearer トークン上の作業対象施設を基準に自施設データのみ処理する',
       '更新系APIは現在ステータスを再取得して遷移可否を検証し、条件を満たさない場合は 409 を返す'
+    ) },
+    @{ Type = 'Heading2'; Text = 'ファイル保存ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '見積依頼書、見積書、契約書、免責部品一覧、契約変更覚書などのファイル実体は、対象APIが multipart/form-data の `files` パートとして受け取り、API内でAmazon S3へPutObjectする',
+      '`application_documents.file_path` にはS3オブジェクトキーのみ保存し、S3バケット名、S3の直接URL、認可なしで利用できるURLはDBへ保存しない',
+      'レスポンスではS3オブジェクトキー、S3バケット名、S3の直接URLを返さず、画面表示やダウンロードが必要な場合は認可済み `downloadUrl` を返す',
+      'Amazon S3保存後にDBメタデータ保存または業務トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
+      '`storageFormat` は保存先ではなく、電子取引/スキャナ保存/未指定などの保存形式区分を表す列として扱い、S3保存有無の表現には使用しない',
+      '削除APIは `application_documents.deleted_at` の論理削除を正本とし、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
     @{ Type = 'Paragraph'; Text = '本API群で使用する `feature_code` は `maintenance_contract` とする。資産一覧の保守契約登録導線、保守契約管理タブ、保守契約見積登録画面の全操作で同じ実効権限を判定する。画面表示用の `/auth/context` はUX用キャッシュであり、各業務APIでも同条件を再判定する。通常アカウントでは作業対象施設への有効担当施設割当、施設提供機能、ユーザー施設別機能設定を確認する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `maintenance_contract` 判定をバイパスする。' },
@@ -550,17 +563,24 @@ $spec = @{
           @('maintenanceContractId', 'path', 'int64', '✓', '保守契約ID'),
           @('rfqVendorId', 'path', 'int64', '✓', '見積依頼先ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('requestDocument', 'DocumentInput', '-', '送付文書メタデータ。別途作成済みの場合は省略可')
+          @('payload.requestDocument', 'DocumentInput', '-', '送付文書メタデータ。`filePartName` で対応するファイルパートを指定する。送付文書が不要な場合は省略可'),
+          @('files', 'binary[]', '-', '`payload.requestDocument.filePartName` で参照される送付文書ファイル本体')
+        )
+        RequestSubtables = @(
+          @{ Title = 'payload.requestDocument要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象契約が `見積依頼` であることを確認する',
           '対象 `rfq_vendors` が契約の `rfq_id` に属し、`request_status` が `DRAFT` または未送信相当であることを確認する',
-          '送付文書メタデータが指定された場合は `application_documents.owner_type=''RFQ_VENDOR''`、`rfq_id=契約のRFQ ID`、`rfq_vendor_id=対象依頼先ID` として保存する',
+          '`payload.requestDocument` を指定した場合は、`filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
+          '送付文書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` や `rfqVendorId` などの業務IDを含めない',
+          '送付文書メタデータは `application_documents.owner_type=''RFQ_VENDOR''`、`rfq_id=契約のRFQ ID`、`rfq_vendor_id=対象依頼先ID`、`document_category=''REQUEST_ATTACHMENT''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後に文書メタデータ保存または依頼先状態更新へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`rfq_vendors.request_status=''SENT''`、`requested_at=現在日時`、`requested_by_user_id=ログインユーザー` を更新する'
         )
         ResponseTitle = 'レスポンス（200：RfqVendorSendResponse）'
@@ -572,8 +592,10 @@ $spec = @{
         )
         StatusRows = @(
           @('200', '送信状態更新成功', 'RfqVendorSendResponse'),
+          @('400', '送付文書メタデータまたはファイル本体が不正', 'ErrorResponse'),
           @('404', '対象契約または依頼先が存在しない', 'ErrorResponse'),
-          @('409', '対象契約ステータスまたは依頼先状態が不正', 'ErrorResponse')
+          @('409', '対象契約ステータスまたは依頼先状態が不正', 'ErrorResponse'),
+          @('502', 'S3保存または保存後ロールバック失敗', 'ErrorResponse')
         )
       },
       @{
@@ -737,25 +759,32 @@ $spec = @{
         ParametersRows = @(
           @('maintenanceContractId', 'path', 'int64', '✓', '保守契約ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('quotationPhase', 'string', '✓', '`発注登録用見積` / `参考見積`'),
-          @('quotationOn', 'date', '-', '見積日。未指定時は業務日を保存する'),
-          @('storageFormat', 'string', '✓', '`電子取引` / `スキャナ保存` / `未指定`'),
-          @('vendorId', 'int64', '-', '業者マスタID'),
-          @('vendorName', 'string', '✓', '見積登録業者名'),
-          @('quotationAmountExclTax', 'decimal', '-', '見積金額(税抜)'),
-          @('annualAmountExclTax', 'decimal', '-', '単年度金額(税抜)'),
-          @('accountDivisionCode', 'string', '-', '会計区分コード'),
-          @('document', 'DocumentInput', '✓', '見積原本メタデータ')
+          @('payload.quotationPhase', 'string', '✓', '`発注登録用見積` / `参考見積`'),
+          @('payload.quotationOn', 'date', '-', '見積日。未指定時は業務日を保存する'),
+          @('payload.storageFormat', 'string', '✓', '`電子取引` / `スキャナ保存` / `未指定`。ファイル保存先ではなく保存形式区分を表す'),
+          @('payload.vendorId', 'int64', '-', '業者マスタID'),
+          @('payload.vendorName', 'string', '✓', '見積登録業者名'),
+          @('payload.quotationAmountExclTax', 'decimal', '-', '見積金額(税抜)'),
+          @('payload.annualAmountExclTax', 'decimal', '-', '単年度金額(税抜)'),
+          @('payload.accountDivisionCode', 'string', '-', '会計区分コード'),
+          @('payload.document', 'DocumentInput', '✓', '見積原本メタデータ。`filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '✓', '`payload.document.filePartName` で参照される見積原本ファイル本体')
+        )
+        RequestSubtables = @(
+          @{ Title = 'payload.document要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $quotationDocumentInputRows }
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象契約が `見積依頼済` または `見積登録済` であることを確認する',
-          '`quotation_no` を採番し、`quotation_on` は入力値または業務日で `quotations` を作成する。`rfq_id` は保守契約RFQに紐づける',
-          '見積原本は `application_documents.owner_type=''QUOTATION''`、`quotation_id=作成した見積ID` として保存する',
+          '`payload.document.filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
+          '`quotation_no` を採番し、`quotation_on` は入力値または業務日で `quotations` を作成する。`rfq_id` は保守契約RFQに紐づける。`payload.storageFormat` は見積原本メタデータの `application_documents.storage_format` に保存する',
+          '見積原本ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` や `quotationId` などの業務IDを含めない',
+          '見積原本は `application_documents.owner_type=''QUOTATION''`、`quotation_id=作成した見積ID`、`document_category=''QUOTATION''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format=payload.storageFormat`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後に見積作成または文書メタデータ保存へ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '参考見積は登録できるが、契約登録時の採用見積にはできない'
         )
         ResponseTitle = 'レスポンス（201：MaintenanceQuotationCreateResponse）'
@@ -766,9 +795,10 @@ $spec = @{
         )
         StatusRows = @(
           @('201', '登録成功', 'MaintenanceQuotationCreateResponse'),
-          @('400', '見積フェーズ、金額、文書メタデータが不正', 'ErrorResponse'),
+          @('400', '見積フェーズ、金額、文書メタデータまたはファイル本体が不正', 'ErrorResponse'),
           @('404', '対象契約または業者が存在しない', 'ErrorResponse'),
-          @('409', 'ステータス不正', 'ErrorResponse')
+          @('409', 'ステータス不正', 'ErrorResponse'),
+          @('502', 'S3保存または保存後ロールバック失敗', 'ErrorResponse')
         )
       },
       @{
@@ -819,7 +849,8 @@ $spec = @{
           '対象契約が `完了` ではないことを確認する',
           '対象見積が契約の保守契約RFQに属することを確認する',
           '`quotations.status=''ORDER_SELECTED''` の採用済み見積は削除不可とする',
-          '`quotations.deleted_at` と対象見積所有の `application_documents.deleted_at` を更新する'
+          '`quotations.deleted_at` と対象見積所有の `application_documents.deleted_at` を更新する',
+          'S3実体は即時DeleteObjectせず、同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う'
         )
         ResponseTitle = 'レスポンス（204：なし）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -891,17 +922,23 @@ $spec = @{
         ParametersRows = @(
           @('maintenanceContractId', 'path', 'int64', '✓', '保守契約ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('documents', 'DocumentInput[]', '✓', '登録する契約関連ドキュメント。1件以上')
+          @('payload.documents', 'DocumentInput[]', '✓', '登録する契約関連ドキュメント。1件以上。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '✓', '`payload.documents[].filePartName` で参照される契約関連ドキュメントのファイル本体')
+        )
+        RequestSubtables = @(
+          @{ Title = 'payload.documents要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
           $workFacilityProcessingLine,
           '対象契約が `見積登録済` であることを確認する',
-          '各文書を `application_documents.owner_type=''RFQ''`、`rfq_id=契約のRFQ ID`、`document_category=''CONTRACT''` として保存する',
-          'ファイル実体アップロードは別ストレージ連携済みの `storageKey` を受け取る前提とする'
+          '`payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
+          '各ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` などの業務IDを含めない',
+          '各文書を `application_documents.owner_type=''RFQ''`、`rfq_id=契約のRFQ ID`、`document_category=''CONTRACT''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後に文書メタデータ保存または業務トランザクションへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す'
         )
         ResponseTitle = 'レスポンス（201：DocumentCreateResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -910,9 +947,10 @@ $spec = @{
         )
         StatusRows = @(
           @('201', '登録成功', 'DocumentCreateResponse'),
-          @('400', '文書メタデータ不正', 'ErrorResponse'),
+          @('400', '文書メタデータまたはファイル本体が不正', 'ErrorResponse'),
           @('404', '対象契約が存在しない', 'ErrorResponse'),
-          @('409', 'ステータス不正', 'ErrorResponse')
+          @('409', 'ステータス不正', 'ErrorResponse'),
+          @('502', 'S3保存または保存後ロールバック失敗', 'ErrorResponse')
         )
       },
       @{
@@ -932,7 +970,8 @@ $spec = @{
           $workFacilityProcessingLine,
           '対象契約が `完了` ではないことを確認する',
           '対象ドキュメントが契約の保守契約RFQに属する `owner_type=''RFQ''` の文書であることを確認する',
-          '`application_documents.deleted_at` を更新する'
+          '`application_documents.deleted_at` を更新する',
+          'S3実体は即時DeleteObjectせず、同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う'
         )
         ResponseTitle = 'レスポンス（204：なし）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -994,14 +1033,18 @@ $spec = @{
         ParametersRows = @(
           @('maintenanceContractId', 'path', 'int64', '✓', '保守契約ID')
         )
-        RequestTitle = 'リクエストボディ'
+        RequestTitle = 'リクエストボディ（multipart/form-data）'
         RequestHeaders = @('フィールド', '型', '必須', '説明')
         RequestRows = @(
-          @('removeMaintenanceContractAssetIds', 'int64[]', '-', '除外する既存契約対象資産ID'),
-          @('addAssetLedgerIds', 'int64[]', '-', '追加する資産台帳ID'),
-          @('newContractAmountExclTax', 'decimal', '✓', '見直し後契約金額(税抜)'),
-          @('reviewReason', 'string', '✓', '見直し理由'),
-          @('documents', 'DocumentInput[]', '✓', '契約変更覚書等の文書。1件以上')
+          @('payload.removeMaintenanceContractAssetIds', 'int64[]', '-', '除外する既存契約対象資産ID'),
+          @('payload.addAssetLedgerIds', 'int64[]', '-', '追加する資産台帳ID'),
+          @('payload.newContractAmountExclTax', 'decimal', '✓', '見直し後契約金額(税抜)'),
+          @('payload.reviewReason', 'string', '✓', '見直し理由'),
+          @('payload.documents', 'DocumentInput[]', '✓', '契約変更覚書等の文書。1件以上。各要素の `filePartName` で対応するファイルパートを指定する'),
+          @('files', 'binary[]', '✓', '`payload.documents[].filePartName` で参照される契約変更文書のファイル本体')
+        )
+        RequestSubtables = @(
+          @{ Title = 'payload.documents要素（DocumentInput）'; Headers = @('フィールド', '型', '必須', '説明'); Rows = $documentInputRows }
         )
         PermissionLines = $permissionLines
         ProcessingLines = @(
@@ -1014,7 +1057,10 @@ $spec = @{
           '除外対象は `maintenance_contract_assets.excluded_flag=true` に更新する',
           '追加対象は `maintenance_contract_assets` に `excluded_flag=false` で新規作成する',
           '追加/除外の履歴を `maintenance_contract_review_assets` に作成する',
-          '契約変更文書は `application_documents.owner_type=''MAINTENANCE_CONTRACT_REVIEW''`、`maintenance_contract_review_id=作成した見直しID` として保存する',
+          '`payload.documents[].filePartName` が multipart のファイルパートに存在することを確認し、拡張子・MIME Type・ファイルサイズ・`contentHash` を検証する',
+          '契約変更文書ファイル本体をAPI内でAmazon S3へPutObjectし、S3オブジェクトキーは `application-documents/facility-{facilityId}/{yyyy}/{mm}/{uploadUuid}.{ext}` 形式で発行する。keyは保存場所識別子であり、`maintenanceContractId` や `maintenanceContractReviewId` などの業務IDを含めない',
+          '契約変更文書は `application_documents.owner_type=''MAINTENANCE_CONTRACT_REVIEW''`、`maintenance_contract_review_id=作成した見直しID`、`document_category=''CONTRACT_REVIEW''`、`document_type`、`file_name`、`file_path=S3オブジェクトキー`、`mime_type`、`file_size_bytes`、`content_hash`、`storage_format`、`uploaded_by_user_id`、`uploaded_at` として保存する。S3バケット名やHTTPS URLはDBへ保存しない',
+          'Amazon S3保存後に見直し履歴、資産追加/除外、金額更新、文書メタデータ保存のいずれかへ失敗した場合は、保存済みS3オブジェクトをDeleteObjectで破棄する。破棄に失敗した場合は 502 (`MAINTENANCE_CONTRACT_FILE_502_S3_WRITE_FAILED`) を返却し、再試行可能な運用ログを残す',
           '`maintenance_contracts.contract_amount_excl_tax` を見直し後金額へ更新し、ステータスは `完了` のまま維持する'
         )
         ResponseTitle = 'レスポンス（201：MaintenanceContractReviewResponse）'
@@ -1029,9 +1075,10 @@ $spec = @{
         )
         StatusRows = @(
           @('201', '登録成功', 'MaintenanceContractReviewResponse'),
-          @('400', '見直し対象未指定、金額または理由不正', 'ErrorResponse'),
+          @('400', '見直し対象未指定、金額、理由、文書メタデータまたはファイル本体が不正', 'ErrorResponse'),
           @('404', '対象契約または資産が存在しない', 'ErrorResponse'),
-          @('409', '期限切れ、ステータス不正、資産重複', 'ErrorResponse')
+          @('409', '期限切れ、ステータス不正、資産重複', 'ErrorResponse'),
+          @('502', 'S3保存または保存後ロールバック失敗', 'ErrorResponse')
         )
       },
       @{
@@ -1112,8 +1159,8 @@ $spec = @{
     ) },
     @{ Type = 'Heading2'; Text = '削除・取消制約' },
     @{ Type = 'Bullets'; Items = @(
-      '見積削除は保守登録前かつ採用前のみ許可し、物理削除せず `quotations.deleted_at` を設定する',
-      '契約ドキュメント削除は完了前のみ許可し、物理削除せず `application_documents.deleted_at` を設定する',
+      '見積削除は保守登録前かつ採用前のみ許可し、物理削除せず `quotations.deleted_at` と対象見積所有の `application_documents.deleted_at` を設定する。S3実体はS3ライフサイクルまたは後続クリーンアップで扱う',
+      '契約ドキュメント削除は完了前のみ許可し、物理削除せず `application_documents.deleted_at` を設定する。S3実体はS3ライフサイクルまたは後続クリーンアップで扱う',
       '申請見送りは `見積依頼` のみ許可し、RFQ作成済みの場合はRFQも `申請を見送る` へ終端化する',
       '完了済み契約は前工程へ戻さず、契約内容見直しまたは契約更新で後続運用する'
     ) },
@@ -1129,8 +1176,8 @@ $spec = @{
       '契約ステータス更新時は `maintenance_contracts.last_status_changed_at` を同一トランザクションで更新する',
       '見積依頼送信者は `rfq_vendors.requested_by_user_id` に保持する',
       '契約内容見直しの登録者は `maintenance_contract_reviews.reviewed_by_user_id` に保持する',
-      '契約書、見積書、契約変更覚書などの文書メタデータは `application_documents` に一元保存し、ファイルパスを各業務テーブルへ重複保持しない',
-      '見積削除、契約ドキュメント削除は物理削除せず `deleted_at` を設定する'
+      '契約書、見積書、契約変更覚書などの文書メタデータは `application_documents` に一元保存し、`file_path` にはAmazon S3のS3オブジェクトキーのみを保持する。S3バケット名やHTTPS URLは保持しない',
+      '見積削除、契約ドキュメント削除は物理削除せず `deleted_at` を設定し、S3実体は同一S3オブジェクトキーを参照する有効メタデータがなくなったことと保存期間を確認するS3ライフサイクルまたは後続クリーンアップで扱う'
     ) },
     @{ Type = 'Heading2'; Text = '排他制御' },
     @{ Type = 'Bullets'; Items = @(

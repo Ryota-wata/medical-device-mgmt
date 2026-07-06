@@ -25,7 +25,7 @@
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '日常点検は、医療機器を QR コードで特定し、使用前・使用中・使用後のタイミングに応じた点検メニューを実施し、結果を記録する業務である。`/inspection-prep` を日常点検PWAの入口とし、オンライン状態で有効QR識別子付き点検対象資産、QR識別子、日常点検メニュー、点検項目、点検管理タブで有効な資産別日常点検設定行を端末内に全量ダウンロードした上で、点検開始後はダウンロード済みデータを用いてQR読取から点検実施までを継続する。' },
     @{ Type = 'Paragraph'; Text = '点検結果は端末内の未送信キューに保持し、オンライン復帰後に同期する。オンライン状態で即時登録する場合も、PWA上で利用したダウンロード済みメニューと項目スナップショットを保持し、同期APIと同じ検証・永続化ルールを適用する。' },
-    @{ Type = 'Paragraph'; Text = '点検メニュー登録、資産一覧画面の選択資産から起動する点検管理登録、日常点検設定行の一覧表示・設定変更・設定解除、点検予定表 CSV 出力、定期点検実施、メーカー保守結果登録は No.28 点検管理タブ API 設計書の対象とし、本書では日常点検の準備・実施・結果参照を対象とする。' },
+    @{ Type = 'Paragraph'; Text = '点検メニュー登録、資産一覧画面の選択資産から起動する点検管理登録、日常点検設定行の一覧表示・設定変更・設定解除、点検予定表 CSV 出力、定期点検実施、メーカー保守結果登録は No.30 点検管理タブ API 設計書の対象とし、本書では日常点検の準備・実施・結果参照を対象とする。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('日常点検', 'QR 読取した資産に対して、使用前・使用中・使用後のいずれかのタイミングで実施する点検'),
@@ -54,7 +54,7 @@
       @('QR 読取または手入力後の対象資産特定', 'APIなし（端末内PWAパッケージを検索）', 'ダウンロード済みQR識別子、資産、資産別日常点検設定、日常点検メニューから対象資産と点検メニューを決定する。設定行または対象タイミングのメニューがない場合は点検入力画面へ遷移しない'),
       @('オンライン時のQR再検証', '`GET /daily-inspection/assets/by-qr/{qrCode}`', 'PWAパッケージ不整合、未登録警告、オンライン補助確認が必要な場合だけ利用する補助API'),
       @('確認ステップの完了または修理申請連携', '`POST /daily-inspection/results`', 'オンライン実施結果を登録し、修理申請連携用 seed を返す'),
-      @('`/inspection-result` 表示または報告書出力', '`GET /inspection-result/reports/{inspectionResultId}`', '日常点検結果の表示と報告書出力に必要なデータを取得する。定期点検結果の参照は No.28 点検管理タブ API 設計書で扱う')
+      @('`/inspection-result` 表示または報告書出力', '`GET /inspection-result/reports/{inspectionResultId}`', '日常点検結果の表示と報告書出力に必要なデータを取得する。定期点検結果の参照は No.30 点検管理タブ API 設計書で扱う')
     ) },
     @{ Type = 'Heading2'; Text = '使用テーブル' },
     @{ Type = 'Table'; Headers = @('テーブル名', '利用種別', '用途'); Rows = @(
@@ -65,7 +65,7 @@
       @('`inspection_tasks`', 'READ', '資産別日常点検設定の解決、点検結果の親タスク参照'),
       @('`inspection_results`', 'CREATE', '日常点検結果の登録、オフライン同期結果の保存'),
       @('`inspection_results`', 'READ', '点検結果画面/報告書データの取得、`clientResultId` 再送検出'),
-      @('`application_documents`', 'READ', '点検結果報告書や添付資料のファイルメタデータ取得'),
+      @('`application_documents`', 'READ', '点検結果報告書や添付資料のファイルメタデータ取得。ファイル実体は Amazon S3 に保存し、DB には `file_path` として S3 オブジェクトキーを保持する'),
       @('`lending_devices`', 'READ / UPDATE', '貸出管理対象機器の場合の点検後ステータス更新'),
       @('`lending_device_status_definitions`', 'READ', '貸出管理機器ステータスの許容値確認'),
       @('`lending_device_status_transitions`', 'READ', '貸出管理対象機器の点検後ステータス更新可否確認'),
@@ -528,7 +528,7 @@
       },
       @{
         Title = '点検結果報告データ取得（/inspection-result/reports/{inspectionResultId}）'
-        Overview = '点検結果画面表示および報告書出力に必要な日常点検結果、対象資産、点検メニュー、項目結果を取得する。本書では日常点検結果のみを対象とし、定期点検結果の参照は No.28 点検管理タブ API 設計書で扱う。'
+        Overview = '点検結果画面表示および報告書出力に必要な日常点検結果、対象資産、点検メニュー、項目結果を取得する。本書では日常点検結果のみを対象とし、定期点検結果の参照は No.30 点検管理タブ API 設計書で扱う。'
         Method = 'GET'
         Path = '/inspection-result/reports/{inspectionResultId}'
         Auth = '要（Bearer）'
@@ -542,9 +542,9 @@
           '`inspection_results`、`inspection_tasks`、`asset_ledgers` を結合し、対象結果が作業対象施設内の資産に紐づくことを確認する',
           '対象 `inspection_tasks` が `inspection_type=''日常点検''` の日常点検設定行であることを確認する。定期点検結果の場合は本 API の対象外として 403 を返す',
           '`result_details_json` から点検メニュー ID、日常点検タイミング、項目結果を復元する',
-          '`application_documents.owner_type=''INSPECTION_RESULT''`、`inspection_result_id=:inspectionResultId`、`document_category<>''PHOTO''`、`deleted_at IS NULL` に一致する点検結果報告書がある場合はメタデータを返す',
+          '`application_documents.owner_type=''INSPECTION_RESULT''`、`inspection_result_id=:inspectionResultId`、`document_category<>''PHOTO''`、`deleted_at IS NULL` に一致する点検結果報告書がある場合はメタデータを返す。`file_path` は Amazon S3 のオブジェクトキーとして保持し、バケット名や HTTPS URL は DB に保存しない',
           '日常点検結果の `returnTo` は `/inspection-prep` を返す',
-          '報告書ファイルをサーバー側で生成済みの場合は `reportDocument` を返す。未生成の場合は画面側または帳票基盤で生成できるデータ一式を返す'
+          '報告書ファイルをサーバー側で生成済みの場合は、`application_documents.file_path` の S3 オブジェクトキーから認可済みダウンロード URL を発行し、`reportDocument.downloadUrl` として返す。S3 オブジェクトキーはレスポンスで直接返却しない。未生成の場合は画面側または帳票基盤で生成できるデータ一式を返す'
         )
         ResponseTitle = 'レスポンス（200：InspectionResultReportResponse）'
         ResponseHeaders = @('フィールド', '型', '必須', '説明')
@@ -561,7 +561,7 @@
           @('overallResult', 'string', '✓', '`PASS` / `REPAIR_REQUEST`'),
           @('resultDetails', 'DailyInspectionResultDetail[]', '✓', '点検項目結果'),
           @('remarks', 'string', '-', '備考'),
-          @('reportDocument', 'InspectionReportDocument', '-', '保存済み報告書メタデータ')
+          @('reportDocument', 'InspectionReportDocument', '-', '保存済み報告書メタデータと認可済みダウンロード URL')
         )
         ResponseSubtables = @(
           @{
@@ -587,7 +587,7 @@
               @('documentType', 'string', '✓', 'ドキュメント種別'),
               @('title', 'string', '-', 'タイトル'),
               @('fileName', 'string', '✓', 'ファイル名'),
-              @('filePath', 'string', '✓', '保存先パス'),
+              @('downloadUrl', 'string', '✓', '認可済みダウンロード URL。S3 オブジェクトキーは返却しない'),
               @('mimeType', 'string', '-', 'MIME タイプ'),
               @('fileSizeBytes', 'int64', '-', 'ファイルサイズ'),
               @('uploadedAt', 'datetime', '-', '登録日時')
@@ -599,6 +599,7 @@
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `daily_inspection` なし、対象施設不一致、または定期点検結果を指定した', 'ErrorResponse'),
           @('404', '点検結果が存在しない', 'ErrorResponse'),
+          @('502', 'Amazon S3 の報告書ダウンロード URL 発行に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       }
@@ -611,18 +612,18 @@
     ) },
     @{ Type = 'Heading2'; Text = '点検管理タブとの責務境界' },
     @{ Type = 'Bullets'; Items = @(
-      '点検メニュー登録・更新・削除は No.28 点検管理タブ API 設計書で扱う',
-      '資産一覧画面の選択資産から起動する点検管理登録による `inspection_tasks` 作成・更新は No.28 点検管理タブ API 設計書で扱う。日常点検では `inspection_type=''日常点検''`、`is_active=true` の設定行に保持された `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` がPWAパッケージの資産別日常点検設定として配信される',
-      '日常点検設定行の一覧表示、設定変更、一部解除、設定解除は No.28 点検管理タブ API 設計書で扱う',
-      '本 API は No.28 で登録された日常点検メニューと資産別日常点検設定行を参照する',
-      '点検予定表 CSV 出力は No.28 の責務であり、本書では扱わない'
+      '点検メニュー登録・更新・削除は No.30 点検管理タブ API 設計書で扱う',
+      '資産一覧画面の選択資産から起動する点検管理登録による `inspection_tasks` 作成・更新は No.30 点検管理タブ API 設計書で扱う。日常点検では `inspection_type=''日常点検''`、`is_active=true` の設定行に保持された `daily_menu_before_id` / `daily_menu_during_id` / `daily_menu_after_id` がPWAパッケージの資産別日常点検設定として配信される',
+      '日常点検設定行の一覧表示、設定変更、一部解除、設定解除は No.30 点検管理タブ API 設計書で扱う',
+      '本 API は No.30 で登録された日常点検メニューと資産別日常点検設定行を参照する',
+      '点検予定表 CSV 出力は No.30 の責務であり、本書では扱わない'
     ) },
     @{ Type = 'Heading2'; Text = '日常点検結果登録ルール' },
     @{ Type = 'Bullets'; Items = @(
       '`inspection_results.inspection_task_id` は必須であるため、日常点検結果は `inspection_type=''日常点検''`、`is_active=true` の資産別日常点検設定行に紐づける',
       '端末内PWAパッケージまたはオンラインQR再検証で `canRegisterResult=false` となった場合、画面は点検入力画面へ遷移せず、点検結果登録 API も呼び出さない。点検管理タブで日常点検設定が必要であることを表示する',
       '画面表示の `合格` は `PASS`、`異常あり` は `REPAIR_REQUEST` として保存する',
-      '日常点検では `inspection_tasks.status`、`last_inspection_on`、`next_inspection_on` を更新しない。定期点検タスクの状態更新は No.28 の責務とする',
+      '日常点検では `inspection_tasks.status`、`last_inspection_on`、`next_inspection_on` を更新しない。定期点検タスクの状態更新は No.30 の責務とする',
       '貸出管理対象機器の場合、合格時は `貸出可`、異常あり時は `使用不可` への更新を行う。ただし `lending_device_status_transitions` で許可されない遷移は実行せず、点検結果登録は成功させた上でレスポンスに警告状態を返す'
     ) },
     @{ Type = 'Heading2'; Text = 'オフライン同期ルール' },
@@ -656,6 +657,7 @@
       @('DAILY_TIMING_MENU_REQUIRED', '409', '対象タイミングの日常点検メニューが未設定', '資産別日常点検設定行は存在するが、指定 `dailyTiming` に対応する `daily_menu_*_id` が `NULL`'),
       @('DAILY_INSPECTION_MENU_MISMATCH', '409', '指定タイミングのメニューが資産別日常点検設定と一致しない', '指定 `dailyTiming` と `inspection_tasks.daily_menu_*_id` が一致しない'),
       @('DAILY_INSPECTION_422_RESULT_DETAIL_INVALID', '422', '点検結果明細の項目、入力方式、評価方式がメニュー定義と一致しない', '点検項目 ID 不一致、入力方式不一致、必須入力不足'),
+      @('DAILY_INSPECTION_502_S3_URL_SIGN_FAILED', '502', '点検結果報告書の Amazon S3 ダウンロード URL 発行に失敗した', '`application_documents.file_path` の S3 オブジェクトキーに対する認可済みダウンロード URL 発行失敗'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー', '想定外例外')
     ) },
 
@@ -669,8 +671,8 @@
     @{ Type = 'Heading2'; Text = '今後拡張時の留意点' },
     @{ Type = 'Bullets'; Items = @(
       'オフライン同期の冪等性を強化する場合は、`inspection_results` に `client_result_id` と `client_device_id` を追加し、一意制約を設定する',
-      '`inspection_type=''日常点検''` にステータスや予定日を追加する場合は、点検管理タブの一覧表示、PWA配信対象、ステータス定義・遷移定義に影響するため No.28 と同時に見直す',
-      '点検結果報告書をサーバー生成する場合は、`application_documents.owner_type=''INSPECTION_RESULT''` として保存し、取得 API の `reportDocument` に返却する',
+      '`inspection_type=''日常点検''` にステータスや予定日を追加する場合は、点検管理タブの一覧表示、PWA配信対象、ステータス定義・遷移定義に影響するため No.30 と同時に見直す',
+      '点検結果報告書をサーバー生成する場合は、ファイル実体を Amazon S3 へ PutObject し、`application_documents.owner_type=''INSPECTION_RESULT''` と `file_path` の S3 オブジェクトキーを保存する。DB にバケット名や HTTPS URL は保存せず、取得 API の `reportDocument.downloadUrl` では認可済みダウンロード URL を返す',
       '修理申請 API 実装時は、日常点検結果登録 API が返す `inspectionResultId` を `repair_request_details.inspection_result_id` へ引き継ぐ'
     ) }
   )

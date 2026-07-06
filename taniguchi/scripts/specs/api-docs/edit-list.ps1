@@ -32,10 +32,9 @@ $disposalTransferPermissionLines = @(
 )
 
 $columnSettingPermissionLines = @(
-  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_edit_list` / `remodel_edit_list` / `normal_ship_column` / `remodel_ship_column` 判定をバイパスする',
+  '認可条件: 共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）の場合は、Bearer トークン上の作業対象施設が未削除であることを確認し、通常アカウント向けの担当施設割当・施設提供設定・ユーザー施設別設定による `normal_edit_list` / `remodel_edit_list` 判定をバイパスする',
   '認可条件: 通常アカウントの場合、Bearer トークン上の作業対象施設について `user_facility_assignments` に有効割当があること',
-  '認可条件: 通常アカウントの場合、`screenId=edit_list` の表示カラム設定は、通常編集リストまたはリモデル編集リストのいずれかの入口権限が有効なユーザーだけ参照・更新できること',
-  '認可条件: 通常アカウントで表示対象にSHIP資産マスタ任意カラムを含む場合は、利用文脈に応じて `normal_ship_column` または `remodel_ship_column` が有効であること'
+  '認可条件: 通常アカウントの場合、`screenId=edit_list` の表示カラム設定は、通常編集リストまたはリモデル編集リストのいずれかの入口権限が有効なユーザーだけ参照・更新できること'
 )
 
 $commonErrorRows = @(
@@ -84,7 +83,6 @@ $editListItemCoreRows = @(
   @('applicationNo', 'string', '-', '申請No.'),
   @('quotationNo', 'string', '-', '見積番号。RFQグループ名とは別項目'),
   @('fixedValues', 'object', '✓', '`fixedColumns[].columnKey` をキーにした固定58列の値。DB列は `edit_list_items` の作業スナップショットに対応する'),
-  @('customValues', 'object', '-', 'SHIP資産マスタ任意カラム値。`normal_ship_column` / `remodel_ship_column` が有効な場合だけ返す'),
   @('freeColumnValues', 'object', '-', 'フリーカラム値。`edit_list_free_column_id` または `column_key` をキーにする'),
   @('recordStatus', 'string', '✓', '`ACTIVE` / `DELETED`'),
   @('updatedAt', 'datetime', '✓', '最終更新日時')
@@ -439,7 +437,7 @@ $endpointBlocks = @(
       'ヘッダー表示に必要なリスト名、対象施設、作成日、`listType`、`status`、作業ロック検証結果を同一レスポンスで返す。',
       'チェックボックスの選択状態はレスポンスに含めない。RFQ作成、Data Link、見積DB Link、廃棄/移設申請では実行時の `editListItemIds[]` を受け取る。',
       '固定58列の表示値は `edit_list_items` の作業スナップショットを正とし、原本、申請、見積を直接参照して上書きしない。',
-      'SHIP資産マスタ任意カラムは `normal_ship_column` / `remodel_ship_column` が有効な場合だけ `customColumns` と `customValues` に含める。',
+      'レスポンスの明細値は固定58列の `fixedValues` と編集リスト内限定の `freeColumnValues` に分けて返す。',
       '検索、ソート、列内フィルター、列順、列幅は画面内一時状態であり本APIの保存対象外とする。'
     ) `
     -ResponseRows @(
@@ -528,13 +526,12 @@ $endpointBlocks = @(
       @('editListItemId', 'path', 'int64', '✓', '編集リスト明細ID')
     ) `
     -RequestRows ($lockRequestRows + @(
-      @('fields', 'object', '✓', '更新対象フィールド。固定列、SHIP任意カラム、フリーカラムを含む'),
-      @('fields.shipAssetCustomValues', 'object', '-', '`ship_asset_custom:{column_key}` をキーにした任意カラム値'),
+      @('fields', 'object', '✓', '更新対象フィールド。固定列、フリーカラムを含む'),
       @('fields.freeColumnValues', 'object', '-', '`edit_list_free_column_id` または `column_key` をキーにしたフリーカラム値')
     )) `
     -PermissionLines $editListMutationPermissionLines `
     -ProcessingLines @(
-      '固定項目は `edit_list_items`、SHIP資産マスタ任意項目は `edit_list_item_custom_values`、フリーカラムは `edit_list_free_column_values` へ保存する。',
+      '固定項目は `edit_list_items`、フリーカラムは `edit_list_free_column_values` へ保存する。',
       '品目、メーカー、型式の更新時は `ship_asset_masters` を `品目 + メーカー + 型式`、`品目 + メーカー`、`品目` の順で再解決し、一意に解決できた場合だけ `ship_asset_master_id` を更新する。',
       '候補なしまたは複数候補で一意に決まらない場合は `ship_asset_master_id=NULL` とし、入力された表示値スナップショットを保持する。',
       'リモデル方針の `NEW` / `DISPOSAL` / `TRANSFER` への単純変更は本APIで保存できる。`REPLACE` / `ADDITION` の派生行作成は明細追加APIの業務ケースで扱う。',
@@ -571,7 +568,7 @@ $endpointBlocks = @(
     -PermissionLines $editListMutationPermissionLines `
     -ProcessingLines @(
       '対象明細はすべて同一 `editListId` 配下、`deleted_at IS NULL`、クローズ済みでないことを検証する。',
-      '固定列、SHIP任意カラム、フリーカラムの保存先をカラムキーから解決する。',
+      '固定列またはフリーカラムの保存先をカラムキーから解決する。',
       '対象明細の一部でも権限、ロック、存在、競合、カラム不正に該当する場合は全体をロールバックする。',
       '品目、メーカー、型式の一括更新時も各行ごとに資産マスタ再解決を行う。'
     ) `
@@ -662,7 +659,7 @@ $endpointBlocks = @(
     -PermissionLines $editListMutationPermissionLines `
     -ProcessingLines @(
       '`edit_list_free_columns.deleted_at IS NULL` の列を `created_at ASC` で返す。',
-      'フリーカラムは編集リスト内限定の作業列であり、SHIP資産マスタ任意カラムとは別管理とする。'
+      'フリーカラムは編集リスト内限定の作業列として管理する。'
     ) `
     -ResponseRows @(
       @('items', 'FreeColumnDefinition[]', '✓', 'フリーカラム定義'),
@@ -776,7 +773,7 @@ $endpointBlocks = @(
     -ProcessingLines @(
       '転記可能カラムと転記先はサーバー定義マッピングで管理し、クライアントから任意の物理カラム名を指定させない。',
       '原本リスト由来は `source_asset_ledger_id` を持つ `BASE_ASSET` 明細だけ対象とし、実行時点の最新 `asset_ledgers` 値を参照する。',
-      '資産Master由来は `edit_list_items.ship_asset_master_id` または元資産行の `asset_ledgers.ship_asset_master_id` で `ship_asset_masters` と任意カラム値を参照する。',
+      '資産Master由来は `edit_list_items.ship_asset_master_id` または元資産行の `asset_ledgers.ship_asset_master_id` で `ship_asset_masters` / `ship_asset_master_details` を参照し、サーバー定義マッピングに存在する固定列だけを転記対象とする。',
       '業者Master由来は `vendor_id` または一意な `vendor_name` で `vendors` を参照し、曖昧一致は紐づけなしとして扱う。',
       '転記元に存在する空値はクリア差分としてプレビューに含める。転記元項目自体が存在しない場合は更新しない。',
       '最大20行の差分サンプル、`totalRows`、残件有無を返す。'
@@ -813,8 +810,8 @@ $endpointBlocks = @(
     -PermissionLines $editListMutationPermissionLines `
     -ProcessingLines @(
       'プレビュー時と同じ条件で再照合し、照合できない行はスキップして結果件数を返す。',
-      '固定列は `edit_list_items`、SHIP任意カラムは `edit_list_item_custom_values`、フリーカラムは `edit_list_free_column_values` へ反映する。',
-      '資産Masterの固定列を持たない項目は `ship_asset_custom:{column_key}` 形式で `edit_list_item_custom_values` へ保存する。',
+      '固定列は `edit_list_items`、フリーカラムは `edit_list_free_column_values` へ反映する。',
+      '転記先固定列を持たない資産Master項目は対象外とし、暗黙に新しい物理列や値保持領域を作らない。',
       '未対応の転記先キーは拒否し、暗黙に新しい物理列を作らない。',
       '転記元に存在する空値はクリア差分として上書きできる。',
       '原本 `asset_ledgers`、SHIP資産マスタ、業者マスタは更新しない。'
@@ -1108,14 +1105,13 @@ $endpointBlocks = @(
     -Path '/user-column-settings?screenId=edit_list' `
     -Auth '要（Bearer）' `
     -ParametersRows @(
-      @('screenId', 'query', 'string', '✓', '`edit_list` 固定'),
-      @('listType', 'query', 'string', '-', '`PURCHASE` / `REMODEL`。SHIP任意カラムの権限判定に使用')
+      @('screenId', 'query', 'string', '✓', '`edit_list` 固定')
     ) `
     -PermissionLines $columnSettingPermissionLines `
     -ProcessingLines @(
       '`user_column_settings` からログインユーザー、`screen_id=''edit_list''` の表示/非表示設定を取得する。',
       '`user_column_setting_presets` と `user_column_setting_preset_items` からブックマーク一覧を取得する。',
-      '固定列の `column_key` は画面契約として固定し、SHIP任意カラムは `ship_asset_custom:{column_key}` 形式で返す。',
+      '固定列の `column_key` は画面契約として固定する。',
       '列幅、列順、ソート、列内フィルター、全体検索条件はDB保存対象外とし返さない。'
     ) `
     -ResponseRows @(
@@ -1142,7 +1138,7 @@ $endpointBlocks = @(
     -PermissionLines $columnSettingPermissionLines `
     -ProcessingLines @(
       'ログインユーザー、`screen_id=''edit_list''` 単位で `user_column_settings` を置換保存する。',
-      '未知の固定列キー、無効化されたSHIP任意カラム、`ship_asset_custom:` プレフィックス不正は拒否する。',
+      '未知の固定列キーは拒否する。',
       '列幅、列順、ソート、列内フィルターは保存しない。'
     ) `
     -ResponseRows @(
@@ -1197,7 +1193,7 @@ $endpointBlocks = @(
     -ProcessingLines @(
       'ログインユーザー所有の有効ブックマークであることを検証する。',
       '`user_column_setting_preset_items` の内容で `user_column_settings` を置換更新する。',
-      '適用時点で無効化されたSHIP任意カラムが含まれる場合は拒否し、利用者に再保存を促す。'
+      '適用時点で未知または廃止された固定列キーが含まれる場合は拒否し、利用者に再保存を促す。'
     ) `
     -ResponseRows @(
       @('columns', 'UserColumnSetting[]', '✓', '適用後の表示カラム設定')
@@ -1277,7 +1273,7 @@ $endpointBlocks = @(
       @('編集リスト新規作成', '`POST /edit-lists`', '対象施設の原本資産を `BASE_ASSET` としてコピーする'),
       @('既存編集リスト入場', '`POST /edit-lists/{editListId}/lock`', '他ユーザー作業中は入場不可'),
       @('画面初期表示', '`GET /edit-lists/{editListId}/items`', 'ヘッダー、ロック、固定列、フリーカラム、明細を取得する'),
-      @('セル編集', '`PATCH /edit-lists/{editListId}/items/{editListItemId}`', '固定列、SHIP任意カラム、フリーカラムへ保存する'),
+      @('セル編集', '`PATCH /edit-lists/{editListId}/items/{editListItemId}`', '固定列、フリーカラムへ保存する'),
       @('一括編集', '`PATCH /edit-lists/{editListId}/items/bulk`', '選択明細の同一カラムを一括保存する'),
       @('更新/増設/新規要望', '`POST /edit-lists/{editListId}/items`', '専用APIを増やさず明細追加APIの業務ケースとして扱う'),
       @('行順変更', '`PATCH /edit-lists/{editListId}/items/reorder`', '`row_no` を再採番する'),
@@ -1294,18 +1290,17 @@ $endpointBlocks = @(
       @('`users`', 'READ', '共有システム管理者アカウント判定、作業ロック保持者名・作成者名の解決'),
       @('`facilities`', 'READ', 'Bearer トークン上の作業対象施設、編集リスト対象施設、主施設の存在確認・未削除判定'),
       @('`user_facility_assignments`', 'READ', '通常アカウントの作業対象施設割当判定'),
-      @('`facility_feature_settings`', 'READ', '通常アカウントの作業対象施設における編集リスト、RFQ、廃棄・移設、SHIP任意カラム機能の提供有無判定'),
-      @('`user_facility_feature_settings`', 'READ', '通常アカウントのユーザー×作業対象施設単位の編集リスト、RFQ、廃棄・移設、SHIP任意カラム機能の利用可否判定'),
+      @('`facility_feature_settings`', 'READ', '通常アカウントの作業対象施設における編集リスト、RFQ、廃棄・移設機能の提供有無判定'),
+      @('`user_facility_feature_settings`', 'READ', '通常アカウントのユーザー×作業対象施設単位の編集リスト、RFQ、廃棄・移設機能の利用可否判定'),
       @('`edit_lists`', 'READ / CREATE / UPDATE / DELETE', '編集リストヘッダー、種別、ステータス、削除、クローズ状態'),
       @('`edit_list_work_locks`', 'READ / CREATE / UPDATE', '作業ロック取得、heartbeat、通常解除、更新系API検証'),
       @('`edit_list_facilities`', 'READ / CREATE', '編集リスト対象施設'),
       @('`edit_list_items`', 'READ / CREATE / UPDATE / DELETE', '固定58列の作業スナップショット、行順、ソース種別、RFQ現在表示'),
-      @('`edit_list_item_custom_values`', 'READ / CREATE / UPDATE', 'SHIP資産マスタ任意カラム転記値'),
       @('`edit_list_free_columns`', 'READ / CREATE / UPDATE / DELETE', '編集リスト内限定のフリーカラム定義'),
       @('`edit_list_free_column_values`', 'READ / CREATE / UPDATE / DELETE', 'フリーカラム行別値'),
       @('`asset_ledgers`', 'READ', '編集リスト作成時の原本コピー元、原本リストData Linkの転記元'),
       @('`qr_codes`', 'READ', '編集リスト作成時に原本資産へ紐づくQR情報を作業スナップショットへ取り込む'),
-      @('`ship_asset_masters` / `ship_asset_master_custom_columns` / `ship_asset_master_custom_values`', 'READ', '資産Master Data Link、任意カラム定義/値、品目/メーカー/型式編集時の再解決'),
+      @('`ship_asset_masters` / `ship_asset_master_details`', 'READ', '資産Master Data Link、品目/メーカー/型式編集時の再解決'),
       @('`vendors`', 'READ', '業者Master Data Link'),
       @('`applications` / `purchase_application_details` / `application_assets`', 'CREATE / READ / UPDATE', 'インライン新規要望、廃棄・移設申請、申請由来明細'),
       @('`application_status_histories`', 'CREATE', 'インライン新規要望、廃棄・移設申請の状態履歴'),
@@ -1330,14 +1325,13 @@ $endpointBlocks = @(
       '論理削除は `deleted_at` または対象テーブルの状態列で扱い、監査・履歴参照に必要なリンクは保持する'
     ) },
     @{ Type = 'Heading2'; Text = '認証・認可' },
-    @{ Type = 'Paragraph'; Text = '本API群はロール固定ではなく、対象施設に対する実効 `feature_code` で認可する。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、編集リスト、RFQ作成、廃棄・移設申請、SHIP任意カラム表示の対象 `feature_code` を有効として扱う。' },
+    @{ Type = 'Paragraph'; Text = '本API群はロール固定ではなく、対象施設に対する実効 `feature_code` で認可する。通常アカウントでは、Bearer トークン上の作業対象施設について `user_facility_assignments` の有効割当があり、`facility_feature_settings` と `user_facility_feature_settings` の両方で対象 `feature_code` が `is_enabled=true` の場合に API 実行を許可する。共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）では、作業対象施設が未削除であることを確認できれば、担当施設割当、施設提供設定、ユーザー施設別設定による通常判定を行わず、編集リスト、RFQ作成、廃棄・移設申請の対象 `feature_code` を有効として扱う。' },
     @{ Type = 'Table'; Headers = @('機能コード', '対象操作', '説明'); Rows = @(
       @('`normal_edit_list`', '通常編集リスト一覧・作成・入場・編集', '通常購入用編集リストの基本権限'),
       @('`remodel_edit_list`', 'リモデル編集リスト一覧・作成・入場・編集', 'リモデル用編集リストの基本権限'),
       @('`normal_purchase`', '通常編集リスト起点RFQ作成', '通常購入RFQを作成する追加権限'),
       @('`remodel_purchase`', 'リモデル編集リスト起点RFQ作成', 'リモデルRFQを作成する追加権限'),
-      @('`transfer_disposal`', 'リモデル編集リスト起点の廃棄・移設申請作成', '廃棄/移設ワークフロー作成の追加権限'),
-      @('`normal_ship_column` / `remodel_ship_column`', 'SHIP資産マスタ任意カラム表示・Data Link転記', '利用文脈に応じたカラム表示権限')
+      @('`transfer_disposal`', 'リモデル編集リスト起点の廃棄・移設申請作成', '廃棄/移設ワークフロー作成の追加権限')
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(

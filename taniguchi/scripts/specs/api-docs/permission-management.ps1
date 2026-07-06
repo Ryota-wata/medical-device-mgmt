@@ -2,8 +2,8 @@
   TemplatePath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\テンプレート\API設計書_標準テンプレート.docx'
   OutputPath = 'C:\Projects\mock\medical-device-mgmt\taniguchi\api\Fix\API設計書_権限管理.docx'
   ScreenLabel = '権限管理'
-  CoverDateText = '2026年5月17日'
-  RevisionDateText = '2026/5/17'
+  CoverDateText = '2026年6月2日'
+  RevisionDateText = '2026/6/2'
   Sections = @(
     @{ Type = 'Heading1'; Text = '第1章 概要' },
     @{ Type = 'Heading2'; Text = '本書の目的' },
@@ -16,15 +16,18 @@
       '`lending_checkout` と `lending_in_use_used` の親子制約',
       '`lending_in_use_used` を OFF にする際の未返却貸出データ検証',
       '施設提供設定とユーザー施設別設定の責務分離',
+      '共有システム管理者アカウント専用の直接認可と、新規施設追加直後の初期設定フロー',
       '権限・バリデーション・エラーレスポンス'
     ) },
     @{ Type = 'Heading2'; Text = '対象システム概要' },
     @{ Type = 'Paragraph'; Text = '権限管理は、メイン画面のマスタ管理モーダルから遷移する独立画面である。共有システム管理者アカウントが対象施設を選択し、当該施設で提供する機能および表示カラムを ON/OFF 設定する。' },
     @{ Type = 'Paragraph'; Text = '施設単位の提供設定は、その施設に所属または担当するユーザーが利用できる機能・カラムの上限として働く。`config_scope=''FACILITY_USER''` の機能は、施設提供設定とユーザー施設別設定の両方が有効な場合にのみ実効利用できる。' },
+    @{ Type = 'Paragraph'; Text = '本画面/APIは、通常アカウントへ付与する `feature_code` ではなく `users.account_type=''SYSTEM_ADMIN''` により直接認可する。新しい施設を追加する運用では、共有システム管理者アカウントが 施設追加 → 施設権限設定 → 最初のユーザー追加 → 最初のユーザー権限設定 の順に初期設定を完了できる必要があるため、対象施設に通常ユーザーやユーザー施設別設定が未作成でも、未削除の施設であれば本APIの設定対象に含める。' },
     @{ Type = 'Heading2'; Text = '用語定義' },
     @{ Type = 'Table'; Headers = @('用語', '説明'); Rows = @(
       @('権限管理', '施設単位の提供機能・提供カラムを管理する画面および API 群'),
-      @('対象施設', '設定を取得・保存する施設。`facilities` で管理する'),
+      @('対象施設', '設定を取得・保存する施設。`facilities` で管理し、通常ユーザー割当の有無にかかわらず未削除施設を対象とする'),
+      @('初期施設設定', '新規施設追加後、最初のユーザーを追加する前に共有システム管理者アカウントが施設提供機能・提供カラムを設定する作業'),
       @('施設提供機能', '対象施設で提供する `feature_code`。`facility_feature_settings` で管理する'),
       @('施設提供カラム', '対象施設で提供する `column_code`。`facility_column_settings` で管理する'),
       @('機能カタログ', '管理対象機能の正本。`feature_catalogs` で管理する'),
@@ -41,7 +44,7 @@
 
     @{ Type = 'Heading1'; Text = '第2章 システム全体構成' },
     @{ Type = 'Heading2'; Text = 'APIの位置づけ' },
-    @{ Type = 'Paragraph'; Text = '本API群は、権限管理画面の初期表示、対象施設別の設定取得、設定保存、別施設からの設定コピーを提供する。' },
+    @{ Type = 'Paragraph'; Text = '本API群は、権限管理画面の初期表示、対象施設別の設定取得、設定保存、別施設からの設定コピーを提供する。対象施設候補は共有システム管理者アカウントの担当施設割当ではなく `facilities.deleted_at IS NULL` を基準に取得し、新規施設追加直後のように通常ユーザーやユーザー施設別設定がまだ存在しない施設も設定対象に含める。' },
     @{ Type = 'Paragraph'; Text = '候補正本は `feature_catalogs` / `column_catalogs` とし、施設別の設定値は `facility_feature_settings` / `facility_column_settings` へ保存する。ユーザー施設別設定は本APIでは更新しない。' },
     @{ Type = 'Heading2'; Text = '画面とAPIの関係' },
     @{ Type = 'Table'; Headers = @('画面操作', 'API', '補足'); Rows = @(
@@ -70,7 +73,9 @@
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-05-17T00:00:00Z`）',
       '論理削除済み施設（`facilities.deleted_at IS NOT NULL`）は対象施設候補、設定取得、保存、コピー元、コピー先の対象外とする',
+      '共有システム管理者アカウントは `user_facility_assignments` に依存せず未削除の全施設を対象にできる。通常ユーザーやユーザー施設別設定が未作成の新規施設も対象に含める',
       'カタログ候補は `is_active=true` の行を対象とし、`sort_order`、コードの順で安定ソートする',
+      '旧整理の `facility_feature_edit` は通常アカウント向け `feature_code` として扱わないため、施設提供機能候補、保存リクエスト、コピー結果の候補集合に含めない',
       '`switchContent` は `taniguchi/docs/ロール整理.xlsx` の `権限管理単位一覧` シートを正本とする表示メタ情報であり、`facility_feature_settings` / `facility_column_settings` には保存しない',
       '保存・コピーは1リクエストを1トランザクションで処理し、一部だけ保存された状態を残さない',
       '保存・コピー時は候補集合全体を基準に UPSERT し、リクエストで指定されない候補は `is_enabled=false` として扱う'
@@ -78,11 +83,11 @@
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
     @{ Type = 'Heading2'; Text = '権限モデル' },
-    @{ Type = 'Paragraph'; Text = '本API群は施設提供設定そのものを管理する管理者 API であるため、対象施設の `facility_feature_settings` / `user_facility_feature_settings` による自己参照型の feature_code 判定は行わない。Bearer トークンの認証コンテキストで共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）と判定できる場合のみ実行を許可する。' },
+    @{ Type = 'Paragraph'; Text = '本API群は施設提供設定そのものを管理する管理者 API であるため、対象施設の `facility_feature_settings` / `user_facility_feature_settings` による自己参照型の feature_code 判定は行わない。Bearer トークンの認証コンテキストで共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）と判定できる場合のみ実行を許可する。通常ユーザー、施設管理者、または `feature_code` による個別権限では本APIを利用できない。' },
     @{ Type = 'Table'; Headers = @('処理', '必要条件', '説明'); Rows = @(
       @('全API', 'Bearer トークンが有効であること', '未認証または期限切れの場合は 401'),
       @('全API', '認証コンテキスト上のユーザーが共有システム管理者アカウントであること', '`users.account_type=''SYSTEM_ADMIN''` で判定する。共有システム管理者アカウント以外は 403'),
-      @('設定取得 / 保存 / コピー', '対象施設が未削除であること', '存在しない、または論理削除済みの場合は 404')
+      @('設定取得 / 保存 / コピー', '対象施設が未削除であること', '存在しない、または論理削除済みの場合は 404。通常ユーザー割当やユーザー施設別設定の有無は必要条件にしない')
     ) },
     @{ Type = 'Heading2'; Text = 'エラーレスポンス仕様' },
     @{ Type = 'Heading3'; Text = '基本エラーレスポンス（ErrorResponse）' },
@@ -155,11 +160,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
+          '認可条件: 通常ユーザー向け `feature_code`、施設提供設定、ユーザー施設別設定による判定は行わない'
         )
         ProcessingLines = @(
-          '`facilities.deleted_at IS NULL` の施設を対象施設候補として取得する',
-          '`feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は候補に含めない',
+          '`facilities.deleted_at IS NULL` の施設を対象施設候補として取得する。`user_facility_assignments` の有無は参照せず、新規施設追加直後で通常ユーザーが未登録の施設も含める',
+          '`feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線、および旧整理の `facility_feature_edit` は候補に含めない',
           'Phase1では `normal_ship_request` / `lending_in_use_used` を `FACILITY_USER` として候補に含める',
           '`column_catalogs.is_active=true` のカラム候補を取得し、`related_feature_code` を併せて返却する',
           '初期選択施設は対象施設候補の先頭とする。クライアントが前回選択施設を保持している場合は、`facilities` に当該施設が含まれることを確認したうえで、施設提供設定取得 API を呼び出して表示を切り替える',
@@ -235,11 +241,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
+          '認可条件: 対象施設に通常ユーザー割当やユーザー施設別設定が存在することは要求しない'
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
-          '`feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する',
+          '`feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` を施設提供機能候補として取得する。旧整理の `facility_feature_edit` は候補に含めない',
           '`column_catalogs.is_active=true` のカラム候補を取得し、`related_feature_code` を併せて返却する',
           '`facility_feature_settings` と `facility_column_settings` の既存値を左結合し、設定行がない候補は `isEnabled=false` として返却する',
           '`lending_in_use_used` は `lending_checkout` の子機能として扱う。`lending_checkout` が OFF の場合、画面は `lending_in_use_used` を非活性または自動 OFF として扱う',
@@ -319,11 +326,12 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
+          '認可条件: 対象施設に通常ユーザー割当やユーザー施設別設定が存在することは要求しない'
         )
         ProcessingLines = @(
           '対象施設が存在し、未削除であることを確認する',
-          '`enabledFeatureCodes` は `feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の候補集合の部分集合でなければならない。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線は受け付けない',
+          '`enabledFeatureCodes` は `feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の候補集合の部分集合でなければならない。`auth_login` / `facility_select` など `SYSTEM_FIXED` の固定導線、および旧整理の `facility_feature_edit` は受け付けない',
           '`enabledFeatureCodes` に `lending_in_use_used` を含める場合は `lending_checkout` も含めなければならない。含まれない場合は 400 (`PERMISSION_SETTING_PARENT_FEATURE_REQUIRED`) とする',
           '既存設定で `lending_in_use_used=true` の施設について、リクエストで `lending_in_use_used` を OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、未返却の `使用中` / `使用済` 状態が存在しないことを確認する。具体的には `lending_devices.status IN (''使用中'',''使用済'')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN (''使用中'',''使用済'')` が存在する場合は 409 (`LENDING_IN_USE_USED_ACTIVE_EXISTS`) とする。返却済み履歴や対象施設外の機器は OFF 拒否条件に含めない',
           '`enabledColumnCodes` は `column_catalogs.is_active=true` の候補集合の部分集合でなければならない',
@@ -345,7 +353,7 @@
         )
         StatusRows = @(
           @('200', '保存成功', 'PermissionFacilitySettingsResponse'),
-          @('400', '未知のコード、固定導線コード指定、親 feature 不足、または関連 feature が無効な column_code 指定', 'ErrorResponse'),
+          @('400', '未知のコード、固定導線コード、旧 `facility_feature_edit`、親 feature 不足、または関連 feature が無効な column_code 指定', 'ErrorResponse'),
           @('401', '未認証', 'ErrorResponse'),
           @('403', '共有システム管理者アカウントではない', 'ErrorResponse'),
           @('404', '対象施設が存在しない、または論理削除済み', 'ErrorResponse'),
@@ -371,7 +379,8 @@
         )
         PermissionLines = @(
           '認可条件: Bearer トークンが有効であること',
-          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること'
+          '認可条件: 認証コンテキスト上のユーザーが共有システム管理者アカウント（`users.account_type=''SYSTEM_ADMIN''`）であること',
+          '認可条件: コピー先施設に通常ユーザー割当やユーザー施設別設定が存在することは要求しない'
         )
         ProcessingLines = @(
           'コピー先施設とコピー元施設が存在し、未削除であることを確認する',
@@ -416,7 +425,7 @@
     ) },
     @{ Type = 'Heading2'; Text = '施設提供設定ルール' },
     @{ Type = 'Bullets'; Items = @(
-      '施設提供機能の候補は `feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` とし、`auth_login` / `facility_select` などの固定導線は対象外とする',
+      '施設提供機能の候補は `feature_catalogs.is_active=true` かつ `config_scope in (''FACILITY'', ''FACILITY_USER'')` の `feature_code` とし、`auth_login` / `facility_select` などの固定導線、および旧整理の `facility_feature_edit` は対象外とする',
       'Phase1では `normal_ship_request` / `lending_in_use_used` を `FACILITY_USER` として施設提供機能候補に含める',
       '`lending_in_use_used` は `lending_checkout` の子機能であり、`lending_checkout` が OFF の場合は ON にできない。保存 API とコピー API は `lending_in_use_used=true` かつ `lending_checkout=false` の組み合わせを拒否する',
       '`lending_in_use_used` を ON から OFF にする場合は、`lending_devices.asset_ledger_id` から `asset_ledgers.facility_id` を参照して対象施設の貸出機器に限定し、`lending_devices.status IN (''使用中'',''使用済'')`、または同一 `lending_device_id` の `lending_transactions.returned_on IS NULL AND status IN (''使用中'',''使用済'')` が存在しないことを検証する。存在する場合は 409 で拒否し、運用上は該当機器を返却完了してから OFF にする',
@@ -425,13 +434,20 @@
       '施設提供設定を OFF にしてもユーザー施設別設定は削除しない。`config_scope=''FACILITY_USER''` では実効権限判定時に施設提供設定が OFF であれば、ユーザー側が ON でも利用不可とする',
       '施設論理削除時は `facility_feature_settings` / `facility_column_settings` を削除せず保持する。再契約等で `facilities.deleted_at` を解除した場合は既存設定を再利用する'
     ) },
+    @{ Type = 'Heading2'; Text = '新規施設初期設定ルール' },
+    @{ Type = 'Bullets'; Items = @(
+      '新しい施設を追加する運用では、共有システム管理者アカウントが施設追加後、通常ユーザーを作成する前に本APIで施設提供機能・提供カラムを設定できる',
+      '対象施設候補、設定取得、保存、コピー先判定では `user_facility_assignments`、`user_facility_feature_settings`、`user_facility_column_settings` の存在を必要条件にしない',
+      '施設権限設定後、No.20 ユーザー管理APIで最初のユーザー追加と担当施設・ユーザー施設別権限設定を行う。ユーザー施設別設定は本APIでは作成・更新しない',
+      '共有システム管理者アカウント以外が本画面/APIを呼び出した場合は、施設管理者であっても 403 とする'
+    ) },
     @{ Type = 'Heading2'; Text = '設定コピーの業務ルール' },
     @{ Type = 'Bullets'; Items = @(
       'コピーはコピー先施設の設定をコピー元施設の設定へ置き換える処理であり、差分追加ではない',
       'コピー元施設に設定行が存在しない候補は OFF としてコピーする',
       'コピー元施設とコピー先施設が同一の場合は実行しない',
       'コピー先施設の貸出データ状態により `lending_in_use_used` を OFF にできない場合は、コピー処理全体を 409 で拒否する',
-      'コピー実行後もユーザー施設別設定は変更しないため、必要に応じてユーザー権限管理画面でユーザー別設定を見直す'
+      'コピー実行後もユーザー施設別設定は変更しないため、必要に応じてユーザー管理画面（/user-management）の編集モーダル（担当施設・権限タブ）でユーザー別設定を見直す'
     ) },
     @{ Type = 'Heading2'; Text = '監査・更新者ルール' },
     @{ Type = 'Bullets'; Items = @(
@@ -445,7 +461,7 @@
       @('UNAUTHORIZED', '401', 'Bearer トークン未指定、期限切れ、または不正'),
       @('PERMISSION_MANAGEMENT_FORBIDDEN', '403', '共有システム管理者アカウントではないユーザーが権限管理 API を呼び出した'),
       @('PERMISSION_TARGET_FACILITY_NOT_FOUND', '404', '対象施設、コピー元施設、またはコピー先施設が存在しない、または論理削除済み'),
-      @('PERMISSION_SETTING_CODE_INVALID', '400', '未知の `feature_code` / `column_code`、非アクティブコード、または固定導線コードが指定された'),
+      @('PERMISSION_SETTING_CODE_INVALID', '400', '未知の `feature_code` / `column_code`、非アクティブコード、固定導線コード、または旧 `facility_feature_edit` が指定された'),
       @('PERMISSION_SETTING_PARENT_FEATURE_REQUIRED', '400', '`lending_in_use_used` が ON だが `lending_checkout` が OFF である'),
       @('PERMISSION_SETTING_COLUMN_RELATED_FEATURE_DISABLED', '400', '関連 `feature_code` が OFF の `column_code` を ON にしようとした'),
       @('PERMISSION_COPY_SOURCE_INVALID', '400', 'コピー元施設が未指定、コピー先と同一、またはコピー元として利用できない'),
@@ -458,11 +474,12 @@
     @{ Type = 'Bullets'; Items = @(
       '権限管理画面に表示する機能・カラムは `feature_catalogs` / `column_catalogs` を正本とする',
       '新しい画面、ボタン、カラムを権限管理対象に追加する場合は、API 実装より先にカタログ定義を追加する',
-      '`SYSTEM_FIXED` の固定導線は本画面に表示せず、保存 API でも受け付けない'
+      '`SYSTEM_FIXED` の固定導線と旧 `facility_feature_edit` は本画面に表示せず、保存 API でも受け付けない'
     ) },
     @{ Type = 'Heading2'; Text = '保守時の注意点' },
     @{ Type = 'Bullets'; Items = @(
       'SHIP施設マスタ API は施設基本情報管理に限定し、施設提供機能・提供カラム設定は本APIを正本とする',
+      '新規施設追加後は、本APIで施設提供設定を行ってからユーザー管理APIで最初のユーザーとユーザー施設別設定を登録する',
       '施設グループ管理および他施設向け公開設定は本APIでは扱わず、施設グループ管理 API 設計書で扱う',
       '施設提供設定を OFF にしてもユーザー施設別設定は削除しないため、権限が再度 ON になった際に既存ユーザー設定が再利用される',
       '`lending_in_use_used` OFF 拒否は運用上のデータ不整合を防ぐためのサーバー側必須検証とし、フロントの非活性制御だけに依存しない'

@@ -78,7 +78,7 @@ $surveyDataEditPermissionLines = @(
       'データ形式: JSON',
       '文字コード: UTF-8',
       '日時形式: ISO 8601（例: `2026-04-18T00:00:00Z`）',
-      '写真本文は `base64` 文字列で受け取り、バックエンド保存時にオブジェクトストレージへ書き込む'
+      '写真本文は `base64` 文字列で受け取り、バックエンド保存時に Amazon S3 へ書き込む。DB には `application_documents.file_path` として S3 オブジェクトキーを保持し、S3 キー自体はレスポンスで直接返却しない'
     ) },
     @{ Type = 'Heading2'; Text = '認証方式' },
     @{ Type = 'Paragraph'; Text = 'ログイン認証で取得した Bearer トークンを `Authorization` ヘッダーに付与して呼び出す。未認証時は 401 を返却する。' },
@@ -94,12 +94,12 @@ $surveyDataEditPermissionLines = @(
     ) },
     @{ Type = 'Heading2'; Text = '永続化とトランザクション境界' },
     @{ Type = 'Bullets'; Items = @(
-      '`POST /offline-prep/survey/upload` は 1 リクエストを 1 調査セッションとして扱い、`asset_survey_sessions` を親、`asset_survey_records` を子、写真を `application_documents` に保存する。`asset_survey_photos` は `application_documents` からの互換 VIEW であり、直接更新しない',
-      '調査結果アップロードは DB 更新を 1 トランザクションで完結させ、写真のオブジェクトストレージ保存に失敗した場合は `asset_survey_sessions` / `asset_survey_records` / `application_documents` をロールバックし、保存済みオブジェクトも破棄する',
+      '`POST /offline-prep/survey/upload` は 1 リクエストを 1 調査セッションとして扱い、`asset_survey_sessions` を親、`asset_survey_records` を子、写真メタデータを `application_documents` に保存する。`asset_survey_photos` は `application_documents` からの互換 VIEW であり、直接更新しない',
+      '調査結果アップロードは DB 更新を 1 トランザクションで完結させ、Amazon S3 への写真保存に失敗した場合は `asset_survey_sessions` / `asset_survey_records` / `application_documents` をロールバックし、保存済み S3 オブジェクトも破棄する',
       '`localPhotoUuid` はファイル名・ファイルパス生成に使う入力であり、業務テーブルの正本カラムとしては保持しない',
       '`/asset-survey` 画面で行う QR 重複チェックは PWA 側責務とし、`POST /offline-prep/survey/upload` は重複チェック済みの `qrIdentifier` スナップショットを保存する',
       '`PUT /registration-edit/records/{recordId}` は `asset_survey_records` のみ、`DELETE /registration-edit/records/{recordId}/photos/{photoId}` は `application_documents` のみ、`POST /registration-edit/records/confirm` は対象 `asset_survey_records` のみを更新する',
-      '更新系 API は 1 回の呼び出しを 1 DB トランザクションで完結させる。写真削除は論理削除を正本とし、オブジェクトストレージ上の実ファイルはこの API では削除しない'
+      '更新系 API は 1 回の呼び出しを 1 DB トランザクションで完結させる。写真削除 API は論理削除と代表写真付け替えに加えて Amazon S3 の DeleteObject を同一 API 処理内で実行し、DeleteObject 成功後に DB トランザクションを commit する'
     ) },
     @{ Type = 'Heading2'; Text = '作業対象施設ベースの認可' },
     @{ Type = 'Bullets'; Items = @(
@@ -274,10 +274,11 @@ $surveyDataEditPermissionLines = @(
           '各レコードの `surveyor_user_id` には認証ユーザーIDを設定する',
           '`records[].qrIdentifier` は `/asset-survey` 画面で重複チェック済みの値を受け取り、`asset_survey_records.qr_identifier` のスナップショットとして保存する',
           'アップロード時点では各レコードを独立した未確定調査データとして作成し、`detail_type` / `parent_asset_survey_record_id` は `NULL` で開始する。本体 / 明細 / 付属品の紐付けは `/registration-edit` で行う',
-          '写真は `application_documents` に `owner_type=''ASSET_SURVEY_RECORD''` / `document_category=''PHOTO''` として保存し、`taken_by_user_id` と `uploaded_by_user_id` には認証ユーザーIDを設定する',
+          '写真本文は Amazon S3 へ PutObject し、写真メタデータは `application_documents` に `owner_type=''ASSET_SURVEY_RECORD''` / `document_category=''PHOTO''` として保存する。`taken_by_user_id` と `uploaded_by_user_id` には認証ユーザーIDを設定する',
           '写真が1件以上あるレコードでは、`photos[].isPrimary=true` は最大1件だけ許可する。すべて未指定または `false` の場合は先頭写真を `is_primary=true` として保存する',
           '現有品調査写真の `file_name` は、受信した `photos[].fileName` をそのまま使わず、`survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` 形式のシステム生成名を採番して保存する',
-          '写真保存時の `file_path` は `asset-survey/{facility_id}/{YYYY}/{MM}/{local_photo_uuid}.{拡張子}` 形式で生成する',
+          '写真保存時の `file_path` は S3 オブジェクトキーとして `application-documents/facility-{facilityId}/{yyyy}/{mm}/{localPhotoUuid}.{拡張子}` 形式で生成し、バケット名や HTTPS URL は保存しない。`localPhotoUuid` はオフライン撮影時点で採番済みの写真UUIDを利用し、S3キーに業務DB採番IDを含めない',
+          'Amazon S3 への PutObject に失敗した場合は 502 を返し、DB トランザクションをロールバックしたうえで保存済み S3 オブジェクトを破棄する',
           '写真保存時の `uploaded_at` にはサーバー受信時刻を設定する',
           'アップロード完了後、セッションステータスを `COMPLETED` へ更新する'
         )
@@ -316,9 +317,9 @@ $surveyDataEditPermissionLines = @(
               @('`application_documents`', '`application_document_id`', '写真ごとに新規採番する', '互換 VIEW `asset_survey_photos.asset_survey_photo_id` の元になる'),
               @('`application_documents`', '`owner_type` / `asset_survey_record_id` / `document_category`', '`ASSET_SURVEY_RECORD` / 対応する新規 `asset_survey_record_id` / `PHOTO` を保存する', '調査写真の正本'),
               @('`application_documents`', 'リクエスト `photos[].localPhotoUuid` / `photos[].fileName`', '`localPhotoUuid` は DB へ保存せず、`fileName` もそのままは保存しない。両者はサーバー生成 `file_name` / `file_path` の材料としてのみ使う', 'クライアント一時識別子'),
-              @('`application_documents` / オブジェクトストレージ', 'リクエスト `photos[].fileBodyBase64`', 'DB カラムへは保存しない。復号した写真本文をオブジェクトストレージへ保存し、その結果から `file_size_bytes` / `content_hash` を導出する', '写真実体そのものは DB ではなくストレージで管理する'),
-              @('`application_documents`', '`file_name` / `file_path`', 'システム生成ファイル名 `survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` と `asset-survey/{facility_id}/{YYYY}/{MM}/{local_photo_uuid}.{拡張子}` を保存する', '実ファイルはオブジェクトストレージへ保存する'),
-              @('`application_documents`', '`mime_type` / `file_size_bytes` / `content_hash` / `storage_format`', 'リクエスト `photos[].contentType`、復号後バイト数、サーバー計算ハッシュ、`NULL` を保存する', '`storage_format` は現有品調査写真では未使用'),
+              @('`application_documents` / Amazon S3', 'リクエスト `photos[].fileBodyBase64`', 'DB カラムへは保存しない。復号した写真本文を Amazon S3 へ PutObject し、その結果から `file_size_bytes` / `content_hash` を導出する', '写真実体そのものは DB ではなく Amazon S3 で管理する'),
+              @('`application_documents`', '`file_name` / `file_path`', 'システム生成ファイル名 `survey-photo_YYYYMMDD_HHMMSS_{local_photo_uuid先頭8桁}.{拡張子}` と S3 オブジェクトキー `application-documents/facility-{facilityId}/{yyyy}/{mm}/{localPhotoUuid}.{拡張子}` を保存する', '`file_path` は S3 キーであり、バケット名や HTTPS URL は保存しない。S3キーに業務DB採番IDを含めない'),
+              @('`application_documents`', '`mime_type` / `file_size_bytes` / `content_hash` / `storage_format`', 'リクエスト `photos[].contentType`、復号後バイト数、サーバー計算ハッシュ、`NULL` を保存する', '`storage_format` は現有品調査写真では未使用。S3 利用有無は `file_path` の S3 オブジェクトキーで表す'),
               @('`application_documents`', '`taken_at` / `taken_by_user_id` / `uploaded_by_user_id` / `uploaded_at`', 'リクエスト `photos[].takenAt`、認証ユーザーID、認証ユーザーID、サーバー受信時刻を保存する', '`takenAt` 未指定時は `uploaded_at` を正本時刻として扱える状態にする'),
               @('`application_documents`', '`is_primary` / `sort_order`', 'レコード配下で `photos[].isPrimary=true` の写真を 1 件だけ `true` とし、未指定時は先頭写真を `true` にする。`sort_order` は `photos[]` の並び順を保存する', '同一 `asset_survey_record_id` で代表写真は必ず 1 件だけ'),
               @('`application_documents`', '`application_id` / `application_asset_id` / `edit_list_item_id` / `rfq_id` / `rfq_vendor_id` / `quotation_id` / `inspection_result_id` / `asset_ledger_id` / `step_code` / `document_type` / `title` / `document_date` / `account_type` / `account_other_text` / `deleted_at`', '`NULL` で作成する', '現有品調査写真では利用しない汎用ドキュメント列'),
@@ -341,6 +342,7 @@ $surveyDataEditPermissionLines = @(
           @('403', '通常アカウントで作業対象施設に対する実効 `existing_survey` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '施設または参照マスタが存在しない、または削除済み', 'ErrorResponse'),
           @('422', '親子紐づけや分類階層の整合が取れない', 'ErrorResponse'),
+          @('502', 'Amazon S3 への写真保存、またはロールバック時の保存済み S3 オブジェクト破棄に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -445,6 +447,7 @@ $surveyDataEditPermissionLines = @(
           '対象 `asset_survey_records` が `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
           '対象レコードの `facilities.deleted_at IS NULL` を検証する',
           '`asset_survey_photos` VIEW から対象レコードの写真を取得する',
+          '`file_path` に保持している S3 オブジェクトキーから認可済み表示URLを発行し、S3 キー自体は返却しない',
           '代表写真フラグと撮影日時をあわせて返却する'
         )
         ResponseTitle = 'レスポンス（200：RegistrationEditPhotoListResponse）'
@@ -459,7 +462,7 @@ $surveyDataEditPermissionLines = @(
             Rows = @(
               @('assetSurveyPhotoId', 'int64', '✓', '調査写真ID'),
               @('fileName', 'string', '✓', 'ファイル名'),
-              @('filePath', 'string', '✓', 'ファイルパス'),
+              @('fileUrl', 'string', '✓', '認可済み表示URL。S3 オブジェクトキーは返却しない'),
               @('takenAt', 'datetime', '-', '撮影日時'),
               @('takenByUserId', 'int64', '-', '撮影者ユーザーID'),
               @('isPrimary', 'boolean', '✓', '代表写真フラグ')
@@ -471,6 +474,7 @@ $surveyDataEditPermissionLines = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `survey_data_edit` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象レコードが存在しない', 'ErrorResponse'),
+          @('502', 'Amazon S3 表示URLの発行に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -578,11 +582,14 @@ $surveyDataEditPermissionLines = @(
         PermissionLines = $surveyDataEditPermissionLines
         ProcessingLines = @(
           '対象 `asset_survey_records` が `deleted_at IS NULL` で存在し、その `facility_id` が Bearer トークン上の作業対象施設IDと一致することを検証する',
-          '対象写真が同一レコード配下の未削除 `application_documents` であることを検証する',
+          '対象写真が同一レコード配下の未削除 `application_documents` であることを検証し、更新トランザクション内で対象写真行を排他取得して `file_path` の S3 オブジェクトキーを保持する',
           '`application_documents.deleted_at` と `updated_at` を更新して論理削除し、削除対象の `is_primary` は `false` にする',
           '削除対象が代表写真で、他に写真が残る場合は、フロントエンドが指定した `nextPrimaryPhotoId` に `is_primary=true` を付け替える',
           '`nextPrimaryPhotoId` が指定された場合は、同一 `asset_survey_record_id` に属する未削除写真であることを検証する',
-          '写真が0件になった場合は代表写真なし状態とし、オブジェクトストレージ上の実ファイルは本 API では削除しない'
+          '写真が0件になった場合は代表写真なし状態とする',
+          '`application_documents.file_path` が指す S3 オブジェクトキーに対して Amazon S3 DeleteObject を実行する。DeleteObject で NoSuchKey が返った場合は削除済みとして成功扱いにする',
+          '通信断・一時障害などの再試行可能エラーは最大3回までリトライし、なお失敗した場合は DB 更新を rollback して 502 を返す',
+          'DeleteObject 成功後に DB トランザクションを commit し、削除後の残写真件数と新代表写真IDを返す。S3 削除成功後に DB commit が失敗した場合は、再実行時に NoSuchKey を成功扱いにして復旧可能とする'
         )
         ExtraTables = @(
           @{
@@ -592,6 +599,7 @@ $surveyDataEditPermissionLines = @(
               @('`application_documents`', '削除対象 `photoId` の `deleted_at` / `updated_at` / `is_primary`', '現在時刻 / 現在時刻 / `false` へ更新する', '論理削除した写真は代表フラグも落とす'),
               @('`application_documents`', 'リクエスト `nextPrimaryPhotoId` の `is_primary` / `updated_at`', '`true` / 現在時刻へ更新する', '削除対象が代表写真で、後続写真が残る場合のみ実行する'),
               @('`application_documents`', 'その他の同一 `asset_survey_record_id` 配下写真', '変更しない', '代表写真の付け替え対象以外はそのまま保持する'),
+              @('`Amazon S3（DB外）`', '`application_documents.file_path` が指す S3 オブジェクト', 'DeleteObject を実行する。NoSuchKey は削除済みとして成功扱いにする', 'S3 削除成功後に DB トランザクションを commit する'),
               @('`asset_survey_photos`', 'VIEW 行', '直接更新しない', '`application_documents` の更新結果が VIEW に反映される')
             )
           }
@@ -608,6 +616,7 @@ $surveyDataEditPermissionLines = @(
           @('401', '未認証', 'ErrorResponse'),
           @('403', '通常アカウントで作業対象施設に対する実効 `survey_data_edit` なし、共有システム管理者で作業対象施設が削除済み、または対象施設不一致', 'ErrorResponse'),
           @('404', '対象写真が存在しない', 'ErrorResponse'),
+          @('502', 'Amazon S3 の調査写真削除に失敗した', 'ErrorResponse'),
           @('500', 'サーバー内部エラー', 'ErrorResponse')
         )
       },
@@ -692,8 +701,11 @@ $surveyDataEditPermissionLines = @(
       @('OFFLINE_PREP_404_FACILITY_NOT_FOUND', '404', '対象施設が存在しない、または削除済み'),
       @('OFFLINE_PREP_404_MASTER_NOT_FOUND', '404', '参照マスタが存在しない、または削除済み'),
       @('OFFLINE_PREP_422_RECORD_RELATION_INVALID', '422', '親子関係または分類階層の整合が取れない'),
+      @('OFFLINE_PREP_502_S3_WRITE_FAILED', '502', '調査写真の Amazon S3 保存、またはロールバック時の保存済み S3 オブジェクト破棄に失敗した'),
       @('REG_EDIT_404_RECORD_NOT_FOUND', '404', '対象調査レコードが存在しない'),
       @('REG_EDIT_404_PHOTO_NOT_FOUND', '404', '対象写真が存在しない'),
+      @('REG_EDIT_502_S3_URL_SIGN_FAILED', '502', '調査写真一覧取得時に Amazon S3 表示URLの発行に失敗した'),
+      @('REG_EDIT_502_S3_DELETE_FAILED', '502', '調査写真削除時に Amazon S3 オブジェクトの削除に失敗した'),
       @('REG_EDIT_409_ALREADY_CONFIRMED', '409', '既に確定済みのため更新できない'),
       @('REG_EDIT_409_CONFIRM_CONDITION_FAILED', '409', '確定条件を満たしていない'),
       @('INTERNAL_SERVER_ERROR', '500', 'サーバー内部エラー')
@@ -702,7 +714,8 @@ $surveyDataEditPermissionLines = @(
     @{ Type = 'Heading1'; Text = '第8章 運用・保守方針' },
     @{ Type = 'Bullets'; Items = @(
       '現有品調査API設計書の対象画面範囲を変更する場合は、先に `taniguchi/機能要件.md` の方針メモを更新する',
-      '写真保存ルールやオブジェクトキー命名規則を変更する場合は、`application_documents` と `asset_survey_photos` VIEW の整合を必ず確認する',
+      '写真保存ルールや Amazon S3 オブジェクトキー命名規則を変更する場合は、`application_documents.file_path` と `asset_survey_photos` VIEW の整合を必ず確認する',
+      '調査写真削除時の Amazon S3 DeleteObject は同期 API 内で実行し、NoSuchKey は削除完了扱いにする。再試行可能な一時障害は最大3回までリトライし、なお失敗する場合は DB 更新を rollback して 502 を返す',
       'PWA 画面群のローカル状態管理は本設計書の対象外とし、API追加時はオンライン画面かオフライン同期I/Fかを明確に区別する'
     ) }
   )
